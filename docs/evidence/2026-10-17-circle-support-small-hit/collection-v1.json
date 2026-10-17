@@ -1,0 +1,41 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "archive": "/dev/shm/csgrs-circle-support-small-hit-v1/collection-v1/raw-evidence-v1.tar.xz",
+  "archive_sha256": "f07bb23f31c0628ae2c8b47aa672dbf35fb0fac34d4b40b48823c482c02b5e53",
+  "archive_bytes": 294744,
+  "archive_members": "/dev/shm/csgrs-circle-support-small-hit-v1/collection-v1/archive-members-v1.json.gz",
+  "archive_members_sha256": "04d7eda288f901f195709db9ba13bce19560436c0e2641c1062484a9efda4b33",
+  "member_count": 905,
+  "uncompressed_member_bytes": 2578549,
+  "all_member_bytes_independently_verified": true,
+  "original_files_unchanged": true,
+  "archive_metadata_is_normalized": true,
+  "metadata_roundtrip_claimed": false,
+  "physical_artifacts_not_duplicated_in_git": {
+    "/dev/shm/csgrs-circle-support-small-hit-v1/build-v1/candidate-tests": {
+      "sha256": "24e16de87bd480c4bdbe9d76e91d47dafea73786358160cc538c5eccc0132cc4",
+      "bytes": 46978216
+    },
+    "/dev/shm/csgrs-circle-support-small-hit-v1/build-v1/candidate.rmeta": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/run/user/1000/csgrs-circle-support-small-hit-metadata-v1/candidate.rmeta": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/run/user/1000/csgrs-circle-support-small-hit-metadata-v1/clippy.rmeta": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "excluded_source_mirrors_remain_physically_retained": true,
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/collect_v1.py": "063a71673aeabc63a91de60283dd883d8940abab63c869f8a6390b12679a6aca",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/decision-v1.json": "5f37561ca7d3f01370eef7cfa39416acecc757dbe08d05d703b3badd953f3f78"
+  },
+  "source_changes_applied": false,
+  "cache_admitted": false,
+  "full_plan_complete": false
+}

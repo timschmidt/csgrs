@@ -1,0 +1,23 @@
+diff --git a/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/README.md b/dev/shm/csgrs-circle-support-small-hit-v1/proposal-v1/source/crates/hypercurve/README.md
+index d3fc050f3..fcba28132 100644
+--- a/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/README.md
++++ b/dev/shm/csgrs-circle-support-small-hit-v1/proposal-v1/source/crates/hypercurve/README.md
+@@ -433,6 +433,18 @@ Hypercurve separates exact values from decisions about them:
+   scalar refinement, coefficient growth, allocation, or wall-clock time. The
+   [accounting module](../hypersolve/src/work_budget.rs) lists the coverage and
+   remaining gaps; the full per-operation bound remains an open target.
++- Native intersection batches retain owned circle-support relations for one
++  synchronous operation under one predicate policy. Small batches use ordered
++  equality lookup without building keys or an index. Once at least 32 relations
++  are retained, an eligible query lazily indexes the retained exact rational
++  centers and squared radii whose scalar storage class is not `VeryLarge`.
++  Symbolic and very large supports retain ordered equality lookup.
++  These cost choices do not restrict supported inputs. Earlier unindexed entries
++  keep their original matching priority. Hits reuse the same relation and ordered
++  witnesses. The cache has no eviction or configurable disable switch and is
++  released when the batch is dropped. Its entry count, key storage, and scalar
++  payloads have no internal heap-byte or total-work bound; it is not shared
++  between independent operations or threads.
+ - `CurvePreviewOptions` owns finite display tolerances separately. Operations
+   called inside `evaluate` use its edge-preview context; its scoped preview
+   results are never exact topology or construction provenance.

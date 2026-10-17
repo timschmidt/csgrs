@@ -1,0 +1,122 @@
+{
+  "complete": true,
+  "main_parent_commit": "324e30bd212a544a7b115944d060cd8c19a13d82",
+  "status": "rejected: direct small-hit return retains a decisive cold index-activation regression at 33 pairs",
+  "retention_decision": "rejected",
+  "cache_index_admitted": false,
+  "source_changes_applied": false,
+  "implementation_sha256": {},
+  "proposal_sha256": {
+    "crates/hypercurve/src/curve_intersection.rs": "4a9b7704c18dda4935e276c28081a1b11328c66f89a5263db8cf4d8b4671f3db",
+    "crates/hypercurve/src/circle_support_cache_tests.rs": "4d7b2fdcee72fc064361de4bc91fb5ce8eac342188ca02f830a543a283c3184c",
+    "crates/hypercurve/README.md": "3a5a6e4cc9a909e99ffc4b0a91fe411460f464417c93e1797b1d7d220fa7de5a"
+  },
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/decision_v1.py": "53aa681d9fcf027b16764cd9dbfe247f731da4bbf57003a50c5c4e483dc64c74",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/progress-v1.md": "024d550a323ac8a669b4adbb7d4e89cedb4bd0019248c5f580fdcfca59fc430b",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/preparation-v2.json": "27dbcd2506a4fd62809d7aca479d5cf4e51178468efb938c9de91e33d0517c29",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/contract-v1.md": "580fbc00bae8f6a819fb3ab4d2d8d3eb7df4e1f1c79fceb7d5bdeed527668582",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/metadata-contract-v1.md": "917831733fb94ebde275712d03b8b6d4b46d0c7f1ab7d657a795a7298a8c73d3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/executable-contract-v1.md": "96e31ba62344c9abc0254c3081f5ea72e862c442260597e7b6b389a452c80e8b",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/library-contract-v1.md": "5f2e29d8fb753fcc25b37de2f2ae2811f98e0323f863a4393401c52a56d30544",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/shared-aggregate-contract-v1.md": "70cd6ed2f059ae7a2ce2f8535edb5ff8662ddc2104e88a0634ce27d39375e33d",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/reproduction-v1/protocol.json": "4777e02c6aead8cdaa85b98780f22115bb6fb3f3d343c0a04b76009b58bd6c91",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/reproduction-v1/commands.json": "e9a90ebae1f70027c76414372553f32c5a7bb8ef5513827b0aa0017fa3bdcc6d",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/reproduction-v1/result.json": "ec5fd41ec7d1a46904bd8782b382701c3179293c1ca09b0d2169fb06803bb245",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/build-v1/protocol.json": "f705f59acb77dcd993e923730f36ae01fc0ea74e14fc83bf4e657b5d627a023d",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/build-v1/commands.json": "fd41972d902658538d5eac07ae653866c1e9d34f3306fbf9ad487dfd59dd5ea5",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/build-v1/result.json": "ea804521e3201ad602c35686e06f592ee3effcdd3a5cd6956e9f6373ce4f9fcd",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/cost-preflight-v1/protocol.json": "66eaf0d1e27d35d351d1d8cc9d94678daf6233c52a96e227e9e847cb84073bc2",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/cost-preflight-v1/commands.json": "75410e41f4707c4c3d64166e0ab9b2404d82410ef0a5bfb80940c75e6f97ac6a",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/cost-preflight-v1/result.json": "780b9be77fe2bc00da1bd7025260dff8ddbea1f36577c64861e2242a655ae1fd",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/cost-matched-v1/protocol.json": "ad493106ef69e40bb46ac211c9a339fb51bd1ba957d2358d85a1fe260b17eaab",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/cost-matched-v1/commands.json": "d022e8be0b814ae0d805464c405d6e86f089d99abcbfa9336a1abf58fc689ac9",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/cost-matched-v1/result.json": "53c2ead08cc561dca28633d56207ed2ee523eebd3b4f2bdddb59c23796934537",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/proposal-v1/result.json": "477c1c2f6a49b8454a9609f982f404acb12f29a02a71821f4ac0d4bca540a7fc",
+    "/run/user/1000/csgrs-circle-support-small-hit-metadata-v1/protocol.json": "fb815f5bb60f8b8d9c2d967dd4ac092d649bb7c06a40e9f4398b857b0c065b99",
+    "/run/user/1000/csgrs-circle-support-small-hit-metadata-v1/commands.json": "84d2510d339f8ee789b03a8d46e803a2d4559657f4e426f64171b3f04cf4f11f",
+    "/run/user/1000/csgrs-circle-support-small-hit-metadata-v1/result.json": "3b3787b78cfe1b6fe2c45b43a32c4c128aa064ed213f97a071fb10084f4f21b8",
+    "/dev/shm/csgrs-circle-support-small-hit-v1/cost-matched-v1/summary.json": "d0488936de2d81fe06ae8c333cce03dc633a63cf153946880274161f2b37ad03",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/format.stdout": "11b60f389a936c2aa863e473cd2fcf8f0ae5ad432aaf950410f05b16bf867411",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/format-v2.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/format-v2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "metadata_typecheck_and_strict_clippy_passed": true,
+  "candidate_executable_build_passed": true,
+  "baseline_executable_reused_read_only": true,
+  "focused_contract_tests_per_variant": 9,
+  "candidate_diagnostic_strict_clippy_passed": true,
+  "preflight_processes": 20,
+  "matched_processes": 140,
+  "matched_phases": 280,
+  "all_measured_results_certified_and_exact_rows_preserved": true,
+  "decisive_rejection_cases": [
+    {
+      "count": 33,
+      "phase": "cold",
+      "baseline_seconds": [
+        0.215810937,
+        0.216173013,
+        0.219813662,
+        0.217426166,
+        0.21505743,
+        0.2150571,
+        0.214605971
+      ],
+      "candidate_seconds": [
+        0.238990831,
+        0.236723668,
+        0.23422113,
+        0.238143169,
+        0.238608847,
+        0.239639057,
+        0.24206918
+      ],
+      "baseline_median_seconds": 0.215810937,
+      "candidate_median_seconds": 0.238608847,
+      "candidate_over_baseline": 1.105638343991806,
+      "positive_paired_differences": 7,
+      "candidate_min_exceeds_baseline_max": true,
+      "predeclared_rejection_criterion_met": true
+    }
+  ],
+  "support_preflight_refused": {
+    "command": [
+      "python3",
+      "target/properties/circle-support-small-hit/support_measure_v1.py",
+      "preflight"
+    ],
+    "exit_code": 1,
+    "error": "AssertionError",
+    "line": 23,
+    "reason": "Existing precondition requires no decisive small-batch rejection.",
+    "output_directory_created": false,
+    "benchmark_processes_launched": 0,
+    "raw_redirected_log_available": false,
+    "observation_source": "exec_command tool result"
+  },
+  "prepared_but_unexecuted_after_rejection": [
+    "support matrix",
+    "heap observations",
+    "full no-feature library",
+    "all-feature library",
+    "grouped shared-support comparison"
+  ],
+  "storage_request": {
+    "path": "/mnt/Disk A/csgrs-properties-validation-2026-10-17",
+    "exists": false,
+    "writable": false,
+    "creation_blocker": "Administrator-owned parent; sudo requires a password; no automatic-review denial."
+  },
+  "native_disposition_preserved": true,
+  "pending_native_paths_remaining": 0,
+  "full_archived_integration_admitted": false,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "next": [
+    "Keep the failed cold activation case and original matrix; investigate amortized index construction in a fresh isolated experiment.",
+    "Preserve typed failures, empty composition, ordinary strict completion and full original native workload gates.",
+    "Use a writable larger volume for fresh affected downstream, native/report, binding and distribution checks."
+  ]
+}

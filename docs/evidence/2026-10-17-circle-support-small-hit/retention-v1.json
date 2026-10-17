@@ -1,0 +1,74 @@
+{
+  "all_new_output_roots_closed": true,
+  "all_original_physical_files_unchanged": true,
+  "archive_members_verified": 905,
+  "cache_index_applied": false,
+  "complete": true,
+  "copied_evidence_files": {
+    "archive-members-v1.json.gz": {
+      "original": "/dev/shm/csgrs-circle-support-small-hit-v1/collection-v1/archive-members-v1.json.gz",
+      "sha256": "04d7eda288f901f195709db9ba13bce19560436c0e2641c1062484a9efda4b33"
+    },
+    "checkpoint_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/checkpoint_v1.py",
+      "sha256": "a142bb71b0cf6d893b3df5b589f112f998b45ac938d7fd9326ac3ff74e9f3efa"
+    },
+    "collection-v1.json": {
+      "original": "/dev/shm/csgrs-circle-support-small-hit-v1/collection-v1/result.json",
+      "sha256": "ab4567e5b07c0f9e4fa3d1ad2acea5765813bb7557d9b0e35b7eb5d21242d6ba"
+    },
+    "contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/contract-v1.md",
+      "sha256": "580fbc00bae8f6a819fb3ab4d2d8d3eb7df4e1f1c79fceb7d5bdeed527668582"
+    },
+    "decision-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/decision-v1.json",
+      "sha256": "5f37561ca7d3f01370eef7cfa39416acecc757dbe08d05d703b3badd953f3f78"
+    },
+    "executable-contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/executable-contract-v1.md",
+      "sha256": "96e31ba62344c9abc0254c3081f5ea72e862c442260597e7b6b389a452c80e8b"
+    },
+    "library-contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/library-contract-v1.md",
+      "sha256": "5f2e29d8fb753fcc25b37de2f2ae2811f98e0323f863a4393401c52a56d30544"
+    },
+    "metadata-contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/metadata-contract-v1.md",
+      "sha256": "917831733fb94ebde275712d03b8b6d4b46d0c7f1ab7d657a795a7298a8c73d3"
+    },
+    "progress-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/progress-v1.md",
+      "sha256": "024d550a323ac8a669b4adbb7d4e89cedb4bd0019248c5f580fdcfca59fc430b"
+    },
+    "proposal/README.md.patch": {
+      "original": "/dev/shm/csgrs-circle-support-small-hit-v1/proposal-v1/README.md.patch",
+      "sha256": "259106632c061080cbcb7fb953f727d0bb96538b44da2e10b3e7e23c294d66df"
+    },
+    "proposal/circle_support_cache_tests.rs.patch": {
+      "original": "/dev/shm/csgrs-circle-support-small-hit-v1/proposal-v1/circle_support_cache_tests.rs.patch",
+      "sha256": "6ef29cebf51c50c58888c338c431d6c385d6303da2429276d24bbf41d1e20611"
+    },
+    "proposal/curve_intersection.rs.patch": {
+      "original": "/dev/shm/csgrs-circle-support-small-hit-v1/proposal-v1/curve_intersection.rs.patch",
+      "sha256": "56359ca7c9690c3c97b563d0c668e1135d6b41fa3e736ac1994b853a31209820"
+    },
+    "raw-evidence-v1.tar.xz": {
+      "original": "/dev/shm/csgrs-circle-support-small-hit-v1/collection-v1/raw-evidence-v1.tar.xz",
+      "sha256": "f07bb23f31c0628ae2c8b47aa672dbf35fb0fac34d4b40b48823c482c02b5e53"
+    },
+    "shared-aggregate-contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-hit/shared-aggregate-contract-v1.md",
+      "sha256": "70cd6ed2f059ae7a2ce2f8535edb5ff8662ddc2104e88a0634ce27d39375e33d"
+    }
+  },
+  "format_exit_code": 0,
+  "full_plan_complete": false,
+  "main_parent_commit": "324e30bd212a544a7b115944d060cd8c19a13d82",
+  "main_sources_unchanged": true,
+  "only_current_work_changed": true,
+  "python_sources_parse": true,
+  "retention_decision": "rejected",
+  "source_changes_applied": false,
+  "source_inputs": 2835
+}
