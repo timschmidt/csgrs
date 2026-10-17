@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s bash /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v2/scripts/test-wasm-bindings.sh"
+	User time (seconds): 238.92
+	System time (seconds): 14.47
+	Percent of CPU this job got: 146%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:52.66
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2726628
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 2737
+	Minor (reclaiming a frame) page faults: 5241978
+	Voluntary context switches: 27208
+	Involuntary context switches: 16991
+	Swaps: 0
+	File system inputs: 532264
+	File system outputs: 1353880
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

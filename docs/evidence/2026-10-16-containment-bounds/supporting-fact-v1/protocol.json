@@ -1,0 +1,27 @@
+{
+  "read_only_inputs_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting_fact_v1.py": "59603d3627350a522072bcaead7c5b41cf2659b822bc57accd85664181437dae",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting_fact_v1.cjs": "d703f055c282d05b38f61e1fec196529a8179bb890ca92044a975488cf7f87e1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-validation-v3/result.json": "8a8a748140c04e97e71a3f6e76964c1be3d52597aec865c5ddaea9ee9fc40d78",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/result.json": "76895157882e3116ebc31b278af1388d8d042e2dd80219720021044077bbb91e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm32-unknown-unknown/wasm/csgrs.wasm": "1af71accb534694339347fdce1e38426ca3fdc0483cf9b05c7a494a6d2f2e0ee",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/csgrs.d.ts": "f7dc8e7da4872b9058f3e59a278a2946793bad1e6249391af4dc9a62c066759f",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/csgrs.js": "8a1a2f460a4e4d2ae250bb7e56fe5fbd9c9a3249288ea66252aa959f8091581e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/csgrs_bg.wasm": "85839034a8ea95d3285240df13844dd334d9174a1fd6424cc430a61b7f4787f6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/csgrs_bg.wasm.d.ts": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/geometry_certainty.ts": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/io_contracts.js": "37fb65ed6e244e3e134178c1358f129f6fe33191028592e9e53043110b45fb19",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/io_contracts.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/mesh_errors.js": "5f133abd2e072712599372bdfcf2275b78c92b339c28e2e33a4d0877408f7efd",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/mesh_errors.ts": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-target-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "726b066f8ed1f990dc731f16e66154e69e859d0ce07799b24290ca43c1f5559d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-target-v1/wasm-bindings-node/csgrs.d.ts": "f7dc8e7da4872b9058f3e59a278a2946793bad1e6249391af4dc9a62c066759f",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-target-v1/wasm-bindings-node/csgrs.js": "8a1a2f460a4e4d2ae250bb7e56fe5fbd9c9a3249288ea66252aa959f8091581e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm": "3bac8d18a614ab674682dd4cd207ca0ceb36704e690f456c49af7a2fbd4da119",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm.d.ts": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6"
+  },
+  "new_proof_scope": "The represented inverse-rotated source, not fidelity to the original unit cube.",
+  "completed_targets_reopened": false,
+  "elapsed_limit_seconds": 180,
+  "address_space_limit_bytes": 68719476736
+}

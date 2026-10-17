@@ -1,0 +1,122 @@
+[
+  {
+    "name": "native-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v3/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v3/release/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v3/release/deps/libhypermesh-00e48e0deaa4b5f0.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prototype-v1/tests/containment_bounds.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/native-bounds-tests"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8340042699128389,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9dd5371a32ed162518618cbcce932597ae3a52099020999dcd62e11dcd21d8b4"
+  },
+  {
+    "name": "native-tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/native-bounds-tests",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.02772116893902421,
+    "stdout_sha256": "d1081787d31fa565de1740360c3b36672925002651e80fe6fcf3db0004b0412c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fedfd7fe402461f8438735a8219eb1943cf868d805b1f79aee803c9c632d2eba"
+  },
+  {
+    "name": "wasm-tests",
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prototype-v1/tests/wasm/containment_winding.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.34838129626587033,
+    "stdout_sha256": "bbe99ee41ce9a3f06c21d2f49244fa0a80ca00505ffc09c609cb0cd0519bad16",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8524cb71a99d97a3f7cfc1f7c47048de1810de15be0f71ed0a112ef3bde5f9a4"
+  },
+  {
+    "name": "control-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v3/release/deps",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v3/release/deps/libhypermesh-00e48e0deaa4b5f0.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/control_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/control-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.43432771088555455,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "25221b9e76252e880d2796727fdd4aaaa58b753b1bd929ffb352523447ff06ae"
+  },
+  {
+    "name": "control-cost",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/control-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00787045992910862,
+    "stdout_sha256": "cb2bde1f8c6c93883d52b5538e1368cfb99c8a3c5e810e0df63ebe29db0f5425",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7f18394003c161576a4a70c291fb976914d8867d9d64ed5f95b6dda7d1da7f24"
+  },
+  {
+    "name": "matrix-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v3/release/deps",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v3/release/deps/libhypermesh-00e48e0deaa4b5f0.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/matrix_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/matrix-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.4866468026302755,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b53217003734f46c2865130679d97e8b04aaf3f31bcd03b9012c1fb2e75195e8"
+  },
+  {
+    "name": "matrix-cost",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/matrix-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.09669608762487769,
+    "stdout_sha256": "13ba941324b87334d00807933eb3c239aaff4d31bf68c3591135f4118b02cdc9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6d7d613e771c8d7cd930c3180de9e2c6a70430535e800155a95437b2b4ec77b1"
+  }
+]

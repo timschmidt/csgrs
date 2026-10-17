@@ -1,0 +1,314 @@
+[
+  {
+    "name": "compile-baseline-control",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v3/release/deps",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v3/release/deps/libhypermesh-00e48e0deaa4b5f0.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/control_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.5512261018157005,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8496c4c40581a4da2e3b2a114d0289c49f7be14f985c74a084287f51b1a29026"
+  },
+  {
+    "name": "compile-candidate-control",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-target-v1/release/deps",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-target-v1/release/deps/libhypermesh-00e48e0deaa4b5f0.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/control_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.44311498710885644,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "db83a5f333b1cbb45f728d159955eecfec6911d833c5ad2aa6ada9b1a64736a1"
+  },
+  {
+    "name": "compile-baseline-matrix",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v3/release/deps",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v3/release/deps/libhypermesh-00e48e0deaa4b5f0.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/matrix_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.5123177510686219,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "be148d4bcf646d42f2a52440a0ffb53d5e2ac64ef0d2f219b6507f636ffe25c8"
+  },
+  {
+    "name": "compile-candidate-matrix",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-target-v1/release/deps",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-target-v1/release/deps/libhypermesh-00e48e0deaa4b5f0.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/matrix_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.5009443517774343,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c5fd657c8c03749a00691f4acfc6c4029c05882f9f5fab750debb5b105affea4"
+  },
+  {
+    "name": "control-00-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.008077026344835758,
+    "stdout_sha256": "64aa9aa43a1c8f2f0a427e67ed733c6668bf9146cb2d110eb0bd9a242681bcea",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "09f398345808d0c48e2e583d8e433b3564e96a253d0cac05faa17b6df2c1638e"
+  },
+  {
+    "name": "control-00-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004926462657749653,
+    "stdout_sha256": "c3d93f3017fe28fee3b21b686cd842166df8d8a1e20b3a59d66e3b93442fd74d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d7c47b0d48016038d316e83a12b96956886aab516f08862710fd0d0722f950a0"
+  },
+  {
+    "name": "control-01-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004929091781377792,
+    "stdout_sha256": "e49ec7cfedaee7796fe3d0b5bf14220cf7c6598dd710d200a50f8ffcc1792e3f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8118147de5720c37a2ba0095804adfec93d67cf2924763c73ee952af482c5efe"
+  },
+  {
+    "name": "control-01-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.006977501325309277,
+    "stdout_sha256": "478557760bc5f4df840d39d4b38a6ef962fd4df5f975f21bf834ad2dced0d4cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fa6d9de6261d51fb049add7a3e85fa0128885c6b1941da0ee936f3ef5dd5e79f"
+  },
+  {
+    "name": "control-02-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.007274930831044912,
+    "stdout_sha256": "059d0aad3e396ce5524f04852798752c9777b28df223c727e0f37bd44d6c70cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a7958a9ab04387b489d26cbfe95af01ebf5387c81bcfdf36a1cce39e8537d4f1"
+  },
+  {
+    "name": "control-02-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004597904160618782,
+    "stdout_sha256": "13a6001f83f8a7d87e62b9167ce76e305172d1ca69316a24b8243be18de83566",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8b546601ed416359fa47f45f8fb23c583723fcc375a46ce30f8251f594b6e992"
+  },
+  {
+    "name": "control-03-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004757893271744251,
+    "stdout_sha256": "1cad0e972d553910eaf6ce9f0afbcc7c4f21f1f267536f38b8b23df08a1fe64c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7007b8354380c090b762d744fb64296b506835fd9bbf77e63aff718f926b86e8"
+  },
+  {
+    "name": "control-03-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.006768246181309223,
+    "stdout_sha256": "c35a54130f5926e7566638c5c48efc5f235ae6a4c878c159060beddfb7c6233e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fa1eee5ef6b9fd609afd7a28ef357b95f904dcf252dfc426e51e37d9bc23c1e3"
+  },
+  {
+    "name": "control-04-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.007477737031877041,
+    "stdout_sha256": "ae735b68905221cfc49fd16f9dd6a98cf1a862d5ed2d8a1ed8efd1f498f41644",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "cc2dd5f3de82892e947ca1d26f61faf29f3b5fe1f7042ed71ea8b78def502dfd"
+  },
+  {
+    "name": "control-04-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-control"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004931841045618057,
+    "stdout_sha256": "6c7121fa3de631ee7ae99b23f31c7fe3f14470341f21cc86a786c3669454daa2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "e97e1faace5c5bc2c40f8e5842dee2304455fc1c7d8e1f847637b065327b241c"
+  },
+  {
+    "name": "matrix-00-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.09915282996371388,
+    "stdout_sha256": "12c6e215e0c5f224449eb7c1ca78ba12bd2df3ee46b1fb97b2f7234be9d1a12a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8fd576119191b131ece4cf8efdbc5b1489e81ec890fce787480746630b727c7b"
+  },
+  {
+    "name": "matrix-00-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05600543925538659,
+    "stdout_sha256": "3fd2d06eed0cf8c26c9dceabde19b5f959091e3d5c5eec77a66dd71e2c3965f2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "02de30acf8aee51dc2586ef89856dcda47487c9608fa772047dceb91b3779ce8"
+  },
+  {
+    "name": "matrix-01-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.061507121194154024,
+    "stdout_sha256": "c44f228742242ef1934ad613c822a8aa074c7fbe752b3fbb25bf2c4a9a8516eb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "724ef2f16b947f7efe76d713e925e9f7659d67c06fcfdff0d1b1e7561d884250"
+  },
+  {
+    "name": "matrix-01-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.09830229729413986,
+    "stdout_sha256": "40f11a082b1b1cf7fc9fe9118e857308e907621af5c3520614d4bc2c5c35d3de",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "1857172d6b6a89b4fdb0e78727cc98f7fc6c2589a90cc34ba963721143ce852d"
+  },
+  {
+    "name": "matrix-02-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.10285708494484425,
+    "stdout_sha256": "5490f82da8344ce1dafd27b2f7a2f921d52c8088510c5644b31e7d0a68e1926f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "eb5fd89def1f2dc9f4412cbb9b713e551b22fd409264a72f5ef4c8c82ec12761"
+  },
+  {
+    "name": "matrix-02-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.061315424274653196,
+    "stdout_sha256": "3c2a16c072072b880c4b8d9614a8a88ddba3d3d4c13f09dc7159385aa1020506",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fb263718e0fe20c675762159673c9be4f57c55fb98459798d53b6b132260f9ea"
+  },
+  {
+    "name": "matrix-03-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.06127737695351243,
+    "stdout_sha256": "9faf79d8fcb591892fc7b88e499f9122b7110d6298b881d4cb2bdecd4bc761f9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "26a3075ac198ccfafdc212fd6201c2a583310013de7dbaf001563a9a5f2fac7c"
+  },
+  {
+    "name": "matrix-03-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.10309378895908594,
+    "stdout_sha256": "2def027ac2cb50929206b39c25c931c7dc5cae1782f41e685156ca1919c8c938",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4fe5783fa7cdefe79e37e982377cba4c7f5a5ad2398e86749f184f8631ee4a25"
+  },
+  {
+    "name": "matrix-04-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/baseline-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0960006546229124,
+    "stdout_sha256": "7d59f1c4c1dc16a6ada1cb1834b13de8f9f852eb98265b5d31edff4c9ebb4798",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "650e2f40b302173943e9fb01ac153e0c83d44c0a7e848e6244001328722c988a"
+  },
+  {
+    "name": "matrix-04-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/candidate-matrix"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05668282229453325,
+    "stdout_sha256": "f2741c66075f6b6fb013817cc37e3ef9ee59412096a6acd78aeaf7d289667ac0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f7d69a51951400a691f1bcd53b70ba81bdd7d11d431562644d3b4626d95d8a5a"
+  }
+]

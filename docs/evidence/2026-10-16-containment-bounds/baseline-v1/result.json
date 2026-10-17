@@ -1,0 +1,9 @@
+{
+  "complete": true,
+  "native_test_exit_code": 0,
+  "wasm_test_exit_code": 0,
+  "current_inputs_unchanged": true,
+  "read_only_artifacts_unchanged": true,
+  "control_and_matrix_observations": "One fresh process each before implementation; paired cost evidence follows only after candidate qualification.",
+  "candidate_admitted": false
+}

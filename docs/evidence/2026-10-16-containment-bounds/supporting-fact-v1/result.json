@@ -1,0 +1,356 @@
+{
+  "complete": true,
+  "commands": [
+    {
+      "variant": "baseline",
+      "command": [
+        "node",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting_fact_v1.cjs",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/csgrs.js"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.21275173826143146,
+      "stdout_sha256": "b5e75ad0a89af5cf390ba2735f1101664dc72f673fb6ff462a3da3f44daddb98",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "f0f2c96d55824c2c9378e97f7c31902c785ae83e3c51927482d33aa4d49864ba"
+    },
+    {
+      "variant": "candidate",
+      "command": [
+        "node",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting_fact_v1.cjs",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-target-v1/wasm-bindings-node/csgrs.js"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.1703762048855424,
+      "stdout_sha256": "1d7bfc854848720212a130769bd1e1ea6da1f46cb6e0b20c12cc4d265d9ddee2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "a6f1adbc8b274620d751f6d2275b20d99f816cf9fe844f74684171776a9b3824"
+    }
+  ],
+  "read_only_inputs_unchanged": true,
+  "observations": {
+    "baseline": {
+      "bounds": {
+        "certainty": "Certified",
+        "projected_min": [
+          0,
+          0,
+          0
+        ],
+        "projected_max": [
+          1,
+          1,
+          1
+        ]
+      },
+      "rows": [
+        {
+          "xyz": [
+            0.5,
+            0,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Unknown",
+          "value": null,
+          "certainty": null,
+          "reason": "predicate could not be decided: point-triangle classification"
+        },
+        {
+          "xyz": [
+            0.5,
+            0,
+            0.5
+          ],
+          "approximate": true,
+          "status": "Decided",
+          "value": false,
+          "certainty": "Approximate512Consumed",
+          "reason": null
+        },
+        {
+          "xyz": [
+            0.5,
+            0,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Unknown",
+          "value": null,
+          "certainty": null,
+          "reason": "predicate could not be decided: point-triangle classification"
+        },
+        {
+          "xyz": [
+            1,
+            0.5,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Unknown",
+          "value": null,
+          "certainty": null,
+          "reason": "predicate could not be decided: Real ordering"
+        },
+        {
+          "xyz": [
+            1,
+            0.5,
+            0.5
+          ],
+          "approximate": true,
+          "status": "Decided",
+          "value": false,
+          "certainty": "Approximate512Consumed",
+          "reason": null
+        },
+        {
+          "xyz": [
+            1,
+            0.5,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Unknown",
+          "value": null,
+          "certainty": null,
+          "reason": "predicate could not be decided: Real ordering"
+        },
+        {
+          "xyz": [
+            0.5,
+            1,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Unknown",
+          "value": null,
+          "certainty": null,
+          "reason": "predicate could not be decided: Real ordering"
+        },
+        {
+          "xyz": [
+            0.5,
+            1,
+            0.5
+          ],
+          "approximate": true,
+          "status": "Decided",
+          "value": false,
+          "certainty": "Approximate512Consumed",
+          "reason": null
+        },
+        {
+          "xyz": [
+            0.5,
+            1,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Unknown",
+          "value": null,
+          "certainty": null,
+          "reason": "predicate could not be decided: Real ordering"
+        },
+        {
+          "xyz": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Decided",
+          "value": true,
+          "certainty": "Certified",
+          "reason": null
+        },
+        {
+          "xyz": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "approximate": true,
+          "status": "Decided",
+          "value": true,
+          "certainty": "Certified",
+          "reason": null
+        },
+        {
+          "xyz": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Decided",
+          "value": true,
+          "certainty": "Certified",
+          "reason": null
+        }
+      ]
+    },
+    "candidate": {
+      "bounds": {
+        "certainty": "Certified",
+        "projected_min": [
+          0,
+          0,
+          0
+        ],
+        "projected_max": [
+          1,
+          1,
+          1
+        ]
+      },
+      "rows": [
+        {
+          "xyz": [
+            0.5,
+            0,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Decided",
+          "value": false,
+          "certainty": "Certified",
+          "reason": null
+        },
+        {
+          "xyz": [
+            0.5,
+            0,
+            0.5
+          ],
+          "approximate": true,
+          "status": "Decided",
+          "value": false,
+          "certainty": "Certified",
+          "reason": null
+        },
+        {
+          "xyz": [
+            0.5,
+            0,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Decided",
+          "value": false,
+          "certainty": "Certified",
+          "reason": null
+        },
+        {
+          "xyz": [
+            1,
+            0.5,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Unknown",
+          "value": null,
+          "certainty": null,
+          "reason": "predicate could not be decided: Real ordering"
+        },
+        {
+          "xyz": [
+            1,
+            0.5,
+            0.5
+          ],
+          "approximate": true,
+          "status": "Decided",
+          "value": false,
+          "certainty": "Approximate512Consumed",
+          "reason": null
+        },
+        {
+          "xyz": [
+            1,
+            0.5,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Unknown",
+          "value": null,
+          "certainty": null,
+          "reason": "predicate could not be decided: Real ordering"
+        },
+        {
+          "xyz": [
+            0.5,
+            1,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Unknown",
+          "value": null,
+          "certainty": null,
+          "reason": "predicate could not be decided: Real ordering"
+        },
+        {
+          "xyz": [
+            0.5,
+            1,
+            0.5
+          ],
+          "approximate": true,
+          "status": "Decided",
+          "value": false,
+          "certainty": "Approximate512Consumed",
+          "reason": null
+        },
+        {
+          "xyz": [
+            0.5,
+            1,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Unknown",
+          "value": null,
+          "certainty": null,
+          "reason": "predicate could not be decided: Real ordering"
+        },
+        {
+          "xyz": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Decided",
+          "value": true,
+          "certainty": "Certified",
+          "reason": null
+        },
+        {
+          "xyz": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "approximate": true,
+          "status": "Decided",
+          "value": true,
+          "certainty": "Certified",
+          "reason": null
+        },
+        {
+          "xyz": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "approximate": false,
+          "status": "Decided",
+          "value": true,
+          "certainty": "Certified",
+          "reason": null
+        }
+      ]
+    }
+  }
+}

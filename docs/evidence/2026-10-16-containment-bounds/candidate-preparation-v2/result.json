@@ -1,0 +1,22 @@
+{
+  "complete": true,
+  "base_commit": "311d04fbbe5635a29fe7e754b838cccc4b8add53",
+  "runner_sha256": "715f4e0e947f9abfe19ebc73f5bb1f0e00e9794ce5c82748fa02a2782aaa11f1",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v2",
+  "source_inputs": 2830,
+  "source_hashes_sha256": "e2dd1faa7696d22ee4f7de3f75b41fd682ff2388a0cfbe8d422b2bb0dc69a08a",
+  "changes": {
+    "crates/hypermesh/src/mesh.rs": "991c3bb367e2a0ae9d0c2563e632ce558a2418fe5d4a18ad33546055efc8981c",
+    "tests/containment_bounds.rs": "8e000e76b610a145edf3c1eb483c30a8f029afee3e77961f6de0d4486b239117",
+    "tests/wasm/containment_winding.cjs": "220bd9851f6fbcf7ed209015729935581e930dc26876cc629f42f1aa1b21a6ff",
+    "tests/wasm/geometry_certainty.cjs": "cc7046b2641cdedeca1797746d24eb9f0d2f40fab8bd980219255564abdd966a"
+  },
+  "contract_sha256": "9253a049b906c1c0041cb701ba793c877409c1c0356bbc858911c670999ff15a",
+  "main_sources_modified": false,
+  "only_changes_from_v1": [
+    "tests/wasm/geometry_certainty.cjs"
+  ],
+  "native_inputs_identical_to_v1": true,
+  "correction": "Retain the original query and require its new Certified false proof; add the unresolved upper-face query with strict Unknown and qualified approximate false assertions. No production code, original geometry or policy changes.",
+  "native_qualification": "Reuse candidate-validation-v1 only because every Rust source, manifest, dependency and native test is identical; the changed JavaScript consumer is requalified in wasm-validation-v2."
+}

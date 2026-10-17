@@ -1,0 +1,2383 @@
+{
+  "status": "kept: certified supporting bounds avoid unnecessary containment arrangement",
+  "main_parent_commit": "311d04fbbe5635a29fe7e754b838cccc4b8add53",
+  "implementation_sha256": {
+    "crates/hypermesh/src/mesh.rs": "991c3bb367e2a0ae9d0c2563e632ce558a2418fe5d4a18ad33546055efc8981c",
+    "tests/containment_bounds.rs": "8e000e76b610a145edf3c1eb483c30a8f029afee3e77961f6de0d4486b239117",
+    "tests/wasm/containment_winding.cjs": "220bd9851f6fbcf7ed209015729935581e930dc26876cc629f42f1aa1b21a6ff",
+    "tests/wasm/geometry_certainty.cjs": "cc7046b2641cdedeca1797746d24eb9f0d2f40fab8bd980219255564abdd966a"
+  },
+  "owning_layer": "Hypermesh TriangleMesh::contains_point_decision",
+  "contract": "contract-v1.md",
+  "validation": {
+    "candidate-validation-v1": [
+      {
+        "name": "format",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 10.822301709093153,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": []
+      },
+      {
+        "name": "containment-regressions",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--test",
+          "containment_inputs",
+          "--test",
+          "containment_winding",
+          "--test",
+          "containment_bounds",
+          "--",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 341.4317580331117,
+        "summaries": 3,
+        "passed": 29,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": []
+      },
+      {
+        "name": "mesh-and-modeling-all-features",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 333.35015680314973,
+        "summaries": 59,
+        "passed": 708,
+        "failed": 0,
+        "ignored": 8,
+        "warnings": [
+          "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-target-v1/release/examples/basic",
+          "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-target-v1/release/examples/basic.dwp"
+        ]
+      },
+      {
+        "name": "modeling-minimal",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--no-default-features"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 169.2232183306478,
+        "summaries": 41,
+        "passed": 161,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": []
+      },
+      {
+        "name": "all-feature-all-target-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 64.5239718821831,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": []
+      },
+      {
+        "name": "minimal-all-target-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--no-default-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 22.828621341381222,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": []
+      },
+      {
+        "name": "all-feature-docs",
+        "command": [
+          "cargo",
+          "doc",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--no-deps"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 38.775351139716804,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": []
+      },
+      {
+        "name": "cost-libraries",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--message-format=json"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 264.48006735322997,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": []
+      }
+    ],
+    "wasm-validation-v2": [
+      {
+        "name": "shell-syntax",
+        "command": [
+          "bash",
+          "-n",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v2/scripts/test-wasm-bindings.sh"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.22281941818073392,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": []
+      },
+      {
+        "name": "real-consumers",
+        "command": [
+          "bash",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v2/scripts/test-wasm-bindings.sh"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 173.55965902516618,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": []
+      },
+      {
+        "name": "wasm-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--profile",
+          "wasm",
+          "--target",
+          "wasm32-unknown-unknown",
+          "--no-default-features",
+          "--features",
+          "wasm",
+          "--lib",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 28.725533930119127,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": []
+      }
+    ]
+  },
+  "baseline_native": {
+    "passed": 4,
+    "failed": 0,
+    "evidence": "baseline-v1/native-tests.stdout"
+  },
+  "baseline_wasm": {
+    "passed": 10,
+    "failed": 0,
+    "evidence": "baseline-v1/wasm-tests.stdout"
+  },
+  "new_native_tests": 4,
+  "winding_wasm_tests": 10,
+  "candidate_native_focused": 29,
+  "typescript_scope": "geometry_certainty.ts typechecked; io_contracts.ts and mesh_errors.ts compiled and executed",
+  "source_proof": "Validated finite closed PWN sources have zero winding outside their certified position bounds. A supporting plane has arbitrarily close exterior points and cannot contain strict interior. The aggregate receipt must remain Certified after the equality comparison.",
+  "preserved_contract": "Strict interior of the same regularized nonzero-winding set; source validation precedes shortcuts; existing exterior comparisons, approximate receipts, exact near-coincidence, internal source faces and fallback algorithms remain.",
+  "new_representation_cache_or_policy": false,
+  "intentional_migration": null,
+  "new_certified_completion_cases_separately_demonstrated": 1,
+  "stronger_proof_evidence": "supporting-fact-v1/result.json",
+  "preserved_failed_attempt": "wasm-validation-v1 fails an old assertion requiring Unknown; later consumer stages were not reached. Final v2 requires Certified false for the same query and adds a separate upper-face Unknown/qualified case.",
+  "native_v1_reuse": "All Rust sources, manifests, dependencies and native tests are identical in final v2; only tests/wasm/geometry_certainty.cjs changed and was requalified by wasm-validation-v2.",
+  "all_final_source_inputs_match_qualified_snapshot": true,
+  "cost": "cost-v2/result.json",
+  "wasm_size_comparison": "wasm-size-v1.json",
+  "cost_completion_categories": {
+    "baseline": {
+      "certified_completion": 3360
+    },
+    "candidate": {
+      "certified_completion": 3360
+    }
+  },
+  "control_certified_queries": 2560,
+  "matrix_certified_queries": 6720,
+  "allocation_gates": [
+    {
+      "scope": "control",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "passed": true
+    },
+    {
+      "scope": "control",
+      "policy": "strict",
+      "phase": "warm_query",
+      "passed": true
+    },
+    {
+      "scope": "control",
+      "policy": "approximate",
+      "phase": "cold_construct_query",
+      "passed": true
+    },
+    {
+      "scope": "control",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "simple_face",
+      "policy": "strict",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299
+      ],
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "simple_vertex",
+      "policy": "strict",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299
+      ],
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "opposite_face",
+      "policy": "strict",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9989628707736984,
+        0.9989628707736984,
+        0.9989628707736984,
+        0.9989628707736984,
+        0.9989628707736984
+      ],
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "symbolic_face",
+      "policy": "strict",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9994662238301406,
+        0.9994662238301406,
+        0.9994662238301406,
+        0.9994662238301406,
+        0.9994662238301406
+      ],
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "symbolic_vertex",
+      "policy": "strict",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9994504488001466,
+        0.9994504488001466,
+        0.9994504488001466,
+        0.9994504488001466,
+        0.9994504488001466
+      ],
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "flat_face",
+      "policy": "strict",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9913941480206541,
+        0.9913941480206541,
+        0.9913941480206541,
+        0.9913941480206541,
+        0.9913941480206541
+      ],
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "simple_face",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299
+      ],
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "simple_vertex",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299,
+        0.9881235154394299
+      ],
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "opposite_face",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9989628707736984,
+        0.9989628707736984,
+        0.9989628707736984,
+        0.9989628707736984,
+        0.9989628707736984
+      ],
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "symbolic_face",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9994662238301406,
+        0.9994662238301406,
+        0.9994662238301406,
+        0.9994662238301406,
+        0.9994662238301406
+      ],
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "symbolic_vertex",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9994504488001466,
+        0.9994504488001466,
+        0.9994504488001466,
+        0.9994504488001466,
+        0.9994504488001466
+      ],
+      "passed": true
+    },
+    {
+      "scope": "matrix",
+      "case": "flat_face",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "allocation_call_reductions": [
+        0.9913941480206541,
+        0.9913941480206541,
+        0.9913941480206541,
+        0.9913941480206541,
+        0.9913941480206541
+      ],
+      "passed": true
+    }
+  ],
+  "adverse_instrumented_timing_rows": [
+    {
+      "scope": "matrix",
+      "case": "simple_inside",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.8602191522724033,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1402001464486209,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1754658440918782,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9025128946295679,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1455845339263708,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.1402001464486209
+    },
+    {
+      "scope": "matrix",
+      "case": "simple_inside",
+      "policy": "strict",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.6557793138377774,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1793731107898542,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1998780331236358,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.893617273909249,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1907113243583174,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.1907113243583174
+    },
+    {
+      "scope": "matrix",
+      "case": "nested_internal_edge",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.7683644892719207,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1100139770063762,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.7641070648363596,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.083609663881158,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0008531725639325,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0008531725639325
+    },
+    {
+      "scope": "matrix",
+      "case": "shared_face",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0136903533353285,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.070238752778231,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1226033742050538,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0167062279736605,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0081410772788413,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        }
+      ],
+      "median_elapsed_ratio": 1.0167062279736605
+    },
+    {
+      "scope": "matrix",
+      "case": "shared_face",
+      "policy": "strict",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.033615329250882,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0231960433323557,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.280901378513125,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.087756712001649,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0227657629662048,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.033615329250882
+    },
+    {
+      "scope": "matrix",
+      "case": "cavity_inside",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1433531578603913,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9615595249048189,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.205297498662416,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.3413381732253042,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9694728913320254,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.1433531578603913
+    },
+    {
+      "scope": "matrix",
+      "case": "cavity_inside",
+      "policy": "strict",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9993020905428924,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9919203030028123,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.2345483224865668,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.2321667249875232,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0113373398266154,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0113373398266154
+    },
+    {
+      "scope": "matrix",
+      "case": "cavity_face",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0185504196086739,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9601459433572208,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0905169199350624,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0623156511276632,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9607548378226842,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0185504196086739
+    },
+    {
+      "scope": "matrix",
+      "case": "reversed_multiplicity",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0198046939017704,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.870812857797252,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0044874530262777,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.898164009794613,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0306975619630245,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0044874530262777
+    },
+    {
+      "scope": "matrix",
+      "case": "symbolic_outside",
+      "policy": "strict",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9758064516129032,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0615212527964206,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0309426455961985,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 2.1668017131612456,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9630831189171049,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0309426455961985
+    },
+    {
+      "scope": "matrix",
+      "case": "simple_outside",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.046242774566474,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0279329608938548,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1887573964497042,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.3241758241758241,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0005437737901033,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.046242774566474
+    },
+    {
+      "scope": "matrix",
+      "case": "nested_inside",
+      "policy": "approximate",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0321870989124897,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9919964071700389,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0131874279853206,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.7282844442888128,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.170265390904189,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0321870989124897
+    },
+    {
+      "scope": "matrix",
+      "case": "nested_inside",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9753430268277699,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0053964388820067,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9629541618848309,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.4826637179014621,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0103551864286977,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0053964388820067
+    },
+    {
+      "scope": "matrix",
+      "case": "nested_internal_face",
+      "policy": "approximate",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.04450684489412,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0096136967734608,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0030884339784487,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.2839620252335489,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0084528319074477,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0096136967734608
+    },
+    {
+      "scope": "matrix",
+      "case": "nested_internal_face",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0088291250449373,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9699008681655402,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9679863603083715,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1179074861155145,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0508650717886665,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0088291250449373
+    },
+    {
+      "scope": "matrix",
+      "case": "nested_internal_edge",
+      "policy": "approximate",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0133916551384776,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9393806025910216,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0249480955458978,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0337133366882412,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9999603523469687,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0133916551384776
+    },
+    {
+      "scope": "matrix",
+      "case": "nested_internal_vertex",
+      "policy": "approximate",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9815775443109503,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.3901311024674057,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.08277093213629,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.034981347211345,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0039889569501779,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.034981347211345
+    },
+    {
+      "scope": "matrix",
+      "case": "nested_internal_vertex",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0337592689509987,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0345975966895733,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0693086928701505,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.019982396379652,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0153671270856082,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0337592689509987
+    },
+    {
+      "scope": "matrix",
+      "case": "shared_face",
+      "policy": "approximate",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0397522783821567,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1156880458353706,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0293392453434467,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.4060445512453752,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.017175476044423,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0397522783821567
+    },
+    {
+      "scope": "matrix",
+      "case": "shared_face",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9914721819317348,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.032793503849697,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1794213350846248,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1511894142706642,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0129229671466324,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.032793503849697
+    },
+    {
+      "scope": "matrix",
+      "case": "cavity_inside",
+      "policy": "approximate",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0223187468231598,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9809302111485931,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0236700278747046,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0048176663132176,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0240041035025336,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0223187468231598
+    },
+    {
+      "scope": "matrix",
+      "case": "reversed_multiplicity",
+      "policy": "approximate",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0092331000042083,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.201401244017819,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0073292492359602,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0010217466344495,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9679591864278677,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0073292492359602
+    },
+    {
+      "scope": "matrix",
+      "case": "symbolic_outside",
+      "policy": "approximate",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.023239680887964,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9692184460464585,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0608862329462172,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0707082833133252,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0268096514745308,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0268096514745308
+    }
+  ],
+  "allocation_increase_rows": [
+    {
+      "scope": "matrix",
+      "case": "nested_inside",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9596495861283191,
+          "allocation_calls_delta": 3,
+          "allocated_bytes_delta": 144,
+          "retained_requested_bytes_delta_delta": 144,
+          "peak_extra_requested_bytes_delta": 144
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.153702744128912,
+          "allocation_calls_delta": 3,
+          "allocated_bytes_delta": 144,
+          "retained_requested_bytes_delta_delta": 144,
+          "peak_extra_requested_bytes_delta": 144
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9043601265289171,
+          "allocation_calls_delta": 3,
+          "allocated_bytes_delta": 144,
+          "retained_requested_bytes_delta_delta": 144,
+          "peak_extra_requested_bytes_delta": 144
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.6982124997010751,
+          "allocation_calls_delta": 3,
+          "allocated_bytes_delta": 144,
+          "retained_requested_bytes_delta_delta": 144,
+          "peak_extra_requested_bytes_delta": 144
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.2977834586205101,
+          "allocation_calls_delta": 3,
+          "allocated_bytes_delta": 144,
+          "retained_requested_bytes_delta_delta": 144,
+          "peak_extra_requested_bytes_delta": 144
+        }
+      ],
+      "median_elapsed_ratio": 0.9596495861283191
+    },
+    {
+      "scope": "matrix",
+      "case": "nested_internal_face",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.7917842580286087,
+          "allocation_calls_delta": 9,
+          "allocated_bytes_delta": 504,
+          "retained_requested_bytes_delta_delta": 400,
+          "peak_extra_requested_bytes_delta": 400
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9533737044532495,
+          "allocation_calls_delta": 9,
+          "allocated_bytes_delta": 504,
+          "retained_requested_bytes_delta_delta": 400,
+          "peak_extra_requested_bytes_delta": 400
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.08376420044561,
+          "allocation_calls_delta": 9,
+          "allocated_bytes_delta": 504,
+          "retained_requested_bytes_delta_delta": 400,
+          "peak_extra_requested_bytes_delta": 400
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9542698097292547,
+          "allocation_calls_delta": 9,
+          "allocated_bytes_delta": 504,
+          "retained_requested_bytes_delta_delta": 400,
+          "peak_extra_requested_bytes_delta": 400
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.361213464816194,
+          "allocation_calls_delta": 9,
+          "allocated_bytes_delta": 504,
+          "retained_requested_bytes_delta_delta": 400,
+          "peak_extra_requested_bytes_delta": 400
+        }
+      ],
+      "median_elapsed_ratio": 0.9542698097292547
+    },
+    {
+      "scope": "matrix",
+      "case": "opposite_inside",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.8340008921653793,
+          "allocation_calls_delta": 4,
+          "allocated_bytes_delta": 296,
+          "retained_requested_bytes_delta_delta": 296,
+          "peak_extra_requested_bytes_delta": 296
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9893852444429556,
+          "allocation_calls_delta": 4,
+          "allocated_bytes_delta": 296,
+          "retained_requested_bytes_delta_delta": 296,
+          "peak_extra_requested_bytes_delta": 296
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9908181362793279,
+          "allocation_calls_delta": 4,
+          "allocated_bytes_delta": 296,
+          "retained_requested_bytes_delta_delta": 296,
+          "peak_extra_requested_bytes_delta": 296
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.81706299070481,
+          "allocation_calls_delta": 4,
+          "allocated_bytes_delta": 296,
+          "retained_requested_bytes_delta_delta": 296,
+          "peak_extra_requested_bytes_delta": 296
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.053854543819012,
+          "allocation_calls_delta": 4,
+          "allocated_bytes_delta": 296,
+          "retained_requested_bytes_delta_delta": 296,
+          "peak_extra_requested_bytes_delta": 296
+        }
+      ],
+      "median_elapsed_ratio": 0.9893852444429556
+    },
+    {
+      "scope": "matrix",
+      "case": "shared_face",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0136903533353285,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.070238752778231,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1226033742050538,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0167062279736605,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0081410772788413,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        }
+      ],
+      "median_elapsed_ratio": 1.0167062279736605
+    },
+    {
+      "scope": "matrix",
+      "case": "tangent_origin",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9894632925744559,
+          "allocation_calls_delta": 1,
+          "allocated_bytes_delta": 176,
+          "retained_requested_bytes_delta_delta": 176,
+          "peak_extra_requested_bytes_delta": 176
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9790277316756691,
+          "allocation_calls_delta": 1,
+          "allocated_bytes_delta": 176,
+          "retained_requested_bytes_delta_delta": 176,
+          "peak_extra_requested_bytes_delta": 176
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9706014278068013,
+          "allocation_calls_delta": 1,
+          "allocated_bytes_delta": 176,
+          "retained_requested_bytes_delta_delta": 176,
+          "peak_extra_requested_bytes_delta": 176
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9315943307781394,
+          "allocation_calls_delta": 1,
+          "allocated_bytes_delta": 176,
+          "retained_requested_bytes_delta_delta": 176,
+          "peak_extra_requested_bytes_delta": 176
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9754311561885849,
+          "allocation_calls_delta": 1,
+          "allocated_bytes_delta": 176,
+          "retained_requested_bytes_delta_delta": 176,
+          "peak_extra_requested_bytes_delta": 176
+        }
+      ],
+      "median_elapsed_ratio": 0.9754311561885849
+    }
+  ],
+  "matrix_measured_phase_totals": [
+    {
+      "pair": 0,
+      "baseline": {
+        "elapsed_ns": 94517016,
+        "allocation_calls": 559048,
+        "allocated_bytes": 50968144
+      },
+      "candidate": {
+        "elapsed_ns": 51219942,
+        "allocation_calls": 242170,
+        "allocated_bytes": 26367512
+      },
+      "candidate_over_baseline": {
+        "elapsed_ns": 0.5419123896167014,
+        "allocation_calls": 0.43318283939840585,
+        "allocated_bytes": 0.517333179721043
+      }
+    },
+    {
+      "pair": 1,
+      "baseline": {
+        "elapsed_ns": 93454219,
+        "allocation_calls": 559048,
+        "allocated_bytes": 50968144
+      },
+      "candidate": {
+        "elapsed_ns": 56699217,
+        "allocation_calls": 242170,
+        "allocated_bytes": 26367512
+      },
+      "candidate_over_baseline": {
+        "elapsed_ns": 0.606705803191186,
+        "allocation_calls": 0.43318283939840585,
+        "allocated_bytes": 0.517333179721043
+      }
+    },
+    {
+      "pair": 2,
+      "baseline": {
+        "elapsed_ns": 97882897,
+        "allocation_calls": 559048,
+        "allocated_bytes": 50968144
+      },
+      "candidate": {
+        "elapsed_ns": 56165162,
+        "allocation_calls": 242170,
+        "allocated_bytes": 26367512
+      },
+      "candidate_over_baseline": {
+        "elapsed_ns": 0.5737995474326838,
+        "allocation_calls": 0.43318283939840585,
+        "allocated_bytes": 0.517333179721043
+      }
+    },
+    {
+      "pair": 3,
+      "baseline": {
+        "elapsed_ns": 97876593,
+        "allocation_calls": 559048,
+        "allocated_bytes": 50968144
+      },
+      "candidate": {
+        "elapsed_ns": 56695199,
+        "allocation_calls": 242170,
+        "allocated_bytes": 26367512
+      },
+      "candidate_over_baseline": {
+        "elapsed_ns": 0.5792518646414265,
+        "allocation_calls": 0.43318283939840585,
+        "allocated_bytes": 0.517333179721043
+      }
+    },
+    {
+      "pair": 4,
+      "baseline": {
+        "elapsed_ns": 90743174,
+        "allocation_calls": 559048,
+        "allocated_bytes": 50968144
+      },
+      "candidate": {
+        "elapsed_ns": 51539430,
+        "allocation_calls": 242170,
+        "allocated_bytes": 26367512
+      },
+      "candidate_over_baseline": {
+        "elapsed_ns": 0.5679703246880036,
+        "allocation_calls": 0.43318283939840585,
+        "allocated_bytes": 0.517333179721043
+      }
+    }
+  ],
+  "retention_rationale": "All independently expected Certified outcomes and original tests remain; the new lower-plane proof additionally certifies one former Unknown. All allocation gates pass. Across the full measured matrix, allocation calls drop 56.7% and requested bytes drop 48.3% in every pair. Five cold rows add 1\u201325 calls / 144\u20131784 requested bytes; some instrumented timing rows are slower. These costs are retained, with no universal latency or per-case no-regression claim.",
+  "retained_or_peak_requested_memory_increase_rows": [
+    {
+      "scope": "matrix",
+      "case": "nested_inside",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9596495861283191,
+          "allocation_calls_delta": 3,
+          "allocated_bytes_delta": 144,
+          "retained_requested_bytes_delta_delta": 144,
+          "peak_extra_requested_bytes_delta": 144
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.153702744128912,
+          "allocation_calls_delta": 3,
+          "allocated_bytes_delta": 144,
+          "retained_requested_bytes_delta_delta": 144,
+          "peak_extra_requested_bytes_delta": 144
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9043601265289171,
+          "allocation_calls_delta": 3,
+          "allocated_bytes_delta": 144,
+          "retained_requested_bytes_delta_delta": 144,
+          "peak_extra_requested_bytes_delta": 144
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.6982124997010751,
+          "allocation_calls_delta": 3,
+          "allocated_bytes_delta": 144,
+          "retained_requested_bytes_delta_delta": 144,
+          "peak_extra_requested_bytes_delta": 144
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.2977834586205101,
+          "allocation_calls_delta": 3,
+          "allocated_bytes_delta": 144,
+          "retained_requested_bytes_delta_delta": 144,
+          "peak_extra_requested_bytes_delta": 144
+        }
+      ],
+      "median_elapsed_ratio": 0.9596495861283191
+    },
+    {
+      "scope": "matrix",
+      "case": "nested_internal_face",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.7917842580286087,
+          "allocation_calls_delta": 9,
+          "allocated_bytes_delta": 504,
+          "retained_requested_bytes_delta_delta": 400,
+          "peak_extra_requested_bytes_delta": 400
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9533737044532495,
+          "allocation_calls_delta": 9,
+          "allocated_bytes_delta": 504,
+          "retained_requested_bytes_delta_delta": 400,
+          "peak_extra_requested_bytes_delta": 400
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.08376420044561,
+          "allocation_calls_delta": 9,
+          "allocated_bytes_delta": 504,
+          "retained_requested_bytes_delta_delta": 400,
+          "peak_extra_requested_bytes_delta": 400
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9542698097292547,
+          "allocation_calls_delta": 9,
+          "allocated_bytes_delta": 504,
+          "retained_requested_bytes_delta_delta": 400,
+          "peak_extra_requested_bytes_delta": 400
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.361213464816194,
+          "allocation_calls_delta": 9,
+          "allocated_bytes_delta": 504,
+          "retained_requested_bytes_delta_delta": 400,
+          "peak_extra_requested_bytes_delta": 400
+        }
+      ],
+      "median_elapsed_ratio": 0.9542698097292547
+    },
+    {
+      "scope": "matrix",
+      "case": "opposite_inside",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.8340008921653793,
+          "allocation_calls_delta": 4,
+          "allocated_bytes_delta": 296,
+          "retained_requested_bytes_delta_delta": 296,
+          "peak_extra_requested_bytes_delta": 296
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9893852444429556,
+          "allocation_calls_delta": 4,
+          "allocated_bytes_delta": 296,
+          "retained_requested_bytes_delta_delta": 296,
+          "peak_extra_requested_bytes_delta": 296
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9908181362793279,
+          "allocation_calls_delta": 4,
+          "allocated_bytes_delta": 296,
+          "retained_requested_bytes_delta_delta": 296,
+          "peak_extra_requested_bytes_delta": 296
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.81706299070481,
+          "allocation_calls_delta": 4,
+          "allocated_bytes_delta": 296,
+          "retained_requested_bytes_delta_delta": 296,
+          "peak_extra_requested_bytes_delta": 296
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.053854543819012,
+          "allocation_calls_delta": 4,
+          "allocated_bytes_delta": 296,
+          "retained_requested_bytes_delta_delta": 296,
+          "peak_extra_requested_bytes_delta": 296
+        }
+      ],
+      "median_elapsed_ratio": 0.9893852444429556
+    },
+    {
+      "scope": "matrix",
+      "case": "shared_face",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0136903533353285,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.070238752778231,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.1226033742050538,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0167062279736605,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 1.0081410772788413,
+          "allocation_calls_delta": 25,
+          "allocated_bytes_delta": 1784,
+          "retained_requested_bytes_delta_delta": 1784,
+          "peak_extra_requested_bytes_delta": 1784
+        }
+      ],
+      "median_elapsed_ratio": 1.0167062279736605
+    },
+    {
+      "scope": "matrix",
+      "case": "tangent_origin",
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9894632925744559,
+          "allocation_calls_delta": 1,
+          "allocated_bytes_delta": 176,
+          "retained_requested_bytes_delta_delta": 176,
+          "peak_extra_requested_bytes_delta": 176
+        },
+        {
+          "pair": 1,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9790277316756691,
+          "allocation_calls_delta": 1,
+          "allocated_bytes_delta": 176,
+          "retained_requested_bytes_delta_delta": 176,
+          "peak_extra_requested_bytes_delta": 176
+        },
+        {
+          "pair": 2,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9706014278068013,
+          "allocation_calls_delta": 1,
+          "allocated_bytes_delta": 176,
+          "retained_requested_bytes_delta_delta": 176,
+          "peak_extra_requested_bytes_delta": 176
+        },
+        {
+          "pair": 3,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9315943307781394,
+          "allocation_calls_delta": 1,
+          "allocated_bytes_delta": 176,
+          "retained_requested_bytes_delta_delta": 176,
+          "peak_extra_requested_bytes_delta": 176
+        },
+        {
+          "pair": 4,
+          "same_certified_contract_completed": true,
+          "elapsed_ratio": 0.9754311561885849,
+          "allocation_calls_delta": 1,
+          "allocated_bytes_delta": 176,
+          "retained_requested_bytes_delta_delta": 176,
+          "peak_extra_requested_bytes_delta": 176
+        }
+      ],
+      "median_elapsed_ratio": 0.9754311561885849
+    }
+  ],
+  "containment_bounds_admitted": true,
+  "universal_set_membership_correctness_claimed": false,
+  "published_package_pipeline_executed": false,
+  "full_pre_push_matrix_executed": false,
+  "complete_artifact_audit_passed": false,
+  "historical_missing_paths": 27093,
+  "native_disposition_preserved": true,
+  "full_plan_complete": false,
+  "limitations": [
+    "Containment and fallback arrangement still have no internal total-work, heap-byte, expression-growth or cancellation bound. The focused probe counts allocator requests and peak live requested bytes; it does not instrument scalar expression depth or coefficient growth.",
+    "Five allocator-instrumented pairs establish these completed-query allocation changes; they do not establish uninstrumented production latency, a universal speedup or cross-library superiority.",
+    "No new claim of end-to-end construction provenance, manifoldness or fidelity to an analytic source follows from the local containment receipt.",
+    "C, C++, Python and Go do not expose this native containment query and were not rerun for this change. Real JavaScript and compiled TypeScript consumers were run.",
+    "The published-package pipeline, full pre-push/CI matrix, coverage and broader properties plan remain open; nothing was pushed.",
+    "The inherited artifact audit remains failed/incomplete with 27093 missing paths; fresh physical files are audited separately.",
+    "The rejected 35-file native integration remains archived and excluded from runtime source; its original workload gates remain in force.",
+    "The combined native package test command retains the pre-existing Cargo output-name collision warnings for the two basic examples. The same warnings occur in the qualified E32 baseline."
+  ],
+  "next": [
+    "Continue ordinary strict completion and typed failure repairs from the preserved native regressions, using smaller changes with independent exact expectations and unchanged original workload gates.",
+    "Complete end-to-end certainty/provenance and the clean external documented distribution pipeline, then the remaining properties, workflow matrix and measured coverage."
+  ]
+}

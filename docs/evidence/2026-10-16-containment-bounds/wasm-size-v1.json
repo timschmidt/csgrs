@@ -1,0 +1,86 @@
+{
+  "complete": true,
+  "runner_sha256": "c2cbc29538d99f1b15503289ea4bab437d239de0f3ee97dea86a0f1720d36238",
+  "qualified_results_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-validation-v3/result.json": "8a8a748140c04e97e71a3f6e76964c1be3d52597aec865c5ddaea9ee9fc40d78",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/result.json": "e3f09c6efbc6ee76dc557d5bd9b654fe2bc502a1e719ef396f9875ccb0293c17"
+  },
+  "rows": [
+    {
+      "artifact": "csgrs.wasm",
+      "baseline": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm32-unknown-unknown/wasm/csgrs.wasm",
+        "sha256": "1af71accb534694339347fdce1e38426ca3fdc0483cf9b05c7a494a6d2f2e0ee",
+        "bytes": 12199464
+      },
+      "candidate": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-target-v2/wasm32-unknown-unknown/wasm/csgrs.wasm",
+        "sha256": "726b066f8ed1f990dc731f16e66154e69e859d0ce07799b24290ca43c1f5559d",
+        "bytes": 12199567
+      },
+      "byte_delta": 103,
+      "identical": false
+    },
+    {
+      "artifact": "csgrs_bg.wasm",
+      "baseline": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/csgrs_bg.wasm",
+        "sha256": "85839034a8ea95d3285240df13844dd334d9174a1fd6424cc430a61b7f4787f6",
+        "bytes": 11149797
+      },
+      "candidate": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-target-v2/wasm-bindings-node/csgrs_bg.wasm",
+        "sha256": "3bac8d18a614ab674682dd4cd207ca0ceb36704e690f456c49af7a2fbd4da119",
+        "bytes": 11149900
+      },
+      "byte_delta": 103,
+      "identical": false
+    },
+    {
+      "artifact": "csgrs.js",
+      "baseline": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/csgrs.js",
+        "sha256": "8a1a2f460a4e4d2ae250bb7e56fe5fbd9c9a3249288ea66252aa959f8091581e",
+        "bytes": 81613
+      },
+      "candidate": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-target-v2/wasm-bindings-node/csgrs.js",
+        "sha256": "8a1a2f460a4e4d2ae250bb7e56fe5fbd9c9a3249288ea66252aa959f8091581e",
+        "bytes": 81613
+      },
+      "byte_delta": 0,
+      "identical": true
+    },
+    {
+      "artifact": "csgrs.d.ts",
+      "baseline": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/csgrs.d.ts",
+        "sha256": "f7dc8e7da4872b9058f3e59a278a2946793bad1e6249391af4dc9a62c066759f",
+        "bytes": 16872
+      },
+      "candidate": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-target-v2/wasm-bindings-node/csgrs.d.ts",
+        "sha256": "f7dc8e7da4872b9058f3e59a278a2946793bad1e6249391af4dc9a62c066759f",
+        "bytes": 16872
+      },
+      "byte_delta": 0,
+      "identical": true
+    },
+    {
+      "artifact": "csgrs_bg.wasm.d.ts",
+      "baseline": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v3/wasm-bindings-node/csgrs_bg.wasm.d.ts",
+        "sha256": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+        "bytes": 14726
+      },
+      "candidate": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-target-v2/wasm-bindings-node/csgrs_bg.wasm.d.ts",
+        "sha256": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+        "bytes": 14726
+      },
+      "byte_delta": 0,
+      "identical": true
+    }
+  ],
+  "claim": "Artifact byte sizes and exact declaration/glue identity, not serialized geometry size or a complete distribution measurement."
+}

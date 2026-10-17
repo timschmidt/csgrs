@@ -1,0 +1,40 @@
+    Checking num-bigint v0.4.6
+    Checking libc v0.2.186
+    Checking num-complex v0.4.6
+    Checking num-rational v0.4.2
+    Checking zerocopy v0.8.48
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v1/crates/hyperreal)
+    Checking getrandom v0.3.4
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v1/crates/hyperlattice)
+    Checking rand_core v0.9.5
+    Checking linux-raw-sys v0.12.1
+    Checking bitflags v2.11.1
+    Checking rustix v1.1.4
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v1/crates/hyperlimit)
+    Checking getrandom v0.4.2
+    Checking once_cell v1.21.4
+    Checking tempfile v3.27.0
+    Checking thiserror v1.0.69
+    Checking ppv-lite86 v0.2.21
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v1/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v1/crates/hypersolve)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v1/crates/hypermesh)
+    Checking half v2.7.1
+    Checking wait-timeout v0.2.1
+    Checking rusty-fork v0.3.1
+    Checking three-d-asset v0.4.0
+    Checking rand_chacha v0.9.0
+    Checking serde_core v1.0.228
+    Checking rand v0.9.4
+    Checking rand_xorshift v0.4.0
+    Checking glam v0.30.10
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v1/crates/hypercurve)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v1/crates/hyperphysics)
+    Checking proptest v1.11.0
+    Checking ply-rs v0.1.3
+    Checking serde_json v1.0.149
+    Checking boolmesh v0.1.9
+    Checking tri-mesh v0.6.1
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v1)
+    Finished `release` profile [optimized] target(s) in 22.51s

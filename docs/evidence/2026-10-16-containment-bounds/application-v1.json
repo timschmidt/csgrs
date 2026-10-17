@@ -1,0 +1,805 @@
+{
+  "main_parent_commit": "311d04fbbe5635a29fe7e754b838cccc4b8add53",
+  "implementation_sha256": {
+    "crates/hypermesh/src/mesh.rs": "991c3bb367e2a0ae9d0c2563e632ce558a2418fe5d4a18ad33546055efc8981c",
+    "tests/containment_bounds.rs": "8e000e76b610a145edf3c1eb483c30a8f029afee3e77961f6de0d4486b239117",
+    "tests/wasm/containment_winding.cjs": "220bd9851f6fbcf7ed209015729935581e930dc26876cc629f42f1aa1b21a6ff",
+    "tests/wasm/geometry_certainty.cjs": "cc7046b2641cdedeca1797746d24eb9f0d2f40fab8bd980219255564abdd966a"
+  },
+  "final_source_inputs": 2830,
+  "qualified_source_hashes_sha256": "e2dd1faa7696d22ee4f7de3f75b41fd682ff2388a0cfbe8d422b2bb0dc69a08a",
+  "final_input_hashes_sha256": "312f118b462c620e7c068e42810b1a1b988d129223292b8be687d9bcba20bc89",
+  "all_final_inputs_match_qualified_sources": true,
+  "native_inputs_identical_between_v1_v2": true,
+  "retained_completed_evidence": {
+    "prototype-v1/contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prototype-v1/contract-v1.md",
+      "sha256": "9253a049b906c1c0041cb701ba793c877409c1c0356bbc858911c670999ff15a"
+    },
+    "prototype-v1/tests/containment_bounds.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prototype-v1/tests/containment_bounds.rs",
+      "sha256": "03a8ca234efcd43a04bded00c24ed0c1ec3521163b8fae08f9951c92d87c5108"
+    },
+    "prototype-v1/tests/wasm/containment_winding.cjs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prototype-v1/tests/wasm/containment_winding.cjs",
+      "sha256": "220bd9851f6fbcf7ed209015729935581e930dc26876cc629f42f1aa1b21a6ff"
+    },
+    "baseline-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/commands.json",
+      "sha256": "bfbf6a887a3aa851c66cf38dc981d7a6c47b149a6aaa6d1643182706c07e10a0"
+    },
+    "baseline-v1/control-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/control-compile.resources",
+      "sha256": "25221b9e76252e880d2796727fdd4aaaa58b753b1bd929ffb352523447ff06ae"
+    },
+    "baseline-v1/control-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/control-compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/control-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/control-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/control-cost.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/control-cost.resources",
+      "sha256": "7f18394003c161576a4a70c291fb976914d8867d9d64ed5f95b6dda7d1da7f24"
+    },
+    "baseline-v1/control-cost.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/control-cost.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/control-cost.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/control-cost.stdout",
+      "sha256": "cb2bde1f8c6c93883d52b5538e1368cfb99c8a3c5e810e0df63ebe29db0f5425"
+    },
+    "baseline-v1/current-input-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/current-input-hashes.json.gz",
+      "sha256": "fa5232eb9c8e42f63acab05b0f725b9001cf94875f5d3cef87ed92e0bee618be"
+    },
+    "baseline-v1/matrix-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/matrix-compile.resources",
+      "sha256": "b53217003734f46c2865130679d97e8b04aaf3f31bcd03b9012c1fb2e75195e8"
+    },
+    "baseline-v1/matrix-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/matrix-compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/matrix-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/matrix-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/matrix-cost.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/matrix-cost.resources",
+      "sha256": "6d7d613e771c8d7cd930c3180de9e2c6a70430535e800155a95437b2b4ec77b1"
+    },
+    "baseline-v1/matrix-cost.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/matrix-cost.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/matrix-cost.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/matrix-cost.stdout",
+      "sha256": "13ba941324b87334d00807933eb3c239aaff4d31bf68c3591135f4118b02cdc9"
+    },
+    "baseline-v1/native-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/native-compile.resources",
+      "sha256": "9dd5371a32ed162518618cbcce932597ae3a52099020999dcd62e11dcd21d8b4"
+    },
+    "baseline-v1/native-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/native-compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/native-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/native-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/native-tests.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/native-tests.resources",
+      "sha256": "fedfd7fe402461f8438735a8219eb1943cf868d805b1f79aee803c9c632d2eba"
+    },
+    "baseline-v1/native-tests.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/native-tests.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/native-tests.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/native-tests.stdout",
+      "sha256": "d1081787d31fa565de1740360c3b36672925002651e80fe6fcf3db0004b0412c"
+    },
+    "baseline-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/protocol.json",
+      "sha256": "b7643995a2831e295d428921821dc5bcce6765070cde5f18b9c46b60ac1fbead"
+    },
+    "baseline-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/result.json",
+      "sha256": "496f90da3910b4451a745bca20b41d1caf466898f217b81874b36e2362ed9a77"
+    },
+    "baseline-v1/wasm-tests.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/wasm-tests.resources",
+      "sha256": "8524cb71a99d97a3f7cfc1f7c47048de1810de15be0f71ed0a112ef3bde5f9a4"
+    },
+    "baseline-v1/wasm-tests.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/wasm-tests.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/wasm-tests.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline-v1/wasm-tests.stdout",
+      "sha256": "bbe99ee41ce9a3f06c21d2f49244fa0a80ca00505ffc09c609cb0cd0519bad16"
+    },
+    "supporting-fact-v1/baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting-fact-v1/baseline.resources",
+      "sha256": "f0f2c96d55824c2c9378e97f7c31902c785ae83e3c51927482d33aa4d49864ba"
+    },
+    "supporting-fact-v1/baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting-fact-v1/baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "supporting-fact-v1/baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting-fact-v1/baseline.stdout",
+      "sha256": "b5e75ad0a89af5cf390ba2735f1101664dc72f673fb6ff462a3da3f44daddb98"
+    },
+    "supporting-fact-v1/candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting-fact-v1/candidate.resources",
+      "sha256": "a6f1adbc8b274620d751f6d2275b20d99f816cf9fe844f74684171776a9b3824"
+    },
+    "supporting-fact-v1/candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting-fact-v1/candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "supporting-fact-v1/candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting-fact-v1/candidate.stdout",
+      "sha256": "1d7bfc854848720212a130769bd1e1ea6da1f46cb6e0b20c12cc4d265d9ddee2"
+    },
+    "supporting-fact-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting-fact-v1/commands.json",
+      "sha256": "0c9a5dfdff187ad58893405abd6035ed8b9bcfa930f4f255968f51a0b7069bbd"
+    },
+    "supporting-fact-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting-fact-v1/protocol.json",
+      "sha256": "1f6eed43c4219fefde8f90de9d8e7af5880134b913993d23d05351ca658cd637"
+    },
+    "supporting-fact-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting-fact-v1/result.json",
+      "sha256": "e67cd916491a1031ff65cf75c2f85b504453772dab12098844c47ea1bbb5de4d"
+    },
+    "candidate-preparation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-preparation-v1/result.json",
+      "sha256": "1752526baf3e1819f6b113a0aee8b64fd70a3850874319576de8153125779c89"
+    },
+    "candidate-preparation-v1/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-preparation-v1/source-hashes.json.gz",
+      "sha256": "714cc6a8b1b2a3f6fb5d79f08c6d5e007a1ef58a1066fda1d23538bfb6bcd9f2"
+    },
+    "candidate-preparation-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-preparation-v2/result.json",
+      "sha256": "242719ad450167ca985625ff47eb356f7a60eb8ec89317a3598f2184d0515835"
+    },
+    "candidate-preparation-v2/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-preparation-v2/source-hashes.json.gz",
+      "sha256": "e2dd1faa7696d22ee4f7de3f75b41fd682ff2388a0cfbe8d422b2bb0dc69a08a"
+    },
+    "candidate-validation-v1/all-feature-all-target-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/all-feature-all-target-clippy.resources",
+      "sha256": "1bbaee6c0616fce9396e1177a7e27017b1d31cbdafda049efb7d0b8cdfb2bc08"
+    },
+    "candidate-validation-v1/all-feature-all-target-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/all-feature-all-target-clippy.stderr",
+      "sha256": "39d61bead797352783a1248150d46e07a0df2cf54beca65877fd5819012c0eb3"
+    },
+    "candidate-validation-v1/all-feature-all-target-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/all-feature-all-target-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/all-feature-docs.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/all-feature-docs.resources",
+      "sha256": "a051d0f525caa04e563548e33bc47337b87f254bc5f1ad8b18799883ff26697a"
+    },
+    "candidate-validation-v1/all-feature-docs.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/all-feature-docs.stderr",
+      "sha256": "00e0fdbbdf17216cb3dbcdb2a919f41a2938ca347f59844fbb06e422d0862776"
+    },
+    "candidate-validation-v1/all-feature-docs.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/all-feature-docs.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/commands.json",
+      "sha256": "d09869c62004f98c29ed2c02e8a44d66cd9d7f1ebbc01eb4f00e310b5a8c9c9b"
+    },
+    "candidate-validation-v1/containment-regressions.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/containment-regressions.resources",
+      "sha256": "5642efd0f59b6284373f887550b1279dd551a803b8537bbbd69d92385ad5f180"
+    },
+    "candidate-validation-v1/containment-regressions.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/containment-regressions.stderr",
+      "sha256": "006fff846a3c282b8bb475aa25cc749da3310863def3d6aca852b1498c06b4b0"
+    },
+    "candidate-validation-v1/containment-regressions.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/containment-regressions.stdout",
+      "sha256": "1a5d2edc9388e8c494cb61e0c34e2e514ba37702997983c5bfd68b2397e383f2"
+    },
+    "candidate-validation-v1/cost-libraries.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/cost-libraries.resources",
+      "sha256": "becbcde562ed46ebb8d304c72aeae14a31e4df2bfe56cb624b42a3886ceabada"
+    },
+    "candidate-validation-v1/cost-libraries.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/cost-libraries.stderr",
+      "sha256": "986b6da52c9a3d28d8a26ae32ea7c38e3e038b7bc863ef73d73fa7a9f2a58f25"
+    },
+    "candidate-validation-v1/cost-libraries.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/cost-libraries.stdout",
+      "sha256": "ee4138c12e8787d1a39c9abc6fb7d5bf40af2e57a9b4c7826df1650007ddd0bb"
+    },
+    "candidate-validation-v1/format.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/format.resources",
+      "sha256": "6ad8784fd40d0469cdcfd40daba4870327e47b2bc80dc8f35a8840acfbb50238"
+    },
+    "candidate-validation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/mesh-and-modeling-all-features.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/mesh-and-modeling-all-features.resources",
+      "sha256": "32a464f1c49f0a13c2b8278cfc78821b93c55a63ccd56fa8d28079664ca37d7a"
+    },
+    "candidate-validation-v1/mesh-and-modeling-all-features.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/mesh-and-modeling-all-features.stderr",
+      "sha256": "2326aab4bb4121c5fb32010a675162188c9973b3ab5bdd7380ecb8f6665f168a"
+    },
+    "candidate-validation-v1/mesh-and-modeling-all-features.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/mesh-and-modeling-all-features.stdout",
+      "sha256": "a1ad94d43da6f025ec5afa904e1d99175d205dd05cab0ae1dacf2a3bdc543876"
+    },
+    "candidate-validation-v1/minimal-all-target-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/minimal-all-target-clippy.resources",
+      "sha256": "78ed580cf9041883790ad8fc6d729de66d9c72056051f4760c2a02beb0f7fc49"
+    },
+    "candidate-validation-v1/minimal-all-target-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/minimal-all-target-clippy.stderr",
+      "sha256": "a65c613ca1b264a13c4f52965937d6d8b9b6019a58be6707d369b65dcc51c9c3"
+    },
+    "candidate-validation-v1/minimal-all-target-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/minimal-all-target-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/modeling-minimal.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/modeling-minimal.resources",
+      "sha256": "2f761b18ef1cc8233fa6185b8ad3fdad890b2334a483609f0fa08a8b4485db9f"
+    },
+    "candidate-validation-v1/modeling-minimal.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/modeling-minimal.stderr",
+      "sha256": "3a43c68bbdfe60358a788ba0aa64caaeb8f0ffd6073bebb0bc9edb020661e3e9"
+    },
+    "candidate-validation-v1/modeling-minimal.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/modeling-minimal.stdout",
+      "sha256": "f78cba8a9b1d6ca30ddeb33fce1448a8815129d95a8438d4eee25bebffc4ff3a"
+    },
+    "candidate-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/protocol.json",
+      "sha256": "8c2a98022f9346fbb802023666f66094f48c8328c136435583a184a302f7e501"
+    },
+    "candidate-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-validation-v1/result.json",
+      "sha256": "545dd5ea9f6cc2f2030910f6792ea558f49e92ac1e79536838fdc6a300b46075"
+    },
+    "wasm-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/commands.json",
+      "sha256": "30433074627460df7878451a2d6c5cc6b82ee51e677f1ebc9c2d971f0724dda6"
+    },
+    "wasm-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/protocol.json",
+      "sha256": "a36243d845909aa2af061032fedae75ced8c3e0a1536688af9bf9c577942f7e4"
+    },
+    "wasm-validation-v1/real-consumers.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/real-consumers.resources",
+      "sha256": "1a8784da1b9d83b73391e5e3a0e2d0d8eb9e5c891002b0c14b24b4abbbea2e05"
+    },
+    "wasm-validation-v1/real-consumers.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/real-consumers.stderr",
+      "sha256": "2f6987c1f8e975326eb878093580b265977aa620701ac90a0087602396d3986d"
+    },
+    "wasm-validation-v1/real-consumers.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/real-consumers.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/result.json",
+      "sha256": "76895157882e3116ebc31b278af1388d8d042e2dd80219720021044077bbb91e"
+    },
+    "wasm-validation-v1/shell-syntax.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/shell-syntax.resources",
+      "sha256": "e63ec6168c27b94b465cf05a71f30a7ec92d74897d670c5fd79f5e70032c4b7d"
+    },
+    "wasm-validation-v1/shell-syntax.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/shell-syntax.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v1/shell-syntax.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/shell-syntax.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v1/wasm-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/wasm-clippy.resources",
+      "sha256": "16669e9d8c0a1fec9d22139ce08d2ea31e2f06e38632e6e353ffcda557f4e4d1"
+    },
+    "wasm-validation-v1/wasm-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/wasm-clippy.stderr",
+      "sha256": "b0d146fee500c324d08511d6659bc829933f1d0ee69730528d02556803cac479"
+    },
+    "wasm-validation-v1/wasm-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v1/wasm-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v2/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/commands.json",
+      "sha256": "bce92f7ebb49b156d1e616253d0387c351cc48e5575dcb993fde1e798913c84d"
+    },
+    "wasm-validation-v2/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/protocol.json",
+      "sha256": "7b2df35fe090b5531932d2d52c150f780c384f28da77ae277d79b54ba1bfa4e6"
+    },
+    "wasm-validation-v2/real-consumers.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/real-consumers.resources",
+      "sha256": "6f932a4c22c1db541a06874733e0ed9215b80a53fe1824887bce3efc3dedf247"
+    },
+    "wasm-validation-v2/real-consumers.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/real-consumers.stderr",
+      "sha256": "32464051c9759f23c0d4f850c2b0b649f5112f17c223228f9a824ee2b0865480"
+    },
+    "wasm-validation-v2/real-consumers.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/real-consumers.stdout",
+      "sha256": "b1a8c1209ad3fff663d73762d54fc09953fbf49add960d769b8bfdb910504c79"
+    },
+    "wasm-validation-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/result.json",
+      "sha256": "e3f09c6efbc6ee76dc557d5bd9b654fe2bc502a1e719ef396f9875ccb0293c17"
+    },
+    "wasm-validation-v2/shell-syntax.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/shell-syntax.resources",
+      "sha256": "25f4bbe9df3f04c7329fb1d3dc316ec6445869d0fe3ad592ddd9304b2602d383"
+    },
+    "wasm-validation-v2/shell-syntax.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/shell-syntax.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v2/shell-syntax.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/shell-syntax.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v2/wasm-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/wasm-clippy.resources",
+      "sha256": "27f78713d7d2b73a07e0032efc9401e45a67f38224d4a367b6fbf494d236f989"
+    },
+    "wasm-validation-v2/wasm-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/wasm-clippy.stderr",
+      "sha256": "1c3f24aab70489d30d5bbe174762ea6c7ab3d8d3d30e8c6dba75b256b23ba069"
+    },
+    "wasm-validation-v2/wasm-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-validation-v2/wasm-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/commands.json",
+      "sha256": "15da3fcdaaca6db0ea03c8bc540658724587e9dc40ce1d9316fc9e274004487c"
+    },
+    "cost-v2/compile-baseline-control.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-baseline-control.resources",
+      "sha256": "8496c4c40581a4da2e3b2a114d0289c49f7be14f985c74a084287f51b1a29026"
+    },
+    "cost-v2/compile-baseline-control.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-baseline-control.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/compile-baseline-control.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-baseline-control.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/compile-baseline-matrix.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-baseline-matrix.resources",
+      "sha256": "be148d4bcf646d42f2a52440a0ffb53d5e2ac64ef0d2f219b6507f636ffe25c8"
+    },
+    "cost-v2/compile-baseline-matrix.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-baseline-matrix.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/compile-baseline-matrix.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-baseline-matrix.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/compile-candidate-control.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-candidate-control.resources",
+      "sha256": "db83a5f333b1cbb45f728d159955eecfec6911d833c5ad2aa6ada9b1a64736a1"
+    },
+    "cost-v2/compile-candidate-control.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-candidate-control.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/compile-candidate-control.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-candidate-control.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/compile-candidate-matrix.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-candidate-matrix.resources",
+      "sha256": "c5fd657c8c03749a00691f4acfc6c4029c05882f9f5fab750debb5b105affea4"
+    },
+    "cost-v2/compile-candidate-matrix.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-candidate-matrix.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/compile-candidate-matrix.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/compile-candidate-matrix.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/control-00-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-00-baseline.resources",
+      "sha256": "09f398345808d0c48e2e583d8e433b3564e96a253d0cac05faa17b6df2c1638e"
+    },
+    "cost-v2/control-00-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-00-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/control-00-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-00-baseline.stdout",
+      "sha256": "64aa9aa43a1c8f2f0a427e67ed733c6668bf9146cb2d110eb0bd9a242681bcea"
+    },
+    "cost-v2/control-00-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-00-candidate.resources",
+      "sha256": "d7c47b0d48016038d316e83a12b96956886aab516f08862710fd0d0722f950a0"
+    },
+    "cost-v2/control-00-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-00-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/control-00-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-00-candidate.stdout",
+      "sha256": "c3d93f3017fe28fee3b21b686cd842166df8d8a1e20b3a59d66e3b93442fd74d"
+    },
+    "cost-v2/control-01-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-01-baseline.resources",
+      "sha256": "fa6d9de6261d51fb049add7a3e85fa0128885c6b1941da0ee936f3ef5dd5e79f"
+    },
+    "cost-v2/control-01-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-01-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/control-01-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-01-baseline.stdout",
+      "sha256": "478557760bc5f4df840d39d4b38a6ef962fd4df5f975f21bf834ad2dced0d4cd"
+    },
+    "cost-v2/control-01-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-01-candidate.resources",
+      "sha256": "8118147de5720c37a2ba0095804adfec93d67cf2924763c73ee952af482c5efe"
+    },
+    "cost-v2/control-01-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-01-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/control-01-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-01-candidate.stdout",
+      "sha256": "e49ec7cfedaee7796fe3d0b5bf14220cf7c6598dd710d200a50f8ffcc1792e3f"
+    },
+    "cost-v2/control-02-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-02-baseline.resources",
+      "sha256": "a7958a9ab04387b489d26cbfe95af01ebf5387c81bcfdf36a1cce39e8537d4f1"
+    },
+    "cost-v2/control-02-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-02-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/control-02-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-02-baseline.stdout",
+      "sha256": "059d0aad3e396ce5524f04852798752c9777b28df223c727e0f37bd44d6c70cd"
+    },
+    "cost-v2/control-02-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-02-candidate.resources",
+      "sha256": "8b546601ed416359fa47f45f8fb23c583723fcc375a46ce30f8251f594b6e992"
+    },
+    "cost-v2/control-02-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-02-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/control-02-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-02-candidate.stdout",
+      "sha256": "13a6001f83f8a7d87e62b9167ce76e305172d1ca69316a24b8243be18de83566"
+    },
+    "cost-v2/control-03-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-03-baseline.resources",
+      "sha256": "fa1eee5ef6b9fd609afd7a28ef357b95f904dcf252dfc426e51e37d9bc23c1e3"
+    },
+    "cost-v2/control-03-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-03-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/control-03-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-03-baseline.stdout",
+      "sha256": "c35a54130f5926e7566638c5c48efc5f235ae6a4c878c159060beddfb7c6233e"
+    },
+    "cost-v2/control-03-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-03-candidate.resources",
+      "sha256": "7007b8354380c090b762d744fb64296b506835fd9bbf77e63aff718f926b86e8"
+    },
+    "cost-v2/control-03-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-03-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/control-03-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-03-candidate.stdout",
+      "sha256": "1cad0e972d553910eaf6ce9f0afbcc7c4f21f1f267536f38b8b23df08a1fe64c"
+    },
+    "cost-v2/control-04-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-04-baseline.resources",
+      "sha256": "cc2dd5f3de82892e947ca1d26f61faf29f3b5fe1f7042ed71ea8b78def502dfd"
+    },
+    "cost-v2/control-04-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-04-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/control-04-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-04-baseline.stdout",
+      "sha256": "ae735b68905221cfc49fd16f9dd6a98cf1a862d5ed2d8a1ed8efd1f498f41644"
+    },
+    "cost-v2/control-04-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-04-candidate.resources",
+      "sha256": "e97e1faace5c5bc2c40f8e5842dee2304455fc1c7d8e1f847637b065327b241c"
+    },
+    "cost-v2/control-04-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-04-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/control-04-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/control-04-candidate.stdout",
+      "sha256": "6c7121fa3de631ee7ae99b23f31c7fe3f14470341f21cc86a786c3669454daa2"
+    },
+    "cost-v2/matrix-00-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-00-baseline.resources",
+      "sha256": "8fd576119191b131ece4cf8efdbc5b1489e81ec890fce787480746630b727c7b"
+    },
+    "cost-v2/matrix-00-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-00-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/matrix-00-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-00-baseline.stdout",
+      "sha256": "12c6e215e0c5f224449eb7c1ca78ba12bd2df3ee46b1fb97b2f7234be9d1a12a"
+    },
+    "cost-v2/matrix-00-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-00-candidate.resources",
+      "sha256": "02de30acf8aee51dc2586ef89856dcda47487c9608fa772047dceb91b3779ce8"
+    },
+    "cost-v2/matrix-00-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-00-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/matrix-00-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-00-candidate.stdout",
+      "sha256": "3fd2d06eed0cf8c26c9dceabde19b5f959091e3d5c5eec77a66dd71e2c3965f2"
+    },
+    "cost-v2/matrix-01-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-01-baseline.resources",
+      "sha256": "1857172d6b6a89b4fdb0e78727cc98f7fc6c2589a90cc34ba963721143ce852d"
+    },
+    "cost-v2/matrix-01-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-01-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/matrix-01-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-01-baseline.stdout",
+      "sha256": "40f11a082b1b1cf7fc9fe9118e857308e907621af5c3520614d4bc2c5c35d3de"
+    },
+    "cost-v2/matrix-01-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-01-candidate.resources",
+      "sha256": "724ef2f16b947f7efe76d713e925e9f7659d67c06fcfdff0d1b1e7561d884250"
+    },
+    "cost-v2/matrix-01-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-01-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/matrix-01-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-01-candidate.stdout",
+      "sha256": "c44f228742242ef1934ad613c822a8aa074c7fbe752b3fbb25bf2c4a9a8516eb"
+    },
+    "cost-v2/matrix-02-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-02-baseline.resources",
+      "sha256": "eb5fd89def1f2dc9f4412cbb9b713e551b22fd409264a72f5ef4c8c82ec12761"
+    },
+    "cost-v2/matrix-02-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-02-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/matrix-02-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-02-baseline.stdout",
+      "sha256": "5490f82da8344ce1dafd27b2f7a2f921d52c8088510c5644b31e7d0a68e1926f"
+    },
+    "cost-v2/matrix-02-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-02-candidate.resources",
+      "sha256": "fb263718e0fe20c675762159673c9be4f57c55fb98459798d53b6b132260f9ea"
+    },
+    "cost-v2/matrix-02-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-02-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/matrix-02-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-02-candidate.stdout",
+      "sha256": "3c2a16c072072b880c4b8d9614a8a88ddba3d3d4c13f09dc7159385aa1020506"
+    },
+    "cost-v2/matrix-03-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-03-baseline.resources",
+      "sha256": "4fe5783fa7cdefe79e37e982377cba4c7f5a5ad2398e86749f184f8631ee4a25"
+    },
+    "cost-v2/matrix-03-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-03-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/matrix-03-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-03-baseline.stdout",
+      "sha256": "2def027ac2cb50929206b39c25c931c7dc5cae1782f41e685156ca1919c8c938"
+    },
+    "cost-v2/matrix-03-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-03-candidate.resources",
+      "sha256": "26a3075ac198ccfafdc212fd6201c2a583310013de7dbaf001563a9a5f2fac7c"
+    },
+    "cost-v2/matrix-03-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-03-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/matrix-03-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-03-candidate.stdout",
+      "sha256": "9faf79d8fcb591892fc7b88e499f9122b7110d6298b881d4cb2bdecd4bc761f9"
+    },
+    "cost-v2/matrix-04-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-04-baseline.resources",
+      "sha256": "650e2f40b302173943e9fb01ac153e0c83d44c0a7e848e6244001328722c988a"
+    },
+    "cost-v2/matrix-04-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-04-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/matrix-04-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-04-baseline.stdout",
+      "sha256": "7d59f1c4c1dc16a6ada1cb1834b13de8f9f852eb98265b5d31edff4c9ebb4798"
+    },
+    "cost-v2/matrix-04-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-04-candidate.resources",
+      "sha256": "f7d69a51951400a691f1bcd53b70ba81bdd7d11d431562644d3b4626d95d8a5a"
+    },
+    "cost-v2/matrix-04-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-04-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v2/matrix-04-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/matrix-04-candidate.stdout",
+      "sha256": "f2741c66075f6b6fb013817cc37e3ef9ee59412096a6acd78aeaf7d289667ac0"
+    },
+    "cost-v2/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/protocol.json",
+      "sha256": "b429b6031a7dfa49e89fbe15061f212f4befa6df7ce25c8903bfc28deb3a9a01"
+    },
+    "cost-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-v2/result.json",
+      "sha256": "672bcba01667a6125152210e979e7b29ebac2d5d582cf799ea99c89e70a90184"
+    },
+    "apply_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/apply_v1.py",
+      "sha256": "9cf3a2291edb30ab7a88472c228f11b8d530694d3acc01ed5fe87876e8f20ed2"
+    },
+    "apply_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/apply_v2.py",
+      "sha256": "9d4f90b7f421ed0de3de5797f29cfc6d7110611ded43d70d624156f9fbed1070"
+    },
+    "assess_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/assess_v1.py",
+      "sha256": "6ee0e77fefa1b550383cb7efc97ec651fe079f16538e7de900f5cc17ce728356"
+    },
+    "assess_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/assess_v2.py",
+      "sha256": "8b3fb228bfe3abf05178d35dc488cef1dbd8da795ac639372605c544d49c61c1"
+    },
+    "baseline_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/baseline_v1.py",
+      "sha256": "9a7ac9a32e6b5020727cc5dd4379b2c2b3b9ee55a112a06ea92fea8f6e30ef61"
+    },
+    "candidate_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate_v1.py",
+      "sha256": "0498e964ba0376b9949852864e1e020453ac86377d0878b68b98d09509a40e16"
+    },
+    "checkpoint_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/checkpoint_v1.py",
+      "sha256": "ac37e91747fb6d189287d182217553f030a783d01d0b4d086a25272f14b8836f"
+    },
+    "control_cost_v1.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/control_cost_v1.rs",
+      "sha256": "5f8dbe02cd7246c9f01b840636c4b9f9e3c94d835fad67d90affd956bb463a1a"
+    },
+    "cost-contract-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost-contract-v1.json",
+      "sha256": "d161437674b38175599c4bd04a4b1e50764f85894528ea1e6a347ff8b53884b0"
+    },
+    "cost_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost_v1.py",
+      "sha256": "16336b6c7492b9829f05aa30f616cf641208d78c393cc93e7a410935f224eb90"
+    },
+    "cost_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/cost_v2.py",
+      "sha256": "0910012704b5ea59b281f4c2bcc4cf7932e9b11cdfde6e39c233625b4510061a"
+    },
+    "matrix_cost_v1.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/matrix_cost_v1.rs",
+      "sha256": "578970d0780572aa11127a00998ac645e38123c08280fccbe42d8d10f111628e"
+    },
+    "prepare_candidate_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prepare_candidate_v1.py",
+      "sha256": "505dfcca84130c717f6846ed58f39ab681747323d2ea64fe0d2c4d9968298afa"
+    },
+    "prepare_candidate_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prepare_candidate_v2.py",
+      "sha256": "715f4e0e947f9abfe19ebc73f5bb1f0e00e9794ce5c82748fa02a2782aaa11f1"
+    },
+    "prepare_checkpoint_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prepare_checkpoint_v1.py",
+      "sha256": "2afdbab928865fee0de523a50a3cf7f0bbb67fbe0818fc75405cbc56deb5a9b4"
+    },
+    "prepare_cost_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prepare_cost_v1.py",
+      "sha256": "a33ce3b4acd1697cf987e6786f4506731ebe7d6c590e09b1c2c7c9356e69bebf"
+    },
+    "prepare_finalization_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prepare_finalization_v1.py",
+      "sha256": "86f3450141ec63f77aad1f18c93c26fdf6a6bbd73b654a4f423904c017a42089"
+    },
+    "prepare_git_helpers_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prepare_git_helpers_v1.py",
+      "sha256": "13e39038c27b11c7934ae8ad8f7cac2ac4571aeeecce7307972f8b3120188d28"
+    },
+    "prepare_probes_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/prepare_probes_v1.py",
+      "sha256": "1255286aec0da33698e878c76acf2bb470e8746261d549cbb0e6c2404729c539"
+    },
+    "supporting_fact_v1.cjs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting_fact_v1.cjs",
+      "sha256": "d703f055c282d05b38f61e1fec196529a8179bb890ca92044a975488cf7f87e1"
+    },
+    "supporting_fact_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/supporting_fact_v1.py",
+      "sha256": "59603d3627350a522072bcaead7c5b41cf2659b822bc57accd85664181437dae"
+    },
+    "validation_common_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/validation_common_v1.py",
+      "sha256": "eaa6caf2a80b82a3cd1ae716307272cc7ac0d870a5a8491f500af4e5cdf78060"
+    },
+    "validation_common_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/validation_common_v2.py",
+      "sha256": "795630117615687083143ec2f4c6c8cffed77b4fb9a2c2c73a65620c7a6dd09a"
+    },
+    "wasm-size-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm-size-v1.json",
+      "sha256": "c649af166ac13ba6e7e15745468d41cc63e8fca112d06e385b688d451c92fa3b"
+    },
+    "wasm_size_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm_size_v1.py",
+      "sha256": "c2cbc29538d99f1b15503289ea4bab437d239de0f3ee97dea86a0f1720d36238"
+    },
+    "wasm_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm_v1.py",
+      "sha256": "ed4b1f3b89067bbd81ebd84367263e50cf3a7fa41e325ea9cf6b60778226d080"
+    },
+    "wasm_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/wasm_v2.py",
+      "sha256": "7734bab1fc7a079a8011d9e1f79a3f4fd3438adb180919963da4475e351f8dac"
+    }
+  },
+  "format_command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "format_exit_code": 0,
+  "format_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "format_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "pending_native_paths_remaining": 0,
+  "native_disposition_preserved": true,
+  "full_plan_complete": false
+}

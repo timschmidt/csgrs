@@ -1,0 +1,15 @@
+{
+  "complete": true,
+  "base_commit": "311d04fbbe5635a29fe7e754b838cccc4b8add53",
+  "runner_sha256": "505dfcca84130c717f6846ed58f39ab681747323d2ea64fe0d2c4d9968298afa",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/candidate-source-v1",
+  "source_inputs": 2830,
+  "source_hashes_sha256": "714cc6a8b1b2a3f6fb5d79f08c6d5e007a1ef58a1066fda1d23538bfb6bcd9f2",
+  "changes": {
+    "crates/hypermesh/src/mesh.rs": "991c3bb367e2a0ae9d0c2563e632ce558a2418fe5d4a18ad33546055efc8981c",
+    "tests/containment_bounds.rs": "8e000e76b610a145edf3c1eb483c30a8f029afee3e77961f6de0d4486b239117",
+    "tests/wasm/containment_winding.cjs": "220bd9851f6fbcf7ed209015729935581e930dc26876cc629f42f1aa1b21a6ff"
+  },
+  "contract_sha256": "9253a049b906c1c0041cb701ba793c877409c1c0356bbc858911c670999ff15a",
+  "main_sources_modified": false
+}

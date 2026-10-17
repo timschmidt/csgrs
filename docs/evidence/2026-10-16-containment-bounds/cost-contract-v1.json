@@ -1,0 +1,21 @@
+{
+  "base_commit": "311d04fbbe5635a29fe7e754b838cccc4b8add53",
+  "benchmark_source": "Unchanged E32 control and 21-case matrix, now comparing two correct implementations.",
+  "probe_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/matrix_cost_v1.rs": "578970d0780572aa11127a00998ac645e38123c08280fccbe42d8d10f111628e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-bounds/control_cost_v1.rs": "5f8dbe02cd7246c9f01b840636c4b9f9e3c94d835fad67d90affd956bb463a1a"
+  },
+  "pairs": 5,
+  "targeted_matrix_cases": [
+    "simple_face",
+    "simple_vertex",
+    "opposite_face",
+    "symbolic_face",
+    "symbolic_vertex",
+    "flat_face"
+  ],
+  "required_allocation_call_reduction_on_each_warm_targeted_row": 0.5,
+  "control_requirement": "Fewer allocation calls and bytes in every cold/warm policy pair; no wrong/undecided/qualified replacement of Certified success.",
+  "all_other_rows": "Retain and inspect every raw sample and all allocation, retained/peak bytes, source-drop, process RSS, timing and artifact-size observations.",
+  "resource_limits": "Externally bounded validation; no internal total-work, heap-byte, expression-growth or cancellation claim."
+}

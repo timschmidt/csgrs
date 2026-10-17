@@ -1,0 +1,161 @@
+{
+  "bounds": {
+    "certainty": "Certified",
+    "projected_min": [
+      0,
+      0,
+      0
+    ],
+    "projected_max": [
+      1,
+      1,
+      1
+    ]
+  },
+  "rows": [
+    {
+      "xyz": [
+        0.5,
+        0,
+        0.5
+      ],
+      "approximate": false,
+      "status": "Unknown",
+      "value": null,
+      "certainty": null,
+      "reason": "predicate could not be decided: point-triangle classification"
+    },
+    {
+      "xyz": [
+        0.5,
+        0,
+        0.5
+      ],
+      "approximate": true,
+      "status": "Decided",
+      "value": false,
+      "certainty": "Approximate512Consumed",
+      "reason": null
+    },
+    {
+      "xyz": [
+        0.5,
+        0,
+        0.5
+      ],
+      "approximate": false,
+      "status": "Unknown",
+      "value": null,
+      "certainty": null,
+      "reason": "predicate could not be decided: point-triangle classification"
+    },
+    {
+      "xyz": [
+        1,
+        0.5,
+        0.5
+      ],
+      "approximate": false,
+      "status": "Unknown",
+      "value": null,
+      "certainty": null,
+      "reason": "predicate could not be decided: Real ordering"
+    },
+    {
+      "xyz": [
+        1,
+        0.5,
+        0.5
+      ],
+      "approximate": true,
+      "status": "Decided",
+      "value": false,
+      "certainty": "Approximate512Consumed",
+      "reason": null
+    },
+    {
+      "xyz": [
+        1,
+        0.5,
+        0.5
+      ],
+      "approximate": false,
+      "status": "Unknown",
+      "value": null,
+      "certainty": null,
+      "reason": "predicate could not be decided: Real ordering"
+    },
+    {
+      "xyz": [
+        0.5,
+        1,
+        0.5
+      ],
+      "approximate": false,
+      "status": "Unknown",
+      "value": null,
+      "certainty": null,
+      "reason": "predicate could not be decided: Real ordering"
+    },
+    {
+      "xyz": [
+        0.5,
+        1,
+        0.5
+      ],
+      "approximate": true,
+      "status": "Decided",
+      "value": false,
+      "certainty": "Approximate512Consumed",
+      "reason": null
+    },
+    {
+      "xyz": [
+        0.5,
+        1,
+        0.5
+      ],
+      "approximate": false,
+      "status": "Unknown",
+      "value": null,
+      "certainty": null,
+      "reason": "predicate could not be decided: Real ordering"
+    },
+    {
+      "xyz": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "approximate": false,
+      "status": "Decided",
+      "value": true,
+      "certainty": "Certified",
+      "reason": null
+    },
+    {
+      "xyz": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "approximate": true,
+      "status": "Decided",
+      "value": true,
+      "certainty": "Certified",
+      "reason": null
+    },
+    {
+      "xyz": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "approximate": false,
+      "status": "Decided",
+      "value": true,
+      "certainty": "Certified",
+      "reason": null
+    }
+  ]
+}

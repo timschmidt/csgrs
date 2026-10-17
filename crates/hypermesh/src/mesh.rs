@@ -961,8 +961,10 @@ impl TriangleMesh {
     ///
     /// Oriented crossings retain winding multiplicity and cancellation. Points
     /// on the represented set's boundary are excluded; internal source faces,
-    /// edges and vertices follow the represented set's interior. Source-face
-    /// queries reuse the native Boolean arrangement to establish that boundary.
+    /// edges and vertices follow the represented set's interior. Certified
+    /// supporting bounds exclude points that cannot be strictly inside. Other
+    /// source-face queries reuse the native Boolean arrangement to establish
+    /// that boundary.
     ///
     /// Canonical empty geometry (both buffers empty) returns `false`. Every
     /// other input must satisfy [`Self::validate_closed_pwn`], including queries
@@ -1005,8 +1007,19 @@ impl TriangleMesh {
                 (&point.y, &bounds.mins.y, &bounds.maxs.y),
                 (&point.z, &bounds.mins.z, &bounds.maxs.z),
             ] {
-                if compare_real_decision(decisions, coordinate, minimum)?.is_lt()
-                    || compare_real_decision(decisions, coordinate, maximum)?.is_gt()
+                // A validated finite solid has exterior points arbitrarily
+                // close to a supporting plane, so that plane has no strict
+                // interior. This shortcut needs certified validation, bounds
+                // and equality; approximate equality is not that proof.
+                let lower = compare_real_decision(decisions, coordinate, minimum)?;
+                if lower.is_lt()
+                    || (lower.is_eq() && decisions.certainty() == MeshCertainty::Certified)
+                {
+                    return Ok(false);
+                }
+                let upper = compare_real_decision(decisions, coordinate, maximum)?;
+                if upper.is_gt()
+                    || (upper.is_eq() && decisions.certainty() == MeshCertainty::Certified)
                 {
                     return Ok(false);
                 }
