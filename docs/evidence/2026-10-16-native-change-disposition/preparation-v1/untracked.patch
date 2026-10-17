@@ -1,0 +1,1045 @@
+--- /dev/null
++++ b/crates/hypercurve/src/bezier_region/linear_stroke.rs
+@@ -0,0 +1,51 @@
++//! Compact boundary of a single positive-width native line stroke.
++
++use super::*;
++
++/// Parallel sides and endpoint caps form a simple convex boundary. Construct
++/// those four exact edges directly, preserving the authored line and radius
++/// identities instead of arranging a rectangle and two overlapping disks.
++/// The caller has validated path connectivity, distinct endpoints, positive
++/// width and corner style. Unresolved endpoint equality uses the general path.
++pub(super) fn native_line_stroke(
++    line: &LineSeg2,
++    half_width: &Real,
++    cap: OffsetCap,
++    policy: &CurveContext,
++) -> ExactCurveResult<CurveRegion2> {
++    let error = |cause| curve_region_edit_error(CurveOperation2::Offset, cause);
++    let left = line.offset_left(half_width.clone()).map_err(error)?;
++    let right = line.offset_left(-half_width.clone()).map_err(error)?;
++    let cap_edge = |start: Point2, end: Point2, center: &Point2| match cap {
++        OffsetCap::Butt => LineSeg2::try_new(start, end)
++            .map(Segment2::Line)
++            .map_err(error),
++        OffsetCap::Round => {
++            // The two parallels are displaced by opposite radius vectors of
++            // length half_width. Their endpoints are antipodal about this
++            // authored endpoint; traversing right-to-left closes a CCW cap.
++            Ok(Segment2::Arc(
++                CircularArc2::new_with_certified_radius_and_sweep(
++                    start,
++                    end,
++                    center.clone(),
++                    half_width * half_width,
++                    false,
++                    crate::arc_bezier::ArcSweepKind::Semicircle,
++                ),
++            ))
++        }
++        OffsetCap::Square => unreachable!("single-line square caps use the general stroke path"),
++    };
++    let end_cap = cap_edge(right.end().clone(), left.end().clone(), line.end())?;
++    let start_cap = cap_edge(left.start().clone(), right.start().clone(), line.start())?;
++    let contour = Contour2::try_new(vec![
++        Segment2::Line(right),
++        end_cap,
++        Segment2::Line(left.reversed()),
++        start_cap,
++    ])
++    .map_err(error)?;
++    CurveRegion2::try_from_native_contours_raw(vec![contour], vec![], policy)?
++        .finish_construction(policy)
++}
+--- /dev/null
++++ b/crates/hypercurve/tests/native_linear_stroke.rs
+@@ -0,0 +1,246 @@
++mod support;
++
++use hypercurve::{
++    BezierParameterPolynomial, CurvePath2, CurveRegion2, ExactCurveError, FillRule, LineSeg2,
++    OffsetCap, OffsetCornerStyle2, Point2, PredicatePolicy, Real, RegionPointLocation,
++    UncertaintyReason, WorkBudget, WorkUsage, evaluate_under, evaluate_with_budget,
++};
++
++fn equal(actual: &Real, expected: &Real) {
++    assert_eq!(
++        hyperlimit::compare_reals(actual, expected, PredicatePolicy::STRICT).value(),
++        Some(std::cmp::Ordering::Equal)
++    );
++}
++
++fn path(end: [i32; 2]) -> CurvePath2 {
++    CurvePath2::try_new(vec![
++        LineSeg2::try_new(
++            Point2::from_values(0, 0),
++            Point2::from_values(end[0], end[1]),
++        )
++        .unwrap()
++        .into(),
++    ])
++    .unwrap()
++}
++
++fn stroke(path: &CurvePath2, cap: OffsetCap) -> CurveRegion2 {
++    CurveRegion2::stroke_path(path, Real::one(), &OffsetCornerStyle2::Round, cap).unwrap()
++}
++
++#[test]
++fn diagonal_capsules_preserve_analytic_area_bounds_and_reusable_boundaries() {
++    for end in [[1, 1], [-1, 1], [1, -1], [-1, -1], [3, 4], [0, -2]] {
++        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
++            let region = evaluate_under(policy, || stroke(&path(end), OffsetCap::Round))
++                .certified()
++                .unwrap();
++            let length = Real::from(end[0] * end[0] + end[1] * end[1])
++                .sqrt()
++                .unwrap();
++            let area = Real::from(2) * length + Real::pi();
++            equal(&region.filled_area().unwrap().unwrap(), &area);
++            let bounds = region.bounds().unwrap().unwrap();
++            for (actual, expected) in [
++                (bounds.min_x(), end[0].min(0) - 1),
++                (bounds.min_y(), end[1].min(0) - 1),
++                (bounds.max_x(), end[0].max(0) + 1),
++                (bounds.max_y(), end[1].max(0) + 1),
++            ] {
++                equal(actual, &Real::from(expected));
++            }
++            let rebuilt = CurveRegion2::try_from_boundary_paths(
++                &region.boundary_paths().unwrap(),
++                FillRule::NonZero,
++            )
++            .unwrap();
++            equal(&rebuilt.filled_area().unwrap().unwrap(), &area);
++            let origin = Point2::from_values(0, 0).into();
++            assert_eq!(
++                rebuilt.classify_point(&origin).unwrap(),
++                RegionPointLocation::Inside
++            );
++        }
++    }
++}
++
++#[test]
++fn butt_diagonal_area_keeps_the_exact_surd() {
++    for end in [[1, 1], [-1, 1], [1, -1], [-1, -1]] {
++        let region = stroke(&path(end), OffsetCap::Butt);
++        equal(
++            &region.filled_area().unwrap().unwrap(),
++            &(Real::from(2) * Real::from(2).sqrt().unwrap()),
++        );
++        assert_eq!(
++            region
++                .classify_point(&Point2::from_values(0, 0).into())
++                .unwrap(),
++            RegionPointLocation::Boundary
++        );
++    }
++}
++
++#[test]
++fn unresolved_single_line_closure_keeps_the_strict_blocker() {
++    let line = LineSeg2::try_new(
++        Point2::from_values(0, 0),
++        Point2::new(support::terminally_unresolved_zero(), Real::zero()),
++    )
++    .unwrap();
++    let path = CurvePath2::try_new(vec![line.into()]).unwrap();
++    for cap in [OffsetCap::Butt, OffsetCap::Round] {
++        let result = CurveRegion2::stroke_path(&path, Real::one(), &OffsetCornerStyle2::Round, cap);
++        assert!(matches!(result, Err(ExactCurveError::Blocked(blocker))
++            if blocker.reason() == UncertaintyReason::RealSign));
++    }
++}
++
++#[test]
++fn many_capsules_preserve_tangent_contacts_and_nested_union_area() {
++    let mut paths = Vec::new();
++    for index in 0..32 {
++        let source = CurvePath2::try_new(vec![
++            LineSeg2::try_new(
++                Point2::from_values(6 * index, 0),
++                Point2::from_values(6 * index + 4, 0),
++            )
++            .unwrap()
++            .into(),
++        ])
++        .unwrap();
++        paths.extend(stroke(&source, OffsetCap::Round).boundary_paths().unwrap());
++    }
++    let tangent = CurveRegion2::try_from_boundary_paths(&paths, FillRule::NonZero).unwrap();
++    equal(
++        &tangent.filled_area().unwrap().unwrap(),
++        &(Real::from(32) * (Real::from(8) + Real::pi())),
++    );
++    for index in 0..31 {
++        assert_eq!(
++            tangent
++                .classify_point(&Point2::from_values(6 * index + 5, 0).into())
++                .unwrap(),
++            RegionPointLocation::Boundary
++        );
++    }
++    let enclosing = CurveRegion2::stroke_path(
++        &path([190, 0]),
++        Real::from(2),
++        &OffsetCornerStyle2::Round,
++        OffsetCap::Round,
++    )
++    .unwrap();
++    paths.extend(enclosing.boundary_paths().unwrap());
++    let nested = CurveRegion2::try_from_boundary_paths(&paths, FillRule::NonZero).unwrap();
++    equal(
++        &nested.filled_area().unwrap().unwrap(),
++        &(Real::from(760) + Real::from(4) * Real::pi()),
++    );
++}
++
++#[test]
++fn capsule_aggregation_keeps_the_exact_path_without_finite_enclosures() {
++    let center: Real = "1e400".parse().unwrap();
++    let mut paths = Vec::new();
++    for y in [0, 10] {
++        let source = CurvePath2::try_new(vec![
++            LineSeg2::try_new(
++                Point2::new(center.clone(), Real::from(y)),
++                Point2::new(&center + Real::from(4), Real::from(y)),
++            )
++            .unwrap()
++            .into(),
++        ])
++        .unwrap();
++        paths.extend(stroke(&source, OffsetCap::Round).boundary_paths().unwrap());
++    }
++    let combined = CurveRegion2::try_from_boundary_paths(&paths, FillRule::NonZero).unwrap();
++    equal(
++        &combined.filled_area().unwrap().unwrap(),
++        &(Real::from(16) + Real::from(2) * Real::pi()),
++    );
++}
++
++#[test]
++fn independent_diagonal_capsules_preserve_exact_total_area() {
++    let mut boundaries = Vec::new();
++    let mut expected = Real::zero();
++    for index in 0..40 {
++        let [dx, dy] = [[1, 2], [2, 3], [3, 5]][index % 3];
++        let x = Real::from((10 * index) as u32);
++        let start = Point2::new(&x + Real::pi(), Real::from(17));
++        let end = Point2::new(start.x() + Real::from(dx), start.y() + Real::from(dy));
++        let path =
++            CurvePath2::try_new(vec![LineSeg2::try_new(start, end).unwrap().into()]).unwrap();
++        boundaries.extend(stroke(&path, OffsetCap::Round).boundary_paths().unwrap());
++        expected += Real::from(2) * Real::from(dx * dx + dy * dy).sqrt().unwrap() + Real::pi();
++    }
++    let combined = CurveRegion2::try_from_boundary_paths(&boundaries, FillRule::NonZero).unwrap();
++    let area = combined.filled_area().unwrap().unwrap();
++    assert_eq!(
++        hyperlimit::compare_reals(&area, &Real::zero(), PredicatePolicy::STRICT).value(),
++        Some(std::cmp::Ordering::Greater)
++    );
++    equal(&area, &expected);
++    let actual = area.certified_rational_interval(-128).unwrap();
++    let expected = expected.certified_rational_interval(-128).unwrap();
++    let tolerance = "1e-30".parse::<hypercurve::Real>().unwrap();
++    let tolerance = tolerance.exact_rational_ref().unwrap();
++    assert!(&actual[1] - &actual[0] < *tolerance);
++    assert!(&expected[1] - &expected[0] < *tolerance);
++    assert!(actual[0] <= expected[1] && expected[0] <= actual[1]);
++}
++
++#[test]
++fn native_stroke_construction_retains_zero_budget_direct_certificates() {
++    for cap in [OffsetCap::Butt, OffsetCap::Round] {
++        let result = evaluate_with_budget(PredicatePolicy::STRICT, WorkBudget::ZERO, || {
++            stroke(&path([3, 4]), cap)
++        });
++        assert_eq!(result.usage, WorkUsage::default());
++        let region = result.result.unwrap().certified().unwrap();
++        let area = if cap == OffsetCap::Round {
++            Real::from(10) + Real::pi()
++        } else {
++            Real::from(10)
++        };
++        equal(&region.filled_area().unwrap().unwrap(), &area);
++    }
++}
++
++#[test]
++fn native_stroke_and_warm_measurements_cannot_publish_an_exhausted_budget_result() {
++    let path = path([3, 4]);
++    let region = stroke(&path, OffsetCap::Round);
++    region.filled_area().unwrap();
++    region.bounds().unwrap();
++    let denied = evaluate_with_budget(PredicatePolicy::STRICT, WorkBudget::ZERO, || {
++        let polynomial = BezierParameterPolynomial::try_new_power_basis(
++            [-36, 1368, -11034, 31728, -38280, 16620]
++                .into_iter()
++                .map(Real::from)
++                .collect(),
++        )
++        .unwrap();
++        assert!(polynomial.isolate_unit_interval_roots().is_err());
++        let construction = CurveRegion2::stroke_path(
++            &path,
++            Real::one(),
++            &OffsetCornerStyle2::Round,
++            OffsetCap::Round,
++        )
++        .unwrap_err();
++        assert!(matches!(construction, ExactCurveError::Blocked(blocker)
++            if blocker.reason() == UncertaintyReason::BudgetExhausted));
++        // Native budgets guard the outer result. Already certified warm
++        // measurements need no new work, but cannot escape that failed result.
++        (region.filled_area(), region.bounds())
++    });
++    assert!(denied.result.is_err());
++    equal(
++        &region.filled_area().unwrap().unwrap(),
++        &(Real::from(10) + Real::pi()),
++    );
++}
+--- /dev/null
++++ b/crates/hyperdrc/src/checks/area_tolerance.rs
+@@ -0,0 +1,120 @@
++//! Optional interval proof for the existing relative area tolerance.
++
++use crate::Scalar;
++use hyperreal::Rational;
++
++/// Decide `|a-b| <= tolerance * max(|a|, |b|, 1)` from certified enclosures.
++/// Overlapping bounds leave the original scalar predicate in charge. The
++/// rational intervals are proof bounds, not rounded replacements for areas.
++pub(super) fn certified_area_tolerance(
++    left: &Scalar,
++    right: &Scalar,
++    tolerance: &Scalar,
++) -> Option<bool> {
++    let tolerance = tolerance.exact_rational_ref()?;
++    if tolerance < &Rational::zero() {
++        return None;
++    }
++    let left = left.certified_rational_interval(-32)?;
++    let right = right.certified_rational_interval(-32)?;
++    let difference = absolute_interval([&left[0] - &right[1], &left[1] - &right[0]]);
++    let left = absolute_interval(left);
++    let right = absolute_interval(right);
++    let scale_lower = rational_max(
++        rational_max(left[0].clone(), right[0].clone()),
++        Rational::one(),
++    );
++    let scale_upper = rational_max(
++        rational_max(left[1].clone(), right[1].clone()),
++        Rational::one(),
++    );
++    if difference[1] <= tolerance * &scale_lower {
++        Some(true)
++    } else if difference[0] > tolerance * &scale_upper {
++        Some(false)
++    } else {
++        None
++    }
++}
++
++fn absolute_interval([lower, upper]: [Rational; 2]) -> [Rational; 2] {
++    if lower >= Rational::zero() {
++        [lower, upper]
++    } else if upper <= Rational::zero() {
++        [-upper, -lower]
++    } else {
++        [Rational::zero(), rational_max(upper, -lower)]
++    }
++}
++
++fn rational_max(left: Rational, right: Rational) -> Rational {
++    if left >= right { left } else { right }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn rational_boundary_inclusion_and_signed_scale_are_exact() {
++        let tolerance = crate::scalar::scalar("0.25");
++        for (left, right, expected) in [
++            ("0", "0.25", true),
++            ("0", "0.25000000000000000000001", false),
++            ("0", "-0.25", true),
++            ("3", "4", true),
++            ("3", "4.00000000000000000000001", false),
++            ("-3", "-4", true),
++            ("-3", "-4.00000000000000000000001", false),
++            ("-3", "4", false),
++        ] {
++            let left = crate::scalar::scalar(left);
++            let right = crate::scalar::scalar(right);
++            for (left, right) in [(&left, &right), (&right, &left)] {
++                assert_eq!(
++                    certified_area_tolerance(left, right, &tolerance),
++                    Some(expected)
++                );
++            }
++        }
++    }
++
++    #[test]
++    fn symbolic_enclosures_decide_only_separated_thresholds_cold_and_warm() {
++        for scale in [
++            Scalar::one(),
++            -Scalar::one(),
++            crate::scalar::scalar("1e400"),
++        ] {
++            let left = Scalar::pi() * &scale;
++            let close = &left + &scale * crate::scalar::scalar("0.1");
++            let far = &left + &scale;
++            for _ in 0..2 {
++                assert_eq!(
++                    certified_area_tolerance(&left, &close, &crate::scalar::scalar("0.1")),
++                    Some(true)
++                );
++                assert_eq!(
++                    certified_area_tolerance(&left, &far, &crate::scalar::scalar("0.1")),
++                    Some(false)
++                );
++                assert_eq!(
++                    certified_area_tolerance(&left, &left, &Scalar::zero()),
++                    None
++                );
++            }
++        }
++    }
++
++    #[test]
++    fn unavailable_tolerance_retains_scalar_fallback() {
++        assert_eq!(
++            certified_area_tolerance(&Scalar::one(), &Scalar::one(), &-Scalar::one()),
++            None
++        );
++        assert_eq!(
++            certified_area_tolerance(&Scalar::one(), &Scalar::one(), &Scalar::pi()),
++            None
++        );
++    }
++}
+--- /dev/null
++++ b/crates/hyperdrc/src/geometry/stroke.rs
+@@ -0,0 +1,93 @@
++//! Exact linear strokes delegated to the native curve kernel.
++
++use super::{Coord, LineString, Polygon, exact_real};
++use crate::{PcbGeometryUncertainty, Scalar};
++use hypercurve::{CurvePath2, CurveRegion2, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2};
++
++/// Construct the rectangular, butt-capped stroke between finite endpoints.
++///
++/// Finite inputs are lifted before subtraction, normalization or halving.
++/// Non-finite inputs, nonpositive widths and identical endpoints retain the
++/// adapter's `None` contract. For otherwise admitted inputs, native construction
++/// failures remain attached to the polygon and observable through its checked
++/// queries. The historical finite corner calculation supplies only a report
++/// ring; collapse or overflow in that view cannot replace the native stroke.
++pub fn line_polygon(start: [f64; 2], end: [f64; 2], width: f64) -> Option<Polygon<f64>> {
++    if !start
++        .into_iter()
++        .chain(end)
++        .chain([width])
++        .all(f64::is_finite)
++        || width <= 0.0
++        || start == end
++    {
++        return None;
++    }
++    let native = linear_stroke_region(
++        &start.map(exact_real),
++        &end.map(exact_real),
++        &exact_real(width),
++        OffsetCap::Butt,
++    );
++    let view = report_ring(start, end, width);
++    Some(match native {
++        Ok(region) => Polygon::from_exact_region(region, view, vec![]),
++        Err(error) => Polygon::from_exact_region(CurveRegion2::empty(), view, vec![])
++            .with_exact_construction_error(error.to_string()),
++    })
++}
++
++pub(crate) fn linear_stroke_region(
++    start: &[Scalar; 2],
++    end: &[Scalar; 2],
++    width: &Scalar,
++    cap: OffsetCap,
++) -> Result<CurveRegion2, PcbGeometryUncertainty> {
++    crate::operations::evaluate("linear-stroke-construction", None, || {
++        let failure =
++            |detail| crate::operations::failure("linear-stroke-construction", None, detail);
++        match crate::scalar::try_compare(width, &Scalar::zero())? {
++            std::cmp::Ordering::Less => return Err(failure("negative stroke width".to_owned())),
++            std::cmp::Ordering::Equal => return Ok(CurveRegion2::empty()),
++            std::cmp::Ordering::Greater => {}
++        }
++        let half_width = crate::scalar::half(width);
++        if crate::scalar::try_compare(&start[0], &end[0])?.is_eq()
++            && crate::scalar::try_compare(&start[1], &end[1])?.is_eq()
++        {
++            return match cap {
++                OffsetCap::Round => super::circle_region(start, &half_width),
++                OffsetCap::Butt => Ok(CurveRegion2::empty()),
++                OffsetCap::Square => Err(failure("a square cap requires a direction".to_owned())),
++            };
++        }
++        let line = LineSeg2::try_new(
++            Point2::new(start[0].clone(), start[1].clone()),
++            Point2::new(end[0].clone(), end[1].clone()),
++        )
++        .map_err(|error| failure(error.to_string()))?;
++        let path =
++            CurvePath2::try_new(vec![line.into()]).map_err(|error| failure(error.to_string()))?;
++        CurveRegion2::stroke_path(&path, half_width, &OffsetCornerStyle2::Round, cap)
++            .map_err(|error| failure(error.to_string()))
++    })
++}
++
++fn report_ring(start: [f64; 2], end: [f64; 2], width: f64) -> LineString<f64> {
++    let dx = end[0] - start[0];
++    let dy = end[1] - start[1];
++    let length = (dx * dx + dy * dy).sqrt();
++    let nx = -dy / length * width / 2.0;
++    let ny = dx / length * width / 2.0;
++    let points = [
++        [start[0] + nx, start[1] + ny],
++        [end[0] + nx, end[1] + ny],
++        [end[0] - nx, end[1] - ny],
++        [start[0] - nx, start[1] - ny],
++        [start[0] + nx, start[1] + ny],
++    ];
++    if !points.iter().flatten().all(|value| value.is_finite()) {
++        return LineString(vec![]);
++    }
++    LineString(points.into_iter().map(|[x, y]| Coord { x, y }).collect())
++}
+--- /dev/null
++++ b/crates/hyperdrc/src/kicad/tracks.rs
+@@ -0,0 +1,85 @@
++//! Exact source fields and round-capped linear copper tracks.
++
++use super::{CopperFeature, CopperKind, Sexp, exact_origin, midpoint_scalar, net_name};
++use crate::geometry::{SourceScalar, SourceUnit, linear_stroke_region};
++use crate::{LayerMetadata, PcbGeometryUncertainty, PcbRegion, Scalar};
++use hypercurve::{CurveRegion2, OffsetCap};
++use std::collections::HashMap;
++
++pub(super) fn parse_segments(
++    root: &Sexp,
++    nets: &HashMap<i32, String>,
++    copper: &mut Vec<CopperFeature>,
++) {
++    for segment in root.named_children("segment") {
++        let source = crate::operations::evaluate("kicad-track-source", None, || {
++            let start = point(segment, "start")?;
++            let end = point(segment, "end")?;
++            let width = field(segment, "width", 1)?;
++            let width = number(width, 1, "width")?;
++            Ok((start, end, width))
++        });
++        let location = source
++            .as_ref()
++            .map(|(start, end, _)| midpoint_scalar(start, end))
++            .unwrap_or_else(|_| exact_origin());
++        let native = source.and_then(|(start, end, width)| {
++            linear_stroke_region(&start, &end, &width, OffsetCap::Round)
++        });
++        let metadata = Some(LayerMetadata {
++            name: "KiCad segment".to_owned(),
++        });
++        let region = match native {
++            Ok(native) => PcbRegion::new(native, metadata),
++            Err(error) => PcbRegion::new(CurveRegion2::empty(), metadata)
++                .with_exact_construction_error(error.to_string()),
++        };
++        if matches!(region.try_is_empty(), Ok(true)) {
++            continue;
++        }
++        copper.push(CopperFeature {
++            layer: segment
++                .named_child("layer")
++                .and_then(|layer| layer.atom_at(1))
++                .unwrap_or("unknown")
++                .to_owned(),
++            net: net_name(segment, nets),
++            kind: CopperKind::Segment,
++            location,
++            region,
++        });
++    }
++}
++
++fn field<'a>(
++    parent: &'a Sexp,
++    name: &str,
++    count: usize,
++) -> Result<&'a Sexp, PcbGeometryUncertainty> {
++    let field = parent.named_child(name).ok_or_else(|| failure(name))?;
++    if field.children().len() != count + 1 {
++        return Err(failure(name));
++    }
++    Ok(field)
++}
++
++fn point(parent: &Sexp, name: &str) -> Result<[Scalar; 2], PcbGeometryUncertainty> {
++    let field = field(parent, name, 2)?;
++    Ok([number(field, 1, name)?, number(field, 2, name)?])
++}
++
++fn number(field: &Sexp, index: usize, name: &str) -> Result<Scalar, PcbGeometryUncertainty> {
++    field
++        .atom_at(index)
++        .and_then(|token| SourceScalar::parse(SourceUnit::KiCadMillimeter, token))
++        .map(|source| source.value)
++        .ok_or_else(|| failure(name))
++}
++
++fn failure(field: &str) -> PcbGeometryUncertainty {
++    crate::operations::failure(
++        "kicad-track-source",
++        None,
++        format!("missing or invalid {field} field"),
++    )
++}
+--- /dev/null
++++ b/crates/hyperdrc/tests/native_linear_strokes.rs
+@@ -0,0 +1,432 @@
++use hypercurve::RegionPointLocation::{Boundary, Inside, Outside};
++use hyperdrc::Scalar;
++use hyperdrc::geometry::{line_polygon, polygons_to_profile};
++use hyperdrc::kicad::{BoardModel, CopperKind, load_kicad_pcb};
++use std::sync::atomic::{AtomicU64, Ordering};
++
++fn scalar(token: &str) -> Scalar {
++    token.parse().unwrap()
++}
++
++fn same(actual: &Scalar, expected: &Scalar) {
++    assert_eq!(
++        hyperlimit::compare_reals(actual, expected, hyperlimit::PredicatePolicy::STRICT).value(),
++        Some(std::cmp::Ordering::Equal),
++        "actual={actual:?}, expected={expected:?}"
++    );
++}
++
++fn board(fields: &str) -> BoardModel {
++    static SEQUENCE: AtomicU64 = AtomicU64::new(0);
++    let path = std::env::temp_dir().join(format!(
++        "hyperdrc-linear-source-{}-{}.kicad_pcb",
++        std::process::id(),
++        SEQUENCE.fetch_add(1, Ordering::Relaxed)
++    ));
++    std::fs::write(
++        &path,
++        format!("(kicad_pcb (net 1 signal) (segment (layer F.Cu) (net 1) {fields}))"),
++    )
++    .unwrap();
++    let result = load_kicad_pcb(&path);
++    std::fs::remove_file(path).unwrap();
++    result.unwrap()
++}
++
++#[test]
++fn large_finite_stroke_does_not_collapse_its_width() {
++    let polygon = line_polygon([1e20, 0.0], [1e20, 16_384.0], 16_384.0).unwrap();
++    same(&polygon.try_area().unwrap(), &Scalar::from(268_435_456));
++    let region = polygons_to_profile(vec![polygon], None);
++    let x = scalar("1e20");
++    assert_eq!(
++        region.classify_xy(&x + Scalar::from(8192), Scalar::one()),
++        Ok(Boundary)
++    );
++    assert_eq!(
++        region.classify_xy(&x + Scalar::from(8193), Scalar::one()),
++        Ok(Outside)
++    );
++}
++
++#[test]
++fn finite_length_squaring_cannot_underflow_to_zero() {
++    let length = 1e-200;
++    let polygon = line_polygon([0.0, 0.0], [length, 0.0], length).unwrap();
++    let value = Scalar::try_from(length).unwrap();
++    same(&polygon.try_area().unwrap(), &(&value * &value));
++}
++
++#[test]
++fn subnormal_width_is_halved_after_lifting() {
++    let width = f64::from_bits(1);
++    let polygon = line_polygon([0.0, 0.0], [2.0, 0.0], width).unwrap();
++    same(
++        &polygon.try_area().unwrap(),
++        &(Scalar::from(2) * Scalar::try_from(width).unwrap()),
++    );
++}
++
++#[test]
++fn finite_endpoint_difference_can_exceed_float_range() {
++    let polygon = line_polygon([-f64::MAX, 0.0], [f64::MAX, 0.0], 1.0).unwrap();
++    same(
++        &polygon.try_area().unwrap(),
++        &(Scalar::from(2) * Scalar::try_from(f64::MAX).unwrap()),
++    );
++}
++
++#[test]
++fn finite_length_squaring_cannot_overflow() {
++    let polygon = line_polygon([0.0, 0.0], [1e200, 0.0], 2.0).unwrap();
++    same(
++        &polygon.try_area().unwrap(),
++        &(Scalar::from(2) * Scalar::try_from(1e200).unwrap()),
++    );
++}
++
++#[test]
++fn pythagorean_diagonal_has_exact_rational_area() {
++    let polygon = line_polygon([-1.0, -1.0], [2.0, 3.0], 0.25).unwrap();
++    same(&polygon.try_area().unwrap(), &scalar("1.25"));
++}
++
++#[test]
++fn irrational_diagonal_retains_native_surd_width() {
++    let polygon = line_polygon([0.0, 0.0], [1.0, 1.0], 2.0).unwrap();
++    same(
++        &polygon.try_area().unwrap(),
++        &(Scalar::from(2) * Scalar::from(2).sqrt().unwrap()),
++    );
++}
++
++#[test]
++fn ordinary_butt_stroke_keeps_its_contract() {
++    let polygon = line_polygon([0.0, 0.0], [2.0, 0.0], 0.5).unwrap();
++    same(&polygon.try_area().unwrap(), &Scalar::one());
++    let region = polygons_to_profile(vec![polygon], None);
++    assert_eq!(
++        region.classify_xy(scalar("-0.1"), Scalar::zero()),
++        Ok(Outside)
++    );
++    assert_eq!(
++        region.classify_xy(Scalar::zero(), Scalar::zero()),
++        Ok(Boundary)
++    );
++}
++
++#[test]
++fn rejected_finite_adapter_inputs_remain_absent() {
++    for (start, end, width) in [
++        ([0.0, 0.0], [0.0, 0.0], 1.0),
++        ([0.0, 0.0], [1.0, 0.0], 0.0),
++        ([0.0, 0.0], [1.0, 0.0], -1.0),
++        ([f64::NAN, 0.0], [1.0, 0.0], 1.0),
++        ([0.0, 0.0], [1.0, 0.0], f64::INFINITY),
++    ] {
++        assert!(line_polygon(start, end, width).is_none());
++    }
++}
++
++#[test]
++fn kicad_linear_tracks_include_both_round_caps() {
++    let board = board("(start 0 0) (end 2 0) (width 2)");
++    assert_eq!(board.copper.len(), 1);
++    let feature = &board.copper[0];
++    assert_eq!(feature.kind, CopperKind::Segment);
++    assert_eq!(feature.net.as_deref(), Some("signal"));
++    same(
++        &feature.region.try_area().unwrap(),
++        &(Scalar::from(4) + Scalar::pi()),
++    );
++    for (x, expected) in [
++        ("-1", Boundary),
++        ("-0.5", Inside),
++        ("3", Boundary),
++        ("3.00001", Outside),
++    ] {
++        assert_eq!(
++            feature.region.classify_xy(scalar(x), Scalar::zero()),
++            Ok(expected)
++        );
++    }
++}
++
++#[test]
++fn track_decimal_endpoints_and_width_are_never_rounded_first() {
++    let board = board(
++        "(start 9007199254740992.1 0) (end 9007199254740992.3 0) (width 0.20000000000000000000004)",
++    );
++    assert_eq!(board.copper.len(), 1);
++    let width = scalar("0.20000000000000000000004");
++    let radius = scalar("0.10000000000000000000002");
++    same(&board.copper[0].location[0], &scalar("9007199254740992.2"));
++    same(
++        &board.copper[0].region.try_area().unwrap(),
++        &(scalar("0.2") * width + Scalar::pi() * &radius * radius),
++    );
++}
++
++#[test]
++fn track_subrange_width_and_length_remain_nonzero() {
++    let board = board("(start 0 0) (end 1e-400 0) (width 2e-400)");
++    assert_eq!(board.copper.len(), 1);
++    let radius = scalar("1e-400");
++    same(
++        &board.copper[0].region.try_area().unwrap(),
++        &((Scalar::from(2) + Scalar::pi()) * &radius * radius),
++    );
++}
++
++#[test]
++fn track_superrange_coordinates_stay_native() {
++    let board = board("(start 1e400 0) (end 1e400 2) (width 2)");
++    assert_eq!(board.copper.len(), 1);
++    same(
++        &board.copper[0].region.try_area().unwrap(),
++        &(Scalar::from(4) + Scalar::pi()),
++    );
++    same(&board.copper[0].location[0], &scalar("1e400"));
++}
++
++#[test]
++fn coincident_track_endpoints_keep_the_width_disk() {
++    let board = board("(start 3 4) (end 3 4) (width 2)");
++    assert_eq!(board.copper.len(), 1);
++    same(&board.copper[0].region.try_area().unwrap(), &Scalar::pi());
++    assert_eq!(
++        board.copper[0]
++            .region
++            .classify_xy(Scalar::from(4), Scalar::from(4)),
++        Ok(Boundary)
++    );
++}
++
++#[test]
++fn zero_track_width_is_certified_empty() {
++    assert!(board("(start 0 0) (end 2 0) (width 0)").copper.is_empty());
++}
++
++#[test]
++fn malformed_track_fields_retain_source_failure() {
++    for fields in [
++        "(start 0 0) (end 2 0)",
++        "(start 0 0) (end 2 0) (width bad)",
++        "(start 0 0) (end 2 0) (width -1)",
++        "(start 0 0) (end 2 0) (width NaN)",
++        "(start 0 0) (end 2 0) (width 1 2)",
++        "(start bad 0) (end 2 0) (width 1)",
++        "(start 0 0) (width 1)",
++        "(start 0 0 4) (end 2 0) (width 1)",
++    ] {
++        let board = board(fields);
++        assert_eq!(board.copper.len(), 1, "{fields}");
++        assert!(board.copper[0].region.try_area().is_err(), "{fields}");
++        assert!(
++            board.copper[0]
++                .region
++                .classify_xy(Scalar::zero(), Scalar::zero())
++                .is_err(),
++            "{fields}"
++        );
++    }
++}
++
++#[test]
++fn reversed_stroke_preserves_exact_bounds_and_area() {
++    let forward = line_polygon([1e20, 0.0], [1e20 + 16_384.0, 16_384.0], 0.5).unwrap();
++    let reverse = line_polygon([1e20 + 16_384.0, 16_384.0], [1e20, 0.0], 0.5).unwrap();
++    same(&forward.try_area().unwrap(), &reverse.try_area().unwrap());
++    for (a, b) in forward
++        .try_bounds()
++        .unwrap()
++        .unwrap()
++        .iter()
++        .zip(reverse.try_bounds().unwrap().unwrap())
++    {
++        same(a, &b);
++    }
++}
++
++#[test]
++fn exact_diagonal_track_area_includes_caps_without_rounding_the_width() {
++    let board = board("(start -1 -1) (end 2 3) (width 0.2)");
++    assert_eq!(board.copper.len(), 1);
++    same(
++        &board.copper[0].region.try_area().unwrap(),
++        &(Scalar::one() + scalar("0.01") * Scalar::pi()),
++    );
++}
++
++#[test]
++fn irrational_diagonal_track_keeps_line_and_arc_geometry() {
++    let board = board("(start 0 0) (end 1 1) (width 2)");
++    assert_eq!(board.copper.len(), 1);
++    same(
++        &board.copper[0].region.try_area().unwrap(),
++        &(Scalar::from(2) * Scalar::from(2).sqrt().unwrap() + Scalar::pi()),
++    );
++    assert_eq!(
++        board.copper[0]
++            .region
++            .classify_xy(Scalar::from(-1), Scalar::zero()),
++        Ok(Boundary)
++    );
++}
++
++#[test]
++fn track_caps_drive_actual_short_readiness() {
++    let mut left = board("(start 0 0) (end 2 0) (width 2)");
++    let mut right = board("(start 3 0) (end 5 0) (width 2)");
++    right.copper[0].net = Some("other".to_owned());
++    left.copper.extend(right.copper);
++    let findings =
++        hyperdrc::checks::continuity::different_net_short_readiness(&left, &[], &Scalar::zero());
++    assert_eq!(findings.len(), 1);
++    assert_eq!(findings[0].check, "different-net-short-readiness");
++}
++
++#[test]
++fn tangent_track_caps_do_not_create_filled_overlap() {
++    let left = board("(start 0 0) (end 2 0) (width 2)");
++    let right = board("(start 4 0) (end 6 0) (width 2)");
++    let overlap = left.copper[0]
++        .region
++        .try_intersection(&right.copper[0].region)
++        .unwrap();
++    assert_eq!(overlap.try_is_empty(), Ok(true));
++    assert_eq!(
++        left.copper[0]
++            .region
++            .classify_xy(Scalar::from(3), Scalar::zero()),
++        Ok(Boundary)
++    );
++    assert_eq!(
++        right.copper[0]
++            .region
++            .classify_xy(Scalar::from(3), Scalar::zero()),
++        Ok(Boundary)
++    );
++}
++
++fn deny_refinement() {
++    let polynomial = hypercurve::BezierParameterPolynomial::try_new_power_basis(
++        [-36, 1368, -11034, 31728, -38280, 16620]
++            .into_iter()
++            .map(Scalar::from)
++            .collect(),
++    )
++    .unwrap();
++    assert!(matches!(polynomial.isolate_unit_interval_roots(),
++        Err(hypercurve::ExactCurveError::Blocked(blocker))
++        if blocker.reason() == hypercurve::UncertaintyReason::BudgetExhausted));
++}
++
++#[test]
++fn denied_stroke_construction_retains_failure_after_scope_exit() {
++    let mut escaped = None;
++    let denied = hypercurve::evaluate_with_budget(
++        hyperlimit::PredicatePolicy::STRICT,
++        hypercurve::WorkBudget::ZERO,
++        || {
++            deny_refinement();
++            escaped = line_polygon([0.0, 0.0], [3.0, 4.0], 0.25);
++        },
++    );
++    assert!(denied.result.is_err());
++    let escaped = escaped.unwrap();
++    assert!(escaped.try_area().is_err());
++    assert!(
++        polygons_to_profile(vec![escaped], None)
++            .try_into_native()
++            .is_err()
++    );
++    same(
++        &line_polygon([0.0, 0.0], [3.0, 4.0], 0.25)
++            .unwrap()
++            .try_area()
++            .unwrap(),
++        &scalar("1.25"),
++    );
++}
++
++#[test]
++fn denied_track_import_cannot_disappear_or_become_a_valid_origin() {
++    let mut escaped = None;
++    let denied = hypercurve::evaluate_with_budget(
++        hyperlimit::PredicatePolicy::STRICT,
++        hypercurve::WorkBudget::ZERO,
++        || {
++            deny_refinement();
++            escaped = Some(board("(start 10 20) (end 12 20) (width 2)"));
++        },
++    );
++    assert!(denied.result.is_err());
++    let escaped = escaped.unwrap();
++    assert_eq!(escaped.copper.len(), 1);
++    assert!(escaped.copper[0].region.try_area().is_err());
++    assert!(
++        escaped.copper[0]
++            .region
++            .classify_xy(Scalar::zero(), Scalar::zero())
++            .is_err()
++    );
++    let retried = board("(start 10 20) (end 12 20) (width 2)");
++    same(
++        &retried.copper[0].region.try_area().unwrap(),
++        &(Scalar::from(4) + Scalar::pi()),
++    );
++}
++
++#[test]
++fn warmed_stroke_queries_recheck_exhausted_scope() {
++    let polygon = line_polygon([0.0, 0.0], [3.0, 4.0], 0.25).unwrap();
++    let region = polygons_to_profile(vec![polygon.clone()], None);
++    polygon.try_area().unwrap();
++    polygon.try_bounds().unwrap();
++    region.try_area().unwrap();
++    let denied = hypercurve::evaluate_with_budget(
++        hyperlimit::PredicatePolicy::STRICT,
++        hypercurve::WorkBudget::ZERO,
++        || {
++            deny_refinement();
++            assert!(polygon.try_area().is_err());
++            assert!(polygon.try_bounds().is_err());
++            assert!(region.try_area().is_err());
++            assert!(region.clone().try_into_native().is_err());
++        },
++    );
++    assert!(denied.result.is_err());
++    same(&region.try_area().unwrap(), &scalar("1.25"));
++}
++
++#[test]
++fn fresh_zero_budget_admits_rational_butt_strokes() {
++    let evaluated = hypercurve::evaluate_with_budget(
++        hyperlimit::PredicatePolicy::STRICT,
++        hypercurve::WorkBudget::ZERO,
++        || line_polygon([1e20, 0.0], [1e20, 16_384.0], 16_384.0).unwrap(),
++    );
++    assert_eq!(evaluated.usage, hypercurve::WorkUsage::default());
++    same(
++        &evaluated
++            .result
++            .unwrap()
++            .certified()
++            .unwrap()
++            .try_area()
++            .unwrap(),
++        &Scalar::from(268_435_456),
++    );
++}
++
++#[test]
++fn ambient_approximate_policy_does_not_change_stroke_geometry() {
++    let result = hypercurve::evaluate_under(hyperlimit::PredicatePolicy::APPROXIMATE_512, || {
++        line_polygon([0.0, 0.0], [1e-200, 0.0], 1e-200).unwrap()
++    })
++    .certified()
++    .unwrap();
++    let length = Scalar::try_from(1e-200).unwrap();
++    same(&result.try_area().unwrap(), &(&length * &length));
++}

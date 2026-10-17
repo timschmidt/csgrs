@@ -1,0 +1,52 @@
+    Checking half v2.7.1
+    Checking glam v0.30.10
+    Checking ciborium-ll v0.2.2
+    Checking ciborium v0.2.2
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperlattice)
+    Checking bevy_reflect v0.18.1
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperlimit)
+   Compiling rustix v1.1.4
+    Checking bevy_ecs v0.18.1
+    Checking arrow-buffer v57.3.1
+    Checking arrow-data v57.3.1
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypersolve)
+    Checking arrow-array v57.3.1
+    Checking bevy_app v0.18.1
+    Checking bevy_time v0.18.1
+    Checking polling v3.11.0
+    Checking exr v1.74.0
+    Checking arrow-select v57.3.1
+    Checking tiff v0.11.3
+    Checking bevy_diagnostic v0.18.1
+    Checking bevy_math v0.18.1
+    Checking async-io v2.6.0
+   Compiling lazy-regex-proc_macros v3.6.0
+    Checking bevy_log v0.18.1
+    Checking bevy_asset v0.18.1
+    Checking bevy_transform v0.18.1
+    Checking image v0.25.10
+    Checking lazy-regex v3.6.0
+    Checking hexasphere v16.0.0
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypermesh)
+    Checking bevy_mesh v0.18.1
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperphysics)
+    Checking dxf v0.6.1
+    Checking flatbuffers v25.12.19
+    Checking gerber_parser v0.4.0
+    Checking hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypersdf)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypercurve)
+    Checking arrow-ord v57.3.1
+    Checking arrow-cast v57.3.1
+    Checking arrow-ipc v57.3.1
+    Checking xattr v1.6.1
+    Checking parquet v57.3.1
+    Checking tar v0.4.46
+    Checking hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperpath)
+ Documenting hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypercurve)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1)
+ Documenting hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperdrc)
+ Documenting csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1)
+    Finished `release` profile [optimized] target(s) in 38.33s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/doc/csgrs/index.html and 2 other files

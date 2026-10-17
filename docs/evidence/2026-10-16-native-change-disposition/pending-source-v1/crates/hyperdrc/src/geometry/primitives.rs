@@ -1,0 +1,257 @@
+//! Primitive polygon constructors.
+//!
+//! Constructors promote finite parser coordinates into exact Hypercurve-backed
+//! profiles immediately. The retained finite rings exist only for reports.
+
+use std::f64::consts::PI;
+
+use super::types::transform_exact_region;
+use super::{Coord, LineString, Polygon, line_polygon};
+
+/// Construct an authoritative native circle and a finite report ring.
+///
+/// The finite center and radius are imported exactly as dyadics. `segments`
+/// controls only the report ring, with a minimum of sixteen samples; every
+/// positive-radius circle is constructed from two exact semicircles, which the
+/// kernel may subdivide when regularizing its boundary. A
+/// negative radius retains the historical report phase and denotes the same
+/// region as its absolute value. A zero radius denotes the empty regularized
+/// region with a collapsed report ring.
+pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon<f64> {
+    if !(center[0].is_finite() && center[1].is_finite() && radius.is_finite()) {
+        return Polygon::new(LineString(vec![]), vec![]);
+    }
+
+    let segments = segments.max(16);
+    let mut coords = Vec::with_capacity(segments + 1);
+    for index in 0..segments {
+        let theta = 2.0 * PI * (index as f64) / (segments as f64);
+        coords.push(Coord {
+            x: center[0] + radius * theta.cos(),
+            y: center[1] + radius * theta.sin(),
+        });
+    }
+    coords.push(coords[0]);
+    let exact_center = center.map(super::exact_real);
+    let exact_radius = super::exact_real(radius.abs());
+    match super::circle_region(&exact_center, &exact_radius) {
+        Ok(region) => Polygon::from_exact_region(region, LineString(coords), vec![]),
+        Err(error) => Polygon::from_exact_region(
+            hypercurve::CurveRegion2::empty(),
+            LineString(coords),
+            vec![],
+        )
+        .with_exact_construction_error(error.to_string()),
+    }
+}
+
+/// Run the `polygon_from_points` design-readiness check or report helper.
+pub fn polygon_from_points(points: Vec<[f64; 2]>) -> Polygon<f64> {
+    if points
+        .iter()
+        .any(|point| !point[0].is_finite() || !point[1].is_finite())
+    {
+        return Polygon::new(LineString(vec![]), vec![]);
+    }
+
+    let mut coords = points
+        .into_iter()
+        .map(|point| Coord {
+            x: point[0],
+            y: point[1],
+        })
+        .collect::<Vec<_>>();
+
+    if coords.first() != coords.last()
+        && let Some(first) = coords.first().copied()
+    {
+        coords.push(first);
+    }
+
+    Polygon::new(LineString(coords), vec![])
+}
+
+/// Rotate and translate the authoritative region under STRICT, with separate
+/// finite report rings. Failed source construction, unresolved native geometry
+/// and exhausted shared budgets remain attached to the result; checked queries
+/// return that failure. Retry from the original polygon in a fresh budget.
+///
+/// Finite parameters are imported exactly from their binary64 values. Non-finite
+/// parameters retain the input report view and record a construction failure.
+pub fn transform_polygon(
+    polygon: &Polygon<f64>,
+    origin: [f64; 2],
+    angle_degrees: f64,
+) -> Polygon<f64> {
+    if !origin[0].is_finite() || !origin[1].is_finite() || !angle_degrees.is_finite() {
+        return polygon
+            .clone()
+            .with_exact_construction_error("affine transform contains a non-finite parameter");
+    }
+
+    let angle = hyperreal::Real::try_from(angle_degrees).expect("finite angle promotes exactly")
+        * hyperreal::Real::pi()
+        / hyperreal::Real::from(180_u16);
+    let angle = angle.expect("180 is nonzero");
+    let exact = transform_exact_region(
+        polygon,
+        angle.clone().cos(),
+        angle.sin(),
+        hyperreal::Real::try_from(origin[0]).expect("finite origin promotes exactly"),
+        hyperreal::Real::try_from(origin[1]).expect("finite origin promotes exactly"),
+    );
+    let exterior = LineString(
+        polygon
+            .exterior()
+            .0
+            .iter()
+            .map(|coord| {
+                let point = rotate_translate([coord.x, coord.y], origin, angle_degrees);
+                Coord {
+                    x: point[0],
+                    y: point[1],
+                }
+            })
+            .collect(),
+    );
+    let interiors = polygon
+        .interiors()
+        .iter()
+        .map(|ring| {
+            LineString(
+                ring.0
+                    .iter()
+                    .map(|coord| {
+                        let point = rotate_translate([coord.x, coord.y], origin, angle_degrees);
+                        Coord {
+                            x: point[0],
+                            y: point[1],
+                        }
+                    })
+                    .collect(),
+            )
+        })
+        .collect();
+    match exact {
+        Ok(exact) => Polygon::from_exact_region(exact, exterior, interiors),
+        Err(error) => {
+            Polygon::from_exact_region(hypercurve::CurveRegion2::empty(), exterior, interiors)
+                .with_exact_construction_error(error.to_string())
+        }
+    }
+}
+
+/// Run the `arc_line_polygons` design-readiness check or report helper.
+pub fn arc_line_polygons(
+    center: [f64; 2],
+    start: [f64; 2],
+    angle_degrees: f64,
+    width: f64,
+    segments: usize,
+) -> Vec<Polygon<f64>> {
+    if !all_finite([center[0], center[1]])
+        || !all_finite([start[0], start[1]])
+        || !width.is_finite()
+        || !angle_degrees.is_finite()
+    {
+        return Vec::new();
+    }
+
+    let segments = segments.max(4);
+    let mut points = Vec::with_capacity(segments + 1);
+    let start_vector = [start[0] - center[0], start[1] - center[1]];
+
+    for index in 0..=segments {
+        let theta = angle_degrees.to_radians() * (index as f64) / (segments as f64);
+        let cos = theta.cos();
+        let sin = theta.sin();
+        points.push([
+            center[0] + start_vector[0] * cos - start_vector[1] * sin,
+            center[1] + start_vector[0] * sin + start_vector[1] * cos,
+        ]);
+    }
+
+    points
+        .windows(2)
+        .filter_map(|window| line_polygon(window[0], window[1], width))
+        .collect()
+}
+
+/// Approximate cubic Bezier curves as stroked line polygons.
+///
+/// KiCad stores board and footprint curve graphics as four-point cubic Bezier
+/// curves. This helper samples each complete cubic span, then turns each
+/// adjacent sample pair into the same rectangular stroke polygons used for
+/// traces and graphical lines. When callers pass a longer point list, connected
+/// spans are read as `p0,p1,p2,p3`, then `p3,p4,p5,p6`, matching the common
+/// contiguous cubic-path convention while still accepting KiCad's documented
+/// four-point form.
+///
+/// The evaluation uses de Casteljau subdivision, the stable geometric
+/// construction presented in Farin, *Curves and Surfaces for CAGD: A Practical
+/// Guide*, 5th ed., Academic Press, 2002.
+pub fn bezier_line_polygons(points: &[[f64; 2]], width: f64, segments: usize) -> Vec<Polygon<f64>> {
+    if points.len() < 4
+        || points.iter().any(|point| !all_finite(*point))
+        || !width.is_finite()
+        || width <= 0.0
+    {
+        return Vec::new();
+    }
+
+    let segments = segments.max(4);
+    let mut polygons = Vec::new();
+    let mut index = 0;
+    while index + 3 < points.len() {
+        let control = [
+            points[index],
+            points[index + 1],
+            points[index + 2],
+            points[index + 3],
+        ];
+        let samples = (0..=segments)
+            .map(|step| {
+                let t = step as f64 / segments as f64;
+                cubic_bezier_point(control, t)
+            })
+            .collect::<Vec<_>>();
+        polygons.extend(
+            samples
+                .windows(2)
+                .filter_map(|window| line_polygon(window[0], window[1], width)),
+        );
+        index += 3;
+    }
+
+    polygons
+}
+
+fn cubic_bezier_point(control: [[f64; 2]; 4], t: f64) -> [f64; 2] {
+    let a = lerp_point(control[0], control[1], t);
+    let b = lerp_point(control[1], control[2], t);
+    let c = lerp_point(control[2], control[3], t);
+    let d = lerp_point(a, b, t);
+    let e = lerp_point(b, c, t);
+    lerp_point(d, e, t)
+}
+
+fn lerp_point(start: [f64; 2], end: [f64; 2], t: f64) -> [f64; 2] {
+    [
+        start[0] + (end[0] - start[0]) * t,
+        start[1] + (end[1] - start[1]) * t,
+    ]
+}
+
+fn all_finite(point: [f64; 2]) -> bool {
+    point[0].is_finite() && point[1].is_finite()
+}
+
+fn rotate_translate(point: [f64; 2], center: [f64; 2], angle_degrees: f64) -> [f64; 2] {
+    let theta = angle_degrees.to_radians();
+    let cos = theta.cos();
+    let sin = theta.sin();
+    [
+        center[0] + point[0] * cos - point[1] * sin,
+        center[1] + point[0] * sin + point[1] * cos,
+    ]
+}

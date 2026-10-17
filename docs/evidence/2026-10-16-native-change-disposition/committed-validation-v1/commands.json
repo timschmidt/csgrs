@@ -1,0 +1,1287 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 10.91065168287605,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fe7433f2faaeb0da98a8610e3f832b30fa37ab3e0b0775cf9b39b5f89fb91e36"
+  },
+  {
+    "name": "root-all",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 924.5516417999752,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/curve_constructor_failures-f7cc43e145ac9696": {
+        "sha256": "ec4d93d57e5d25071ea69ea1f1bca97abbac2d9d41b41d23623e88c28480cc2a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ec4d93d57e5d25071ea69ea1f1bca97abbac2d9d41b41d23623e88c28480cc2a/curve_constructor_failures-f7cc43e145ac9696",
+        "bytes": 32962208
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/strict_drilled_workflows-84fb41c10d127f23": {
+        "sha256": "30353568f396e277166dadc0f8425a1b057b6b91986f6e1eb18516d34503486b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/30353568f396e277166dadc0f8425a1b057b6b91986f6e1eb18516d34503486b/strict_drilled_workflows-84fb41c10d127f23",
+        "bytes": 20819336
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/adversarial-61fa74ccbd896935": {
+        "sha256": "700690fefeac747e82d12f903ccae5e8694e4a2b58cfec0f3b06aca9cf1da8bb",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/700690fefeac747e82d12f903ccae5e8694e4a2b58cfec0f3b06aca9cf1da8bb/adversarial-61fa74ccbd896935",
+        "bytes": 34182672
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/geometry_context-f3d29f7d6dc94528": {
+        "sha256": "da54e3f9785b7911a50ea7132aa844e9f4f64093035d93d42dcee66cd8d0fa8b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/da54e3f9785b7911a50ea7132aa844e9f4f64093035d93d42dcee66cd8d0fa8b/geometry_context-f3d29f7d6dc94528",
+        "bytes": 41647456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/generated_benchmark_corpus-3c1f1fde5d37996c": {
+        "sha256": "0412cfda31598165bfcf8528ab9a9499b19b4838480d272539cac249a6cca67c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/0412cfda31598165bfcf8528ab9a9499b19b4838480d272539cac249a6cca67c/generated_benchmark_corpus-3c1f1fde5d37996c",
+        "bytes": 19055432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/adversarial_extrusions-03eb6390b46717d7": {
+        "sha256": "f0ad290b8d9ba63145a5277c45d7e734328df6d00875a1390db34c7b7d8318a9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/f0ad290b8d9ba63145a5277c45d7e734328df6d00875a1390db34c7b7d8318a9/adversarial_extrusions-03eb6390b46717d7",
+        "bytes": 32504472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/adapter_boolean_failures-8867e9a3af41b5b5": {
+        "sha256": "2ec4835b7e7068d7cb8931fdcab982cb82b7af372f3571bd4aab1564e894a7c0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/2ec4835b7e7068d7cb8931fdcab982cb82b7af372f3571bd4aab1564e894a7c0/adapter_boolean_failures-8867e9a3af41b5b5",
+        "bytes": 20635520
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hilbert_trimming-a298c6dfff13a0d9": {
+        "sha256": "3933ef526ec0c5a8bce7d43728153b733920fec7e619c4ca88e7841393661407",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/3933ef526ec0c5a8bce7d43728153b733920fec7e619c4ca88e7841393661407/hilbert_trimming-a298c6dfff13a0d9",
+        "bytes": 32805496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/minkowski_contracts-0128f2ac1f93f880": {
+        "sha256": "8eeaccc741b435b5bf25de7de183d7b265a6ec53aabdbca7e28b30ecbdf902c7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/8eeaccc741b435b5bf25de7de183d7b265a6ec53aabdbca7e28b30ecbdf902c7/minkowski_contracts-0128f2ac1f93f880",
+        "bytes": 21387336
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/text_contracts-84d126534db53fda": {
+        "sha256": "45734196649c7e6c1ffe735222e1cfc8da5a310dfbb66ead49236afa8c436566",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/45734196649c7e6c1ffe735222e1cfc8da5a310dfbb66ead49236afa8c436566/text_contracts-84d126534db53fda",
+        "bytes": 34021528
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/adversarial_fixtures-eb5cce8eab7e81ab": {
+        "sha256": "283ba36a5aef8de66a7941c162cbf029e2486ef96027e63061daf77f1af359f7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/283ba36a5aef8de66a7941c162cbf029e2486ef96027e63061daf77f1af359f7/adversarial_fixtures-eb5cce8eab7e81ab",
+        "bytes": 1112728
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/mesh_boolean_context-914bbfe568471b47": {
+        "sha256": "34a697dd2aef981525472e3a4e733d601be67615d2505b039cec40319ded8825",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/34a697dd2aef981525472e3a4e733d601be67615d2505b039cec40319ded8825/mesh_boolean_context-914bbfe568471b47",
+        "bytes": 20729608
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/curve_metaball_workloads-66d29e6564cd95ad": {
+        "sha256": "c44bf7106af10c492f180fb17c8dfe5787d62358a00c3b677f80f581001a48b1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c44bf7106af10c492f180fb17c8dfe5787d62358a00c3b677f80f581001a48b1/curve_metaball_workloads-66d29e6564cd95ad",
+        "bytes": 31732472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/transform_failures-21eb23e9828f9466": {
+        "sha256": "ecf6c2dfe017fdfe94bad42060613db4a125ac8797a3d7dc0ffb241657c35ead",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ecf6c2dfe017fdfe94bad42060613db4a125ac8797a3d7dc0ffb241657c35ead/transform_failures-21eb23e9828f9466",
+        "bytes": 20769112
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/exact_linear_modeling-5d0a48a07e0f162b": {
+        "sha256": "f0afa85481b1fb0c70d4472b965afb2020b28a001ef1aeb406fc350106e116c8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/f0afa85481b1fb0c70d4472b965afb2020b28a001ef1aeb406fc350106e116c8/exact_linear_modeling-5d0a48a07e0f162b",
+        "bytes": 32252168
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/export_projection_contracts-ded2f815cac1de97": {
+        "sha256": "2b41e37e7107d3bbb938bb5be6b6a84c2c07328ce49f0e49e9febf3d6e7ecf04",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/2b41e37e7107d3bbb938bb5be6b6a84c2c07328ce49f0e49e9febf3d6e7ecf04/export_projection_contracts-ded2f815cac1de97",
+        "bytes": 21077344
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/obj_export_failures-cd495c9311a295fd": {
+        "sha256": "3cc940f8b97b007804b27d333d0e3edd5b04d3a0201d8fea30a38277c38ece6a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/3cc940f8b97b007804b27d333d0e3edd5b04d3a0201d8fea30a38277c38ece6a/obj_export_failures-cd495c9311a295fd",
+        "bytes": 20664416
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/readme-1992b521cbd1aa62": {
+        "sha256": "5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145/readme-1992b521cbd1aa62",
+        "bytes": 1153328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/sampled_profile_failures-1e978d3da16ca610": {
+        "sha256": "a791158bc403f1305aa043f4e616659cc47160cd419cc18c62fb8827fa4a1b7e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/a791158bc403f1305aa043f4e616659cc47160cd419cc18c62fb8827fa4a1b7e/sampled_profile_failures-1e978d3da16ca610",
+        "bytes": 33302656
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/primitive_failures-62bfc794561dcdc3": {
+        "sha256": "3f750eda17ac43dcf66e20e711a43c29df6028a9aa1fd5e9ba072caf82a633c6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/3f750eda17ac43dcf66e20e711a43c29df6028a9aa1fd5e9ba072caf82a633c6/primitive_failures-62bfc794561dcdc3",
+        "bytes": 20816936
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/wasm_certainty-4c94a4a83c71928e": {
+        "sha256": "1cbe6b945d83a718a15244fc71952186565a0414d60c76daf93530b730ad0e58",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/1cbe6b945d83a718a15244fc71952186565a0414d60c76daf93530b730ad0e58/wasm_certainty-4c94a4a83c71928e",
+        "bytes": 32002744
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/exact_path_failures-d29490301ca0c150": {
+        "sha256": "c4b282afd8e0db92a17c789ed1de4d215c8bff44e05cacd84012786d721eb4ba",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c4b282afd8e0db92a17c789ed1de4d215c8bff44e05cacd84012786d721eb4ba/exact_path_failures-d29490301ca0c150",
+        "bytes": 32824008
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/metaball_failures-d85a244280836e13": {
+        "sha256": "418bbcce47d22990cc7b212b6eb87919493e50d2e01c1f17deaeeda7e4ae7ebd",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/418bbcce47d22990cc7b212b6eb87919493e50d2e01c1f17deaeeda7e4ae7ebd/metaball_failures-d85a244280836e13",
+        "bytes": 20636928
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/metaballs_diagnostics-0ceadacbf3d3f4d1": {
+        "sha256": "d1bee5bbd06d2148034d6e9238c6929d2b97fc4e51d0ab970f3494119fa943f6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/d1bee5bbd06d2148034d6e9238c6929d2b97fc4e51d0ab970f3494119fa943f6/metaballs_diagnostics-0ceadacbf3d3f4d1",
+        "bytes": 18968688
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/distribution_contracts-555e8fcfefd73180": {
+        "sha256": "6d4f5eada8bda4a5780c25a61187bcdd5539f8bf3b2722032ea43c9c02a49430",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/6d4f5eada8bda4a5780c25a61187bcdd5539f8bf3b2722032ea43c9c02a49430/distribution_contracts-555e8fcfefd73180",
+        "bytes": 21049824
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/adversarial_deep-521173baf42fc07b": {
+        "sha256": "d1d7a30a619aff170fbff1e6eb5bd9c078a926545bc181bbf43f2e1259a36a3c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/d1d7a30a619aff170fbff1e6eb5bd9c078a926545bc181bbf43f2e1259a36a3c/adversarial_deep-521173baf42fc07b",
+        "bytes": 33860744
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/planar_operation_failures-21febc1e6bde631d": {
+        "sha256": "a1f9063d2910749858233091401921e1902167ea3fe714d21d7c5b3a987a1643",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/a1f9063d2910749858233091401921e1902167ea3fe714d21d7c5b3a987a1643/planar_operation_failures-21febc1e6bde631d",
+        "bytes": 33081256
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/metaball_workloads-fdfd90c45629d15d": {
+        "sha256": "c17f44c4d121fbbebe50ad8a663847f00a930df73090d079afcdd2c65bc565b8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c17f44c4d121fbbebe50ad8a663847f00a930df73090d079afcdd2c65bc565b8/metaball_workloads-fdfd90c45629d15d",
+        "bytes": 19038040
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/empty_composition-916811c3b9113a9e": {
+        "sha256": "ce5c53d4e846df43e07f57d9757a81107eebf66a99d668417fdcc2d500397dae",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ce5c53d4e846df43e07f57d9757a81107eebf66a99d668417fdcc2d500397dae/empty_composition-916811c3b9113a9e",
+        "bytes": 20815880
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/readme_render_regression-241ede70811c95bb": {
+        "sha256": "d87ed2e4e0436781c831d05bbfa79a26ebd84ec297a601cc5dd72ab116f0eb8d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/d87ed2e4e0436781c831d05bbfa79a26ebd84ec297a601cc5dd72ab116f0eb8d/readme_render_regression-241ede70811c95bb",
+        "bytes": 1151112
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/competitive-185cd4c877423fbe": {
+        "sha256": "5ed7a2b74e399f72fde752b745091da1d159a6c5b741c7a84f18badcfe98f6ca",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/5ed7a2b74e399f72fde752b745091da1d159a6c5b741c7a84f18badcfe98f6ca/competitive-185cd4c877423fbe",
+        "bytes": 21060440
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/curve_metaball_failures-d27370f0b0e5f990": {
+        "sha256": "5a304ae18712a74623387ec37fe19a2470c35e454fc21338336a7d5448f70f50",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/5a304ae18712a74623387ec37fe19a2470c35e454fc21338336a7d5448f70f50/curve_metaball_failures-d27370f0b0e5f990",
+        "bytes": 32929096
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/csgrs-3c5a74bdc7539294": {
+        "sha256": "35c000cbbc1488b6a6a5c048e7abacb42145ac3e4ea643365805a5e5cedb20af",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/35c000cbbc1488b6a6a5c048e7abacb42145ac3e4ea643365805a5e5cedb20af/csgrs-3c5a74bdc7539294",
+        "bytes": 39728696
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/solid_cache-4b39500f97650a56": {
+        "sha256": "c236fc262be4b5cde0521b7aaee270ced368391e58539050463a0988a7378844",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c236fc262be4b5cde0521b7aaee270ced368391e58539050463a0988a7378844/solid_cache-4b39500f97650a56",
+        "bytes": 34306352
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/sdf_failures-70ac7c65f6b4d210": {
+        "sha256": "c9e61e64d80cb036b20734b35b0b14c8c104ee136a5ba951a74f60a0a2323f37",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c9e61e64d80cb036b20734b35b0b14c8c104ee136a5ba951a74f60a0a2323f37/sdf_failures-70ac7c65f6b4d210",
+        "bytes": 21018744
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/rounded_rectangle_fidelity-8f7195511dbb1c27": {
+        "sha256": "f67a3c3914ff0ede62c11c4c74f46c20133d65257b4b15ddbfc2495bc58fb0b6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/f67a3c3914ff0ede62c11c4c74f46c20133d65257b4b15ddbfc2495bc58fb0b6/rounded_rectangle_fidelity-8f7195511dbb1c27",
+        "bytes": 35959352
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/adversarial_stress-7115bbec9298381e": {
+        "sha256": "6e4e9b5df07f7d3e358b44f2620949037ffa3b5479dd41d26f0977729dfb77b8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/6e4e9b5df07f7d3e358b44f2620949037ffa3b5479dd41d26f0977729dfb77b8/adversarial_stress-7115bbec9298381e",
+        "bytes": 33645856
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/gear_airfoil_failures-edc7ec750765891a": {
+        "sha256": "97bdb152c8fbcba47fdf96639e070650dbb9c174d3430c31ee0545af7e89e2c0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/97bdb152c8fbcba47fdf96639e070650dbb9c174d3430c31ee0545af7e89e2c0/gear_airfoil_failures-edc7ec750765891a",
+        "bytes": 33035376
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/polyhedral_construction-5ca791f19bc691fe": {
+        "sha256": "343c90903227dd996a5c8a708702e205230f14343ad5cc02a9715b6c54b434e2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/343c90903227dd996a5c8a708702e205230f14343ad5cc02a9715b6c54b434e2/polyhedral_construction-5ca791f19bc691fe",
+        "bytes": 20763920
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/slice_projection_contract-b55baaad948b2b8d": {
+        "sha256": "4e0cd77426ba6e251547628d937c0f7dc440d843ccff851b717288e184e8535f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/4e0cd77426ba6e251547628d937c0f7dc440d843ccff851b717288e184e8535f/slice_projection_contract-b55baaad948b2b8d",
+        "bytes": 33934968
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/batch_common_cells-a927672f36173761": {
+        "sha256": "85f1b1faab46c7c14c045b04705f532a53ba31f1ef6fc1133b3149158ae2f158",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/85f1b1faab46c7c14c045b04705f532a53ba31f1ef6fc1133b3149158ae2f158/batch_common_cells-a927672f36173761",
+        "bytes": 20534552
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/stl_import_contracts-1972ae5b143c3f00": {
+        "sha256": "f2f137c46aa6f8b3d89e268a04ba823ba1994d44f6636628734ca1f04662820c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/f2f137c46aa6f8b3d89e268a04ba823ba1994d44f6636628734ca1f04662820c/stl_import_contracts-1972ae5b143c3f00",
+        "bytes": 20594680
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/sdf_tpms_diagnostics-24970cc75f8a8512": {
+        "sha256": "b958709950d539bd80ec74dc4565ecc147f8389be6ebbafc2dc33db10efe68d0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/b958709950d539bd80ec74dc4565ecc147f8389be6ebbafc2dc33db10efe68d0/sdf_tpms_diagnostics-24970cc75f8a8512",
+        "bytes": 21204656
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/bounds_failures-65b1d35d217e46d4": {
+        "sha256": "84318318e68de2d9c55c68267ac651a8e52897d7d07ca0a1e9bc2e1a58acf19b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/84318318e68de2d9c55c68267ac651a8e52897d7d07ca0a1e9bc2e1a58acf19b/bounds_failures-65b1d35d217e46d4",
+        "bytes": 34088712
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/native_queries-b33ec052b7501c8a": {
+        "sha256": "5867503a689e216d9a73945074ae760fec6e384280e35e1c077a702bfe0237d8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/5867503a689e216d9a73945074ae760fec6e384280e35e1c077a702bfe0237d8/native_queries-b33ec052b7501c8a",
+        "bytes": 20875328
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "dde8094cf437dc11ec18bbf946c1b0f1087b4dff7580e7887e342e903ab274f7",
+    "stderr_sha256": "adb412fa73193f53bc25e15f6ced0fcfac66de21c51e03e1f775b8280f77c3c8",
+    "resources_sha256": "e228dbadbc265408f4ee51f89cd537443e121d7f73803f1754a9bfad8806c675"
+  },
+  {
+    "name": "root-minimal",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 156.75985694117844,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/readme-114567bf52c105c8": {
+        "sha256": "d758991ee9cea61e9e596e31d01c946b6c9a40b646ba745836012f6d716e0dcf",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/d758991ee9cea61e9e596e31d01c946b6c9a40b646ba745836012f6d716e0dcf/readme-114567bf52c105c8",
+        "bytes": 1153328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/csgrs-12b72f0ccdd38706": {
+        "sha256": "62c9bc249a57f998b0df276d23d8eecd91adf46d2dc0917f454aa35e1852092d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/62c9bc249a57f998b0df276d23d8eecd91adf46d2dc0917f454aa35e1852092d/csgrs-12b72f0ccdd38706",
+        "bytes": 7353384
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/stl_import_contracts-0dbc0c6214a44758": {
+        "sha256": "ddde926345c1cb524b949f7ac04efce4fed7091c2dc63df9704d25daaddd54c8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ddde926345c1cb524b949f7ac04efce4fed7091c2dc63df9704d25daaddd54c8/stl_import_contracts-0dbc0c6214a44758",
+        "bytes": 1079464
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/text_contracts-89d7bc1159e5c677": {
+        "sha256": "c691a2ec94817d8e279e25a6120b267f83f00e58251b9a1c1548706ebad4370e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c691a2ec94817d8e279e25a6120b267f83f00e58251b9a1c1548706ebad4370e/text_contracts-89d7bc1159e5c677",
+        "bytes": 1079432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/batch_common_cells-95a76a9364b0dff9": {
+        "sha256": "ba850ffc2059dbb7241d2f4dcc8779a480ed21256152f9f5f3763ad7f7d1ce0d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ba850ffc2059dbb7241d2f4dcc8779a480ed21256152f9f5f3763ad7f7d1ce0d/batch_common_cells-95a76a9364b0dff9",
+        "bytes": 6406080
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/planar_operation_failures-cb132bda92ed78c2": {
+        "sha256": "7630f6bd592c778afa35d6fa067bb3e084e5deecf62533746374d604d4e0615a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/7630f6bd592c778afa35d6fa067bb3e084e5deecf62533746374d604d4e0615a/planar_operation_failures-cb132bda92ed78c2",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": {
+        "sha256": "3c9a944cbdc0c3214daef587e5f51b639948866efa8c22af84b75688da808b05",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/3c9a944cbdc0c3214daef587e5f51b639948866efa8c22af84b75688da808b05/mesh_boolean_context-a8ee65205fbdc3d4",
+        "bytes": 6581112
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/curve_constructor_failures-fd8f13d67d2561c4": {
+        "sha256": "6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd/curve_constructor_failures-fd8f13d67d2561c4",
+        "bytes": 1079496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/empty_composition-329c8a68d57ad60d": {
+        "sha256": "25013d1ab9e6dcd0e6fcf5f24719843bc219b32442c6a8320553a02560016ef6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/25013d1ab9e6dcd0e6fcf5f24719843bc219b32442c6a8320553a02560016ef6/empty_composition-329c8a68d57ad60d",
+        "bytes": 6656832
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/obj_export_failures-663bc04ad5485983": {
+        "sha256": "1dd5de3d541a6e7ee87e8222b800b4be583403c3d0c7d7e8362219f91ef74839",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/1dd5de3d541a6e7ee87e8222b800b4be583403c3d0c7d7e8362219f91ef74839/obj_export_failures-663bc04ad5485983",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/metaball_workloads-51226a10ba4c7506": {
+        "sha256": "8860a20077e9b2340069df7f32a175ec3a576eab1134f8e4f672e8b8bea20d47",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/8860a20077e9b2340069df7f32a175ec3a576eab1134f8e4f672e8b8bea20d47/metaball_workloads-51226a10ba4c7506",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/readme_render_regression-13a0224cc2b1eb67": {
+        "sha256": "7f887519cc6719a558a14fb039d9b170cfedb89f15b81e13b6e4b1f2de1dd2d7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/7f887519cc6719a558a14fb039d9b170cfedb89f15b81e13b6e4b1f2de1dd2d7/readme_render_regression-13a0224cc2b1eb67",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/gear_airfoil_failures-cab79b6a24c79f3a": {
+        "sha256": "c1e961bfadf37b3c53950a620a7768fd800d47dd30f31bd30b2b4714025a8a78",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c1e961bfadf37b3c53950a620a7768fd800d47dd30f31bd30b2b4714025a8a78/gear_airfoil_failures-cab79b6a24c79f3a",
+        "bytes": 1079472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hilbert_trimming-72122bfafb7d9216": {
+        "sha256": "b7f48c39dcc16e4d1dc028ff905509227856050561a1764f39e3b476434cf4f2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/b7f48c39dcc16e4d1dc028ff905509227856050561a1764f39e3b476434cf4f2/hilbert_trimming-72122bfafb7d9216",
+        "bytes": 1079448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/curve_metaball_failures-100955c99151bd1c": {
+        "sha256": "138b61bc832cd460e4d4dba5de0b6638df032af3c1b14961e425e6e96aca9ce0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/138b61bc832cd460e4d4dba5de0b6638df032af3c1b14961e425e6e96aca9ce0/curve_metaball_failures-100955c99151bd1c",
+        "bytes": 1079480
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/geometry_context-673fb3a0a6f0689a": {
+        "sha256": "e5180a0dc5c1b38494477ef963aaa10c33ef46bcdb2209dd2610e3b07696134d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/e5180a0dc5c1b38494477ef963aaa10c33ef46bcdb2209dd2610e3b07696134d/geometry_context-673fb3a0a6f0689a",
+        "bytes": 7167984
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/sdf_failures-0fb37e01688c21a0": {
+        "sha256": "7a21e36eb9f175a7dcd1d299d5d6e405ba05bdb2d8dc15e2d4e43d4cb9ffe2a9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/7a21e36eb9f175a7dcd1d299d5d6e405ba05bdb2d8dc15e2d4e43d4cb9ffe2a9/sdf_failures-0fb37e01688c21a0",
+        "bytes": 1079424
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/adapter_boolean_failures-4f1ca3000d3fc581": {
+        "sha256": "924afa4fa1b8375a066b2f80d07508b967d718074f0f608796cb0114972d7e48",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/924afa4fa1b8375a066b2f80d07508b967d718074f0f608796cb0114972d7e48/adapter_boolean_failures-4f1ca3000d3fc581",
+        "bytes": 6477504
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/minkowski_contracts-95fc559a68f6aff4": {
+        "sha256": "87434a2fc18f0c16c658a7466ceb0bb117c1879acfcc22e64cdbcef4aa17dd1d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/87434a2fc18f0c16c658a7466ceb0bb117c1879acfcc22e64cdbcef4aa17dd1d/minkowski_contracts-95fc559a68f6aff4",
+        "bytes": 7157128
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/exact_path_failures-c65ee91721cdc862": {
+        "sha256": "e649513289a10819baaeab30f0130cb0843b5095fb2c1d9d7ac9ccdcb4ce6db5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/e649513289a10819baaeab30f0130cb0843b5095fb2c1d9d7ac9ccdcb4ce6db5/exact_path_failures-c65ee91721cdc862",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/wasm_certainty-65de70dfe11e3e06": {
+        "sha256": "d8e8d09df2a9eea388be56b3ed93d6e562d7f37630a19f07a014d19430c30fb6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/d8e8d09df2a9eea388be56b3ed93d6e562d7f37630a19f07a014d19430c30fb6/wasm_certainty-65de70dfe11e3e06",
+        "bytes": 1079432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/rounded_rectangle_fidelity-1435e79a4c8f8808": {
+        "sha256": "0326a0c9f5da56b219cf3c0db28ed85672d53d140696d7927b40ea9590d6844a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/0326a0c9f5da56b219cf3c0db28ed85672d53d140696d7927b40ea9590d6844a/rounded_rectangle_fidelity-1435e79a4c8f8808",
+        "bytes": 1079496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/bounds_failures-c661a92a5b4c7962": {
+        "sha256": "b1008a6b8942b1e2b33c3623b4192a4d50af7d8e8f5f3d06cf50e3c3ee996d0a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/b1008a6b8942b1e2b33c3623b4192a4d50af7d8e8f5f3d06cf50e3c3ee996d0a/bounds_failures-c661a92a5b4c7962",
+        "bytes": 6550048
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/distribution_contracts-7364b209d04c9660": {
+        "sha256": "8fed2d1d7db1c2410281f7fc3dc71044f3e9a39472a9077e346d725fa5e32482",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/8fed2d1d7db1c2410281f7fc3dc71044f3e9a39472a9077e346d725fa5e32482/distribution_contracts-7364b209d04c9660",
+        "bytes": 6833168
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/transform_failures-5b7fe4d21c3ce0bd": {
+        "sha256": "20c1b11594ca8ec6bd5fea7afd9d5268c02ce2491bb076e640799d47a09eaa42",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/20c1b11594ca8ec6bd5fea7afd9d5268c02ce2491bb076e640799d47a09eaa42/transform_failures-5b7fe4d21c3ce0bd",
+        "bytes": 6613168
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/slice_projection_contract-9b033a35ae634fdd": {
+        "sha256": "da642a310125099793b4cc5d297f01f3993ce1d8ab366467f1db7bf2c6b48c2a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/da642a310125099793b4cc5d297f01f3993ce1d8ab366467f1db7bf2c6b48c2a/slice_projection_contract-9b033a35ae634fdd",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/sampled_profile_failures-59ed42fadf98b620": {
+        "sha256": "40dce8f51aed77737a19b16a5aedcb200ac4d619a9285c55f73bf25c7eb41ae4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/40dce8f51aed77737a19b16a5aedcb200ac4d619a9285c55f73bf25c7eb41ae4/sampled_profile_failures-59ed42fadf98b620",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/adversarial_fixtures-f3fb997ef2084a11": {
+        "sha256": "4d01b8d8e25dcd012bbd062682a18b23529bced5e3cbd9ac984074f1f6f59505",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/4d01b8d8e25dcd012bbd062682a18b23529bced5e3cbd9ac984074f1f6f59505/adversarial_fixtures-f3fb997ef2084a11",
+        "bytes": 1112728
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/primitive_failures-812823cb4c624c0c": {
+        "sha256": "245c34df99a1670eb6716f8162014bbcc11517b7616633767b813bfac34df2ca",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/245c34df99a1670eb6716f8162014bbcc11517b7616633767b813bfac34df2ca/primitive_failures-812823cb4c624c0c",
+        "bytes": 6645952
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/native_queries-c72418af2e8884f8": {
+        "sha256": "63e98ed9c990b748f493e651221d580385ad5894d11374d6667eb165eb6c454a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/63e98ed9c990b748f493e651221d580385ad5894d11374d6667eb165eb6c454a/native_queries-c72418af2e8884f8",
+        "bytes": 6712816
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/export_projection_contracts-f90dd6ab1d556b5f": {
+        "sha256": "b72244673c056edb7590558dc1228f299d9212c74952840b4a61041e0621f44d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/b72244673c056edb7590558dc1228f299d9212c74952840b4a61041e0621f44d/export_projection_contracts-f90dd6ab1d556b5f",
+        "bytes": 1079496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/curve_metaball_workloads-93eb9e05f68c5c8b": {
+        "sha256": "f81d63774abaa7f5d90152904922972dae56f2f0428e267daef0158a8c506339",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/f81d63774abaa7f5d90152904922972dae56f2f0428e267daef0158a8c506339/curve_metaball_workloads-93eb9e05f68c5c8b",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/exact_linear_modeling-f01de976de318a36": {
+        "sha256": "c6e97dcb258e46009c992b103a4ae871228e5fbdc5a0e0f6d49cf64c911345ec",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c6e97dcb258e46009c992b103a4ae871228e5fbdc5a0e0f6d49cf64c911345ec/exact_linear_modeling-f01de976de318a36",
+        "bytes": 1079472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/solid_cache-07b265ceb2ca1c46": {
+        "sha256": "c14d62ade1e05e13f28130b52127767fea3479a875da63c22bbd3abdc21d6ed0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c14d62ade1e05e13f28130b52127767fea3479a875da63c22bbd3abdc21d6ed0/solid_cache-07b265ceb2ca1c46",
+        "bytes": 6711760
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/polyhedral_construction-37f9e8a14557f156": {
+        "sha256": "c0f35128084e0426f38a8fe0b7d558f8589ae8cb0c1d2a651ce43bd7806637ee",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c0f35128084e0426f38a8fe0b7d558f8589ae8cb0c1d2a651ce43bd7806637ee/polyhedral_construction-37f9e8a14557f156",
+        "bytes": 6784192
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/strict_drilled_workflows-638875a84f3cf049": {
+        "sha256": "9f10268308c7cf2acce1276a8bf08196566bb8f818ec5479018bf097a3903c2a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/9f10268308c7cf2acce1276a8bf08196566bb8f818ec5479018bf097a3903c2a/strict_drilled_workflows-638875a84f3cf049",
+        "bytes": 6640016
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/metaball_failures-02f33d21474432af": {
+        "sha256": "35b3571cdafac22ce4013b03c66903595a9a8198c394d67ae85e16b6efa5e62c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/35b3571cdafac22ce4013b03c66903595a9a8198c394d67ae85e16b6efa5e62c/metaball_failures-02f33d21474432af",
+        "bytes": 1079448
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "6912a6a8a22648fba8dd2b3dc77c3354f98d92e446217b634246123d00a0ce49",
+    "stderr_sha256": "13d6707b8102010c4bc46e8733c1afa76b72e20097f2e585c648cae806f7cbe2",
+    "resources_sha256": "98a399fee59a677c0e2cadae3c5a5df18de51909d7d6c0ac7a4cd76f61943d6d"
+  },
+  {
+    "name": "curve-default",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--no-default-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1222.3613714594394,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_string-2e7e9339c7a7cbb4": {
+        "sha256": "5552a224909f3b73fd52be368c996943fb1f18657fd2208f55f4f5cfad94033e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/5552a224909f3b73fd52be368c996943fb1f18657fd2208f55f4f5cfad94033e/hypercurve_curve_string-2e7e9339c7a7cbb4",
+        "bytes": 18288488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_arc_bezier-3f8f6fd99d0e20cd": {
+        "sha256": "066a5fec99e805be31b98b804d7ccaa0ca0fc6822e11f83fcab7d2a133283fec",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/066a5fec99e805be31b98b804d7ccaa0ca0fc6822e11f83fcab7d2a133283fec/hypercurve_arc_bezier-3f8f6fd99d0e20cd",
+        "bytes": 12927856
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_range-8e551fb90715b437": {
+        "sha256": "4cd4dad17c63cb54cfc70914506b5abd51520a5496f4851b5e271a084ea628ff",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/4cd4dad17c63cb54cfc70914506b5abd51520a5496f4851b5e271a084ea628ff/hypercurve_curve_range-8e551fb90715b437",
+        "bytes": 16428152
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_point-f8b9c8cfa80ccb34": {
+        "sha256": "24ba270cde4416402b4772f104db85c04524a7c7c07fd6f119aff9cd8ef0ec5b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/24ba270cde4416402b4772f104db85c04524a7c7c07fd6f119aff9cd8ef0ec5b/hypercurve_curve_point-f8b9c8cfa80ccb34",
+        "bytes": 12428664
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/line_fragment_orientation-c752c7ffe5ee4577": {
+        "sha256": "986a8827213315aa5dd6c2e4f56ded80abe673e2ff70b939101b62782bf4611d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/986a8827213315aa5dd6c2e4f56ded80abe673e2ff70b939101b62782bf4611d/line_fragment_orientation-c752c7ffe5ee4577",
+        "bytes": 4871152
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_derivative_completeness-98745be011ae758f": {
+        "sha256": "aa06826319f23256f69c6f5c16e908ae35581b1b77a24d13cc524cedf4db5003",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/aa06826319f23256f69c6f5c16e908ae35581b1b77a24d13cc524cedf4db5003/hypercurve_derivative_completeness-98745be011ae758f",
+        "bytes": 12260504
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_svg-c8777c5eb0b2f0dd": {
+        "sha256": "ff1e688e38c94be94c574bf433b8549d98bd1a56abffb5a426cb0113ba192fee",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ff1e688e38c94be94c574bf433b8549d98bd1a56abffb5a426cb0113ba192fee/hypercurve_svg-c8777c5eb0b2f0dd",
+        "bytes": 1079432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_triangulation-76089d390fb7df7a": {
+        "sha256": "7bca9eb99cd4ec877cc2ed2ef9ee5b2736c8bf4570c5f3188cb9526a7afcd7d9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/7bca9eb99cd4ec877cc2ed2ef9ee5b2736c8bf4570c5f3188cb9526a7afcd7d9/hypercurve_triangulation-76089d390fb7df7a",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_analytic_parallel_region-93096e7f96d7688a": {
+        "sha256": "f0a3a74e8d66d3ebf7605544d7048440733016094bd9a23aca19ea9584f91236",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/f0a3a74e8d66d3ebf7605544d7048440733016094bd9a23aca19ea9584f91236/hypercurve_analytic_parallel_region-93096e7f96d7688a",
+        "bytes": 19906072
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_bbox-23d55edadafb6a69": {
+        "sha256": "5825ff75226b1f0669b2fafaf894f41a3a9141ce98ebf7a4e4f7fa8d9cb4a7b4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/5825ff75226b1f0669b2fafaf894f41a3a9141ce98ebf7a4e4f7fa8d9cb4a7b4/hypercurve_bbox-23d55edadafb6a69",
+        "bytes": 17359864
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/ray_filter_extreme_coordinates-c685cd90fd6f2f96": {
+        "sha256": "c1d8273a8f70aec3c28f06c7b8661fa0ddbb192e95d8ef096ab5144ee0761a9d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c1d8273a8f70aec3c28f06c7b8661fa0ddbb192e95d8ef096ab5144ee0761a9d/ray_filter_extreme_coordinates-c685cd90fd6f2f96",
+        "bytes": 17368664
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/work_budget-11269e80bbee218e": {
+        "sha256": "f0414059026a7f9b383804afa12b651bb89e4472eccd92788834596ad5b4ce75",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/f0414059026a7f9b383804afa12b651bb89e4472eccd92788834596ad5b4ce75/work_budget-11269e80bbee218e",
+        "bytes": 15608592
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_pcb_boolean_regressions-c354824ae99a76df": {
+        "sha256": "c063355233b31c2f0b100841f3e459d608534b8db73b64fd5bed3cb8d9c272a5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c063355233b31c2f0b100841f3e459d608534b8db73b64fd5bed3cb8d9c272a5/hypercurve_pcb_boolean_regressions-c354824ae99a76df",
+        "bytes": 17361664
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_circle_predicates-a2a265f3bcb4b59f": {
+        "sha256": "05766cdcfb83dc58b30b8b99ff065c4ce331942b39257db9e27df9c8469902aa",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/05766cdcfb83dc58b30b8b99ff065c4ce331942b39257db9e27df9c8469902aa/hypercurve_circle_predicates-a2a265f3bcb4b59f",
+        "bytes": 5203048
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve-a6e9089b857b4c48": {
+        "sha256": "c057feba4440b1ee60062c8b890089a4022b2c26562372926f5af21f5e5f8e05",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c057feba4440b1ee60062c8b890089a4022b2c26562372926f5af21f5e5f8e05/hypercurve-a6e9089b857b4c48",
+        "bytes": 40574856
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_dispatch_trace-8d38b0b3d8d7bd3c": {
+        "sha256": "f7837f336a382c0d4445b6db032420ed93233db6c7d0fa98e6c8e0a26dcd3332",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/f7837f336a382c0d4445b6db032420ed93233db6c7d0fa98e6c8e0a26dcd3332/hypercurve_dispatch_trace-8d38b0b3d8d7bd3c",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_geo_regressions-d93051e83f86a429": {
+        "sha256": "af42ab1e804fe96111248ede73d130a68db6b553d1370364b7370a95d896999c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/af42ab1e804fe96111248ede73d130a68db6b553d1370364b7370a95d896999c/hypercurve_geo_regressions-d93051e83f86a429",
+        "bytes": 18320472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_bezier_fit_offset-17c7abadd32016da": {
+        "sha256": "fc443a1b7843f7703dd2c545cca72eb40530772fefd7cfc0f926dca7b854533e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/fc443a1b7843f7703dd2c545cca72eb40530772fefd7cfc0f926dca7b854533e/hypercurve_bezier_fit_offset-17c7abadd32016da",
+        "bytes": 19072880
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_self_contacts-c53ddf5a253b4b52": {
+        "sha256": "38bd86b6748d1c0c5937f5b3ef6d65c232c63cd63e5b78fa001da535427a9a72",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/38bd86b6748d1c0c5937f5b3ef6d65c232c63cd63e5b78fa001da535427a9a72/hypercurve_self_contacts-c53ddf5a253b4b52",
+        "bytes": 5043288
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_offset-92dd6b4fd94b5bb2": {
+        "sha256": "1aa2cfe75860ae3d6ca624e1815c4d89dfea2b3481bfc1c2e7e23b45796f39d5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/1aa2cfe75860ae3d6ca624e1815c4d89dfea2b3481bfc1c2e7e23b45796f39d5/hypercurve_offset-92dd6b4fd94b5bb2",
+        "bytes": 4774944
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_open_path_compositions-05f5095f6fd655fe": {
+        "sha256": "e6e07745f0e008107b7fb58197c6ae0b73ceab9cb469e51e6b4d0c5ed91003e2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/e6e07745f0e008107b7fb58197c6ae0b73ceab9cb469e51e6b4d0c5ed91003e2/hypercurve_open_path_compositions-05f5095f6fd655fe",
+        "bytes": 19504808
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/marching_squares-03631cafb58f4268": {
+        "sha256": "fd4776056ceb12a0170e945e55854b960112dc593d02c28713c658f92a4cae23",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/fd4776056ceb12a0170e945e55854b960112dc593d02c28713c658f92a4cae23/marching_squares-03631cafb58f4268",
+        "bytes": 17410752
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/exact_structural_facts-971e4c18d8ca878c": {
+        "sha256": "e1f73c9b8bacaa18954726909f2129652d239e858143a43988b6dd5f56d020c4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/e1f73c9b8bacaa18954726909f2129652d239e858143a43988b6dd5f56d020c4/exact_structural_facts-971e4c18d8ca878c",
+        "bytes": 17392192
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_bezier_algebraic_parameter-f22baa740855fec5": {
+        "sha256": "8345f430f15b86e6d730fef57492ceef98ad5eb155864dd5cc393bcc6b544614",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/8345f430f15b86e6d730fef57492ceef98ad5eb155864dd5cc393bcc6b544614/hypercurve_bezier_algebraic_parameter-f22baa740855fec5",
+        "bytes": 6273360
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_stationary_fillets-ce5a3cf3973361a2": {
+        "sha256": "14de5104385f6c3611644e38b2ea8f32534f76f7058f7c2723106c25a6bfe487",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/14de5104385f6c3611644e38b2ea8f32534f76f7058f7c2723106c25a6bfe487/hypercurve_stationary_fillets-ce5a3cf3973361a2",
+        "bytes": 18809808
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_region_stroke-85b56b628260e2cf": {
+        "sha256": "26cab2234ad1d6443b54635f52ca0cf7cfaaf84cdf6ebabaaa24a9614d88154d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/26cab2234ad1d6443b54635f52ca0cf7cfaaf84cdf6ebabaaa24a9614d88154d/hypercurve_curve_region_stroke-85b56b628260e2cf",
+        "bytes": 18089336
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_pr59_shape_regressions-b50f73b92cf1b333": {
+        "sha256": "83c124a8e563fa925941871bfcc4389a02e80fff42f875defd9b356eca86198b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/83c124a8e563fa925941871bfcc4389a02e80fff42f875defd9b356eca86198b/hypercurve_pr59_shape_regressions-b50f73b92cf1b333",
+        "bytes": 17345312
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_region_boolean-ea6a7425ca1db37d": {
+        "sha256": "7b9408e9a63ada81e41cc5e249bd79b29c2859304cec6869b362648389aaf128",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/7b9408e9a63ada81e41cc5e249bd79b29c2859304cec6869b362648389aaf128/hypercurve_curve_region_boolean-ea6a7425ca1db37d",
+        "bytes": 19767352
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/contour_area_normal_form-4acc2d1144c7ff40": {
+        "sha256": "776d502107216b71525dd704b8df635ba26101f1a7c5d2a85cc8885ff5203b30",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/776d502107216b71525dd704b8df635ba26101f1a7c5d2a85cc8885ff5203b30/contour_area_normal_form-4acc2d1144c7ff40",
+        "bytes": 17306984
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/bbox_initial_pair-9557d205dded03ae": {
+        "sha256": "8708295e8838e50ad5a541a887ff36617666bd26be333d1bb2211cfa41880350",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/8708295e8838e50ad5a541a887ff36617666bd26be333d1bb2211cfa41880350/bbox_initial_pair-9557d205dded03ae",
+        "bytes": 4441960
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_intersection-86a6001866a8d948": {
+        "sha256": "9fd28cfa7e8aca9670ee36bd23c9d717f975d8cc4c7c4f0b523675f4be1d1ba3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/9fd28cfa7e8aca9670ee36bd23c9d717f975d8cc4c7c4f0b523675f4be1d1ba3/hypercurve_curve_intersection-86a6001866a8d948",
+        "bytes": 20815080
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_composed_workloads-af13a912881be6ef": {
+        "sha256": "88bf9b8ffc19bff1ef0d0c9c0e63859529c7e06d3dc4b21e9a87e2f058654ac5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/88bf9b8ffc19bff1ef0d0c9c0e63859529c7e06d3dc4b21e9a87e2f058654ac5/hypercurve_composed_workloads-af13a912881be6ef",
+        "bytes": 19700184
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_path_closure-e92b65201d4f5534": {
+        "sha256": "4338956cd734b666dd40d607e698086a6e8eb582cb87950ac8b21fc7f1ae2b8b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/4338956cd734b666dd40d607e698086a6e8eb582cb87950ac8b21fc7f1ae2b8b/hypercurve_path_closure-e92b65201d4f5534",
+        "bytes": 20143512
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_rational_bezier-79ceb8d79ad1ddcd": {
+        "sha256": "4c4a690487c5554d85d56de8cfc7336b662a162082358daaf5cd60761ee03534",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/4c4a690487c5554d85d56de8cfc7336b662a162082358daaf5cd60761ee03534/hypercurve_rational_bezier-79ceb8d79ad1ddcd",
+        "bytes": 12339832
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_split-d7d471c3a7bcf0bb": {
+        "sha256": "61dffc7d5a135c76340e2f655eaab06384a1a88e8fe62f5bcbee4f808b61c55a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/61dffc7d5a135c76340e2f655eaab06384a1a88e8fe62f5bcbee4f808b61c55a/hypercurve_split-d7d471c3a7bcf0bb",
+        "bytes": 5295352
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/pathological_benchmark_fixture-00fc9cac32866d74": {
+        "sha256": "894d30a5329138a8d9660292fcf4e2252343de8c676c91acd66c4e4ce8f33c4e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/894d30a5329138a8d9660292fcf4e2252343de8c676c91acd66c4e4ce8f33c4e/pathological_benchmark_fixture-00fc9cac32866d74",
+        "bytes": 18050960
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_nurbs_interpolation-2b6ab0e944d91a78": {
+        "sha256": "13940c6236878222df7fa095b4057a389793a97ae9c95a25f5af2986c596013d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/13940c6236878222df7fa095b4057a389793a97ae9c95a25f5af2986c596013d/hypercurve_nurbs_interpolation-2b6ab0e944d91a78",
+        "bytes": 5478104
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_adversarial_polygons-18858c3ea9c80298": {
+        "sha256": "1e8310d06cd07f16e6f674c4430d78129d1101ecdef82942a7f0ef9793107ffe",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/1e8310d06cd07f16e6f674c4430d78129d1101ecdef82942a7f0ef9793107ffe/hypercurve_adversarial_polygons-18858c3ea9c80298",
+        "bytes": 18081888
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/line_constant_coordinates-051ef3625301ce3a": {
+        "sha256": "245222fa7a38d3c475ec058d5c8d318b96cc53988d449bc0c890eeac9d435764",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/245222fa7a38d3c475ec058d5c8d318b96cc53988d449bc0c890eeac9d435764/line_constant_coordinates-051ef3625301ce3a",
+        "bytes": 4269736
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_region_promotion-fb84dae9f991bc27": {
+        "sha256": "296b4fc948b1572d85b28d6112d099c9563bead99843189361aad509bb180aa2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/296b4fc948b1572d85b28d6112d099c9563bead99843189361aad509bb180aa2/hypercurve_curve_region_promotion-fb84dae9f991bc27",
+        "bytes": 21546360
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_reconstruct-dfe95821ff6b649b": {
+        "sha256": "33a9c8726e5e04facab60cf2e464bb376573824948784c18a0d45ab75cceeca6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/33a9c8726e5e04facab60cf2e464bb376573824948784c18a0d45ab75cceeca6/hypercurve_reconstruct-dfe95821ff6b649b",
+        "bytes": 17875784
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_region_boolean_fuzz-3afdd646fdbe0fc5": {
+        "sha256": "4485d447009683530141a41291948594ba0fd79b9e0bc603ab20c7b15a064665",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/4485d447009683530141a41291948594ba0fd79b9e0bc603ab20c7b15a064665/hypercurve_curve_region_boolean_fuzz-3afdd646fdbe0fc5",
+        "bytes": 18111016
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_exact_closure-9461d24f0d83ac4b": {
+        "sha256": "bfce0fc09ed8f31cd26fa1d66bf7dcfd6f9ffe8a64c65985dfe61cebf10c5c6f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/bfce0fc09ed8f31cd26fa1d66bf7dcfd6f9ffe8a64c65985dfe61cebf10c5c6f/hypercurve_exact_closure-9461d24f0d83ac4b",
+        "bytes": 17745520
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_bezier_evaluation-2d921b3e6f2be106": {
+        "sha256": "ec022f444073c6315142fd2a5dd2b6b25476e8f2b4d389328386fd8e32117ed5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ec022f444073c6315142fd2a5dd2b6b25476e8f2b4d389328386fd8e32117ed5/hypercurve_bezier_evaluation-2d921b3e6f2be106",
+        "bytes": 11956096
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_contour-ec307c03c2b2dc58": {
+        "sha256": "c3b33cc5a20a49f683324105a350ba7afa6d00f0ef70fa59f559d70830fe2d62",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c3b33cc5a20a49f683324105a350ba7afa6d00f0ef70fa59f559d70830fe2d62/hypercurve_contour-ec307c03c2b2dc58",
+        "bytes": 5287960
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve-9e5208d8b7b18711": {
+        "sha256": "1e774c45212d3d22c9501f4eb9edfbab4121d431260c7549336daefef95ddca9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/1e774c45212d3d22c9501f4eb9edfbab4121d431260c7549336daefef95ddca9/hypercurve_curve-9e5208d8b7b18711",
+        "bytes": 20640032
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_fuzz_regressions-7668830f65c2ea75": {
+        "sha256": "562e4a826f0aa92a04bcbcbcff402d953599fb212ae819e0b45d03e279849f60",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/562e4a826f0aa92a04bcbcbcff402d953599fb212ae819e0b45d03e279849f60/hypercurve_fuzz_regressions-7668830f65c2ea75",
+        "bytes": 4981160
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_fragments-9694d176c5b39900": {
+        "sha256": "90713de6027c7c5c8ed69d7b3a0c2afac4666a3b5289a5cc9208dec44e1595b9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/90713de6027c7c5c8ed69d7b3a0c2afac4666a3b5289a5cc9208dec44e1595b9/hypercurve_fragments-9694d176c5b39900",
+        "bytes": 6172672
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/readme-b1e126790c7889cc": {
+        "sha256": "52f6b41e2c138b2baf3add0cd884248810f8a542b6d1fafd2d56076e41af48cb",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/52f6b41e2c138b2baf3add0cd884248810f8a542b6d1fafd2d56076e41af48cb/readme-b1e126790c7889cc",
+        "bytes": 1121880
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_events-3e802f68ba0049fa": {
+        "sha256": "e20bfc11019e7992617b8ae4ca3dc2fe21d837cb82f50bcdc101aff2a43cb3d7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/e20bfc11019e7992617b8ae4ca3dc2fe21d837cb82f50bcdc101aff2a43cb3d7/hypercurve_events-3e802f68ba0049fa",
+        "bytes": 5326832
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "2e59c59616a7b38b61db3ac11717d3d9886fbbb4f625332dcae812fe9db084f5",
+    "stderr_sha256": "3cb95c556617d00ae1e2016c698ba8b04c470460750423d6ed6183fc62b3ae5f",
+    "resources_sha256": "abd2973d05303c1e78a9e414057ce0eb6b6ef02548177dda6bc94f94bb482be9"
+  },
+  {
+    "name": "curve-all",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1285.1828644797206,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_open_path_compositions-24ae05f9efc2f345": {
+        "sha256": "ad07c2dc58e558628f577e1df0a41342bcf859dca218cf72123f2a307c15fe25",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ad07c2dc58e558628f577e1df0a41342bcf859dca218cf72123f2a307c15fe25/hypercurve_open_path_compositions-24ae05f9efc2f345",
+        "bytes": 20155928
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_dispatch_trace-19500280b30d6468": {
+        "sha256": "70f23acb6dc60c1dbb89c8b5ea9ea606b7fc47d883b9f8252a1ae5f48ec031e4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/70f23acb6dc60c1dbb89c8b5ea9ea606b7fc47d883b9f8252a1ae5f48ec031e4/hypercurve_dispatch_trace-19500280b30d6468",
+        "bytes": 6175976
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_bezier_algebraic_parameter-b3c101ceb1f03d27": {
+        "sha256": "51f3ae4828c60a26a6f80b6184d107d5df11e711108aeadcd7a938b73ed81c64",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/51f3ae4828c60a26a6f80b6184d107d5df11e711108aeadcd7a938b73ed81c64/hypercurve_bezier_algebraic_parameter-b3c101ceb1f03d27",
+        "bytes": 6645944
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_circle_predicates-6a21d60fefd977d6": {
+        "sha256": "de4728359fb38040b742640a2dbc081d0ea826bf633ee317f37afc5900cff27f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/de4728359fb38040b742640a2dbc081d0ea826bf633ee317f37afc5900cff27f/hypercurve_circle_predicates-6a21d60fefd977d6",
+        "bytes": 5555056
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/contour_area_normal_form-4bb910b60a3a7465": {
+        "sha256": "75c38edaf06a10cd8b5252d561d6d8e0deae6ebebdb459dabff509b0b171454d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/75c38edaf06a10cd8b5252d561d6d8e0deae6ebebdb459dabff509b0b171454d/contour_area_normal_form-4bb910b60a3a7465",
+        "bytes": 17938904
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/bbox_initial_pair-42009948bb13c480": {
+        "sha256": "63286434208d519d2f69820e9126ad04519a262575d2fc3a8b6e63478f9a4756",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/63286434208d519d2f69820e9126ad04519a262575d2fc3a8b6e63478f9a4756/bbox_initial_pair-42009948bb13c480",
+        "bytes": 4720408
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_nurbs_interpolation-eebf1e52f536fb73": {
+        "sha256": "08fb2b90c3d3699f3503737718abb2d391b08ba1de519cbe4831f1966c2f1c7c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/08fb2b90c3d3699f3503737718abb2d391b08ba1de519cbe4831f1966c2f1c7c/hypercurve_nurbs_interpolation-eebf1e52f536fb73",
+        "bytes": 5862912
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_path_closure-13e4ed5ea986002d": {
+        "sha256": "41b37c439881d440bd0c980c7cd4c64e3644be2c7245d8497b3e8c3b54c0037b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/41b37c439881d440bd0c980c7cd4c64e3644be2c7245d8497b3e8c3b54c0037b/hypercurve_path_closure-13e4ed5ea986002d",
+        "bytes": 20792144
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/line_fragment_orientation-f9fa75a347463c52": {
+        "sha256": "1fe0c2e60bc8cb7a5d428488f0686771f91b1af4a5326a08c383e26259ab1e07",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/1fe0c2e60bc8cb7a5d428488f0686771f91b1af4a5326a08c383e26259ab1e07/line_fragment_orientation-f9fa75a347463c52",
+        "bytes": 5186368
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_analytic_parallel_region-726d47dc1888e58a": {
+        "sha256": "a6b7ab0f0aa59341c3a4d50579c9fc6164a83d8382c282f9e279d5ca0bce6357",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/a6b7ab0f0aa59341c3a4d50579c9fc6164a83d8382c282f9e279d5ca0bce6357/hypercurve_analytic_parallel_region-726d47dc1888e58a",
+        "bytes": 20536680
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_offset-13a102504eed15de": {
+        "sha256": "d2467ba74b6faa59eebd97753cf6cb980345cb9c6e73682cbc363056c8320edc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/d2467ba74b6faa59eebd97753cf6cb980345cb9c6e73682cbc363056c8320edc/hypercurve_offset-13a102504eed15de",
+        "bytes": 5050584
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_triangulation-352ff74abe37fd6e": {
+        "sha256": "c0890dd7a2f4582fdb0c72b6f75937b92f99a14e92e05079d01398fbd6e728b5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c0890dd7a2f4582fdb0c72b6f75937b92f99a14e92e05079d01398fbd6e728b5/hypercurve_triangulation-352ff74abe37fd6e",
+        "bytes": 18107888
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve-9910e4ca7e304f6a": {
+        "sha256": "d6405d9572ea91803b05c14d73b592ec3c39d6c10d7bb66db0bb1cb6a82246cd",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/d6405d9572ea91803b05c14d73b592ec3c39d6c10d7bb66db0bb1cb6a82246cd/hypercurve_curve-9910e4ca7e304f6a",
+        "bytes": 21296408
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_split-6e8c2606d715ddf3": {
+        "sha256": "599451a2da1d40510ba4bfa201132773860561257df8a8810c3dd5e69f9648e5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/599451a2da1d40510ba4bfa201132773860561257df8a8810c3dd5e69f9648e5/hypercurve_split-6e8c2606d715ddf3",
+        "bytes": 5669272
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/line_constant_coordinates-d121d91fba5474b4": {
+        "sha256": "facfadb67521bc86b467f2c8ad6ab723abd819c5201aba6653e577be712df603",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/facfadb67521bc86b467f2c8ad6ab723abd819c5201aba6653e577be712df603/line_constant_coordinates-d121d91fba5474b4",
+        "bytes": 4544880
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_string-a6f5cb6c05aed1b9": {
+        "sha256": "2729b8cf4e271e294c32d3b03f8346f0b65e338b7a341225b4e30bd6441713bc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/2729b8cf4e271e294c32d3b03f8346f0b65e338b7a341225b4e30bd6441713bc/hypercurve_curve_string-a6f5cb6c05aed1b9",
+        "bytes": 18917304
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_geo_regressions-1b602cdcbb4fe85c": {
+        "sha256": "4c5f701e8fce8b34aa97867ef79d6dc555155e09920bdf8a99b6eab83d2801d9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/4c5f701e8fce8b34aa97867ef79d6dc555155e09920bdf8a99b6eab83d2801d9/hypercurve_geo_regressions-1b602cdcbb4fe85c",
+        "bytes": 18930200
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/marching_squares-038ea04afeca3641": {
+        "sha256": "4c1e30f8e014ba3fbb0991405a8d408a13b5743a3faa7741b73a6b3d011e61c3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/4c1e30f8e014ba3fbb0991405a8d408a13b5743a3faa7741b73a6b3d011e61c3/marching_squares-038ea04afeca3641",
+        "bytes": 18311168
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_fuzz_regressions-76bc9ae059bb9293": {
+        "sha256": "f6156346473355c936656dcfac428b85c4b10e4581b10a784a0545dbe1132f0b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/f6156346473355c936656dcfac428b85c4b10e4581b10a784a0545dbe1132f0b/hypercurve_fuzz_regressions-76bc9ae059bb9293",
+        "bytes": 5335760
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_region_promotion-e3e18c6ed854aea1": {
+        "sha256": "56d4225cedefc49ed57a4db3cde03fbbec0a8d8ece92174a2e9c69020f1dd5d7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/56d4225cedefc49ed57a4db3cde03fbbec0a8d8ece92174a2e9c69020f1dd5d7/hypercurve_curve_region_promotion-e3e18c6ed854aea1",
+        "bytes": 22229464
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_self_contacts-6c627d173f5b69e1": {
+        "sha256": "2bef8e54a3ac627c8d815185087962785cceaf09d6d8b2f2466213d78cfc1567",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/2bef8e54a3ac627c8d815185087962785cceaf09d6d8b2f2466213d78cfc1567/hypercurve_self_contacts-6c627d173f5b69e1",
+        "bytes": 5403928
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_stationary_fillets-bb316e3e756ce796": {
+        "sha256": "fdabbe92df0ff64483b7374a141697b4935dbef6f82c8e0526bba39cb2b3ed4f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/fdabbe92df0ff64483b7374a141697b4935dbef6f82c8e0526bba39cb2b3ed4f/hypercurve_stationary_fillets-bb316e3e756ce796",
+        "bytes": 19455344
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_bezier_evaluation-2b2af0cd20a58eb6": {
+        "sha256": "fc17f5aa2f845aef301197aa26ea60e3fdafa008bf01d1b28a5b8a23a2a47d75",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/fc17f5aa2f845aef301197aa26ea60e3fdafa008bf01d1b28a5b8a23a2a47d75/hypercurve_bezier_evaluation-2b2af0cd20a58eb6",
+        "bytes": 12498952
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_range-ce272b03c5af5e60": {
+        "sha256": "e736ad33be6523c43aa14ec4f9d74c816fffd765764127fdf407d0ba51e06233",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/e736ad33be6523c43aa14ec4f9d74c816fffd765764127fdf407d0ba51e06233/hypercurve_curve_range-ce272b03c5af5e60",
+        "bytes": 17018736
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_svg-556a1ede74b5cd05": {
+        "sha256": "422b8ac2c67bbbac966b9103a2baed5aa1fdc75f2a011c89bc5b8075fe496e4e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/422b8ac2c67bbbac966b9103a2baed5aa1fdc75f2a011c89bc5b8075fe496e4e/hypercurve_svg-556a1ede74b5cd05",
+        "bytes": 19530720
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_adversarial_polygons-648061a661d2d4d2": {
+        "sha256": "ed1769a1edabe72f36d549a0c5a4a1b1da2e81fcc0c0c5417b13f445b31bdb2c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ed1769a1edabe72f36d549a0c5a4a1b1da2e81fcc0c0c5417b13f445b31bdb2c/hypercurve_adversarial_polygons-648061a661d2d4d2",
+        "bytes": 18705064
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_reconstruct-a445dce1f120dd8a": {
+        "sha256": "c86fd6b683122dda260a2be28b4777f484738f9bf19cf75b389d21d01ea82a3d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c86fd6b683122dda260a2be28b4777f484738f9bf19cf75b389d21d01ea82a3d/hypercurve_reconstruct-a445dce1f120dd8a",
+        "bytes": 18495288
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_region_boolean_fuzz-2e74957ca48860d4": {
+        "sha256": "a9ebf199316cdaeaf3282da06c974432b2b7f941a7c87ae0952231d788f010f5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/a9ebf199316cdaeaf3282da06c974432b2b7f941a7c87ae0952231d788f010f5/hypercurve_curve_region_boolean_fuzz-2e74957ca48860d4",
+        "bytes": 18770360
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_events-c6fa78e0298355bc": {
+        "sha256": "b468d40250928e45c99b1e67f08d8177648e6c733aab065fa95e61388a2568d7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/b468d40250928e45c99b1e67f08d8177648e6c733aab065fa95e61388a2568d7/hypercurve_events-c6fa78e0298355bc",
+        "bytes": 5700560
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_bbox-fd4e6060656a9e53": {
+        "sha256": "44b8f7011416bca785968914f0af9068cf82fe76e8ed5d2ab4046df55a69b15e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/44b8f7011416bca785968914f0af9068cf82fe76e8ed5d2ab4046df55a69b15e/hypercurve_bbox-fd4e6060656a9e53",
+        "bytes": 17964536
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_pr59_shape_regressions-83b1fc0d5a794bdf": {
+        "sha256": "5e64b275801c122746ce57e9270be22f83df74dfe3f8daf7391b5e08a200bb37",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/5e64b275801c122746ce57e9270be22f83df74dfe3f8daf7391b5e08a200bb37/hypercurve_pr59_shape_regressions-83b1fc0d5a794bdf",
+        "bytes": 17954536
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_fragments-531bd9eccf3a410b": {
+        "sha256": "d9b6181363a987ff8c64a9a2bec46881f1b1c2c5a24180a0f7425bdfb74c658f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/d9b6181363a987ff8c64a9a2bec46881f1b1c2c5a24180a0f7425bdfb74c658f/hypercurve_fragments-531bd9eccf3a410b",
+        "bytes": 6556168
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_contour-4ebf43d4cac44124": {
+        "sha256": "ec4fde6324cb8eb1a11b4cc9f6fcd2cef09bb9efaa17721909853e2881065166",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ec4fde6324cb8eb1a11b4cc9f6fcd2cef09bb9efaa17721909853e2881065166/hypercurve_contour-4ebf43d4cac44124",
+        "bytes": 5631184
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_intersection-84afdd00f969615e": {
+        "sha256": "cf6afc8d121d06718f88a75a56b09eacff0495a5c5275f4a914987f5b3a866e6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/cf6afc8d121d06718f88a75a56b09eacff0495a5c5275f4a914987f5b3a866e6/hypercurve_curve_intersection-84afdd00f969615e",
+        "bytes": 21447664
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_composed_workloads-00d318fe4aa418d9": {
+        "sha256": "9329db8d383237ad9358dfe85e5e1d15a9ad318b928812eb7023a63f7388808e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/9329db8d383237ad9358dfe85e5e1d15a9ad318b928812eb7023a63f7388808e/hypercurve_composed_workloads-00d318fe4aa418d9",
+        "bytes": 20362072
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_point-723c0db0e305158f": {
+        "sha256": "72cad114a65b6f76574b1e500f04bd618d83e32a5196c06e7e31b12e209a03e6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/72cad114a65b6f76574b1e500f04bd618d83e32a5196c06e7e31b12e209a03e6/hypercurve_curve_point-723c0db0e305158f",
+        "bytes": 12996128
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_region_boolean-73f474d9f89ada3b": {
+        "sha256": "8a330733ed98b006ea93d356321efd85659546729e8ef01301cf83beb686f5de",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/8a330733ed98b006ea93d356321efd85659546729e8ef01301cf83beb686f5de/hypercurve_curve_region_boolean-73f474d9f89ada3b",
+        "bytes": 20407648
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_rational_bezier-ebc5ec163d658b4d": {
+        "sha256": "150cf703a63486ea7a34ef38bb964ca7ac5e7717401a04cb272b8707d508a213",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/150cf703a63486ea7a34ef38bb964ca7ac5e7717401a04cb272b8707d508a213/hypercurve_rational_bezier-ebc5ec163d658b4d",
+        "bytes": 12874256
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_pcb_boolean_regressions-6789f90d07d16ed5": {
+        "sha256": "01d0b880f73825e3b21b77cd301e25eb28c46d6ccfb955728c70b5cde516979b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/01d0b880f73825e3b21b77cd301e25eb28c46d6ccfb955728c70b5cde516979b/hypercurve_pcb_boolean_regressions-6789f90d07d16ed5",
+        "bytes": 17970808
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/pathological_benchmark_fixture-376aa6ef985840a8": {
+        "sha256": "ac354afedf89b87898a90ef560762bb29e8f057606eeb8ab709b4382777b5559",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ac354afedf89b87898a90ef560762bb29e8f057606eeb8ab709b4382777b5559/pathological_benchmark_fixture-376aa6ef985840a8",
+        "bytes": 18713536
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve-c64b9a6905916d79": {
+        "sha256": "1d5bb181a9e2a2f67695daf097f2b5c078484e8837b60a49989d4fb51727203d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/1d5bb181a9e2a2f67695daf097f2b5c078484e8837b60a49989d4fb51727203d/hypercurve-c64b9a6905916d79",
+        "bytes": 41643888
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_derivative_completeness-3b7db4764a27ca62": {
+        "sha256": "6b6da7abb66fe0ed32c20621103cb240bfa06a53c3c9bb61f290703cc2d2f3aa",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/6b6da7abb66fe0ed32c20621103cb240bfa06a53c3c9bb61f290703cc2d2f3aa/hypercurve_derivative_completeness-3b7db4764a27ca62",
+        "bytes": 12799416
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/exact_structural_facts-76451eec1ebb234c": {
+        "sha256": "3b6a259c3b213cc088ff2f2a983d8acc96b63cc4e2288b2a247c46032b9057ae",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/3b6a259c3b213cc088ff2f2a983d8acc96b63cc4e2288b2a247c46032b9057ae/exact_structural_facts-76451eec1ebb234c",
+        "bytes": 18014664
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_exact_closure-321fd937dd57609f": {
+        "sha256": "44b0539a2495c22c331e65b07129dc70e7348ac4990cdc0a7fe9e7ab7e3bba4b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/44b0539a2495c22c331e65b07129dc70e7348ac4990cdc0a7fe9e7ab7e3bba4b/hypercurve_exact_closure-321fd937dd57609f",
+        "bytes": 18692376
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/ray_filter_extreme_coordinates-9d17ed123cd5307c": {
+        "sha256": "10551a8fa7c6ca6f19507a3712ea6c4cfe71e658e3db99ff24750ea0066da34f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/10551a8fa7c6ca6f19507a3712ea6c4cfe71e658e3db99ff24750ea0066da34f/ray_filter_extreme_coordinates-9d17ed123cd5307c",
+        "bytes": 18003256
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_bezier_fit_offset-000e6dcd62486581": {
+        "sha256": "3e6aa8327730afdb42b3837cbd22000a238845aed951053a26e43a79668e4afa",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/3e6aa8327730afdb42b3837cbd22000a238845aed951053a26e43a79668e4afa/hypercurve_bezier_fit_offset-000e6dcd62486581",
+        "bytes": 19732256
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/readme-e31e3117e75caf45": {
+        "sha256": "84b11694579bdb34847f11688a5ca2ecae1e595d0784ffe95e294c8771a58d0e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/84b11694579bdb34847f11688a5ca2ecae1e595d0784ffe95e294c8771a58d0e/readme-e31e3117e75caf45",
+        "bytes": 1121880
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/work_budget-9fefc193fdafb511": {
+        "sha256": "ef5a93d19e73a0a666b40e45e3627f1d18a3f5c89a9d325ff5a4b5ef32990dfd",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ef5a93d19e73a0a666b40e45e3627f1d18a3f5c89a9d325ff5a4b5ef32990dfd/work_budget-9fefc193fdafb511",
+        "bytes": 16181480
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_curve_region_stroke-e159e365a3ffcb56": {
+        "sha256": "9467dca8c3c3fb18ea634e12a0cd4fe2122153c04fd092db47ac1ff479bb5908",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/9467dca8c3c3fb18ea634e12a0cd4fe2122153c04fd092db47ac1ff479bb5908/hypercurve_curve_region_stroke-e159e365a3ffcb56",
+        "bytes": 18748784
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hypercurve_arc_bezier-1e373a41b9ebc9c7": {
+        "sha256": "b370517500f96c062aab01a5f6e8bc754efeded7bd7b10ef5d496234a478884e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/b370517500f96c062aab01a5f6e8bc754efeded7bd7b10ef5d496234a478884e/hypercurve_arc_bezier-1e373a41b9ebc9c7",
+        "bytes": 13509096
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "49ea03c2a2bbe4bcbda290a98dd5d9369ea8d78e876308a227f3b4ae396cf9b5",
+    "stderr_sha256": "ed1aa82eae6c2e97503672910a3ed47c12694ab285fad1b591f877d8873800d0",
+    "resources_sha256": "a1e5bbcd96c98dc944c542f0c1355f1f319a4f6f51814bded859ec6dd715fa19"
+  },
+  {
+    "name": "native-other-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1",
+      "--skip",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--skip",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--skip",
+      "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 559.6885202019475,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/kicad_rule_export-c09b25b29b958a07": {
+        "sha256": "68a6f6ec3340ab74d54994f27eb798ab4c151be113e7ce437b026bd24a917a16",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/68a6f6ec3340ab74d54994f27eb798ab4c151be113e7ce437b026bd24a917a16/kicad_rule_export-c09b25b29b958a07",
+        "bytes": 43448680
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "ad931c0e0b2bfa01bfa9e9111e275e37c9a6b898dae22b5ed567c55c391b9454",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ad931c0e0b2bfa01bfa9e9111e275e37c9a6b898dae22b5ed567c55c391b9454/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54235040
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/artifact_numeric_keys-03d9b7a570505404": {
+        "sha256": "a8fac0cb5492fb90d1d023d0b9a91a62395bb232a115167ea56455c4fedf8fb4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/a8fac0cb5492fb90d1d023d0b9a91a62395bb232a115167ea56455c4fedf8fb4/artifact_numeric_keys-03d9b7a570505404",
+        "bytes": 6721200
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/readme-990ac56b4fb5e9a5": {
+        "sha256": "6a81a0ddde36375d4251df1a78520da654652d910fa837af9f2f57c454423e93",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/6a81a0ddde36375d4251df1a78520da654652d910fa837af9f2f57c454423e93/readme-990ac56b4fb5e9a5",
+        "bytes": 1115880
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hyperdrc-5da1690b41025398": {
+        "sha256": "c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af/hyperdrc-5da1690b41025398",
+        "bytes": 1079400
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/diagnostic_formatting-e5ef4baeabfbc955": {
+        "sha256": "4cfedf26d188223b35c4cd76d614ef5f51b7a636361940142b2549329f0dd655",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/4cfedf26d188223b35c4cd76d614ef5f51b7a636361940142b2549329f0dd655/diagnostic_formatting-e5ef4baeabfbc955",
+        "bytes": 20047784
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/kicad_pad_sources-e4732b4399bed56a": {
+        "sha256": "67f2217705e3d1479fcc32b7ef27a20067781a57f6db06b03ecd80c0f39e5ed2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/67f2217705e3d1479fcc32b7ef27a20067781a57f6db06b03ecd80c0f39e5ed2/kicad_pad_sources-e4732b4399bed56a",
+        "bytes": 20739448
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "d36293ca39af2fd5f763de540fa2bac95cd6c0a394ed20d6ab9fdb5fc6e983a2",
+    "stderr_sha256": "51d08742667c735e29d1b2a7f5cba29a65af05b23f2513a722b341634c996328",
+    "resources_sha256": "06c604a19b413bedf9f2e65df0bb15df762f7270e38aafead8b796b3c95b452d"
+  },
+  {
+    "name": "full-board",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 55.911569429095834,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "ad931c0e0b2bfa01bfa9e9111e275e37c9a6b898dae22b5ed567c55c391b9454",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ad931c0e0b2bfa01bfa9e9111e275e37c9a6b898dae22b5ed567c55c391b9454/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54235040
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "0e8df62ba1cbf4b098c7150bdb31e3cddd847e7f605b7fd38fc827a7a9ef88e6",
+    "stderr_sha256": "71b4815cb8fd92ff0788fd587be24d887b4c3b215bcd276b7115239a99ed43ee",
+    "resources_sha256": "1cbcd005a6b565264f3d41f71a67e8724bee9913dfca258949e71aa201b39502"
+  },
+  {
+    "name": "copper-neck",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 45.7692126580514,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "ad931c0e0b2bfa01bfa9e9111e275e37c9a6b898dae22b5ed567c55c391b9454",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ad931c0e0b2bfa01bfa9e9111e275e37c9a6b898dae22b5ed567c55c391b9454/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54235040
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "b5beb7ccf6cdd0a1475b62e24c72d32455c1d3569d8188b77e88aabba26d30f8",
+    "stderr_sha256": "cf17ea4b15cc9c7a606389160807dcdf72e76fef03e0a634ca67be5a5fd6444e",
+    "resources_sha256": "d1a04a09e19c31bc3add040c8e694d7c184296db2a68f0abfd20973c7538c15e"
+  },
+  {
+    "name": "gerber",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.7074649198912084,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "ad931c0e0b2bfa01bfa9e9111e275e37c9a6b898dae22b5ed567c55c391b9454",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-executables-v1/ad931c0e0b2bfa01bfa9e9111e275e37c9a6b898dae22b5ed567c55c391b9454/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54235040
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "ad0094e8779893e9957c9115899cb57707257bffc489462178c9d16167ff7b2b",
+    "stderr_sha256": "60032bdbdedbe9f34f62c1ec891339995f4ef10734c85254c1eaf423bc65057f",
+    "resources_sha256": "6885ddfeb018d00809bfc483d5e7d220c4c7c36a634091ed9ed58065345e1674"
+  },
+  {
+    "name": "strict-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 103.1118259318173,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "b02dc022903183525e0d0f03d4ba5c5ba64c6871dc64531c4e95f93e3de55b2b",
+    "resources_sha256": "70693f00c2d35bc10bfd06ce0ff53c4116119deded06da76428719cccb10596a"
+  },
+  {
+    "name": "minimal-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "-p",
+      "hypercurve",
+      "--no-default-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 38.8949488629587,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "8a697367b297aa9ffbbd86b607e23fa908221940e0b488143def29337cfac60f",
+    "resources_sha256": "ddad61f86c08524256004ece0cfca9c0a3da34ad2d33e37c7e26f3a97795a6a6"
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 38.77017682977021,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": "-D warnings",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "56f5959ebd5b6b296d01b6d9d11bc21b801fff51e66dbe517aba6753f6040e3e",
+    "resources_sha256": "f47fd2c4c80c286eec5faa0ac4ff7aaccc31489538a923e9fc86710379a2c312"
+  },
+  {
+    "name": "native-cli",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 107.5908531602472,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "aae476e6a631c2b4f50bda8cecc316f2594d5fa6cfb1e15254af989329558b6f",
+    "stderr_sha256": "76aab1d4fb4dbe0814294a58453fef2c5511298ff232aabc72dbe6511513277b",
+    "resources_sha256": "e5ed70969bd6ea4bd4b4184e8b9ce0386795b66ee8727f0fb703bee70c867728"
+  }
+]

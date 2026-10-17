@@ -1,0 +1,38 @@
+{
+  "complete": true,
+  "compile_exit_code": 0,
+  "test_exit_code": 101,
+  "counts": {
+    "passed": 4,
+    "failed": 22,
+    "ignored": 0
+  },
+  "failed_tests": [
+    "ambient_approximate_policy_does_not_change_stroke_geometry",
+    "coincident_track_endpoints_keep_the_width_disk",
+    "denied_stroke_construction_retains_failure_after_scope_exit",
+    "denied_track_import_cannot_disappear_or_become_a_valid_origin",
+    "exact_diagonal_track_area_includes_caps_without_rounding_the_width",
+    "finite_endpoint_difference_can_exceed_float_range",
+    "finite_length_squaring_cannot_overflow",
+    "finite_length_squaring_cannot_underflow_to_zero",
+    "fresh_zero_budget_admits_rational_butt_strokes",
+    "irrational_diagonal_retains_native_surd_width",
+    "irrational_diagonal_track_keeps_line_and_arc_geometry",
+    "kicad_linear_tracks_include_both_round_caps",
+    "large_finite_stroke_does_not_collapse_its_width",
+    "malformed_track_fields_retain_source_failure",
+    "pythagorean_diagonal_has_exact_rational_area",
+    "subnormal_width_is_halved_after_lifting",
+    "tangent_track_caps_do_not_create_filled_overlap",
+    "track_caps_drive_actual_short_readiness",
+    "track_decimal_endpoints_and_width_are_never_rounded_first",
+    "track_subrange_width_and_length_remain_nonzero",
+    "track_superrange_coordinates_stay_native",
+    "warmed_stroke_queries_recheck_exhausted_scope"
+  ],
+  "source_and_libraries_unchanged": true,
+  "regressions_weakened": false,
+  "binary_sha256": "1baab0b102eec03e099b4fb89ef9b692ab2c1cefba444d200fdb4195f4e853de",
+  "full_plan_complete": false
+}

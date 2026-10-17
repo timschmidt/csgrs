@@ -1,0 +1,45 @@
+{
+  "complete": true,
+  "commands": 3,
+  "unexpected_exits": [],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "real_js_and_compiled_typescript_consumers_passed": true,
+  "public_contract_tests": 12,
+  "artifacts": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": {
+      "sha256": "663480d51ab9a44d52b65c6a4f5716435db8aff5ec346c4709b38a941c8764b6",
+      "bytes": 12251710
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.d.ts": {
+      "sha256": "4929deff0be4f14fc59a6bca45c1999d46401aa8ae3bb8e3a395b0fa2ef64da3",
+      "bytes": 15809
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.js": {
+      "sha256": "6ad5697ee5e849f6d4859cc651ec155922ce7b97050a3a8221ddae0650183945",
+      "bytes": 80582
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm": {
+      "sha256": "af3098788a905c8d9d68f5a16c54aeb7d36d8f430b718a34a128c677c5216348",
+      "bytes": 11198949
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm.d.ts": {
+      "sha256": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+      "bytes": 14726
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/geometry_certainty.ts": {
+      "sha256": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7",
+      "bytes": 3098
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/io_contracts.js": {
+      "sha256": "37fb65ed6e244e3e134178c1358f129f6fe33191028592e9e53043110b45fb19",
+      "bytes": 4009
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/io_contracts.ts": {
+      "sha256": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e",
+      "bytes": 4087
+    }
+  }
+}

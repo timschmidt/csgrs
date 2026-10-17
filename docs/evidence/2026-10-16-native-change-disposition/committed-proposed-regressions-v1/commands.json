@@ -1,0 +1,43 @@
+[
+  {
+    "name": "compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debuginfo=0",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/native_linear_strokes",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/libhyperdrc.rlib"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.660521418787539,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9780c96d2b3f8a1bbf46cf1ceda69caa51609d9d71081992a988b87ad77a1e67"
+  },
+  {
+    "name": "regressions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/native_linear_strokes",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.010719425044953823,
+    "stdout_sha256": "d1ed21bdc73f8b2d9a745091f0c34beb7dbce16e1c04652bc3e4c66de5bb3c02",
+    "stderr_sha256": "5314a1cf115bfc31206bc85d0386a5ea139cf03ec4d21cb3cda362f4b192710e",
+    "resources_sha256": "1cec9f37f59213937e535e1736ec38fc8d44154cb6cae9091df518ed469cc6e0"
+  }
+]

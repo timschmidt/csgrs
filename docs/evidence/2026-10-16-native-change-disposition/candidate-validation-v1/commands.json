@@ -1,0 +1,204 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 10.950467661954463,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c4a7d11a1d78eae5341fdf279f6d720bb2bb885e873020f917a1b93ae25c7361"
+  },
+  {
+    "name": "native-curve-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--test",
+      "native_linear_stroke",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 150.8985237320885,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-target-v1/release/deps/native_linear_stroke-5eb5c1ee2586089c": {
+        "sha256": "3378ad63f68689a28c9f6a037cdd4fb65445db553f0ca3eec73fa0235e1acbce",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-executables-v1/3378ad63f68689a28c9f6a037cdd4fb65445db553f0ca3eec73fa0235e1acbce/native_linear_stroke-5eb5c1ee2586089c",
+        "bytes": 18668552
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "699fd2ccf37fbf6afed1b63cc4aaf3f0ea5934d3afff0b01b99dd52cee060e96",
+    "stderr_sha256": "506c8f14fba67f790bc3610e0b8580ca7432a0cd9229546abf377602a9fe031d",
+    "resources_sha256": "e5710a92a4517d15d6b3b8de2c9df95692e9e0a00fe53bfb3053c2e07df8828f"
+  },
+  {
+    "name": "native-drc-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--test",
+      "native_linear_strokes",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 283.2320889378898,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-target-v1/release/deps/native_linear_strokes-28ed5b0b1f09e479": {
+        "sha256": "c7d96d884bb2d571a4b8fcb3eb0506ce609274646edac2e89d105f7f937c448f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-executables-v1/c7d96d884bb2d571a4b8fcb3eb0506ce609274646edac2e89d105f7f937c448f/native_linear_strokes-28ed5b0b1f09e479",
+        "bytes": 20715264
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "6fe26e30dcac3985dcaa8431fbf6979caa59aa92ac712f3ba4368c8099b8666c",
+    "stderr_sha256": "b4d768049e90f8ccb2425a0eca2957630869a967c67f49160064eea968e33f05",
+    "resources_sha256": "224168bb2a6b6623d9705cf5428ca56712b5f651dd331b086dc5bb4a39ef88cb"
+  },
+  {
+    "name": "gate-build",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--no-run"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 64.95348280807957,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "a05e0d4cb8a110c967481f4f11bf50df2babce4828238b06b6cd5589a4dbf72b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-executables-v1/a05e0d4cb8a110c967481f4f11bf50df2babce4828238b06b6cd5589a4dbf72b/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54267368
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "fd9d91b85a74446485dad07176ff01b4394bf1f98ed08c0c1e86ca0a38134ec1",
+    "resources_sha256": "cc91782bf463fa1b3af8f620d9c34a716d49858e375a767b3da3dd4727a8a7b3"
+  },
+  {
+    "name": "full-board",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 197.1796631673351,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "a05e0d4cb8a110c967481f4f11bf50df2babce4828238b06b6cd5589a4dbf72b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-executables-v1/a05e0d4cb8a110c967481f4f11bf50df2babce4828238b06b6cd5589a4dbf72b/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54267368
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "82fa82a03b66837e275659cdf4c1d0edd8de92d363cead5735a4eb6b5f4d39d3",
+    "stderr_sha256": "1fbfae9fafbc081f136ad58dccc4cbc3a622fee39785b392e61885036a67a3ea",
+    "resources_sha256": "4b4781e9c573d68fd51575419b05743068708db509771f7f0fb5239b84a06494"
+  },
+  {
+    "name": "copper-neck",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 199.76098815025762,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "a05e0d4cb8a110c967481f4f11bf50df2babce4828238b06b6cd5589a4dbf72b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-executables-v1/a05e0d4cb8a110c967481f4f11bf50df2babce4828238b06b6cd5589a4dbf72b/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54267368
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "346c25a0e66e336728b311ae76379252ec9aa269f0d49ffc5ad68552880af0f7",
+    "stderr_sha256": "13536836c5be89a66b9c51a51c3f896eec3ee93964c25abb8c4c6dc136bbdfa6",
+    "resources_sha256": "21de1fccda4ee8caf5dffda2387c71da1eac41372b4448595023c84f630b49d1"
+  },
+  {
+    "name": "gerber",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.2131648953072727,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "a05e0d4cb8a110c967481f4f11bf50df2babce4828238b06b6cd5589a4dbf72b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-executables-v1/a05e0d4cb8a110c967481f4f11bf50df2babce4828238b06b6cd5589a4dbf72b/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54267368
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "fed8c49764b63a1b48311b11dfc12251e1c20ada22e663cf13f94b21b46c0eb6",
+    "stderr_sha256": "7e84d88fe25991d5fe24f2ba862e45a71af48f00884dfc951615fc31adf31803",
+    "resources_sha256": "c766732f15b85d0d3163fb5efac354576b49167c58ca931f770bb1e72415a6d8"
+  }
+]

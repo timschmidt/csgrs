@@ -1,0 +1,406 @@
+{
+  "complete": true,
+  "runner_sha256": "fe60b61d2fa4e609de99d4bce7e86a1dc35d26a45c474b1c9525c616bfc6c5cc",
+  "retained_completed_evidence": {
+    "preparation-v1/candidate-source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/preparation-v1/candidate-source-hashes.json.gz",
+      "sha256": "3b32ef87ae080492a73fea53b8b1b9a66c2c420c0df17c8e3b8ef71575ea8be3"
+    },
+    "preparation-v1/committed-source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/preparation-v1/committed-source-hashes.json.gz",
+      "sha256": "53221aed09db5326c966b3edd58453a6261a3cf303dd13f09d1374943e9a69bb"
+    },
+    "preparation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/preparation-v1/result.json",
+      "sha256": "def3b9eb1fa2038bca7bbeb5782b3796f7ae1873bb20787ea1f2d83c746bcd58"
+    },
+    "preparation-v1/tracked.patch": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/preparation-v1/tracked.patch",
+      "sha256": "a6831dc595431aa24eec750d56f350c5d19f760171f90d3b479cb78154fe0c17"
+    },
+    "preparation-v1/untracked.patch": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/preparation-v1/untracked.patch",
+      "sha256": "e78d81ef69584428f1ed451f2430de3ca150c95ce8b057613c074bca6e56a1f4"
+    },
+    "fixture-preflight-v1/candidate-0.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/fixture-preflight-v1/candidate-0.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "fixture-preflight-v1/candidate-1.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/fixture-preflight-v1/candidate-1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "fixture-preflight-v1/committed-0.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/fixture-preflight-v1/committed-0.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "fixture-preflight-v1/committed-1.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/fixture-preflight-v1/committed-1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "fixture-preflight-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/fixture-preflight-v1/result.json",
+      "sha256": "e48fc8c12f2e19972902271aafa84f73015de298245de59e45a6f89096e3cd01"
+    },
+    "fixture-preflight-v1/unzip-version.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/fixture-preflight-v1/unzip-version.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "fixture-preflight-v1/unzip-version.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/fixture-preflight-v1/unzip-version.stdout",
+      "sha256": "ef0a576092b336396c86862e752c1ed712d71c99ab15f151d7f6a0d39685c2ef"
+    },
+    "candidate-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/commands.json",
+      "sha256": "36c9bf5167fe0525c11f459f1ca63b5ccc9fd9592942333feaf8b1cb4b5b8b63"
+    },
+    "candidate-validation-v1/copper-neck.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/copper-neck.resources",
+      "sha256": "21de1fccda4ee8caf5dffda2387c71da1eac41372b4448595023c84f630b49d1"
+    },
+    "candidate-validation-v1/copper-neck.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/copper-neck.stderr",
+      "sha256": "13536836c5be89a66b9c51a51c3f896eec3ee93964c25abb8c4c6dc136bbdfa6"
+    },
+    "candidate-validation-v1/copper-neck.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/copper-neck.stdout",
+      "sha256": "346c25a0e66e336728b311ae76379252ec9aa269f0d49ffc5ad68552880af0f7"
+    },
+    "candidate-validation-v1/format.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/format.resources",
+      "sha256": "c4a7d11a1d78eae5341fdf279f6d720bb2bb885e873020f917a1b93ae25c7361"
+    },
+    "candidate-validation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/full-board.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/full-board.resources",
+      "sha256": "4b4781e9c573d68fd51575419b05743068708db509771f7f0fb5239b84a06494"
+    },
+    "candidate-validation-v1/full-board.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/full-board.stderr",
+      "sha256": "1fbfae9fafbc081f136ad58dccc4cbc3a622fee39785b392e61885036a67a3ea"
+    },
+    "candidate-validation-v1/full-board.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/full-board.stdout",
+      "sha256": "82fa82a03b66837e275659cdf4c1d0edd8de92d363cead5735a4eb6b5f4d39d3"
+    },
+    "candidate-validation-v1/gate-build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/gate-build.resources",
+      "sha256": "cc91782bf463fa1b3af8f620d9c34a716d49858e375a767b3da3dd4727a8a7b3"
+    },
+    "candidate-validation-v1/gate-build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/gate-build.stderr",
+      "sha256": "fd9d91b85a74446485dad07176ff01b4394bf1f98ed08c0c1e86ca0a38134ec1"
+    },
+    "candidate-validation-v1/gate-build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/gate-build.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/gerber.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/gerber.resources",
+      "sha256": "c766732f15b85d0d3163fb5efac354576b49167c58ca931f770bb1e72415a6d8"
+    },
+    "candidate-validation-v1/gerber.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/gerber.stderr",
+      "sha256": "7e84d88fe25991d5fe24f2ba862e45a71af48f00884dfc951615fc31adf31803"
+    },
+    "candidate-validation-v1/gerber.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/gerber.stdout",
+      "sha256": "fed8c49764b63a1b48311b11dfc12251e1c20ada22e663cf13f94b21b46c0eb6"
+    },
+    "candidate-validation-v1/native-curve-regressions.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/native-curve-regressions.resources",
+      "sha256": "e5710a92a4517d15d6b3b8de2c9df95692e9e0a00fe53bfb3053c2e07df8828f"
+    },
+    "candidate-validation-v1/native-curve-regressions.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/native-curve-regressions.stderr",
+      "sha256": "506c8f14fba67f790bc3610e0b8580ca7432a0cd9229546abf377602a9fe031d"
+    },
+    "candidate-validation-v1/native-curve-regressions.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/native-curve-regressions.stdout",
+      "sha256": "699fd2ccf37fbf6afed1b63cc4aaf3f0ea5934d3afff0b01b99dd52cee060e96"
+    },
+    "candidate-validation-v1/native-drc-regressions.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/native-drc-regressions.resources",
+      "sha256": "224168bb2a6b6623d9705cf5428ca56712b5f651dd331b086dc5bb4a39ef88cb"
+    },
+    "candidate-validation-v1/native-drc-regressions.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/native-drc-regressions.stderr",
+      "sha256": "b4d768049e90f8ccb2425a0eca2957630869a967c67f49160064eea968e33f05"
+    },
+    "candidate-validation-v1/native-drc-regressions.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/native-drc-regressions.stdout",
+      "sha256": "6fe26e30dcac3985dcaa8431fbf6979caa59aa92ac712f3ba4368c8099b8666c"
+    },
+    "candidate-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/protocol.json",
+      "sha256": "9679ad7c82b3e92adf05c2cc7b0abeb7a70fabd207598152b267c588269b4547"
+    },
+    "candidate-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-validation-v1/result.json",
+      "sha256": "1ce846744cac145f0fc19db3547a9803d29a4f08eb122f340a84b323261ad148"
+    },
+    "committed-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/commands.json",
+      "sha256": "0d20e4263a8c5aeddc3d92350d0e048db17321af5afea189313eaed93fa91f96"
+    },
+    "committed-validation-v1/copper-neck.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/copper-neck.resources",
+      "sha256": "d1a04a09e19c31bc3add040c8e694d7c184296db2a68f0abfd20973c7538c15e"
+    },
+    "committed-validation-v1/copper-neck.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/copper-neck.stderr",
+      "sha256": "cf17ea4b15cc9c7a606389160807dcdf72e76fef03e0a634ca67be5a5fd6444e"
+    },
+    "committed-validation-v1/copper-neck.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/copper-neck.stdout",
+      "sha256": "b5beb7ccf6cdd0a1475b62e24c72d32455c1d3569d8188b77e88aabba26d30f8"
+    },
+    "committed-validation-v1/curve-all.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/curve-all.resources",
+      "sha256": "a1e5bbcd96c98dc944c542f0c1355f1f319a4f6f51814bded859ec6dd715fa19"
+    },
+    "committed-validation-v1/curve-all.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/curve-all.stderr",
+      "sha256": "ed1aa82eae6c2e97503672910a3ed47c12694ab285fad1b591f877d8873800d0"
+    },
+    "committed-validation-v1/curve-all.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/curve-all.stdout",
+      "sha256": "49ea03c2a2bbe4bcbda290a98dd5d9369ea8d78e876308a227f3b4ae396cf9b5"
+    },
+    "committed-validation-v1/curve-default.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/curve-default.resources",
+      "sha256": "abd2973d05303c1e78a9e414057ce0eb6b6ef02548177dda6bc94f94bb482be9"
+    },
+    "committed-validation-v1/curve-default.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/curve-default.stderr",
+      "sha256": "3cb95c556617d00ae1e2016c698ba8b04c470460750423d6ed6183fc62b3ae5f"
+    },
+    "committed-validation-v1/curve-default.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/curve-default.stdout",
+      "sha256": "2e59c59616a7b38b61db3ac11717d3d9886fbbb4f625332dcae812fe9db084f5"
+    },
+    "committed-validation-v1/docs.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/docs.resources",
+      "sha256": "f47fd2c4c80c286eec5faa0ac4ff7aaccc31489538a923e9fc86710379a2c312"
+    },
+    "committed-validation-v1/docs.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/docs.stderr",
+      "sha256": "56f5959ebd5b6b296d01b6d9d11bc21b801fff51e66dbe517aba6753f6040e3e"
+    },
+    "committed-validation-v1/docs.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/docs.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "committed-validation-v1/format.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/format.resources",
+      "sha256": "fe7433f2faaeb0da98a8610e3f832b30fa37ab3e0b0775cf9b39b5f89fb91e36"
+    },
+    "committed-validation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "committed-validation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "committed-validation-v1/full-board.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/full-board.resources",
+      "sha256": "1cbcd005a6b565264f3d41f71a67e8724bee9913dfca258949e71aa201b39502"
+    },
+    "committed-validation-v1/full-board.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/full-board.stderr",
+      "sha256": "71b4815cb8fd92ff0788fd587be24d887b4c3b215bcd276b7115239a99ed43ee"
+    },
+    "committed-validation-v1/full-board.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/full-board.stdout",
+      "sha256": "0e8df62ba1cbf4b098c7150bdb31e3cddd847e7f605b7fd38fc827a7a9ef88e6"
+    },
+    "committed-validation-v1/gerber.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/gerber.resources",
+      "sha256": "6885ddfeb018d00809bfc483d5e7d220c4c7c36a634091ed9ed58065345e1674"
+    },
+    "committed-validation-v1/gerber.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/gerber.stderr",
+      "sha256": "60032bdbdedbe9f34f62c1ec891339995f4ef10734c85254c1eaf423bc65057f"
+    },
+    "committed-validation-v1/gerber.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/gerber.stdout",
+      "sha256": "ad0094e8779893e9957c9115899cb57707257bffc489462178c9d16167ff7b2b"
+    },
+    "committed-validation-v1/minimal-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/minimal-clippy.resources",
+      "sha256": "ddad61f86c08524256004ece0cfca9c0a3da34ad2d33e37c7e26f3a97795a6a6"
+    },
+    "committed-validation-v1/minimal-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/minimal-clippy.stderr",
+      "sha256": "8a697367b297aa9ffbbd86b607e23fa908221940e0b488143def29337cfac60f"
+    },
+    "committed-validation-v1/minimal-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/minimal-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "committed-validation-v1/native-cli.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/native-cli.resources",
+      "sha256": "e5ed70969bd6ea4bd4b4184e8b9ce0386795b66ee8727f0fb703bee70c867728"
+    },
+    "committed-validation-v1/native-cli.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/native-cli.stderr",
+      "sha256": "76aab1d4fb4dbe0814294a58453fef2c5511298ff232aabc72dbe6511513277b"
+    },
+    "committed-validation-v1/native-cli.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/native-cli.stdout",
+      "sha256": "aae476e6a631c2b4f50bda8cecc316f2594d5fa6cfb1e15254af989329558b6f"
+    },
+    "committed-validation-v1/native-other-tests.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/native-other-tests.resources",
+      "sha256": "06c604a19b413bedf9f2e65df0bb15df762f7270e38aafead8b796b3c95b452d"
+    },
+    "committed-validation-v1/native-other-tests.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/native-other-tests.stderr",
+      "sha256": "51d08742667c735e29d1b2a7f5cba29a65af05b23f2513a722b341634c996328"
+    },
+    "committed-validation-v1/native-other-tests.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/native-other-tests.stdout",
+      "sha256": "d36293ca39af2fd5f763de540fa2bac95cd6c0a394ed20d6ab9fdb5fc6e983a2"
+    },
+    "committed-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/protocol.json",
+      "sha256": "62ea7c1b80d0bf554ba51678072f3ed89c18e4ab86a569c48d6d7cec97b392c4"
+    },
+    "committed-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/result.json",
+      "sha256": "d700d0690e1620832ad4f8c42be5006b92d420b8ff41e6e3013f10dbbabd76c3"
+    },
+    "committed-validation-v1/root-all.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/root-all.resources",
+      "sha256": "e228dbadbc265408f4ee51f89cd537443e121d7f73803f1754a9bfad8806c675"
+    },
+    "committed-validation-v1/root-all.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/root-all.stderr",
+      "sha256": "adb412fa73193f53bc25e15f6ced0fcfac66de21c51e03e1f775b8280f77c3c8"
+    },
+    "committed-validation-v1/root-all.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/root-all.stdout",
+      "sha256": "dde8094cf437dc11ec18bbf946c1b0f1087b4dff7580e7887e342e903ab274f7"
+    },
+    "committed-validation-v1/root-minimal.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/root-minimal.resources",
+      "sha256": "98a399fee59a677c0e2cadae3c5a5df18de51909d7d6c0ac7a4cd76f61943d6d"
+    },
+    "committed-validation-v1/root-minimal.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/root-minimal.stderr",
+      "sha256": "13d6707b8102010c4bc46e8733c1afa76b72e20097f2e585c648cae806f7cbe2"
+    },
+    "committed-validation-v1/root-minimal.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/root-minimal.stdout",
+      "sha256": "6912a6a8a22648fba8dd2b3dc77c3354f98d92e446217b634246123d00a0ce49"
+    },
+    "committed-validation-v1/strict-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/strict-clippy.resources",
+      "sha256": "70693f00c2d35bc10bfd06ce0ff53c4116119deded06da76428719cccb10596a"
+    },
+    "committed-validation-v1/strict-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/strict-clippy.stderr",
+      "sha256": "b02dc022903183525e0d0f03d4ba5c5ba64c6871dc64531c4e95f93e3de55b2b"
+    },
+    "committed-validation-v1/strict-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/strict-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/commands.json",
+      "sha256": "f32ff7016f3b1b1c8aaa63bbebd712563be502281cbcf175171420114e5cd118"
+    },
+    "wasm-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/protocol.json",
+      "sha256": "661213f05bfcd15738975e99abea84b1689839c2c554da7f9e6a7df337553113"
+    },
+    "wasm-validation-v1/real-consumers.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/real-consumers.resources",
+      "sha256": "88f3daedf5005302a808757ee1bb441e7f4451ba27d919ec2517ad3498c54345"
+    },
+    "wasm-validation-v1/real-consumers.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/real-consumers.stderr",
+      "sha256": "7874e49691e6bec77f2b5444d1a1d4cfe7290ee18b42000bbb8df7f6c621b58e"
+    },
+    "wasm-validation-v1/real-consumers.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/real-consumers.stdout",
+      "sha256": "2a9526c61750a7b42f384416bf80bef49052986186b3f25cb7f159d2a3e720f2"
+    },
+    "wasm-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/result.json",
+      "sha256": "ebef9a4787556f990b7138972f3077e7ed86f4c19f4ca2e22721be21f2c96c07"
+    },
+    "wasm-validation-v1/shell-syntax.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/shell-syntax.resources",
+      "sha256": "e363b21d50f28dfad26728342d4433d05672f43b830a15d87c135ac969e65803"
+    },
+    "wasm-validation-v1/shell-syntax.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/shell-syntax.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v1/shell-syntax.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/shell-syntax.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v1/wasm-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/wasm-clippy.resources",
+      "sha256": "9e5434bb509233f4f3cd0f0d5b81918526e51c2f959415b8ede032157e5163b4"
+    },
+    "wasm-validation-v1/wasm-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/wasm-clippy.stderr",
+      "sha256": "bcc67601d727de8831e392dd7cabb49b55081edb5683d21f3b91580acbea2bb2"
+    },
+    "wasm-validation-v1/wasm-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-validation-v1/wasm-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "committed-proposed-regressions-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/commands.json",
+      "sha256": "38223900b1696b27eec114463c38776f66fe2ef5b92e497999143b438aca1b2f"
+    },
+    "committed-proposed-regressions-v1/compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/compile.resources",
+      "sha256": "9780c96d2b3f8a1bbf46cf1ceda69caa51609d9d71081992a988b87ad77a1e67"
+    },
+    "committed-proposed-regressions-v1/compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "committed-proposed-regressions-v1/compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "committed-proposed-regressions-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/protocol.json",
+      "sha256": "ec18bdc3d7c22f2af0ec3bc81e192f7de04b997acaf27740f43ab064772d1191"
+    },
+    "committed-proposed-regressions-v1/regressions.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/regressions.resources",
+      "sha256": "1cec9f37f59213937e535e1736ec38fc8d44154cb6cae9091df518ed469cc6e0"
+    },
+    "committed-proposed-regressions-v1/regressions.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/regressions.stderr",
+      "sha256": "5314a1cf115bfc31206bc85d0386a5ea139cf03ec4d21cb3cda362f4b192710e"
+    },
+    "committed-proposed-regressions-v1/regressions.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/regressions.stdout",
+      "sha256": "d1ed21bdc73f8b2d9a745091f0c34beb7dbce16e1c04652bc3e4c66de5bb3c02"
+    },
+    "committed-proposed-regressions-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/result.json",
+      "sha256": "a3863b63b704357b43f56669215c7f074f5f27b168b059fd036863cbcdcf8b9f"
+    }
+  },
+  "physical_executables_and_targets_modified": false,
+  "full_extracted_boards_retained_in_physical_fixture_directory": true,
+  "original_archive_bytes_preserved": true,
+  "full_plan_complete": false
+}

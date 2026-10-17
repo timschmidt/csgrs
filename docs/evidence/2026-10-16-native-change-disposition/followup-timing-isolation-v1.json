@@ -1,0 +1,22 @@
+{
+  "followup_result": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/result.json",
+  "followup_result_sha256": "006e0f04dab6897368b65c858db86c00a71963f54bcb158606fb7d48eac4ed03",
+  "followup_native_result": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/result.json",
+  "followup_native_result_sha256": "14ba2e9794b2f08f7fe5c43b231046112229c722e52d607e965300a7937a19c5",
+  "followup_completed_epoch": 1792198527.4057589,
+  "gates": {
+    "full-board": {
+      "followup_completion_precedes_gate_start": true,
+      "conservative_gap_seconds": 1279.783588886261
+    },
+    "copper-neck": {
+      "followup_completion_precedes_gate_start": true,
+      "conservative_gap_seconds": 1336.088621854782
+    },
+    "gerber": {
+      "followup_completion_precedes_gate_start": true,
+      "conservative_gap_seconds": 1382.2413856983185
+    }
+  },
+  "interpretation": "Resource-file end time minus the whole supervised duration is earlier than the actual gate start; the independent WASM phase completed before that bound."
+}

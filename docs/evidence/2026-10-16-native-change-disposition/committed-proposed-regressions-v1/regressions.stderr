@@ -1,0 +1,97 @@
+
+thread 'ambient_approximate_policy_does_not_change_stroke_geometry' (4169993) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:426:57:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'coincident_track_endpoints_keep_the_width_disk' (4169994) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:195:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+thread 'denied_stroke_construction_retains_failure_after_scope_exit' (4169995) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:12:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 90071992547409985, denominator: 72057594037927936 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 5, denominator: 4 }, class: One, computable: None, primitive_approx_cache: Empty }
+  left: Some(Greater)
+ right: Some(Equal)
+
+thread 'denied_track_import_cannot_disappear_or_become_a_valid_origin' (4169996) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:12:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: ConstOffset(ConstOffsetClass { pi_power: 1, exp_power: Rational { sign: NoSign, numerator: 0, denominator: 1 }, offset: Rational { sign: Plus, numerator: 4, denominator: 1 } }), computable: Some(Computable { internal: Node { facts: AtomicFacts(8590067511), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(4), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+thread 'exact_diagonal_track_area_includes_caps_without_rounding_the_width' (4169997) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:12:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 1125899906842625, denominator: 1125899906842624 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 100 }, class: ConstOffset(ConstOffsetClass { pi_power: 1, exp_power: Rational { sign: NoSign, numerator: 0, denominator: 1 }, offset: Rational { sign: Plus, numerator: 100, denominator: 1 } }), computable: Some(Computable { internal: Node { facts: AtomicFacts(25769936695), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(100), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+thread 'finite_endpoint_difference_can_exceed_float_range' (4169998) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:74:29:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour has fewer than three vertices" }
+
+thread 'finite_length_squaring_cannot_overflow' (4169999) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:83:29:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+
+thread 'finite_length_squaring_cannot_underflow_to_zero' (4170000) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:55:67:
+called `Option::unwrap()` on a `None` value
+
+thread 'fresh_zero_budget_admits_rational_butt_strokes' (4170001) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:418:14:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+
+thread 'irrational_diagonal_retains_native_surd_width' (4170002) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:12:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 1592262918131443, denominator: 562949953421312 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 2, denominator: 1 }, class: Sqrt(Rational { sign: Plus, numerator: 2, denominator: 1 }), computable: Some(Computable { internal: Node { facts: AtomicFacts(823), approximation: Sqrt(Computable { internal: Node { facts: AtomicFacts(4294967863), approximation: Int(2), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+thread 'irrational_diagonal_track_keeps_line_and_arc_geometry' (4170003) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:12:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 1592262918131443, denominator: 562949953421312 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: Irrational, computable: Some(Computable { internal: Node { facts: AtomicFacts(198407), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295033655), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(823), approximation: Sqrt(Computable { internal: Node { facts: AtomicFacts(4294967863), approximation: Int(2), cache: None }, signal: None }), cache: Some((-5, 45)) }, signal: None }, 1), cache: Some((-4, 45)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }), cache: Some((-2, 24)) }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+thread 'kicad_linear_tracks_include_both_round_caps' (4170004) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:12:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: ConstOffset(ConstOffsetClass { pi_power: 1, exp_power: Rational { sign: NoSign, numerator: 0, denominator: 1 }, offset: Rational { sign: Plus, numerator: 4, denominator: 1 } }), computable: Some(Computable { internal: Node { facts: AtomicFacts(8590067511), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(4), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+thread 'large_finite_stroke_does_not_collapse_its_width' (4170005) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:39:30:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+
+thread 'malformed_track_fields_retain_source_failure' (4170006) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:223:9:
+assertion `left == right` failed: (start 0 0) (end 2 0)
+  left: 0
+ right: 1
+
+thread 'pythagorean_diagonal_has_exact_rational_area' (4170008) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:12:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 101412048018258424852870238463591, denominator: 81129638414606681695789005144064 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 5, denominator: 4 }, class: One, computable: None, primitive_approx_cache: Empty }
+  left: Some(Greater)
+ right: Some(Equal)
+
+thread 'subnormal_width_is_halved_after_lifting' (4170011) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:65:29:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+
+thread 'tangent_track_caps_do_not_create_filled_overlap' (4170012) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:298:5:
+assertion `left == right` failed
+  left: Ok(Outside)
+ right: Ok(Boundary)
+
+thread 'track_caps_drive_actual_short_readiness' (4170013) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:285:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+thread 'track_decimal_endpoints_and_width_are_never_rounded_first' (4170014) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:160:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+thread 'track_subrange_width_and_length_remain_nonzero' (4170015) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:173:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+thread 'track_superrange_coordinates_stay_native' (4170016) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:184:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+thread 'warmed_stroke_queries_recheck_exhausted_scope' (4170017) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs:12:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 90071992547409985, denominator: 72057594037927936 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 5, denominator: 4 }, class: One, computable: None, primitive_approx_cache: Empty }
+  left: Some(Greater)
+ right: Some(Equal)

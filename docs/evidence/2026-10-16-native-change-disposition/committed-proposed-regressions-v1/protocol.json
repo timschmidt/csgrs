@@ -1,0 +1,133 @@
+{
+  "runner_sha256": "c2e286cbdfb065f299123d0984e3996162e340882228b38ef4798fcace7e387f",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs",
+  "source_sha256": "84f86db87c666e019b54bad7bff57cbbb290fe23960cc891966134cddd0a7b74",
+  "complete_unchanged_regression_file": true,
+  "baseline_production_modified": false,
+  "qualified_libraries": {
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "sha256": "102f5f76835e93774dcfb63468b687904ab1e877643cacf1b43fc81ca83b62a7",
+      "cargo_artifact": {
+        "reason": "compiler-artifact",
+        "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperlimit#0.4.1",
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperlimit/Cargo.toml",
+        "target": {
+          "kind": [
+            "lib"
+          ],
+          "crate_types": [
+            "lib"
+          ],
+          "name": "hyperlimit",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperlimit/src/lib.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": true,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": false
+        },
+        "features": [
+          "default",
+          "std"
+        ],
+        "filenames": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rmeta"
+        ],
+        "executable": null,
+        "fresh": true
+      }
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "sha256": "ecbcd1e674847736b9f3a328e65c905eb691f11a43b84424d6a5c497e240c8ea",
+      "cargo_artifact": {
+        "reason": "compiler-artifact",
+        "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypercurve#0.3.1",
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypercurve/Cargo.toml",
+        "target": {
+          "kind": [
+            "lib"
+          ],
+          "crate_types": [
+            "lib"
+          ],
+          "name": "hypercurve",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypercurve/src/lib.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": true,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": false
+        },
+        "features": [
+          "default",
+          "triangulation"
+        ],
+        "filenames": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/libhypercurve-7548676b4153986b.rmeta"
+        ],
+        "executable": null,
+        "fresh": true
+      }
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/libhyperdrc.rlib",
+      "sha256": "63da1197a3770fa3854a7738717e87f9ec8720e5ee6a99fb7f441927414f381c",
+      "cargo_artifact": {
+        "reason": "compiler-artifact",
+        "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperdrc#0.3.0",
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperdrc/Cargo.toml",
+        "target": {
+          "kind": [
+            "lib"
+          ],
+          "crate_types": [
+            "lib"
+          ],
+          "name": "hyperdrc",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperdrc/src/lib.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": true,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": false
+        },
+        "features": [],
+        "filenames": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/libhyperdrc.rlib",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/libhyperdrc-6899efa1ff32b829.rmeta"
+        ],
+        "executable": null,
+        "fresh": false
+      }
+    }
+  },
+  "qualification_sha256": "d700d0690e1620832ad4f8c42be5006b92d420b8ff41e6e3013f10dbbabd76c3",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "elapsed_limit_seconds_per_command": 1800,
+  "address_space_limit_bytes": 8589934592,
+  "purpose": "Expose which proposed mathematical claims remain unmet by the committed alternative. Do not count expected legacy failures as successful geometry or weaken their assertions.",
+  "completed_cargo_target_reopened": false,
+  "performance_claimed": false
+}

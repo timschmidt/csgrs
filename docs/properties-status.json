@@ -19,18 +19,32 @@
     "remaining": "All 13 whole-crate obligation groups remain open. Current candidate runtime admission, production callers, normalization/count premises, concurrent publication, matched cost/memory/size, original caps and full-board qualification remain open. The corrected rejection sweep still exceeds the current 15-minute CI job locally. Historical main-worktree guards describe their recorded checkpoint; subsequent authorized main changes require a fresh integration baseline."
   },
   "pending_native_geometry": {
-    "status": "runtime-gates-failed",
-    "scope": "The 35 existing curve/DRC runtime entries remain in scope, including exact source strokes, certificate reuse and their regressions.",
-    "failure": "The corrected full curve run passes 2485 results with 33 ignores. DRC passes 1560 library results and fails the original full-board worker CPU limit (202.370870026 seconds / 120) and copper-neck wall limit (98.539989332 seconds / 60).",
-    "correction": "Compact line certificates satisfy the unchanged 48-byte guard. All 81 separately executed DRC integration results, four curve/DRC doctests, strict release all-feature/all-target Clippy and warning-denied documentation pass. These checks do not admit the native runtime while both original cost gates fail.",
+    "status": "rejected; disposition complete; no pending native edits",
+    "scope": "The submitted 35-file native integration was evaluated against the current revision and rejected after both unchanged original workload gates failed.",
+    "previous_pending_entry": {
+      "status": "runtime-gates-failed",
+      "scope": "The 35 existing curve/DRC runtime entries remain in scope, including exact source strokes, certificate reuse and their regressions.",
+      "failure": "The corrected full curve run passes 2485 results with 33 ignores. DRC passes 1560 library results and fails the original full-board worker CPU limit (202.370870026 seconds / 120) and copper-neck wall limit (98.539989332 seconds / 60).",
+      "correction": "Compact line certificates satisfy the unchanged 48-byte guard. All 81 separately executed DRC integration results, four curve/DRC doctests, strict release all-feature/all-target Clippy and warning-denied documentation pass. These checks do not admit the native runtime while both original cost gates fail.",
+      "evidence": [
+        "docs/evidence/2026-10-12-existing-worktree/geometry-validation/result.json",
+        "docs/evidence/2026-10-12-existing-worktree/line-layout-fix/result.json",
+        "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/historical-worktree-retention.json",
+        "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
+      ],
+      "runtime_admitted": false,
+      "next_step": "Freeze and qualify the owned-radical-scratch design, then review its fixed scalar costs before any native work. All 35 existing native entries, inherited tradeoffs, complete-report obligations and original timing limits remain open."
+    },
     "evidence": [
-      "docs/evidence/2026-10-12-existing-worktree/geometry-validation/result.json",
-      "docs/evidence/2026-10-12-existing-worktree/line-layout-fix/result.json",
-      "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/historical-worktree-retention.json",
-      "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
+      "docs/evidence/2026-10-16-native-change-disposition/decision-v1.json",
+      "docs/evidence/2026-10-16-native-change-disposition/progress-v1.md",
+      "docs/evidence/2026-10-16-native-change-disposition/application-v1.json"
     ],
     "runtime_admitted": false,
-    "next_step": "Freeze and qualify the owned-radical-scratch design, then review its fixed scalar costs before any native work. All 35 existing native entries, inherited tradeoffs, complete-report obligations and original timing limits remain open."
+    "pending_native_paths_remaining": 0,
+    "candidate_files_preserved": 35,
+    "candidate_snapshot": "docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/",
+    "next_step": "Use the preserved failing source-fidelity and construction-failure regressions for smaller independently qualified changes; retain the original workload gates."
   },
   "plan_complete": false,
   "isolated_recursive_certificate_cache": {
@@ -12319,6 +12333,62 @@
       "Continue typed failures and claim scope across remaining legacy WASM boundaries; full P30 and inherited provenance remain open.",
       "Keep the 35 pending native changes unadmitted until their original full-board and copper-neck runtime gates pass.",
       "Continue ordinary strict completion, clean external distribution, remaining properties and complete pre-push validation."
+    ]
+  },
+  "native_change_disposition": {
+    "status": "rejected: complete 35-file native integration fails unchanged workload contract; candidate preserved, committed sources restored",
+    "main_parent_commit": "99b88f707b04053de7f40a86d6d029e3c07460d9",
+    "contract": "docs/evidence/2026-10-16-native-change-disposition/contract-v1.md",
+    "progress": "docs/evidence/2026-10-16-native-change-disposition/progress-v1.md",
+    "decision": "docs/evidence/2026-10-16-native-change-disposition/decision-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-native-change-disposition/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-native-change-disposition/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {},
+    "candidate_snapshot": "docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/",
+    "candidate_files_preserved": 35,
+    "candidate_gates": {
+      "full-board": {
+        "exit_code": 101,
+        "passed": false,
+        "metric": "test-worker thread CPU seconds",
+        "unchanged_limit_seconds": 120,
+        "reported_assertion_seconds": 193.401087205,
+        "whole_supervised_command_seconds": 197.1796631673351,
+        "full_original_fixtures_available": true
+      },
+      "copper-neck": {
+        "exit_code": 101,
+        "passed": false,
+        "metric": "check-body wall seconds",
+        "unchanged_limit_seconds": 60,
+        "reported_assertion_seconds": 86.070668709,
+        "whole_supervised_command_seconds": 199.76098815025762,
+        "full_original_fixtures_available": true
+      },
+      "gerber": {
+        "exit_code": 0,
+        "passed": true,
+        "metric": "original smoke assertions",
+        "unchanged_limit_seconds": null,
+        "reported_assertion_seconds": null,
+        "whole_supervised_command_seconds": 1.2131648953072727,
+        "full_original_fixtures_available": true
+      }
+    },
+    "proposed_regressions_on_committed_libraries": {
+      "passed": 4,
+      "failed": 22,
+      "ignored": 0
+    },
+    "known_gaps": "The unchanged proposed regression file was independently compiled against the exact qualified committed libraries and executed in full. Its failures remain failures. Passing legacy tests or workload gates does not certify source-coordinate fidelity, round track caps, extreme finite stroke support or construction-failure retention addressed by the proposal.",
+    "disposition_complete": true,
+    "native_candidate_admitted": false,
+    "pending_native_paths_remaining": 0,
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "next": [
+      "Use the preserved failing source-fidelity and construction-failure regressions for smaller independently qualified changes; retain the original workload gates.",
+      "Continue typed public failures, ordinary strict completion, end-to-end evidence and clean external distribution under the properties contract."
     ]
   }
 },

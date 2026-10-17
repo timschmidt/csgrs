@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s rustc --edition=2024 --test /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-change-disposition/pending-source-v1/crates/hyperdrc/tests/native_linear_strokes.rs -C opt-level=3 -C debuginfo=0 -L dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps -o /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-proposed-regressions-v1/native_linear_strokes --extern hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib --extern hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib --extern hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-target-v1/release/libhyperdrc.rlib"
+	User time (seconds): 1.26
+	System time (seconds): 0.31
+	Percent of CPU this job got: 240%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.65
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 302304
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 226
+	Minor (reclaiming a frame) page faults: 64962
+	Voluntary context switches: 2892
+	Involuntary context switches: 192
+	Swaps: 0
+	File system inputs: 28616
+	File system outputs: 52760
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

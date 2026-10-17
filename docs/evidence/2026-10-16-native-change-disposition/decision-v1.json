@@ -1,0 +1,363 @@
+{
+  "status": "rejected: complete 35-file native integration fails unchanged workload contract; candidate preserved, committed sources restored",
+  "user_direction": "Evaluate the 35 earlier native edits, choose whether to retain them, then continue the properties plan.",
+  "base_commit": "99b88f707b04053de7f40a86d6d029e3c07460d9",
+  "contract": "contract-v1.md",
+  "source_review": "source-review-v1.md",
+  "scope": "The submitted complete integration is rejected. This is not a conclusion that every individual idea is unsound or that the legacy implementation meets the proposed new claims.",
+  "owning_layers": [
+    "Hypercurve exact stroke construction, retained evidence, bounds/winding and arrangement",
+    "Hyperdrc source ingress, native stroke geometry, report projection and failure-preserving handoff"
+  ],
+  "properties": [
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P6",
+    "P8",
+    "P9",
+    "P10",
+    "P11",
+    "P12",
+    "P13",
+    "P14",
+    "P15",
+    "P16",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P25",
+    "P26",
+    "P27",
+    "P28",
+    "P29",
+    "P30",
+    "P35",
+    "P36",
+    "P37"
+  ],
+  "candidate": {
+    "native_curve_regressions_passed": 8,
+    "native_drc_regressions_passed": 26,
+    "commands": 7,
+    "failed_commands": [
+      "full-board",
+      "copper-neck"
+    ],
+    "gates": {
+      "full-board": {
+        "exit_code": 101,
+        "passed": false,
+        "metric": "test-worker thread CPU seconds",
+        "unchanged_limit_seconds": 120,
+        "reported_assertion_seconds": 193.401087205,
+        "whole_supervised_command_seconds": 197.1796631673351,
+        "full_original_fixtures_available": true
+      },
+      "copper-neck": {
+        "exit_code": 101,
+        "passed": false,
+        "metric": "check-body wall seconds",
+        "unchanged_limit_seconds": 60,
+        "reported_assertion_seconds": 86.070668709,
+        "whole_supervised_command_seconds": 199.76098815025762,
+        "full_original_fixtures_available": true
+      },
+      "gerber": {
+        "exit_code": 0,
+        "passed": true,
+        "metric": "original smoke assertions",
+        "unchanged_limit_seconds": null,
+        "reported_assertion_seconds": null,
+        "whole_supervised_command_seconds": 1.2131648953072727,
+        "full_original_fixtures_available": true
+      }
+    },
+    "full_qualification_claimed": false,
+    "reason": "Either failed original timing assertion blocks retention of the complete integration under its declared workload contract."
+  },
+  "committed_alternative": {
+    "commands": 13,
+    "failed_commands": [],
+    "gates": {
+      "full-board": {
+        "exit_code": 0,
+        "passed": true,
+        "metric": "test-worker thread CPU seconds",
+        "unchanged_limit_seconds": 120,
+        "reported_assertion_seconds": null,
+        "whole_supervised_command_seconds": 55.911569429095834,
+        "full_original_fixtures_available": true
+      },
+      "copper-neck": {
+        "exit_code": 0,
+        "passed": true,
+        "metric": "check-body wall seconds",
+        "unchanged_limit_seconds": 60,
+        "reported_assertion_seconds": null,
+        "whole_supervised_command_seconds": 45.7692126580514,
+        "full_original_fixtures_available": true
+      },
+      "gerber": {
+        "exit_code": 0,
+        "passed": true,
+        "metric": "original smoke assertions",
+        "unchanged_limit_seconds": null,
+        "reported_assertion_seconds": null,
+        "whole_supervised_command_seconds": 0.7074649198912084,
+        "full_original_fixtures_available": true
+      }
+    },
+    "wasm_commands": 3,
+    "new_js_contract_tests_passed": 12,
+    "actual_typescript_compiled_and_executed": true,
+    "prior_consumers_preserved": true
+  },
+  "independent_followup_build_isolation": {
+    "followup_result": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/result.json",
+    "followup_result_sha256": "006e0f04dab6897368b65c858db86c00a71963f54bcb158606fb7d48eac4ed03",
+    "followup_native_result": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/result.json",
+    "followup_native_result_sha256": "14ba2e9794b2f08f7fe5c43b231046112229c722e52d607e965300a7937a19c5",
+    "followup_completed_epoch": 1792198527.4057589,
+    "gates": {
+      "full-board": {
+        "followup_completion_precedes_gate_start": true,
+        "conservative_gap_seconds": 1279.783588886261
+      },
+      "copper-neck": {
+        "followup_completion_precedes_gate_start": true,
+        "conservative_gap_seconds": 1336.088621854782
+      },
+      "gerber": {
+        "followup_completion_precedes_gate_start": true,
+        "conservative_gap_seconds": 1382.2413856983185
+      }
+    },
+    "interpretation": "Resource-file end time minus the whole supervised duration is earlier than the actual gate start; the independent WASM phase completed before that bound."
+  },
+  "test_counts_by_command": {
+    "candidate-validation-v1/native-curve-regressions": {
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    "candidate-validation-v1/native-drc-regressions": {
+      "passed": 26,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    "candidate-validation-v1/full-board": {
+      "passed": 0,
+      "failed": 1,
+      "ignored": 0,
+      "groups": 1
+    },
+    "candidate-validation-v1/copper-neck": {
+      "passed": 0,
+      "failed": 1,
+      "ignored": 0,
+      "groups": 1
+    },
+    "candidate-validation-v1/gerber": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    "committed-validation-v1/root-all": {
+      "passed": 429,
+      "failed": 0,
+      "ignored": 1,
+      "groups": 46
+    },
+    "committed-validation-v1/root-minimal": {
+      "passed": 132,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 38
+    },
+    "committed-validation-v1/curve-default": {
+      "passed": 2431,
+      "failed": 0,
+      "ignored": 28,
+      "groups": 51
+    },
+    "committed-validation-v1/curve-all": {
+      "passed": 2468,
+      "failed": 0,
+      "ignored": 33,
+      "groups": 51
+    },
+    "committed-validation-v1/native-other-tests": {
+      "passed": 1614,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 9
+    },
+    "committed-validation-v1/full-board": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    "committed-validation-v1/copper-neck": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    "committed-validation-v1/gerber": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    }
+  },
+  "proposed_regressions_on_committed_libraries": {
+    "complete": true,
+    "compile_exit_code": 0,
+    "test_exit_code": 101,
+    "counts": {
+      "passed": 4,
+      "failed": 22,
+      "ignored": 0
+    },
+    "failed_tests": [
+      "ambient_approximate_policy_does_not_change_stroke_geometry",
+      "coincident_track_endpoints_keep_the_width_disk",
+      "denied_stroke_construction_retains_failure_after_scope_exit",
+      "denied_track_import_cannot_disappear_or_become_a_valid_origin",
+      "exact_diagonal_track_area_includes_caps_without_rounding_the_width",
+      "finite_endpoint_difference_can_exceed_float_range",
+      "finite_length_squaring_cannot_overflow",
+      "finite_length_squaring_cannot_underflow_to_zero",
+      "fresh_zero_budget_admits_rational_butt_strokes",
+      "irrational_diagonal_retains_native_surd_width",
+      "irrational_diagonal_track_keeps_line_and_arc_geometry",
+      "kicad_linear_tracks_include_both_round_caps",
+      "large_finite_stroke_does_not_collapse_its_width",
+      "malformed_track_fields_retain_source_failure",
+      "pythagorean_diagonal_has_exact_rational_area",
+      "subnormal_width_is_halved_after_lifting",
+      "tangent_track_caps_do_not_create_filled_overlap",
+      "track_caps_drive_actual_short_readiness",
+      "track_decimal_endpoints_and_width_are_never_rounded_first",
+      "track_subrange_width_and_length_remain_nonzero",
+      "track_superrange_coordinates_stay_native",
+      "warmed_stroke_queries_recheck_exhausted_scope"
+    ],
+    "source_and_libraries_unchanged": true,
+    "regressions_weakened": false,
+    "binary_sha256": "1baab0b102eec03e099b4fb89ef9b692ab2c1cefba444d200fdb4195f4e853de",
+    "full_plan_complete": false
+  },
+  "known_gap_interpretation": "The unchanged proposed regression file was independently compiled against the exact qualified committed libraries and executed in full. Its failures remain failures. Passing legacy tests or workload gates does not certify source-coordinate fidelity, round track caps, extreme finite stroke support or construction-failure retention addressed by the proposal.",
+  "regression_replay_limit": "Each failed test stops at its first assertion. Several budget/policy-named tests fail first on geometry construction or area; this does not establish that their later budget/policy assertions also failed.",
+  "performance_interpretation": "The two representations perform different geometric work. No latency ratio, speedup or performance-only correctness claim is made. Original assertion outcomes are categorical admission evidence; whole supervised-command durations include setup, compilation and evidence bookkeeping and are not substitutes for assertion metrics.",
+  "evidence_limits": "Candidate focused regressions and original gates are current measurements. Rejection stops full-candidate admission; prior broad suites and cost trials are not credited as fresh qualification. Committed-source tests, lint/docs, real WASM consumers and full proposed DRC regression replay qualify only their stated scopes. Report finding counts are not independent set oracles or full report equality.",
+  "resource_limits": "External 1800-second command and 8-GiB native/64-GiB WASM per-process address-space limits. No internal work, heap-byte or cancellation bound is added.",
+  "disposition": {
+    "tracked_files_restored": 29,
+    "saved_additions_removed": 6,
+    "complete_candidate_files_preserved": 35,
+    "pending_native_paths_remaining": 0,
+    "candidate_snapshot": "pending-source-v1/",
+    "tracked_patch": "preparation-v1/tracked.patch",
+    "untracked_patch": "preparation-v1/untracked.patch"
+  },
+  "rejected_native_sha256": {
+    "crates/hypercurve/src/bbox.rs": "c145ab30c68433690f8827b7de7cc9c30c1707a1cdb7793cb81e33b3dba0ae4c",
+    "crates/hypercurve/src/bezier.rs": "257dc8fb654fa86f7d2d47089bd5137f5a1f53d3336127e76baf4cf7d05b8840",
+    "crates/hypercurve/src/bezier_fit.rs": "cbba8129249d814c997629e7d8373a985b6bf9b77ab2774dff4afff1bed4d762",
+    "crates/hypercurve/src/bezier_region.rs": "6ea7d9bb3bd2fadc96cb8736b59fc66b5f576460eee83ee5fb306b43a227bb1e",
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/src/bezier_region/offset_spans.rs": "4c6ffb8e36b5dfd3d9d030c016d96af7964f9a9e56f1b9c1abbbf91553f29ee6",
+    "crates/hypercurve/src/bezier_region/point_location.rs": "2d915ac75cd5d7a61b3440fecf0f0ffae8c6c25687e5c4f382077f8de3908672",
+    "crates/hypercurve/src/bezier_region/tests.rs": "c78ab04298572d06d51eec08aa3201e392a6fb663a0b1a65d5ce81e5c06c6318",
+    "crates/hypercurve/src/classify.rs": "6997d26ebfe4c50d3abf7ed296cb9cc121ab70754421172e21693bde005e81df",
+    "crates/hypercurve/src/contour.rs": "a6ef94566c3c68d6311f7fc7bd47f55e129858cb4d381ec6a8acde157fe4141c",
+    "crates/hypercurve/src/curve.rs": "5e9e1457cd9c7f875f0c730ef8ea88ce2f78a8eab1cd93b8e59463f57327468d",
+    "crates/hypercurve/src/curve_intersection.rs": "2d5b2566186174ed2cfc53de0c276560bc647c6f9a39004ffedcdd90f91f78f4",
+    "crates/hypercurve/src/curve_region_boolean.rs": "5d0a87272791632d128731c4ed78971fdac5717b594f33bd8513389401606471",
+    "crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs": "385a1080d7972a08a5082bb6c47ad19e2cfcc1012b4f6c45bfd618796b848344",
+    "crates/hypercurve/src/curve_region_boolean/regularization.rs": "5a542169b7e0dfe99e520da867a907303485a56b03b13491af4970044e9ca866",
+    "crates/hypercurve/src/offset.rs": "b83ee4f648f9ae4b0bcfc5b52f2553eaaf87f1c57c67e340d9ab101053bcffda",
+    "crates/hypercurve/src/policy.rs": "abbadb4d1345eb2ccdf50df57337e991abb999e479067851c5bb2e75f9f34202",
+    "crates/hypercurve/src/rational_bezier_general.rs": "372d81688c5c6e061ad62cff408dd974c7f4bc771dccb19389823e6edd8886ef",
+    "crates/hypercurve/src/segment.rs": "d253abef3276d8b56a99ad9a7273227d3c823b6f01a7b01a0ce3959b32057213",
+    "crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs": "ef2d56e6e5dcec355eb776a8218fba2c797db5b14eda9c1e2dd5ec79224b4fd0",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b",
+    "crates/hyperdrc/README.md": "3af373486b7b51887db4cbfd17b50c7f01c2c64b018a342b3ac970484c0acd9d",
+    "crates/hyperdrc/src/checks/area_tolerance.rs": "d659ed532de0f81477afaa00df6521f4625bb7ddf4af3e08d158f8300cc00d5b",
+    "crates/hyperdrc/src/checks/differential.rs": "90e491f2578abdb07a7c922058d0b579c1cbb1f3ccea872ffcdb9deb373a6951",
+    "crates/hyperdrc/src/checks/layer.rs": "df442cd2614061fadcb0a5a8019410aa36afa9999a5ccf128d91e52cd1ef6f06",
+    "crates/hyperdrc/src/checks/mod.rs": "7f085ea070136481b6a1550f1589ddf15d4dfec657e68679059a05fc93f05ca1",
+    "crates/hyperdrc/src/geometry.rs": "18826a139f20f4fa047ecf83b864ad8311c26e0965835d8df0c42412fdd37fc2",
+    "crates/hyperdrc/src/geometry/README.md": "f8145f2c515a5b35b70815c7b68d8fc50e893f9d41072d0913d00b22133c2eb0",
+    "crates/hyperdrc/src/geometry/primitives.rs": "a753ce71223326c4b1d92467ec64ce2ad1a7528bd2c3822135a62e0990b13070",
+    "crates/hyperdrc/src/geometry/stroke.rs": "193422c60cd9a6e86efb7d8f61cfd9baae4e7ce130d136a881c1150d270e212f",
+    "crates/hyperdrc/src/kicad.rs": "598c62dfddbb7cbc8840b5a31b02ddcb408b4e35771ee33d03994084ccd16f59",
+    "crates/hyperdrc/src/kicad/README.md": "01e8aca6832bce80152306ad74cfb20fae6ef7258ed833ff1c6692e842c204a7",
+    "crates/hyperdrc/src/kicad/tracks.rs": "6ea5c63821f0f79b7f548bdaf613e9fdce273dc42be5d2597070f7195f2ba227",
+    "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+    "crates/hyperdrc/tests/native_linear_strokes.rs": "84f86db87c666e019b54bad7bff57cbbb290fe23960cc891966134cddd0a7b74"
+  },
+  "restored_native_sha256": {
+    "crates/hypercurve/src/bbox.rs": "e827391f343114c8c947a696426c9cec03a2b5897d0359626eef9da0b1bcb3bc",
+    "crates/hypercurve/src/bezier.rs": "6fe317570386c556b3952009c81fa2339cb88d1886fcd36204856467874fb068",
+    "crates/hypercurve/src/bezier_fit.rs": "f40fe50e1cebc97caa4d9cd8d03c7a8dcc382face14a9e438fcabb2f06e63388",
+    "crates/hypercurve/src/bezier_region.rs": "fc71d3c071736774642270dae2e82f85cc163d530e80234d1d3b8395a80105a7",
+    "crates/hypercurve/src/bezier_region/offset_spans.rs": "5da41e14ed6fc4e7519b821bcb708b9723e18697e60b2ea332ca116d3dddf1d6",
+    "crates/hypercurve/src/bezier_region/point_location.rs": "0db959c7b34329f5784db38c153f5fa720b4537534d63bfd3acca80c458e5a0e",
+    "crates/hypercurve/src/bezier_region/tests.rs": "cd3c677d0b24bf1fe664bc8074f1d98bf05b95fd310d1fd6e4cbd7d21ce73056",
+    "crates/hypercurve/src/classify.rs": "aa9934fb719945ba40b8c1691ce0805499925d2756beddd6999b3e20f10e51c7",
+    "crates/hypercurve/src/contour.rs": "4b11d4f36f3e07f7ff5b53768a227be841c0dd8d3578792d66b64496fc05741b",
+    "crates/hypercurve/src/curve.rs": "1ffb35f7a6aa8a4f02a3a419906b1f1278f1f2a941aa2226a7995853a8fa822d",
+    "crates/hypercurve/src/curve_intersection.rs": "b5196342dc7c07585c2fe169a91e708a02c583735c1e01f93b9eaeaf7c32f823",
+    "crates/hypercurve/src/curve_region_boolean.rs": "1f847fb048aae9c17625782488c486899600724d744a74748982a7b2e03bed3f",
+    "crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs": "62d9149b226f5f224f685b397488e7bf69447dfa6b6194e9f7ed9f32b8068081",
+    "crates/hypercurve/src/curve_region_boolean/regularization.rs": "fa8a54eabf53847c16cf2364e0af283ee00c5ff9e6fa035c1da5640531fffefb",
+    "crates/hypercurve/src/offset.rs": "d37160cb193d9a90ab04a5576592980252d27661ba322ecb45865beb749c05d3",
+    "crates/hypercurve/src/policy.rs": "67923745098557fb20229fadd9dde82e06e91c87449d561e2bf62e79b0243b2f",
+    "crates/hypercurve/src/rational_bezier_general.rs": "0f35228c128ad227e3dbe6aba4ed284f99e48fe770e8a7ed5e6a537e1814f941",
+    "crates/hypercurve/src/segment.rs": "f2820fb0907302160361703633801fb5a356dd44893193d610734db82f55519f",
+    "crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs": "cf86c2593217d430f069715b26cd92b70d94fa95a53c34caf6e22853775d0f43",
+    "crates/hyperdrc/README.md": "e4982f255d5801e68d1961032b5106abadfce04019546de6c5ebc59a8131e5c8",
+    "crates/hyperdrc/src/checks/differential.rs": "70b16c6b0ed8f557f642e48e4a14a3c842737c770f7827cd9e35060409f79d34",
+    "crates/hyperdrc/src/checks/layer.rs": "364fd7a5d05d85434185109164f606903d5a2e5da6b2fea23cedf51b61935fc7",
+    "crates/hyperdrc/src/checks/mod.rs": "3b5b75a42a9224db1922d2aa32762eacabce2c00bf354219ad0247fcfcef4616",
+    "crates/hyperdrc/src/geometry.rs": "78b4627d7c179e8b02bd52fa2088bd18b3448fca8c475e79ea209f8523a794c4",
+    "crates/hyperdrc/src/geometry/README.md": "ebe6f9d19fb384937b532f858f7ab6f89fa7e7f3bcaf9ee834c60b3a545ba5ad",
+    "crates/hyperdrc/src/geometry/primitives.rs": "6b82c375403fa4e3cb97ced1f28a2e348ebe3c2be785c8bead57daad375a8a38",
+    "crates/hyperdrc/src/kicad.rs": "a59cb6f030a38a505fc730e0447c7bd75b6f86971c0dadfd90e02ab9e9c64a4b",
+    "crates/hyperdrc/src/kicad/README.md": "cde4b95048766a6ef1cd3da14468d1182d02f15db73a6875ed4cd0f1fcf262e1",
+    "crates/hyperdrc/src/readiness.rs": "2000dda3f16047a2bd3b28fe742540275dc23daca76fc701e4926135815e52de"
+  },
+  "removed_added_paths": [
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs",
+    "crates/hypercurve/tests/native_linear_stroke.rs",
+    "crates/hyperdrc/src/checks/area_tolerance.rs",
+    "crates/hyperdrc/src/geometry/stroke.rs",
+    "crates/hyperdrc/src/kicad/tracks.rs",
+    "crates/hyperdrc/tests/native_linear_strokes.rs"
+  ],
+  "implementation_sha256": {},
+  "native_candidate_admitted": false,
+  "disposition_complete": true,
+  "optimization_claimed": false,
+  "historical_artifact_audit_passed": false,
+  "historical_preservation_complete": false,
+  "published_package_pipeline_executed": false,
+  "full_pre_push_matrix_executed": false,
+  "push_performed": false,
+  "full_plan_complete": false,
+  "next": [
+    "Use the preserved failing source-fidelity and construction-failure regressions for smaller independently qualified changes; retain the original workload gates.",
+    "Continue typed public failures, ordinary strict completion, end-to-end evidence and clean external distribution under the properties contract."
+  ]
+}

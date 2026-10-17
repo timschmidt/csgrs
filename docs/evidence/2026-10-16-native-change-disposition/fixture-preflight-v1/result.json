@@ -1,0 +1,59 @@
+{
+  "complete": true,
+  "runner_sha256": "34eb95ec0783ecca8e2f48dd403e94bb1034a9fb78337187125566de5f75485d",
+  "unzip": "/usr/bin/unzip",
+  "unzip_sha256": "b6e111c483ac63c80ec94633ab191f7107881c721d7e11d9f78510a2dd5c5fe7",
+  "unzip_version_stdout_sha256": "ef0a576092b336396c86862e752c1ed712d71c99ab15f151d7f6a0d39685c2ef",
+  "rows": [
+    {
+      "variant": "candidate",
+      "command": [
+        "/usr/bin/unzip",
+        "-p",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-source-v1/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+        "CPArti FPGA dev board.kicad_pcb"
+      ],
+      "exit_code": 0,
+      "entry_bytes": 8177693,
+      "entry_sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+    },
+    {
+      "variant": "candidate",
+      "command": [
+        "/usr/bin/unzip",
+        "-p",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/candidate-source-v1/crates/hyperdrc/docs/HVP109A.zip",
+        "HVP109A.kicad_pcb"
+      ],
+      "exit_code": 0,
+      "entry_bytes": 5611517,
+      "entry_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    },
+    {
+      "variant": "committed",
+      "command": [
+        "/usr/bin/unzip",
+        "-p",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+        "CPArti FPGA dev board.kicad_pcb"
+      ],
+      "exit_code": 0,
+      "entry_bytes": 8177693,
+      "entry_sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+    },
+    {
+      "variant": "committed",
+      "command": [
+        "/usr/bin/unzip",
+        "-p",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperdrc/docs/HVP109A.zip",
+        "HVP109A.kicad_pcb"
+      ],
+      "exit_code": 0,
+      "entry_bytes": 5611517,
+      "entry_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    }
+  ],
+  "all_original_archives_and_entries_present": true,
+  "fixture_resolution_reduced": false
+}

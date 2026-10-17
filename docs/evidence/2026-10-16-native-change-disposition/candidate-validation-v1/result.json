@@ -1,0 +1,12 @@
+{
+  "complete": true,
+  "variant": "candidate",
+  "commands": 7,
+  "failed_commands": [
+    "full-board",
+    "copper-neck"
+  ],
+  "sources_unchanged": true,
+  "original_assertions_unchanged": true,
+  "full_plan_complete": false
+}

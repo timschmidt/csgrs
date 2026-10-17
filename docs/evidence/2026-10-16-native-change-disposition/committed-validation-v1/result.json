@@ -1,0 +1,9 @@
+{
+  "complete": true,
+  "variant": "committed",
+  "commands": 13,
+  "failed_commands": [],
+  "sources_unchanged": true,
+  "original_assertions_unchanged": true,
+  "full_plan_complete": false
+}

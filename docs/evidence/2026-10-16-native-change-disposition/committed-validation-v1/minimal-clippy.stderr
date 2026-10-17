@@ -1,0 +1,57 @@
+    Checking num-integer v0.1.46
+    Checking libc v0.2.186
+    Checking num-bigint v0.4.6
+    Checking num-iter v0.1.45
+    Checking num-complex v0.4.6
+    Checking zerocopy v0.8.48
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperreal)
+    Checking getrandom v0.3.4
+    Checking rand_core v0.9.5
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperlattice)
+    Checking linux-raw-sys v0.12.1
+    Checking bitflags v2.11.1
+    Checking rustix v1.1.4
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperlimit)
+    Checking getrandom v0.4.2
+    Checking thiserror v2.0.21
+    Checking once_cell v1.21.4
+    Checking tempfile v3.27.0
+    Checking ppv-lite86 v0.2.21
+    Checking wait-timeout v0.2.1
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypersolve)
+    Checking rusty-fork v0.3.1
+    Checking rand_chacha v0.9.0
+    Checking rand_xorshift v0.4.0
+    Checking rand v0.9.4
+    Checking proptest v1.11.0
+    Checking either v1.15.0
+    Checking rayon v1.12.0
+    Checking smallvec v1.15.1
+    Checking foldhash v0.2.0
+    Checking hashbrown v0.16.1
+    Checking spade v2.15.1
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypercurve)
+    Checking rstar v0.12.2
+    Checking i_key_sort v0.10.3
+    Checking i_overlay v4.5.2
+    Checking geo-types v0.7.20
+    Checking rand v0.10.3
+    Checking log v0.4.29
+    Checking geo v0.33.1
+    Checking thiserror v1.0.69
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hypermesh)
+    Checking half v2.7.1
+    Checking three-d-asset v0.4.0
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1/crates/hyperphysics)
+    Checking serde_core v1.0.228
+    Checking glam v0.30.10
+    Checking ply-rs v0.1.3
+    Checking serde_json v1.0.149
+    Checking boolmesh v0.1.9
+    Checking tri-mesh v0.6.1
+    Checking quick-xml v0.39.4
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-source-v1)
+    Finished `release` profile [optimized] target(s) in 38.33s

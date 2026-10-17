@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s cargo test --locked --release -p csgrs --all-features --no-fail-fast -- --test-threads=2"
+	User time (seconds): 863.73
+	System time (seconds): 219.12
+	Percent of CPU this job got: 117%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 15:22.13
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2046584
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1143464
+	Minor (reclaiming a frame) page faults: 17498539
+	Voluntary context switches: 1438392
+	Involuntary context switches: 102057
+	Swaps: 0
+	File system inputs: 144181568
+	File system outputs: 6583072
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
