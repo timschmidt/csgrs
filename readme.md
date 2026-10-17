@@ -159,9 +159,9 @@ Invalid input, undecided predicates, scalar-domain errors and capacity failures
 remain distinct from successful empty results. Native topology failures retain
 their cause. These sampled polygons carry no analytic-fidelity bound.
 
-Text and other legacy convenience operations still need their own typed-failure
-migration. End-to-end provenance remains a separate open contract from these
-operation-local certainty receipts.
+TrueType and Hershey text constructors also return typed failures; their
+context variants retain operation-local certainty. End-to-end provenance
+remains a separate open contract from these receipts.
 
 Rendered filled constructors:
 

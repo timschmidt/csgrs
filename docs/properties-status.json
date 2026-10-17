@@ -17342,6 +17342,21 @@
     "checkpoint": "docs/evidence/2026-10-17-circle-support-reuse-index/checkpoint-v1.json",
     "artifact_expectations": "docs/evidence/2026-10-17-circle-support-reuse-index/artifact-expectations-v1.json.gz",
     "raw_evidence_archive": "docs/evidence/2026-10-17-circle-support-reuse-index/raw-evidence-v1.tar.xz"
+  },
+  "readme_text_status_correction": {
+    "status": "kept: contradictory text-migration summary corrected against current public signatures",
+    "base_revision": "cf9ec88b232f751d0a299da20fcd50bfef7d9097",
+    "contract": "docs/evidence/2026-10-17-readme-text-status/contract-v1.md",
+    "checkpoint": "docs/evidence/2026-10-17-readme-text-status/checkpoint-v1.json",
+    "review": "docs/evidence/2026-10-17-readme-text-status/review-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-readme-text-status/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "readme.md": "5df3c8dc114beb32b2e05a5ba8e75d8357d19fea771af8627f90835dcad2ff5c"
+    },
+    "scope": "Documentation consistency only; no runtime, certainty, provenance or release capability added.",
+    "runtime_tests_rerun": false,
+    "cache_index_admitted": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
