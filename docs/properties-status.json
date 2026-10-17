@@ -17377,6 +17377,26 @@
     "release_ready": false,
     "cache_index_admitted": false,
     "full_plan_complete": false
+  },
+  "package_evidence_boundary": {
+    "status": "kept: historical admission archives excluded from the root crate package",
+    "base_revision": "db7161eab0ea2c8b7272a666e3f2024dffe959ff",
+    "contract": "docs/evidence/2026-10-17-package-evidence-boundary/contract-v1.md",
+    "decision": "docs/evidence/2026-10-17-package-evidence-boundary/proposal-result.json",
+    "checkpoint": "docs/evidence/2026-10-17-package-evidence-boundary/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-package-evidence-boundary/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "Cargo.toml": "01703a3b2d48b25f8714e3430095201a559ce3feb0c788e7da640bcffe360822"
+    },
+    "before_package_paths": 448428,
+    "after_package_paths": 7769,
+    "excluded_evidence_paths": 440659,
+    "non_evidence_package_paths_preserved": true,
+    "package_built": false,
+    "external_pipeline_complete": false,
+    "release_ready": false,
+    "cache_index_admitted": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
