@@ -1869,6 +1869,26 @@
       "validation": "Native/IO release suites pass 600 all-feature and 592 minimal-feature tests. All 33 focused debug tests, full/minimal all-target warning-denied Clippy, external consumer lint, warning-denied rustdoc, nine STEP examples, fuzz-target compilation and formatting pass. Actual source-path WASM executes 138 groups with zero imports, retaining all 127 preceding groups. Eight rotated/reflected partial-depth native/STEP workflows complete independently derived volume/area, incidence, exact near-boundary classification, cold replay, repeated cuts, plug reconstruction, transverse cuts, complete removal and recovery; scale and two distant periodic seams add three native groups. All 24 original full-size prism cases return native results, including the four previously unsupported partial shells. All 81 preceding native diagnostic outcomes remain; diagnostic counts alone are not semantic admission. The preceding artifact inventory contains 171 byte-identical and 16 deliberately migrated native/STEP outputs. Native line/circle extrusion walls now use plane/cylinder carriers with exact charts/orientation; complete affine prism promotion preserves the original shear domain. Original general-path round-cap measurement blockers remain. Initial compile/continuation, shear, periodic, representation assertion and lint failures remain reconstructible. Supporting runtime is unchanged; inherited scalar zero-factor failures remain upstream-owned. The supplemental benchmark STEP capture reproduces both changed exchange receipts: two identity outputs are identical and two reflected outputs change only six cylinder axis signs and one exactly coplanar plane origin. Every other STEP byte is identical, and all eight old/new files pass the independent reader. Its initial missing-fixture project-assembly failure is retained separately.",
       "cost_evidence": "All 184 preceding cases across 21 full benchmark corpora retain original inputs, iterations, assertions and materialization; 6 changed receipts are explicit representation migrations, with deterministic per-revision output and separate semantic acceptance. Eight new complete workflows have absolute cost only. Three alternating pairs per old corpus and three new-corpus processes total 129 fresh processes. Median case ratio 1.000016, range 0.782783\u20131.753610; 3 rows exceed the 10% review marker and 85 have increased allocation requests. All raw/adverse observations, CPU/wall/RSS, requested allocation bytes and executable sizes remain. Exact capability and continued consumption justify retention as a feature, not an optimization or all-cohort performance admission. Shared-host timings do not establish significance; allocation requests do not bound live heap and harness sizes are not distribution sizes. The NURBS-boundary path-extrusion probe regresses from 0.690851 to 1.211483 ms (1.753610x), with all three candidate samples slower than all three baselines; butt-region exchange regresses by 13.3% and 15.3%. These adverse results require follow-up isolation, not dismissal as timer noise. New complete workflows take about 2.1-3.1 seconds and request about 0.75-1.13 GB cumulatively; eight-row process peak RSS is 23,572-24,036 KiB.",
       "limits": "Admission covers complete axial plane/cylinder shells with orthogonal native side charts and proved cap/contact/link structure. General curved embedding, non-prismatic affine analytic images, arbitrary trimmed surfaces and separate void-shell arrangements remain open. One preceding diagonal prism result still has an unencodable STEP vertex. General Boolean closure and complete STEP/EXPRESS/AP support require separate exact evidence; optional floating-point readers do not establish exact source fidelity. The optional OCCT reader flags one original unrotated lower thin-layer STEP shape: three exact vertices at height 1e-9 mm are absent after import with reported tolerance 1e-7 mm. All eight rotated/reflected outputs are valid and all independent measures agree. Preserve this interoperability limitation without changing exact geometry. No total-work, retained-heap, expression/coefficient-growth or end-to-end cancellation bound is added. Finite chart enumeration, solver counters and external test timeouts are distinct from those contracts. Source qualification, shipped package/MSRV, actual C/Python/JavaScript distribution, full coverage, formal proofs, runtime fuzz/ASan/lexicase, release and complete pre-push gates remain open. No push; all 28 work packages stay open/in progress. Inherited scalar zero-factor failures, historical adverse costs and unrelated upstream work remain separate obligations. Supporting-crate runtime is unchanged; necessary future supporting changes remain authorized in their owning crates."
+    },
+    {
+      "id": "package-upstream-2026-10-17",
+      "work_packages": [
+        "WP00",
+        "WP17",
+        "WP23"
+      ],
+      "properties": [
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Integrate upstream packaging/documentation/license corrections. Keep historical BREP acceptance evidence out of the crate payload and include the already-declared Apache text in both BREP packages, with production and dependency preservation.",
+      "source": "../Cargo.toml",
+      "evidence": "evidence/2026-10-17-package-upstream-integration/manifest.json",
+      "validation": "Merged seven upstream commits without changing production Rust or dependency locks. HyperBRep package membership drops from 13,119 to 184 by excluding only 12,936 historical evidence members and adding the declared Apache text; HyperBRep IO adds the same text (129 to 130 members). All other members persist. Exact resolved Cargo metadata is unchanged. Both README tests, direct warning-denied Clippy, formatting and eight complete frozen native/STEP workflows pass; all sixteen output files match the preceding qualification byte-for-byte. Source identity justifies reusing the frozen runtime executable; this is not a fresh whole-library build or timing campaign.",
+      "limits": "Package lists are not built/published packages or installed-consumer qualification. Registry availability, all feature/MSRV/binding/provenance gates and all 28 work packages remain open. Historical evidence stays in the repository. The preceding BREP cost regressions and thin-layer OCCT limitation remain recorded; this merge does not resolve them. Unrelated upstream source-history and deferred-index admission gaps remain with their owner. No push."
     }
   ],
   "work_packages": [
@@ -2062,7 +2082,7 @@
     "Upstream 99b88f707 is integrated, including exact binary64 decimal export, binary32 projected-triangle validation and typed WASM STL import/export errors. Preserve the native and real JS/TS consumers, text/error migrations and documented source-fidelity limits. Use message/code/cause.code directly; no compatibility shim. Fetch again at coherent checkpoints, freeze each qualification source and preserve both histories and ledger ownership. BREP/IO remain the implementation focus; unrelated native timing, storage and remaining boundary work stays upstream-owned."
   ],
   "acceptance_contract": {
-    "upstream_revision": "be2a0c37bfe57799c62a36125a5cb883a5458f00",
+    "upstream_revision": "7ed43501755fd64a01f54c3078d12229cbc0129d",
     "properties": "../../../properties.md",
     "protocol": "../../../docs/admission.md",
     "agent_rules": "../../../AGENTS.md",
@@ -2087,7 +2107,7 @@
       "incorrect result"
     ],
     "admission": "Documentation and integration do not establish implementation compliance. Source-specific evidence remains tied to its original revision; requalify after dependency changes.",
-    "latest_integration": "evidence/2026-10-17-stroke-upstream-integration/README.md",
+    "latest_integration": "evidence/2026-10-17-package-upstream-integration/README.md",
     "implementation_ownership": {
       "primary": [
         "hyperbrep",

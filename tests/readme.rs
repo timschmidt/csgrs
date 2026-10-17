@@ -17,7 +17,8 @@ fn readme_quickstart_matches_the_runnable_example() {
 
 #[test]
 fn readme_release_metadata_matches_the_manifest() {
-    assert!(README.contains("csgrs = \"0.23.0\""));
+    let version = env!("CARGO_PKG_VERSION");
+    assert!(README.contains(&format!("csgrs {version}")));
     for heading in [
         "## Primary types",
         "## Quick start",

@@ -83,6 +83,16 @@ native, feature, WASM and composition paths after integration. Keep a fixed
 revision throughout checks and matched measurements; refresh source-specific
 evidence before making claims on the merged code.
 
+Upstream `7ed435017` adds package/license and README corrections. The
+[package integration](evidence/2026-10-17-package-upstream-integration/README.md)
+preserves production source and dependencies, excludes historical acceptance
+archives from the HyperBRep crate payload, and supplies the already-declared
+Apache text in both BREP packages. Keep evidence in the source repository.
+Package lists, source-path examples and unchanged-runtime replay do not prove
+registry availability, installed consumers, provenance or release readiness.
+Carry these requirements into subsequent package and feature work while the
+existing runtime and performance qualification remains tied to its source.
+
 Upstream `3b69af324` corrects the interpretation of its metadata-order trial:
 the [storage identity audit](../../../docs/evidence/2026-10-16-native-metadata-isolation/progress-v2.md)
 failed because nested FUSE build views could alias distinct Cargo artifact
