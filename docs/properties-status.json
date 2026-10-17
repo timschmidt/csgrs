@@ -17080,6 +17080,103 @@
     "checkpoint": "docs/evidence/2026-10-17-circle-support-lazy-index/checkpoint-v1.json",
     "artifact_expectations": "docs/evidence/2026-10-17-circle-support-lazy-index/artifact-expectations-v1.json.gz",
     "raw_evidence_archive": "docs/evidence/2026-10-17-circle-support-lazy-index/raw-evidence-v1.tar.xz"
+  },
+  "circle_support_small_hit": {
+    "complete": true,
+    "main_parent_commit": "324e30bd212a544a7b115944d060cd8c19a13d82",
+    "status": "rejected: direct small-hit return retains a decisive cold index-activation regression at 33 pairs",
+    "retention_decision": "rejected",
+    "cache_index_admitted": false,
+    "source_changes_applied": false,
+    "implementation_sha256": {},
+    "proposal_sha256": {
+      "crates/hypercurve/src/curve_intersection.rs": "4a9b7704c18dda4935e276c28081a1b11328c66f89a5263db8cf4d8b4671f3db",
+      "crates/hypercurve/src/circle_support_cache_tests.rs": "4d7b2fdcee72fc064361de4bc91fb5ce8eac342188ca02f830a543a283c3184c",
+      "crates/hypercurve/README.md": "3a5a6e4cc9a909e99ffc4b0a91fe411460f464417c93e1797b1d7d220fa7de5a"
+    },
+    "metadata_typecheck_and_strict_clippy_passed": true,
+    "candidate_executable_build_passed": true,
+    "baseline_executable_reused_read_only": true,
+    "focused_contract_tests_per_variant": 9,
+    "candidate_diagnostic_strict_clippy_passed": true,
+    "preflight_processes": 20,
+    "matched_processes": 140,
+    "matched_phases": 280,
+    "all_measured_results_certified_and_exact_rows_preserved": true,
+    "decisive_rejection_cases": [
+      {
+        "count": 33,
+        "phase": "cold",
+        "baseline_seconds": [
+          0.215810937,
+          0.216173013,
+          0.219813662,
+          0.217426166,
+          0.21505743,
+          0.2150571,
+          0.214605971
+        ],
+        "candidate_seconds": [
+          0.238990831,
+          0.236723668,
+          0.23422113,
+          0.238143169,
+          0.238608847,
+          0.239639057,
+          0.24206918
+        ],
+        "baseline_median_seconds": 0.215810937,
+        "candidate_median_seconds": 0.238608847,
+        "candidate_over_baseline": 1.105638343991806,
+        "positive_paired_differences": 7,
+        "candidate_min_exceeds_baseline_max": true,
+        "predeclared_rejection_criterion_met": true
+      }
+    ],
+    "support_preflight_refused": {
+      "command": [
+        "python3",
+        "target/properties/circle-support-small-hit/support_measure_v1.py",
+        "preflight"
+      ],
+      "exit_code": 1,
+      "error": "AssertionError",
+      "line": 23,
+      "reason": "Existing precondition requires no decisive small-batch rejection.",
+      "output_directory_created": false,
+      "benchmark_processes_launched": 0,
+      "raw_redirected_log_available": false,
+      "observation_source": "exec_command tool result"
+    },
+    "prepared_but_unexecuted_after_rejection": [
+      "support matrix",
+      "heap observations",
+      "full no-feature library",
+      "all-feature library",
+      "grouped shared-support comparison"
+    ],
+    "storage_request": {
+      "path": "/mnt/Disk A/csgrs-properties-validation-2026-10-17",
+      "exists": false,
+      "writable": false,
+      "creation_blocker": "Administrator-owned parent; sudo requires a password; no automatic-review denial."
+    },
+    "native_disposition_preserved": true,
+    "pending_native_paths_remaining": 0,
+    "full_archived_integration_admitted": false,
+    "native_runtime_admitted": false,
+    "full_plan_complete": false,
+    "next": [
+      "Keep the failed cold activation case and original matrix; investigate amortized index construction in a fresh isolated experiment.",
+      "Preserve typed failures, empty composition, ordinary strict completion and full original native workload gates.",
+      "Use a writable larger volume for fresh affected downstream, native/report, binding and distribution checks."
+    ],
+    "contract": "docs/evidence/2026-10-17-circle-support-small-hit/contract-v1.md",
+    "decision": "docs/evidence/2026-10-17-circle-support-small-hit/decision-v1.json",
+    "progress": "docs/evidence/2026-10-17-circle-support-small-hit/progress-v1.md",
+    "checkpoint": "docs/evidence/2026-10-17-circle-support-small-hit/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-circle-support-small-hit/artifact-expectations-v1.json.gz",
+    "raw_evidence_archive": "docs/evidence/2026-10-17-circle-support-small-hit/raw-evidence-v1.tar.xz"
   }
 },
   "status_meanings": {
