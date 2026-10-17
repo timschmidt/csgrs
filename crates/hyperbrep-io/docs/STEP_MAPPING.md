@@ -361,7 +361,8 @@ retains its existing instrumented-work meaning.
 ## Exact native analytic export
 
 `write_advanced` accepts selected validated outer-shell solids on `Plane` and
-`Cylinder` carriers, with `Line` and `CircleArc` edges. It emits
+`Cylinder` carriers, plus exact linear extrusions of lines and circles swept
+normal to their plane, with `Line` and `CircleArc` edges. It emits
 `ADVANCED_BREP_SHAPE_REPRESENTATION`, `MANIFOLD_SOLID_BREP`, `CLOSED_SHELL`,
 `ADVANCED_FACE`, explicit bounds/loops/oriented uses, `EDGE_CURVE`,
 `VERTEX_POINT`, `LINE`/`CIRCLE`, and `PLANE`/`CYLINDRICAL_SURFACE`.
@@ -386,13 +387,31 @@ angular direction and unwrapped endpoint angles. `EDGE_CURVE.same_sense` and
 `ORIENTED_EDGE.orientation` encode independent directions. Reimport may choose a
 different full-period representative of the same angular phase.
 
-Each face reports a linear native-to-output UV map. A plane retains its authored
+Each face reports an affine native-to-output UV map. A plane retains its authored
 origin and orthonormalizes its U/V frame for STEP; the reported map accounts for
 skew, scale and output units. A cylinder keeps its exact origin and frame; U is
 in radians and V is divided by metres-per-output-unit. The native pcurves remain
 queryable through each borrowed source use. They, unused geometry, history and
 unselected document entities are not persisted by geometry export; use native
 archives for those representations.
+
+An extrusion uses `Surface::extrusion_profile_and_direction` to inspect its
+actual `profile(u) + v*direction` chart. Line profiles encode as planes; circular
+profiles encode as cylinders only after proving the direction parallel to the
+circle normal. The map retains native parameter offsets, reversed angular
+traversal and signed axial scaling. `WrittenAdvancedFace::orientation` records
+the emitted sense after any chart reversal; it can differ from the source
+face's sense while preserving the oriented physical face. Ellipse, spline and
+oblique circular extrusions retain `UnsupportedSurface` errors. No sampled
+recognition, fitting or decimal approximation is performed.
+
+This adds `WrittenSurfaceParameters::origin` and the emitted face orientation
+to the public report without compatibility adapters. Existing plane/cylinder
+maps have zero offset. Circle-preserving region extrusion and the containing-
+slab Boolean route can intentionally change native topology and STEP bytes;
+semantic, parameter and source-accounting checks are separate from deterministic
+artifact migration. Native archives retain native representations; this
+direct-curve STEP encoding does not serialize native pcurves or operation history.
 
 The scalar layer's exact rational certificate can expose decimal-representable
 values without rounding. Direction ratios can remove a common irrational

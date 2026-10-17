@@ -448,7 +448,7 @@ impl ArenaModelBuilder {
             let line_arc_prism = if analytic_closed || simple_prism {
                 false
             } else {
-                self.certify_extrusion_prism_shell(outer)?
+                self.certify_curved_prism_shell(outer)?
             };
             let curve_sweep = if analytic_closed || simple_prism || line_arc_prism {
                 None

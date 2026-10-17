@@ -76,3 +76,21 @@ the [periodic-cylinder research](../../../hyperbrep/docs/evidence/2026-10-15-per
 It declares millimetres. Its tiny nonzero decimal seam coordinate is not exactly
 on the declared circle, so native import must reject it. It remains an independent
 exporter input and exact-fidelity rejection, never a healed success fixture.
+
+## Preserved planar prism exchanges
+
+`prism-box-cover.step`, `prism-box-tiny-upper-gap.step`, `prism-strip-cover.step`
+and `prism-ring-cover.step` are byte-identical copies of the four STEP outputs
+captured at BREP revision `5495a63e07abee7c769969330975a4332d7c1cf4` before
+native circular-prism preservation. They are original Apache-2.0 test geometry,
+not external CAD models. Source recipes and hashes are retained in
+[prism continuation evidence](../../../hyperbrep/docs/evidence/2026-10-16-prism-continuation/).
+
+The box occupies `[-5,5]^2 x [0,6]`. The covering cutter occupies
+`[0,20] x [-20,20] x [-20,20]`; the tiny-gap variant ends at `6-10^-12`.
+The strip cutter has x interval `[-1,1]`, producing two components. The ring
+starts with the same box and a square through-hole `[-2,2]^2`.
+Exact volumes are respectively `300`, `300+50*10^-12`, two times `240`, and
+`252`; areas are `280`, `380+10*10^-12`, `496`, and `288`, in metre units.
+Tests separately validate these preserved files and new exports, including
+point classification, archive replay, self subtraction, and empty union.

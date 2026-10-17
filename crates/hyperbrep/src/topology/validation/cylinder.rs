@@ -66,41 +66,12 @@ impl ArenaModelBuilder {
         let mut face_coordinates = Vec::with_capacity(side_faces.len());
         for face_id in side_faces {
             let face = self.face_ref(*face_id)?;
-            if face.orientation != orientation || !face.inner().is_empty() {
+            if face.orientation != orientation {
                 return Ok(None);
             }
-            let Some(outer) = face.outer() else {
+            let Some((u_min, u_max, v_min, v_max)) = self.cylinder_face_rectangle(*face_id)? else {
                 return Ok(None);
             };
-            let wire = self.wire_ref(outer)?;
-            if wire.edge_uses.len() < 4 {
-                return Ok(None);
-            }
-            let mut face_u = Vec::with_capacity(8);
-            let mut face_v = Vec::with_capacity(8);
-            let Some(parameter_segments) = self.cylinder_wire_lines(outer)? else {
-                return Ok(None);
-            };
-            for line in &parameter_segments {
-                let u_constant = real_values_equal(line.start().x(), line.end().x())?;
-                let v_constant = real_values_equal(line.start().y(), line.end().y())?;
-                if u_constant == v_constant {
-                    return Ok(None);
-                }
-                face_u.extend([line.start().x().clone(), line.end().x().clone()]);
-                face_v.extend([line.start().y().clone(), line.end().y().clone()]);
-            }
-            let (u_min, u_max) = exact_real_min_max(&face_u)?;
-            let (v_min, v_max) = exact_real_min_max(&face_v)?;
-            if !self.axis_aligned_lines_tile_rectangle(
-                &parameter_segments,
-                &u_min,
-                &u_max,
-                &v_min,
-                &v_max,
-            )? {
-                return Ok(None);
-            }
             insert_sorted_real(&mut u_values, &u_min)?;
             insert_sorted_real(&mut u_values, &u_max)?;
             insert_sorted_real(&mut v_values, &v_min)?;
@@ -150,6 +121,46 @@ impl ArenaModelBuilder {
             v_max,
             sphere_subtraction: None,
         }))
+    }
+
+    /// Exact rectangle in a native cylinder chart, including subdivided sides.
+    /// This is a boundary-image proof, independent of a complete cylindrical solid.
+    pub(in crate::topology) fn cylinder_face_rectangle(
+        &self,
+        face_id: FaceId,
+    ) -> Result<Option<(Real, Real, Real, Real)>, BuildError> {
+        let face = self.face_ref(face_id)?;
+        if self.surface_ref(face.surface)?.kind() != SurfaceKind::Cylinder
+            || !face.inner().is_empty()
+        {
+            return Ok(None);
+        }
+        let Some(outer) = face.outer() else {
+            return Ok(None);
+        };
+        if self.wire_ref(outer)?.edge_uses.len() < 4 {
+            return Ok(None);
+        }
+        let Some(lines) = self.cylinder_wire_lines(outer)? else {
+            return Ok(None);
+        };
+        let mut u = Vec::with_capacity(8);
+        let mut v = Vec::with_capacity(8);
+        for line in &lines {
+            let u_constant = real_values_equal(line.start().x(), line.end().x())?;
+            let v_constant = real_values_equal(line.start().y(), line.end().y())?;
+            if u_constant == v_constant {
+                return Ok(None);
+            }
+            u.extend([line.start().x().clone(), line.end().x().clone()]);
+            v.extend([line.start().y().clone(), line.end().y().clone()]);
+        }
+        let (u_min, u_max) = exact_real_min_max(&u)?;
+        let (v_min, v_max) = exact_real_min_max(&v)?;
+        if !self.axis_aligned_lines_tile_rectangle(&lines, &u_min, &u_max, &v_min, &v_max)? {
+            return Ok(None);
+        }
+        Ok(Some((u_min, u_max, v_min, v_max)))
     }
 
     pub(in crate::topology) fn cylinder_face_v_bounds(

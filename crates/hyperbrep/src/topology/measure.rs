@@ -694,14 +694,8 @@ impl ArenaModel {
             }
             if let Some(prism) = &self.data.certified_prisms[id.index()] {
                 let area = match &prism.profile {
-                    CertifiedPrismProfile::Paths { outer, holes } => {
-                        let mut area = curve_path_signed_area(outer)?.abs();
-                        for hole in holes {
-                            area -= curve_path_signed_area(hole)?.abs();
-                        }
-                        area
-                    }
-                    CertifiedPrismProfile::CurveRegion { area, .. } => area.clone(),
+                    CertifiedPrismProfile::Paths { area, .. }
+                    | CertifiedPrismProfile::CurveRegion { area, .. } => area.clone(),
                 };
                 let jacobian = prism.u.dot(&prism.v.cross(&prism.extrusion)).abs();
                 return Ok(area * jacobian * (&prism.parameter_max - &prism.parameter_min));

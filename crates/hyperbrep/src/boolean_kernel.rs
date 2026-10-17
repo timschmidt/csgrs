@@ -359,7 +359,8 @@ pub enum BooleanError {
     },
     /// The operand pair is outside the active exact Boolean matrix.
     UnsupportedOperand,
-    /// A non-cylinder prism union or difference uses incompatible slabs.
+    /// A prism union needs equal slabs, or its subtraction cutter does not
+    /// contain the source slab. Other geometry routes may still apply.
     IncompatibleExtrusionSlabs,
     /// Hypercurve could not decide the exact planar Boolean.
     Unresolved(UncertaintyReason),
@@ -5766,13 +5767,26 @@ fn boolean(
     )? {
         return Ok(result);
     }
-    let optimized = z_prism_boolean(
+    let optimized = match z_prism_boolean(
         first_model,
         first_solid,
         second_model,
         second_solid,
         operation,
-    );
+    ) {
+        Err(BooleanError::UnsupportedOperand) => match oriented_prism_boolean(
+            first_model,
+            first_solid,
+            second_model,
+            second_solid,
+            operation,
+        ) {
+            Ok(Some(result)) => Ok(result),
+            Ok(None) => Err(BooleanError::UnsupportedOperand),
+            Err(error) => Err(error),
+        },
+        result => result,
+    };
     match optimized {
         Ok(result) => Ok(result),
         Err(optimized_error) => {
@@ -6106,9 +6120,20 @@ fn z_prism_boolean(
             }
             (z_min, z_max)
         }
-        BooleanOp::Union | BooleanOp::Difference => {
+        BooleanOp::Union => {
             if exact_order(&first_min, &second_min)? != Ordering::Equal
                 || exact_order(&first_max, &second_max)? != Ordering::Equal
+            {
+                return Err(BooleanError::IncompatibleExtrusionSlabs);
+            }
+            (first_min, first_max)
+        }
+        BooleanOp::Difference => {
+            // For I contained in J, regularized (A x I) \ (B x J)
+            // is (regularized A \ B) x I. This rule is directed; a partial
+            // overlap or a gap, however small, does not meet its precondition.
+            if exact_order(&second_min, &first_min)? == Ordering::Greater
+                || exact_order(&first_max, &second_max)? == Ordering::Greater
             {
                 return Err(BooleanError::IncompatibleExtrusionSlabs);
             }
@@ -6176,6 +6201,48 @@ fn identical_torus_boolean(
         BooleanOp::Difference => ArenaBooleanResult::Empty,
         BooleanOp::Xor => unreachable!("not exposed by HyperBREP"),
     }))
+}
+
+/// Reuse the existing planar-region operation after a proved common-axis
+/// isometry. This also accepts previous prism outputs and archive replays,
+/// which need not retain the primitive-cylinder certificate.
+fn oriented_prism_boolean(
+    first_model: &ArenaModel,
+    first_solid: SolidId,
+    second_model: &ArenaModel,
+    second_solid: SolidId,
+    operation: BooleanOp,
+) -> Result<Option<ArenaBooleanResult>, BooleanError> {
+    let Some((origin, axis)) = first_model.certified_right_prism_frame(first_solid)? else {
+        return Ok(None);
+    };
+    // The caller has already tried this chart. Reframing a vertical unsupported
+    // operand is not a new geometric proof and needlessly repeats its work.
+    if exact_order(&axis[0], &Real::zero())? == Ordering::Equal
+        && exact_order(&axis[1], &Real::zero())? == Ordering::Equal
+    {
+        return Ok(None);
+    }
+    let Some((_, second_axis)) = second_model.certified_right_prism_frame(second_solid)? else {
+        return Ok(None);
+    };
+    if exact_order(&axis.cross(&second_axis).norm_squared(), &Real::zero())? != Ordering::Equal {
+        return Ok(None);
+    }
+    let (x, y) = axis
+        .orthonormal_basis_checked()
+        .map_err(GeometryError::Numeric)?;
+    let linear = orthonormal_linear(&x, &y, &axis);
+    let translation = [origin.x, origin.y, origin.z];
+    let to_local = Matrix4::affine_orthonormal_inverse(linear.clone(), translation.clone());
+    let to_world = Matrix4::affine_orthonormal(linear, translation);
+    let first = first_model.transformed(&to_local)?;
+    let second = second_model.transformed(&to_local)?;
+    match z_prism_boolean(&first, first_solid, &second, second_solid, operation) {
+        Ok(result) => Ok(Some(transform_boolean_result(result, &to_world)?)),
+        Err(BooleanError::UnsupportedOperand) => Ok(None),
+        Err(error) => Err(error),
+    }
 }
 
 fn oriented_cylinder_boolean(
@@ -7076,6 +7143,99 @@ mod tests {
 
     fn p(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn prism_frame_requires_exactly_parallel_axes() {
+        let (model, solid) = crate::construction::cylinder(Real::from(1), Real::from(6)).unwrap();
+        let rotation = |t: Real| {
+            let denominator = Real::one() + &t * &t;
+            let c = ((Real::one() - &t * &t) / &denominator).unwrap();
+            let s = (Real::from(2) * t / denominator).unwrap();
+            Matrix4::from_row_major([
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                c.clone(),
+                -&s,
+                Real::zero(),
+                Real::zero(),
+                s,
+                c,
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+            ])
+        };
+        let first_frame = rotation((Real::one() / Real::from(2)).unwrap());
+        let first = model.transformed(&first_frame).unwrap();
+        let tiny = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+        for second_frame in [Matrix4::identity(), first_frame * rotation(tiny)] {
+            let second = model.transformed(&second_frame).unwrap();
+            assert!(
+                oriented_prism_boolean(&first, solid, &second, solid, BooleanOp::Difference)
+                    .unwrap()
+                    .is_none()
+            );
+        }
+    }
+
+    #[test]
+    fn prism_frame_rejects_skew_extrusion_as_a_vertical_product() {
+        let uv = |x: i32, y: i32| hypercurve::Point2::new(Real::from(x), Real::from(y));
+        let path = CurvePath2::try_new(
+            [((1, 0), (-1, 0)), ((-1, 0), (1, 0))]
+                .into_iter()
+                .map(|(a, b)| {
+                    Curve2::from(
+                        hypercurve::CircularArc2::try_from_center(
+                            uv(a.0, a.1),
+                            uv(b.0, b.1),
+                            uv(0, 0),
+                            false,
+                        )
+                        .unwrap(),
+                    )
+                })
+                .collect(),
+        )
+        .unwrap();
+        let (model, solid) =
+            crate::construction::extrude_path(&path, Real::zero(), Real::from(6)).unwrap();
+        let shear = Matrix4::from_row_major([
+            Real::one(),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ]);
+        let skew = model.transformed(&shear).unwrap();
+        let witness = Point3::new(
+            (Real::from(-1) / Real::from(2)).unwrap(),
+            Real::zero(),
+            (Real::one() / Real::from(10)).unwrap(),
+        );
+        assert_eq!(
+            skew.classify_point(solid, &witness).unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert!(skew.certified_right_prism_frame(solid).unwrap().is_none());
+        assert!(skew.certified_z_prism_profile(solid).unwrap().is_none());
     }
 
     #[test]

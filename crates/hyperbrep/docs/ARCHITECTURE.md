@@ -338,6 +338,8 @@ The world-z prism optimization is separately gated by a certified translation
 family. Two vertex-height layers and a planar cap are not sufficient evidence:
 in particular, a cone frustum must fall through to retained curved stitching
 instead of being interpreted as a constant-profile extrusion.
+Every admitted edge connecting distinct height levels must also preserve x/y;
+a skew extrusion cannot become a world-z Cartesian product from its cap alone.
 
 ## Exact image agreement
 
@@ -587,6 +589,25 @@ families are promoted exactly. The prism certificate retains the complete
 `CurvePath2` outer-minus-hole region, so exact volume and point
 classification never reduce spline boundaries to chords.
 
+Region extrusion asks the authoritative `CurveRegion2` component for its
+certified borrowed line/arc view before converting boundaries to spatial
+curves. Available circles remain native circles; other persistent curves use
+the existing exact conversion. Failure to prove a view remains distinct from
+an unavailable view. The original region certificate remains authoritative.
+This intentionally changes some boundary tags and archive bytes from rational
+Bézier spans to native circles; it is a representation migration, not a
+performance-only optimization.
+
+Prism replay derives cap area from retained spatial conic integrals when
+available, projected into the certified cap basis. Other paths retain their
+exact path-area calculation. The area is a transient validated fact, never an
+unchecked serialized value. Signed cap area and the oriented extrusion
+determinant also establish shell orientation when a chord mesh would have zero
+volume, including an annulus bounded by two semicircles per loop. Inward shells
+remain invalid. A cylindrical lateral face requires an exact rectangular trim,
+axis parallel to the cap translation and cap normal, and matching axial bounds;
+this extends the shared prism validator used by replay and STEP import.
+
 Finite revolution patches share one native latitude extractor between
 construction and validation. Latitude edges are compared against the complete
 expected circle parameterization, including frame, domain, and directed
@@ -601,6 +622,22 @@ Regularized z-prism Booleans delegate planar arrangement and role assignment to
 Hypercurve, then reconstruct line/arc material contours and holes as newly
 validated BREP solids. Empty, incompatible, unsupported, and unresolved
 outcomes remain distinct.
+Intersection uses the overlapping axial interval; union requires equal
+intervals. Directed difference accepts a cutter interval containing the entire
+source interval, including equal endpoints. Partial coverage, an exact 1e-12
+gap, touching, and disjoint intervals do not satisfy that difference rule;
+other existing Boolean routes may still complete them. The same operation
+handles replayed right prisms in a common orthonormal chart when both certified
+axes are exactly parallel. Skew or nonparallel axes are outside this route.
+No second planar kernel, tolerance or sampled recognition is introduced.
+
+Rationally rotated split circles expose two necessary scalar identities:
+principal rational atan reciprocal normalization and half-atan sine/cosine
+reduction when the rational argument has a rational hypotenuse. These proofs
+belong to Hyperreal; BREP keeps the original strict comparisons and full-size
+rotated inputs. This is the reproduced dependency exception to the branch's
+BREP-focused ownership. Other trig branches and fields retain their existing
+representations and failure contracts.
 
 The retained intersection-graph route is the general planar BREP pipeline:
 exact transverse and coincident support arrangements partition both operands,

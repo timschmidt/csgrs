@@ -60,7 +60,7 @@ pub(super) fn write<'a>(
 struct Body<'a> {
     points: HashMap<VertexRef<'a>, (usize, Point3)>,
     edge_ids: HashMap<EdgeRef<'a>, u64>,
-    supports: HashMap<SurfaceRef<'a>, (u64, WrittenSurfaceParameters)>,
+    supports: HashMap<SurfaceRef<'a>, (u64, WrittenSurfaceParameters, bool)>,
     vertices: Vec<WrittenAdvancedVertex<'a>>,
     edges: Vec<WrittenAdvancedEdge<'a>>,
     faces: Vec<WrittenAdvancedFace<'a>>,
@@ -315,7 +315,7 @@ impl<'a> Body<'a> {
         };
         out.site = site;
         let support = source.surface();
-        let (surface, parameters) = if let Some(value) = self.supports.get(&support) {
+        let (surface, parameters, reversed) = if let Some(value) = self.supports.get(&support) {
             value.clone()
         } else {
             let value = geometry::surface(out, &support, scale)?;
@@ -336,12 +336,17 @@ impl<'a> Body<'a> {
             push(&mut bounds, bound, site)?;
         }
         out.site = site;
+        let orientation = if reversed {
+            source.orientation().reversed()
+        } else {
+            source.orientation()
+        };
         let entity = out.entity("ADVANCED_FACE", |out| {
             out.put("'',")?;
             out.references(&bounds)?;
             out.put(",")?;
             out.reference(surface)?;
-            out.put(match source.orientation() {
+            out.put(match orientation {
                 Orientation::Forward => ",.T.",
                 Orientation::Reversed => ",.F.",
             })
@@ -353,6 +358,7 @@ impl<'a> Body<'a> {
                 entity,
                 surface,
                 parameters,
+                orientation,
             },
             site,
         )?;

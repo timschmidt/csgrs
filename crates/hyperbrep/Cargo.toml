@@ -95,3 +95,7 @@ harness = false
 [[bench]]
 name = "oblique"
 harness = false
+
+[[bench]]
+name = "prisms"
+harness = false

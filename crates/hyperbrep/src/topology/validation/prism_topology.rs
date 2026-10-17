@@ -9,7 +9,7 @@ impl ArenaModelBuilder {
     ) -> Result<Option<CertifiedZPrismShell>, BuildError> {
         if !self.certify_simple_prism_shell(shell)?
             && !self.certify_internally_partitioned_prism_shell(shell)?
-            && !self.certify_extrusion_prism_shell(shell)?
+            && !self.certify_curved_prism_shell(shell)?
         {
             return Ok(None);
         }
@@ -464,6 +464,44 @@ impl ArenaModelBuilder {
                 (!first_group.contains(&index) && !second_group.contains(&index)).then_some(index)
             })
             .collect::<Vec<_>>();
+        for index in &lateral_indices {
+            let face_id = faces[*index];
+            let surface = self.surface_ref(self.face_ref(face_id)?.surface)?;
+            let Some(cylinder) = surface.cylindrical_geometry() else {
+                continue;
+            };
+            // Cylinder support is invariant under this translation. Rectangular
+            // trim images then prove that its whole lateral face, not merely
+            // its corner vertices, connects these two normal cap planes.
+            if !real_values_equal(
+                &cylinder.axis.cross(&translation).norm_squared(),
+                &Real::zero(),
+            )? || !real_values_equal(
+                &cylinder.axis.cross(&first_u.cross(first_v)).norm_squared(),
+                &Real::zero(),
+            )? {
+                return Ok(false);
+            }
+            let Some((u_min, u_max, v_min, v_max)) = self.cylinder_face_rectangle(face_id)? else {
+                return Ok(false);
+            };
+            if decided_model_order(compare_reals(
+                &(&u_max - &u_min),
+                &Real::tau(),
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Greater
+            {
+                return Ok(false);
+            }
+            let a = (first_surface.plane_origin().expect("cap plane") - cylinder.origin)
+                .dot(cylinder.axis);
+            let b = (second_surface.plane_origin().expect("cap plane") - cylinder.origin)
+                .dot(cylinder.axis);
+            let (lower, upper) = exact_real_min_max(&[a, b])?;
+            if !real_values_equal(&v_min, &lower)? || !real_values_equal(&v_max, &upper)? {
+                return Ok(false);
+            }
+        }
         let lateral_edges = lateral_indices
             .iter()
             .map(|index| self.face_edge_set(faces[*index]))
@@ -619,6 +657,21 @@ impl ArenaModelBuilder {
     }
 
     pub(crate) fn signed_shell_six_volume(&self, shell: ShellId) -> Result<Real, BuildError> {
+        let mut curved = false;
+        'faces: for face_id in &self.shell_ref(shell)?.faces {
+            for wire_id in self.face_ref(*face_id)?.boundary_wires() {
+                for use_id in &self.wire_ref(*wire_id)?.edge_uses {
+                    let edge = self.edge_ref(self.edge_use_ref(*use_id)?.edge)?;
+                    if self.curve_ref(edge.curve)?.kind() != Curve3Kind::Line {
+                        curved = true;
+                        break 'faces;
+                    }
+                }
+            }
+        }
+        if curved && let Some((_, volume)) = self.certified_prism_shell_and_volume(shell)? {
+            return Ok(Real::from(6) * volume);
+        }
         let mut sum = Real::zero();
         for face_id in &self.shell_ref(shell)?.faces {
             let face = self.face_ref(*face_id)?;

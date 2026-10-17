@@ -44,3 +44,7 @@ harness = false
 [[bench]]
 name = "analytic_export"
 harness = false
+
+[[bench]]
+name = "prism_exchange"
+harness = false

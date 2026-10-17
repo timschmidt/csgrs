@@ -3,7 +3,7 @@
 use crate::topology::*;
 
 impl ArenaModelBuilder {
-    pub(in crate::topology) fn certify_extrusion_prism_shell(
+    pub(in crate::topology) fn certify_curved_prism_shell(
         &self,
         shell: ShellId,
     ) -> Result<bool, BuildError> {
@@ -14,7 +14,7 @@ impl ArenaModelBuilder {
                 SurfaceKind::Plane => {
                     cap_surfaces.insert(face.surface);
                 }
-                SurfaceKind::Extrusion => {}
+                SurfaceKind::Extrusion | SurfaceKind::Cylinder => {}
                 _ => return Ok(false),
             }
             for wire_id in face.boundary_wires() {
@@ -33,7 +33,7 @@ impl ArenaModelBuilder {
                 }
             }
         }
-        if cap_surfaces.len() != 2 {
+        if cap_surfaces.len() < 2 {
             return Ok(false);
         }
         self.certify_translation_shell_topology(shell)
@@ -66,9 +66,20 @@ impl ArenaModelBuilder {
         &self,
         shell: ShellId,
     ) -> Result<Option<CertifiedPrismShell>, BuildError> {
+        Ok(self
+            .certified_prism_shell_and_volume(shell)?
+            .map(|(prism, _)| prism))
+    }
+
+    /// The signed volume keeps the cap orientation until shell admission has
+    /// checked it. Taking an absolute volume here would admit inward shells.
+    pub(in crate::topology) fn certified_prism_shell_and_volume(
+        &self,
+        shell: ShellId,
+    ) -> Result<Option<(CertifiedPrismShell, Real)>, BuildError> {
         if !self.certify_simple_prism_shell(shell)?
             && !self.certify_internally_partitioned_prism_shell(shell)?
-            && !self.certify_extrusion_prism_shell(shell)?
+            && !self.certify_curved_prism_shell(shell)?
         {
             return Ok(None);
         }
@@ -126,6 +137,7 @@ impl ArenaModelBuilder {
                 }
                 let mut outer = None;
                 let mut holes = Vec::new();
+                let mut profile_area = Real::zero();
                 let mut projected_sources = HashMap::new();
                 for uses in first_boundary {
                     let curves = uses
@@ -193,7 +205,10 @@ impl ArenaModelBuilder {
                         .collect::<Result<Vec<_>, _>>()?;
                     let path = CurvePath2::try_new(wire_geometry::coalesce_restrictions(curves)?)
                         .map_err(GeometryError::from)?;
-                    let area = curve_path_signed_area(&path)?;
+                    let area = match self.conic_cap_signed_area(&uses, &u, &v)? {
+                        Some(area) => area,
+                        None => curve_path_signed_area(&path)?,
+                    };
                     let positive = decided_model_order(compare_reals(
                         &area,
                         &Real::zero(),
@@ -204,24 +219,103 @@ impl ArenaModelBuilder {
                         if outer.replace(path).is_some() {
                             return Ok(None);
                         }
+                        profile_area += area.abs();
                     } else {
                         holes.push(path);
+                        profile_area -= area.abs();
                     }
                 }
                 let Some(outer) = outer else {
                     return Ok(None);
                 };
-                return Ok(Some(CertifiedPrismShell {
-                    profile: CertifiedPrismProfile::Paths { outer, holes },
-                    origin,
-                    u,
-                    v,
-                    extrusion,
-                    parameter_min: Real::zero(),
-                    parameter_max: Real::one(),
-                }));
+                let signed_volume = &profile_area * determinant;
+                let signed_volume = match first_face.orientation {
+                    Orientation::Forward => -signed_volume,
+                    Orientation::Reversed => signed_volume,
+                };
+                return Ok(Some((
+                    CertifiedPrismShell {
+                        profile: CertifiedPrismProfile::Paths {
+                            outer,
+                            holes,
+                            area: profile_area,
+                        },
+                        origin,
+                        u,
+                        v,
+                        extrusion,
+                        parameter_min: Real::zero(),
+                        parameter_max: Real::one(),
+                    },
+                    signed_volume,
+                )));
             }
         }
         Ok(None)
+    }
+
+    /// Exact signed profile-coordinate area of an admitted planar cap with
+    /// native conics. Multiple closed wires contribute their oriented integrals.
+    pub(crate) fn conic_cap_area(&self, face: FaceId) -> Result<Option<Real>, BuildError> {
+        let face = self.face_ref(face)?;
+        let surface = self.surface_ref(face.surface)?;
+        let Some((u, v)) = surface.plane_directions() else {
+            return Ok(None);
+        };
+        let mut uses = Vec::new();
+        for wire in face.boundary_wires() {
+            uses.extend_from_slice(&self.wire_ref(*wire)?.edge_uses);
+        }
+        self.conic_cap_signed_area(&uses, u, v)
+    }
+
+    /// Integrates retained spatial conic intervals in the already certified
+    /// cap frame. Replaying split pcurves need not reconstruct those angles.
+    fn conic_cap_signed_area(
+        &self,
+        uses: &[EdgeUseId],
+        u: &Vector3,
+        v: &Vector3,
+    ) -> Result<Option<Real>, BuildError> {
+        let mut conic_origin = None;
+        for use_id in uses {
+            let edge_use = self.edge_use_ref(*use_id)?;
+            let edge = self.edge_ref(edge_use.edge)?;
+            if let Some(center) = self.curve_ref(edge.curve)?.analytic_area_origin() {
+                conic_origin = Some(center);
+                break;
+            }
+        }
+        let Some(conic_origin) = conic_origin else {
+            return Ok(None);
+        };
+        // As in planar face measurement, centering on a retained conic avoids
+        // translated endpoint terms which would have to cancel after splitting.
+        let normal = u.cross(v);
+        let mut doubled_area = Real::zero();
+        for use_id in uses {
+            let edge_use = self.edge_use_ref(*use_id)?;
+            let edge = self.edge_ref(edge_use.edge)?;
+            let (Some(start), Some(end)) =
+                (edge.domain.start().try_real(), edge.domain.end().try_real())
+            else {
+                return Ok(None);
+            };
+            let Some(integral) =
+                self.curve_ref(edge.curve)?
+                    .analytic_area_vector(start, end, conic_origin)?
+            else {
+                return Ok(None);
+            };
+            let contribution = integral.dot(&normal);
+            match edge_use.direction {
+                Direction::Forward => doubled_area += contribution,
+                Direction::Reversed => doubled_area -= contribution,
+            }
+        }
+        (doubled_area / (Real::from(2) * normal.norm_squared()))
+            .map(Some)
+            .map_err(GeometryError::Numeric)
+            .map_err(Into::into)
     }
 }

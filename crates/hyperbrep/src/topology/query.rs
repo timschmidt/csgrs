@@ -726,7 +726,7 @@ impl ArenaModel {
         }
         let planar = hypercurve::CurvePoint2::from(CurvePoint2::new(planar_u, planar_v));
         let planar_location = match &prism.profile {
-            CertifiedPrismProfile::Paths { outer, holes } => {
+            CertifiedPrismProfile::Paths { outer, holes, .. } => {
                 match crate::error::classified(outer.classify_point(&planar))
                     .map_err(GeometryError::from)?
                 {
@@ -1155,6 +1155,48 @@ impl ArenaModel {
         Ok(Classification::Decided(ContourPointLocation::Inside))
     }
 
+    /// A validated right-prism axis, including holes and native cylinder solids.
+    /// This is a view of admission evidence, not recognition from sampled bounds.
+    pub(crate) fn certified_right_prism_frame(
+        &self,
+        solid_id: SolidId,
+    ) -> Result<Option<(Point3, Vector3)>, GeometryError> {
+        let Some(solid) = self.solid(solid_id) else {
+            return Ok(None);
+        };
+        if !solid.voids.is_empty() {
+            return Ok(None);
+        }
+        if let Some(prism) = self
+            .data
+            .certified_prisms
+            .get(solid_id.index())
+            .and_then(Option::as_ref)
+        {
+            for direction in [&prism.u, &prism.v] {
+                if decided_model_order(compare_reals(
+                    &direction.dot(&prism.extrusion),
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? != std::cmp::Ordering::Equal
+                {
+                    return Ok(None);
+                }
+            }
+            return Ok(Some((
+                prism.origin.clone(),
+                prism
+                    .extrusion
+                    .clone()
+                    .normalize_checked()
+                    .map_err(GeometryError::Numeric)?,
+            )));
+        }
+        Ok(self
+            .certified_cylinder_profile(solid_id)
+            .map(|cylinder| (cylinder.origin, cylinder.axis)))
+    }
+
     pub(crate) fn certified_z_prism_profile(
         &self,
         solid_id: SolidId,
@@ -1202,6 +1244,27 @@ impl ArenaModel {
                     let edge = self.edge(edge_use.edge).expect("validated edge reference");
                     vertex_ids.insert(edge.start);
                     vertex_ids.insert(edge.end);
+                    if edge_use.direction == Direction::Forward {
+                        let start = self
+                            .vertex(edge.start)
+                            .expect("validated vertex")
+                            .represented_point()?;
+                        let end = self
+                            .vertex(edge.end)
+                            .expect("validated vertex")
+                            .represented_point()?;
+                        // Two endpoint levels alone also describe a skew prism.
+                        // A world-Z product requires its connecting edges to
+                        // retain x/y, in addition to the admitted shell proof.
+                        if !real_values_equal(&start.z, &end.z).map_err(build_error_geometry)?
+                            && (!real_values_equal(&start.x, &end.x)
+                                .map_err(build_error_geometry)?
+                                || !real_values_equal(&start.y, &end.y)
+                                    .map_err(build_error_geometry)?)
+                        {
+                            return Ok(None);
+                        }
+                    }
                 }
             }
         }

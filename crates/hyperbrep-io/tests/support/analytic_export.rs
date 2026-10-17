@@ -269,8 +269,11 @@ pub fn graph(output: &AdvancedStep<'_>, scale: &Real) {
             assert_eq!(reference(argument(&file, face.entity, 2)), face.surface);
             boolean(
                 argument(&file, face.entity, 3),
-                face.source.orientation() == Orientation::Forward,
+                face.orientation == Orientation::Forward,
             );
+            if face.source.surface().kind() != SurfaceKind::Extrusion {
+                assert_eq!(face.orientation, face.source.orientation());
+            }
             let wires = face
                 .source
                 .outer()
@@ -294,12 +297,13 @@ pub fn graph(output: &AdvancedStep<'_>, scale: &Real) {
                 let uv = uv.coordinates().unwrap();
                 let uv = Point2::new(uv.x().clone(), uv.y().clone());
                 let native = face.source.surface().point_at(&uv).unwrap();
+                let native_uv = uv.clone();
                 let uv = face.parameters.map(&uv);
                 let encoded = match name(&file, face.surface) {
                     "PLANE" => origin.clone() + x.clone() * &uv.x + y.clone() * &uv.y,
                     "CYLINDRICAL_SURFACE" => {
                         origin.clone()
-                            + (x.clone() * &uv.x.clone().cos() + y.clone() * &uv.x.sin())
+                            + (x.clone() * &uv.x.clone().cos() + y.clone() * &uv.x.clone().sin())
                                 * scalar(argument(&file, face.surface, 2))
                             + z.clone() * &uv.y
                     }
@@ -309,6 +313,37 @@ pub fn graph(output: &AdvancedStep<'_>, scale: &Real) {
                     &native,
                     &Point3::new(encoded.x * scale, encoded.y * scale, encoded.z * scale),
                 );
+                if face.source.surface().kind() == SurfaceKind::Extrusion {
+                    // Independently compare oriented geometric normals, rather
+                    // than assuming that changing charts preserves face sense.
+                    let mut native_normal = face.source.surface().normal_at(&native_uv).unwrap();
+                    let mut encoded_normal = match name(&file, face.surface) {
+                        "PLANE" => x.cross(&y),
+                        "CYLINDRICAL_SURFACE" => {
+                            x.clone() * uv.x.clone().cos() + y.clone() * uv.x.sin()
+                        }
+                        _ => unreachable!(),
+                    };
+                    if face.source.orientation() == Orientation::Reversed {
+                        native_normal = -native_normal;
+                    }
+                    if face.orientation == Orientation::Reversed {
+                        encoded_normal = -encoded_normal;
+                    }
+                    equal(
+                        &native_normal.cross(&encoded_normal).norm_squared(),
+                        &Real::zero(),
+                    );
+                    assert_eq!(
+                        compare_reals(
+                            &native_normal.dot(&encoded_normal),
+                            &Real::zero(),
+                            STRICT_PREDICATES
+                        )
+                        .value(),
+                        Some(Ordering::Greater)
+                    );
+                }
             }
         }
     }

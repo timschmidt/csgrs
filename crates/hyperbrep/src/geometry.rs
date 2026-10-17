@@ -4178,7 +4178,12 @@ impl Surface {
         }
     }
 
-    pub(crate) fn extrusion_profile_and_direction(&self) -> Option<(&Curve3, &Vector3)> {
+    /// Borrows a native extrusion's exact profile and authored direction.
+    ///
+    /// Its chart is `S(u, v) = profile(u) + v * direction`; the direction need
+    /// not have unit length. Other surface families return `None`. This does
+    /// not fit or recognize another carrier as an extrusion.
+    pub fn extrusion_profile_and_direction(&self) -> Option<(&Curve3, &Vector3)> {
         match &self.data.geometry {
             SurfaceGeometry::Extrusion(surface) => Some((&surface.profile, &surface.direction)),
             _ => None,

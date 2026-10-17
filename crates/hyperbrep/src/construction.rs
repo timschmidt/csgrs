@@ -1929,11 +1929,27 @@ pub(crate) fn extrude_curve_region(
     let mut builder = ArenaModelBuilder::new();
     let mut solids = Vec::with_capacity(components.len());
     for component in components {
-        let loops = component
-            .boundary_loops()
-            .iter()
-            .map(|boundary| persistent_planar_curves(boundary.curves()))
-            .collect::<Result<Vec<_>, _>>()?;
+        // The unified region may retain a native circular image in rational
+        // spans. Borrow its certified line/arc view before choosing spatial
+        // carriers; the original component remains the solid's region proof.
+        let loops = if let Some(native) = component
+            .native_contours_fast_path()
+            .map_err(GeometryError::from)?
+        {
+            let [material] = native.material_contours() else {
+                return Err(ConstructionError::UnsupportedPlanarProfile);
+            };
+            std::iter::once(material)
+                .chain(native.hole_contours())
+                .map(|contour| contour.segments().iter().map(curve2_from_segment).collect())
+                .collect::<Vec<_>>()
+        } else {
+            component
+                .boundary_loops()
+                .iter()
+                .map(|boundary| persistent_extrusion_curves(boundary.curves()))
+                .collect::<Result<Vec<_>, _>>()?
+        };
         let area =
             match crate::error::classified(component.signed_area()).map_err(GeometryError::from)? {
                 Classification::Decided(Some(area)) => area,
@@ -2077,7 +2093,7 @@ fn add_curve_path_region(
 ) -> Result<SolidId, ConstructionError> {
     let loop_curves = loops
         .iter()
-        .map(persistent_extrusion_path_curves)
+        .map(|path| persistent_extrusion_curves(path.curves()))
         .collect::<Result<Vec<_>, _>>()?;
     add_persistent_curve_region(builder, &loop_curves, z_min, z_max, None)
 }
@@ -2300,6 +2316,11 @@ fn add_persistent_curve_region(
     faces.extend(side_faces);
     let shell = builder.shell(faces)?;
     let solid = if let Some((region, area)) = curve_region {
+        // The region remains authoritative for set membership and provenance.
+        // Native conic intervals provide an equivalent metric expression that
+        // also survives subdivision and replay without rebuilding their angles
+        // from rational planar fragments. The top cap uses the region's XY frame.
+        let area = builder.conic_cap_area(top_face)?.unwrap_or(area);
         builder.solid_with_curve_region_prism_certificate(shell, region, area, z_min, z_max)?
     } else {
         builder.solid(shell, Vec::new())?
@@ -3706,9 +3727,11 @@ fn persistent_planar_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, Constructi
     Ok(persistent)
 }
 
-fn persistent_extrusion_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, ConstructionError> {
+// Region and authored-path extrusion retain the same native circular carriers.
+// Planar face construction has its own rational promotion requirements.
+fn persistent_extrusion_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, ConstructionError> {
     let mut persistent = Vec::new();
-    for curve in path.curves() {
+    for curve in curves {
         match curve.geometry() {
             None => return Err(ConstructionError::UnsupportedPlanarProfile),
             Some(CurveGeometry2::Line(_))

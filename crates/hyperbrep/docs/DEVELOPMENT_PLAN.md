@@ -82,6 +82,21 @@ native, feature, WASM and composition paths after integration. Keep a fixed
 revision throughout checks and matched measurements; refresh source-specific
 evidence before making claims on the merged code.
 
+Upstream `3b69af324` corrects the interpretation of its metadata-order trial:
+the [storage identity audit](../../../docs/evidence/2026-10-16-native-metadata-isolation/progress-v2.md)
+failed because nested FUSE build views could alias distinct Cargo artifact
+paths. Preserved executable bytes do not establish which dependency bytes the
+compiler consumed. Keep those observations and failures as historical evidence,
+and withhold qualification for affected runs. For subsequent BREP campaigns,
+identify the source, Cargo target and dependency/cache filesystems; exercise
+distinct reads, hard links, atomic replacement and executable loading in the
+actual physical target before rebuilding affected checks. A bounded storage
+probe is not a whole-history artifact audit. Do not reuse an affected nested
+view or replace historical expected hashes with newly observed bytes. This
+guidance applies to future merges and evidence collection as well as the current
+increment. Upstream's full-board and copper-neck runtime gates and its 35-file
+pending candidate remain unadmitted; unrelated repairs retain upstream ownership.
+
 Future sketch/infill consumers must retain the upstream gear, rack and airfoil
 constructors' typed failures and contextual `GeometryOutcome` receipts. Their
 sampled profiles retain sampled intent; successful strict construction does
@@ -133,16 +148,20 @@ and profiling are diagnostic evidence, not performance acceptance. The previous
 parked scalar investigation remains preserved and unapplied. The
 [conic comparison reuse](evidence/2026-10-16-conic-comparison-reuse/README.md)
 keeps certified interval orderings within one helper call and preserves the
-existing exact domain. Its current evidence becomes the next BREP baseline;
+existing exact domain. Its evidence remains the historical optimization baseline;
 all prior adverse observations remain visible. Any new persistent proof cache
 needs separate identity, lifetime, resource and state-matrix admission.
 
-For the next prism-subtraction extension, reproduce both direct z-prism calls
-and the parallel-cylinder caller after its common-coordinate transform. Capture
-current planar results and STEP export before changing dispatch: region extrusion
-creates extrusion surfaces, while the current advanced writer admits planes and
-cylinders. Preserve every previously supported downstream export, with any
-necessary exact representation or exchange support owned by BREP/IO. A native
+The [prism continuation record](evidence/2026-10-16-prism-continuation/README.md)
+covers directed subtraction when the cutter's axial slab contains the source's.
+Native line/circle extrusion, signed conic cap integration and validated common
+right-prism frames preserve recuts, holes, subdivision and replay. Exact linear
+and normal circular extrusion surfaces have STEP mappings with affine UV offsets
+and explicit emitted orientation. Partial axial overlap, skew/nonparallel
+extrusions and other surface families retain separate proof obligations. Keep
+the original oversized cutters and all formerly supported planar exports;
+never broaden the shortcut from close endpoint values or corner samples.
+Future extensions must continue through the supported interchange path. A native
 Boolean followed by a typed export blocker is not a completed STEP workflow.
 This ownership direction changes who performs dependency work; it does not
 weaken the shared properties or close any work-package gate.
@@ -2127,17 +2146,20 @@ The original fifteen-case continuation diagnostic continues to return native
 results for every case. The [oblique increment](evidence/2026-10-16-oblique-cuts/README.md)
 adds distant conic chart queries and a 45-degree torus half/band workflow with
 reconstruction, exact transforms and replay. Preserve its complete nine-fixture
-diagnostic, including oversized cylinder subtraction/clear blockers, cone
-continuation uncertainty and rationally rotated torus witness uncertainty;
+diagnostic, including its historical oversized cylinder subtraction/clear
+blockers, cone continuation uncertainty and rationally rotated torus witness uncertainty;
 successful body counts are separate from independent semantic acceptance.
 Extend these full-size cases through reusable selected contacts and complete
 native arrangement/embedding proofs (WP03/WP06/WP07/WP08), then disconnected and
 nested combinations. Keep unsupported, undecided and resource outcomes explicit;
-do not replace original fixtures with easier seam-aligned cuts. For oversized
-prism subtraction, first test the exact Cartesian-product containment case in
+do not replace original fixtures with easier seam-aligned cuts. The prism
+continuation extends the Cartesian-product containment case in
 `z_prism_boolean`: the source's axial interval lies inside the cutter's interval.
-Keep the union precondition and partial-overlap cases explicit; retain the
-original 40-unit cutters and both rational/radical rotations in acceptance.
+Preserve its original 40-unit cutters, rational/radical rotations, through bores,
+annular profiles, tiny endpoint-gap controls and imported-result recuts. The
+union precondition and partial-overlap cases remain explicit. Further completion
+requires reusable arrangement and embedding evidence, not progressively weaker
+whole-solid recognition or approximation at the STEP boundary.
 
 Cone/torus STEP exchange and a clean packaged
 consumer must accompany their own supported-domain proofs. Do not credit
@@ -2145,7 +2167,10 @@ source-path WASM or an optional floating-point oracle as shipped release coverag
 
 Surrounding crates remain owned by the concurrent upstream thread. The sector
 increment needed one reproduced scalar certificate, `acos(±1/2)`, after checking
-upstream. Its full dependency-check outcomes remain visible in the evidence;
+upstream. Prism continuation similarly needs rational reciprocal `atan` and a
+principal half-angle certificate for rational-hypotenuse arguments; their owning
+scalar regressions and downstream consumer checks accompany the BREP failure.
+The full dependency-check outcomes remain visible in the evidence;
 passing BREP checks do not close an inherited whole-scalar or release gate.
 Do not repair unrelated dependency findings in this branch merely to turn a
 broader dashboard green. Existing archive and spline timing exceptions remain

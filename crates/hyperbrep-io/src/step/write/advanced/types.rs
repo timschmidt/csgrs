@@ -1,5 +1,5 @@
 use hyperbrep::{
-    EdgeRef, EdgeUseRef, FaceRef, Point2, Real, SolidRef, Vector2, VertexRef, WireRef,
+    EdgeRef, EdgeUseRef, FaceRef, Orientation, Point2, Real, SolidRef, Vector2, VertexRef, WireRef,
 };
 
 /// A native vertex with its distinct topological and coordinate STEP entities.
@@ -30,13 +30,16 @@ pub struct WrittenAdvancedEdge<'a> {
     pub parameter_end: Real,
 }
 
-/// Exact linear map from an authored native surface chart to the output chart.
+/// Exact affine map from an authored native surface chart to the output chart.
 ///
-/// Origins coincide physically; the two vectors are the columns of the map.
+/// The two vectors are the columns of the linear part. Offsets retain shifted
+/// native parameters, including unwrapped circular angles and seam identities.
 /// Plane output coordinates are in the selected length unit; cylinder U is in
 /// radians and V is in that length unit. This is encoding metadata, not a surface.
 #[derive(Clone, Debug)]
 pub struct WrittenSurfaceParameters {
+    /// Output UV at native (0, 0), even when outside the finite source chart.
+    pub origin: Point2,
     /// Output UV change for one native U unit.
     pub u: Vector2,
     /// Output UV change for one native V unit.
@@ -45,7 +48,7 @@ pub struct WrittenSurfaceParameters {
 impl WrittenSurfaceParameters {
     /// Maps a native parameter without converting through floating point.
     pub fn map(&self, point: &Point2) -> Point2 {
-        Point2::origin() + self.u.clone() * &point.x + self.v.clone() * &point.y
+        self.origin.clone() + self.u.clone() * &point.x + self.v.clone() * &point.y
     }
 }
 
@@ -60,6 +63,9 @@ pub struct WrittenAdvancedFace<'a> {
     pub surface: u64,
     /// Native-to-output surface parameter map.
     pub parameters: WrittenSurfaceParameters,
+    /// Emitted orientation relative to the output surface's normal. Chart
+    /// reversal can make this differ from the source face's orientation.
+    pub orientation: Orientation,
 }
 
 /// An authored outer/inner wire and its explicit directed edge loop.

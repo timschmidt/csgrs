@@ -366,8 +366,12 @@ differences and their union, with the same intermediate support limits.
 
 `boolean::{union, intersection, difference}` supports certified global-z
 prisms whose planar boundaries contain exact lines and circular arcs.
-Intersection may use the overlapping z slab; union and difference require
-identical slabs.
+Intersection may use the overlapping z slab; union requires identical slabs.
+Directed difference permits a cutter slab containing the source slab, including
+equal endpoints. Partial coverage and exact small gaps remain outside that
+route. Certified right-prism outputs with parallel axes can continue in a
+common orthonormal chart after transforms or replay; skew/nonparallel prisms
+are not admitted by that shortcut. Other Boolean routes retain their domains.
 
 Parallel and antiparallel analytic cylinders are reduced through a certified
 orthonormal cylinder-local frame, so the same exact line/arc region kernel is

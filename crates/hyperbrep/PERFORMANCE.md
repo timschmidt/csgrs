@@ -781,3 +781,49 @@ Observed allocation increases are retained separately from the pcurve reductions
 These are process observations, not a universal allocation reduction claim.
 
 The original focused probe and all unfavorable rows remain in the evidence. No prior archive, spline, cached-arc, pcurve or provenance cost gate is closed by this experiment.
+
+
+## Exact prism continuation (2026-10-16)
+
+The [source-bound record](docs/evidence/2026-10-16-prism-continuation/README.md) retains original failures, the full preserved corpus and reviewed representation migrations.
+
+The complete 96-process campaign measures 159 preserved cases in fifteen corpora and eight new completed workflows. 8 old case receipts and 1 fixture-fact records have individually reviewed migrations. Maximum preserved-case median latency ratio is 1.713776; 19 rows exceed 10%. 68 rows change allocation observations, including 60 increases in calls or requested bytes. All raw samples, adverse rows, output receipts, process resources and executable sizes remain. Native harness size changes range from 4336 to 67920 bytes; the WASM harness grows 492304 bytes and includes twelve new test groups. Shared-host observations do not establish a general speedup, controlled-host performance, isolated scalar primitive costs, shipped binary size or closure of earlier cost gates.
+
+Retain the exact capability and correctness extension under the governing ladder: the original rational/radical prism cuts, bore continuation, two-semicircle annulus orientation, split/archive replay and supported STEP compositions now complete their independent exact assertions, while every preceding supported workload remains. This is not retained as an optimization. The 19 preserved-case median ratios above 1.10 (maximum 1.713776), 60 allocation increases and harness growth are adverse outcomes and remain open cost work. Eight old case receipts and one fixture-fact record change intentionally; four complete old/new archives prove equality of all 115 changed scalar values and identity of all non-scalar fields. Seven prism artifacts have separate documented carrier/chart migrations. Neither migration substitutes for semantic tests. Retain the bounded extension with these disclosed costs; merge upstream next, then investigate repeated BREP certificate construction against this complete feature baseline without weakening validation or moving unrelated work out of its owning thread. No broader work-package, release, resource-bound or pre-push gate is closed.
+
+Every observed preserved-case median ratio above 10%:
+
+- `analytic_export/analytic_export/partial_imported`: 1.179108.
+- `analytic_export/analytic_export/edit_roundtrip`: 1.179471.
+- `analytic_similarity/similarity/radical_replay`: 1.124558.
+- `arc/arc_retained_inverse_witness_replay`: 1.262752.
+- `circles/circles/closed_fresh_document`: 1.287108.
+- `circles/circles/closed_reused_document`: 1.286667.
+- `circles/circles/partial_fresh_document`: 1.696032.
+- `circles/circles/partial_reused_document`: 1.713776.
+- `circles/circles/edits_replay_composition`: 1.315466.
+- `kernel/analytic_kernel/cylinder_build_measure_classify`: 1.169058.
+- `kernel/analytic_kernel/homothetic_loft_build_measure_classify`: 1.170378.
+- `kernel/spline_kernel/nurbs_path_extrusion_build_exact_volume`: 1.200637.
+- `kernel/boolean_kernel/oriented_cylinder_interval_cut_build_measure`: 1.113730.
+- `pcurves/pcurves/full_fresh`: 1.202172.
+- `pcurves/pcurves/full_reused`: 1.210364.
+- `pcurves/pcurves/partial_fresh`: 1.389983.
+- `pcurves/pcurves/partial_reused`: 1.389129.
+- `pcurves/pcurves/edit_replay_composition`: 1.230131.
+- `pcurves/pcurves/reject_nonmaster_height`: 1.197891.
+
+New successful workflows have separate absolute costs, with exact checks and full archive/STEP materialization inside timing. A formerly failed operation is not a speedup baseline.
+
+| New workflow | Median milliseconds per iteration |
+| --- | ---: |
+| `prism_exchange/prism_exchange/half_cylinder` | 15.502098 |
+| `prism_exchange/prism_exchange/annular_prism` | 29.438153 |
+| `prism_exchange/prism_exchange/preserved_planar` | 84.642063 |
+| `prism_exchange/prism_exchange/covering_circular` | 134.602519 |
+| `prisms/prisms/same_height` | 129.102996 |
+| `prisms/prisms/covering_cylinders` | 4878.928089 |
+| `prisms/prisms/covering_bores` | 596.449667 |
+| `prisms/prisms/annular_cut` | 39.546634 |
+
+Requested allocation bytes and process RSS do not bound retained heap or total work. Earlier archive, spline, cached-arc, pcurve and provenance timing gates remain open. All broader work-package and delivery gates remain open.

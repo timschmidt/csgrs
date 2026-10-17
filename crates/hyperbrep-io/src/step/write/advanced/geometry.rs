@@ -1,8 +1,14 @@
 use super::super::{WriteError, WriteErrorKind, error::Site, number, output::Output};
 use super::WrittenSurfaceParameters;
-use hyperbrep::{GeometryError, Point3, Real, Surface, SurfaceKind, Vector2, Vector3};
+use hyperbrep::{
+    Curve3Kind, GeometryError, Point2, Point3, Real, Surface, SurfaceKind, Vector2, Vector3,
+};
 use hyperlimit::{PredicateOutcome, compare_reals};
 use std::cmp::Ordering;
+
+#[cfg(test)]
+#[path = "geometry_tests.rs"]
+mod tests;
 
 fn order(a: &Real, b: &Real, site: Site) -> Result<Ordering, WriteError> {
     match compare_reals(a, b, hyperbrep::STRICT_PREDICATES) {
@@ -124,11 +130,64 @@ pub(super) fn placement(
     })
 }
 
+fn plane(
+    out: &mut Output,
+    origin: &Point3,
+    u: &Vector3,
+    v: &Vector3,
+    scale: &Real,
+) -> Result<(u64, WrittenSurfaceParameters, bool), WriteError> {
+    let divide = |value: Real| {
+        (value / scale).map_err(|problem| out.site.error(WriteErrorKind::Numeric(problem)))
+    };
+    let normal = u.cross(v);
+    let x = u
+        .normalize_checked()
+        .map_err(|problem| out.site.error(WriteErrorKind::Numeric(problem)))?;
+    let axis = normal
+        .normalize_checked()
+        .map_err(|problem| out.site.error(WriteErrorKind::Numeric(problem)))?;
+    let y = axis
+        .cross(&x)
+        .normalize_checked()
+        .map_err(|problem| out.site.error(WriteErrorKind::Numeric(problem)))?;
+    let parameters = WrittenSurfaceParameters {
+        origin: Point2::origin(),
+        u: Vector2::new([divide(u.dot(&x))?, divide(u.dot(&y))?]),
+        v: Vector2::new([divide(v.dot(&x))?, divide(v.dot(&y))?]),
+    };
+    let placement = placement(out, origin, &normal, u, scale)?;
+    let id = out.entity("PLANE", |out| {
+        out.put("'',")?;
+        out.reference(placement)
+    })?;
+    Ok((id, parameters, false))
+}
+
+fn cylinder(
+    out: &mut Output,
+    origin: &Point3,
+    axis: &Vector3,
+    x: &Vector3,
+    radius: &Real,
+    scale: &Real,
+) -> Result<u64, WriteError> {
+    let radius = length(radius, scale, out)?;
+    let placement = placement(out, origin, axis, x, scale)?;
+    out.entity("CYLINDRICAL_SURFACE", |out| {
+        out.put("'',")?;
+        out.reference(placement)?;
+        out.put(",")?;
+        out.number(&radius)
+    })
+}
+
+/// The Boolean reports whether the exact native-to-output chart reverses orientation.
 pub(super) fn surface(
     out: &mut Output,
     source: &Surface,
     scale: &Real,
-) -> Result<(u64, WrittenSurfaceParameters), WriteError> {
+) -> Result<(u64, WrittenSurfaceParameters, bool), WriteError> {
     let divide = |value: Real| {
         (value / scale).map_err(|problem| out.site.error(WriteErrorKind::Numeric(problem)))
     };
@@ -136,43 +195,74 @@ pub(super) fn surface(
         SurfaceKind::Plane => {
             let origin = source.plane_origin().expect("plane origin");
             let (u, v) = source.plane_directions().expect("plane directions");
-            let normal = u.cross(v);
-            let x = u
-                .normalize_checked()
-                .map_err(|problem| out.site.error(WriteErrorKind::Numeric(problem)))?;
-            let axis = normal
-                .normalize_checked()
-                .map_err(|problem| out.site.error(WriteErrorKind::Numeric(problem)))?;
-            let y = axis
-                .cross(&x)
-                .normalize_checked()
-                .map_err(|problem| out.site.error(WriteErrorKind::Numeric(problem)))?;
-            let parameters = WrittenSurfaceParameters {
-                u: Vector2::new([divide(u.dot(&x))?, divide(u.dot(&y))?]),
-                v: Vector2::new([divide(v.dot(&x))?, divide(v.dot(&y))?]),
-            };
-            let placement = placement(out, origin, &normal, u, scale)?;
-            let id = out.entity("PLANE", |out| {
-                out.put("'',")?;
-                out.reference(placement)
-            })?;
-            Ok((id, parameters))
+            plane(out, origin, u, v, scale)
         }
         SurfaceKind::Cylinder => {
-            let cylinder = source.cylindrical_geometry().expect("cylinder data");
+            let data = source.cylindrical_geometry().expect("cylinder data");
             let parameters = WrittenSurfaceParameters {
+                origin: Point2::origin(),
                 u: Vector2::new([Real::one(), Real::zero()]),
                 v: Vector2::new([Real::zero(), divide(Real::one())?]),
             };
-            let radius = length(cylinder.radius, scale, out)?;
-            let placement = placement(out, cylinder.origin, cylinder.axis, cylinder.x, scale)?;
-            let id = out.entity("CYLINDRICAL_SURFACE", |out| {
-                out.put("'',")?;
-                out.reference(placement)?;
-                out.put(",")?;
-                out.number(&radius)
-            })?;
-            Ok((id, parameters))
+            let id = cylinder(out, data.origin, data.axis, data.x, data.radius, scale)?;
+            Ok((id, parameters, false))
+        }
+        SurfaceKind::Extrusion => {
+            let (profile, direction) = source
+                .extrusion_profile_and_direction()
+                .expect("extrusion data");
+            if profile.kind() == Curve3Kind::Line {
+                let origin = profile
+                    .start()
+                    .map_err(|error| out.site.error(WriteErrorKind::Geometry(error)))?;
+                let u = profile
+                    .derivative_at(profile.domain().start(), 1)
+                    .map_err(|error| out.site.error(WriteErrorKind::Geometry(error)))?;
+                let (id, mut parameters, reversed) =
+                    plane(out, &origin, u.vector(), direction, scale)?;
+                parameters.origin =
+                    Point2::origin() - parameters.u.clone() * profile.domain().start();
+                return Ok((id, parameters, reversed));
+            }
+            if let Some(arc) = profile.circular_geometry() {
+                let axis = arc.x.cross(arc.y);
+                if order(
+                    &axis.cross(direction).norm_squared(),
+                    &Real::zero(),
+                    out.site,
+                )? != Ordering::Equal
+                {
+                    return Err(out
+                        .site
+                        .error(WriteErrorKind::UnsupportedSurface(SurfaceKind::Extrusion)));
+                }
+                let axial_scale = direction.dot(&axis);
+                let axial_order = order(&axial_scale, &Real::zero(), out.site)?;
+                if axial_order == Ordering::Equal {
+                    return Err(out
+                        .site
+                        .error(WriteErrorKind::Invalid("singular circular extrusion")));
+                }
+                let sign = if arc.increasing_angle {
+                    Real::one()
+                } else {
+                    -Real::one()
+                };
+                let parameters = WrittenSurfaceParameters {
+                    origin: Point2::new(
+                        arc.angle_at_start - &sign * profile.domain().start(),
+                        Real::zero(),
+                    ),
+                    u: Vector2::new([sign, Real::zero()]),
+                    v: Vector2::new([Real::zero(), divide(axial_scale)?]),
+                };
+                let reversed = arc.increasing_angle == (axial_order == Ordering::Less);
+                let id = cylinder(out, arc.center, &axis, arc.x, arc.radius, scale)?;
+                return Ok((id, parameters, reversed));
+            }
+            Err(out
+                .site
+                .error(WriteErrorKind::UnsupportedSurface(SurfaceKind::Extrusion)))
         }
         kind => Err(out.site.error(WriteErrorKind::UnsupportedSurface(kind))),
     }
