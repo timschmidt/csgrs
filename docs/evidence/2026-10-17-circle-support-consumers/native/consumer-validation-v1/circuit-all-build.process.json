@@ -1,0 +1,16 @@
+{
+  "pid": 3587342,
+  "command": [
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "-p",
+    "hypercircuit",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "started_unix": 1792239317.5239282
+}

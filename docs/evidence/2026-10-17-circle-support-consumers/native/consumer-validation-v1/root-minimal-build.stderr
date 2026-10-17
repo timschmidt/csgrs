@@ -1,0 +1,49 @@
+   Compiling syn v2.0.117
+   Compiling libc v0.2.186
+   Compiling num-bigint v0.4.6
+   Compiling num-rational v0.4.2
+   Compiling num-complex v0.4.6
+   Compiling num v0.4.3
+   Compiling zerocopy-derive v0.8.48
+   Compiling hyperreal v0.13.1 (/dev/shm/csgrs-circle-support-consumers-v1/candidate-source-v1/crates/hyperreal)
+   Compiling serde_derive v1.0.228
+   Compiling serde v1.0.228
+   Compiling zerocopy v0.8.48
+   Compiling hyperlattice v0.6.1 (/dev/shm/csgrs-circle-support-consumers-v1/candidate-source-v1/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/dev/shm/csgrs-circle-support-consumers-v1/candidate-source-v1/crates/hyperlimit)
+   Compiling cargo-platform v0.1.9
+   Compiling getrandom v0.3.4
+   Compiling cargo_metadata v0.14.2
+   Compiling rand_core v0.9.5
+   Compiling hypertri v0.4.1 (/dev/shm/csgrs-circle-support-consumers-v1/candidate-source-v1/crates/hypertri)
+   Compiling rustix v1.1.4
+   Compiling bitflags v2.11.1
+   Compiling linux-raw-sys v0.12.1
+   Compiling skeptic v0.13.7
+   Compiling getrandom v0.4.2
+   Compiling hypersolve v0.3.1 (/dev/shm/csgrs-circle-support-consumers-v1/candidate-source-v1/crates/hypersolve)
+   Compiling thiserror-impl v1.0.69
+   Compiling once_cell v1.21.4
+   Compiling serde_core v1.0.228
+   Compiling tempfile v3.27.0
+   Compiling thiserror v1.0.69
+   Compiling ply-rs v0.1.3
+   Compiling hypermesh v0.1.0 (/dev/shm/csgrs-circle-support-consumers-v1/candidate-source-v1/crates/hypermesh)
+   Compiling half v2.7.1
+   Compiling ppv-lite86 v0.2.21
+   Compiling wait-timeout v0.2.1
+   Compiling serde_json v1.0.149
+   Compiling doc-image-embed v0.2.1
+   Compiling rusty-fork v0.3.1
+   Compiling rand_chacha v0.9.0
+   Compiling three-d-asset v0.4.0
+   Compiling hypercurve v0.3.1 (/dev/shm/csgrs-circle-support-consumers-v1/candidate-source-v1/crates/hypercurve)
+   Compiling hyperphysics v0.3.0 (/dev/shm/csgrs-circle-support-consumers-v1/candidate-source-v1/crates/hyperphysics)
+   Compiling rand_xorshift v0.4.0
+   Compiling rand v0.9.4
+   Compiling glam v0.30.10
+   Compiling proptest v1.11.0
+   Compiling boolmesh v0.1.9
+   Compiling tri-mesh v0.6.1
+   Compiling csgrs v0.23.0 (/dev/shm/csgrs-circle-support-consumers-v1/candidate-source-v1)
+    Finished `release` profile [optimized] target(s) in 2m 24s

@@ -1,0 +1,23 @@
+	Command being timed: "cargo test --offline --locked -p hypercircuit --release --all-features --no-run --message-format=json"
+	User time (seconds): 988.64
+	System time (seconds): 45.37
+	Percent of CPU this job got: 199%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 8:37.52
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2012756
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 59
+	Minor (reclaiming a frame) page faults: 15754946
+	Voluntary context switches: 266334
+	Involuntary context switches: 33824
+	Swaps: 0
+	File system inputs: 46664
+	File system outputs: 1920
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

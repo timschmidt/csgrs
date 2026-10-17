@@ -1,0 +1,16 @@
+{
+  "pid": 3517515,
+  "command": [
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "-p",
+    "csgrs",
+    "--release",
+    "--no-default-features",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "started_unix": 1792239147.9964461
+}

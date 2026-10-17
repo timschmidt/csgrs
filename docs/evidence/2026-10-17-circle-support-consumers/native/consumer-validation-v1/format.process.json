@@ -1,0 +1,11 @@
+{
+  "pid": 3298673,
+  "command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "started_unix": 1792238618.166624
+}

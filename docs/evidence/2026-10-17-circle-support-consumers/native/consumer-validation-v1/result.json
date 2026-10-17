@@ -1,0 +1,30 @@
+{
+  "complete": true,
+  "command_failures": [
+    "clippy"
+  ],
+  "commands_not_run": [
+    {
+      "name": "docs",
+      "reason": "shm-user-quota-reserve"
+    },
+    {
+      "name": "ffi-build",
+      "reason": "shm-user-quota-reserve"
+    },
+    {
+      "name": "ffi-tests-and-real-consumers",
+      "reason": "ffi-build did not complete successfully"
+    }
+  ],
+  "external_stop_reason": "shm-user-quota-reserve",
+  "sources_unchanged": true,
+  "source_input_mismatches": {},
+  "generated_outputs": {},
+  "cargo_target_closed": true,
+  "main_sources_modified": false,
+  "cache_admitted": false,
+  "full_plan_complete": false,
+  "full_pre_push_matrix_executed": false,
+  "published_package_pipeline_executed": false
+}

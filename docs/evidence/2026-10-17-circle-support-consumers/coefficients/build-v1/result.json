@@ -1,0 +1,19 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "binaries": {
+    "baseline": {
+      "path": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/baseline-tests",
+      "sha256": "d1e4d39c39e1ec06063a1c6495d06726f57fdd2f197595a715b8a804c8825b65",
+      "bytes": 46755992
+    },
+    "candidate": {
+      "path": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/candidate-tests",
+      "sha256": "4b6dc264208264c69850c198c5d31b7af468905f7b295b967a66de08e6ac9267",
+      "bytes": 46906264
+    }
+  },
+  "command_failures": [],
+  "source_and_read_only_dependencies_unchanged": true,
+  "cache_admitted": false
+}

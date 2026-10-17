@@ -1,0 +1,30 @@
+{
+  "name": "r5-b64-candidate",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/candidate-tests",
+    "curve_intersection::circle_support_cost_probe::shared_coefficient_lookup_cost",
+    "--exact",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.01762774819508195,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 884592640,
+      "runtime_free_bytes": 1331580928,
+      "host_available_memory_bytes": 9262448640
+    }
+  ],
+  "environment_overrides": {
+    "CIRCLE_SHARED_BITS": "64",
+    "CIRCLE_SHARED_REPEATS": "20000"
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "2e77e5b137589627d714362f3cab8631880571840320ed819a96cc545cea0a7d",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "8f264ff632f785e17a813770f02342720070ae218e46dc4c6168a548a9f2044a"
+}

@@ -1,0 +1,17 @@
+{
+  "pid": 3461657,
+  "command": [
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "-p",
+    "csgrs",
+    "--release",
+    "--all-features",
+    "--no-fail-fast",
+    "--",
+    "--test-threads=1"
+  ],
+  "started_unix": 1792239007.7817461
+}

@@ -1,0 +1,32 @@
+{
+  "complete": true,
+  "base_commit": "67a6ba54f1bf25f0ef495972238bba0a0102137e",
+  "source": "/dev/shm/csgrs-circle-support-consumers-v1/candidate-source-v1",
+  "storage_root": "/dev/shm/csgrs-circle-support-consumers-v1",
+  "source_inputs": 2836,
+  "source_hashes_sha256": "b33bfe6845fa81a5d3ea7e5102276e4234357735e039cc7339222fb31ee2b833",
+  "main_input_hashes_sha256": "d0173a0809aa4177a739114309d171de995842ae49b2392ad06fae1576f260a8",
+  "proposal_sha256": {
+    "crates/hypercurve/src/curve_intersection.rs": "2b6729bbef6ae8ac1ec95341c0311a299fde90e1a4dd207bb92bc43fc1ac472e",
+    "crates/hypercurve/src/circle_support_cache_tests.rs": "a95c3b73c00c486bc63de4e7711aef3fd2790ab7a3e1c5899b6ddd57755b783f",
+    "crates/hypercurve/README.md": "7587b7b82534a4a14502092dffc76f7189afff4f5db73d9e929976b0dff36bbe"
+  },
+  "changes_from_qualified_e40_candidate": {
+    "docs/properties-status.json": {
+      "previous": "e2e0a289b736771ddf974e29fe9517eb11dcd30b1de572533d031809b15b8537",
+      "current": "f0d2bf01a02a141fb61bdc84981a7282dd5411ffad9095f45ba23f028fc9b8c5"
+    }
+  },
+  "implementation_and_tests_identical_to_e40_candidate": true,
+  "format_exit_code": 0,
+  "main_sources_modified": false,
+  "cache_admitted": false,
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/prepare_v1.py": "4f2f6b51c4b80fec1ae38b33015effcf7049cfa167a5b580b1d975231697aeea",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/contract-v1.md": "011d8252dac7ea7a66174b9d76414c382208262625897106e8cd1b1dba39f615",
+    "/dev/shm/csgrs-circle-support-consumers-v1/write-control": "d035ce47091a029fafac18b04b31fadfbbac70f1d18e1af025444b1ac1494fea",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/preparation-v2/result.json": "b9b5d540c9c68e9a3e0888dd657fef741669bdd4c4d08216bda4442c6b43a02d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/preparation-v2/source-hashes.json.gz": "8d8d977ef3b8c9b76afbac21e599f88411ec9ab2c30149e21c4c67c6148b122a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-17-circle-support-corpus/checkpoint-v1.json": "27dc18819fa742165c71eb9c5f0b0efe654c60049e022576c995c8feff592035"
+  }
+}

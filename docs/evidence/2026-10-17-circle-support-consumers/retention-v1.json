@@ -1,0 +1,1221 @@
+{
+  "all_new_output_roots_closed": true,
+  "cache_index_applied": false,
+  "complete": true,
+  "format_exit_code": 0,
+  "full_plan_complete": false,
+  "intermediate_example_binaries_overwritten_while_target_open": [
+    {
+      "build": "root-all-build",
+      "final_sha256": "93de0dfd334202bc3954d978b7e6a25bdf1c3c885218ca4726a5bb68afa6dafd",
+      "path": "/dev/shm/csgrs-circle-support-consumers-v1/native-target-v1/release/examples/adjacency_demo",
+      "time_of_build_sha256": "8ab73219159f6b12c8488bdbddfe686b7d3f8198866b33eb5fc64c4a13d4d318"
+    },
+    {
+      "build": "root-all-build",
+      "final_sha256": "943a77586a89306bb87c92efe3bb7db39ac19e429186d3af412e732511c244f2",
+      "path": "/dev/shm/csgrs-circle-support-consumers-v1/native-target-v1/release/examples/assembly_manual",
+      "time_of_build_sha256": "435c68d4028dc8bf79f56557fc12f753a823d8e9ce9d185737b7c8dd3024cca7"
+    },
+    {
+      "build": "root-all-build",
+      "final_sha256": "28076144ffc2570187575beea235b3bd11cc0f14b07ce2bf2fbfec30fefff195",
+      "path": "/dev/shm/csgrs-circle-support-consumers-v1/native-target-v1/release/examples/scalar_adapter",
+      "time_of_build_sha256": "6e53af26e0e9ceb44cb55fd638c59b0a4561b525287b69e525d3bb0b0fa3c020"
+    },
+    {
+      "build": "root-all-build",
+      "final_sha256": "b639ddef14cfdc451200a47a4bd6bd3de59241908c47f27ffe8e75cf8496e66e",
+      "path": "/dev/shm/csgrs-circle-support-consumers-v1/native-target-v1/release/examples/multi_format_export",
+      "time_of_build_sha256": "dc77990a8366f38bada7bf49fe40716ff37720fb703c85eb4367005572a60adf"
+    },
+    {
+      "build": "root-all-build",
+      "final_sha256": "f403e0f5c970ec27a58343a37250b08d2fd5817bebae84d8e5de6262862b6656",
+      "path": "/dev/shm/csgrs-circle-support-consumers-v1/native-target-v1/release/examples/basic",
+      "time_of_build_sha256": "5f7af26e343bd780885c6b9ccf3ded7e296a68573924cb9c9f13db152d147fbb"
+    }
+  ],
+  "main_parent_commit": "67a6ba54f1bf25f0ef495972238bba0a0102137e",
+  "main_sources_unchanged": true,
+  "only_current_work_changed": true,
+  "physical_artifacts_not_duplicated_in_git": [
+    {
+      "bytes": 46755992,
+      "path": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/baseline-tests",
+      "sha256": "d1e4d39c39e1ec06063a1c6495d06726f57fdd2f197595a715b8a804c8825b65"
+    },
+    {
+      "bytes": 46906264,
+      "path": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/candidate-tests",
+      "sha256": "4b6dc264208264c69850c198c5d31b7af468905f7b295b967a66de08e6ac9267"
+    }
+  ],
+  "python_sources_parse": true,
+  "retained_evidence_files": {
+    "build_coefficients_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/build_coefficients_v1.py",
+      "sha256": "324ad9431336440fec8032b6d3b609dca2e980745171ba050a968c824d517a10"
+    },
+    "checkpoint_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/checkpoint_v1.py",
+      "sha256": "9208d66b7a30f91027b043a6378e92aea6544f1f3869599623aadc8740d8ffc7"
+    },
+    "coefficient-contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/coefficient-contract-v1.md",
+      "sha256": "2fbb9b1ad2f6203e8efa6511830a2a9882983385ab2bb4f5d2930c4f10cff286"
+    },
+    "coefficient_probe_v1.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/coefficient_probe_v1.rs",
+      "sha256": "7aef9d8ceeb37682a4359b76fb0bf4c80dc83169b28d00c2c0950692b2bc36a5"
+    },
+    "coefficient_runner_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/coefficient_runner_v1.py",
+      "sha256": "b24b29e291fd093432703d1f4349de2fc6894a3c00e567a0b92f16a57910d62f"
+    },
+    "coefficients/build-v1/baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/baseline.process.json",
+      "sha256": "67c7c5f5a83e4dc66fba110a34b4a1a07071c2b186632f535e9b5e5629ea1023"
+    },
+    "coefficients/build-v1/baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/baseline.resources",
+      "sha256": "e211e1a979338c59fe3eec78c67a90e93b9744fef54c4f955df73d3ef5bf8b26"
+    },
+    "coefficients/build-v1/baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/baseline.result.json",
+      "sha256": "d813fc4dc753f436422da9cb08d3c76c9e38df7dc3a52a54dfa91b819576683c"
+    },
+    "coefficients/build-v1/baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/build-v1/baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/baseline.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/build-v1/candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/candidate.process.json",
+      "sha256": "3b1495df6d6b8dadf16d081012c916289ea1c32219304b335b9472840c8c6107"
+    },
+    "coefficients/build-v1/candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/candidate.resources",
+      "sha256": "8f32307c361a00e78524ff9038b53f37ddfbc8a644250b550a2ab7815942237e"
+    },
+    "coefficients/build-v1/candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/candidate.result.json",
+      "sha256": "ce0f07a9ad0810b31da0771ab63ff89ee9e0200e3dc7add7fe06ae01e3ef7948"
+    },
+    "coefficients/build-v1/candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/build-v1/candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/candidate.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/build-v1/commands.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/commands.json",
+      "sha256": "914d2d9ccae91f64b9ba58ccb068def6d8227e113c7b6cc6b7ea76595d3bb23f"
+    },
+    "coefficients/build-v1/protocol.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/protocol.json",
+      "sha256": "714f8ef1d7e1d80c03bfc12442ec038a67770e7bef40da09ef37c19ff2fab7c0"
+    },
+    "coefficients/build-v1/result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/result.json",
+      "sha256": "68bc59436564895e59235b737b8789406a3620d7c90242236bce61b1e2aa03e6"
+    },
+    "coefficients/matched-v1/commands.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/commands.json",
+      "sha256": "4039a27cc19d368e9f9cb6eba38f321c5e644cb036de2c2715f2020d68e11d6d"
+    },
+    "coefficients/matched-v1/protocol.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/protocol.json",
+      "sha256": "67c85fafa4b021146e17b10c62bea20ebecbc13333b79d049ff29f829d40cdc9"
+    },
+    "coefficients/matched-v1/r0-b1048576-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b1048576-baseline.process.json",
+      "sha256": "4e400f5663d8cf71dcfb9f5b9f8eecb53d814128a1df61d4ce75afbc42ee574f"
+    },
+    "coefficients/matched-v1/r0-b1048576-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b1048576-baseline.resources",
+      "sha256": "60bee4d56497b07274c78bb1b2d5974cddcf0105930c858f8ef600aebe36f5ab"
+    },
+    "coefficients/matched-v1/r0-b1048576-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b1048576-baseline.result.json",
+      "sha256": "60f729884b9f9e95c9bb921e25aa50ebafdc63123161efdb783e199ae7b0fd95"
+    },
+    "coefficients/matched-v1/r0-b1048576-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b1048576-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r0-b1048576-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b1048576-baseline.stdout",
+      "sha256": "88c879be4ec1f4962e43ce31d7e341f7e1f552fc6c6ec5ab5bb333cef4aa7f07"
+    },
+    "coefficients/matched-v1/r0-b1048576-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b1048576-candidate.process.json",
+      "sha256": "afcf2b2959d807389e769d3e570767bcbb11827bc535ef515011f868e43a243d"
+    },
+    "coefficients/matched-v1/r0-b1048576-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b1048576-candidate.resources",
+      "sha256": "4c88f1c56be435d08a258e698fa2afe6bac92a156b39389d599ae4f3611c21cb"
+    },
+    "coefficients/matched-v1/r0-b1048576-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b1048576-candidate.result.json",
+      "sha256": "ba0a33ad05133da94cc8fcfcaa2e7cdf195135cbc97935b0ed348824c5d4da6b"
+    },
+    "coefficients/matched-v1/r0-b1048576-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b1048576-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r0-b1048576-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b1048576-candidate.stdout",
+      "sha256": "391e9a5069f163c5606407493e8a7ae03605c5e601617c0268bb1c77b6442898"
+    },
+    "coefficients/matched-v1/r0-b64-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b64-baseline.process.json",
+      "sha256": "23a81337a389517cdad70d5af29f1ea3e0107b6dc039cbba07bca728d1c1ff9c"
+    },
+    "coefficients/matched-v1/r0-b64-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b64-baseline.resources",
+      "sha256": "46a37288df2a3c9cedefc4a5ae23895f110a66f6eda2826f2bbeeba4340e536a"
+    },
+    "coefficients/matched-v1/r0-b64-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b64-baseline.result.json",
+      "sha256": "799d0d874e4e260f7a07b57020ef2fc191d8e434bdfca0b6bbed1028bc51925e"
+    },
+    "coefficients/matched-v1/r0-b64-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b64-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r0-b64-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b64-baseline.stdout",
+      "sha256": "7bf78e769c36259f367e735710e0750a9f4d2707898846091dc13af3e23f9f37"
+    },
+    "coefficients/matched-v1/r0-b64-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b64-candidate.process.json",
+      "sha256": "f73998540776f1ad3974cd647365ee19cc7db7b8f6250b4f7bc0950db6bd96f1"
+    },
+    "coefficients/matched-v1/r0-b64-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b64-candidate.resources",
+      "sha256": "a1f5b4cad0e827f36280c0459dde2e45c07a8a1f558428d0a59776e385f092fe"
+    },
+    "coefficients/matched-v1/r0-b64-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b64-candidate.result.json",
+      "sha256": "b528eaca9616df912e03ee8d132a595e35d17d4f6632228f2326e1a90e94dfef"
+    },
+    "coefficients/matched-v1/r0-b64-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b64-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r0-b64-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b64-candidate.stdout",
+      "sha256": "3375d9b249c1bd0e8937c691817a588a8d68c99d0cb9b3dd82eb30ab49797857"
+    },
+    "coefficients/matched-v1/r0-b65536-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b65536-baseline.process.json",
+      "sha256": "956d25c9022e7cf01877e4495086c7b2798d92579fa03ac152a8ee2413e0b656"
+    },
+    "coefficients/matched-v1/r0-b65536-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b65536-baseline.resources",
+      "sha256": "98b59267dd41abc423a5699f75bb59251e2ef6a21f908df1e3383580e52591f2"
+    },
+    "coefficients/matched-v1/r0-b65536-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b65536-baseline.result.json",
+      "sha256": "050800bd7c0e96b2bebe048d865248591a46624853c98dfd8de5502f06c51004"
+    },
+    "coefficients/matched-v1/r0-b65536-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b65536-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r0-b65536-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b65536-baseline.stdout",
+      "sha256": "8dd77eed998edca3f2716da49f9ffbbb1aa1f72b479aaccc6294132a175f05b1"
+    },
+    "coefficients/matched-v1/r0-b65536-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b65536-candidate.process.json",
+      "sha256": "0e43b8d0d7f1976f71f7ecd0bb9a136635c9b6fb991764dfdcaf03290b12b9a8"
+    },
+    "coefficients/matched-v1/r0-b65536-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b65536-candidate.resources",
+      "sha256": "fa488d8c68e151bb8fd805081c052ddae93773065c53c8c0763d73153ff12627"
+    },
+    "coefficients/matched-v1/r0-b65536-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b65536-candidate.result.json",
+      "sha256": "90bc47fb1929ac940e0f4f4b123d202063b260290bee6eee632969381453dffe"
+    },
+    "coefficients/matched-v1/r0-b65536-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b65536-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r0-b65536-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r0-b65536-candidate.stdout",
+      "sha256": "cb84ac19794752d43687ae440c00133a0f8f39ff1a046f167937130fa6515e7f"
+    },
+    "coefficients/matched-v1/r1-b1048576-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b1048576-baseline.process.json",
+      "sha256": "fc3c5b4f681cddbb834be71f2eafbee02e224862bba3b3301a4b5392271b8103"
+    },
+    "coefficients/matched-v1/r1-b1048576-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b1048576-baseline.resources",
+      "sha256": "eeb25e7bc597082b7cce8e522911a9763c5a60656614a21f20a5624041bc26a9"
+    },
+    "coefficients/matched-v1/r1-b1048576-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b1048576-baseline.result.json",
+      "sha256": "8d47dafac3fe21ee0721f4dcd593709ee2e303e085c442dd532b07175a6ebb36"
+    },
+    "coefficients/matched-v1/r1-b1048576-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b1048576-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r1-b1048576-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b1048576-baseline.stdout",
+      "sha256": "a7fd1ed95bcc59b2566691c54856eb5ea049d675c3acdd2b08fab357d19934b2"
+    },
+    "coefficients/matched-v1/r1-b1048576-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b1048576-candidate.process.json",
+      "sha256": "c7deb89bbc93173c22fefec72471b6d1ae5ffe322ec32adb2563a3da132d636d"
+    },
+    "coefficients/matched-v1/r1-b1048576-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b1048576-candidate.resources",
+      "sha256": "672e3397d8b978af5f3c527094b93e0334db633ab935e89f0d6e0223395968f9"
+    },
+    "coefficients/matched-v1/r1-b1048576-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b1048576-candidate.result.json",
+      "sha256": "8f28c2b41467b6c76837d88a5983478dfddee9645739bc413906fc703e5b7c08"
+    },
+    "coefficients/matched-v1/r1-b1048576-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b1048576-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r1-b1048576-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b1048576-candidate.stdout",
+      "sha256": "dda3462b2ed8d34acf8fde609c1ff3eb592c078d47993b0a6bcf9146464ade24"
+    },
+    "coefficients/matched-v1/r1-b64-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b64-baseline.process.json",
+      "sha256": "4919763afe53d57c9ae6d05cee7f4c618da220d4f963c724e84bd3fb10320fba"
+    },
+    "coefficients/matched-v1/r1-b64-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b64-baseline.resources",
+      "sha256": "1de3b16a3a660397e91241db0b12472ef414376da4a9362f928605cab8fe09c2"
+    },
+    "coefficients/matched-v1/r1-b64-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b64-baseline.result.json",
+      "sha256": "00ff1db01221a209526f5708b2c7e1bd7b49f24f181eb5e29c37b94db1c12b98"
+    },
+    "coefficients/matched-v1/r1-b64-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b64-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r1-b64-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b64-baseline.stdout",
+      "sha256": "e6b8dfbc730b8c4844ba6fa07ff9e3f6a6986a78a527cf703f05da05162fd05e"
+    },
+    "coefficients/matched-v1/r1-b64-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b64-candidate.process.json",
+      "sha256": "3635d6e6a457d224675182774cd8dac2514bb654bb5efb4ce5089be0b7610ca3"
+    },
+    "coefficients/matched-v1/r1-b64-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b64-candidate.resources",
+      "sha256": "e6e6c3223b1254b33560fddce3606e8a78dd46b79783f7e27a93d4245c55c79b"
+    },
+    "coefficients/matched-v1/r1-b64-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b64-candidate.result.json",
+      "sha256": "67c2497640845117ce181a1deae474986a26c077b0209143e2da71ed95b6da7d"
+    },
+    "coefficients/matched-v1/r1-b64-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b64-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r1-b64-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b64-candidate.stdout",
+      "sha256": "ec09d0079282598b104be7c3c02f0fffd79e7131ed52485df3c5855302d79061"
+    },
+    "coefficients/matched-v1/r1-b65536-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b65536-baseline.process.json",
+      "sha256": "6e505d56b5c783926e286d3442ccdc03024c2bfcb1a852348d3f6efab480fe1b"
+    },
+    "coefficients/matched-v1/r1-b65536-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b65536-baseline.resources",
+      "sha256": "80bf38c526a096d264252d1882c9cb3abb78ffee8dd8875f9dfdb1d27bff3c47"
+    },
+    "coefficients/matched-v1/r1-b65536-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b65536-baseline.result.json",
+      "sha256": "4de1e02d1610371fc3dcebb6799e6304afedff171bc07e9901b960f4e6c723bd"
+    },
+    "coefficients/matched-v1/r1-b65536-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b65536-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r1-b65536-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b65536-baseline.stdout",
+      "sha256": "0b2faf8c5c3abe8ea353899554b57d26846f105d44309da352f1494713d9b023"
+    },
+    "coefficients/matched-v1/r1-b65536-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b65536-candidate.process.json",
+      "sha256": "35799e1d305718a2f1eb66a1bca6917694b2c3a1e9343f9ca4431bcf9b502725"
+    },
+    "coefficients/matched-v1/r1-b65536-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b65536-candidate.resources",
+      "sha256": "f3bf24517bb007b22d3e9a226925d4c08c73621302ac70f95e5846eeeb37674c"
+    },
+    "coefficients/matched-v1/r1-b65536-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b65536-candidate.result.json",
+      "sha256": "e21378079bcd826c42f727bf3c19dff5c4155cc461374b7416bf0f20dc492d50"
+    },
+    "coefficients/matched-v1/r1-b65536-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b65536-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r1-b65536-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r1-b65536-candidate.stdout",
+      "sha256": "5687ffa0f06cbcc2a67feae2c8306d8fb42eab7a16d2e300836171c8610cfd6c"
+    },
+    "coefficients/matched-v1/r2-b1048576-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b1048576-baseline.process.json",
+      "sha256": "bc3d0ec463f993ed027b8eec056dfc7d757a9ed49b29c1ce3fefe05c3a23314d"
+    },
+    "coefficients/matched-v1/r2-b1048576-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b1048576-baseline.resources",
+      "sha256": "16ca2bd236c87f4b33d6d5b68fcd31446815d9179b9650bb3cdfc2553b3ba14c"
+    },
+    "coefficients/matched-v1/r2-b1048576-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b1048576-baseline.result.json",
+      "sha256": "a131e439d3445b05cef35cb4e7d686cdcaa0376eebf5e6078c5845d4cd7967d7"
+    },
+    "coefficients/matched-v1/r2-b1048576-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b1048576-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r2-b1048576-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b1048576-baseline.stdout",
+      "sha256": "b414dabb82029e5c9aeacaa21b0c4d66b9a9fdd76862decaf157d3478dbb6b7b"
+    },
+    "coefficients/matched-v1/r2-b1048576-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b1048576-candidate.process.json",
+      "sha256": "5cecdbf3f8f984f447ffea3407c2428be099f7b972d3a81322e727173eb70cbe"
+    },
+    "coefficients/matched-v1/r2-b1048576-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b1048576-candidate.resources",
+      "sha256": "e9a54637d51bb346269c6d21f88c962463b13917ceef3c0a0db75ac47cf6ee7a"
+    },
+    "coefficients/matched-v1/r2-b1048576-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b1048576-candidate.result.json",
+      "sha256": "5c5679eac9891f05b9e47618479f104611d683a4ee66f36d9cd14502c1055138"
+    },
+    "coefficients/matched-v1/r2-b1048576-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b1048576-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r2-b1048576-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b1048576-candidate.stdout",
+      "sha256": "3d15060d1a8f0e0f62ac5a64016666fba25d3a2dc509a0fb2d8a918a08783b94"
+    },
+    "coefficients/matched-v1/r2-b64-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b64-baseline.process.json",
+      "sha256": "75f45d5b0e4ecdc20699b0141d9de499eb39e61be7946cfe7c79ee46c988f43e"
+    },
+    "coefficients/matched-v1/r2-b64-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b64-baseline.resources",
+      "sha256": "fc9f71fa1932c5822bf4757d56281ec77cce359e12ca772a0222f900b3a15618"
+    },
+    "coefficients/matched-v1/r2-b64-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b64-baseline.result.json",
+      "sha256": "ae7ac717ffa0a0cac3231218b73d42e7cfcc0115926486ee83ea9828693fe584"
+    },
+    "coefficients/matched-v1/r2-b64-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b64-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r2-b64-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b64-baseline.stdout",
+      "sha256": "d5de5260bb68913da829c12eb44afcfa8f9eab64466e2e1e4c159e9593754fb8"
+    },
+    "coefficients/matched-v1/r2-b64-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b64-candidate.process.json",
+      "sha256": "b0271b36bb6f215736648dde0418d23ae0d456766d9ca3d7ce825ed9de9ef099"
+    },
+    "coefficients/matched-v1/r2-b64-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b64-candidate.resources",
+      "sha256": "2037f7a541c16c999f3759e8276d50efa422a3a76d95cf2f222cdbc909927004"
+    },
+    "coefficients/matched-v1/r2-b64-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b64-candidate.result.json",
+      "sha256": "7ff2b3308ea99ffa36a0a46c001f693c19c99cd37a47f73376bdbf040e22fc8f"
+    },
+    "coefficients/matched-v1/r2-b64-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b64-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r2-b64-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b64-candidate.stdout",
+      "sha256": "d7454bb9785b70e38185004e099a47c8110bd7f93c16053bde63b0f9abdc1da5"
+    },
+    "coefficients/matched-v1/r2-b65536-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b65536-baseline.process.json",
+      "sha256": "38e056e6a8cfa7296d8082b5afc0079c2b5c86d2e899f4615821898a9d9f8fc0"
+    },
+    "coefficients/matched-v1/r2-b65536-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b65536-baseline.resources",
+      "sha256": "830d1697bfebbd2d11e6b425cf94c7336e2a553485966e8cb20065f21f2a141b"
+    },
+    "coefficients/matched-v1/r2-b65536-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b65536-baseline.result.json",
+      "sha256": "09ed10a194c37625b7c9ee9c860382e5f0f60f9e04705fdd1bc9d1c1a554e57b"
+    },
+    "coefficients/matched-v1/r2-b65536-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b65536-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r2-b65536-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b65536-baseline.stdout",
+      "sha256": "d3af6076d8f54d172e74f065aa39d3bcd537953dd431a6381aa2f1626cbfa291"
+    },
+    "coefficients/matched-v1/r2-b65536-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b65536-candidate.process.json",
+      "sha256": "07058045cde00bbb83781b5a0c5661d152c283af1aac257a5c9bbb538fa04fb5"
+    },
+    "coefficients/matched-v1/r2-b65536-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b65536-candidate.resources",
+      "sha256": "e42fd4f50ced003d21cc949a2e865ba3d9b93c24760d1db1a56ad7ff58dba509"
+    },
+    "coefficients/matched-v1/r2-b65536-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b65536-candidate.result.json",
+      "sha256": "86eb35aa928b678cdb47d480dc3fe7f8e3a2c5ef58a9626b5b33e895b5bf9f50"
+    },
+    "coefficients/matched-v1/r2-b65536-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b65536-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r2-b65536-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r2-b65536-candidate.stdout",
+      "sha256": "0d2f90727c783029cba5e6db211f51a0bbf92d6762cbd539c205dd518be59b37"
+    },
+    "coefficients/matched-v1/r3-b1048576-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b1048576-baseline.process.json",
+      "sha256": "6290a8923d30365c1ab0052b4db901cc58e4f29b9e7d13c0ef4c03e334a07763"
+    },
+    "coefficients/matched-v1/r3-b1048576-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b1048576-baseline.resources",
+      "sha256": "8855ec401fea6476287d81102c07e4680280ce3221ce5876939125e09f23ba0f"
+    },
+    "coefficients/matched-v1/r3-b1048576-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b1048576-baseline.result.json",
+      "sha256": "75068bdb7bdb9a787bcefaff7c78558612e8635b17ef0bc0d98668d569c80b4f"
+    },
+    "coefficients/matched-v1/r3-b1048576-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b1048576-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r3-b1048576-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b1048576-baseline.stdout",
+      "sha256": "5e7e896326e7895fd252164522a8a9cc5727ca00629c6d1d3cc68288401593cc"
+    },
+    "coefficients/matched-v1/r3-b1048576-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b1048576-candidate.process.json",
+      "sha256": "a0da4b7e544f0b226daf4d6124f0000ec6fe64159b4b58e5fc8a54a5ad7499c6"
+    },
+    "coefficients/matched-v1/r3-b1048576-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b1048576-candidate.resources",
+      "sha256": "a204efdc0e8d26bdf8bda64bffbb85f4c39c5b81fd43048eacecc0fd864236d5"
+    },
+    "coefficients/matched-v1/r3-b1048576-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b1048576-candidate.result.json",
+      "sha256": "30469045f77589e856c1ee2273307e511c734ebb9f159e2f1b3aca69af267e5e"
+    },
+    "coefficients/matched-v1/r3-b1048576-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b1048576-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r3-b1048576-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b1048576-candidate.stdout",
+      "sha256": "532a4a4db3a78fbd603f410de0f7fa3ec73c7ee32a25ae82e60576cff3f4738c"
+    },
+    "coefficients/matched-v1/r3-b64-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b64-baseline.process.json",
+      "sha256": "33b99225f3a3fee740876771daca19992c999693b4d0ca9dc46df8457b0054c9"
+    },
+    "coefficients/matched-v1/r3-b64-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b64-baseline.resources",
+      "sha256": "aa8a752d3302c47ae7d9d29fa98a765771eb2b9c39a283df95b2b811f8dff677"
+    },
+    "coefficients/matched-v1/r3-b64-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b64-baseline.result.json",
+      "sha256": "31cbd9e47661b825d4d339a85029d889edf935a5801fd94782d5099158def571"
+    },
+    "coefficients/matched-v1/r3-b64-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b64-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r3-b64-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b64-baseline.stdout",
+      "sha256": "c2680d8959d00b7b5f5ba0e76ca8eb58de0900407c46437c51483921913b9e27"
+    },
+    "coefficients/matched-v1/r3-b64-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b64-candidate.process.json",
+      "sha256": "f0c6fd1f12f958c73e3479e81f8862ae64420ef10a22f5f4c3b5cd73174f5d88"
+    },
+    "coefficients/matched-v1/r3-b64-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b64-candidate.resources",
+      "sha256": "a0ac44772e6b9ef31eebdae606d5061eaa6272e51b758ace09deb9ff39b14950"
+    },
+    "coefficients/matched-v1/r3-b64-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b64-candidate.result.json",
+      "sha256": "d80e22fe7da92084abe6eb586e04671122420dedab21e8547f2dfcaf212653d6"
+    },
+    "coefficients/matched-v1/r3-b64-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b64-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r3-b64-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b64-candidate.stdout",
+      "sha256": "00c3768e509a935e9376c117ec6092c179791c98e931b7b508276e5321a585bf"
+    },
+    "coefficients/matched-v1/r3-b65536-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b65536-baseline.process.json",
+      "sha256": "e86e662ac106aefd6b41687199f7bdec27bbc702842f3c455f74d1c290522169"
+    },
+    "coefficients/matched-v1/r3-b65536-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b65536-baseline.resources",
+      "sha256": "9ebfe6d2629f78d1368a24e4de4736f7a6435c0e1bab929a39ab81fa9a4d9fce"
+    },
+    "coefficients/matched-v1/r3-b65536-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b65536-baseline.result.json",
+      "sha256": "5877ada3282df4dc34abb64c3093ee686b6157bb5040d6bece17b4880be0f5f8"
+    },
+    "coefficients/matched-v1/r3-b65536-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b65536-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r3-b65536-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b65536-baseline.stdout",
+      "sha256": "b010c5a47c0bdde72be55e6c92c7d8fda1019b5f96ee1fbc87e93c5fee3d4568"
+    },
+    "coefficients/matched-v1/r3-b65536-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b65536-candidate.process.json",
+      "sha256": "2833e1a0a9534d8cc7055cd40fd0ea672179873b4c044f2d72fda8f9ab14eedd"
+    },
+    "coefficients/matched-v1/r3-b65536-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b65536-candidate.resources",
+      "sha256": "261eb0f007d18b6db692bba540615838a4daf9020897660100dba5adc8711bce"
+    },
+    "coefficients/matched-v1/r3-b65536-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b65536-candidate.result.json",
+      "sha256": "4c2c2cff67b80f4647a065d9a2113983cbe4726d84bf7da698a477d732a28b2b"
+    },
+    "coefficients/matched-v1/r3-b65536-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b65536-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r3-b65536-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r3-b65536-candidate.stdout",
+      "sha256": "4aa465cd8d05b5d288f82723b7410aec974806413b16ee784808b5f79735bc11"
+    },
+    "coefficients/matched-v1/r4-b1048576-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b1048576-baseline.process.json",
+      "sha256": "7994022b03db4290c6ccaee78d77bb913a40b3e09e901595cf6e90d193db8423"
+    },
+    "coefficients/matched-v1/r4-b1048576-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b1048576-baseline.resources",
+      "sha256": "f218ac9357edf08aabdb0a09425eab733df09d3208b36db42d0494ab712c3637"
+    },
+    "coefficients/matched-v1/r4-b1048576-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b1048576-baseline.result.json",
+      "sha256": "7bc5adc5831bb8f9b6a67eca3d96437c7cb6b27a0d1c5c28254be7fd80654691"
+    },
+    "coefficients/matched-v1/r4-b1048576-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b1048576-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r4-b1048576-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b1048576-baseline.stdout",
+      "sha256": "20a8f2a5a6607049a038530023c286d792d7e1b23b03b7dabb6a16917752cf5d"
+    },
+    "coefficients/matched-v1/r4-b1048576-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b1048576-candidate.process.json",
+      "sha256": "3ec66006b88e3beec5e447e7c6e4eef4a40b16a8d96f8808d188239fe99a8666"
+    },
+    "coefficients/matched-v1/r4-b1048576-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b1048576-candidate.resources",
+      "sha256": "8cbc426afa950af630e28a2887c786d806b3766df3564cfd2bf4bb6d43bc5bb8"
+    },
+    "coefficients/matched-v1/r4-b1048576-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b1048576-candidate.result.json",
+      "sha256": "afde28472304ae23aa50fd1a6b255b5ba71b782347e71150a65a381e994bba50"
+    },
+    "coefficients/matched-v1/r4-b1048576-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b1048576-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r4-b1048576-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b1048576-candidate.stdout",
+      "sha256": "87332a939e34dd2a944a08966ab591412396314e4e6bcc1c1ee8bca082c97805"
+    },
+    "coefficients/matched-v1/r4-b64-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b64-baseline.process.json",
+      "sha256": "e2924891d8d4b5adaea839868305a3331cf00f330006582c890d2530449ec8f4"
+    },
+    "coefficients/matched-v1/r4-b64-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b64-baseline.resources",
+      "sha256": "6ed774443ec121f508efc3a6467b1f7fb8e5362a2ea53df4bb68c596ddd763b3"
+    },
+    "coefficients/matched-v1/r4-b64-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b64-baseline.result.json",
+      "sha256": "0c958719efb14a6f7cc68667bad67a42257451717e6468c6679bee0638ed5860"
+    },
+    "coefficients/matched-v1/r4-b64-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b64-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r4-b64-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b64-baseline.stdout",
+      "sha256": "7ae498a62bc4ddfa16f1d97872fe6a55587b90a27dbe0d4d1671d0140374d383"
+    },
+    "coefficients/matched-v1/r4-b64-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b64-candidate.process.json",
+      "sha256": "740fa615110bbfb894fb0780ca0c481b28cf123fc2e0482aa6d12182f6bed41a"
+    },
+    "coefficients/matched-v1/r4-b64-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b64-candidate.resources",
+      "sha256": "161227e7980bf80b9df6d4bb501140794aa6c97a07d0ddc5324bcac5b704dfd1"
+    },
+    "coefficients/matched-v1/r4-b64-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b64-candidate.result.json",
+      "sha256": "0e6092fb4852a5ebd70290d43e041c7b75360b4dc8549d60e1dd6c972f5e08fa"
+    },
+    "coefficients/matched-v1/r4-b64-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b64-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r4-b64-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b64-candidate.stdout",
+      "sha256": "ead3aaad3b0f85f72ccfc830a531e9bf6a89d060e3e760325830a30a084c78ec"
+    },
+    "coefficients/matched-v1/r4-b65536-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b65536-baseline.process.json",
+      "sha256": "89ecff9c553563a996835a60a558d12bbf3bd86e041834bb82eda552c8b4c944"
+    },
+    "coefficients/matched-v1/r4-b65536-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b65536-baseline.resources",
+      "sha256": "c3b2be0178df349834ca03ee531261529d5a0e7680f24aebdcf58e8c1e7a9a93"
+    },
+    "coefficients/matched-v1/r4-b65536-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b65536-baseline.result.json",
+      "sha256": "effd6581c6dbbfe437f53ed5f445211b4542d4a43ae37f95013185ee2898276d"
+    },
+    "coefficients/matched-v1/r4-b65536-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b65536-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r4-b65536-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b65536-baseline.stdout",
+      "sha256": "2055bca3d9fdd7cddbf12116307ab7cd1d04ce2df7cd193f3b234d8761f0eefb"
+    },
+    "coefficients/matched-v1/r4-b65536-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b65536-candidate.process.json",
+      "sha256": "3d6cda08c77886951bf8c54e15c144446558bb9a2371b7cb09b702b57da76db0"
+    },
+    "coefficients/matched-v1/r4-b65536-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b65536-candidate.resources",
+      "sha256": "48a8af08b15dce93e892bc15cbcf0c2ef969535a55af65997a54844daf9e9418"
+    },
+    "coefficients/matched-v1/r4-b65536-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b65536-candidate.result.json",
+      "sha256": "12b9e7c4a83aec8c39cf985e2e92992d4f495ca861879e2621d3d811b7421507"
+    },
+    "coefficients/matched-v1/r4-b65536-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b65536-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r4-b65536-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r4-b65536-candidate.stdout",
+      "sha256": "2c3d6833326efdb4225a51132807803c986ee870a335f980c6785e7aea12b63e"
+    },
+    "coefficients/matched-v1/r5-b1048576-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b1048576-baseline.process.json",
+      "sha256": "013143214046ce360a782f6716854c145e655d856af08cf62ff5dd23afc92fcc"
+    },
+    "coefficients/matched-v1/r5-b1048576-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b1048576-baseline.resources",
+      "sha256": "addce97d21c37bff408e0f994b6a0cf2fb40e2176c7a371a6adb1aac96eb40b0"
+    },
+    "coefficients/matched-v1/r5-b1048576-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b1048576-baseline.result.json",
+      "sha256": "5e5793bad0d852bacea797139f87840e64140d5573cd3749b5fe32111955db5f"
+    },
+    "coefficients/matched-v1/r5-b1048576-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b1048576-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r5-b1048576-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b1048576-baseline.stdout",
+      "sha256": "a66a445835a05de798e73d8f2edb5ee2f953d8242eb7a8d81f29c230cca17789"
+    },
+    "coefficients/matched-v1/r5-b1048576-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b1048576-candidate.process.json",
+      "sha256": "0ba9eb70108ca2160d978de35c9de211527be02fbb144328fbb4734f2a4005f0"
+    },
+    "coefficients/matched-v1/r5-b1048576-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b1048576-candidate.resources",
+      "sha256": "450df2e0172ac5dec8e020c3c4a7932f66cb1f551fd9bca505683528916eda09"
+    },
+    "coefficients/matched-v1/r5-b1048576-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b1048576-candidate.result.json",
+      "sha256": "16e6e856815ef24461854c1e348eb846e74b9b59e4c417aafca50b17a14a223b"
+    },
+    "coefficients/matched-v1/r5-b1048576-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b1048576-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r5-b1048576-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b1048576-candidate.stdout",
+      "sha256": "40024d3057fce4c04a2c07880774ad4e9d30965182fe43cb602f0ab102dddb6a"
+    },
+    "coefficients/matched-v1/r5-b64-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b64-baseline.process.json",
+      "sha256": "02102f88415b3391a7540beb6748ea018ec51322ff6468d35f5b1edf2ef7606b"
+    },
+    "coefficients/matched-v1/r5-b64-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b64-baseline.resources",
+      "sha256": "6e4dab6de3840802f8c356084fdbfce45691b8daae451e7c9300004b1c469bf4"
+    },
+    "coefficients/matched-v1/r5-b64-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b64-baseline.result.json",
+      "sha256": "88e045c6a85b0a16727b6c1865e134eaa0a72503f4d1963347927dbf1d531fde"
+    },
+    "coefficients/matched-v1/r5-b64-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b64-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r5-b64-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b64-baseline.stdout",
+      "sha256": "f6a07398f36cbb4fd967c4ed19a2e59d790f132f2944b3b1727be36c7d7666f0"
+    },
+    "coefficients/matched-v1/r5-b64-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b64-candidate.process.json",
+      "sha256": "c2b33576d90509daaf9a458bc76803c05df26d230bc444f8a96ad1ecbcc04310"
+    },
+    "coefficients/matched-v1/r5-b64-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b64-candidate.resources",
+      "sha256": "8f264ff632f785e17a813770f02342720070ae218e46dc4c6168a548a9f2044a"
+    },
+    "coefficients/matched-v1/r5-b64-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b64-candidate.result.json",
+      "sha256": "b7984b85e7983bc501bc78b18d7411db96e7a5229087df4517c981799bf2fc55"
+    },
+    "coefficients/matched-v1/r5-b64-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b64-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r5-b64-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b64-candidate.stdout",
+      "sha256": "2e77e5b137589627d714362f3cab8631880571840320ed819a96cc545cea0a7d"
+    },
+    "coefficients/matched-v1/r5-b65536-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b65536-baseline.process.json",
+      "sha256": "4247f5a231e8bbdcc6593719ec1bb2f1718279efdfe070ae176710a3218351e5"
+    },
+    "coefficients/matched-v1/r5-b65536-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b65536-baseline.resources",
+      "sha256": "bedffe8874488e3f5f623551147b0eb76c56c19df5002575475ed9baff582707"
+    },
+    "coefficients/matched-v1/r5-b65536-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b65536-baseline.result.json",
+      "sha256": "7a661f16ed4137bd68c4c9d393bb06f8e25b3530e55a536af00117e4ea1373fb"
+    },
+    "coefficients/matched-v1/r5-b65536-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b65536-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r5-b65536-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b65536-baseline.stdout",
+      "sha256": "67915d56a281cf9285e278364ddba996c0a32403e07ead3089967c8919fc6194"
+    },
+    "coefficients/matched-v1/r5-b65536-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b65536-candidate.process.json",
+      "sha256": "8dbdb0e2e202e4ec0086ffff33f8e9bbf5939ae95b4dc9834a2cd3ca0360b345"
+    },
+    "coefficients/matched-v1/r5-b65536-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b65536-candidate.resources",
+      "sha256": "02079724c2596ce458b2a5f138d8100c67233eef9e0ac402c3ab70d604ff3993"
+    },
+    "coefficients/matched-v1/r5-b65536-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b65536-candidate.result.json",
+      "sha256": "db26df6a305941867b61a485246e5c737ce03a7290ba520174ae68221902c8d4"
+    },
+    "coefficients/matched-v1/r5-b65536-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b65536-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r5-b65536-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r5-b65536-candidate.stdout",
+      "sha256": "7d14f3c46cd69d9c3bca773d110e354e631b596746591cb188415162d677eba2"
+    },
+    "coefficients/matched-v1/r6-b1048576-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b1048576-baseline.process.json",
+      "sha256": "cef06888bace0868584f8e613d1fce9a844aa81231d73f60db4d514f4400f783"
+    },
+    "coefficients/matched-v1/r6-b1048576-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b1048576-baseline.resources",
+      "sha256": "c521d69778f45ffef00f31d6d181ce8a2e5caf9b725721da3687fa35f0eaf7a6"
+    },
+    "coefficients/matched-v1/r6-b1048576-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b1048576-baseline.result.json",
+      "sha256": "6d8cb7b3314fdb2dae79713c48ec370b7474a8685e99c21c3300166c41ae0b82"
+    },
+    "coefficients/matched-v1/r6-b1048576-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b1048576-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r6-b1048576-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b1048576-baseline.stdout",
+      "sha256": "b5cd724642ef4ba031429c8aa6c9346e89ca8dd9fc2ba6e8cd7dd021d76369a5"
+    },
+    "coefficients/matched-v1/r6-b1048576-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b1048576-candidate.process.json",
+      "sha256": "a26af1c339df833e34d91c942789ae9635f01ad410c94f0801fd8179ab2da4ed"
+    },
+    "coefficients/matched-v1/r6-b1048576-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b1048576-candidate.resources",
+      "sha256": "0d4c0adedf2fcb9d7230f4163d8703d675dc14cba93666f5da28a163c08beea9"
+    },
+    "coefficients/matched-v1/r6-b1048576-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b1048576-candidate.result.json",
+      "sha256": "f59c0f0b22287ec5f22818bae09af80cbd0f7e60f40456f1fd3e4c2d2183a813"
+    },
+    "coefficients/matched-v1/r6-b1048576-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b1048576-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r6-b1048576-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b1048576-candidate.stdout",
+      "sha256": "92ff9d758fd7fe70d2082389a65af2bf0411ec2cdafe12f54e458f529255d5e6"
+    },
+    "coefficients/matched-v1/r6-b64-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b64-baseline.process.json",
+      "sha256": "e14c52946b22e62b088fed16552798887f07048a61af41facbafe10df14ce496"
+    },
+    "coefficients/matched-v1/r6-b64-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b64-baseline.resources",
+      "sha256": "298af006fb28d2aa6aeaf4b372fc9ea250e1fe384e000aef672f74dea87ff09d"
+    },
+    "coefficients/matched-v1/r6-b64-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b64-baseline.result.json",
+      "sha256": "3a09f208611a8cf0195d1b7da8f8e8805be8693d7637ef3d357fa7819d65536a"
+    },
+    "coefficients/matched-v1/r6-b64-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b64-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r6-b64-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b64-baseline.stdout",
+      "sha256": "b19720aba76aa0b852b1b8c4800e165bb12f11aaba71d893ec451093eaaa9ba3"
+    },
+    "coefficients/matched-v1/r6-b64-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b64-candidate.process.json",
+      "sha256": "a8e096b0e1b1af7fc1453f691041b2eb2ad31905a454531ae3d493c31115f367"
+    },
+    "coefficients/matched-v1/r6-b64-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b64-candidate.resources",
+      "sha256": "5b059e2ab60535f6de689911257895720a121dab45014dfccd5816b36c2d5313"
+    },
+    "coefficients/matched-v1/r6-b64-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b64-candidate.result.json",
+      "sha256": "6e63b29721b7330e71c9a810e996cad162bbadba7daf5db5979b6c998ddfc758"
+    },
+    "coefficients/matched-v1/r6-b64-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b64-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r6-b64-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b64-candidate.stdout",
+      "sha256": "b46762b9f621765ea2e8c1ccec2f84da29447961b1b2cefff75dacc67c5163d0"
+    },
+    "coefficients/matched-v1/r6-b65536-baseline.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b65536-baseline.process.json",
+      "sha256": "a2ddfdfd8cb6920e1d0ceb2a8e2719fa431a19cdeb03d265756b3072f8f3aa78"
+    },
+    "coefficients/matched-v1/r6-b65536-baseline.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b65536-baseline.resources",
+      "sha256": "4755d8aa2ae77d1e1aa7e83007f1b46bfdcc4273d591ed1d10486bc7a3d62c29"
+    },
+    "coefficients/matched-v1/r6-b65536-baseline.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b65536-baseline.result.json",
+      "sha256": "0c08b71c4824a0d31c656a330d6bb1b9599adf7fe28da38eeed8fcb768dd5078"
+    },
+    "coefficients/matched-v1/r6-b65536-baseline.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b65536-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r6-b65536-baseline.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b65536-baseline.stdout",
+      "sha256": "f3964bed4cf9ff159462d3914c6c0ee93b3e22604a1a8fa3d6c456b43b2b73f9"
+    },
+    "coefficients/matched-v1/r6-b65536-candidate.process.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b65536-candidate.process.json",
+      "sha256": "f7b939ce13a212c680cb7fc071d709acc1f97db25b7c88c9eaf051bccea26254"
+    },
+    "coefficients/matched-v1/r6-b65536-candidate.resources": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b65536-candidate.resources",
+      "sha256": "a00da6edf8ef2cbe73e231409506573dadcc27dc5c9c1d2a0fcffd2d342a0424"
+    },
+    "coefficients/matched-v1/r6-b65536-candidate.result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b65536-candidate.result.json",
+      "sha256": "cdbecc5a2109a7a4a81f65d8b2675f3f6809629971c8511409a636060340d605"
+    },
+    "coefficients/matched-v1/r6-b65536-candidate.stderr": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b65536-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "coefficients/matched-v1/r6-b65536-candidate.stdout": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/r6-b65536-candidate.stdout",
+      "sha256": "9b6a65e9abf8d905734331f5003cbcbb5de089cab10c1e0dc3632e3fa59384b1"
+    },
+    "coefficients/matched-v1/result.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/result.json",
+      "sha256": "df58a7616a82576ea4f2ad182f4c7a6803d9045c8ef83743d66c8e1a9ac08cfa"
+    },
+    "coefficients/matched-v1/samples.json": {
+      "original": "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/samples.json",
+      "sha256": "440959199505611c5baa86d2b07c0d7802b4726e3ea95552cf825aec26e43745"
+    },
+    "consumers_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/consumers_v1.py",
+      "sha256": "84c9182456895e15ff4324539d4fcf75b2ebc6e455a34987943b38a8da262172"
+    },
+    "contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/contract-v1.md",
+      "sha256": "011d8252dac7ea7a66174b9d76414c382208262625897106e8cd1b1dba39f615"
+    },
+    "decision-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/decision-v1.json",
+      "sha256": "05cc1023285600795bd1a6be124ae8c91342b97eec2410d4f80f6ae945e9582f"
+    },
+    "measure_coefficients_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/measure_coefficients_v1.py",
+      "sha256": "d2e8d7d4165222e325deac3f7e4e9b66911bdfcc99de1907249918ff95656a6f"
+    },
+    "native/consumer-validation-v1/circuit-all-build.process.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/circuit-all-build.process.json",
+      "sha256": "61a0f3a2f7c5596081ca2130ae5f262572be862cd7f782ae7e34e3c6f0b3e103"
+    },
+    "native/consumer-validation-v1/circuit-all-build.resources": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/circuit-all-build.resources",
+      "sha256": "19933c91154c065120ddb613742abdd71a231c7920243a4900a4912d15aa87ef"
+    },
+    "native/consumer-validation-v1/circuit-all-build.stderr": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/circuit-all-build.stderr",
+      "sha256": "d266b121591005a3bd7cc3552b713b3c6287d1be32cbfe2c0ba7f1957c08f0a8"
+    },
+    "native/consumer-validation-v1/circuit-all-build.stdout": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/circuit-all-build.stdout",
+      "sha256": "8eff640d79fdd8c6f7a891464df1347d8e5edab65b864071040333cc8ee62868"
+    },
+    "native/consumer-validation-v1/circuit-all.process.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/circuit-all.process.json",
+      "sha256": "d51bc45a3206da0b8ef4f005d13975b6a646aed510d0aaf3daa6929b7d7d38f6"
+    },
+    "native/consumer-validation-v1/circuit-all.resources": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/circuit-all.resources",
+      "sha256": "2337e4ecd3fceb1eed145326e25bc08db2e04669700c614922d4a3a4981dbfe9"
+    },
+    "native/consumer-validation-v1/circuit-all.stderr": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/circuit-all.stderr",
+      "sha256": "c26d3074ee1e2b37c84ac47046c5f7ddf1831de31143b0c9ffd1e0717ec9bf79"
+    },
+    "native/consumer-validation-v1/circuit-all.stdout": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/circuit-all.stdout",
+      "sha256": "b6d6d9d263a77d63eac6ab5882947ef3031994e20abc425c1bce58b216ddcdfc"
+    },
+    "native/consumer-validation-v1/clippy.process.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/clippy.process.json",
+      "sha256": "54b68734cf4eceaac021ac916146aa735ff4a6bc5700b6c5ad1ebe06a5cd0d9e"
+    },
+    "native/consumer-validation-v1/clippy.resources": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/clippy.resources",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native/consumer-validation-v1/clippy.stderr": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/clippy.stderr",
+      "sha256": "e3f081eb94b827dcb8c47c43615d13ea79b40859ee5b4735b1d82483ee627357"
+    },
+    "native/consumer-validation-v1/clippy.stdout": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native/consumer-validation-v1/commands.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/commands.json",
+      "sha256": "1befa3e3867daf97706b1ac71ade94f9c0724c77f0b8655c8c8786bfcc652076"
+    },
+    "native/consumer-validation-v1/format.process.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/format.process.json",
+      "sha256": "721643fd8c7639d528c4e6c02e323cd4c3643e791bc09fa800ec5764a5049eb9"
+    },
+    "native/consumer-validation-v1/format.resources": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/format.resources",
+      "sha256": "f3b185b4cd60edcb4d13586b4c90f0930b11c95867c7d0154e753c7f6e3fcf1a"
+    },
+    "native/consumer-validation-v1/format.stderr": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native/consumer-validation-v1/format.stdout": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native/consumer-validation-v1/protocol.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/protocol.json",
+      "sha256": "125615038a5121676e235ca844f93aa258bfb0d96a807ff44203094fc496dd7f"
+    },
+    "native/consumer-validation-v1/result.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/result.json",
+      "sha256": "334ce63bd2bddc4fd24d9e22724bd38f3694ae7366a6f5f51387600ec644809e"
+    },
+    "native/consumer-validation-v1/root-all-build.process.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-all-build.process.json",
+      "sha256": "f0a8c33947e2ae969e7c65d50fa198e964353747ff0757569dd78e2f39859dd7"
+    },
+    "native/consumer-validation-v1/root-all-build.resources": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-all-build.resources",
+      "sha256": "c5c0fdcf50c9272ca83828482b49c4f7cfd8448e316f2f73047e8deab77edef3"
+    },
+    "native/consumer-validation-v1/root-all-build.stderr": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-all-build.stderr",
+      "sha256": "51498fa01ffed85bb749a7cb09756c5655802dc44b4374fd4031f709fe94c455"
+    },
+    "native/consumer-validation-v1/root-all-build.stdout": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-all-build.stdout",
+      "sha256": "a6687324ca2ef06f1c09adfc3348c91c2075ba7d2b278f34d463ed940383fa90"
+    },
+    "native/consumer-validation-v1/root-all.process.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-all.process.json",
+      "sha256": "dca1d1476cf8299ca6b66ea1a9a7901830dcf0d26260dd8457f2ea4dcd31edd0"
+    },
+    "native/consumer-validation-v1/root-all.resources": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-all.resources",
+      "sha256": "a4e89e27571080ab636cc2a38b222f39548d103ce1ca94dc46711ee508a33033"
+    },
+    "native/consumer-validation-v1/root-all.stderr": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-all.stderr",
+      "sha256": "c689b2d5db4b7bc0f87e46c46f6435bbba743fd195f2cbfe36210d0683f44de4"
+    },
+    "native/consumer-validation-v1/root-all.stdout": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-all.stdout",
+      "sha256": "9715424781280412c5698b14e4490722b214cd3209632b89d339ae8ea7e49474"
+    },
+    "native/consumer-validation-v1/root-minimal-build.process.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-minimal-build.process.json",
+      "sha256": "3c8013c0228d256020d0ad2426b62b5554b4b3e82c43c96f89f8fdbe1f4513c3"
+    },
+    "native/consumer-validation-v1/root-minimal-build.resources": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-minimal-build.resources",
+      "sha256": "59de880cac5387bea0983b02a229b65051dd7f161c65a92dc17e79374d855232"
+    },
+    "native/consumer-validation-v1/root-minimal-build.stderr": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-minimal-build.stderr",
+      "sha256": "719053d27b67f014ed81d3589771cfddf03bb141ad8b232c86633668318cb760"
+    },
+    "native/consumer-validation-v1/root-minimal-build.stdout": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-minimal-build.stdout",
+      "sha256": "f77b8a1af7ea6f7059ca818a992df20db1ff0d7e638d47b464b6177ed5e5d881"
+    },
+    "native/consumer-validation-v1/root-minimal.process.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-minimal.process.json",
+      "sha256": "033c1ad7adb6befe14d8276404d943d3edfe88cab7de151395f5282fb45c690f"
+    },
+    "native/consumer-validation-v1/root-minimal.resources": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-minimal.resources",
+      "sha256": "3df455f86cf0afe2dc839abb7dd8c468c5dbb2f97cbd2c50dd70621e44b4f554"
+    },
+    "native/consumer-validation-v1/root-minimal.stderr": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-minimal.stderr",
+      "sha256": "b3ddb7113d957175011c220dea69854ae99d6b1d6bd837f5d56edcc03b884451"
+    },
+    "native/consumer-validation-v1/root-minimal.stdout": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/root-minimal.stdout",
+      "sha256": "42ed9d21237b5a1c8c22255a4321df1cf088eb187625c8a72f75092ba90ef942"
+    },
+    "native/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/config/kicad/9.0/design-block-lib-table": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/config/kicad/9.0/design-block-lib-table",
+      "sha256": "c1a8f8fe41a64c0c49cf0d7e397a656c3f6fab32fdb8be41f5c4cbc5842654fb"
+    },
+    "native/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/config/kicad/9.0/eeschema.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/config/kicad/9.0/eeschema.json",
+      "sha256": "7e880fa0b624918ad66b5846da8f2aec72539f508b93dc809d5b27c082caf60a"
+    },
+    "native/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/config/kicad/9.0/kicad.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/config/kicad/9.0/kicad.json",
+      "sha256": "0348ef3294363c42323da36bd67413e658fade4fcd706b3fcc04a5d6d4fff8d2"
+    },
+    "native/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/config/kicad/9.0/kicad_common.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/config/kicad/9.0/kicad_common.json",
+      "sha256": "0547842d247076d496e1e8d5f7c10bd73d455cc9edfdf54cfb64421c36629f4c"
+    },
+    "native/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/config/kicad/9.0/symbol_editor.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/config/kicad/9.0/symbol_editor.json",
+      "sha256": "8962eab2f93bfd726b40e505c984f19adb1ec023599fae4896439d8d11f9a441"
+    },
+    "native/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/multipart.kicad_sch": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/multipart.kicad_sch",
+      "sha256": "1bbb2ca5e8b95e1ac1016b1cd029182b91cc75239ed96b90f41737c6b7932d04"
+    },
+    "native/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/svg/multipart.svg": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/scratch/hypercircuit-kicad-multipart-3815977/svg/multipart.svg",
+      "sha256": "d66682eea01e8d76440e0e0c19f51c40717b2c8a6529f22b0e54a5302c5eb91c"
+    },
+    "native/preparation-v1/environment.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/preparation-v1/environment.json",
+      "sha256": "6943428b73ab649136c5aea362b25e06300658bd4c7e4f96bea4bc6b18fe82cf"
+    },
+    "native/preparation-v1/format.stderr": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/preparation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native/preparation-v1/format.stdout": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/preparation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native/preparation-v1/main-input-hashes.json.gz": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/preparation-v1/main-input-hashes.json.gz",
+      "sha256": "d0173a0809aa4177a739114309d171de995842ae49b2392ad06fae1576f260a8"
+    },
+    "native/preparation-v1/result.json": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/preparation-v1/result.json",
+      "sha256": "280d2069a5c56d08b99317eaaec2a01130b136dbdc95552941e2c75d0cdb60a9"
+    },
+    "native/preparation-v1/source-hashes.json.gz": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/preparation-v1/source-hashes.json.gz",
+      "sha256": "b33bfe6845fa81a5d3ea7e5102276e4234357735e039cc7339222fb31ee2b833"
+    },
+    "native/write-control": {
+      "original": "/dev/shm/csgrs-circle-support-consumers-v1/write-control",
+      "sha256": "d035ce47091a029fafac18b04b31fadfbbac70f1d18e1af025444b1ac1494fea"
+    },
+    "prepare_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/prepare_v1.py",
+      "sha256": "4f2f6b51c4b80fec1ae38b33015effcf7049cfa167a5b580b1d975231697aeea"
+    },
+    "progress-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/progress-v1.md",
+      "sha256": "0b46b25e1dd20a2395b88135f1ad04d553ee74b6b4526ebb104e2ec395048424"
+    },
+    "runner_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/runner_v1.py",
+      "sha256": "4d1462217313ee2d6d5a5b6ca797afb46a7bd1ba147c1e3a3514a89183e05095"
+    },
+    "unused-wasm/write-control": {
+      "original": "/run/user/1000/csgrs-circle-support-wasm-v1/write-control",
+      "sha256": "e668e82835681d703103119d89408ff2eff7d336a75dd32296ac787e7af2f428"
+    },
+    "wasm_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/wasm_v1.py",
+      "sha256": "63ebc02c5e45c521585d69471b9091e678a8e381adf2dc47b3c29567907a59f5"
+    }
+  },
+  "retention_decision": "rejected",
+  "source_changes_applied": false,
+  "source_inputs": 2835,
+  "wasm_helper_executed": false
+}

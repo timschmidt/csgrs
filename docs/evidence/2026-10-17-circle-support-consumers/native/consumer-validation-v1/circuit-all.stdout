@@ -1,0 +1,583 @@
+
+running 31 tests
+test coordinates::tests::cardinal_and_mirrored_transforms_remain_exact ... ok
+test coordinates::tests::default_frame_is_valid_and_contradictions_fail_loudly ... ok
+test drc::tests::heterogeneous_dielectrics_are_not_collapsed_into_false_precision ... ok
+test drc::tests::hyperphysics_material_graph_enables_hyperdrc_impedance_estimate ... ok
+test drc::tests::keepout_constructor_failure_survives_the_public_handoff_and_recovers ... ok
+test drc::tests::placed_polygon_retains_constructor_failure_instead_of_an_empty_envelope ... ok
+test drc::tests::unresolved_material_properties_remain_release_auditable ... ok
+test fabrication::tests::ipc356_net_tokens_escape_delimiters_without_identity_loss ... ok
+test intelligent_exchange::tests::bounded_arbitrary_ipc2581_xml_never_panics ... ok
+test intelligent_exchange::tests::content_addressed_package_rejects_tampering_and_version_drift ... ok
+test intelligent_exchange::tests::ipc_xml_inspection_rejects_entities_and_depth_bombs ... ok
+test intelligent_exchange::tests::subprocess_boundary_reports_crash_timeout_malformed_output_and_version_drift ... ok
+test kicad_import::tests::kicad_number_tokens_use_hyperreal_scientific_parsing ... ok
+test manufacturing_release::tests::archive_reader_rejects_duplicate_names_and_symbolic_links_before_manifest_loading ... ok
+test manufacturing_release::tests::bounded_arbitrary_archive_bytes_never_panic ... ok
+test materialize::tests::additive_composition_preserves_holes_islands_and_duplicate_profiles ... ok
+test materialize::tests::approximate_materialization_marks_consumed_terminal_pad_ordering ... ok
+test materialize::tests::cubic_projection_handles_finite_coordinates_whose_raw_chord_overflows ... ok
+test materialize::tests::disjoint_additive_compound_does_not_invent_coincident_holes ... ok
+test materialize::tests::exact_compound_regions_replay_positive_and_negative_curve_loops ... ok
+test materialize::tests::overlapping_additive_union_does_not_reclassify_material_as_a_hole ... ok
+test materialize::tests::pad_local_rotation_precedes_translation_and_board_placement ... ok
+test materialize::tests::rectangle_materialization_preserves_errors_and_consumed_certainty ... ok
+test materialize::tests::rounded_pads_retain_exact_arcs_and_union_without_boolean_blockers ... ok
+test materialize::tests::short_translated_line_stroke_remains_strictly_certified ... ok
+test materialize::tests::thermal_spoke_bounds_preserve_empty_clearance ... ok
+test panel::tests::panelizes_access_with_child_identity_and_exact_mirrored_rotation ... ok
+test panel::tests::validates_containment_overlap_and_minimum_web_exactly ... ok
+test release_artifact::tests::insertion_order_does_not_change_catalog_bytes_or_digest ... ok
+test release_artifact::tests::path_traversal_duplicates_and_byte_mutation_are_rejected_or_detected ... ok
+test test_intent::tests::physical_access_requires_an_exact_position_and_valid_frame ... ok
+
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 6 tests
+test certified_mosfet_operating_point_drives_exact_small_signal_ac ... ok
+test exact_rc_ac_sweep_solves_and_replays_in_authored_order ... ok
+test fluent_declarative_rc_design_executes_the_same_ac_sweep ... ok
+test inductor_and_vccs_share_the_exact_complex_mna_path ... ok
+test invalid_frequency_and_excitation_contracts_are_typed ... ok
+test shockley_small_signal_retains_the_lossy_derivative_boundary ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 14 tests
+test authoring_source_map_round_trips_independently_of_semantic_ir ... ok
+test connection_batches_are_atomic_and_part_physical_requirements_fail_early ... ok
+test fluent_design_lowers_to_checked_simulation_and_layout_intent ... ok
+test fluent_nonlinear_parts_extract_and_execute_retained_device_laws ... ok
+test fluent_routing_vias_zones_and_keepouts_lower_atomically_with_sources ... ok
+test fluent_source_waveforms_drive_exact_transient_runs_and_reject_misuse ... ok
+test incremental_connections_chain_visible_symbols_and_report_schematic_mutations ... ok
+test reusable_part_definition_lowers_library_records_once_for_many_instances ... ok
+test structural_diagnostics_point_back_to_part_and_escape_hatch_call_sites ... ok
+test typed_buses_slices_and_ports_preserve_order_and_scope ... ok
+test typed_handles_cannot_cross_design_boundaries ... ok
+test typed_phase_tuning_builders_retain_and_realize_one_atomic_pair ... ok
+test typed_placement_rules_cover_every_retained_constraint_family_atomically ... ok
+test typed_routing_policy_builders_retain_inheritance_vias_and_pairs_atomically ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 41 tests
+test accepted_autoroute_materializes_with_source_identity ... ok
+test adaptive_router_synthesizes_exact_capacity_after_a_coarse_channel_failure ... ok
+test advanced_routing_intent_rejects_unknown_targets_and_invalid_bounds ... ok
+test advanced_routing_intent_round_trips_exactly ... ok
+test bounded_any_angle_visibility_routes_and_accounts_for_exact_crossing_clearance ... ok
+test differential_pair_neckdown_fans_out_tight_terminals_before_joint_routing ... ok
+test differential_pair_routes_atomically_with_translated_traces_and_vias ... ok
+test differential_phase_group_tunes_both_routes_atomically_and_replays ... ok
+test electrically_unmapped_placed_pads_remain_physical_routing_obstacles ... ok
+test exact_length_tuning_inserts_a_bounded_serpentine_and_replays_idempotently ... ok
+test exact_non_circular_pad_envelopes_open_real_channels_and_honor_pad_rotation ... ok
+test exact_route_quality_report_measures_stretch_and_typed_incompleteness ... ok
+test feature_aligned_grid_preserves_exact_differential_pair_translation ... ok
+test feature_aligned_grid_routes_exact_off_lattice_terminals_and_audits_injection ... ok
+test grid_pitch_must_cover_the_stricter_pairwise_net_clearance ... ok
+test incompatible_differential_pair_terminal_translation_is_refused ... ok
+test insufficient_single_layer_capacity_remains_an_audited_iteration_limit ... ok
+test invalid_or_unknown_via_styles_fail_structural_validation ... ok
+test invalid_regional_route_rules_fail_before_routing ... ok
+test layer_scoped_copper_keepout_forces_a_back_layer_escape ... ok
+test locally_refined_grid_adds_dense_channel_capacity_without_a_global_fine_mesh ... ok
+test named_via_style_drives_search_emission_and_use_evidence ... ok
+test negotiated_router_fixture_corpus_has_reproducible_work_bounds ... ok
+test negotiated_router_rips_up_conflicts_and_emits_hyperpath_geometry ... ok
+test negotiated_router_uses_exact_arc_board_clearance ... ok
+test net_class_inheritance_rejects_missing_parents_cycles_and_ambiguous_nets ... ok
+test nonselected_copper_is_preserved_and_treated_as_a_fixed_obstacle ... ok
+test octilinear_router_accounts_for_crossing_diagonal_cells_and_reports_exact_quality ... ok
+test per_connection_expansion_budget_is_retained_and_audited ... ok
+test phase_group_collision_rejects_every_member_without_partial_application ... ok
+test phase_group_rejects_a_copper_keepout_atomically ... ok
+test phase_group_rejects_a_foreign_copper_zone_atomically ... ok
+test phase_group_rejects_a_foreign_placed_pad_envelope_atomically ... ok
+test phase_tuning_group_round_trips_exactly ... ok
+test phase_tuning_synthesis_generates_and_certifies_exact_pair_intent ... ok
+test phase_tuning_synthesis_retains_its_candidate_certification_bound ... ok
+test phase_tuning_uses_exact_rotated_non_circular_pad_envelopes ... ok
+test regional_width_and_clearance_change_search_envelopes_and_split_output ... ok
+test route_regions_and_escape_policies_are_enforced_with_use_evidence ... ok
+test sparse_octilinear_crossings_share_one_generalized_diagonal_cell ... ok
+test tscircuit_simple_route_json_round_trips_external_wire_and_via_candidates ... ok
+
+test result: ok. 41 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.26s
+
+
+running 2 tests
+test cooperative_async_behavior_schedules_retained_timer_events ... ok
+test typed_queues_and_selective_receive_preserve_deterministic_order ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test project_cli_uses_manifest_material_evidence_for_controlled_impedance_release ... ok
+test retained_project_cli_checks_exports_and_releases_one_document ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
+
+
+running 2 tests
+test global_power_supply_requires_exactly_one_elaborated_source ... ok
+test seed_function_contracts_require_their_declared_interface ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test spec_lt3980_buck_preserves_supply_direction_and_computed_values ... ok
+test spec_rc_lowpass_survives_semantic_interchange_and_role_erc ... ok
+test spec_rp2354a_board_joins_global_rails_and_retains_coppermine_evidence ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 5 tests
+test arc_board_profile_materializes_exactly_and_emits_cam_arcs ... ok
+test cubic_board_profile_requires_an_explicit_cam_projection_policy ... ok
+test disconnected_mixed_contours_fail_structural_validation ... ok
+test lceda_curved_contour_chords_are_explicitly_audited ... ok
+test mixed_curve_board_contours_round_trip_and_render_without_chord_loss ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.53s
+
+
+running 2 tests
+test exact_mixed_line_arc_bezier_route_survives_native_workflow_boundaries ... ok
+test route_width_must_be_smaller_than_an_arc_diameter ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+
+running 4 tests
+test bus_slices_and_rail_intent_are_retained_and_validated ... ok
+test declarative_connectivity_retains_buses_ports_and_pin_nets ... ok
+test source_stimuli_are_component_addressed_and_structurally_validated ... ok
+test validation_reports_cross_reference_errors_before_lowering ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test exact_mna_replay_does_not_request_approximation ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 9 tests
+test esp32_runs_end_to_end_through_hyperdrc ... ok
+test esp32s3_runs_end_to_end_through_hyperdrc ... ok
+test manifest_pins_the_complete_easyduino_repository_inventory ... ok
+test nano_full_fidelity_aggregate_obeys_the_selected_predicate_policy ... ok
+test nano_runs_end_to_end_through_hyperdrc ... ok
+test pinned_kicad_projects_import_to_exact_native_semantic_fixtures ... ok
+test rp2040_runs_end_to_end_through_hyperdrc ... ok
+test stm32f103_runs_end_to_end_through_hyperdrc ... ok
+test uno_runs_end_to_end_through_hyperdrc ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 36.28s
+
+
+running 36 tests
+test board_configuration_keepouts_and_land_patterns_edit_reversibly ... ok
+test bus_presence_conflicts_with_stale_membership_edits ... ok
+test bus_slice_and_port_edits_are_dependency_checked_and_reversible ... ok
+test circuit_instances_and_models_edit_atomically_across_the_pcb_boundary ... ok
+test circuit_library_edits_work_without_a_pcb_and_round_trip_history ... ok
+test circuit_only_net_and_pin_binding_edits_are_reversible ... ok
+test circuit_port_removal_observes_schematic_references ... ok
+test circuit_presence_changes_reject_stale_identity_writes ... ok
+test complete_circuit_and_copper_definitions_edit_as_one_atomic_batch ... ok
+test complete_route_definition_conflicts_with_stale_narrow_writes ... ok
+test concurrent_commits_rebase_disjoint_fields_and_reject_overlapping_writes ... ok
+test exact_editor_batch_commits_once_and_survives_json_and_kicad ... ok
+test identityless_manual_stamps_replace_as_one_exact_reversible_field ... ok
+test inserted_driving_constraint_cannot_silently_reposition_authored_placement ... ok
+test keepout_presence_conflicts_with_stale_definition_edits ... ok
+test land_pattern_library_edits_are_dependency_aware_and_exactly_reversible ... ok
+test land_pattern_presence_conflicts_by_identity_while_assignment_rebases ... ok
+test net_presence_conflicts_with_stale_net_property_writes ... ok
+test pcb_container_attaches_to_circuit_only_documents_and_undoes_exactly ... ok
+test pcb_container_presence_conflicts_with_stale_nested_board_edits ... ok
+test pcb_copper_net_reassignment_is_atomic_and_dependency_checked ... ok
+test placement_presence_and_constraint_presence_reject_stale_writes ... ok
+test presence_changes_conflict_with_stale_field_edits_but_not_other_objects ... ok
+test rail_presence_conflicts_with_stale_definition_edits ... ok
+test remaining_circuit_collections_edit_atomically_and_reversibly ... ok
+test replay_log_compaction_and_v1_migration_refuse_unprovable_rebases ... ok
+test reversible_history_round_trips_and_keeps_revisions_monotonic ... ok
+test schematic_container_presence_conflicts_with_stale_nested_edits ... ok
+test schematic_object_presence_conflicts_with_stale_definition_edits ... ok
+test schematic_structure_edits_build_hierarchy_and_undo_to_no_schematic ... ok
+test serialized_history_rejects_noncontiguous_replay_evidence ... ok
+test stale_or_invalid_batches_leave_the_document_unchanged ... ok
+test structural_copper_edits_are_serializable_reversible_and_atomic ... ok
+test structural_placement_edits_are_serializable_reversible_and_atomic ... ok
+test touched_fixed_placement_constraints_are_not_silently_overridden ... ok
+test version_two_through_fourteen_histories_migrate_and_future_versions_are_rejected ... ok
+
+test result: ok. 36 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 3 tests
+test erc_distinguishes_unpowered_inputs_from_valid_power_sources ... ok
+test erc_reports_push_pull_driver_conflicts ... ok
+test erc_rule_deck_controls_release_severity_and_suppression ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test agenda_and_stochastic_provenance_round_trip_without_fingerprint_drift ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 8 tests
+test agenda_clock_advancement_cannot_skip_pending_events ... ok
+test agenda_fingerprints_and_stochastic_draws_are_reproducible ... ok
+test agenda_orders_by_exact_time_phase_and_stable_sequence ... ok
+test cancellation_and_rescheduling_retain_lifecycle_evidence ... ok
+test delivered_phase_cannot_be_reentered_at_the_same_time ... ok
+test invalid_preordered_trace_is_rejected_atomically ... ok
+test named_breakpoint_schedules_support_trace_and_topology_adapters ... ok
+test preordered_fast_path_merges_with_existing_events ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test certified_layer_images_emit_x2_copper_and_plated_excellon_files ... ok
+test pad_and_artwork_intent_emit_unit_aware_mask_paste_and_legend_images ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+
+running 11 tests
+test authored_globals_join_same_named_nets_without_boundary_ports ... ok
+test exact_module_overrides_apply_to_instance_and_model_parameters_before_mna ... ok
+test flattening_exposes_scope_maps_and_namespaces_source_stimuli ... ok
+test global_child_port_cannot_bind_to_a_local_parent_net ... ok
+test hierarchy_validation_rejects_missing_ports_and_recursive_definitions ... ok
+test module_parameter_declarations_and_overrides_round_trip_exactly ... ok
+test module_parameters_forward_through_nested_subcircuits ... ok
+test one_net_cannot_expose_incompatible_boundary_signal_types ... ok
+test parameter_validation_rejects_unknown_units_targets_and_stale_stamps ... ok
+test reusable_modules_flatten_with_namespaced_ids_and_remapped_mna_stamps ... ok
+test typed_hierarchy_rejects_incompatible_signal_shapes_on_one_parent_net ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test conflicting_global_declarations_and_stale_part_resolution_are_rejected ... ok
+test coppertrace_intent_preserves_spans_roles_typed_values_and_resolution_evidence ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 17 tests
+test authored_coppertrace_intent_round_trips_with_source_ranges_and_contracts ... ok
+test decoded_pcb_must_pass_structural_validation ... ok
+test decoded_schematic_must_agree_with_decoded_circuit ... ok
+test exact_authored_event_trace_round_trips_and_validates ... ok
+test exact_source_stimuli_round_trip_through_semantic_json ... ok
+test invalid_canvas_and_wire_presentation_is_rejected_at_interchange_boundary ... ok
+test native_hierarchy_simulation_and_wire_presentation_round_trip_together ... ok
+test unknown_schema_versions_are_rejected ... ok
+test version_eight_json_migrates_through_each_additive_schema_boundary ... ok
+test version_nineteen_promotes_embedded_symbol_geometry_into_a_library ... ok
+test version_twenty_eight_defaults_authored_design_intent ... ok
+test version_twenty_five_defaults_new_differential_pair_neckdown ... ok
+test version_twenty_four_defaults_new_phase_tuning_groups ... ok
+test version_twenty_seven_promotes_legacy_bundle_member_names_to_real_types ... ok
+test version_twenty_three_defaults_new_differential_impedance_intent ... ok
+test versioned_semantic_json_round_trips_exact_values ... ok
+test versions_outside_the_migration_window_are_rejected ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 6 tests
+test binding_rejects_two_endpoints_presenting_the_same_direction ... ok
+test dual_bundle_endpoints_lower_to_existing_hierarchy_port_bindings ... ok
+test event_addresses_validate_against_bundle_members_and_hierarchy_paths ... ok
+test modport_dual_flips_directional_members_and_retains_symmetric_roles ... ok
+test typed_bundle_members_must_match_their_bound_circuit_ports ... ok
+test validation_reports_incomplete_views_and_endpoint_direction_mismatches ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test installed_official_multipart_logic_and_dip_libraries_import_when_available ... ok
+test installed_official_resistor_libraries_import_when_available ... ok
+test native_library_pair_imports_to_one_portable_part_and_checked_design ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+
+running 9 tests
+test bent_wires_split_into_native_segments_and_rejoin_as_valid_connectivity ... ok
+test installed_kicad_cli_can_follow_the_generated_native_hierarchy ... ok
+test installed_kicad_cli_can_render_the_generated_native_file ... ok
+test label_projection_and_hierarchy_boundary_are_typed ... ok
+test native_schematic_round_trip_reconstructs_presentation_against_circuit_truth ... ok
+test native_symbol_position_edits_reimport_without_changing_circuit_topology ... ok
+test nested_book_round_trip_restores_link_identity_and_reports_missing_files ... ok
+test non_schematic_roots_are_rejected_without_mutating_circuit_truth ... ok
+test reusable_multipart_library_and_exact_graphics_round_trip_once ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.16s
+
+
+running 15 tests
+test assembly_csv_reimport_reports_typed_tampering_and_handles_quoted_parts ... ok
+test assembly_views_derive_bom_and_pick_and_place_from_retained_identities ... ok
+test board_routing_problem_round_trips_accepted_hyperpath_candidates ... ok
+test invalid_package_model_reports_its_independent_record ... ok
+test kicad_custom_rules_report_flattened_and_nonrepresentable_class_policy ... ok
+test kicad_project_import_keeps_native_defaults_and_reports_composite_patterns ... ok
+test kicad_projects_non_native_routed_slots_to_valid_round_drills ... ok
+test kicad_review_board_exports_all_retained_copper_feature_families ... ok
+test kicad_semantic_round_trip_can_be_edited_and_reexported ... ok
+test kicad_stackup_and_custom_rule_companion_round_trip_exact_policy ... ok
+test newly_routed_vias_report_missing_process_intent ... ok
+test placed_instances_require_complete_nonduplicated_pin_to_pad_mappings ... ok
+test placement_inverse_transform_exactly_replays_front_and_back_side_semantics ... ok
+test representative_board_validates_and_lowers_routes_to_hyperpath ... ok
+test via_mask_opening_must_retain_positive_geometry ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test module_validation_and_scope_binding_fail_before_partial_composition ... ok
+test reusable_layout_assembly_round_trips_before_composition ... ok
+test reusable_layout_modules_compose_to_flat_hyperpath_ready_intent ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+test exports_deterministic_parseable_pro_archive_with_authored_pcb_records ... ok
+test rejects_zero_precision ... ok
+test supported_pcb_subset_imports_editor_changes_and_reexports_stably ... ok
+test supported_schematic_presentation_imports_editor_changes_without_connectivity_changes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 2 tests
+test retired_csgrs_handoff_remains_readable_without_live_geometry_markers ... ok
+test retired_handoff_rejects_other_schema_families ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test declarative_board_materializes_source_addressable_copper_and_drills ... ok
+test multi_segment_orthogonal_route_materializes_as_one_source_feature ... ok
+test zone_island_policy_prunes_unconnected_and_exact_undersized_components ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+
+running 17 tests
+test companion_stamp_combines_exact_conductance_and_history_source ... ok
+test coupling_ports_keep_circuit_and_physics_handles_explicit ... ok
+test duplicate_mna_unknowns_are_rejected_before_assembly ... ok
+test electrothermal_fixture_keeps_trace_and_material_handles_explicit ... ok
+test electrothermal_rc_rejects_negative_resistance_domains ... ok
+test electrothermal_rc_replay_computes_exact_resistance_and_heat ... ok
+test empty_component_ids_are_rejected ... ok
+test exact_circuit_carriers_lower_to_mna_without_float_policy ... ok
+test exact_linear_solver_rejects_singular_systems_without_tolerance_guessing ... ok
+test generated_electrothermal_heat_is_i_squared_r ... ok
+test generated_mna_stamps_match_kcl_reference ... ok
+test nonlinear_reports_expose_domains_parameters_and_event_policy ... ok
+test piecewise_linear_report_keeps_exact_segments ... ok
+test replay_validates_candidate_shape_and_adapter_status ... ok
+test vccs_stamp_uses_exact_control_voltage_columns ... ok
+test voltage_source_and_resistor_stamp_replays_exact_candidate ... ok
+test wrong_candidate_is_rejected_by_exact_residuals ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 5 tests
+test common_source_dc_solve_replays_the_exact_saturation_law ... ok
+test mosfet_terminal_roles_are_structurally_validated ... ok
+test p_channel_common_source_mirrors_current_and_stamp_polarity ... ok
+test retained_mosfet_model_round_trips_through_semantic_json ... ok
+test square_law_selects_exact_nmos_and_pmos_regions ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 6 tests
+test exact_piecewise_linear_solver_enforces_enumeration_limit ... ok
+test exact_piecewise_linear_solver_enumerates_to_the_consistent_region ... ok
+test exact_piecewise_linear_solver_reports_shared_boundary_regions ... ok
+test retained_diode_model_round_trips_through_semantic_json ... ok
+test shockley_newton_returns_an_audited_iteration_limit ... ok
+test shockley_newton_uses_lossy_proposals_but_exact_true_law_replay ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+test package_lock_json_round_trips_exact_coordinates_and_provenance ... ok
+test portable_part_library_publishes_locks_loads_and_instantiates_without_duplication ... ok
+test resolver_backtracks_to_highest_mutually_compatible_release_and_verifies_lock ... ok
+test reusable_circuit_library_artifact_round_trips_through_resolution_and_store ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 10 tests
+test deterministic_search_moves_only_the_colliding_unconstrained_package ... ok
+test exact_pin_access_feedback_moves_a_terminal_out_of_a_board_edge_trap ... ok
+test fixed_collisions_are_reported_without_breaking_constraints ... ok
+test optional_optimization_improves_a_legal_authored_connectivity_cost ... ok
+test pin_access_audit_observes_escape_policy_keepouts_and_foreign_pads ... ok
+test placement_search_uses_exact_arc_board_envelopes ... ok
+test regional_search_keeps_the_package_envelope_out_of_board_cutouts ... ok
+test retained_rotation_and_side_choices_are_searched_and_audited ... ok
+test routability_aware_optimization_reduces_exact_net_box_congestion ... ok
+test solved_placement_is_clean_under_hyperdrc_component_readiness ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+
+running 2 tests
+test native_pcb_svg_filters_copper_by_layer_but_keeps_spanning_vias ... ok
+test native_pcb_svg_retains_source_and_net_identity_with_projection_audit ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test module_bindings_reject_missing_duplicate_and_foreign_interfaces_atomically ... ok
+test nested_layout_transforms_compose_mirroring_and_orientation_exactly ... ok
+test recursive_checked_modules_compile_through_circuit_and_layout_hierarchy ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test project_manifest_rejects_unknown_defaults_and_mixed_provider_fields ... ok
+test project_manifest_round_trips_and_selects_command_and_cargo_providers ... ok
+test project_materials_resolve_to_exact_hyperphysics_property_graphs ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 9 tests
+test authored_role_handoff_preserves_physical_endpoints_and_source_subjects ... ok
+test component_keepouts_are_checked_against_placed_envelopes ... ok
+test cyclic_relative_placement_constraints_are_reported ... ok
+test external_obj_vrml_and_gltf_package_models_resolve_with_digest_and_scene_identity ... ok
+test failed_package_model_transform_is_an_explicit_omission_with_recovery ... ok
+test overlapping_component_courtyards_are_release_blocking ... ok
+test oversized_authored_mask_expansion_is_reported_by_native_hyperdrc ... ok
+test package_body_is_an_explicit_fallback_when_no_courtyard_exists ... ok
+test representative_board_spans_authoring_review_verification_and_release_outputs ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.62s
+
+
+running 1 test
+test retained_routing_corpus_is_complete_reproducible_and_protocol_compatible ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.26s
+
+
+running 4 tests
+test hierarchical_schematic_rejects_cycles_and_boundary_net_disagreement ... ok
+test hierarchical_schematic_validates_renders_pages_and_round_trips ... ok
+test schematic_rejects_wire_net_that_disagrees_with_pin_bindings ... ok
+test schematic_validates_typed_endpoints_and_renders_audited_svg ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test automatic_layout_policy_and_work_bounds_fail_typed ... ok
+test checked_fluent_design_can_replace_an_empty_drawing_and_render_it ... ok
+test connectivity_depth_places_a_chain_without_ground_collapsing_columns ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 20 tests
+test adaptive_driven_run_evaluates_each_refined_endpoint ... ok
+test adaptive_transient_run_rejects_then_refines_to_the_exact_stop_time ... ok
+test analytic_source_delays_drive_the_exact_transient_endpoint_grid ... ok
+test analytic_waveforms_evaluate_exact_sine_and_exponential_laws ... ok
+test backward_euler_capacitor_steps_replay_and_carry_exact_history ... ok
+test backward_euler_inductor_integrates_exact_current ... ok
+test driven_transient_run_retains_source_and_response_waveforms ... ok
+test fixed_transient_run_emits_exact_time_ordered_waveforms ... ok
+test incremental_session_honors_event_breakpoints_and_applies_source_overrides ... ok
+test mixed_linear_reactive_diode_run_replays_every_nonlinear_endpoint ... ok
+test pulse_waveforms_repeat_with_exact_phase_values_and_breakpoints ... ok
+test retained_device_models_lower_solve_and_replay_without_manual_stamps ... ok
+test session_callbacks_emit_auditable_same_time_followups ... ok
+test session_honors_named_external_breakpoint_schedules ... ok
+test source_waveforms_evaluate_steps_and_exact_linear_interpolation ... ok
+test time_aware_lowering_overrides_scalar_source_parameters_with_audited_values ... ok
+test transient_run_lands_on_every_periodic_source_event ... ok
+test transient_run_rejects_invalid_time_policy_before_stepping ... ok
+test transient_run_returns_audited_limits_instead_of_partial_success ... ok
+test trapezoidal_capacitor_uses_voltage_and_current_history ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test deterministic_stitching_vias_feed_every_release_boundary ... ok
+test stitching_cap_is_explicit_in_reports_and_exports ... ok
+test stitching_uses_exact_arc_board_clearance_without_indeterminate_candidates ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+
+running 9 tests
+test centered_pad_materialization_avoids_spurious_offset_uncertainty ... ok
+test checked_fluent_design_reports_cohesive_release_evidence ... ok
+test checked_hierarchy_reports_release_from_its_path_qualified_flat_view ... ok
+test default_manufacturing_release_is_unsigned_deterministic_and_self_verifying ... ok
+test ordinary_release_runs_native_dft_requirements_with_source_evidence ... ok
+test panel_release_expands_components_and_test_access_without_losing_child_identity ... ok
+test release_resolves_controlled_impedance_materials_through_hyperphysics ... ok
+test release_rule_failures_remain_inspectable_reports ... ok
+test semantic_release_preserves_authored_intent_and_source_spans_in_drc_handoff ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.39s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

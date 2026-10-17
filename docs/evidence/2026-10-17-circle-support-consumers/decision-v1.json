@@ -1,0 +1,310 @@
+{
+  "complete": true,
+  "main_parent_commit": "67a6ba54f1bf25f0ef495972238bba0a0102137e",
+  "status": "rejected: unguarded rational index regresses shared large-coefficient warm reuse",
+  "cache_status": "rejected: exact results preserved, but repeated hashing adds substantial cost for supported shared large-coefficient inputs",
+  "retention_decision": "rejected",
+  "progress_classification": "progress",
+  "cache_index_admitted": false,
+  "main_sources_modified": false,
+  "implementation_sha256": {},
+  "results": {
+    "consumer_suites": {
+      "root-all": {
+        "passed": 458,
+        "failed": 0,
+        "ignored": 1,
+        "summaries": 49
+      },
+      "root-minimal": {
+        "passed": 161,
+        "failed": 0,
+        "ignored": 0,
+        "summaries": 41
+      },
+      "circuit-all": {
+        "passed": 348,
+        "failed": 0,
+        "ignored": 0,
+        "summaries": 47
+      }
+    },
+    "native_validation": {
+      "complete": true,
+      "command_failures": [
+        "clippy"
+      ],
+      "commands_not_run": [
+        {
+          "name": "docs",
+          "reason": "shm-user-quota-reserve"
+        },
+        {
+          "name": "ffi-build",
+          "reason": "shm-user-quota-reserve"
+        },
+        {
+          "name": "ffi-tests-and-real-consumers",
+          "reason": "ffi-build did not complete successfully"
+        }
+      ],
+      "external_stop_reason": "shm-user-quota-reserve",
+      "sources_unchanged": true,
+      "source_input_mismatches": {},
+      "generated_outputs": {},
+      "cargo_target_closed": true,
+      "main_sources_modified": false,
+      "cache_admitted": false,
+      "full_plan_complete": false,
+      "full_pre_push_matrix_executed": false,
+      "published_package_pipeline_executed": false
+    },
+    "coefficient_diagnostic": {
+      "complete": true,
+      "output_closed": true,
+      "command_count": 42,
+      "expected_command_count": 42,
+      "timed_observation_count": 84,
+      "expected_timed_observation_count": 84,
+      "all_exact_rows_equal_and_certified": true,
+      "failures": [],
+      "external_resource_stop": false,
+      "summary": [
+        {
+          "coefficient_shift_bits": 64,
+          "phase": "cold",
+          "seconds": {
+            "baseline": [
+              4.3337e-05,
+              2.8218e-05,
+              2.9938e-05,
+              4.0038e-05,
+              3.1498e-05,
+              4.1767e-05,
+              3.0478e-05
+            ],
+            "candidate": [
+              2.0438e-05,
+              3.9158e-05,
+              2.7608e-05,
+              2.9668e-05,
+              4.2317e-05,
+              2.7208e-05,
+              3.4928e-05
+            ]
+          },
+          "median_seconds": {
+            "baseline": 3.1498e-05,
+            "candidate": 2.9668e-05
+          },
+          "candidate_to_baseline_median_ratio": 0.9419010730840053
+        },
+        {
+          "coefficient_shift_bits": 64,
+          "phase": "warm",
+          "seconds": {
+            "baseline": [
+              0.000606149,
+              0.00044247,
+              0.000462768,
+              0.000476207,
+              0.000489456,
+              0.000398682,
+              0.000395253
+            ],
+            "candidate": [
+              0.00377564,
+              0.004314173,
+              0.003504179,
+              0.003723084,
+              0.003975646,
+              0.004002515,
+              0.003411525
+            ]
+          },
+          "median_seconds": {
+            "baseline": 0.000462768,
+            "candidate": 0.00377564
+          },
+          "candidate_to_baseline_median_ratio": 8.158818241537876
+        },
+        {
+          "coefficient_shift_bits": 65536,
+          "phase": "cold",
+          "seconds": {
+            "baseline": [
+              3.1798e-05,
+              3.6488e-05,
+              3.8377e-05,
+              3.5927e-05,
+              5.5716e-05,
+              3.9708e-05,
+              3.0898e-05
+            ],
+            "candidate": [
+              4.6067e-05,
+              3.5298e-05,
+              4.2068e-05,
+              3.0818e-05,
+              4.1488e-05,
+              3.4588e-05,
+              3.4907e-05
+            ]
+          },
+          "median_seconds": {
+            "baseline": 3.6488e-05,
+            "candidate": 3.5298e-05
+          },
+          "candidate_to_baseline_median_ratio": 0.9673865380399035
+        },
+        {
+          "coefficient_shift_bits": 65536,
+          "phase": "warm",
+          "seconds": {
+            "baseline": [
+              0.000434711,
+              0.000492326,
+              0.00043246,
+              0.000360285,
+              0.00043284,
+              0.000422311,
+              0.000483767
+            ],
+            "candidate": [
+              0.05310792,
+              0.052883075,
+              0.052374271,
+              0.054157898,
+              0.053841829,
+              0.05382462,
+              0.052045842
+            ]
+          },
+          "median_seconds": {
+            "baseline": 0.00043284,
+            "candidate": 0.05310792
+          },
+          "candidate_to_baseline_median_ratio": 122.69642362073746
+        },
+        {
+          "coefficient_shift_bits": 1048576,
+          "phase": "cold",
+          "seconds": {
+            "baseline": [
+              5.6336e-05,
+              5.1716e-05,
+              4.7417e-05,
+              4.8536e-05,
+              5.2857e-05,
+              4.5696e-05,
+              4.6537e-05
+            ],
+            "candidate": [
+              0.000114982,
+              9.0403e-05,
+              0.000110002,
+              9.1203e-05,
+              9.0674e-05,
+              9.4524e-05,
+              8.9734e-05
+            ]
+          },
+          "median_seconds": {
+            "baseline": 4.8536e-05,
+            "candidate": 9.1203e-05
+          },
+          "candidate_to_baseline_median_ratio": 1.8790794461842757
+        },
+        {
+          "coefficient_shift_bits": 1048576,
+          "phase": "warm",
+          "seconds": {
+            "baseline": [
+              0.00044355,
+              0.000470478,
+              0.000376764,
+              0.000381414,
+              0.000470447,
+              0.000453839,
+              0.000466758
+            ],
+            "candidate": [
+              0.78710836,
+              0.781359395,
+              0.781765218,
+              0.780311027,
+              0.782924958,
+              0.779464446,
+              0.802621774
+            ]
+          },
+          "median_seconds": {
+            "baseline": 0.000453839,
+            "candidate": 0.781765218
+          },
+          "candidate_to_baseline_median_ratio": 1722.5606834141622
+        }
+      ],
+      "all_inputs_unchanged": true,
+      "unfavorable_samples_retained": true,
+      "cache_admitted": false,
+      "internal_resource_bounds_claimed": false
+    }
+  },
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/contract-v1.md": "011d8252dac7ea7a66174b9d76414c382208262625897106e8cd1b1dba39f615",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/coefficient-contract-v1.md": "2fbb9b1ad2f6203e8efa6511830a2a9882983385ab2bb4f5d2930c4f10cff286",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-consumers/coefficient_probe_v1.rs": "7aef9d8ceeb37682a4359b76fb0bf4c80dc83169b28d00c2c0950692b2bc36a5",
+    "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/result.json": "68bc59436564895e59235b737b8789406a3620d7c90242236bce61b1e2aa03e6",
+    "/run/user/1000/csgrs-circle-support-coefficients-v1/matched-v1/result.json": "df58a7616a82576ea4f2ad182f4c7a6803d9045c8ef83743d66c8e1a9ac08cfa",
+    "/dev/shm/csgrs-circle-support-consumers-v1/consumer-validation-v1/result.json": "334ce63bd2bddc4fd24d9e22724bd38f3694ae7366a6f5f51387600ec644809e"
+  },
+  "intermediate_example_binaries_overwritten_while_target_open": [
+    {
+      "build": "root-all-build",
+      "path": "/dev/shm/csgrs-circle-support-consumers-v1/native-target-v1/release/examples/adjacency_demo",
+      "time_of_build_sha256": "8ab73219159f6b12c8488bdbddfe686b7d3f8198866b33eb5fc64c4a13d4d318",
+      "final_sha256": "93de0dfd334202bc3954d978b7e6a25bdf1c3c885218ca4726a5bb68afa6dafd"
+    },
+    {
+      "build": "root-all-build",
+      "path": "/dev/shm/csgrs-circle-support-consumers-v1/native-target-v1/release/examples/assembly_manual",
+      "time_of_build_sha256": "435c68d4028dc8bf79f56557fc12f753a823d8e9ce9d185737b7c8dd3024cca7",
+      "final_sha256": "943a77586a89306bb87c92efe3bb7db39ac19e429186d3af412e732511c244f2"
+    },
+    {
+      "build": "root-all-build",
+      "path": "/dev/shm/csgrs-circle-support-consumers-v1/native-target-v1/release/examples/scalar_adapter",
+      "time_of_build_sha256": "6e53af26e0e9ceb44cb55fd638c59b0a4561b525287b69e525d3bb0b0fa3c020",
+      "final_sha256": "28076144ffc2570187575beea235b3bd11cc0f14b07ce2bf2fbfec30fefff195"
+    },
+    {
+      "build": "root-all-build",
+      "path": "/dev/shm/csgrs-circle-support-consumers-v1/native-target-v1/release/examples/multi_format_export",
+      "time_of_build_sha256": "dc77990a8366f38bada7bf49fe40716ff37720fb703c85eb4367005572a60adf",
+      "final_sha256": "b639ddef14cfdc451200a47a4bd6bd3de59241908c47f27ffe8e75cf8496e66e"
+    },
+    {
+      "build": "root-all-build",
+      "path": "/dev/shm/csgrs-circle-support-consumers-v1/native-target-v1/release/examples/basic",
+      "time_of_build_sha256": "5f7af26e343bd780885c6b9ccf3ded7e296a68573924cb9c9f13db152d147fbb",
+      "final_sha256": "f403e0f5c970ec27a58343a37250b08d2fd5817bebae84d8e5de6262862b6656"
+    }
+  ],
+  "wasm_helper_executed": false,
+  "matched_original_12_case_suite_executed": false,
+  "no_remaining_qualification_can_admit_unchanged_rejected_candidate": true,
+  "limits": [
+    "The external /dev/shm quota reserve stopped strict Clippy; documentation generation and native bindings were not run.",
+    "The prepared WASM helper was never invoked.",
+    "Private-kernel timing, not distributed-binary or end-to-end performance. Cold single-query and sub-millisecond baseline timings limit ratio precision.",
+    "No internal total-work, coefficient-growth, retained-heap or cancellation guarantee is established.",
+    "27,093 inherited artifact paths remain missing; no whole-history preservation claim.",
+    "No full pre-push, published-package, coverage, directed-campaign, proof or whole-plan completion claim."
+  ],
+  "next": [
+    "Preserve cheap shared-support reuse in any revised cache design, and include the new large-coefficient cases with the original full-scale corpus.",
+    "Use fresh guarded storage to qualify a revised candidate through local and real downstream consumers; keep the current index rejected.",
+    "Continue ordinary strict-mode completion and the full properties plan; retain earlier native bundle and exact-ingress rejection decisions."
+  ]
+}

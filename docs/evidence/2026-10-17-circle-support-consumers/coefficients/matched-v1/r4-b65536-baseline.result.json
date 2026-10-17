@@ -1,0 +1,30 @@
+{
+  "name": "r4-b65536-baseline",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/baseline-tests",
+    "curve_intersection::circle_support_cost_probe::shared_coefficient_lookup_cost",
+    "--exact",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.010147332213819027,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 884592640,
+      "runtime_free_bytes": 1332031488,
+      "host_available_memory_bytes": 9236271104
+    }
+  ],
+  "environment_overrides": {
+    "CIRCLE_SHARED_BITS": "65536",
+    "CIRCLE_SHARED_REPEATS": "20000"
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "2055bca3d9fdd7cddbf12116307ab7cd1d04ce2df7cd193f3b234d8761f0eefb",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "c3b2be0178df349834ca03ee531261529d5a0e7680f24aebdcf58e8c1e7a9a93"
+}

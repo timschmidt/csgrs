@@ -1,0 +1,191 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "command_count": 42,
+  "expected_command_count": 42,
+  "timed_observation_count": 84,
+  "expected_timed_observation_count": 84,
+  "all_exact_rows_equal_and_certified": true,
+  "failures": [],
+  "external_resource_stop": false,
+  "summary": [
+    {
+      "coefficient_shift_bits": 64,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          4.3337e-05,
+          2.8218e-05,
+          2.9938e-05,
+          4.0038e-05,
+          3.1498e-05,
+          4.1767e-05,
+          3.0478e-05
+        ],
+        "candidate": [
+          2.0438e-05,
+          3.9158e-05,
+          2.7608e-05,
+          2.9668e-05,
+          4.2317e-05,
+          2.7208e-05,
+          3.4928e-05
+        ]
+      },
+      "median_seconds": {
+        "baseline": 3.1498e-05,
+        "candidate": 2.9668e-05
+      },
+      "candidate_to_baseline_median_ratio": 0.9419010730840053
+    },
+    {
+      "coefficient_shift_bits": 64,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.000606149,
+          0.00044247,
+          0.000462768,
+          0.000476207,
+          0.000489456,
+          0.000398682,
+          0.000395253
+        ],
+        "candidate": [
+          0.00377564,
+          0.004314173,
+          0.003504179,
+          0.003723084,
+          0.003975646,
+          0.004002515,
+          0.003411525
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.000462768,
+        "candidate": 0.00377564
+      },
+      "candidate_to_baseline_median_ratio": 8.158818241537876
+    },
+    {
+      "coefficient_shift_bits": 65536,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          3.1798e-05,
+          3.6488e-05,
+          3.8377e-05,
+          3.5927e-05,
+          5.5716e-05,
+          3.9708e-05,
+          3.0898e-05
+        ],
+        "candidate": [
+          4.6067e-05,
+          3.5298e-05,
+          4.2068e-05,
+          3.0818e-05,
+          4.1488e-05,
+          3.4588e-05,
+          3.4907e-05
+        ]
+      },
+      "median_seconds": {
+        "baseline": 3.6488e-05,
+        "candidate": 3.5298e-05
+      },
+      "candidate_to_baseline_median_ratio": 0.9673865380399035
+    },
+    {
+      "coefficient_shift_bits": 65536,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.000434711,
+          0.000492326,
+          0.00043246,
+          0.000360285,
+          0.00043284,
+          0.000422311,
+          0.000483767
+        ],
+        "candidate": [
+          0.05310792,
+          0.052883075,
+          0.052374271,
+          0.054157898,
+          0.053841829,
+          0.05382462,
+          0.052045842
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.00043284,
+        "candidate": 0.05310792
+      },
+      "candidate_to_baseline_median_ratio": 122.69642362073746
+    },
+    {
+      "coefficient_shift_bits": 1048576,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          5.6336e-05,
+          5.1716e-05,
+          4.7417e-05,
+          4.8536e-05,
+          5.2857e-05,
+          4.5696e-05,
+          4.6537e-05
+        ],
+        "candidate": [
+          0.000114982,
+          9.0403e-05,
+          0.000110002,
+          9.1203e-05,
+          9.0674e-05,
+          9.4524e-05,
+          8.9734e-05
+        ]
+      },
+      "median_seconds": {
+        "baseline": 4.8536e-05,
+        "candidate": 9.1203e-05
+      },
+      "candidate_to_baseline_median_ratio": 1.8790794461842757
+    },
+    {
+      "coefficient_shift_bits": 1048576,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.00044355,
+          0.000470478,
+          0.000376764,
+          0.000381414,
+          0.000470447,
+          0.000453839,
+          0.000466758
+        ],
+        "candidate": [
+          0.78710836,
+          0.781359395,
+          0.781765218,
+          0.780311027,
+          0.782924958,
+          0.779464446,
+          0.802621774
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.000453839,
+        "candidate": 0.781765218
+      },
+      "candidate_to_baseline_median_ratio": 1722.5606834141622
+    }
+  ],
+  "all_inputs_unchanged": true,
+  "unfavorable_samples_retained": true,
+  "cache_admitted": false,
+  "internal_resource_bounds_claimed": false
+}
