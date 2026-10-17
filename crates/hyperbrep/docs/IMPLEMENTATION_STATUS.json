@@ -1449,6 +1449,35 @@
       "cost_evidence": "The complete 96-process campaign measures 159 preserved cases in fifteen corpora and eight new completed workflows. 8 old case receipts and 1 fixture-fact records have individually reviewed migrations. Maximum preserved-case median latency ratio is 1.713776; 19 rows exceed 10%. 68 rows change allocation observations, including 60 increases in calls or requested bytes. All raw samples, adverse rows, output receipts, process resources and executable sizes remain. Native harness size changes range from 4336 to 67920 bytes; the WASM harness grows 492304 bytes and includes twelve new test groups. Shared-host observations do not establish a general speedup, controlled-host performance, isolated scalar primitive costs, shipped binary size or closure of earlier cost gates.",
       "migration": "Borrowed Surface::extrusion_profile_and_direction; affine WrittenSurfaceParameters::origin and emitted WrittenAdvancedFace::orientation. Native circle carriers, cap metric expressions and contained-slab output charts can change exact artifacts; all observed changes are explicitly reviewed. No compatibility shim, archive schema version, weakened policy or raised admission limit is added. General durable Boolean source lineage is not established by the empty saved selection tables in the prism fixtures.",
       "limits": "Production work is BREP/IO plus two necessary scalar identities with reproduced BREP blockers. Other runtime owners are unchanged. The source is physical ext4 and Cargo target/cache are physical tmpfs; the bounded 16-read/eight-execution storage probe does not qualify historical nested-FUSE artifacts. All 28 work packages remain open. General embedding, partial-slab and nonparallel closure, cone/torus STEP, mandatory composed provenance and certainty, total-work/heap/cancellation, clean packaged consumers/MSRV, actual C/Python/JS bindings, runtime fuzz/ASan, lexicase, coverage, formal proof and full-workspace/pre-push gates remain open. No push was performed."
+    },
+    {
+      "id": "upstream-format-integration-2026-10-16",
+      "work_packages": [
+        "WP00",
+        "WP14a",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P6",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P22",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Merge upstream OBJ/STL format corrections, retain both histories and ledger ownership, and apply parsed-topology/source-fidelity guidance to future BREP consumers.",
+      "evidence": "evidence/2026-10-16-upstream-format-integration/manifest.json",
+      "decision": "kept",
+      "validation": "On the integrated tree, BREP/IO release tests pass 512 with all features and 504 with minimal features; neither configuration has failures or ignored tests. Both warning-denied all-target Clippy configurations, rustdoc and fuzz-target compilation pass. The unchanged source-path WASM consumer passes 83 groups with zero imports and retains the preceding binary hash. The incoming seven OBJ and eight STL regressions pass in both debug and release with obj-io,stl-io and no default features; targeted format Clippy and the curve,stl-io basic_shapes build/Clippy pass. Counts overlap across configurations and are not coverage metrics. Formatting passes.",
+      "limits": "No BREP, IO or numerical/geometry dependency runtime bytes change in this merge. The earlier prism correctness, exact representation migrations and 96-process costs remain source-bound historical evidence, with no new timing or speedup claim. Nineteen adverse timing rows, sixty allocation increases, the two inherited scalar zero-factor failures, upstream native timing gates and three format export defects remain open. Fresh physical validation does not repair historical nested-FUSE identity failures or missing artifacts. All 28 BREP work packages remain open; this is not full-workspace/pre-push, package/MSRV, binding distribution, resource-bound, coverage, fuzz-runtime or formal-proof admission. No push."
     }
   ],
   "work_packages": [
@@ -1623,7 +1652,7 @@
   ],
   "next_actions": [
     "Preserve the full 81-slot frontier, fifteen preceding workflows and newly qualified prism/STEP continuation. Promote additional native diagnostic results only with independent set/topology/composition tests. Five rational cone/torus decisions and two torus resource exhaustions remain explicit; the six partial-slab/reversed prism controls stay unsupported. Extend native arrangements and embedding evidence, not tolerances or sampled recognition. Only repair dependencies for a reproduced BREP blocker after checking upstream.",
-    "Use prism continuation as the next exact feature baseline, preserving all old receipts, reviewed migrations and adverse costs. Keep per-call conic comparison reuse and its earlier evidence. Investigate measured regressions without dropping validation or output materialization; persistent caches still require separate identity, lifetime, resource and state-matrix gates.",
+    "Use the integrated prism continuation as the next exact feature baseline. Investigate repeated BREP builder certificate construction as specified in evidence/2026-10-16-prism-continuation/performance-investigation.md; causal contribution remains unmeasured. Preserve every old receipt, reviewed migration, adverse cost and complete workflow. Keep per-call conic comparison reuse. Persistent caches need separate identity, lifetime, resource and state-matrix admission; do not skip validation or output materialization.",
     "Preserve and extend named BREP strict workflows with independent set, topology and source-fidelity checks. Observe upstream drilled-body and dependency corrections during integration; unrelated repairs remain upstream work. Record all seven outcome categories and the concrete failing BREP stage (WP00/WP21, P39).",
     "Preserve the completed half-case recut/clear/reconstruct workflows in evidence/2026-10-16-curved-coplanar/manifest.json alongside the sector extension: nine original exact configurations and 54 transformed variants, full-size geometry, near samples, split/reflection/replay, source parameters and public overlap provenance. The five formerly blocked quarter/band diagnostics now complete in evidence/2026-10-16-sector-cuts/continuation-frontier.json. Further composition extensions must retain these successes and independently verify represented-set identities (WP03/WP06/WP07/WP08, P17-P20/P35/P39).",
     "Complete the documented-package pipeline in clean external consumers and actual affected bindings; verify features, dependency versions, MSRV, certainty and format-specific round trips. Local paths, source builds and WASM probes do not close delivery gates (WP17/WP18/WP23, P37).",
@@ -1637,10 +1666,10 @@
     "Continue every BREP work package and its cross-stack integration requirements in the plan. Surrounding-crate implementation is concurrent upstream work unless a reproduced dependency failure would make BREP worse; foundational progress does not close broader project gates.",
     "Preserve every historical feature/integration baseline and raw campaign. The prism increment extends exact extrusion STEP; cone/torus STEP writers remain an explicit exchange frontier. Close controlled-host, full dependency and shipped-consumer gates using their original contracts, not a successful subset.",
     "Investigate the sector increment\u2019s paired/multi-hole affine-tensor bridge costs (1.389189 and 1.312397 observed ratios). Preserve full wire simplicity/nesting validation and the crossing-hole rejection control; reuse native evidence rather than restoring an unjustified simplicity certificate. Keep the three arc/STEP timing rows and the inherited scalar zero-factor failure visible. Coordinate unrelated scalar repair through upstream.",
-    "Merge the fetched upstream format corrections at the next clean checkpoint and requalify affected consumers. Preserve typed text/distribution contracts, source qualification, structural concatenation versus union, material-set Minkowski semantics and protected-cell triangulation migrations. Native closed-PWN validation of parsed STL is not proof of manifoldness or exact analytic fidelity. Unrelated pending runtime and format defects remain upstream-owned; fresh physical builds do not repair historical storage evidence."
+    "Upstream c9410688b is integrated and affected BREP consumers are requalified. Fetch again at coherent development boundaries, keep each qualification source fixed, preserve both histories and ledger ownership, and requalify affected consumers. Preserve typed text/distribution contracts, source qualification, concatenation-versus-union and material-set Minkowski semantics. Parsed STL closed-PWN validity does not prove manifoldness or analytic fidelity; preserve native error causes and explicit empty outcomes. The three format export defects and unrelated native runtime failures remain upstream-owned. Fresh builds do not repair historical storage evidence."
   ],
   "acceptance_contract": {
-    "upstream_revision": "3b69af324a9642d1f71b9cc38de58b59a236f740",
+    "upstream_revision": "c9410688b0c7854fba6c9a90f34cae5b3382318a",
     "properties": "../../../properties.md",
     "protocol": "../../../docs/admission.md",
     "agent_rules": "../../../AGENTS.md",
@@ -1665,7 +1694,7 @@
       "incorrect result"
     ],
     "admission": "Documentation and integration do not establish implementation compliance. Source-specific evidence remains tied to its original revision; requalify after dependency changes.",
-    "latest_integration": "evidence/2026-10-16-upstream-native-integration/README.md",
+    "latest_integration": "evidence/2026-10-16-upstream-format-integration/README.md",
     "implementation_ownership": {
       "primary": [
         "hyperbrep",

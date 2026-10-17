@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
 Status: implementation blueprint. Updated 2026-10-16 for upstream
-`73472622dd4034b8b8777cb2a116c4020f6bb328` and concurrent development ownership.
+`c9410688b0c7854fba6c9a90f34cae5b3382318a` and concurrent development ownership.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,
@@ -97,6 +97,32 @@ guidance applies to future merges and evidence collection as well as the current
 increment. Upstream's full-board and copper-neck runtime gates and its 35-file
 pending candidate remain unadmitted; unrelated repairs retain upstream ownership.
 
+The [current format integration](evidence/2026-10-16-upstream-format-integration/README.md)
+preserves the qualified prism implementation while incorporating upstream
+`c9410688b`. OBJ now resolves all triangle indices before emitting any bytes,
+using Hypermesh's existing resolver; this is not a general topology certificate.
+Both STL encodings parse finite binary32 values and promote them exactly before
+strict native closed-PWN validation. Canonical empty remains successful, native
+topology errors retain their typed causes, and disconnected, nested, inverted
+and multiply wound closed surfaces remain within that mesh contract. Future
+BREP reconstruction, fitting and feature history must preserve this source
+qualification. Closed PWN, manifoldness and fidelity to an original analytic
+surface require separate evidence. A validated imported mesh is not itself
+an exact analytic reconstruction, and exact promotion cannot recover values
+lost at an earlier format boundary.
+
+The [physical requalification](../../../docs/evidence/2026-10-16-physical-build-requalification/progress-v1.md)
+retains full-board worker CPU of 191.224524234 seconds against a 120-second gate,
+and copper-neck check-body wall time of 86.843039677 seconds against 60 seconds.
+Those gates remain failed; subsequent format corrections do not admit the
+35 pending native files or repair missing historical artifacts. The current
+[STL record](../../../docs/evidence/2026-10-16-stl-native-validation/progress-v3.md)
+also retains tiny-coordinate text loss in OBJ/ASCII STL and binary STL projection
+that can collapse faces. These are upstream-owned export defects. BREP consumers
+must not promise topology-preserving tessellation interchange through them
+without separately validating the emitted representation. The documented
+`basic_shapes` feature combination now includes both `curve` and `stl-io`.
+
 Future sketch/infill consumers must retain the upstream gear, rack and airfoil
 constructors' typed failures and contextual `GeometryOutcome` receipts. Their
 sampled profiles retain sampled intent; successful strict construction does
@@ -107,7 +133,7 @@ geometry-only strings. Padding insets the Hilbert grid bounds; it is not a
 boundary-clearance guarantee. These APIs remain CSGRS/Hypercurve responsibilities;
 BREP consumers compose them without duplicating the curve kernel.
 
-The [latest integration record](evidence/2026-10-16-upstream-native-integration/README.md)
+The [preceding native integration](evidence/2026-10-16-upstream-native-integration/README.md)
 qualifies the unchanged BREP implementation against upstream `73472622d`, including
 the scalar root-square/eighth-angle proofs and BREP's earcut configuration. Its
 complete preserved corpus includes the oblique continuation; inherited failures
