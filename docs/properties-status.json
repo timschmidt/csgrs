@@ -17546,6 +17546,25 @@
     "full_plan_complete": false,
     "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
     "original_worktree_integration_pending": true
+  },
+  "circle_support_native_qualification": {
+    "status": "native gates, complete HyperDRC suite and full report compatibility passed; cache admission remains open",
+    "contract": "docs/evidence/2026-10-17-circle-support-native-cargo/contract-v1.md",
+    "qualification": "docs/evidence/2026-10-17-circle-support-native-cargo/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-circle-support-native-cargo/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-circle-support-native-cargo/artifact-expectations-v1.json.gz",
+    "separate_native_gates_passed": 6,
+    "full_suite_passed": 1656,
+    "full_suite_failed": 0,
+    "full_suite_ignored": 0,
+    "report_processes_completed": 12,
+    "full_reports_equal": true,
+    "repeat_determinism_verified": true,
+    "legacy_kicad_exact_fidelity_established": false,
+    "cache_index_admitted": false,
+    "full_plan_complete": false,
+    "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
+    "original_worktree_integration_pending": true
   }
 },
   "status_meanings": {
