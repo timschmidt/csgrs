@@ -13257,6 +13257,49 @@
       "Investigate native loop-bound reuse and neck construction evidence separately. Any repair must preserve exact geometry and prove its own acceptance tests before replaying both original full-project resource gates.",
       "Continue the complete properties plan, typed failures, ordinary strict completion and shipped user-path validation. E36 and the original full native bundle remain unadmitted."
     ]
+  },
+  "circle_support_index": {
+    "status": "unadmitted: exact circle-support index passes focused semantics and original workload gates; full qualification interrupted by storage quota",
+    "main_parent_commit": "da8b64c1948abc26ad06490784165b15143f5def",
+    "progress_classification": "progress",
+    "contract": "docs/evidence/2026-10-17-circle-support-index/contract-v1.md",
+    "decision": "docs/evidence/2026-10-17-circle-support-index/decision-v1.json",
+    "progress": "docs/evidence/2026-10-17-circle-support-index/progress-v1.md",
+    "checkpoint": "docs/evidence/2026-10-17-circle-support-index/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-circle-support-index/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {},
+    "prototype_sha256": {
+      "crates/hypercurve/src/curve_intersection.rs": "2b6729bbef6ae8ac1ec95341c0311a299fde90e1a4dd207bb92bc43fc1ac472e",
+      "crates/hypercurve/src/circle_support_cache_tests.rs": "a95c3b73c00c486bc63de4e7711aef3fd2790ab7a3e1c5899b6ddd57755b783f",
+      "crates/hypercurve/README.md": "7587b7b82534a4a14502092dffc76f7189afff4f5db73d9e929976b0dff36bbe"
+    },
+    "source_changes_applied": false,
+    "focused_semantic_tests_per_variant": 7,
+    "original_workload_gates_passed": 3,
+    "native_test_passed": 1648,
+    "native_test_failed": 5,
+    "full_qualification_passed": false,
+    "storage_requirement": "At least 6 GiB additional writable validation storage or an increased /tmp quota; existing physical artifacts must be preserved.",
+    "native_disposition_preserved": true,
+    "pending_native_paths_remaining": 0,
+    "full_archived_integration_admitted": false,
+    "native_runtime_admitted": false,
+    "full_plan_complete": false,
+    "limitations": [
+      "No production patch admitted; no full native or boundary pass claimed.",
+      "Cost observations are focused diagnostics, not end-to-end speedup or final optimization acceptance.",
+      "Mixed and superrange heap peaks increase slightly; symbolic allocation count increases by six; all adverse rows retained.",
+      "No new total-work, heap-byte, expression-growth or cancellation bound.",
+      "Exact-track E36 integration remains rejected and the original 35-file disposition remains intact.",
+      "Inherited artifact audit still has 27,093 missing paths; no whole-history or zero-loss claim.",
+      "Full pre-push, published-package, MSRV, formal-proof, coverage and directed-campaign targets remain open."
+    ],
+    "next": [
+      "After storage recovery, use fresh targets for remaining full Hypercurve, CSGRS, HyperDRC, Hypercircuit and boundary qualification; do not reopen completed targets.",
+      "Reproduce the five native file-output failures without quota exhaustion, preserving the original assertions.",
+      "Complete full-project byte comparisons and matched cost measurements, then decide whether to apply the three-file candidate.",
+      "If retained, reevaluate exact KiCad ingress independently against its unchanged workloads; preserve all broader properties targets."
+    ]
   }
 },
   "status_meanings": {
