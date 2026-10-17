@@ -112,6 +112,14 @@ impl Builder {
         if !forward {
             ordered.reverse();
         }
+        let mut torus_segments = if matches!(surface.support, surfaces::Support::Torus(_)) {
+            Some(
+                self.torus_loop(resolver, &ordered, surface, scale, site)?
+                    .into_iter(),
+            )
+        } else {
+            None
+        };
         let mut uses = Vec::new();
         let mut segments = Vec::new();
         let mut previous_vertex = None;
@@ -126,14 +134,20 @@ impl Builder {
             if previous_vertex.is_some_and(|id| id != from) {
                 return Err(site.invalid("edge loop has disconnected vertex identities"));
             }
-            let (segment, correspondence) = surface.boundary_segment(
-                &edge,
-                &self.by_vertex[&from].point,
-                &self.by_vertex[&to].point,
-                forward,
-                previous_parameter.as_ref(),
-                site,
-            )?;
+            let (segment, correspondence) = if let Some(prepared) = &mut torus_segments {
+                prepared
+                    .next()
+                    .expect("one prepared segment per ordered use")
+            } else {
+                surface.boundary_segment(
+                    &edge,
+                    &self.by_vertex[&from].point,
+                    &self.by_vertex[&to].point,
+                    forward,
+                    previous_parameter.as_ref(),
+                    site,
+                )?
+            };
             previous_vertex = Some(to);
             previous_parameter = Some(segment.end().clone());
             let curve = match &segment {

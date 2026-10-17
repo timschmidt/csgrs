@@ -1,9 +1,10 @@
-//! Unsupported analytic STEP families stay explicit after successful Booleans.
+//! Completed torus exchange and explicit unsupported cone recovery.
 use hyperbrep::{OperationContext, SurfaceKind, WorkBudget, boolean, builder};
 use hyperbrep_io::step::{StepBody, StepWriteOptions, WriteErrorKind, write_advanced};
 #[allow(dead_code)]
-#[path = "../../../hyperbrep/tests/support/seam_cuts.rs"]
-mod seam;
+#[path = "torus_exchange.rs"]
+mod torus;
+use torus::seam;
 
 pub fn failures_and_recovery() {
     let context = OperationContext::strict(WorkBudget {
@@ -12,8 +13,12 @@ pub fn failures_and_recovery() {
     });
     let options = StepWriteOptions::new("seams.step", "2026-10-16T00:00:00");
     for kind in 0..3 {
-        let (source, cutter, _, _) = seam::fixture(kind);
+        let (source, cutter, volume, area) = seam::fixture(kind);
         let half = boolean::intersection(&source, &cutter).unwrap();
+        if kind < 2 {
+            torus::round_trip(half.bodies().next().unwrap(), &options, &volume, &area, &[]);
+            continue;
+        }
         let error = write_advanced(
             &[StepBody {
                 solid: half.bodies().next().unwrap(),
@@ -28,7 +33,7 @@ pub fn failures_and_recovery() {
         assert!(
             matches!(
                 error.kind,
-                WriteErrorKind::UnsupportedSurface(SurfaceKind::Torus | SurfaceKind::Cone)
+                WriteErrorKind::UnsupportedSurface(SurfaceKind::Cone)
             ),
             "{error:?}"
         );

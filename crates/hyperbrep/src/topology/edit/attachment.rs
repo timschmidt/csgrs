@@ -136,14 +136,13 @@ impl ArenaModel {
                     && end_order == std::cmp::Ordering::Less
                     && !matching_edges
                         .iter()
-                        .any(|(candidate, _, _, _, _)| *candidate == edge_use.edge)
+                        .any(|(candidate, _, _, _)| *candidate == edge_use.edge)
                 {
                     matching_edges.push((
                         edge_use.edge,
                         contact.parameter().clone(),
                         *use_id,
-                        contact.pcurve_point().clone(),
-                        contact.spatial_point().clone(),
+                        contact.clone(),
                     ));
                 }
             }
@@ -159,17 +158,11 @@ impl ArenaModel {
             }
         }
         match matching_edges.as_slice() {
-            [(edge, parameter, edge_use, pcurve_point, spatial_point)] => {
-                Ok(FaceSplitEndpointLocation::Edge {
-                    edge: *edge,
-                    parameter: parameter.clone(),
-                    pcurve_split: Some(Box::new((
-                        *edge_use,
-                        pcurve_point.clone(),
-                        spatial_point.clone(),
-                    ))),
-                })
-            }
+            [(edge, parameter, edge_use, contact)] => Ok(FaceSplitEndpointLocation::Edge {
+                edge: *edge,
+                parameter: parameter.clone(),
+                pcurve_split: Some(Box::new((*edge_use, contact.clone()))),
+            }),
             [] => Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary {
                 face: face_id,
                 endpoint,

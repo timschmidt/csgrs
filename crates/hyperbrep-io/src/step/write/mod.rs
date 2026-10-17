@@ -107,7 +107,7 @@ pub fn write_faceted<'a>(
     context.evaluate(|| faceted::write(bodies, options))
 }
 
-/// Writes selected planar/cylindrical solids with explicit line/circle topology.
+/// Writes selected plane/cylinder/ring-torus solids with explicit line/circle topology.
 ///
 /// Every emitted scalar is exact. Other carriers, cavity shells and values
 /// without an admitted finite decimal encoding fail with source diagnostics.

@@ -48,3 +48,7 @@ harness = false
 [[bench]]
 name = "prism_exchange"
 harness = false
+
+[[bench]]
+name = "torus_exchange"
+harness = false

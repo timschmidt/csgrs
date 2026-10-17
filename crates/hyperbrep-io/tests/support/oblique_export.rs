@@ -1,5 +1,5 @@
 //! An oblique Boolean result preserves typed exchange blockers and recovery.
-use hyperbrep::{Matrix4, OperationContext, SurfaceKind, WorkBudget, boolean, builder};
+use hyperbrep::{Matrix4, OperationContext, WorkBudget, boolean, builder};
 use hyperbrep_io::step::{StepBody, StepWriteOptions, WriteErrorKind, write_advanced};
 #[allow(dead_code)]
 #[path = "../../../hyperbrep/tests/support/oblique.rs"]
@@ -38,10 +38,7 @@ pub fn failures_and_recovery() {
             .unwrap()
             .unwrap_err();
             assert!(
-                matches!(
-                    error.kind,
-                    WriteErrorKind::UnsupportedSurface(SurfaceKind::Torus)
-                ),
+                matches!(error.kind, WriteErrorKind::NonRational),
                 "{error:?}"
             );
             assert_eq!(error.body, Some(0));

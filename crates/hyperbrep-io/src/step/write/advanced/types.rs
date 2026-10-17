@@ -35,7 +35,8 @@ pub struct WrittenAdvancedEdge<'a> {
 /// The two vectors are the columns of the linear part. Offsets retain shifted
 /// native parameters, including unwrapped circular angles and seam identities.
 /// Plane output coordinates are in the selected length unit; cylinder U is in
-/// radians and V is in that length unit. This is encoding metadata, not a surface.
+/// radians and V is in that length unit. Both torus coordinates are in radians.
+/// This is encoding metadata, not a surface.
 #[derive(Clone, Debug)]
 pub struct WrittenSurfaceParameters {
     /// Output UV at native (0, 0), even when outside the finite source chart.
@@ -59,7 +60,7 @@ pub struct WrittenAdvancedFace<'a> {
     pub source: FaceRef<'a>,
     /// Output ADVANCED_FACE ID.
     pub entity: u64,
-    /// Output PLANE or CYLINDRICAL_SURFACE ID.
+    /// Output PLANE, CYLINDRICAL_SURFACE or TOROIDAL_SURFACE ID.
     pub surface: u64,
     /// Native-to-output surface parameter map.
     pub parameters: WrittenSurfaceParameters,

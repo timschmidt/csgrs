@@ -4,6 +4,64 @@ use crate::Vector3;
 fn p(x: i32, y: i32, z: i32) -> Point3 {
     Point3::new(x.into(), y.into(), z.into())
 }
+
+#[test]
+fn rational_torus_latitude_retains_contact_through_all_incident_faces() {
+    let (source, solid) = crate::construction::torus(10.into(), 5.into()).unwrap();
+    let (cutter, cutter_solid) =
+        crate::construction::cuboid(p(-40, -40, 3), p(40, 40, 40)).unwrap();
+    let ArenaBooleanResult::Solid { model, solid, .. } = sets::boolean(
+        &source,
+        &[solid],
+        &cutter,
+        &[cutter_solid],
+        BooleanOperation::Intersection,
+    )
+    .unwrap() else {
+        panic!("one toroidal band")
+    };
+    // Integrating 4*pi*R*sqrt(r^2-z^2) from 3 to 5 gives this volume.
+    let a = (Real::from(3) / Real::from(5)).unwrap().asin().unwrap();
+    let expected = Real::from(20)
+        * Real::pi()
+        * (Real::from(25) * ((Real::pi() / Real::from(2)).unwrap() - a) - Real::from(12));
+    assert_eq!(
+        exact_order(&model.solid_volume(solid).unwrap(), &expected).unwrap(),
+        Ordering::Equal
+    );
+    for (point, expected) in [
+        (p(10, 0, 4), crate::SolidPointLocation::Inside),
+        (p(10, 0, 2), crate::SolidPointLocation::Outside),
+        (p(6, 0, 3), crate::SolidPointLocation::Boundary),
+        (p(14, 0, 3), crate::SolidPointLocation::Boundary),
+    ] {
+        assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+    }
+    let replay = |model: &ArenaModel, label: &str| {
+        let json = model.to_json().unwrap();
+        let loaded =
+            crate::persistence::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
+                .unwrap()
+                .validate()
+                .unwrap_or_else(|error| panic!("{label}: {error:?}"));
+        assert_eq!(loaded.to_json().unwrap(), json);
+        assert_eq!(
+            exact_order(&loaded.solid_volume(solid).unwrap(), &expected).unwrap(),
+            Ordering::Equal
+        );
+        loaded
+    };
+    let mut loaded = replay(&model, "before subdivision");
+    for iteration in 0..4 {
+        let (edge_id, edge) = loaded.edges().next().unwrap();
+        let parameter = ((edge.domain().start().try_real().unwrap()
+            + edge.domain().end().try_real().unwrap())
+            / Real::from(2))
+        .unwrap();
+        let (split, _) = loaded.split_edge(edge_id, parameter.into()).unwrap();
+        loaded = replay(&split, &format!("after subdivision {}", iteration + 1));
+    }
+}
 fn circle(x: Vector3, y: Vector3, start: Real, end: Real) -> Curve3 {
     Curve3::circle_arc(p(0, 0, 0), x, y, 2.into(), start, end).unwrap()
 }
@@ -21,6 +79,7 @@ fn circular_clip_preimages_preserve_chart_scope_and_both_seam_ends() {
         SurfaceIntersectionBoundaryContact::new(
             source,
             parameter,
+            None,
             hypercurve::Point2::new((-2).into(), 0.into()),
             p(-2, 0, 0),
         )
@@ -71,6 +130,7 @@ fn circular_clip_preimages_preserve_chart_scope_and_both_seam_ends() {
     let seam = SurfaceIntersectionBoundaryContact::new(
         curve.clone(),
         Real::tau(),
+        None,
         hypercurve::Point2::new(2.into(), 0.into()),
         p(2, 0, 0),
     );

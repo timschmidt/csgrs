@@ -1,9 +1,10 @@
-//! Repeated exact curved Booleans retain explicit exchange-family blockers.
-use hyperbrep::{OperationContext, SurfaceKind, WorkBudget, boolean, builder};
+//! Repeated torus Booleans complete exchange; cones remain explicit blockers.
+use hyperbrep::{OperationContext, Real, SurfaceKind, WorkBudget, boolean, builder};
 use hyperbrep_io::step::{StepBody, StepWriteOptions, WriteErrorKind, write_advanced};
 #[allow(dead_code)]
-#[path = "../../../hyperbrep/tests/support/seam_cuts.rs"]
-mod seam;
+#[path = "torus_exchange.rs"]
+mod torus;
+use torus::seam;
 
 pub fn failures_and_recovery() {
     let context = OperationContext::strict(WorkBudget {
@@ -12,7 +13,7 @@ pub fn failures_and_recovery() {
     });
     let options = StepWriteOptions::new("coplanar.step", "2026-10-16T00:00:00");
     for kind in 0..3 {
-        let (source, cutter, _, _) = seam::fixture(kind);
+        let (source, cutter, volume, area) = seam::fixture(kind);
         let half = boolean::intersection(&source, &cutter).unwrap();
         let other = boolean::difference(&source, &cutter).unwrap();
         for (name, result) in [
@@ -20,6 +21,22 @@ pub fn failures_and_recovery() {
             ("reconstructed", boolean::union(&half, &other).unwrap()),
         ] {
             let replay = seam::reload(result.model());
+            if kind < 2 {
+                let (expected_volume, expected_area) = if name == "recut" {
+                    (volume.clone(), area.clone())
+                } else {
+                    let full = Real::from(40) * Real::pi() * Real::pi();
+                    (full.clone(), full)
+                };
+                torus::round_trip(
+                    replay.solids().next().unwrap(),
+                    &options,
+                    &expected_volume,
+                    &expected_area,
+                    &[],
+                );
+                continue;
+            }
             let error = write_advanced(
                 &[StepBody {
                     solid: replay.solids().next().unwrap(),
@@ -31,13 +48,11 @@ pub fn failures_and_recovery() {
             .result
             .unwrap()
             .unwrap_err();
-            let expected = if kind == 2 {
-                SurfaceKind::Cone
-            } else {
-                SurfaceKind::Torus
-            };
             assert!(
-                matches!(error.kind, WriteErrorKind::UnsupportedSurface(kind) if kind == expected),
+                matches!(
+                    error.kind,
+                    WriteErrorKind::UnsupportedSurface(SurfaceKind::Cone)
+                ),
                 "{error:?}"
             );
             assert_eq!(error.body, Some(0));

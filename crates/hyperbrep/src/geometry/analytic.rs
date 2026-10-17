@@ -42,6 +42,33 @@ pub struct CylinderGeometry<'a> {
     pub radius: &'a Real,
 }
 
+/// A borrowed exact ring-torus frame and radii.
+///
+/// The right-handed axes are orthonormal. Both surface parameters are angles:
+///
+/// ```text
+/// center + (major_radius + minor_radius*cos(v))*(x*cos(u) + y*sin(u))
+///        + axis*minor_radius*sin(v)
+/// ```
+///
+/// The major radius is strictly greater than the
+/// positive minor radius. This view does not change the surface's finite chart.
+#[derive(Clone, Copy, Debug)]
+pub struct TorusGeometry<'a> {
+    /// Center of the major circle.
+    pub center: &'a Point3,
+    /// Unit radial direction at longitude zero.
+    pub x: &'a Vector3,
+    /// Unit radial direction at longitude pi/2.
+    pub y: &'a Vector3,
+    /// Unit axial direction.
+    pub axis: &'a Vector3,
+    /// Radius of the circle traced by the minor circle's center.
+    pub major_radius: &'a Real,
+    /// Radius of the minor circle.
+    pub minor_radius: &'a Real,
+}
+
 impl Curve3 {
     /// Borrows the exact carrier and angular map of a native circular arc.
     ///
@@ -63,6 +90,22 @@ impl Curve3 {
 }
 
 impl Surface {
+    /// Borrows the exact ring-torus carrier without changing its chart or frame.
+    /// Other surface families return `None`.
+    pub fn toroidal_geometry(&self) -> Option<TorusGeometry<'_>> {
+        let SurfaceGeometry::Torus(torus) = &self.data.geometry else {
+            return None;
+        };
+        Some(TorusGeometry {
+            center: &torus.center,
+            x: &torus.frame.x,
+            y: &torus.frame.y,
+            axis: &torus.frame.z,
+            major_radius: &torus.major_radius,
+            minor_radius: &torus.minor_radius,
+        })
+    }
+
     /// Borrows the exact cylinder carrier without changing its chart or frame.
     /// Other surface families return `None`.
     pub fn cylindrical_geometry(&self) -> Option<CylinderGeometry<'_>> {

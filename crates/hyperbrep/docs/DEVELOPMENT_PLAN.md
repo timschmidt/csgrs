@@ -66,11 +66,12 @@ documentation. Surrounding crates are being developed concurrently in another
 thread. Their responsibilities remain in this architectural roadmap, but
 unrelated dependency repairs are not implementation tasks for this branch.
 
-Change a surrounding crate only when leaving it unchanged would make BREP
-incorrect, lose supported behavior or evidence, or violate a demonstrated BREP
-resource/performance contract. Reproduce the concrete BREP failure on the
-current revision, check for an upstream correction, and make only the necessary
-owning-layer change. Preserve typed blockers for genuinely unsupported work;
+Supporting changes in surrounding crates are in scope when needed to implement
+a BREP feature or preserve its correctness, supported behavior, evidence or
+resource/performance contract. Keep each invariant in its owning crate, declare
+the affected domain and missing or failing acceptance test, and qualify the
+dependent consumers. Reproduce existing failures on the current revision and
+check upstream before overlapping dependency work. Preserve typed blockers for unsupported work;
 do not duplicate another kernel or resume a parked dependency prototype merely
 because it exists. Report unrelated dependency findings for upstream ownership.
 
@@ -226,7 +227,13 @@ This does not close earlier cost regressions or total-work/heap/cancellation
 contracts. Further STEP families need exact chart and scalar-encoding proofs;
 the [cone/torus exchange notes](evidence/2026-10-16-builder-certificates/next-exchange-research.md)
 identify parameter-convention and representability questions for reproduction
-before implementation. They are research, not implemented exchange support.
+before implementation. The [ring-torus exchange increment](evidence/2026-10-16-torus-exchange/README.md)
+implements the selected circular latitude/meridian domain with both angular
+units, explicit seams and exact finite-decimal encoding. It preserves repeated
+native subdivision/replay through a necessary shared inverse-angle certificate
+and native contact/image facts. Preserve the scalar baseline, rejected BREP
+recognizers and all performance/representation observations. General torus trims,
+cone parameter/encoding proofs and clean package delivery remain separate work.
 This ownership direction changes who performs dependency work; it does not
 weaken the shared properties or close any work-package gate.
 
@@ -2225,15 +2232,34 @@ union precondition and partial-overlap cases remain explicit. Further completion
 requires reusable arrangement and embedding evidence, not progressively weaker
 whole-solid recognition or approximation at the STEP boundary.
 
-Cone/torus STEP exchange and a clean packaged
-consumer must accompany their own supported-domain proofs. Do not credit
+Further cone/torus STEP exchange and a clean packaged consumer must accompany
+their own supported-domain proofs. Retain the selected ring-torus workflows,
+independent exact measures, supplied two-axis source maps, seam/malformed-input
+controls and four native split/reload cycles. Do not credit
 source-path WASM or an optional floating-point oracle as shipped release coverage.
+The [cone encoding feasibility note](evidence/2026-10-16-torus-exchange/future-cone-exchange.md)
+identifies an exact swept-surface candidate and its schema constraints; qualify
+native continuation and parameter correspondence before adopting that encoding.
+The torus increment also improves two original rational-sector diagnostics;
+independent native probes check both through split/replay, recut and empty
+recovery. Preserve the [two-slot review](evidence/2026-10-16-torus-exchange/frontier-migration.json),
+including its unresolved direct torus measure comparison and exact normalized
+oracle. The 81-slot inventory now has 76 native results, three undecided cone
+continuations and two exhausted torus reconstructions. These diagnostic counts
+do not replace independent semantic acceptance of each workflow.
 
-Surrounding crates remain owned by the concurrent upstream thread. The sector
-increment needed one reproduced scalar certificate, `acos(±1/2)`, after checking
+Supporting changes in surrounding crates are permitted when a HyperBRep
+feature requires them. Preserve crate boundaries: implement the invariant in
+its owning crate and qualify its affected consumers. The concurrent upstream
+thread continues to handle unrelated breakage; do not duplicate that repair
+work or postpone BREP work for a broader dashboard failure. Check upstream at
+coherent checkpoints and retain the evidence needed to merge these changes.
+The sector increment needed one reproduced scalar certificate, `acos(±1/2)`, after checking
 upstream. Prism continuation similarly needs rational reciprocal `atan` and a
-principal half-angle certificate for rational-hypotenuse arguments; their owning
-scalar regressions and downstream consumer checks accompany the BREP failure.
+principal half-angle certificate for rational-hypotenuse arguments. Ring-torus
+subdivision needs exact principal-angle normal forms after archive replay;
+their owning scalar regressions and downstream consumer checks accompany the
+BREP failure.
 The full dependency-check outcomes remain visible in the evidence;
 passing BREP checks do not close an inherited whole-scalar or release gate.
 Do not repair unrelated dependency findings in this branch merely to turn a

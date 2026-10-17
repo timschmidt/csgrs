@@ -4,6 +4,7 @@ mod curves;
 mod faces;
 mod pcurves;
 mod surfaces;
+mod torus;
 
 use super::{
     ContextUnits, Error, ErrorKind,
@@ -69,7 +70,7 @@ struct Edge {
 struct FaceSurface {
     geometry: Plane,
     key: SurfaceKey,
-    cylinder: Option<surfaces::Cylinder>,
+    support: surfaces::Support,
 }
 struct Builder {
     model: ModelBuilder,

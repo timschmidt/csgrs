@@ -320,3 +320,21 @@ above follows complete requalification and retains every cohort. No total-work,
 retained-heap, cancellation or controlled-host claim is made.
 The five remaining quarter/band diagnostics and all broader work-package,
 resource/provenance and delivery gates remain open.
+
+## Exact ring-torus exchange (2026-10-17)
+
+The [complete admission record](../hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md) qualifies exact selected torus support, both angular maps, seams and repeated native composition. The [native performance record](../hyperbrep/PERFORMANCE.md#exact-ring-torus-exchange-2026-10-17) lists every adverse timing row and the supporting scalar observations.
+
+The complete 105-process campaign compares 167 preserved cases in seventeen corpora and records three new completed torus workflows separately. 162 old exact receipts are unchanged; five archive receipts have explicitly reviewed exact representation migrations. Their complete artifact comparison is linked in the admission record. The original no-migration gate remains failed. All 54 separately retained STEP/archive artifacts agree byte-for-byte. The maximum preserved-case median latency ratio is 1.807459; 15 rows exceed 10%. 65 rows change allocation observations, including 35 increases in calls or requested bytes. All raw samples, unfavorable results, allocation requests, process resources and executable sizes remain in the evidence. These shared-host observations do not establish a general speedup or close earlier cost gates.
+
+New workflows include exact assertions and full output materialization inside timing. Formerly unsupported operations are not speedup baselines.
+
+| New workflow | Median milliseconds per iteration |
+| --- | ---: |
+| `torus_exchange/whole_frames_units` | 216.689574 |
+| `torus_exchange/halves_reconstruction` | 1780.628593 |
+| `torus_exchange/rational_band` | 899.330116 |
+
+Native harness size changes range from 6,880 to 65,176 bytes. The WASM harness changes by 318,775 bytes and now includes 90 probe groups; this is not a matched package-size comparison. Cumulative allocator requests and process RSS do not bound retained heap or total work. Four native subdivision/reload cycles grow the archive from 91,506 to 142,937 bytes and serialized Computable occurrences from 780 to 2,089. Their maximum serialized depth rises from 16 to 18. These five states establish no arbitrary-depth or cancellation guarantee.
+
+Retain this as an exact feature extension with the disclosed adverse costs, not an optimization. Whole-image admission, finite-decimal encoding and typed failures remain authoritative. Optional OCCT checks and source-path WASM execution do not close the shipped-package, MSRV or language-binding gates. The original successful geometry, policies, byte contracts and full-size hard cases remain the baseline for further cost work.

@@ -854,3 +854,45 @@ New successful workflows have separate absolute costs, with exact checks and ful
 | `prisms/prisms/annular_cut` | 39.546634 |
 
 Requested allocation bytes and process RSS do not bound retained heap or total work. Earlier archive, spline, cached-arc, pcurve and provenance timing gates remain open. All broader work-package and delivery gates remain open.
+
+## Exact ring-torus exchange (2026-10-17)
+
+The [source-bound admission record](docs/evidence/2026-10-16-torus-exchange/README.md) retains the original exchange/replay failures, shared scalar proof, native contact/image facts, rejected alternatives and explicit capability migrations.
+
+The complete 105-process campaign compares 167 preserved cases in seventeen corpora and records three new completed torus workflows separately. 162 old exact receipts are unchanged; five archive receipts have explicitly reviewed exact representation migrations. Their complete artifact comparison is linked in the admission record. The original no-migration gate remains failed. All 54 separately retained STEP/archive artifacts agree byte-for-byte. The maximum preserved-case median latency ratio is 1.807459; 15 rows exceed 10%. 65 rows change allocation observations, including 35 increases in calls or requested bytes. All raw samples, unfavorable results, allocation requests, process resources and executable sizes remain in the evidence. These shared-host observations do not establish a general speedup or close earlier cost gates.
+
+Retain the selected exact feature and composition extension under the governing ladder. Ring-torus STEP workflows now compose through native cuts, units, transforms, periodic seams, subdivision and archive replay using shared scalar and native proofs. Prior certified behavior and independent geometric assertions remain; five canonical-expression receipts change only under the complete explicit migration proof. This is not an optimization. The main campaign retains 15 median latency ratios above 1.10 (maximum 1.807459), 65 changed allocation rows including 35 increases, native harness growth of 6880-65176 bytes, and WASM growth of 318775 bytes with seven added groups. The dependency supplement retains five ratios above 1.10 (maximum 1.452677), including four inverse-angle scalar cases and one 9-11 ns predicate case. All adverse observations remain; shared-host samples do not establish a general speedup or controlled-host performance admission. Profile repeated angular certificates against this complete feature baseline next, retaining the same strict success, replay, output and resource-observation contracts.
+
+Every preserved-workflow median ratio above 10%:
+
+| Corpus / case | Candidate / baseline |
+| --- | ---: |
+| `analytic_export/analytic_export/closed_imported` | 1.149632 |
+| `analytic_export/analytic_export/partial_imported` | 1.334782 |
+| `analytic_export/analytic_export/edit_roundtrip` | 1.251074 |
+| `arc/arc_retained_inverse_witness_replay` | 1.807459 |
+| `circles/circles/closed_fresh_document` | 1.393839 |
+| `circles/circles/closed_reused_document` | 1.460995 |
+| `circles/circles/partial_fresh_document` | 1.627308 |
+| `circles/circles/partial_reused_document` | 1.621428 |
+| `circles/circles/edits_replay_composition` | 1.194098 |
+| `pcurves/pcurves/full_fresh` | 1.283222 |
+| `pcurves/pcurves/full_reused` | 1.291432 |
+| `pcurves/pcurves/partial_fresh` | 1.456298 |
+| `pcurves/pcurves/partial_reused` | 1.466652 |
+| `pcurves/pcurves/edit_replay_composition` | 1.161300 |
+| `pcurves/pcurves/reject_nonmaster_height` | 1.275334 |
+
+New workflows include exact assertions and full output materialization inside timing. Formerly unsupported operations are not speedup baselines.
+
+| New workflow | Median milliseconds per iteration |
+| --- | ---: |
+| `torus_exchange/whole_frames_units` | 216.689574 |
+| `torus_exchange/halves_reconstruction` | 1780.628593 |
+| `torus_exchange/rational_band` | 899.330116 |
+
+Native harness size changes range from 6,880 to 65,176 bytes. The WASM harness changes by 318,775 bytes and now includes 90 probe groups; this is not a matched package-size comparison. Cumulative allocator requests and process RSS do not bound retained heap or total work. Four native subdivision/reload cycles grow the archive from 91,506 to 142,937 bytes and serialized Computable occurrences from 780 to 2,089. Their maximum serialized depth rises from 16 to 18. These five states establish no arbitrary-depth or cancellation guarantee.
+
+The separate dependency microcost supplement records 175 cases in 12 processes, with 5 median ratios above 1.10 and maximum 1.452677. Its scalar baseline was reconstructed after the blocker was discovered; it was not frozen prospectively. Criterion alone supplies no geometric completion or allocation receipt. The four complete dependency library suites preserve all 3,514 named outcomes (3,508 passed, six ignored); the separately reproduced inherited zero-factor debug failures remain.
+
+The [follow-up experiment](docs/evidence/2026-10-16-torus-exchange/future-angle-costs.md) targets repeated proof work while preserving every successful workflow. No individual helper's contribution has yet been isolated. Prior archive, spline, cached-arc, pcurve, provenance and prism cost observations remain open. All broader work-package, resource and delivery gates remain open.

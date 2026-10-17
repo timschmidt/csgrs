@@ -538,10 +538,24 @@ impl PiAcosLinearForm {
         self
     }
 
-    fn add(self, other: Self) -> Option<Self> {
+    fn add(self, mut other: Self) -> Option<Self> {
         let argument = match (&self.argument, &other.argument) {
             (Some(left), Some(right)) if !Computable::internal_structural_eq(left, right) => {
-                return None;
+                // In the first quadrant complementary sine/cosine arguments
+                // give acos(a)+acos(b)=pi/2. The exact unit-circle equation
+                // and both signs are necessary; squares alone lose the branch.
+                let a = left.exact_rational()?;
+                let b = right.exact_rational()?;
+                if a.sign() == Sign::Minus
+                    || b.sign() == Sign::Minus
+                    || &a * &a + &b * &b != Rational::one()
+                {
+                    return None;
+                }
+                other.pi =
+                    other.pi + &other.acos * Rational::fraction(1, 2).expect("two is nonzero");
+                other.acos = -other.acos;
+                Some(left.clone())
             }
             (Some(argument), _) | (_, Some(argument)) => Some(argument.clone()),
             (None, None) => None,
@@ -1038,31 +1052,30 @@ impl Computable {
                 argument: None,
             });
         }
-        if let Some(atan_argument) = self.atan_argument()
-            && let Some((scale, radicand)) = atan_argument.exact_pure_quadratic_surd()
-            && radicand == Rational::new(35)
-        {
-            let magnitude = if scale.sign() == Sign::Minus {
-                -scale.clone()
+        if let Some(argument) = self.atan_argument() {
+            // atan(t) has the sign of t and lies strictly between -pi/2 and
+            // pi/2. Its sine has squared magnitude t^2/(1+t^2). Admit this
+            // cross-family form only when that positive root is exactly
+            // rational, including pure quadratic tangents. No root is fitted.
+            let (sign, square) = if let Some(value) = argument.exact_rational() {
+                (value.sign(), &value * &value)
             } else {
-                scale.clone()
+                let (scale, radicand) = argument.exact_pure_quadratic_surd()?;
+                (scale.sign(), &scale * &scale * radicand)
             };
-            if magnitude == Rational::fraction(1, 35).expect("thirty-five is nonzero") {
-                let orientation = if scale.sign() == Sign::Minus {
-                    Rational::new(-1)
-                } else {
-                    Rational::one()
-                };
-                return Some(PiAcosLinearForm {
-                    constant: Rational::zero(),
-                    pi: orientation.clone()
-                        * Rational::fraction(1, 2).expect("two is nonzero"),
-                    acos: -orientation,
-                    argument: Some(Self::rational(
-                        Rational::fraction(1, 6).expect("six is nonzero"),
-                    )),
-                });
-            }
+            let denominator = Rational::one() + &square;
+            let sine = (square / denominator).perfect_nth_root(2)?;
+            let orientation = if sign == Sign::Minus {
+                Rational::new(-1)
+            } else {
+                Rational::one()
+            };
+            return Some(PiAcosLinearForm {
+                constant: Rational::zero(),
+                pi: orientation.clone() * Rational::fraction(1, 2).expect("two is nonzero"),
+                acos: -orientation,
+                argument: Some(Self::rational(sine)),
+            });
         }
         if let Some(argument) = self.asin_argument() {
             if let Some(rational) = argument.exact_rational()
@@ -1127,6 +1140,38 @@ impl Computable {
             }
             _ => None,
         }
+    }
+
+    fn pi_acos_laurent_form(&self, budget: usize) -> Option<PiAcosLinearForm> {
+        if budget == 0 || !self.internal.contains_inverse_trig_or_pi() {
+            return None;
+        }
+        // Replay may retain an angle inside cancelling pi factors. Project
+        // once through the existing bounded Laurent authority, then interpret
+        // only rational scales, pi, and admitted inverse-angle atoms.
+        let polynomial = self.pi_laurent_polynomial(budget)?;
+        let mut form = PiAcosLinearForm {
+            constant: Rational::zero(),
+            pi: Rational::zero(),
+            acos: Rational::zero(),
+            argument: None,
+        };
+        for (power, coefficient) in polynomial.terms {
+            if !coefficient.radicals.is_empty() {
+                return None;
+            }
+            match power {
+                0 => {
+                    form.constant = form.constant + coefficient.rational;
+                    for (atom, scale) in coefficient.atoms {
+                        form = form.add(atom.pi_acos_linear_form(budget - 1)?.scaled(scale))?;
+                    }
+                }
+                1 if coefficient.atoms.is_empty() => form.pi = form.pi + coefficient.rational,
+                _ => return None,
+            }
+        }
+        Some(form)
     }
 
     fn pi_atan_terms_form(&self, budget: usize) -> Option<PiAtanTermsForm> {
@@ -1323,7 +1368,9 @@ impl Computable {
             }
         }
 
-        if let Some(form) = self.pi_acos_linear_form(32)
+        if let Some(form) = self
+            .pi_acos_linear_form(32)
+            .or_else(|| self.pi_acos_laurent_form(32))
             && form.constant.sign() == Sign::NoSign
         {
             if form.pi.sign() == Sign::NoSign {

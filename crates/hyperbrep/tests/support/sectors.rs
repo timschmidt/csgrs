@@ -2,7 +2,7 @@
 use hyperbrep::{BodySet, Matrix4, Model, Point3, Real, SolidPointLocation, boolean, builder};
 #[allow(dead_code)]
 #[path = "seam_cuts.rs"]
-pub(super) mod seam;
+pub mod seam;
 use seam::{equal, point as p, ratio as q};
 
 fn parent_kind(kind: usize) -> usize {
@@ -26,7 +26,7 @@ pub fn fixture(kind: usize) -> (BodySet, BodySet, Real, Real) {
     (half, cutter, volume, area)
 }
 
-fn expected(kind: usize, difference: bool) -> (Real, Real) {
+pub fn expected(kind: usize, difference: bool) -> (Real, Real) {
     let pi = Real::pi();
     let pi2 = &pi * &pi;
     let sqrt3 = Real::from(3).sqrt().unwrap();
@@ -81,7 +81,7 @@ fn measures(model: &Model, volume: &Real, area: &Real) {
     }
 }
 
-fn samples(kind: usize, column: usize, map: &Matrix4) -> Vec<(Point3, SolidPointLocation)> {
+pub fn samples(kind: usize, column: usize, map: &Matrix4) -> Vec<(Point3, SolidPointLocation)> {
     use SolidPointLocation::{Boundary as B, Inside as I, Outside as O};
     let d = q(1, 1_000_000) * q(1, 1_000_000);
     // Columns describe intersection, difference and the original half. They

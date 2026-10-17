@@ -6,6 +6,7 @@ use hyperbrep::CurveParameterLocation;
 pub(super) struct CircleEdge {
     pub center: Point3,
     pub normal: Vector3,
+    pub radius: Real,
     /// Physical angular traversal in the source frame, including edge same_sense.
     pub sweep: Real,
     /// Increasing native parameter interval, even when physical traversal reverses.
@@ -109,7 +110,7 @@ impl Builder {
             frame.origin.clone(),
             frame.x,
             frame.y,
-            radius,
+            radius.clone(),
             if same_sense { a.clone() } else { b.clone() },
             if same_sense { b.clone() } else { a.clone() },
         )
@@ -122,6 +123,7 @@ impl Builder {
                 .map_err(|e| site.error(ErrorKind::Geometry(e)))?
         };
         let circle = CircleEdge {
+            radius,
             center: frame.origin,
             normal,
             sweep,

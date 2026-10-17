@@ -4319,6 +4319,17 @@ fn model_boundary_contacts(
                         .try_real()
                         .ok_or(GeometryError::UnrepresentableParameter)?
                         .clone();
+                    let affine_parameter = edge_use
+                        .parameter_correspondence()
+                        .affine_coefficients()
+                        // Preserve the planar cut's authored UV contact. Other
+                        // surface families retain their canonical preimages;
+                        // extending this choice requires independent replay.
+                        .filter(|_| {
+                            canonical_surface
+                                .is_some_and(|surface| surface.kind() == crate::SurfaceKind::Plane)
+                        })
+                        .map(|_| observed_parameter.clone());
                     let edge_parameter = match canonical_surface {
                         Some(surface) => {
                             canonical_surface_edge_parameter(surface, &curve, &observed_parameter)?
@@ -4329,6 +4340,7 @@ fn model_boundary_contacts(
                     translated.push(SurfaceIntersectionBoundaryContact::new(
                         curve,
                         edge_parameter,
+                        affine_parameter,
                         pcurve_point.clone(),
                         spatial_point.clone(),
                     ));

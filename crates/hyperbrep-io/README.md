@@ -6,10 +6,10 @@ HyperBRep and exact scalar arithmetic belongs to Hyperreal.
 
 The crate reads and writes bounded Part 21 syntax, imports an explicitly
 selected faceted or supported advanced representation into strictly validated
-native HyperBRep solids, and exports selected planar/cylindrical solids with
+native HyperBRep solids, and exports selected planar/cylindrical/ring-torus solids with
 line/circle boundaries to STEP.
-Advanced import includes circular edges on planes and cylinders and supplied
-planar/cylindrical pcurves. Coordinates
+Advanced import includes circular edges on planes, cylinders and ring tori and supplied
+planar/cylindrical/toroidal pcurves. Coordinates
 and authored unit conversions remain exact. Whole-document/product traversal,
 other analytic/spline mappings, cavity shells and approximate export remain unfinished.
 
@@ -78,7 +78,7 @@ map, including a closed edge with one vertex and distinct seam uses. Cylinder
 charts use native radians and metres; source angle units are converted exactly
 and independently of length units. Native validation proves the complete
 edge/pcurve image. Selected `SURFACE_CURVE` records admit planar `CIRCLE` and
-cylindrical `LINE` pcurves, with every alternate checked and its parameter map
+cylindrical/toroidal `LINE` pcurves, with every alternate checked and its parameter map
 retained. `SEAM_CURVE` additionally requires two pcurves at opposite exact
 parameter bounds on the same surface. Decimal approximations to a full angular
 period remain typed rejections; there is no inferred `pi` or implicit repair.
@@ -151,7 +151,7 @@ It checks the exact volume and deterministic archive replay independently of
 STEP output; the faceted writer rejects its curved carriers.
 
 `step::write_advanced` emits explicit `VERTEX_POINT`/`EDGE_CURVE` identities,
-directed uses, bounds and `ADVANCED_FACE` records on native planes and cylinders.
+directed uses, bounds and `ADVANCED_FACE` records on native planes, cylinders and ring tori.
 It retains straight lines and circular arcs, including closed circular edges,
 shared seams and partial arcs. The borrowed `AdvancedStep` report maps every
 used native entity to its output entity and retains exact output curve parameter
@@ -190,9 +190,14 @@ were not adopted for this boundary. [Performance](PERFORMANCE.md) records measur
 costs and the limits of the evidence. Extensions follow the stack's
 [admission protocol](../../docs/admission.md).
 
-Repeated native recuts and complementary reconstruction of torus/cone halves
-remain outside the current STEP surface mapping. Export of their independently
-replayed outputs returns `UnsupportedSurface` with body/entity identity; the same
-operation context still exports a supported cylinder afterwards. The
-[composition evidence](../hyperbrep/docs/evidence/2026-10-16-curved-coplanar/README.md)
-records this downstream boundary separately from native Boolean completion.
+Ring-torus exchange admits exact latitude/meridian boundaries with both UV
+coordinates in radians. Whole tori, axial/longitudinal halves, supported quarters
+and the rational 10/5-radius band cut at height 3 have exchange and continuation
+checks, including archive replay after subdivision. The
+[torus example](examples/torus_step.rs) exports, reimports and recuts these shapes.
+The [admission record](../hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md)
+separates native, STEP and resource evidence. Horn/spindle tori, other torus-curve
+families and loops requiring additional periodic subdivision remain unsupported.
+Radii, vertices and frame encodings must satisfy the existing exact-number
+contract; irrational band boundaries are not rounded. Cone STEP exchange,
+general Boolean closure and package/binding release qualification remain open.

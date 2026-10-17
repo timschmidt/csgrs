@@ -10,6 +10,27 @@ pub(super) struct Cylinder {
     iso: Curve3,
 }
 
+#[derive(Clone)]
+pub(super) enum Support {
+    Plane,
+    Cylinder(Cylinder),
+    Torus(torus::Torus),
+}
+
+impl FaceSurface {
+    pub(super) fn is_plane(&self) -> bool {
+        matches!(self.support, Support::Plane)
+    }
+
+    pub(super) fn angular_coordinates(&self) -> [bool; 2] {
+        match self.support {
+            Support::Plane => [false, false],
+            Support::Cylinder(_) => [true, false],
+            Support::Torus(_) => [true, true],
+        }
+    }
+}
+
 impl Builder {
     pub(super) fn surface(
         &mut self,
@@ -20,7 +41,12 @@ impl Builder {
         let entity = resolver.entity(id)?;
         let site = Site::entity(entity);
         let record = entity.components().next().expect("syntax component");
-        if entity.is_complex() || !matches!(record.name(), "PLANE" | "CYLINDRICAL_SURFACE") {
+        if entity.is_complex()
+            || !matches!(
+                record.name(),
+                "PLANE" | "CYLINDRICAL_SURFACE" | "TOROIDAL_SURFACE"
+            )
+        {
             return Err(site.error(ErrorKind::Unsupported("advanced support surface")));
         }
         if let Some(surface) = self.by_surface.get(&id) {
@@ -29,7 +55,7 @@ impl Builder {
         let mut args = Args::new(record, site);
         resolver.text(args.next()?, site)?;
         let geometry = resolver.placement(args.reference()?, scale)?;
-        let (native, cylinder) = if record.name() == "CYLINDRICAL_SURFACE" {
+        let (native, support) = if record.name() == "CYLINDRICAL_SURFACE" {
             self.angular_scale(site)?;
             let radius = resolver.scalar(args.next()?, site)? * scale;
             let axis = geometry.x.cross(&geometry.y);
@@ -50,9 +76,15 @@ impl Builder {
                 Real::tau(),
             )
             .map_err(|e| site.error(ErrorKind::Geometry(e)))?;
-            (surface, Some(Cylinder { axis, iso }))
+            (surface, Support::Cylinder(Cylinder { axis, iso }))
+        } else if record.name() == "TOROIDAL_SURFACE" {
+            self.angular_scale(site)?;
+            let major = resolver.scalar(args.next()?, site)? * scale;
+            let minor = resolver.scalar(args.next()?, site)? * scale;
+            let (surface, torus) = torus::Torus::new(&geometry, major, minor, site)?;
+            (surface, Support::Torus(torus))
         } else {
-            (geometry.surface.clone(), None)
+            (geometry.surface.clone(), Support::Plane)
         };
         args.finish()?;
         let key = self
@@ -62,7 +94,7 @@ impl Builder {
         let surface = FaceSurface {
             geometry,
             key,
-            cylinder,
+            support,
         };
         cache(&mut self.by_surface, id, surface.clone(), site)?;
         Ok(surface)
@@ -81,7 +113,7 @@ impl FaceSurface {
     ) -> Result<(Segment2, ParameterCorrespondence), Error> {
         let plane = &self.geometry;
         let direction = if forward { Real::one() } else { -Real::one() };
-        let segment = if let Some(cylinder) = &self.cylinder {
+        let segment = if let Support::Cylinder(cylinder) = &self.support {
             let from_height = (from - &plane.origin).dot(&cylinder.axis);
             let to_height = (to - &plane.origin).dot(&cylinder.axis);
             let angle = if let Some(previous) = previous {
@@ -105,6 +137,8 @@ impl FaceSurface {
                 )
                 .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?,
             )
+        } else if let Support::Torus(torus) = &self.support {
+            torus.boundary_segment(plane, edge, from, &direction, previous, site)?
         } else {
             let project = |point: &Point3| {
                 let delta = point - &plane.origin;
@@ -152,7 +186,7 @@ impl FaceSurface {
     }
 }
 
-fn aligned_normals(a: &Vector3, b: &Vector3, site: Site) -> Result<Real, Error> {
+pub(super) fn aligned_normals(a: &Vector3, b: &Vector3, site: Site) -> Result<Real, Error> {
     let sign = a.dot(b);
     if order(site, &sign, &Real::one())? == Ordering::Equal
         || order(site, &sign, &-Real::one())? == Ordering::Equal

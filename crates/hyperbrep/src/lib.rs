@@ -53,7 +53,7 @@ pub use geometry::{
     SurfaceIntersectionLine, SurfaceIntersectionOperand, SurfaceIntersectionParameterRay,
     SurfaceIntersectionPcurve, SurfaceIntersectionRay, SurfaceIsoAxis, SurfaceKind,
     SurfaceParameterDomain, SurfacePartials, SurfacePcurveCorrespondence,
-    SurfaceSurfaceIntersection,
+    SurfaceSurfaceIntersection, TorusGeometry,
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};

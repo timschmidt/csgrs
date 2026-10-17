@@ -58,7 +58,7 @@ enum FaceSplitEndpointLocation {
     Edge {
         edge: EdgeId,
         parameter: Real,
-        pcurve_split: Option<Box<(EdgeUseId, CurvePoint2, Point3)>>,
+        pcurve_split: Option<Box<(EdgeUseId, SurfaceIntersectionBoundaryContact)>>,
     },
 }
 

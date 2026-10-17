@@ -165,7 +165,7 @@ independent. A conversion named `degree` uses its authored exact decimal factor;
 it never substitutes symbolic `pi/180`. Uncertainty metadata cannot make an
 off-carrier decimal vertex incident.
 
-Ellipses, other analytic surfaces and spline exchange remain typed unsupported.
+Ellipses, analytic surfaces other than the ring tori described below, and spline exchange remain typed unsupported.
 The planar line/supplied-pcurve mapping above is unchanged. Every selected body
 must finish admission before any result is
 published; all source entities remain interpreted or raw-retained. The exact
@@ -193,6 +193,7 @@ parametric context. Supported basis combinations are:
 | Circle | CIRCLE with AXIS2_PLACEMENT_2D | PLANE | Center/radius use length; circle parameter uses angle |
 | Constant-height circle | LINE | CYLINDRICAL_SURFACE | U uses angle, V uses length |
 | Axial line | LINE | CYLINDRICAL_SURFACE | U uses angle, V uses length |
+| Torus latitude or meridian circle | LINE | TOROIDAL_SURFACE | Both U and V use angle, independently of length |
 
 The pcurve vector is normalized in its authored parameter coordinates before
 the two basis scales are applied. Plane-circle placements normalize their 2D
@@ -217,7 +218,9 @@ cylindrical seam their constant native U values must be 0 and exact `tau`, in
 either order. Duplicate pcurves at U=0 are not opposite boundaries. A finite
 decimal such as `6.283185307179586` is not exact `tau`; this encoding is rejected,
 even in an ambient approximate-policy scope. This increment provides those
-checks, not a successful finite-decimal exact seam fixture. Other seam surfaces,
+checks, not a successful finite-decimal exact seam fixture. Toroidal seam checks
+apply to either angular axis and require both pcurves to bound that same axis.
+Other seam surfaces,
 trimmed/spline pcurves and explicit approximation/healing remain open.
 
 Malformed supplied encodings now reach their referenced definitions: missing
@@ -361,11 +364,11 @@ retains its existing instrumented-work meaning.
 ## Exact native analytic export
 
 `write_advanced` accepts selected validated outer-shell solids on `Plane` and
-`Cylinder` carriers, plus exact linear extrusions of lines and circles swept
+`Cylinder` and ring `Torus` carriers, plus exact linear extrusions of lines and circles swept
 normal to their plane, with `Line` and `CircleArc` edges. It emits
 `ADVANCED_BREP_SHAPE_REPRESENTATION`, `MANIFOLD_SOLID_BREP`, `CLOSED_SHELL`,
 `ADVANCED_FACE`, explicit bounds/loops/oriented uses, `EDGE_CURVE`,
-`VERTEX_POINT`, `LINE`/`CIRCLE`, and `PLANE`/`CYLINDRICAL_SURFACE`.
+`VERTEX_POINT`, `LINE`/`CIRCLE`, and `PLANE`/`CYLINDRICAL_SURFACE`/`TOROIDAL_SURFACE`.
 Topology follows model-bound identity: shared edges stay shared, closed circles
 reuse their single vertex, and two seam uses remain separate directed records.
 Coincident coordinates and repeated body occurrences do not weld identities.
@@ -432,6 +435,37 @@ the original native uniform-scaling failure. The subsequent
 adds exact physical scaling, reflected chart transport, native replay and
 unit-aware export/reimport. Physical scaling occurs in HyperBRep; output unit
 selection remains an independent exchange operation.
+
+## Ring-torus exchange
+
+`TOROIDAL_SURFACE` uses the exact placement and major/minor radii, with native
+admission requiring `major_radius > minor_radius > 0`. Both parameters are
+angles. The source formula is
+`C + (R + r*cos(v))*(X*cos(u) + Y*sin(u)) + Z*r*sin(v)`.
+Length units apply to C, R and r; angle units independently apply to both UV
+coordinates and supplied pcurve velocities. A borrowed `TorusGeometry` view
+supplies writer data without fitting or a second surface carrier.
+
+The reader constructs latitude/meridian candidates through native circle point
+location and certifies the complete edge image with the ordinary model builder.
+Connected loop segments retain one continuous periodic lift. A whole loop can
+be translated by exactly tau into the native chart; distinct 0/tau coordinates
+are preserved. A loop requiring periodic subdivision beyond this mapping is a
+typed unsupported input. Endpoint agreement alone never admits a pcurve.
+
+The writer emits direct spatial circles and an identity native-to-output UV map
+in radians. It does not encode a finite decimal as tau. Existing exact decimal
+and projective direction admission applies to every vertex, radius and frame;
+some valid native torus bands therefore remain `NonRational` export failures.
+Horn/spindle tori, other torus circle families, general trims and full EXPRESS/AP
+validation remain open. The finite-decimal seam controls cover both U and V.
+
+The [torus admission record](../../hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md)
+retains the original unsupported controls and their explicit capability migration,
+independent surface/measure checks, source maps, repeated modeling, native replay,
+malformed inputs and resource limits. The [example](../examples/torus_step.rs)
+demonstrates the public source workflow. These selected workflows do not close
+WP14a/b or establish package release readiness.
 
 ## Remaining exchange work
 

@@ -17,7 +17,7 @@ mod analytic;
 mod location;
 mod point;
 mod transform;
-pub use analytic::{CircularArcGeometry, CylinderGeometry};
+pub use analytic::{CircularArcGeometry, CylinderGeometry, TorusGeometry};
 use location::{
     locate_ellipse_arc_parameters, locate_line_parameter, locate_nurbs_parameters,
     locate_rational_bezier_parameters,
@@ -1761,6 +1761,7 @@ pub struct SurfaceIntersectionCurve {
 pub(crate) struct SurfaceIntersectionBoundaryContact {
     curve: Curve3,
     parameter: Real,
+    affine_parameter: Option<Real>,
     pcurve_point: CurvePoint2,
     spatial_point: Point3,
 }
@@ -1769,12 +1770,14 @@ impl SurfaceIntersectionBoundaryContact {
     pub(crate) fn new(
         curve: Curve3,
         parameter: Real,
+        affine_parameter: Option<Real>,
         pcurve_point: CurvePoint2,
         spatial_point: Point3,
     ) -> Self {
         Self {
             curve,
             parameter,
+            affine_parameter,
             pcurve_point,
             spatial_point,
         }
@@ -1786,6 +1789,13 @@ impl SurfaceIntersectionBoundaryContact {
 
     pub(crate) const fn parameter(&self) -> &Real {
         &self.parameter
+    }
+
+    /// The same spatial preimage before canonicalization, retained from a
+    /// certified affine pcurve contact. All incident affine uses can consume
+    /// this representative without reconstructing the contact's coordinates.
+    pub(crate) const fn affine_parameter(&self) -> Option<&Real> {
+        self.affine_parameter.as_ref()
     }
 
     pub(crate) const fn pcurve_point(&self) -> &CurvePoint2 {
@@ -5108,11 +5118,41 @@ fn ellipse_arc_parameters_at_angle(
     angle: Real,
 ) -> GeometryResult<Vec<Real>> {
     let delta = if arc.direction < 0 {
-        &arc.angle_at_start - angle
+        &arc.angle_at_start - &angle
     } else {
-        angle - &arc.angle_at_start
+        &angle - &arc.angle_at_start
     };
-    angular_parameter_lifts(&(curve.domain().start() + delta), curve.domain())
+    let result = angular_parameter_lifts(&(curve.domain().start() + delta), curve.domain());
+    if !matches!(
+        result,
+        Err(GeometryError::PredicateUnresolved { .. }
+            | GeometryError::Numeric(hyperreal::Problem::Exhausted))
+    ) {
+        return result;
+    }
+    // A scalar equation can produce an acos phase for a contact already at an
+    // atan-authored endpoint. Equality of both unit-circle coordinates proves
+    // congruence modulo tau without an unproved inverse-trig identity. In an
+    // at-most-one-turn chart this retains precisely the endpoint lift(s).
+    // Only a positive exact certificate replaces the original typed failure.
+    let sine = angle.clone().sin();
+    let cosine = angle.cos();
+    for endpoint in [curve.domain().start(), curve.domain().end()] {
+        let offset = endpoint - curve.domain().start();
+        let phase = if arc.direction < 0 {
+            &arc.angle_at_start - offset
+        } else {
+            &arc.angle_at_start + offset
+        };
+        if compare_reals(&sine, &phase.clone().sin(), crate::STRICT_PREDICATES).value()
+            == Some(Ordering::Equal)
+            && compare_reals(&cosine, &phase.cos(), crate::STRICT_PREDICATES).value()
+                == Some(Ordering::Equal)
+        {
+            return angular_parameter_lifts(endpoint, curve.domain());
+        }
+    }
+    result
 }
 
 /// All equivalent unit-speed conic parameters in a validated at-most-one-turn
@@ -10911,6 +10951,10 @@ fn nurbs_from_homogeneous(
     }
     Curve3::nurbs(degree, points, weights, knots)
 }
+
+#[cfg(test)]
+#[path = "geometry/periodic_tests.rs"]
+mod periodic_tests;
 
 #[cfg(test)]
 mod tests {

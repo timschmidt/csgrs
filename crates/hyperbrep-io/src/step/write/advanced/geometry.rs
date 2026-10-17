@@ -207,6 +207,29 @@ pub(super) fn surface(
             let id = cylinder(out, data.origin, data.axis, data.x, data.radius, scale)?;
             Ok((id, parameters, false))
         }
+        SurfaceKind::Torus => {
+            let data = source.toroidal_geometry().expect("torus data");
+            let major = length(data.major_radius, scale, out)?;
+            let minor = length(data.minor_radius, scale, out)?;
+            let placement = placement(out, data.center, data.axis, data.x, scale)?;
+            let id = out.entity("TOROIDAL_SURFACE", |out| {
+                out.put("'',")?;
+                out.reference(placement)?;
+                out.put(",")?;
+                out.number(&major)?;
+                out.put(",")?;
+                out.number(&minor)
+            })?;
+            Ok((
+                id,
+                WrittenSurfaceParameters {
+                    origin: Point2::origin(),
+                    u: Vector2::new([Real::one(), Real::zero()]),
+                    v: Vector2::new([Real::zero(), Real::one()]),
+                },
+                false,
+            ))
+        }
         SurfaceKind::Extrusion => {
             let (profile, direction) = source
                 .extrusion_profile_and_direction()

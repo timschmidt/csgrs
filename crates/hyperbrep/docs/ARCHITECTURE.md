@@ -1106,7 +1106,7 @@ Canonical expression bytes can change under the existing archive schema.
 The [evidence record](evidence/2026-10-16-seam-cuts/README.md) retains the original
 full-size seam failures and the subsequent repeated-use failures, including the
 70 MB swapped-cone line archive. The repeated-composition extension below addresses those specific cap/recut/reunion
-failures. Arbitrary periodic traces, general Boolean closure, STEP torus/cone
+failures. Arbitrary periodic traces, general Boolean closure, general torus/cone STEP
 encoding and project-wide resource/provenance/delivery gates remain open.
 
 ## Repeated curved composition
@@ -1236,11 +1236,40 @@ exercise 175 nonempty continuation outputs and 35 canonical empty results.
 Each nonempty output has independent exact volume/area, analytic point tables
 including 1e-12 offsets, paired opposite edge uses, deterministic raw replay,
 subdivision, reflected rescaling and further replay. This finite corpus does not
-establish arbitrary-angle or general Boolean closure. Ten new torus/cone STEP
-attempts preserve their typed unsupported-family/body/entity diagnostics, followed
-by supported cylinder export in the same context. See the
+establish arbitrary-angle or general Boolean closure. That historical increment
+kept ten typed unsupported torus/cone STEP controls. Ring-torus exchange now
+admits the exactly representable torus cases; cones and nonrepresentable scalar
+encodings retain typed diagnostics and same-context supported recovery. See the
 [evidence record](evidence/2026-10-16-sector-cuts/README.md) for executed commands,
 failed candidates, costs and remaining gates.
+
+## Exact ring-torus exchange and repeated angular replay
+
+`TorusGeometry` borrows the native right-handed frame and radii; authoritative
+geometry remains in `Surface`. The STEP adapter owns `TOROIDAL_SURFACE`, its two
+angular coordinates, length units and exact finite-decimal encoding. It builds
+latitude/meridian UV candidates through native circle incidence, preserves a
+continuous loop lift and translates by an exact period into the native chart.
+Whole-image validation admits those candidates. Distinct opposite seams remain
+explicit, including the axis identity of supplied pcurves. Other trim families
+and loops requiring additional periodic subdivision fail typed.
+
+Repeated rational-band subdivision exposed lost affine contact expressions and
+an inverse-angle equality unavailable at scalar replay. Planar cuts now retain
+the validated preimage alongside the canonical edge parameter. The topology
+owner normalizes only exactly rational affine split parameters. Equal authored
+circle frames/phases give a positive whole-map certificate; endpoint sine/cosine
+congruence can recover lifts in an already validated at-most-one-turn chart.
+The existing alternate certificates remain available when these proofs fail.
+
+The shared scalar normal form recognizes rational/pure-quadratic tangents with
+an exactly rational sine, first-quadrant complementary acos arguments and
+reconstructed rational scales through its existing bounded Laurent authority.
+This necessary dependency repair replaces a rejected BREP multiplier cascade.
+It introduces no numeric carrier, tolerance, terminal or larger recognition
+budget. See the [ownership/proof review](evidence/2026-10-16-torus-exchange/review.md)
+and [executed evidence](evidence/2026-10-16-torus-exchange/README.md), including
+four split/reload cycles, wrong-quadrant controls and preserved adverse results.
 
 ## Performance contract
 

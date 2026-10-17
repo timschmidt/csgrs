@@ -307,6 +307,14 @@ pub fn graph(output: &AdvancedStep<'_>, scale: &Real) {
                                 * scalar(argument(&file, face.surface, 2))
                             + z.clone() * &uv.y
                     }
+                    "TOROIDAL_SURFACE" => {
+                        let major = scalar(argument(&file, face.surface, 2));
+                        let minor = scalar(argument(&file, face.surface, 3));
+                        origin.clone()
+                            + (x.clone() * uv.x.clone().cos() + y.clone() * uv.x.clone().sin())
+                                * (major + &minor * uv.y.clone().cos())
+                            + z.clone() * minor * uv.y.clone().sin()
+                    }
                     other => panic!("unadmitted surface {other}"),
                 };
                 equal_point(

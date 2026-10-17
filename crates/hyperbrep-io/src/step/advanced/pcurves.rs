@@ -5,8 +5,8 @@ use hypercurve::CircularArc2;
 pub(super) struct CheckedPcurve {
     pub parameters: SourceCurveParameters,
     surface: u64,
-    /// Exact constant u of an axial cylindrical pcurve, in native radians.
-    seam_u: Option<Real>,
+    /// Constant angular coordinate and its axis (0 for U, 1 for V).
+    seam: Option<(usize, Real)>,
 }
 
 pub(super) fn validate_seam(pcurves: &[Option<CheckedPcurve>; 2], site: Site) -> Result<(), Error> {
@@ -16,9 +16,12 @@ pub(super) fn validate_seam(pcurves: &[Option<CheckedPcurve>; 2], site: Site) ->
     if first.surface != second.surface {
         return Err(site.invalid("seam pcurves must share their basis surface"));
     }
-    let (Some(a), Some(b)) = (&first.seam_u, &second.seam_u) else {
+    let (Some((first_axis, a)), Some((second_axis, b))) = (&first.seam, &second.seam) else {
         return Err(site.error(ErrorKind::Unsupported("seam parameter boundary")));
     };
+    if first_axis != second_axis {
+        return Err(site.invalid("seam pcurves must bound the same angular coordinate"));
+    }
     let zero = Real::zero();
     let tau = Real::tau();
     if !((order(site, a, &zero)? == Ordering::Equal && order(site, b, &tau)? == Ordering::Equal)
@@ -73,13 +76,13 @@ impl Builder {
         let second = &self.by_vertex[&edge.end].point;
         let mut args = Args::new(record, curve_site);
         resolver.text(args.next()?, curve_site)?;
-        let mut seam_u = None;
+        let mut seam = None;
         let (pcurve, correspondence, parameters) = match record.name() {
             "LINE" => {
                 let origin = resolver.point2(args.reference()?)?;
                 let velocity = resolver.vector(args.reference()?, 2)?;
                 args.finish()?;
-                if let Some(line) = source_line.filter(|_| surface.cylinder.is_none()) {
+                if let Some(line) = source_line.filter(|_| surface.is_plane()) {
                     // Preserve the exact infinite affine-line certificate and
                     // its source maps. Curved images use the native query below.
                     let plane = surface.geometry;
@@ -95,20 +98,27 @@ impl Builder {
                     return Ok(CheckedPcurve {
                         parameters: mapped.parameters(first, second, site)?,
                         surface: surface_id,
-                        seam_u,
+                        seam,
                     });
                 }
-                let u_scale = if surface.cylinder.is_some() {
+                let angular = surface.angular_coordinates();
+                let u_scale = if angular[0] {
                     self.angular_scale(site)?
                 } else {
                     scale
                 };
-                let origin = Point2::new(origin.x() * u_scale, origin.y() * scale);
-                let velocity = [&velocity[0] * u_scale, &velocity[1] * scale];
-                if surface.cylinder.is_some()
-                    && order(site, &velocity[0], &Real::zero())? == Ordering::Equal
+                let v_scale = if angular[1] {
+                    self.angular_scale(site)?
+                } else {
+                    scale
+                };
+                let origin = Point2::new(origin.x() * u_scale, origin.y() * v_scale);
+                let velocity = [&velocity[0] * u_scale, &velocity[1] * v_scale];
+                if angular[0] && order(site, &velocity[0], &Real::zero())? == Ordering::Equal {
+                    seam = Some((0, origin.x().clone()));
+                } else if angular[1] && order(site, &velocity[1], &Real::zero())? == Ordering::Equal
                 {
-                    seam_u = Some(origin.x().clone());
+                    seam = Some((1, origin.y().clone()));
                 }
                 let (segment, correspondence) =
                     surface.boundary_segment(edge, first, second, true, None, site)?;
@@ -152,7 +162,7 @@ impl Builder {
                     },
                 )
             }
-            "CIRCLE" if surface.cylinder.is_none() => {
+            "CIRCLE" if surface.is_plane() => {
                 let placement = args.reference()?;
                 let radius = resolver.scalar(args.next()?, curve_site)? * scale;
                 args.finish()?;
@@ -225,7 +235,7 @@ impl Builder {
         Ok(CheckedPcurve {
             parameters,
             surface: surface_id,
-            seam_u,
+            seam,
         })
     }
 }

@@ -22,7 +22,7 @@ impl ArenaModel {
         &self,
         edge_id: EdgeId,
         parameter: Parameter,
-        retained_contact: Option<(EdgeUseId, CurvePoint2, Point3)>,
+        retained_contact: Option<(EdgeUseId, SurfaceIntersectionBoundaryContact)>,
     ) -> Result<(Self, ArenaEdgeSplit), TopologyEditError> {
         let edge = self
             .edge(edge_id)
@@ -36,8 +36,8 @@ impl ArenaModel {
         {
             return Err(GeometryError::InvalidParameterDomain.into());
         }
-        let split_point = if let Some((_, _, point)) = &retained_contact {
-            point.clone().into()
+        let split_point = if let Some((_, contact)) = &retained_contact {
+            contact.spatial_point().clone().into()
         } else {
             self.curve(edge.curve)
                 .expect("validated edge curve ID")
@@ -53,6 +53,16 @@ impl ArenaModel {
             .uses_of_edge(edge_id)
             .expect("validated edge adjacency")
             .to_vec();
+
+        // The clipper proved this preimage on the same canonical spatial
+        // curve. Keep its affine expression for every incident pcurve, while
+        // the edge domains keep their canonical root representative. Otherwise
+        // equivalent atan/acos expressions can sever a shared UV contact.
+        let affine_parameter = retained_contact
+            .as_ref()
+            .and_then(|(_, contact)| contact.affine_parameter())
+            .map(|value| Parameter::from_real(value.clone()))
+            .unwrap_or_else(|| parameter.clone());
 
         struct UseSplit {
             use_id: EdgeUseId,
@@ -79,9 +89,9 @@ impl ArenaModel {
                     let parameter = parameter
                         .try_real()
                         .ok_or(GeometryError::UnrepresentableParameter)?;
-                    if let Some((_, retained_point, _)) = retained_contact
+                    if let Some((_, contact)) = retained_contact
                         .as_ref()
-                        .filter(|(retained_use, _, _)| retained_use == use_id)
+                        .filter(|(retained_use, _)| retained_use == use_id)
                     {
                         let arc = pcurve
                             .circular_arc()
@@ -99,7 +109,10 @@ impl ArenaModel {
                         let fraction = ((parameter - start) / (end - start))
                             .map_err(GeometryError::Numeric)?;
                         let (first, second) = match crate::error::classified(
-                            arc.split_at_retained_sweep_point(&fraction, retained_point.clone()),
+                            arc.split_at_retained_sweep_point(
+                                &fraction,
+                                contact.pcurve_point().clone(),
+                            ),
                         )
                         .map_err(GeometryError::from)?
                         {
@@ -153,8 +166,17 @@ impl ArenaModel {
                         pcurve,
                         &edge.domain,
                         edge_use.direction,
-                        &parameter,
+                        &affine_parameter,
                     )?;
+                    // A midpoint of an irrational edge domain can still have
+                    // an exact rational pcurve parameter. Retain that scalar
+                    // proof before interpolation grows a redundant quotient
+                    // into each UV coordinate and obstructs archive replay.
+                    let pcurve_parameter = pcurve_parameter
+                        .try_real()
+                        .and_then(Real::exact_rational_normal_form)
+                        .map(|value| Parameter::from_real(Real::new(value)))
+                        .unwrap_or(pcurve_parameter);
                     pcurve.split_at(&pcurve_parameter)?
                 }
             };

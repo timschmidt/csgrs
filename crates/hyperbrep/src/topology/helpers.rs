@@ -1547,6 +1547,25 @@ pub(crate) fn circle_data_parameterizations_equal(
         return Ok(false);
     }
 
+    // Equal authored frames, phase and direction prove the whole map before
+    // any trig expansion. A split can retain two algebraically equal phase
+    // expressions whose separately expanded sine/cosine forms are undecided.
+    // This is only a positive proof; unavailable frame/phase equality falls
+    // through to the existing rotated-frame certificates.
+    if actual.direction == expected.direction
+        && matches!(vectors_equal(&actual.x, &expected.x), Ok(true))
+        && matches!(vectors_equal(&actual.y, &expected.y), Ok(true))
+        && compare_reals(
+            &actual.angle_at_start,
+            &expected.angle_at_start,
+            crate::STRICT_PREDICATES,
+        )
+        .value()
+            == Some(std::cmp::Ordering::Equal)
+    {
+        return Ok(true);
+    }
+
     // The common domain start is an exact anchor. Its radial vector and signed
     // unit angular tangent determine the complete parameterization. Anchoring
     // avoids constructing doubled inverse-angle phases for reversed STEP arcs.

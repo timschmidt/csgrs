@@ -22,7 +22,7 @@ Syntax success alone confers no geometry authority. The typed STEP layer now
 adds checked standard headers, decoded text, exact unit graphs, selected
 faceted import, planar straight-edge advanced import with 3D/pcurve source
 parameter maps, direct circular edges and supplied analytic pcurves on
-planes/cylinders, and exact faceted or selected analytic export. Circular source maps retain
+planes/cylinders/ring tori, and exact faceted or selected analytic export. Circular source maps retain
 independent angle units, sense and phase; full edges and seam uses remain distinct.
 Holes and selected body occurrences are accounted for; unsupported records
 remain in the source exchange. Import uses native strict validation without
@@ -38,7 +38,7 @@ native edits, replay and Boolean/empty continuation separately from an
 independent floating-point reader.
 
 `write_advanced` preserves explicit native vertex/edge identity, every directed
-use and face bound, orientation, and selected occurrence for planar/cylindrical
+use and face bound, orientation, and selected occurrence for plane/cylinder/ring-torus
 solids with line/circle edges. Reports retain native sources, exact emitted
 curve parameter intervals and UV chart maps. Native pcurves/history are not
 serialized by this direct-curve exchange encoding. Decimal and homogeneous
@@ -776,7 +776,7 @@ Native circular overlap receipts retain actual public parameters and source
 revisions. Coincident cone/torus charts require exact full parameterization
 equality, including when shell faces reference different equal carrier records.
 Selected quarter/band workflows are extended below. Nonlinear periodic gluing,
-torus/cone STEP exchange, full provenance/resource admission and work-package
+general torus and cone STEP exchange, full provenance/resource admission and work-package
 gates remain open.
 
 ## Convex analytic sectors and axial bands
@@ -800,9 +800,10 @@ UV grid inside at most two axis-containing planes and two axial bounds. It
 proves the entire angular and axial occupancy, with planar completion justified
 by that restricted arrangement. See [the architecture](ARCHITECTURE.md#analytic-sector-and-band-continuation).
 This finite corpus does not establish arbitrary-angle or general Boolean
-closure. STEP attempts for these cone/torus outputs still return typed
-`UnsupportedSurface` with body/entity identity; same-context supported-cylinder
-recovery is tested. Broader release and resource gates remain open.
+closure. The historical increment retained typed `UnsupportedSurface` controls.
+The ring-torus exchange extension below admits its exactly representable torus
+cases; cones retain typed unsupported diagnostics and same-context supported-
+cylinder recovery. Broader release and resource gates remain open.
 
 ## Oblique torus bands and distant conic charts
 
@@ -818,11 +819,37 @@ band, subtraction and complementary reconstruction in both orders. Identity,
 reflected 1/1000 scale and reflected sqrt(2) scale exercise 18 nonempty outputs
 and three canonical empty results, with exact independent measures/classification,
 paired incidence, subdivision, transformed replay and full archive checks.
-Four torus STEP attempts retain typed body/entity diagnostics and supported
-same-context cylinder export recovers.
+Four torus STEP attempts now reach exact scalar-encoding checks and return
+`NonRational` with body/entity diagnostics; supported same-context cylinder export
+recovers. Those irrational boundary values are not rounded for exchange.
 
-The complete nine-fixture diagnostic still has oversized cylinder subtraction/
-clear blockers, cone continuation uncertainty and rationally rotated torus
-witness uncertainty. Its successful body counts are not independent set proofs.
-General oblique closure, cone/torus STEP, complete provenance/resource admission
+The historical nine-fixture diagnostic retained cylinder, cone and torus
+continuation blockers. The current 81-slot rerun has 76 native results, three
+undecided cone continuations and two exhausted torus reconstructions; see the
+[reviewed frontier](evidence/2026-10-16-torus-exchange/continuation-frontier.json).
+Its successful body counts are not independent set proofs. The two newly
+completed rational-sector slots have separate full-size exact composition probes.
+General oblique closure, further torus/cone STEP domains, complete provenance/resource admission
 and release gates remain open.
+
+## Ring-torus STEP continuation
+
+`Surface::toroidal_geometry()` exposes a borrowed exact frame and radii.
+Selected advanced exchange admits ring tori with circular latitude/meridian
+boundaries whose geometry has the existing exact finite-decimal encoding.
+Both UV axes use angular units and preserve distinct 0/tau seams. Supplied
+pcurves retain independent source scales/offsets and require native whole-image
+admission. Positive horn/spindle tori and loops needing additional periodic
+subdivision return explicit unsupported outcomes. General toroidal trace
+families remain outside the declared exchange domain.
+
+The [acceptance record](evidence/2026-10-16-torus-exchange/README.md) covers whole
+tori, reflected/rational frames, metre/millimetre units, half/quarter recuts,
+empty continuation, complementary reconstruction and an R=10, r=5 rational
+axial band. Four native subdivision/archive cycles retain independent exact
+measures before STEP exchange. Exact near-coincidence, malformed source maps,
+both seams and exhausted import limits have rejection/recovery controls.
+The necessary shared scalar inverse-angle certificate and retained native
+contact/image facts have separate baseline regressions; neither changes policy
+nor promotes approximate data. This domain does not establish arbitrary torus
+Booleans, general STEP conformance or release/resource admission.

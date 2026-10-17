@@ -1,0 +1,387 @@
+[
+  {
+    "rational": {
+      "sign": 1,
+      "numerator": [
+        1
+      ],
+      "denominator": [
+        1
+      ]
+    },
+    "class": "Irrational",
+    "computable": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Add": [
+                {
+                  "internal": {
+                    "Offset": [
+                      {
+                        "internal": {
+                          "Constant": "Pi"
+                        }
+                      },
+                      -1
+                    ]
+                  }
+                },
+                {
+                  "internal": {
+                    "Negate": {
+                      "internal": {
+                        "AcosPositiveRational": {
+                          "sign": 1,
+                          "numerator": [
+                            3
+                          ],
+                          "denominator": [
+                            5
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Add": [
+                {
+                  "internal": {
+                    "Offset": [
+                      {
+                        "internal": {
+                          "Add": [
+                            {
+                              "internal": {
+                                "Add": [
+                                  {
+                                    "internal": {
+                                      "Offset": [
+                                        {
+                                          "internal": {
+                                            "Constant": "Pi"
+                                          }
+                                        },
+                                        -1
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "internal": {
+                                      "Negate": {
+                                        "internal": {
+                                          "AcosPositiveRational": {
+                                            "sign": 1,
+                                            "numerator": [
+                                              3
+                                            ],
+                                            "denominator": [
+                                              5
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "internal": {
+                                "Offset": [
+                                  {
+                                    "internal": {
+                                      "Add": [
+                                        {
+                                          "internal": {
+                                            "Add": [
+                                              {
+                                                "internal": {
+                                                  "Offset": [
+                                                    {
+                                                      "internal": {
+                                                        "Constant": "Pi"
+                                                      }
+                                                    },
+                                                    -1
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "internal": {
+                                                  "Negate": {
+                                                    "internal": {
+                                                      "AcosPositiveRational": {
+                                                        "sign": 1,
+                                                        "numerator": [
+                                                          3
+                                                        ],
+                                                        "denominator": [
+                                                          5
+                                                        ]
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "internal": {
+                                            "Offset": [
+                                              {
+                                                "internal": {
+                                                  "Constant": "Pi"
+                                                }
+                                              },
+                                              -1
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  -1
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      -1
+                    ]
+                  }
+                },
+                {
+                  "internal": {
+                    "Negate": {
+                      "internal": {
+                        "Add": [
+                          {
+                            "internal": {
+                              "Offset": [
+                                {
+                                  "internal": {
+                                    "Constant": "Pi"
+                                  }
+                                },
+                                -1
+                              ]
+                            }
+                          },
+                          {
+                            "internal": {
+                              "Negate": {
+                                "internal": {
+                                  "AcosPositiveRational": {
+                                    "sign": 1,
+                                    "numerator": [
+                                      3
+                                    ],
+                                    "denominator": [
+                                      5
+                                    ]
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "rational": {
+      "sign": 1,
+      "numerator": [
+        1
+      ],
+      "denominator": [
+        1
+      ]
+    },
+    "class": "Irrational",
+    "computable": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Multiply": [
+                      {
+                        "internal": {
+                          "Constant": "Pi"
+                        }
+                      },
+                      {
+                        "internal": {
+                          "Multiply": [
+                            {
+                              "internal": {
+                                "Multiply": [
+                                  {
+                                    "internal": {
+                                      "AtanRational": {
+                                        "sign": 1,
+                                        "numerator": [
+                                          3
+                                        ],
+                                        "denominator": [
+                                          4
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "internal": {
+                                "Inverse": {
+                                  "internal": {
+                                    "Multiply": [
+                                      {
+                                        "internal": {
+                                          "Constant": "Pi"
+                                        }
+                                      },
+                                      {
+                                        "internal": {
+                                          "Constant": "Pi"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Add": [
+                      {
+                        "internal": {
+                          "Offset": [
+                            {
+                              "internal": {
+                                "Multiply": [
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  },
+                                  {
+                                    "internal": {
+                                      "Multiply": [
+                                        {
+                                          "internal": {
+                                            "Multiply": [
+                                              {
+                                                "internal": {
+                                                  "AtanRational": {
+                                                    "sign": 1,
+                                                    "numerator": [
+                                                      3
+                                                    ],
+                                                    "denominator": [
+                                                      4
+                                                    ]
+                                                  }
+                                                }
+                                              },
+                                              {
+                                                "internal": {
+                                                  "Constant": "Pi"
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "internal": {
+                                            "Inverse": {
+                                              "internal": {
+                                                "Multiply": [
+                                                  {
+                                                    "internal": {
+                                                      "Constant": "Pi"
+                                                    }
+                                                  },
+                                                  {
+                                                    "internal": {
+                                                      "Constant": "Pi"
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            -1
+                          ]
+                        }
+                      },
+                      {
+                        "internal": {
+                          "Offset": [
+                            {
+                              "internal": {
+                                "Constant": "Pi"
+                              }
+                            },
+                            -2
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                -1
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+]

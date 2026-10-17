@@ -507,9 +507,9 @@ packages, landed increments, verification and the remaining capability gaps.
 
 The downstream [HyperBRep IO crate](../hyperbrep-io/README.md) provides bounded
 Part 21 syntax, strict unit-aware faceted/selected analytic import, and exact
-faceted or analytic geometry export. Planar/cylindrical faces with line/circle
+faceted or analytic geometry export. Planar/cylindrical/ring-torus faces with line/circle
 boundaries retain explicit topology and source parameter maps; native borrowed
-circle/cylinder views supply exact carrier data to the writer. Holes, repeated
+circle/cylinder/torus views supply exact carrier data to the writer. Holes, repeated
 body occurrences, edits and reflected models remain explicit.
 [Its mapping contract](../hyperbrep-io/docs/STEP_MAPPING.md) records the admitted
 domain, output representability and loss model. Other analytic/spline families,
@@ -545,7 +545,11 @@ subdivision and untrusted replay. Public annular face partitions retain the
 source trace indices and model revisions. The
 [sector contract](docs/ARCHITECTURE.md#analytic-sector-and-band-continuation)
 and [evidence](docs/evidence/2026-10-16-sector-cuts/README.md) state the coverage.
-General Boolean closure and torus/cone STEP encoding remain open.
+Ring-torus STEP exchange now covers exact latitude/meridian boundaries in the
+named whole/half/quarter and rational-band corpus. Both angular coordinates,
+periodic lifts, source maps and strict failures remain explicit; cone STEP and
+general Boolean closure remain open. See the
+[torus exchange admission record](docs/evidence/2026-10-16-torus-exchange/README.md).
 
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.

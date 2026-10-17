@@ -1,10 +1,10 @@
-//! Exact sector and band Booleans retain explicit exchange-family blockers.
-use hyperbrep::{OperationContext, SurfaceKind, WorkBudget, boolean, builder};
+//! Torus sectors complete exchange; irrational bands and cones remain explicit.
+use hyperbrep::{Matrix4, OperationContext, SurfaceKind, WorkBudget, boolean, builder};
 use hyperbrep_io::step::{StepBody, StepWriteOptions, WriteErrorKind, write_advanced};
 #[allow(dead_code)]
-#[path = "../../../hyperbrep/tests/support/sectors.rs"]
-mod sectors;
-use sectors::seam;
+#[path = "torus_exchange.rs"]
+mod torus;
+use torus::{seam, sectors};
 
 pub fn failures_and_recovery() {
     let context = OperationContext::strict(WorkBudget {
@@ -25,6 +25,19 @@ pub fn failures_and_recovery() {
             ),
         ] {
             let replay = seam::reload(result.model());
+            if kind < 2 {
+                let difference = name == "sector-difference";
+                let (volume, area) = sectors::expected(kind, difference);
+                let samples = sectors::samples(kind, usize::from(difference), &Matrix4::identity());
+                torus::round_trip(
+                    replay.solids().next().unwrap(),
+                    &options,
+                    &volume,
+                    &area,
+                    &samples,
+                );
+                continue;
+            }
             let error = write_advanced(
                 &[StepBody {
                     solid: replay.solids().next().unwrap(),
@@ -36,15 +49,15 @@ pub fn failures_and_recovery() {
             .result
             .unwrap()
             .unwrap_err();
-            let expected = if matches!(kind, 2 | 4) {
-                SurfaceKind::Cone
+            let expected = if kind == 3 {
+                matches!(error.kind, WriteErrorKind::NonRational)
             } else {
-                SurfaceKind::Torus
+                matches!(
+                    error.kind,
+                    WriteErrorKind::UnsupportedSurface(SurfaceKind::Cone)
+                )
             };
-            assert!(
-                matches!(error.kind, WriteErrorKind::UnsupportedSurface(kind) if kind == expected),
-                "{error:?}"
-            );
+            assert!(expected, "{error:?}");
             assert_eq!(error.body, Some(0));
             assert!(error.entity.is_some());
         }
