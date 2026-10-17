@@ -1,0 +1,36 @@
+{
+  "complete": true,
+  "base_commit": "b137381247a03342ce5b6184710475fcc22c9d63",
+  "source_inputs": 2835,
+  "source_hashes_sha256": "777951fcbdd62c5ce814b761fa526baf58ad4c88cdd1cec8635fc087cd211755",
+  "changes": {
+    "crates/hypercircuit/src/materialize.rs": "6355b8cb6a73360ddb1a153ecaae1b5cd8754ad1679b36126bbcad7b4b6ddffe",
+    "crates/hypercircuit/tests/fabrication.rs": "e2d6c1fd8744bd43b6f452347958fc8e8f67d0716e41708ea7f6febe0003ef91",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32.json": "b3a0428305689adb1520b80fb741616dd6bff7a1e4cd853870b43a3bbc3765ae",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32s3.json": "64aca0494a1107cfb415eae9c6eda5838f613291e75c553780e8a7600843f517",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/nano.json": "25be72d0dd282a4f2ea552b9e1f79ca1bcd087b93c51d5e53ab435c45db54a02",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/rp2040.json": "792319f31fac7910f7ca91a79071b405c1ee60a721c94596aebcae5a4dc8c9b0",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/stm32f103.json": "5c057de4b6f0cf9319ca33f63ca198cc567d43536a313e2f1a4613be3a73919b",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/uno.json": "7d3dc6055a8408d553af96661b634c6f030251c9cb9bee6994d51aee19654316",
+    "crates/hypercircuit/tests/fixtures/manufacturing-release/release-board-v1.zip": "aaae55e9957c7a2db67f3b60489d117afab7411b00f25a61e06e8c8de0e2d188",
+    "crates/hypercurve/README.md": "905fc28d5bbb2eab7ef5f355937f44cccebe01ab9af02971a04ea06f765d50b4",
+    "crates/hypercurve/src/bezier_region.rs": "f9d51503203a265b9397d29d7a0ba57d08d7484c621ebb354bd9f17f704cccca",
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b",
+    "crates/hypercurve/tests/native_linear_stroke_contracts.rs": "174e36d4a368764f437046b78f7a5ad305c4c516e0922602bb1d052c072cebf6"
+  },
+  "delta_from_v5": {
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32.json": "b3a0428305689adb1520b80fb741616dd6bff7a1e4cd853870b43a3bbc3765ae",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32s3.json": "64aca0494a1107cfb415eae9c6eda5838f613291e75c553780e8a7600843f517",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/nano.json": "25be72d0dd282a4f2ea552b9e1f79ca1bcd087b93c51d5e53ab435c45db54a02",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/rp2040.json": "792319f31fac7910f7ca91a79071b405c1ee60a721c94596aebcae5a4dc8c9b0",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/stm32f103.json": "5c057de4b6f0cf9319ca33f63ca198cc567d43536a313e2f1a4613be3a73919b",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/uno.json": "7d3dc6055a8408d553af96661b634c6f030251c9cb9bee6994d51aee19654316",
+    "crates/hypercircuit/tests/fixtures/manufacturing-release/release-board-v1.zip": "aaae55e9957c7a2db67f3b60489d117afab7411b00f25a61e06e8c8de0e2d188"
+  },
+  "runner_sha256": "be7a75ed20ddc9cfe24e670cef2ad527dcd56647488e1067ddc8dc75f9029b02",
+  "metadata_migration_audit_sha256": "07a62e34f8a3ffca2e9c794906c5e0da4d7170e21e7e2f9be7552e4cb2329756",
+  "production_code_and_test_bodies_unchanged_from_v5": true,
+  "original_source_fixtures_unchanged": true,
+  "main_sources_modified": false
+}

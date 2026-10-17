@@ -1,0 +1,7 @@
+{
+  "runner": "verify_metadata_migration_v1.py",
+  "exit_code": 1,
+  "assertion": "Expected spaced check_version token; archive DRC evidence uses compact JSON.",
+  "fixtures_modified": false,
+  "observation_source": "Codex execution terminal"
+}

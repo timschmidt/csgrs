@@ -1,0 +1,13 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/prepare_ui_isolation_v1.py": "331c042b010017576444fae063520f781d71f4a3aed0ed298214e18e272ffa74",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/ui-isolation-contract-v1.md": "d149e395865c59a0f1878e87c24f6321d324d2b642fad6814ebeb2a7bb8f747a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-preparation-v6/source-hashes.json.gz": "777951fcbdd62c5ce814b761fa526baf58ad4c88cdd1cec8635fc087cd211755",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/ui-validation-v1/result.json": "b3f7b2572fb3bb0e9d5c80960abaedebd8ed591dc712b5b83b28c0a3874bc6e6"
+  },
+  "source": "/tmp/csgrs-native-stroke-ui-source-v1",
+  "timeout_seconds": 1800,
+  "address_space_bytes": 8589934592,
+  "production_source_changes": false,
+  "completed_target_reopened": false
+}

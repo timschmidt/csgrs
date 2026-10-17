@@ -1,0 +1,26 @@
+{
+  "observation_source": "Codex execution-session terminal results",
+  "native_result_sha256": "9dff38adb05c33bbedbf55d2b643a12d4b1ab0cde3f427ed1b5cc309eb341e7e",
+  "sessions": [
+    {
+      "id": 36576,
+      "runner": "candidate_v4.py",
+      "exit_code": 101,
+      "result": "All 14 commands attempted; unexpected exits curve-all, circuit-all, clippy."
+    },
+    {
+      "id": 23913,
+      "runner": "qualification_tail_v1.py",
+      "exit_code": 1,
+      "result": "Prerequisite assertion failed before dependent commands."
+    },
+    {
+      "id": 77218,
+      "runner": "qualification_tail_v2.py",
+      "exit_code": 1,
+      "result": "Prerequisite assertion expected only curve-all timeout; actual also circuit-all and clippy. No dependent runner executed."
+    }
+  ],
+  "dependent_builds_or_measurements_started": false,
+  "main_sources_modified": false
+}

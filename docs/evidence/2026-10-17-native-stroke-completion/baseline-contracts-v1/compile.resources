@@ -1,0 +1,23 @@
+	Command being timed: "timeout --kill-after=10s 900s rustc --edition=2024 -D warnings -C opt-level=3 -L dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps --extern hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib --extern hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib --extern hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperreal-a23a946140139d6a.rlib --test /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/contract_tests_v1.rs -o /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/baseline-contracts-v1/contracts"
+	User time (seconds): 1.03
+	System time (seconds): 0.18
+	Percent of CPU this job got: 196%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.61
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 187436
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 133
+	Minor (reclaiming a frame) page faults: 47472
+	Voluntary context switches: 2205
+	Involuntary context switches: 104
+	Swaps: 0
+	File system inputs: 4432
+	File system outputs: 47384
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

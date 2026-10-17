@@ -1,0 +1,11 @@
+
+thread 'diagonal_capsules_preserve_analytic_area_bounds_and_reusable_boundaries' (92) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/probe-source-v2/curve_regressions.rs:10:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Equal)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'independent_diagonal_capsules_preserve_exact_total_area' (93) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/probe-source-v2/curve_regressions.rs:10:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Equal)

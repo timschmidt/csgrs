@@ -1,0 +1,23 @@
+	Command being timed: "timeout --kill-after=20s 1800s /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc --kicad-pcb /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/comparison-v1/inputs/cparti.kicad_pcb --check layer-sanity --check board-outline-sanity --check min-copper-neck --check drill-spacing --min-width 0.0762 --format json --allow-findings"
+	User time (seconds): 35.73
+	System time (seconds): 0.54
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:36.44
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 892092
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 238996
+	Voluntary context switches: 4
+	Involuntary context switches: 364
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 2440
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

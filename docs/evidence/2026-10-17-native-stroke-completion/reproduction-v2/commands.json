@@ -1,0 +1,123 @@
+[
+  {
+    "name": "curve_regressions-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/libhyperdrc.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libanyhow-af4f35109210643f.rlib",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/probe-source-v2/curve_regressions.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/reproduction-v2/curve_regressions"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6170054120011628,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c059fe96c91ac7093dad62eab0ff43d6df2470f7723c13b06a641946e47fc81f"
+  },
+  {
+    "name": "curve_regressions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/reproduction-v2/curve_regressions",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.6152757201343775,
+    "stdout_sha256": "0e7ee7911b539afd15886b0e1d36616a40ff874eba8c46b7e2f70cd75137f0b2",
+    "stderr_sha256": "67a951eef9d4713791f48de3d6fe4197c89bd103d43e739b87e9e06bcc909ef9",
+    "resources_sha256": "f872c75388ac6effe327f44813b207a75c71ea98334a1ec6aae469ace28482f8"
+  },
+  {
+    "name": "drc_regressions-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/libhyperdrc.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libanyhow-af4f35109210643f.rlib",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/probe-source-v2/drc_regressions.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/reproduction-v2/drc_regressions"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6222665798850358,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "99a4d7dac69918f52097eea0e3b8ab0650a4997ac393ec0c47caa63db346ae72"
+  },
+  {
+    "name": "drc_regressions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/reproduction-v2/drc_regressions",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.010393776930868626,
+    "stdout_sha256": "05f4d3e5e12463244d840d404205d5e5bcd4d712810b37e582bd4056190fd34f",
+    "stderr_sha256": "663e5add654f848394a08b4a384f96d17e74564a6d3a17570448a4c7d6702089",
+    "resources_sha256": "68e1f661fb92f7e70c07a1c0f3dc5948489a3382bf7b36f7e75d28abe8016039"
+  },
+  {
+    "name": "direct-probe-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/libhyperdrc.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libanyhow-af4f35109210643f.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/probe-source-v2/direct_probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/reproduction-v2/direct-probe"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.06659549102187157,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e0c843efba98be492384219ca342fce6ff6695bca242df6ef3a57f5f67ce835b",
+    "resources_sha256": "8a9a96c680086a0b5353bc624651d8953cd0b02b0e618d7e9c9284fe59bc4a76"
+  }
+]

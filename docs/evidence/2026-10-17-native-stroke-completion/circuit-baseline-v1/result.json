@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "exit_code": 101,
+  "baseline_compile_failure_reproduced": true,
+  "sources_unchanged": true,
+  "main_sources_modified": false,
+  "tests_executed": false
+}

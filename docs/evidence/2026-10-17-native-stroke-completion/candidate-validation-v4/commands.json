@@ -1,0 +1,1280 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 10.481312449090183,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "994b866346efeb8b1e8fbfe62b561f175f9ef07b0fff5d3f9cf3900561ac9a31"
+  },
+  {
+    "name": "stroke-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "native_linear_stroke",
+      "--test",
+      "native_linear_stroke_contracts",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 126.194147342816,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/native_linear_stroke_contracts-e68059a92f6c4a61": {
+        "sha256": "4fb7f1c12a868993f08f4fa65368440f9c93f6056704fb2d27e1a49cb5a2cc07",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/4fb7f1c12a868993f08f4fa65368440f9c93f6056704fb2d27e1a49cb5a2cc07/native_linear_stroke_contracts-e68059a92f6c4a61",
+        "bytes": 17709560
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/native_linear_stroke-e62926b739997465": {
+        "sha256": "667ad78ff5c9c83e246b640c6f1f464b5dcf9ca60744c647d91cf86f75494b8c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/667ad78ff5c9c83e246b640c6f1f464b5dcf9ca60744c647d91cf86f75494b8c/native_linear_stroke-e62926b739997465",
+        "bytes": 17992744
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "83ca62aaec2f4f5b7927c13a248fecee68a3220c461682f051a23213ef34080d",
+    "stderr_sha256": "093f94f15d39caab7d6222b063aecf551592be3dc51c1fe5357366dcb5f8201e",
+    "resources_sha256": "a3222244fe5f440d36acb1d4eece770d9073c62b5cd52ce0ae0c33083ad521a6"
+  },
+  {
+    "name": "curve-default",
+    "command": [
+      "cargo",
+      "test",
+      "--no-fail-fast",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 1788.4770335187204,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_arc_bezier-b0170adabc43f616": {
+        "sha256": "328c99649e2957ad996bb29aeb10d1feb1eee27431669bb1356dc9a593575ae5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/328c99649e2957ad996bb29aeb10d1feb1eee27431669bb1356dc9a593575ae5/hypercurve_arc_bezier-b0170adabc43f616",
+        "bytes": 12924928
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/contour_area_normal_form-264d9c122078b630": {
+        "sha256": "2e58e24c1df2ae9bf6a4c1ba3bad4010f10e0927915b19133e8329f7d1805b08",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/2e58e24c1df2ae9bf6a4c1ba3bad4010f10e0927915b19133e8329f7d1805b08/contour_area_normal_form-264d9c122078b630",
+        "bytes": 17311448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_split-91d5488ce1f28112": {
+        "sha256": "d95a3dd79100ad745abfcacc88865ef4a636033aeee75bc8eadab4ac98c685a7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/d95a3dd79100ad745abfcacc88865ef4a636033aeee75bc8eadab4ac98c685a7/hypercurve_split-91d5488ce1f28112",
+        "bytes": 5292152
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_nurbs_interpolation-70cadf3f5cde7b1d": {
+        "sha256": "c29f6bf2b51a523b345bea1b87718c3fc69d6ce5ee7e57f18a2180fc772c0882",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/c29f6bf2b51a523b345bea1b87718c3fc69d6ce5ee7e57f18a2180fc772c0882/hypercurve_nurbs_interpolation-70cadf3f5cde7b1d",
+        "bytes": 5480672
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_region_stroke-8b7ada6ca74081b3": {
+        "sha256": "2ff91fb74a371aa848bb78ce29093dcdd0a65ef48b1f6745c7d240404b5c111c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/2ff91fb74a371aa848bb78ce29093dcdd0a65ef48b1f6745c7d240404b5c111c/hypercurve_curve_region_stroke-8b7ada6ca74081b3",
+        "bytes": 18097392
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve-e2142dc4d22d7350": {
+        "sha256": "cedeb71a081dbf243549ca4c3fbce6e5f829dc29d06e58d25b550e9b9b786535",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/cedeb71a081dbf243549ca4c3fbce6e5f829dc29d06e58d25b550e9b9b786535/hypercurve_curve-e2142dc4d22d7350",
+        "bytes": 20641696
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/readme-522ebc8e02d0100e": {
+        "sha256": "de51cf96ad8bbcfd301c3650ce2aa6cc93c6c0dada355662fb57c0d0fe87e779",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/de51cf96ad8bbcfd301c3650ce2aa6cc93c6c0dada355662fb57c0d0fe87e779/readme-522ebc8e02d0100e",
+        "bytes": 1122504
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_rational_bezier-abe213b38d89edaa": {
+        "sha256": "4b9efd350f07d23139e24bdb94876772e1c19968577db07b0d08ff42937843dd",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/4b9efd350f07d23139e24bdb94876772e1c19968577db07b0d08ff42937843dd/hypercurve_rational_bezier-abe213b38d89edaa",
+        "bytes": 12336648
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/pathological_benchmark_fixture-6bcd225204fbea6e": {
+        "sha256": "97a56768f56fe29208bd72999ac7e3ff42d63980d40a2579ff1d0c76a939d096",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/97a56768f56fe29208bd72999ac7e3ff42d63980d40a2579ff1d0c76a939d096/pathological_benchmark_fixture-6bcd225204fbea6e",
+        "bytes": 18054160
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_self_contacts-ac626a31e06c8ba1": {
+        "sha256": "f5e631f65e7b0c63f455d85c60f4394acbfb0197cde61347257152dbf1fc7528",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/f5e631f65e7b0c63f455d85c60f4394acbfb0197cde61347257152dbf1fc7528/hypercurve_self_contacts-ac626a31e06c8ba1",
+        "bytes": 5041448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_fragments-a70f1a2065dd99e3": {
+        "sha256": "a224d288e0dfaa66923c560d0b0d55fa4b3ad765842985f6c963a1b8a8167f6c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/a224d288e0dfaa66923c560d0b0d55fa4b3ad765842985f6c963a1b8a8167f6c/hypercurve_fragments-a70f1a2065dd99e3",
+        "bytes": 6175304
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_exact_closure-e33712406db4aeb0": {
+        "sha256": "08198e2f2dfa5bb0163c98b7861a08a03144627e1924e92b10c335ec60e60a3c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/08198e2f2dfa5bb0163c98b7861a08a03144627e1924e92b10c335ec60e60a3c/hypercurve_exact_closure-e33712406db4aeb0",
+        "bytes": 17749536
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_string-e038d4dc1f95750a": {
+        "sha256": "4635ae8dac0f23da11ddc92535b5e75d43cf409ae2a647d1790d2b6ef8a0716a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/4635ae8dac0f23da11ddc92535b5e75d43cf409ae2a647d1790d2b6ef8a0716a/hypercurve_curve_string-e038d4dc1f95750a",
+        "bytes": 18292640
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_analytic_parallel_region-93b8ef93c2ca2e28": {
+        "sha256": "29bb9b2f18df2f70a77cce1b29a481ae91125ad5333590cadbc6a1f0b4de9152",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/29bb9b2f18df2f70a77cce1b29a481ae91125ad5333590cadbc6a1f0b4de9152/hypercurve_analytic_parallel_region-93b8ef93c2ca2e28",
+        "bytes": 19907896
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_dispatch_trace-ba57718fb80bb6d0": {
+        "sha256": "f010a3d2afc0d75314a8289d7035cada208fe71317edd75782d3c8635e46010c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/f010a3d2afc0d75314a8289d7035cada208fe71317edd75782d3c8635e46010c/hypercurve_dispatch_trace-ba57718fb80bb6d0",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_composed_workloads-7390806e916ce9a2": {
+        "sha256": "863893677c752758b74ac3564ca9be513ae872e6349d264015878dc0ae6146db",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/863893677c752758b74ac3564ca9be513ae872e6349d264015878dc0ae6146db/hypercurve_composed_workloads-7390806e916ce9a2",
+        "bytes": 19701784
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_bezier_algebraic_parameter-f080b2abe4370cea": {
+        "sha256": "e072e13d888a64ac9910f0cc0e005d5384006b73c9485377c646928c7385dc57",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/e072e13d888a64ac9910f0cc0e005d5384006b73c9485377c646928c7385dc57/hypercurve_bezier_algebraic_parameter-f080b2abe4370cea",
+        "bytes": 6274952
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/bbox_initial_pair-dedfc896e945f830": {
+        "sha256": "cf6edf5e0a393aecdb7dc310c9ba8ccaa9393148c35b3d98d390b384a6da50c3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/cf6edf5e0a393aecdb7dc310c9ba8ccaa9393148c35b3d98d390b384a6da50c3/bbox_initial_pair-dedfc896e945f830",
+        "bytes": 4442824
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_bezier_fit_offset-f1b6194265c07c5c": {
+        "sha256": "ece7bfc7f3b35dbee7db5d57c307a3f9233957eb42dce792a86507bb5e7c6d50",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/ece7bfc7f3b35dbee7db5d57c307a3f9233957eb42dce792a86507bb5e7c6d50/hypercurve_bezier_fit_offset-f1b6194265c07c5c",
+        "bytes": 19076808
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_triangulation-04948d61b87b6045": {
+        "sha256": "eddd2d432fc64f0bf6c4199a709e82bbb887f1df9dfc033c0b1315886b4cf2f4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/eddd2d432fc64f0bf6c4199a709e82bbb887f1df9dfc033c0b1315886b4cf2f4/hypercurve_triangulation-04948d61b87b6045",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_geo_regressions-c3649cc7f690f1d2": {
+        "sha256": "6c15b0f3e0baaef0a741e0d5f67862edda7770ced480ce06032783890a867e22",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/6c15b0f3e0baaef0a741e0d5f67862edda7770ced480ce06032783890a867e22/hypercurve_geo_regressions-c3649cc7f690f1d2",
+        "bytes": 18324120
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve-705a9496438e8131": {
+        "sha256": "5cddc5bac510ceaef0fbbde714f1ccbad17ed5570e3de9038a34d03ab6c8b9eb",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/5cddc5bac510ceaef0fbbde714f1ccbad17ed5570e3de9038a34d03ab6c8b9eb/hypercurve-705a9496438e8131",
+        "bytes": 40573656
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/line_fragment_orientation-13dbae43cc538618": {
+        "sha256": "41a490b0cd570ee4ace27ac061e139009e807cb0a3c6617dc5c15ba6cdde4793",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/41a490b0cd570ee4ace27ac061e139009e807cb0a3c6617dc5c15ba6cdde4793/line_fragment_orientation-13dbae43cc538618",
+        "bytes": 4870640
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_point-5f06fb119c951595": {
+        "sha256": "1f88d07bb40f7a76a59db7d5ea7e474bb37105b074a57d5ae3e610e96a4a1519",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/1f88d07bb40f7a76a59db7d5ea7e474bb37105b074a57d5ae3e610e96a4a1519/hypercurve_curve_point-5f06fb119c951595",
+        "bytes": 12436904
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/exact_structural_facts-055c2c87c15dcf68": {
+        "sha256": "504f8335a1e15236c9564a92b61b8795c19f55453b6f181aba7e349c5de5c072",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/504f8335a1e15236c9564a92b61b8795c19f55453b6f181aba7e349c5de5c072/exact_structural_facts-055c2c87c15dcf68",
+        "bytes": 17395568
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_region_promotion-257918dac4d07e9d": {
+        "sha256": "4dfada32f250dab9f3c0ebe1b59cc86787a536602c61a6942ef543108594cd35",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/4dfada32f250dab9f3c0ebe1b59cc86787a536602c61a6942ef543108594cd35/hypercurve_curve_region_promotion-257918dac4d07e9d",
+        "bytes": 21547800
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_svg-99aeb4b7309d2b1f": {
+        "sha256": "981db84bdbdd74b05a8a380ed55b4c4ef0c7d7993bc85cc8837efd243731f557",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/981db84bdbdd74b05a8a380ed55b4c4ef0c7d7993bc85cc8837efd243731f557/hypercurve_svg-99aeb4b7309d2b1f",
+        "bytes": 1079432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_path_closure-0c957bcb13082000": {
+        "sha256": "3f9b166548d2caf0e81cb08ba42691854c7ab0e005c4cdbd4ecf0d3b4104e7d3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/3f9b166548d2caf0e81cb08ba42691854c7ab0e005c4cdbd4ecf0d3b4104e7d3/hypercurve_path_closure-0c957bcb13082000",
+        "bytes": 20145136
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_reconstruct-abb5336087b8371a": {
+        "sha256": "66583b20a4568a55b3f50178b5204886130f9ade2390ca66932571ed692f74ad",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/66583b20a4568a55b3f50178b5204886130f9ade2390ca66932571ed692f74ad/hypercurve_reconstruct-abb5336087b8371a",
+        "bytes": 17879824
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_circle_predicates-4e6dc68a122d3f61": {
+        "sha256": "c6455892d16c18cb8b3f814d63d0e159f315d372d7a55ddd5fbd77498986d07d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/c6455892d16c18cb8b3f814d63d0e159f315d372d7a55ddd5fbd77498986d07d/hypercurve_circle_predicates-4e6dc68a122d3f61",
+        "bytes": 5204128
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_derivative_completeness-9532a14212029df4": {
+        "sha256": "b445a2e071289f69bd8d7bb4ca69478a069894e5bae6341331d8f9f45ef68b5b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/b445a2e071289f69bd8d7bb4ca69478a069894e5bae6341331d8f9f45ef68b5b/hypercurve_derivative_completeness-9532a14212029df4",
+        "bytes": 12268240
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_contour-05593c7ab3ba80ba": {
+        "sha256": "a9b3591c67112794b79fe3b459b9a36e9f51632a98e50c0b98b19accf179ace8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/a9b3591c67112794b79fe3b459b9a36e9f51632a98e50c0b98b19accf179ace8/hypercurve_contour-05593c7ab3ba80ba",
+        "bytes": 5291344
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_region_boolean-332eed0f64f6a387": {
+        "sha256": "225159689cdcc33d37caea94337897e4b0dc76d306d1826d12f58a37acf41781",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/225159689cdcc33d37caea94337897e4b0dc76d306d1826d12f58a37acf41781/hypercurve_curve_region_boolean-332eed0f64f6a387",
+        "bytes": 19761752
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/line_constant_coordinates-1143f301e7d9dc75": {
+        "sha256": "3698866bffdcef6dbf6d8790b5d947d2e1e697960a1cc590f3407389a8349ed0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/3698866bffdcef6dbf6d8790b5d947d2e1e697960a1cc590f3407389a8349ed0/line_constant_coordinates-1143f301e7d9dc75",
+        "bytes": 4270504
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/native_linear_stroke_contracts-e68059a92f6c4a61": {
+        "sha256": "4fb7f1c12a868993f08f4fa65368440f9c93f6056704fb2d27e1a49cb5a2cc07",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/4fb7f1c12a868993f08f4fa65368440f9c93f6056704fb2d27e1a49cb5a2cc07/native_linear_stroke_contracts-e68059a92f6c4a61",
+        "bytes": 17709560
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_bezier_evaluation-c5e901530351c10d": {
+        "sha256": "e95e3a6ca060b1906707dfe953bd01b793f96ed4c8d19f4fb0b1c49152078f59",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/e95e3a6ca060b1906707dfe953bd01b793f96ed4c8d19f4fb0b1c49152078f59/hypercurve_bezier_evaluation-c5e901530351c10d",
+        "bytes": 11962376
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_stationary_fillets-e214c1c51d73cd90": {
+        "sha256": "cee1507145d956eba2ad6dd000e56df9007d862210142b1d5764ec7f425ea81b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/cee1507145d956eba2ad6dd000e56df9007d862210142b1d5764ec7f425ea81b/hypercurve_stationary_fillets-e214c1c51d73cd90",
+        "bytes": 18810864
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/work_budget-7fcf0fe290d71266": {
+        "sha256": "3fbef162a9b4600abf6bb1b20833a66e14bafda44a81cf48790bd7aba5a26e4a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/3fbef162a9b4600abf6bb1b20833a66e14bafda44a81cf48790bd7aba5a26e4a/work_budget-7fcf0fe290d71266",
+        "bytes": 15606040
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_bbox-2042926225ce96a0": {
+        "sha256": "2e0d7b0e11c9ba3b9f52ac9b0852bae2a55841deab4126dca8c2804ad79b5ca3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/2e0d7b0e11c9ba3b9f52ac9b0852bae2a55841deab4126dca8c2804ad79b5ca3/hypercurve_bbox-2042926225ce96a0",
+        "bytes": 17364008
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_open_path_compositions-df137780705b3d34": {
+        "sha256": "292eb1f404b76aca9ede319789eaefe72733442c5a93d2d877e65269ed87ab41",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/292eb1f404b76aca9ede319789eaefe72733442c5a93d2d877e65269ed87ab41/hypercurve_open_path_compositions-df137780705b3d34",
+        "bytes": 19508832
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_intersection-053aaccfc1660d21": {
+        "sha256": "b282df79349839e7f0c023abb5d651feb952ea8f43a9ed33db1efa9edaeed037",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/b282df79349839e7f0c023abb5d651feb952ea8f43a9ed33db1efa9edaeed037/hypercurve_curve_intersection-053aaccfc1660d21",
+        "bytes": 20809808
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_adversarial_polygons-a252ab704b24d25f": {
+        "sha256": "ee97b749539c75970d856e81a9586847940ec80c498fc579b9fb2451fa1e43af",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/ee97b749539c75970d856e81a9586847940ec80c498fc579b9fb2451fa1e43af/hypercurve_adversarial_polygons-a252ab704b24d25f",
+        "bytes": 18085776
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_pcb_boolean_regressions-1de645e9e878b7fa": {
+        "sha256": "311863f038bd2ebe197062c7ae0c9112f9bf11208f92edee2213ddcae15de514",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/311863f038bd2ebe197062c7ae0c9112f9bf11208f92edee2213ddcae15de514/hypercurve_pcb_boolean_regressions-1de645e9e878b7fa",
+        "bytes": 17365288
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_events-f8553b1c9c62f19f": {
+        "sha256": "668fef19bf8d185200c1867bce00be7ec75e6ff33dde50bb8cb44e09a55b86dc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/668fef19bf8d185200c1867bce00be7ec75e6ff33dde50bb8cb44e09a55b86dc/hypercurve_events-f8553b1c9c62f19f",
+        "bytes": 5323456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/ray_filter_extreme_coordinates-cb8452934a111f32": {
+        "sha256": "731afa2aab8655c72fbfe8f31c7b6b451be43fadfd99780b9f9981a11b96d7e1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/731afa2aab8655c72fbfe8f31c7b6b451be43fadfd99780b9f9981a11b96d7e1/ray_filter_extreme_coordinates-cb8452934a111f32",
+        "bytes": 17372912
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/native_linear_stroke-e62926b739997465": {
+        "sha256": "667ad78ff5c9c83e246b640c6f1f464b5dcf9ca60744c647d91cf86f75494b8c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/667ad78ff5c9c83e246b640c6f1f464b5dcf9ca60744c647d91cf86f75494b8c/native_linear_stroke-e62926b739997465",
+        "bytes": 17992744
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_region_boolean_fuzz-fc84a97e50ee1885": {
+        "sha256": "e05d5ae7cb537069f6e3f6ec39a72e27ff01c5bffb5ff094ae2b83ce28bd1402",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/e05d5ae7cb537069f6e3f6ec39a72e27ff01c5bffb5ff094ae2b83ce28bd1402/hypercurve_curve_region_boolean_fuzz-fc84a97e50ee1885",
+        "bytes": 18114064
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_fuzz_regressions-df034dae9494dcaf": {
+        "sha256": "63d1efb07adcc180944c0a36c227dc1cb42a93c3d45b053564a069810d42ed42",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/63d1efb07adcc180944c0a36c227dc1cb42a93c3d45b053564a069810d42ed42/hypercurve_fuzz_regressions-df034dae9494dcaf",
+        "bytes": 4978648
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_range-3a7efefada8398bc": {
+        "sha256": "e594ef86e508cce63a4c1f1c7abe41896fa527751bbb7a1fa05afc40685dd1f5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/e594ef86e508cce63a4c1f1c7abe41896fa527751bbb7a1fa05afc40685dd1f5/hypercurve_curve_range-3a7efefada8398bc",
+        "bytes": 16423752
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_offset-008b56001b7121bc": {
+        "sha256": "bde6e2961dbbebb0f807218f77ca723341f13c9d9d3a83b77e17102d7e671f2a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/bde6e2961dbbebb0f807218f77ca723341f13c9d9d3a83b77e17102d7e671f2a/hypercurve_offset-008b56001b7121bc",
+        "bytes": 4776024
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/marching_squares-6853dfa7361028f3": {
+        "sha256": "2f78a302067d26e0d35b23dd64624c58d28dba89a12650f670dce8314d13d4c4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/2f78a302067d26e0d35b23dd64624c58d28dba89a12650f670dce8314d13d4c4/marching_squares-6853dfa7361028f3",
+        "bytes": 17414352
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_pr59_shape_regressions-362bc02eaffe4a21": {
+        "sha256": "014c762973ba6786f8e175d4418872f75dc557875d52126d4c8471de3e05841a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/014c762973ba6786f8e175d4418872f75dc557875d52126d4c8471de3e05841a/hypercurve_pr59_shape_regressions-362bc02eaffe4a21",
+        "bytes": 17348944
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "3a52e12a5ab47c13203ecf0cdf80e3181957fa5c359b554c08a1e1c273a63f91",
+    "stderr_sha256": "956c3310bcbdaa602aad0acbc381d90f8b6254f8860e5e90116388048f16241a",
+    "resources_sha256": "edb487b6744a3f4c772ddd7d2d7e7a4813627fcea2781680d7b9730f2722c63b"
+  },
+  {
+    "name": "curve-all",
+    "command": [
+      "cargo",
+      "test",
+      "--no-fail-fast",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 124,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 1801.3472169600427,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_string-a6f5cb6c05aed1b9": {
+        "sha256": "ecf8dcb4143eea1e6865861d152c38ff2f55eaf8dcf087833380ae323f4b7a99",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/ecf8dcb4143eea1e6865861d152c38ff2f55eaf8dcf087833380ae323f4b7a99/hypercurve_curve_string-a6f5cb6c05aed1b9",
+        "bytes": 18910528
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_fragments-531bd9eccf3a410b": {
+        "sha256": "f88358b7d930c82a42d8e7e661a1375cc9d41444db91ed83b162e4edb450d600",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/f88358b7d930c82a42d8e7e661a1375cc9d41444db91ed83b162e4edb450d600/hypercurve_fragments-531bd9eccf3a410b",
+        "bytes": 6551632
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_bezier_fit_offset-000e6dcd62486581": {
+        "sha256": "f489ca857a11a7990489d0a07593d1fbd5b061bc724b10b789cbb27c06f2c2cc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/f489ca857a11a7990489d0a07593d1fbd5b061bc724b10b789cbb27c06f2c2cc/hypercurve_bezier_fit_offset-000e6dcd62486581",
+        "bytes": 19724048
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_intersection-84afdd00f969615e": {
+        "sha256": "7d638c3c213d610af40c2d5eacda3eb66d32ef6f2aa00e57527f2a6eb123286f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/7d638c3c213d610af40c2d5eacda3eb66d32ef6f2aa00e57527f2a6eb123286f/hypercurve_curve_intersection-84afdd00f969615e",
+        "bytes": 21433248
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_bezier_algebraic_parameter-b3c101ceb1f03d27": {
+        "sha256": "1992d08d9988c8dfabb4ae128aa9ebbf6b6a0dc5dd052341bf0e692486bd8445",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/1992d08d9988c8dfabb4ae128aa9ebbf6b6a0dc5dd052341bf0e692486bd8445/hypercurve_bezier_algebraic_parameter-b3c101ceb1f03d27",
+        "bytes": 6643176
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_region_boolean-73f474d9f89ada3b": {
+        "sha256": "ba402b2fbfe7d3442c786c39b84fc47ac6c9b9b46f4ffd4eaa1b8755661ad581",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/ba402b2fbfe7d3442c786c39b84fc47ac6c9b9b46f4ffd4eaa1b8755661ad581/hypercurve_curve_region_boolean-73f474d9f89ada3b",
+        "bytes": 20394040
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_bezier_evaluation-2b2af0cd20a58eb6": {
+        "sha256": "1b7057a4fbd55ec693d05475b279ec7ed2666bf88129f1215f34b8d8769552cc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/1b7057a4fbd55ec693d05475b279ec7ed2666bf88129f1215f34b8d8769552cc/hypercurve_bezier_evaluation-2b2af0cd20a58eb6",
+        "bytes": 12493976
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_circle_predicates-6a21d60fefd977d6": {
+        "sha256": "a5813c8f67542dcbe1bdde0444f8ee3f43f43383ffc8e510ba6761b2abb612e5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/a5813c8f67542dcbe1bdde0444f8ee3f43f43383ffc8e510ba6761b2abb612e5/hypercurve_circle_predicates-6a21d60fefd977d6",
+        "bytes": 5550488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/contour_area_normal_form-4bb910b60a3a7465": {
+        "sha256": "f38da869a7a53229f8758d44e3636fb57146c52344bc349ced1c1d97ccedfd12",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/f38da869a7a53229f8758d44e3636fb57146c52344bc349ced1c1d97ccedfd12/contour_area_normal_form-4bb910b60a3a7465",
+        "bytes": 17930304
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_region_boolean_fuzz-2e74957ca48860d4": {
+        "sha256": "5c50050ca89077a9bb71cbed585ac16bf99565d313d8f503434f4a98f684b208",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/5c50050ca89077a9bb71cbed585ac16bf99565d313d8f503434f4a98f684b208/hypercurve_curve_region_boolean_fuzz-2e74957ca48860d4",
+        "bytes": 18763464
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_region_stroke-e159e365a3ffcb56": {
+        "sha256": "8acf5f972a488532539d77626261ccf5937a8557aef8e72651aaef0e1bbc8f54",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/8acf5f972a488532539d77626261ccf5937a8557aef8e72651aaef0e1bbc8f54/hypercurve_curve_region_stroke-e159e365a3ffcb56",
+        "bytes": 18740944
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_contour-4ebf43d4cac44124": {
+        "sha256": "b55603415318588f3e72045e9aa8eaa3e4bc5f7c92ad5799a22275a5d7bce928",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/b55603415318588f3e72045e9aa8eaa3e4bc5f7c92ad5799a22275a5d7bce928/hypercurve_contour-4ebf43d4cac44124",
+        "bytes": 5628024
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_bbox-fd4e6060656a9e53": {
+        "sha256": "161432418653ed366ead41d30ea2c2c1a6cfbcf3cf3920c313025eecfa5ba42a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/161432418653ed366ead41d30ea2c2c1a6cfbcf3cf3920c313025eecfa5ba42a/hypercurve_bbox-fd4e6060656a9e53",
+        "bytes": 17957720
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_derivative_completeness-3b7db4764a27ca62": {
+        "sha256": "6987e0aefb8ab57039a306970ecc13013fe86fa7574822699581b7c656166746",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/6987e0aefb8ab57039a306970ecc13013fe86fa7574822699581b7c656166746/hypercurve_derivative_completeness-3b7db4764a27ca62",
+        "bytes": 12794504
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_arc_bezier-1e373a41b9ebc9c7": {
+        "sha256": "2f21e9a36c4d528ca06f8734d91a6eedf90f1c346042f7e28aa4196b2351c187",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/2f21e9a36c4d528ca06f8734d91a6eedf90f1c346042f7e28aa4196b2351c187/hypercurve_arc_bezier-1e373a41b9ebc9c7",
+        "bytes": 13504104
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve-c64b9a6905916d79": {
+        "sha256": "fc1dbcd687635caf4ef9f26b8772fd46f1b2b6eeca94d3e64eb05ceca220591d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/fc1dbcd687635caf4ef9f26b8772fd46f1b2b6eeca94d3e64eb05ceca220591d/hypercurve-c64b9a6905916d79",
+        "bytes": 41644848
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_range-ce272b03c5af5e60": {
+        "sha256": "1290fc90405cd60649dc7bd6ca13a7acfc4064a4b4374a1c80f3b15c19725f78",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/1290fc90405cd60649dc7bd6ca13a7acfc4064a4b4374a1c80f3b15c19725f78/hypercurve_curve_range-ce272b03c5af5e60",
+        "bytes": 17011304
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_adversarial_polygons-648061a661d2d4d2": {
+        "sha256": "c4b87961fe2cade195579c9c723fe361939835ebc11a6b6158b4f98565a8e7d6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/c4b87961fe2cade195579c9c723fe361939835ebc11a6b6158b4f98565a8e7d6/hypercurve_adversarial_polygons-648061a661d2d4d2",
+        "bytes": 18696720
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/exact_structural_facts-76451eec1ebb234c": {
+        "sha256": "25ad819805ec41cd694a8c7e39cb3d8c2115c1feab5462ef80e2186f17ce54e6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/25ad819805ec41cd694a8c7e39cb3d8c2115c1feab5462ef80e2186f17ce54e6/exact_structural_facts-76451eec1ebb234c",
+        "bytes": 18006840
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_region_promotion-e3e18c6ed854aea1": {
+        "sha256": "65392ad92a96bbf0f6b392a624a60a97eae087548e4f0646343b717eeb23fb4f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/65392ad92a96bbf0f6b392a624a60a97eae087548e4f0646343b717eeb23fb4f/hypercurve_curve_region_promotion-e3e18c6ed854aea1",
+        "bytes": 22215504
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_dispatch_trace-19500280b30d6468": {
+        "sha256": "2872a646886f103f228df223a9637afdd5a3a0e0d8decdedb3c084d0056778b5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/2872a646886f103f228df223a9637afdd5a3a0e0d8decdedb3c084d0056778b5/hypercurve_dispatch_trace-19500280b30d6468",
+        "bytes": 6171416
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_exact_closure-321fd937dd57609f": {
+        "sha256": "216192979d793eb66a5d2099fa386a5c7f71e538cb4691ac2a319b0614e0905e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/216192979d793eb66a5d2099fa386a5c7f71e538cb4691ac2a319b0614e0905e/hypercurve_exact_closure-321fd937dd57609f",
+        "bytes": 18680376
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve-9910e4ca7e304f6a": {
+        "sha256": "a35557466883204e512beaaf998db10c92b54763679bc8e0ba8eb6b75f940b6c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/a35557466883204e512beaaf998db10c92b54763679bc8e0ba8eb6b75f940b6c/hypercurve_curve-9910e4ca7e304f6a",
+        "bytes": 21281960
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_curve_point-723c0db0e305158f": {
+        "sha256": "4586cee33da4233b67d3834b10d5a50857d3a6a93ecb5a3a1fa9637613111220",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/4586cee33da4233b67d3834b10d5a50857d3a6a93ecb5a3a1fa9637613111220/hypercurve_curve_point-723c0db0e305158f",
+        "bytes": 12991328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_events-c6fa78e0298355bc": {
+        "sha256": "2c40d2c31d0458f45720b560f1c387a48e87a0b1e223598a429553675f92e38b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/2c40d2c31d0458f45720b560f1c387a48e87a0b1e223598a429553675f92e38b/hypercurve_events-c6fa78e0298355bc",
+        "bytes": 5696016
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_analytic_parallel_region-726d47dc1888e58a": {
+        "sha256": "004dcd798dc79f18ca00a211fd91dc124328a9f76cf4ba7cccaf2320fa4fd7f9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/004dcd798dc79f18ca00a211fd91dc124328a9f76cf4ba7cccaf2320fa4fd7f9/hypercurve_analytic_parallel_region-726d47dc1888e58a",
+        "bytes": 20523088
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/bbox_initial_pair-42009948bb13c480": {
+        "sha256": "a013f9d2d72bc13e8fd575fcd06eb06c6a5e2cd70f7fb3a2d93b30f87b7b2038",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/a013f9d2d72bc13e8fd575fcd06eb06c6a5e2cd70f7fb3a2d93b30f87b7b2038/bbox_initial_pair-42009948bb13c480",
+        "bytes": 4719784
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hypercurve_composed_workloads-00d318fe4aa418d9": {
+        "sha256": "4d74fa7163a4c0b037efafa3df7d5030175b363de6044466927fdcd4427a618c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/4d74fa7163a4c0b037efafa3df7d5030175b363de6044466927fdcd4427a618c/hypercurve_composed_workloads-00d318fe4aa418d9",
+        "bytes": 20352216
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "d9437bd67eff24c5be185ef40e9467e59aceffa7dc522f6559e2373a78ad6445",
+    "stderr_sha256": "70c8333ca62cca5dc72828f9b42f08b84785229be43bff3b771aa29b5617876b",
+    "resources_sha256": "b286aceb9aa88eab9d1c36a72da6462e861dd9c12ee78cf9812088557967b647"
+  },
+  {
+    "name": "root-all",
+    "command": [
+      "cargo",
+      "test",
+      "--no-fail-fast",
+      "--offline",
+      "--locked",
+      "-p",
+      "csgrs",
+      "--release",
+      "--all-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 506.58942564902827,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/competitive-185cd4c877423fbe": {
+        "sha256": "ddbde1b3346cea608c2c4c98746b21057261afe25fa880623af0f8df33ff24ea",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/ddbde1b3346cea608c2c4c98746b21057261afe25fa880623af0f8df33ff24ea/competitive-185cd4c877423fbe",
+        "bytes": 21063512
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/mesh_boolean_context-914bbfe568471b47": {
+        "sha256": "932b715f297d76586c146efbc5741b5b71b2f6e81d4dc7c14da90748f4c23c50",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/932b715f297d76586c146efbc5741b5b71b2f6e81d4dc7c14da90748f4c23c50/mesh_boolean_context-914bbfe568471b47",
+        "bytes": 20733512
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/curve_metaball_failures-d27370f0b0e5f990": {
+        "sha256": "6d5708cf26aa95f8646da423d77ce3c7df6111a8a615a25c0481fab07eea5025",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/6d5708cf26aa95f8646da423d77ce3c7df6111a8a615a25c0481fab07eea5025/curve_metaball_failures-d27370f0b0e5f990",
+        "bytes": 32918320
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/exact_linear_modeling-5d0a48a07e0f162b": {
+        "sha256": "66f867dd4a959263c574e3794756dcf54e4d5fbf87af0fa7d888bc05901aa653",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/66f867dd4a959263c574e3794756dcf54e4d5fbf87af0fa7d888bc05901aa653/exact_linear_modeling-5d0a48a07e0f162b",
+        "bytes": 32246816
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/slice_projection_contract-b55baaad948b2b8d": {
+        "sha256": "d73690089e035c5e322e02efac35a907344c2dba14fff42945a8d85b4861990e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/d73690089e035c5e322e02efac35a907344c2dba14fff42945a8d85b4861990e/slice_projection_contract-b55baaad948b2b8d",
+        "bytes": 33926336
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/solid_cache-4b39500f97650a56": {
+        "sha256": "bb12f6086d4fd2c283521cce321cc2d2f809cfac9b3a9e96796b5f504116ae91",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/bb12f6086d4fd2c283521cce321cc2d2f809cfac9b3a9e96796b5f504116ae91/solid_cache-4b39500f97650a56",
+        "bytes": 34302304
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/readme-1992b521cbd1aa62": {
+        "sha256": "5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145/readme-1992b521cbd1aa62",
+        "bytes": 1153328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/adversarial_deep-521173baf42fc07b": {
+        "sha256": "6804cdc7fd0843c712ab2020d297610a39b719c5ba708ae2ac386de80d9acc4a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/6804cdc7fd0843c712ab2020d297610a39b719c5ba708ae2ac386de80d9acc4a/adversarial_deep-521173baf42fc07b",
+        "bytes": 33859552
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/curve_metaball_workloads-66d29e6564cd95ad": {
+        "sha256": "2346dddcc39dff089e5c282057c8c49fa59fd265d04b76c70566be5e09d7d1f1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/2346dddcc39dff089e5c282057c8c49fa59fd265d04b76c70566be5e09d7d1f1/curve_metaball_workloads-66d29e6564cd95ad",
+        "bytes": 31726672
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/minkowski_contracts-0128f2ac1f93f880": {
+        "sha256": "db29b5df185543e51c26cea04059d5f9066b192156148eb706babd0a444d7b42",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/db29b5df185543e51c26cea04059d5f9066b192156148eb706babd0a444d7b42/minkowski_contracts-0128f2ac1f93f880",
+        "bytes": 21308056
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/curve_constructor_failures-f7cc43e145ac9696": {
+        "sha256": "fc0ca7ad314dbe7b761099586891dec998009135ab9e33429caffbd667eca0ad",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/fc0ca7ad314dbe7b761099586891dec998009135ab9e33429caffbd667eca0ad/curve_constructor_failures-f7cc43e145ac9696",
+        "bytes": 32951960
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/metaball_failures-d85a244280836e13": {
+        "sha256": "53efd8130a02d2026e413429c9937d04c3d97728c0c35bcaf924d5f764715451",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/53efd8130a02d2026e413429c9937d04c3d97728c0c35bcaf924d5f764715451/metaball_failures-d85a244280836e13",
+        "bytes": 20639024
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/native_queries-b33ec052b7501c8a": {
+        "sha256": "7557002b9ebbf5fdb5891f94f1e4011eac127389f50eda9e8e6d6abb3ce57948",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/7557002b9ebbf5fdb5891f94f1e4011eac127389f50eda9e8e6d6abb3ce57948/native_queries-b33ec052b7501c8a",
+        "bytes": 20878688
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/adversarial_fixtures-eb5cce8eab7e81ab": {
+        "sha256": "d65b6b07327397927fcec44d130f4d8336f51124007f9cdf871c11438a2baa30",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/d65b6b07327397927fcec44d130f4d8336f51124007f9cdf871c11438a2baa30/adversarial_fixtures-eb5cce8eab7e81ab",
+        "bytes": 1112712
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/metaballs_diagnostics-0ceadacbf3d3f4d1": {
+        "sha256": "55df98fc2881a71f7679c1cd79f1205e2d795ffef0c856f49b2280640fbc6207",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/55df98fc2881a71f7679c1cd79f1205e2d795ffef0c856f49b2280640fbc6207/metaballs_diagnostics-0ceadacbf3d3f4d1",
+        "bytes": 18969784
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/adversarial_extrusions-03eb6390b46717d7": {
+        "sha256": "f3213dd629b5d2ba5cabe727484bd6bdcc27181f8031c88d423ef619d52b80e1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/f3213dd629b5d2ba5cabe727484bd6bdcc27181f8031c88d423ef619d52b80e1/adversarial_extrusions-03eb6390b46717d7",
+        "bytes": 32499368
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/primitive_failures-62bfc794561dcdc3": {
+        "sha256": "f9c72822711a1838063ad724a916a38380069def8b7c3717b1b0f38e240b1f36",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/f9c72822711a1838063ad724a916a38380069def8b7c3717b1b0f38e240b1f36/primitive_failures-62bfc794561dcdc3",
+        "bytes": 20820832
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/strict_drilled_workflows-84fb41c10d127f23": {
+        "sha256": "a06df6b9fac4fd9d35ac753269b651d6ca6651689ccf11d12c2e96d7e5c4ea52",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/a06df6b9fac4fd9d35ac753269b651d6ca6651689ccf11d12c2e96d7e5c4ea52/strict_drilled_workflows-84fb41c10d127f23",
+        "bytes": 20742560
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/transform_failures-21eb23e9828f9466": {
+        "sha256": "36300723702b99a0c86a0446373f1196dcb5bb30a0af3f42d1adfd4e0ca9c481",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/36300723702b99a0c86a0446373f1196dcb5bb30a0af3f42d1adfd4e0ca9c481/transform_failures-21eb23e9828f9466",
+        "bytes": 20771184
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/sdf_failures-70ac7c65f6b4d210": {
+        "sha256": "0f91032409ca1d6582e1537230b19b86e6aba8154c481273a010e424ff8cecdf",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/0f91032409ca1d6582e1537230b19b86e6aba8154c481273a010e424ff8cecdf/sdf_failures-70ac7c65f6b4d210",
+        "bytes": 21020896
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/stl_import_contracts-1972ae5b143c3f00": {
+        "sha256": "265beb6dff95a4b37f59da288f029bdce757e12c3e9a9812ce3b303217972683",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/265beb6dff95a4b37f59da288f029bdce757e12c3e9a9812ce3b303217972683/stl_import_contracts-1972ae5b143c3f00",
+        "bytes": 20595560
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/rounded_rectangle_fidelity-8f7195511dbb1c27": {
+        "sha256": "de1875c7080dbbb72782492368bfec9db0798f810865946d82ae29020e4e258d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/de1875c7080dbbb72782492368bfec9db0798f810865946d82ae29020e4e258d/rounded_rectangle_fidelity-8f7195511dbb1c27",
+        "bytes": 35958504
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/empty_composition-916811c3b9113a9e": {
+        "sha256": "b26edabfb35a598b5a80b29639b2d8a2a3f0678c7f3d7943f0bb1e1e5027bf17",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/b26edabfb35a598b5a80b29639b2d8a2a3f0678c7f3d7943f0bb1e1e5027bf17/empty_composition-916811c3b9113a9e",
+        "bytes": 20739168
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/geometry_context-f3d29f7d6dc94528": {
+        "sha256": "16a56634ef4c1bc4a1c0d21e3ff6078a0bc68bf4996d51cfb4bfcb4e1b3d1fe7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/16a56634ef4c1bc4a1c0d21e3ff6078a0bc68bf4996d51cfb4bfcb4e1b3d1fe7/geometry_context-f3d29f7d6dc94528",
+        "bytes": 41647864
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/batch_common_cells-a927672f36173761": {
+        "sha256": "c429c298462f0a03a079a144d2410ee56d72c1186085f915703d07d77b77e488",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/c429c298462f0a03a079a144d2410ee56d72c1186085f915703d07d77b77e488/batch_common_cells-a927672f36173761",
+        "bytes": 20457504
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/adversarial-61fa74ccbd896935": {
+        "sha256": "7e4694ac811c4e4d71e074c3bf00e9fe911c60c1f12ef8723ad120eab9c9e151",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/7e4694ac811c4e4d71e074c3bf00e9fe911c60c1f12ef8723ad120eab9c9e151/adversarial-61fa74ccbd896935",
+        "bytes": 34101536
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/polyhedral_construction-5ca791f19bc691fe": {
+        "sha256": "711a72e7314377d36d634b0957462fbe99d4d33d4b1a219ad0128bac2ac4327e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/711a72e7314377d36d634b0957462fbe99d4d33d4b1a219ad0128bac2ac4327e/polyhedral_construction-5ca791f19bc691fe",
+        "bytes": 20686888
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/sampled_profile_failures-1e978d3da16ca610": {
+        "sha256": "d59c0d68e78feb1325b0b8c5546cb39f56d882e6039895536e6e6600411d86ce",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/d59c0d68e78feb1325b0b8c5546cb39f56d882e6039895536e6e6600411d86ce/sampled_profile_failures-1e978d3da16ca610",
+        "bytes": 33297464
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/obj_export_failures-cd495c9311a295fd": {
+        "sha256": "a778217b4b2c11432a6ad5906a737abde6ce7d5c86ed8703fb1dbb3713f8341a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/a778217b4b2c11432a6ad5906a737abde6ce7d5c86ed8703fb1dbb3713f8341a/obj_export_failures-cd495c9311a295fd",
+        "bytes": 20668760
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/distribution_contracts-555e8fcfefd73180": {
+        "sha256": "cb5bbdb012df13007352c3ed8fe07b6c39ebfdeb021c3552720475c402577fd8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/cb5bbdb012df13007352c3ed8fe07b6c39ebfdeb021c3552720475c402577fd8/distribution_contracts-555e8fcfefd73180",
+        "bytes": 20970920
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/readme_render_regression-241ede70811c95bb": {
+        "sha256": "5ffbbf1895ff6945447d116819c6be538ce5e20629b2c99fee12a436a70455ce",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/5ffbbf1895ff6945447d116819c6be538ce5e20629b2c99fee12a436a70455ce/readme_render_regression-241ede70811c95bb",
+        "bytes": 1151112
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/csgrs-3c5a74bdc7539294": {
+        "sha256": "bb7e6c39eb1d0fc04a368a13ca0d82532eecd77f9468304eb32dd8a8b6eff671",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/bb7e6c39eb1d0fc04a368a13ca0d82532eecd77f9468304eb32dd8a8b6eff671/csgrs-3c5a74bdc7539294",
+        "bytes": 39722728
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/gear_airfoil_failures-edc7ec750765891a": {
+        "sha256": "5f2759386aa6b44e164255800ee9225bc52da2d0e6496812067ec2678735eedc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/5f2759386aa6b44e164255800ee9225bc52da2d0e6496812067ec2678735eedc/gear_airfoil_failures-edc7ec750765891a",
+        "bytes": 33026992
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/planar_operation_failures-21febc1e6bde631d": {
+        "sha256": "b54773d819b9c245d6e372e2e335e1afd9d3edd33326501c307906efc7080b4e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/b54773d819b9c245d6e372e2e335e1afd9d3edd33326501c307906efc7080b4e/planar_operation_failures-21febc1e6bde631d",
+        "bytes": 33071440
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/bounds_failures-65b1d35d217e46d4": {
+        "sha256": "38e4974f88b7c9dc39c53815ad127adbe44af995680b6c2694d3906ccfb898f3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/38e4974f88b7c9dc39c53815ad127adbe44af995680b6c2694d3906ccfb898f3/bounds_failures-65b1d35d217e46d4",
+        "bytes": 34085416
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/text_contracts-84d126534db53fda": {
+        "sha256": "d68b90373d64937882ba1ac2bde56e6f3a1e7e4916875bc75db5577c971fc143",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/d68b90373d64937882ba1ac2bde56e6f3a1e7e4916875bc75db5577c971fc143/text_contracts-84d126534db53fda",
+        "bytes": 34012160
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/export_projection_contracts-ded2f815cac1de97": {
+        "sha256": "24ad54e45e9a1ce00c866b82d5feedf46284632714afa14fec4f7521ba31d235",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/24ad54e45e9a1ce00c866b82d5feedf46284632714afa14fec4f7521ba31d235/export_projection_contracts-ded2f815cac1de97",
+        "bytes": 21081272
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/generated_benchmark_corpus-3c1f1fde5d37996c": {
+        "sha256": "0dfe06a0081f5c8ff5dd21687bfe189f5d60696ffbd8b9f551fdf47f1d8261f2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/0dfe06a0081f5c8ff5dd21687bfe189f5d60696ffbd8b9f551fdf47f1d8261f2/generated_benchmark_corpus-3c1f1fde5d37996c",
+        "bytes": 19059720
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/exact_path_failures-d29490301ca0c150": {
+        "sha256": "0599a72fade73e52cb83eb26b1deeefef9650c8acdeac395a2f1c43374d397a9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/0599a72fade73e52cb83eb26b1deeefef9650c8acdeac395a2f1c43374d397a9/exact_path_failures-d29490301ca0c150",
+        "bytes": 32813248
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/adversarial_stress-7115bbec9298381e": {
+        "sha256": "1ea53f8be9603d675cec0967cee156c3c30923c203225d81d3f9bf0f1bcbfdde",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/1ea53f8be9603d675cec0967cee156c3c30923c203225d81d3f9bf0f1bcbfdde/adversarial_stress-7115bbec9298381e",
+        "bytes": 33643560
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/containment_inputs-a77923e5f14d9793": {
+        "sha256": "4b129d94c47c8f959529f6b1107ee1a318bbe9c9e0c4a4dbbdad2ea8701a80de",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/4b129d94c47c8f959529f6b1107ee1a318bbe9c9e0c4a4dbbdad2ea8701a80de/containment_inputs-a77923e5f14d9793",
+        "bytes": 20208320
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/sdf_tpms_diagnostics-24970cc75f8a8512": {
+        "sha256": "08e841bdf0ef4431773f2782838a692d73d95dee4dea71f4a5da08e78fc858bd",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/08e841bdf0ef4431773f2782838a692d73d95dee4dea71f4a5da08e78fc858bd/sdf_tpms_diagnostics-24970cc75f8a8512",
+        "bytes": 21208520
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hilbert_trimming-a298c6dfff13a0d9": {
+        "sha256": "5a948875e758cc1db8b8f6e8339611a1a6f70b82371cebc5afd2f8808e845669",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/5a948875e758cc1db8b8f6e8339611a1a6f70b82371cebc5afd2f8808e845669/hilbert_trimming-a298c6dfff13a0d9",
+        "bytes": 32800752
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/containment_winding-2eac9180939f11ea": {
+        "sha256": "53972e890e5f9162c79116676f384fdcbbd932df645785daeb4ec3290e98294b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/53972e890e5f9162c79116676f384fdcbbd932df645785daeb4ec3290e98294b/containment_winding-2eac9180939f11ea",
+        "bytes": 20112400
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/adapter_boolean_failures-8867e9a3af41b5b5": {
+        "sha256": "03dfd2388cd9f94f3f08143447dcde66b969288062f5b303c4787ae045ad70a4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/03dfd2388cd9f94f3f08143447dcde66b969288062f5b303c4787ae045ad70a4/adapter_boolean_failures-8867e9a3af41b5b5",
+        "bytes": 20637592
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/containment_bounds-e21e6763893836e0": {
+        "sha256": "ada8b0ee18d3e8b5799054e6c657ac84dd0280671e239706b37bf153e5b56ed6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/ada8b0ee18d3e8b5799054e6c657ac84dd0280671e239706b37bf153e5b56ed6/containment_bounds-e21e6763893836e0",
+        "bytes": 20582560
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/wasm_certainty-4c94a4a83c71928e": {
+        "sha256": "4f67d56add1c9496f0fb622b06fd0c10d7183ab0b1e12010e528ec065d3440d7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/4f67d56add1c9496f0fb622b06fd0c10d7183ab0b1e12010e528ec065d3440d7/wasm_certainty-4c94a4a83c71928e",
+        "bytes": 33281984
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/metaball_workloads-fdfd90c45629d15d": {
+        "sha256": "54adc63e2e37efae7c0330a9ad07f4126ed4652e3dd939b61aa4d8180620308c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/54adc63e2e37efae7c0330a9ad07f4126ed4652e3dd939b61aa4d8180620308c/metaball_workloads-fdfd90c45629d15d",
+        "bytes": 19039296
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "d4d4fe75afa8fd69496263e080edc81589503c06ae86a03512251933e1a197b9",
+    "stderr_sha256": "a4eb55fb37095171f23ef89c3b92e24d9e2e6ecb8f47f11bea762dfc0288cc0b",
+    "resources_sha256": "4ef272d4027177e3e27eb9747e4da21b89236cad097646dcc9d260c0e1166ca0"
+  },
+  {
+    "name": "root-minimal",
+    "command": [
+      "cargo",
+      "test",
+      "--no-fail-fast",
+      "--offline",
+      "--locked",
+      "-p",
+      "csgrs",
+      "--release",
+      "--no-default-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 158.73440299974754,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/gear_airfoil_failures-cab79b6a24c79f3a": {
+        "sha256": "c1e961bfadf37b3c53950a620a7768fd800d47dd30f31bd30b2b4714025a8a78",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/c1e961bfadf37b3c53950a620a7768fd800d47dd30f31bd30b2b4714025a8a78/gear_airfoil_failures-cab79b6a24c79f3a",
+        "bytes": 1079472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/csgrs-12b72f0ccdd38706": {
+        "sha256": "4c4d3370c398669df468c21873b43d2ee2ae2dff9f497a3d43be3e670bdfc6ab",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/4c4d3370c398669df468c21873b43d2ee2ae2dff9f497a3d43be3e670bdfc6ab/csgrs-12b72f0ccdd38706",
+        "bytes": 7354256
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/containment_inputs-8b8ba142265b5e91": {
+        "sha256": "724ad4febfdf01abeaa9ffbc38a6a07e58d94cfc950197419a4859b2af4659d5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/724ad4febfdf01abeaa9ffbc38a6a07e58d94cfc950197419a4859b2af4659d5/containment_inputs-8b8ba142265b5e91",
+        "bytes": 6298080
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/rounded_rectangle_fidelity-1435e79a4c8f8808": {
+        "sha256": "0326a0c9f5da56b219cf3c0db28ed85672d53d140696d7927b40ea9590d6844a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/0326a0c9f5da56b219cf3c0db28ed85672d53d140696d7927b40ea9590d6844a/rounded_rectangle_fidelity-1435e79a4c8f8808",
+        "bytes": 1079496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/adversarial_fixtures-f3fb997ef2084a11": {
+        "sha256": "234ff6429df62416241cebb5fdd1f1a812a2c884c3cbfbe449118cd0a87bda14",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/234ff6429df62416241cebb5fdd1f1a812a2c884c3cbfbe449118cd0a87bda14/adversarial_fixtures-f3fb997ef2084a11",
+        "bytes": 1112712
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/primitive_failures-812823cb4c624c0c": {
+        "sha256": "d880ac7b42dd313ae452b8e8f3a1c1873db79facf31ecb164bf99de9266c41f4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/d880ac7b42dd313ae452b8e8f3a1c1873db79facf31ecb164bf99de9266c41f4/primitive_failures-812823cb4c624c0c",
+        "bytes": 6646176
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/stl_import_contracts-0dbc0c6214a44758": {
+        "sha256": "ddde926345c1cb524b949f7ac04efce4fed7091c2dc63df9704d25daaddd54c8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/ddde926345c1cb524b949f7ac04efce4fed7091c2dc63df9704d25daaddd54c8/stl_import_contracts-0dbc0c6214a44758",
+        "bytes": 1079464
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/minkowski_contracts-95fc559a68f6aff4": {
+        "sha256": "389a22ad78fc2fdefeb213ced79e93f118eb9005d40dbae5fa0441827bf621ca",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/389a22ad78fc2fdefeb213ced79e93f118eb9005d40dbae5fa0441827bf621ca/minkowski_contracts-95fc559a68f6aff4",
+        "bytes": 7087440
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/obj_export_failures-663bc04ad5485983": {
+        "sha256": "1dd5de3d541a6e7ee87e8222b800b4be583403c3d0c7d7e8362219f91ef74839",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/1dd5de3d541a6e7ee87e8222b800b4be583403c3d0c7d7e8362219f91ef74839/obj_export_failures-663bc04ad5485983",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/planar_operation_failures-cb132bda92ed78c2": {
+        "sha256": "7630f6bd592c778afa35d6fa067bb3e084e5deecf62533746374d604d4e0615a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/7630f6bd592c778afa35d6fa067bb3e084e5deecf62533746374d604d4e0615a/planar_operation_failures-cb132bda92ed78c2",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/slice_projection_contract-9b033a35ae634fdd": {
+        "sha256": "da642a310125099793b4cc5d297f01f3993ce1d8ab366467f1db7bf2c6b48c2a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/da642a310125099793b4cc5d297f01f3993ce1d8ab366467f1db7bf2c6b48c2a/slice_projection_contract-9b033a35ae634fdd",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/containment_winding-8a800865f1034dbb": {
+        "sha256": "81d75e535baec9876b7dc773d9b22d2207f025cb79d6569f9599e9c0d0f7aa07",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/81d75e535baec9876b7dc773d9b22d2207f025cb79d6569f9599e9c0d0f7aa07/containment_winding-8a800865f1034dbb",
+        "bytes": 6235032
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/readme_render_regression-13a0224cc2b1eb67": {
+        "sha256": "7f887519cc6719a558a14fb039d9b170cfedb89f15b81e13b6e4b1f2de1dd2d7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/7f887519cc6719a558a14fb039d9b170cfedb89f15b81e13b6e4b1f2de1dd2d7/readme_render_regression-13a0224cc2b1eb67",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/exact_linear_modeling-f01de976de318a36": {
+        "sha256": "c6e97dcb258e46009c992b103a4ae871228e5fbdc5a0e0f6d49cf64c911345ec",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/c6e97dcb258e46009c992b103a4ae871228e5fbdc5a0e0f6d49cf64c911345ec/exact_linear_modeling-f01de976de318a36",
+        "bytes": 1079472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/containment_bounds-26ee7ab7cc5952a4": {
+        "sha256": "44eeda972c6cd3aa6e918c6dd1642878082bfa8d79e45788a9e62a13ba717c92",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/44eeda972c6cd3aa6e918c6dd1642878082bfa8d79e45788a9e62a13ba717c92/containment_bounds-26ee7ab7cc5952a4",
+        "bytes": 6427392
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/metaball_failures-02f33d21474432af": {
+        "sha256": "35b3571cdafac22ce4013b03c66903595a9a8198c394d67ae85e16b6efa5e62c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/35b3571cdafac22ce4013b03c66903595a9a8198c394d67ae85e16b6efa5e62c/metaball_failures-02f33d21474432af",
+        "bytes": 1079448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/distribution_contracts-7364b209d04c9660": {
+        "sha256": "9bc2c3bfb63004e8f13492fd41b193118e9bdfbd243d1f263c9928f343014f87",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/9bc2c3bfb63004e8f13492fd41b193118e9bdfbd243d1f263c9928f343014f87/distribution_contracts-7364b209d04c9660",
+        "bytes": 6762264
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/bounds_failures-c661a92a5b4c7962": {
+        "sha256": "bd34daee9b1302c481fd16dd5e98ef6bc6d3428b05e44f005b893230ae7d88c8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/bd34daee9b1302c481fd16dd5e98ef6bc6d3428b05e44f005b893230ae7d88c8/bounds_failures-c661a92a5b4c7962",
+        "bytes": 6550208
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/readme-114567bf52c105c8": {
+        "sha256": "d758991ee9cea61e9e596e31d01c946b6c9a40b646ba745836012f6d716e0dcf",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/d758991ee9cea61e9e596e31d01c946b6c9a40b646ba745836012f6d716e0dcf/readme-114567bf52c105c8",
+        "bytes": 1153328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/strict_drilled_workflows-638875a84f3cf049": {
+        "sha256": "606d9169d7ee5a9a6b8e3e9304e7a1b23b73e3decf6546d4dbdcd495b234e06c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/606d9169d7ee5a9a6b8e3e9304e7a1b23b73e3decf6546d4dbdcd495b234e06c/strict_drilled_workflows-638875a84f3cf049",
+        "bytes": 6569432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/geometry_context-673fb3a0a6f0689a": {
+        "sha256": "0c1beef155760c3622f886374bba6d9dca85ea0155f835a867084343d2e3e234",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/0c1beef155760c3622f886374bba6d9dca85ea0155f835a867084343d2e3e234/geometry_context-673fb3a0a6f0689a",
+        "bytes": 7168024
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/metaball_workloads-51226a10ba4c7506": {
+        "sha256": "8860a20077e9b2340069df7f32a175ec3a576eab1134f8e4f672e8b8bea20d47",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/8860a20077e9b2340069df7f32a175ec3a576eab1134f8e4f672e8b8bea20d47/metaball_workloads-51226a10ba4c7506",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/curve_metaball_workloads-93eb9e05f68c5c8b": {
+        "sha256": "f81d63774abaa7f5d90152904922972dae56f2f0428e267daef0158a8c506339",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/f81d63774abaa7f5d90152904922972dae56f2f0428e267daef0158a8c506339/curve_metaball_workloads-93eb9e05f68c5c8b",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/solid_cache-07b265ceb2ca1c46": {
+        "sha256": "114ee27acc14e374c930039edf7857bde045b99a8b48189f16c56e3e848f84b9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/114ee27acc14e374c930039edf7857bde045b99a8b48189f16c56e3e848f84b9/solid_cache-07b265ceb2ca1c46",
+        "bytes": 6712280
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/sdf_failures-0fb37e01688c21a0": {
+        "sha256": "7a21e36eb9f175a7dcd1d299d5d6e405ba05bdb2d8dc15e2d4e43d4cb9ffe2a9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/7a21e36eb9f175a7dcd1d299d5d6e405ba05bdb2d8dc15e2d4e43d4cb9ffe2a9/sdf_failures-0fb37e01688c21a0",
+        "bytes": 1079424
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/transform_failures-5b7fe4d21c3ce0bd": {
+        "sha256": "2abf3fc6e0c39f174ee50520cdd529824239890d44a15bed32248dcc6a5b656c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/2abf3fc6e0c39f174ee50520cdd529824239890d44a15bed32248dcc6a5b656c/transform_failures-5b7fe4d21c3ce0bd",
+        "bytes": 6613288
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/text_contracts-89d7bc1159e5c677": {
+        "sha256": "c691a2ec94817d8e279e25a6120b267f83f00e58251b9a1c1548706ebad4370e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/c691a2ec94817d8e279e25a6120b267f83f00e58251b9a1c1548706ebad4370e/text_contracts-89d7bc1159e5c677",
+        "bytes": 1079432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/batch_common_cells-95a76a9364b0dff9": {
+        "sha256": "b3c8287c615a70eae52024d3c219ff9bbafb3de07e0c588b071429ca1526f9ed",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/b3c8287c615a70eae52024d3c219ff9bbafb3de07e0c588b071429ca1526f9ed/batch_common_cells-95a76a9364b0dff9",
+        "bytes": 6335240
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/adapter_boolean_failures-4f1ca3000d3fc581": {
+        "sha256": "8574e61283ccb483188aed3fa9b097d5f576fadf992cb7fb2b454139137b3508",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/8574e61283ccb483188aed3fa9b097d5f576fadf992cb7fb2b454139137b3508/adapter_boolean_failures-4f1ca3000d3fc581",
+        "bytes": 6477704
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/curve_metaball_failures-100955c99151bd1c": {
+        "sha256": "138b61bc832cd460e4d4dba5de0b6638df032af3c1b14961e425e6e96aca9ce0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/138b61bc832cd460e4d4dba5de0b6638df032af3c1b14961e425e6e96aca9ce0/curve_metaball_failures-100955c99151bd1c",
+        "bytes": 1079480
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hilbert_trimming-72122bfafb7d9216": {
+        "sha256": "b7f48c39dcc16e4d1dc028ff905509227856050561a1764f39e3b476434cf4f2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/b7f48c39dcc16e4d1dc028ff905509227856050561a1764f39e3b476434cf4f2/hilbert_trimming-72122bfafb7d9216",
+        "bytes": 1079448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/sampled_profile_failures-59ed42fadf98b620": {
+        "sha256": "40dce8f51aed77737a19b16a5aedcb200ac4d619a9285c55f73bf25c7eb41ae4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/40dce8f51aed77737a19b16a5aedcb200ac4d619a9285c55f73bf25c7eb41ae4/sampled_profile_failures-59ed42fadf98b620",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/exact_path_failures-c65ee91721cdc862": {
+        "sha256": "e649513289a10819baaeab30f0130cb0843b5095fb2c1d9d7ac9ccdcb4ce6db5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/e649513289a10819baaeab30f0130cb0843b5095fb2c1d9d7ac9ccdcb4ce6db5/exact_path_failures-c65ee91721cdc862",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/polyhedral_construction-37f9e8a14557f156": {
+        "sha256": "f20e2a178e9252ad3b10de908744d23f58602e009284c1c6d2a19677141405b9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/f20e2a178e9252ad3b10de908744d23f58602e009284c1c6d2a19677141405b9/polyhedral_construction-37f9e8a14557f156",
+        "bytes": 6715048
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/curve_constructor_failures-fd8f13d67d2561c4": {
+        "sha256": "6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd/curve_constructor_failures-fd8f13d67d2561c4",
+        "bytes": 1079496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/wasm_certainty-65de70dfe11e3e06": {
+        "sha256": "d8e8d09df2a9eea388be56b3ed93d6e562d7f37630a19f07a014d19430c30fb6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/d8e8d09df2a9eea388be56b3ed93d6e562d7f37630a19f07a014d19430c30fb6/wasm_certainty-65de70dfe11e3e06",
+        "bytes": 1079432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/native_queries-c72418af2e8884f8": {
+        "sha256": "7f64ee7d41c819a93b5f159af24a6c68c3baee45892e79ad8b3bec6aaab3c18a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/7f64ee7d41c819a93b5f159af24a6c68c3baee45892e79ad8b3bec6aaab3c18a/native_queries-c72418af2e8884f8",
+        "bytes": 6710768
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/empty_composition-329c8a68d57ad60d": {
+        "sha256": "f5a62c959bc7650395d3300ea2caa95769a8e68fce959364938b21ffb5c37d88",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/f5a62c959bc7650395d3300ea2caa95769a8e68fce959364938b21ffb5c37d88/empty_composition-329c8a68d57ad60d",
+        "bytes": 6586208
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": {
+        "sha256": "739d890da0f66797d8e2a741cc2932b14500f600ca4b78d82e031145acd491f9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/739d890da0f66797d8e2a741cc2932b14500f600ca4b78d82e031145acd491f9/mesh_boolean_context-a8ee65205fbdc3d4",
+        "bytes": 6581224
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/export_projection_contracts-f90dd6ab1d556b5f": {
+        "sha256": "b72244673c056edb7590558dc1228f299d9212c74952840b4a61041e0621f44d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/b72244673c056edb7590558dc1228f299d9212c74952840b4a61041e0621f44d/export_projection_contracts-f90dd6ab1d556b5f",
+        "bytes": 1079496
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "c69978d052ae68d3ef7534b7c2c40bc04642e8d7b11fab8db1114740ddad0a7d",
+    "stderr_sha256": "53f11de38e1537ab182a8e0d07fe1a35954ca46b94efe26e25796cae0d1e2bec",
+    "resources_sha256": "01772b0f7db3ab73291c81584bf6cbe2340160c63abd62f7b2b63a61e4df7040"
+  },
+  {
+    "name": "native-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--no-fail-fast",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--",
+      "--test-threads=1",
+      "--skip",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--skip",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--skip",
+      "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 543.3832792900503,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hyperdrc-5da1690b41025398": {
+        "sha256": "c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af/hyperdrc-5da1690b41025398",
+        "bytes": 1079400
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "58a628bac759271d7d48a21bcc11edbf5fe495b34e399d014f4ef47e57310567",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/58a628bac759271d7d48a21bcc11edbf5fe495b34e399d014f4ef47e57310567/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54262744
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/diagnostic_formatting-e5ef4baeabfbc955": {
+        "sha256": "4bfba96e0eca348fb66989f2422b4a0c6f6084e1037c0380bfdbdd72dea23a35",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/4bfba96e0eca348fb66989f2422b4a0c6f6084e1037c0380bfdbdd72dea23a35/diagnostic_formatting-e5ef4baeabfbc955",
+        "bytes": 20066512
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/artifact_numeric_keys-03d9b7a570505404": {
+        "sha256": "d062798be1190306d7c15a776ec75d7805a9252a126943e32e5bff3694e42437",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/d062798be1190306d7c15a776ec75d7805a9252a126943e32e5bff3694e42437/artifact_numeric_keys-03d9b7a570505404",
+        "bytes": 6798376
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/kicad_pad_sources-e4732b4399bed56a": {
+        "sha256": "2a587265f85bff10cdf081fbcbd2bddc979c33a19802c011975659d4e13c265a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/2a587265f85bff10cdf081fbcbd2bddc979c33a19802c011975659d4e13c265a/kicad_pad_sources-e4732b4399bed56a",
+        "bytes": 20792368
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/kicad_rule_export-c09b25b29b958a07": {
+        "sha256": "87288589a423f61fc12a0404f8d3a8c5f9cbbd0fde3687788b91f5ed10d01a8c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/87288589a423f61fc12a0404f8d3a8c5f9cbbd0fde3687788b91f5ed10d01a8c/kicad_rule_export-c09b25b29b958a07",
+        "bytes": 43571536
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/kicad_track_failures-b846f6af7dd90fbe": {
+        "sha256": "8e72046fbe7221dba7f5bf625fc87a34a9883a84fde5c364d5425666dd6d58c0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/8e72046fbe7221dba7f5bf625fc87a34a9883a84fde5c364d5425666dd6d58c0/kicad_track_failures-b846f6af7dd90fbe",
+        "bytes": 20528208
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/readme-990ac56b4fb5e9a5": {
+        "sha256": "87afe91b185172eaa34cb976ea0a10c8742a8c82d8ae9987ce5e0d2952b1a6ab",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/87afe91b185172eaa34cb976ea0a10c8742a8c82d8ae9987ce5e0d2952b1a6ab/readme-990ac56b4fb5e9a5",
+        "bytes": 1117544
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "cada102cd0b45c0b129f2d21b39bf8ad8b517f7d7210d6d452632cf9371a8fd9",
+    "stderr_sha256": "dd7085a4f2b71e342df9f756f21461e5dcaf19e13cf15fbbcc4ef9d0b6698ed3",
+    "resources_sha256": "3330c7773bcf687f259f36696f017ca82bc65d690f04c841fc2dc935face4e93"
+  },
+  {
+    "name": "full-board",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 54.5978097198531,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "58a628bac759271d7d48a21bcc11edbf5fe495b34e399d014f4ef47e57310567",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/58a628bac759271d7d48a21bcc11edbf5fe495b34e399d014f4ef47e57310567/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54262744
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "3ad8f993ae31ddd213e2ffb30921f745d3c52bd184775515b2f8cf5f4f5c45d1",
+    "stderr_sha256": "0294d6d40d63ec06788c9ef73cad0ba8c614fb4379f12c7cc2fe6f6c3af432e5",
+    "resources_sha256": "b35c9d8caad9502e5676e505971bf7a9ebdb55f0c315326addfd03ff15744c9e"
+  },
+  {
+    "name": "copper-neck",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 44.80657502776012,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "58a628bac759271d7d48a21bcc11edbf5fe495b34e399d014f4ef47e57310567",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/58a628bac759271d7d48a21bcc11edbf5fe495b34e399d014f4ef47e57310567/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54262744
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "eec167ef38845b9e1dd081b23143f3548aa81e2ff995924f6dbb51b8435cd961",
+    "stderr_sha256": "b905c4634fb16ec738eb5e79a7bc041dbab4aa356c91f66cf4cf8439ff82a5dc",
+    "resources_sha256": "8151df73d6b99ae91a68f006b2f2be7ccfe190606f284e39a800bb9e34d56b81"
+  },
+  {
+    "name": "gerber",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.5081239761784673,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v4/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "58a628bac759271d7d48a21bcc11edbf5fe495b34e399d014f4ef47e57310567",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v4/58a628bac759271d7d48a21bcc11edbf5fe495b34e399d014f4ef47e57310567/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54262744
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "ad0094e8779893e9957c9115899cb57707257bffc489462178c9d16167ff7b2b",
+    "stderr_sha256": "9ebb8c8e82755c51859531f989812ba157a4a183dcde5c286b8ace34e60b7ed0",
+    "resources_sha256": "e44c970d6df283711f5e5c39772336ff55631f915746239eb3af5ba49a301b1d"
+  },
+  {
+    "name": "circuit-all",
+    "command": [
+      "cargo",
+      "test",
+      "--no-fail-fast",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--release",
+      "--all-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 184.04502136074007,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "23d365e34be87ea808a7fee357fddec8b0d42e5576d261f51cd0da606ed4c751",
+    "resources_sha256": "2dfb677ddb00461b99e003348ae4ff0d3b1198defec539842a651e9aee93ee3b"
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "-p",
+      "csgrs",
+      "-p",
+      "hyperdrc",
+      "-p",
+      "hypercircuit",
+      "--release",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 76.5338479471393,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "0b581575877b5bcc935283e88a9eb83448a3051a37a8cab6401cf5fe37c0bc17",
+    "resources_sha256": "18f046a55bea2ba4dace734b2f087e10f496ced6340c05d042cacf57aa504429"
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-features",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 24.378774845972657,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": "-D warnings",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "8306b75dc08055a4f674b1ab20d531b0a1744d3b11d8cbb5b74fa1a2a992c74c",
+    "resources_sha256": "428e5fea72310ceb2482805dbde8e8bc610256d5a42844a9f544b861f8422bee"
+  },
+  {
+    "name": "native-cli",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 112.47964451508597,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "6fe178d61dee25d091f89fa0a7aafe4ddaed23994b7cba5469f825e02015693b",
+    "stderr_sha256": "2f44bf896cd9f47fa6165d1c88f5d3c22d706417d1b5c8eb1abe857966e6d8fd",
+    "resources_sha256": "5abc80a386783504baf078cbd879981dec1215b9ba342a799b9706c43722d456"
+  }
+]

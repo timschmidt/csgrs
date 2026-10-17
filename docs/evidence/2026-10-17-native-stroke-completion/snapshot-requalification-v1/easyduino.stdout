@@ -1,0 +1,14 @@
+
+running 9 tests
+test esp32_runs_end_to_end_through_hyperdrc ... ok
+test esp32s3_runs_end_to_end_through_hyperdrc ... ok
+test manifest_pins_the_complete_easyduino_repository_inventory ... ok
+test nano_full_fidelity_aggregate_obeys_the_selected_predicate_policy ... ok
+test nano_runs_end_to_end_through_hyperdrc ... ok
+test pinned_kicad_projects_import_to_exact_native_semantic_fixtures ... ok
+test rp2040_runs_end_to_end_through_hyperdrc ... ok
+test stm32f103_runs_end_to_end_through_hyperdrc ... ok
+test uno_runs_end_to_end_through_hyperdrc ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 36.84s
+

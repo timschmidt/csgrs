@@ -1,0 +1,23 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/qualification_tail_v4.py": "8a7a34f7977ad0fc5da46a93bf03fb620f5fe45387ca8c23bac4d3b121c974ba",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/ui_v4.py": "b1ad584b5f3cf0a1cf9d093829894aa45e957c3ff83b98c4a309bc166bb2d417",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/ui_common_v3.py": "0f1a66398c9f0fae553dadbad6e81032218b88771d824d2b3b7788ee7167ccae",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/compare_v4.py": "8e1989eb528aa17d45153a8e395f8221e875747057397abdbda6b614227faeeb",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost_probe_v2.rs": "a964550404cc84a17f662161a29790b367c5de2e2f453751b55723135fdfc820",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost-contract-v1.md": "d35ab69375fd7f74938c0fa20886bcb3163dd2daf3823c9da1e2eded287ac944",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/v4-qualification-reuse-v2/result.json": "3737ca37f4a2d473170ad12d29b8ed33db12ac72f192bc149c9ffe309be760a7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/requalify_snapshots_v1.py": "1e6ebb425d14800e4022a469cc8d9757c030c9fcea75982d74347df20a61ea39",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/metadata-migration-v2/result.json": "07a62e34f8a3ffca2e9c794906c5e0da4d7170e21e7e2f9be7552e4cb2329756",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/result.json": "02c5950b270457eaceb2bd62a5ac56e8265402885d59fc76433181d5c42ff428"
+  },
+  "started_epoch": 1792221690.9977708,
+  "native_wait_limit_seconds": 10800,
+  "order": [
+    "consumer-validation-v1",
+    "snapshot-requalification-v1",
+    "ui-validation-v1",
+    "comparison-v1"
+  ],
+  "overlapping_workload_measurements": false
+}

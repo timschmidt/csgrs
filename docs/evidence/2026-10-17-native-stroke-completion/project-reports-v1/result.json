@@ -1,0 +1,26 @@
+{
+  "complete": true,
+  "commands": 4,
+  "reports": {
+    "cparti": {
+      "difference_count": 0,
+      "difference_file": "cparti-differences.json",
+      "baseline_violation_count": 12,
+      "candidate_violation_count": 12,
+      "baseline_waived_count": 0,
+      "candidate_waived_count": 0
+    },
+    "hvp109a": {
+      "difference_count": 0,
+      "difference_file": "hvp109a-differences.json",
+      "baseline_violation_count": 201,
+      "candidate_violation_count": 201,
+      "baseline_waived_count": 0,
+      "candidate_waived_count": 0
+    }
+  },
+  "all_report_values_identical": true,
+  "all_project_inputs_and_binaries_unchanged": true,
+  "project_files_retained": 108,
+  "performance_comparison_claimed": false
+}

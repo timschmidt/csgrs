@@ -1,0 +1,6 @@
+
+thread 'translated_reversed_strokes_keep_analytic_measurements_and_membership' (189230) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/contract_tests_v1.rs:8:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Equal)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

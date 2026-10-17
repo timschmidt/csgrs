@@ -1,0 +1,14 @@
+
+running 9 tests
+test centered_pad_materialization_avoids_spurious_offset_uncertainty ... ok
+test checked_fluent_design_reports_cohesive_release_evidence ... ok
+test checked_hierarchy_reports_release_from_its_path_qualified_flat_view ... ok
+test default_manufacturing_release_is_unsigned_deterministic_and_self_verifying ... ok
+test ordinary_release_runs_native_dft_requirements_with_source_evidence ... ok
+test panel_release_expands_components_and_test_access_without_losing_child_identity ... ok
+test release_resolves_controlled_impedance_materials_through_hyperphysics ... ok
+test release_rule_failures_remain_inspectable_reports ... ok
+test semantic_release_preserves_authored_intent_and_source_spans_in_drc_handoff ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.39s
+

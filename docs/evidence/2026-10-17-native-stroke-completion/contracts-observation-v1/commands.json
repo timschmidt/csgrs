@@ -1,0 +1,30 @@
+[
+  {
+    "name": "compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/libhypercurve.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/deps/libhyperlimit-748af1e73cf3afdf.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/deps/libhyperreal-833ddc6db119ca40.rlib",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/contract_tests_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/contracts-observation-v1/contracts"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.03505817474797368,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "efdf3059ced3ca8365e6914ba50c63faeb34febc491e1a5d186df598f914ba5b",
+    "resources_sha256": "efba9cff4ad7968d5f9a64f45b8f2c94a1ad216dc0a6afbd202e21c62d007290"
+  }
+]

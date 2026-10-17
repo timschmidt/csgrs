@@ -1,0 +1,33 @@
+{
+  "observation_source": "Codex execution-session terminal results",
+  "sessions": [
+    {
+      "id": 27045,
+      "runner": "qualification_tail_v5.py",
+      "exit_code": 0,
+      "result": "Demo tests, strict Clippy and WASM build passed; all 126 comparison commands completed. Candidate certified all 120 phases, repeated snapshots and both standalone reports agree."
+    },
+    {
+      "id": 97452,
+      "runner": "measure_structure_v1.py",
+      "exit_code": 0,
+      "result": "Measured all 240 retained phase observations and 120 paired rows without rerunning timed work."
+    },
+    {
+      "id": 50510,
+      "runner": "project_reports_v1.py",
+      "exit_code": 0,
+      "result": "All four complete-project CLI commands passed; both reports match in every field."
+    }
+  ],
+  "result_sha256": {
+    "qualification-tail-v5/result.json": "f997e55652c6c05d4f7515ee2e682ac812b24025802564850ef79cc3de65ec87",
+    "comparison-v1/result.json": "acb69ae182baac65f2f042c41ebc240d9e33c2763c37ca77a6ee766fd180bcff",
+    "structure-metrics-v1/result.json": "1a87fd16f226809111c9904d2140850c9afeb614e87bfcd58c0b8e2a80e76bff",
+    "project-reports-v1/result.json": "ebddcb203a9fe0704b7f319214b0f69efe10a289bea6748518623a6b6e12d56c",
+    "cost-review-v1.json": "87e93ef2982b56c39971094d4cc12d772387ef99f170601b635b3d95fe14053c"
+  },
+  "main_sources_modified": false,
+  "full_pre_push_matrix_executed": false,
+  "published_package_pipeline_executed": false
+}

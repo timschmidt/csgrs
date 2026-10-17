@@ -1,0 +1,32 @@
+[
+  {
+    "name": "curve_regressions-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/libhyperdrc.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libanyhow-af4f35109210643f.rlib",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/probe-source-v1/curve_regressions.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/reproduction-v1/curve_regressions"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.11664605792611837,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "899c1b6130036cec5c910ab1395c0368efdd774f8d579d9845c407b513797eec",
+    "resources_sha256": "c795fdd2fdae5879c8cbc46c974168f0dbf1542fcba5ada03b2753e5d81f5b6b"
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "complete": true,
+  "commands": 3,
+  "unexpected_exits": [],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "experiment_only": true,
+  "full_qualification_claimed": false
+}

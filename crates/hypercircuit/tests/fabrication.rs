@@ -650,22 +650,98 @@ fn pad_and_artwork_intent_emit_unit_aware_mask_paste_and_legend_images() {
     assert_eq!(package.production_omissions.len(), 1);
     assert!(package.verify_integrity().is_empty());
 
-    let rejected = layout
-        .materialize(
-            &circuit,
-            &hypercircuit::MaterializationContext::STRICT,
-            MaterializationOptions {
-                production_text: Some(ProductionTextPolicy {
-                    font_name: "invalid-font".into(),
-                    font_data: b"not a font".to_vec(),
-                }),
-                ..MaterializationOptions::default()
-            },
-        )
-        .unwrap();
-    assert!(rejected.process_omissions.iter().any(|omission| matches!(
-        omission,
-        ProcessMaterializationOmission::TextFontRejected { source }
-            if source.ends_with(":reference-text")
-    )));
+    // A selected but invalid font is a typed failure, so there is no partial
+    // successful materialization available for the fabrication exporter.
+    use csgrs::errors::ValidationError;
+    use std::error::Error;
+    for context in [
+        hypercircuit::MaterializationContext::STRICT,
+        hypercircuit::MaterializationContext::APPROXIMATE_512,
+        hypercircuit::MaterializationContext::STRICT,
+    ] {
+        let error = layout
+            .materialize(
+                &circuit,
+                &context,
+                MaterializationOptions {
+                    production_text: Some(ProductionTextPolicy {
+                        font_name: "invalid-font".into(),
+                        font_data: b"not a font".to_vec(),
+                    }),
+                    ..MaterializationOptions::default()
+                },
+            )
+            .unwrap_err();
+        assert!(matches!(
+            &error,
+            hypercircuit::GeometryMaterializationError::Construction(ValidationError::FontFace(_))
+        ));
+        assert!(matches!(
+            error.source().unwrap().downcast_ref::<ValidationError>(),
+            Some(ValidationError::FontFace(_))
+        ));
+
+        let mut missing_glyph = layout.clone();
+        let mut changed_text = 0;
+        for graphic in &mut missing_glyph.land_patterns[0].graphics {
+            if let LandPatternGraphicPrimitive::Text { text, .. } = &mut graphic.primitive {
+                // The valid A prefix must not escape as complete AB artwork.
+                *text = "AB".to_owned();
+                changed_text += 1;
+            }
+        }
+        assert_eq!(changed_text, 1);
+        let error = missing_glyph
+            .materialize(
+                &circuit,
+                &context,
+                MaterializationOptions {
+                    production_text: Some(ProductionTextPolicy {
+                        font_name: "ttf-parser-demo".into(),
+                        font_data: demo_font(),
+                    }),
+                    ..MaterializationOptions::default()
+                },
+            )
+            .unwrap_err();
+        assert!(matches!(
+            &error,
+            hypercircuit::GeometryMaterializationError::Construction(
+                ValidationError::MissingFontGlyph { character: 'B' }
+            )
+        ));
+        assert!(matches!(
+            error.source().unwrap().downcast_ref::<ValidationError>(),
+            Some(ValidationError::MissingFontGlyph { character: 'B' })
+        ));
+
+        let valid = layout
+            .materialize(
+                &circuit,
+                &context,
+                MaterializationOptions {
+                    production_text: Some(ProductionTextPolicy {
+                        font_name: "ttf-parser-demo".into(),
+                        font_data: demo_font(),
+                    }),
+                    ..MaterializationOptions::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(valid.predicate_policy, context.predicate_policy());
+        assert_eq!(
+            valid.predicate_certainty,
+            csgrs::GeometryCertainty::Certified
+        );
+        assert_eq!(
+            valid.process_features.len(),
+            materialized.process_features.len()
+        );
+        assert_eq!(valid.production_text, materialized.production_text);
+        assert!(!valid.process_omissions.iter().any(|omission| matches!(
+            omission,
+            ProcessMaterializationOmission::TextArtwork { .. }
+                | ProcessMaterializationOmission::TextFontRejected { .. }
+        )));
+    }
 }

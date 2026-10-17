@@ -330,7 +330,7 @@ exact signatures.
   try_from_native_material_contours, try_from_native_boundary_contours,
   try_from_boundary_paths, classify_point, classify_points, signed_area,
   filled_area, boundary_profiles, boundary_paths,
-  segment_certified, offset}` is the mixed-family region API. `offset` is the
+  segment_certified, offset, stroke_path}` is the mixed-family region API. `offset` is the
   sole region offset operation and takes an explicit `OffsetCornerStyle2`;
   unsupported exact carriers remain explicit blockers. `segment_certified`
   is a separate lossy output adapter and never participates in offset
@@ -341,6 +341,14 @@ exact signatures.
   overlap, or touch; their individual contour fill rules do not override the
   chosen compound fill. Explicit material/hole constructors retain per-loop
   fill semantics.
+  `stroke_path` takes a positive half-width, a corner style and an endpoint
+  `OffsetCap`. A certified distinct single line supports exact butt and round
+  strokes, including diagonal directions, symbolic radii and exact coordinates
+  beyond binary64 range. Retained parallels and semicircular caps keep analytic
+  area, bounds and rebuilt boundary paths consumable under `STRICT`. Boundary
+  subdivision and ordering can differ from earlier arrangement output; compare
+  represented sets separately from serialized artifacts. Unresolved predicates
+  remain typed blockers. This does not add a total-work or heap-byte bound.
   Unordered segment admission returns the region through the same exact-result
   contract. Unresolved endpoint assembly or topology remains an exact blocker;
   native views and structural counts are computed when requested.

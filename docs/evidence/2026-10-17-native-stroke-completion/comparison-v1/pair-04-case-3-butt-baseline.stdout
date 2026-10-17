@@ -1,0 +1,22 @@
+[
+  {
+    "allocated_bytes": 29405741,
+    "allocation_calls": 395735,
+    "certified_completion": true,
+    "elapsed_ns": 24480341,
+    "peak_extra_requested_bytes": 1182735,
+    "phase": "fresh_process",
+    "retained_regions": 2,
+    "retained_requested_bytes_delta": 613665
+  },
+  {
+    "allocated_bytes": 29380221,
+    "allocation_calls": 395231,
+    "certified_completion": true,
+    "elapsed_ns": 22828784,
+    "peak_extra_requested_bytes": 1155495,
+    "phase": "repeat_after_model_drop",
+    "retained_regions": 2,
+    "retained_requested_bytes_delta": 587553
+  }
+]

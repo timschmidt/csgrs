@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "base_commit": "b137381247a03342ce5b6184710475fcc22c9d63",
+  "source_inputs": 2833,
+  "baseline_inputs": 2832,
+  "source_hashes_sha256": "43659e29621e4c993b24690b30d474537d2bcf507cb08ad0a08d5a02934a0b5b",
+  "changes": {
+    "crates/hypercurve/src/bezier_region.rs": "115e092cfaa6d27613736433ffb2890031bd24f793188c17d71250e54af892da",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b"
+  },
+  "runner_sha256": "dbacd23e842720f78a719a0c1978af478f7d048ae1535d1c8259d29ad4b6b272",
+  "archive_component": "Only retained circular signed-area reuse; original eight curve tests byte-identical.",
+  "main_sources_modified": false
+}

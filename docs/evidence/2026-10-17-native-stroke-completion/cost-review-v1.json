@@ -1,0 +1,751 @@
+{
+  "complete": true,
+  "runner_sha256": "abaa01e484befde4e85261132fc316bd929d79666d7ea465bfab3f69dd755f76",
+  "comparison_sha256": "acb69ae182baac65f2f042c41ebc240d9e33c2763c37ca77a6ee766fd180bcff",
+  "structure_sha256": "1a87fd16f226809111c9904d2140850c9afeb614e87bfcd58c0b8e2a80e76bff",
+  "completion": {
+    "baseline": {
+      "phases": 120,
+      "certified_complete": 80
+    },
+    "candidate": {
+      "phases": 120,
+      "certified_complete": 120
+    }
+  },
+  "matched_completed_rows": 16,
+  "expanded_completion_rows": 8,
+  "reviewed_artifact_differences": [
+    {
+      "case": 0,
+      "cap": "butt",
+      "difference_count": 0,
+      "strengthened_area_claims": [],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "candidate": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    },
+    {
+      "case": 0,
+      "cap": "round",
+      "difference_count": 0,
+      "strengthened_area_claims": [],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            6,
+            6
+          ],
+          [
+            6,
+            6
+          ]
+        ],
+        "candidate": [
+          [
+            6,
+            6
+          ],
+          [
+            6,
+            6
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    },
+    {
+      "case": 1,
+      "cap": "butt",
+      "difference_count": 0,
+      "strengthened_area_claims": [],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "candidate": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    },
+    {
+      "case": 1,
+      "cap": "round",
+      "difference_count": 4,
+      "strengthened_area_claims": [],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            8,
+            8
+          ],
+          [
+            8,
+            8
+          ]
+        ],
+        "candidate": [
+          [
+            6,
+            6
+          ],
+          [
+            6,
+            6
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    },
+    {
+      "case": 2,
+      "cap": "butt",
+      "difference_count": 0,
+      "strengthened_area_claims": [],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "candidate": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    },
+    {
+      "case": 2,
+      "cap": "round",
+      "difference_count": 24,
+      "strengthened_area_claims": [
+        "$[0].regions[0].area.certified_equal",
+        "$[0].regions[1].area.certified_equal",
+        "$[1].regions[0].area.certified_equal",
+        "$[1].regions[1].area.certified_equal"
+      ],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            8,
+            8
+          ],
+          [
+            8,
+            8
+          ]
+        ],
+        "candidate": [
+          [
+            6,
+            6
+          ],
+          [
+            6,
+            6
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    },
+    {
+      "case": 3,
+      "cap": "butt",
+      "difference_count": 0,
+      "strengthened_area_claims": [],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "candidate": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    },
+    {
+      "case": 3,
+      "cap": "round",
+      "difference_count": 48,
+      "strengthened_area_claims": [
+        "$[0].regions[0].area.certified_equal",
+        "$[0].regions[1].area.certified_equal",
+        "$[1].regions[0].area.certified_equal",
+        "$[1].regions[1].area.certified_equal"
+      ],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            8,
+            8
+          ],
+          [
+            8,
+            8
+          ]
+        ],
+        "candidate": [
+          [
+            6,
+            6
+          ],
+          [
+            6,
+            6
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    },
+    {
+      "case": 4,
+      "cap": "butt",
+      "difference_count": 0,
+      "strengthened_area_claims": [],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "candidate": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    },
+    {
+      "case": 4,
+      "cap": "round",
+      "difference_count": 40,
+      "strengthened_area_claims": [
+        "$[0].regions[0].area.certified_equal",
+        "$[0].regions[1].area.certified_equal",
+        "$[1].regions[0].area.certified_equal",
+        "$[1].regions[1].area.certified_equal"
+      ],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            8,
+            8
+          ],
+          [
+            8,
+            8
+          ]
+        ],
+        "candidate": [
+          [
+            6,
+            6
+          ],
+          [
+            6,
+            6
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    },
+    {
+      "case": 5,
+      "cap": "butt",
+      "difference_count": 0,
+      "strengthened_area_claims": [],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "candidate": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    },
+    {
+      "case": 5,
+      "cap": "round",
+      "difference_count": 24,
+      "strengthened_area_claims": [
+        "$[0].regions[0].area.certified_equal",
+        "$[0].regions[1].area.certified_equal",
+        "$[1].regions[0].area.certified_equal",
+        "$[1].regions[1].area.certified_equal"
+      ],
+      "native_edge_counts": {
+        "baseline": [
+          [
+            8,
+            8
+          ],
+          [
+            8,
+            8
+          ]
+        ],
+        "candidate": [
+          [
+            6,
+            6
+          ],
+          [
+            6,
+            6
+          ]
+        ]
+      },
+      "all_other_facts_and_independent_query_results_identical": true
+    }
+  ],
+  "repeated_snapshot_differences": 0,
+  "matched_completed_cost_rows": [
+    {
+      "case": 0,
+      "label": "axis",
+      "cap": "butt",
+      "phase": "fresh_process",
+      "median_elapsed_ratio": 1.014710964603299,
+      "median_requested_allocation_byte_change_percent": 0.45731301488387227,
+      "all_allocation_call_deltas": [
+        47,
+        47,
+        47,
+        47,
+        47
+      ],
+      "all_peak_requested_byte_deltas": [
+        -136,
+        -136,
+        -136,
+        -136,
+        -136
+      ]
+    },
+    {
+      "case": 0,
+      "label": "axis",
+      "cap": "butt",
+      "phase": "repeat_after_model_drop",
+      "median_elapsed_ratio": 1.0248285513026802,
+      "median_requested_allocation_byte_change_percent": 0.4106971638891891,
+      "all_allocation_call_deltas": [
+        42,
+        42,
+        42,
+        42,
+        42
+      ],
+      "all_peak_requested_byte_deltas": [
+        -736,
+        -736,
+        -736,
+        -736,
+        -736
+      ]
+    },
+    {
+      "case": 0,
+      "label": "axis",
+      "cap": "round",
+      "phase": "fresh_process",
+      "median_elapsed_ratio": 0.9514555055095367,
+      "median_requested_allocation_byte_change_percent": -5.968792858262197,
+      "all_allocation_call_deltas": [
+        -6241,
+        -6241,
+        -6241,
+        -6241,
+        -6241
+      ],
+      "all_peak_requested_byte_deltas": [
+        -15624,
+        -15624,
+        -15624,
+        -15624,
+        -15624
+      ]
+    },
+    {
+      "case": 0,
+      "label": "axis",
+      "cap": "round",
+      "phase": "repeat_after_model_drop",
+      "median_elapsed_ratio": 0.9429136688651828,
+      "median_requested_allocation_byte_change_percent": -5.847669884941222,
+      "all_allocation_call_deltas": [
+        -6028,
+        -6028,
+        -6028,
+        -6028,
+        -6028
+      ],
+      "all_peak_requested_byte_deltas": [
+        -1632,
+        -1632,
+        -1632,
+        -1632,
+        -1632
+      ]
+    },
+    {
+      "case": 1,
+      "label": "rational_diagonal",
+      "cap": "butt",
+      "phase": "fresh_process",
+      "median_elapsed_ratio": 1.0639259297497021,
+      "median_requested_allocation_byte_change_percent": 0.17241744719949434,
+      "all_allocation_call_deltas": [
+        11,
+        11,
+        11,
+        11,
+        11
+      ],
+      "all_peak_requested_byte_deltas": [
+        -664,
+        -664,
+        -664,
+        -664,
+        -664
+      ]
+    },
+    {
+      "case": 1,
+      "label": "rational_diagonal",
+      "cap": "butt",
+      "phase": "repeat_after_model_drop",
+      "median_elapsed_ratio": 0.9933298147802556,
+      "median_requested_allocation_byte_change_percent": 0.19677610312632926,
+      "all_allocation_call_deltas": [
+        13,
+        13,
+        13,
+        13,
+        13
+      ],
+      "all_peak_requested_byte_deltas": [
+        -592,
+        -592,
+        -592,
+        -592,
+        -592
+      ]
+    },
+    {
+      "case": 1,
+      "label": "rational_diagonal",
+      "cap": "round",
+      "phase": "fresh_process",
+      "median_elapsed_ratio": 0.8505771171467696,
+      "median_requested_allocation_byte_change_percent": -28.766648477323848,
+      "all_allocation_call_deltas": [
+        -91112,
+        -91112,
+        -91112,
+        -91112,
+        -91112
+      ],
+      "all_peak_requested_byte_deltas": [
+        -123256,
+        -123256,
+        -123256,
+        -123256,
+        -123256
+      ]
+    },
+    {
+      "case": 1,
+      "label": "rational_diagonal",
+      "cap": "round",
+      "phase": "repeat_after_model_drop",
+      "median_elapsed_ratio": 0.8647544940824379,
+      "median_requested_allocation_byte_change_percent": -28.738792199569822,
+      "all_allocation_call_deltas": [
+        -90793,
+        -90793,
+        -90793,
+        -90793,
+        -90793
+      ],
+      "all_peak_requested_byte_deltas": [
+        -98656,
+        -98656,
+        -98656,
+        -98656,
+        -98656
+      ]
+    },
+    {
+      "case": 2,
+      "label": "surd_diagonal",
+      "cap": "butt",
+      "phase": "fresh_process",
+      "median_elapsed_ratio": 0.9930958333752167,
+      "median_requested_allocation_byte_change_percent": 0.5453993778738109,
+      "all_allocation_call_deltas": [
+        1186,
+        1186,
+        1186,
+        1186,
+        1186
+      ],
+      "all_peak_requested_byte_deltas": [
+        -800,
+        -800,
+        -800,
+        -800,
+        -800
+      ]
+    },
+    {
+      "case": 2,
+      "label": "surd_diagonal",
+      "cap": "butt",
+      "phase": "repeat_after_model_drop",
+      "median_elapsed_ratio": 1.066757829359906,
+      "median_requested_allocation_byte_change_percent": 0.5445216961194165,
+      "all_allocation_call_deltas": [
+        1185,
+        1185,
+        1185,
+        1185,
+        1185
+      ],
+      "all_peak_requested_byte_deltas": [
+        -592,
+        -592,
+        -592,
+        -592,
+        -592
+      ]
+    },
+    {
+      "case": 3,
+      "label": "symbolic_translation",
+      "cap": "butt",
+      "phase": "fresh_process",
+      "median_elapsed_ratio": 1.0078658736713477,
+      "median_requested_allocation_byte_change_percent": 0.41819724930584135,
+      "all_allocation_call_deltas": [
+        1660,
+        1660,
+        1660,
+        1660,
+        1660
+      ],
+      "all_peak_requested_byte_deltas": [
+        -912,
+        -912,
+        -912,
+        -912,
+        -912
+      ]
+    },
+    {
+      "case": 3,
+      "label": "symbolic_translation",
+      "cap": "butt",
+      "phase": "repeat_after_model_drop",
+      "median_elapsed_ratio": 0.9922963654558808,
+      "median_requested_allocation_byte_change_percent": 0.4185605002766998,
+      "all_allocation_call_deltas": [
+        1660,
+        1660,
+        1660,
+        1660,
+        1660
+      ],
+      "all_peak_requested_byte_deltas": [
+        -808,
+        -808,
+        -808,
+        -808,
+        -808
+      ]
+    },
+    {
+      "case": 4,
+      "label": "symbolic_radius",
+      "cap": "butt",
+      "phase": "fresh_process",
+      "median_elapsed_ratio": 0.9821387058972447,
+      "median_requested_allocation_byte_change_percent": 0.36008227627663714,
+      "all_allocation_call_deltas": [
+        1956,
+        1956,
+        1956,
+        1956,
+        1956
+      ],
+      "all_peak_requested_byte_deltas": [
+        -1080,
+        -1080,
+        -1080,
+        -1080,
+        -1080
+      ]
+    },
+    {
+      "case": 4,
+      "label": "symbolic_radius",
+      "cap": "butt",
+      "phase": "repeat_after_model_drop",
+      "median_elapsed_ratio": 1.0149617706136826,
+      "median_requested_allocation_byte_change_percent": 0.36026540747678604,
+      "all_allocation_call_deltas": [
+        1956,
+        1956,
+        1956,
+        1956,
+        1956
+      ],
+      "all_peak_requested_byte_deltas": [
+        -808,
+        -808,
+        -808,
+        -808,
+        -808
+      ]
+    },
+    {
+      "case": 5,
+      "label": "small_rational_radius",
+      "cap": "butt",
+      "phase": "fresh_process",
+      "median_elapsed_ratio": 1.0280560090632613,
+      "median_requested_allocation_byte_change_percent": 0.4349174737340213,
+      "all_allocation_call_deltas": [
+        1588,
+        1588,
+        1588,
+        1588,
+        1588
+      ],
+      "all_peak_requested_byte_deltas": [
+        -2776,
+        -2776,
+        -2776,
+        -2776,
+        -2776
+      ]
+    },
+    {
+      "case": 5,
+      "label": "small_rational_radius",
+      "cap": "butt",
+      "phase": "repeat_after_model_drop",
+      "median_elapsed_ratio": 0.957165433203967,
+      "median_requested_allocation_byte_change_percent": 0.4332126107522083,
+      "all_allocation_call_deltas": [
+        1583,
+        1583,
+        1583,
+        1583,
+        1583
+      ],
+      "all_peak_requested_byte_deltas": [
+        -3328,
+        -3328,
+        -3328,
+        -3328,
+        -3328
+      ]
+    }
+  ],
+  "largest_median_paired_elapsed_ratio_on_matched_rows": 1.066757829359906,
+  "largest_median_requested_allocation_byte_increase_percent_on_matched_rows": 0.5453993778738109,
+  "all_recorded_retained_expression_metrics_nonincreasing": true,
+  "cli_byte_delta": 72,
+  "probe_byte_delta": 3408,
+  "interpretation": "Retain for expanded certified completion. Small adverse butt-stroke timings and allocation increases are retained alongside favorable round-stroke observations. Ratios for newly completed cases compare different completion outcomes and are not speedup evidence.",
+  "artifact_migration": "Five non-axis round-stroke cases use six regularized native edges instead of eight; equivalent scalar expression forms change in the four newly completed cases. Independent expected area, bounds and point classification establish the tested semantics separately from these serialization differences.",
+  "limitations": "Five instrumented pairs per case/cap. No universal speedup, uninstrumented latency, unique live graph size, peak intermediate expression growth, internal work bound or whole-program heap bound is established."
+}

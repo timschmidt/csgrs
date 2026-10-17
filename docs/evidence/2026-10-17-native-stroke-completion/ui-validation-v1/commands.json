@@ -1,0 +1,74 @@
+[
+  {
+    "name": "ui-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "crates/hypercurve/examples/hypercurve_ui/Cargo.toml",
+      "--release",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.2230594060383737,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "01103542ca713329d96b66721fa895ea45d09e0fdf7fc77d4e3a662d22008a0d",
+    "resources_sha256": "92379828e9857153e9bdea64244db5c8517311f2d7640c7b9e710aa3171567ec"
+  },
+  {
+    "name": "ui-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "crates/hypercurve/examples/hypercurve_ui/Cargo.toml",
+      "--release",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.24574239924550056,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "01103542ca713329d96b66721fa895ea45d09e0fdf7fc77d4e3a662d22008a0d",
+    "resources_sha256": "77d49e423cd9c0cc96e09a6100761fdcda0e66490a69f019942e6a43f67e91be"
+  },
+  {
+    "name": "ui-wasm",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "crates/hypercurve/examples/hypercurve_ui/Cargo.toml",
+      "--release",
+      "--target",
+      "wasm32-unknown-unknown"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.22773926425725222,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "01103542ca713329d96b66721fa895ea45d09e0fdf7fc77d4e3a662d22008a0d",
+    "resources_sha256": "1441f60cc77bbb2ac5d7c004be8067a34d5da3be26ff411045ae6ad1cac8bf01"
+  }
+]

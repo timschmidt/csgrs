@@ -1,0 +1,4958 @@
+[
+  {
+    "path": "$[0].regions[0].native.material[0]",
+    "baseline": [
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  5
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  5
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "candidate": [
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  18
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  24
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  18
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  24
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "path": "$[0].regions[1].native.material[0]",
+    "baseline": [
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  5
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  5
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "candidate": [
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  18
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  24
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  18
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  24
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "path": "$[1].regions[0].native.material[0]",
+    "baseline": [
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  5
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  5
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "candidate": [
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  18
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  24
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  18
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  24
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "path": "$[1].regions[1].native.material[0]",
+    "baseline": [
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  5
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  5
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "candidate": [
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  18
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  24
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  19
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  17
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  18
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  24
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "line": [
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  11
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  23
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        ]
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "arc": {
+          "center": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            }
+          ],
+          "clockwise": false,
+          "end": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            }
+          ],
+          "radius_squared": {
+            "class": "One",
+            "computable": null,
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "start": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  3
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5
+                ],
+                "numerator": [
+                  4
+                ],
+                "sign": -1
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

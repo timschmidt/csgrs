@@ -1,0 +1,21 @@
+
+running 8 tests
+test butt_diagonal_area_keeps_the_exact_surd ... ok
+test capsule_aggregation_keeps_the_exact_path_without_finite_enclosures ... ok
+test diagonal_capsules_preserve_analytic_area_bounds_and_reusable_boundaries ... FAILED
+test independent_diagonal_capsules_preserve_exact_total_area ... FAILED
+test many_capsules_preserve_tangent_contacts_and_nested_union_area ... ok
+test native_stroke_and_warm_measurements_cannot_publish_an_exhausted_budget_result ... FAILED
+test native_stroke_construction_retains_zero_budget_direct_certificates ... FAILED
+test unresolved_single_line_closure_keeps_the_strict_blocker ... ok
+
+failures:
+
+failures:
+    diagonal_capsules_preserve_analytic_area_bounds_and_reusable_boundaries
+    independent_diagonal_capsules_preserve_exact_total_area
+    native_stroke_and_warm_measurements_cannot_publish_an_exhausted_budget_result
+    native_stroke_construction_retains_zero_budget_direct_certificates
+
+test result: FAILED. 4 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.54s
+

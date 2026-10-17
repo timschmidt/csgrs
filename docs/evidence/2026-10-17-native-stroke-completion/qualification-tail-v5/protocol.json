@@ -1,0 +1,25 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/qualification_tail_v5.py": "263aa44b2d71571a49b8bd33e150134e635020d075daba0259dda11638375ef6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/ui_v5.py": "9e9d1f6564d4618c2efe5176e3bad8ecfb22576279e386153967deb0d095cd09",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/ui_common_v4.py": "ddefe54b2af64e30a29d140f229bc8a5afb3e87931ccd45ac7406dd48d3ab5ce",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/compare_v5.py": "1e14d2d363bb8a0b8bf06541de121fafd0fda858634b0a17c47f0d15ef331f3b",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost_probe_v2.rs": "a964550404cc84a17f662161a29790b367c5de2e2f453751b55723135fdfc820",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost_body_v2.rs": "e311b54f60aa87d60da13d7ccd6948145befddc433014824b1321bc75b098044",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost-contract-v1.md": "d35ab69375fd7f74938c0fa20886bcb3163dd2daf3823c9da1e2eded287ac944",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/ui-isolation-v1/result.json": "903d04582428aab3da12c64e41b5254bb260259c2fde3908fb68c761a9d77939",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/ui-isolation-contract-v1.md": "d149e395865c59a0f1878e87c24f6321d324d2b642fad6814ebeb2a7bb8f747a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-requalification-v1/result.json": "2f11a58f7e6cf13c889d2e08297b4f51c6abc77b6e180b50375df91bdcacbbc1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-validation-v1/result.json": "07e25ae9cbfd785ca45bd96f9499ba2d92ea8c3307c4585be8878ea00969fff3"
+  },
+  "started_epoch": 1792223613.1650305,
+  "order": [
+    "ui-validation-v2",
+    "comparison-v1"
+  ],
+  "overlapping_workload_measurements": false,
+  "preserved_failures": [
+    "ui-validation-v1",
+    "qualification-tail-v4"
+  ]
+}

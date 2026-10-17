@@ -1,0 +1,20 @@
+{
+  "libraries": {
+    "hypercurve": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/libhypercurve.rlib",
+    "hyperlimit": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/deps/libhyperlimit-748af1e73cf3afdf.rlib",
+    "hyperreal": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/deps/libhyperreal-833ddc6db119ca40.rlib"
+  },
+  "read_only_library_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/libhypercurve.rlib": "2a09b88886c3421b36e24500a18f454602d8ef158d65a2388d69706185caac2b"
+  },
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/contracts_v1.py": "959c4759da9c3eb7c70d6a1fcdfa3e8fb569e3a8c6dc4c8acaf0721de9417690",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/contract_tests_v1.rs": "2a212aa7c8289bdb1ce55a85039619d871e2d4ba86d584558fd853785c752aa5",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-validation-v2/result.json": "5c34f845efc7f84b7534f12ac3a06d4b4bd884ce6b0a11efe806b91aa2f76b04",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-preparation-v2/source-hashes.json.gz": "b417ee1f25feb942870ee5afc0a52488c081d14b19371c55bdf40eed177444e6"
+  },
+  "timeout_seconds": 900,
+  "address_space_bytes": 8589934592,
+  "completed_targets_reopened": false,
+  "scope": "Additional independent area, point-membership, bounds, reversal, reconstruction, policy and exact extreme-coordinate zero-budget contracts. Each test stops at its first failure."
+}

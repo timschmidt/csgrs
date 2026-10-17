@@ -1,0 +1,22 @@
+{
+  "observation_source": "Codex execution-session terminal results",
+  "native_result_sha256": "07e25ae9cbfd785ca45bd96f9499ba2d92ea8c3307c4585be8878ea00969fff3",
+  "sessions": [
+    {
+      "id": 86237,
+      "runner": "consumer_v1.py",
+      "exit_code": 101,
+      "result": "All nine commands completed; circuit-all retains 341 passes and seven stale artifact failures. Curve all-features, combined strict Clippy, documentation and CLI build passed."
+    },
+    {
+      "id": 83070,
+      "runner": "qualification_tail_v3.py",
+      "exit_code": 1,
+      "result": "Prerequisite assertion rejected the circuit-all failures before starting any dependent runner."
+    }
+  ],
+  "qualification_tail_v4_session": 6959,
+  "qualification_tail_v4_running": true,
+  "original_nonzero_exits_relabelled_as_success": false,
+  "main_sources_modified": false
+}

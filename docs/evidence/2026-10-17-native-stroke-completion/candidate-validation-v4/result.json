@@ -1,0 +1,22 @@
+{
+  "complete": true,
+  "commands": 14,
+  "unexpected_exits": [
+    "curve-all",
+    "circuit-all",
+    "clippy"
+  ],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "affected_native_consumers": [
+    "hypercurve",
+    "csgrs",
+    "hyperdrc",
+    "hypercircuit"
+  ],
+  "original_workload_gates_unchanged": true,
+  "full_pre_push_matrix_executed": false,
+  "published_package_pipeline_executed": false
+}

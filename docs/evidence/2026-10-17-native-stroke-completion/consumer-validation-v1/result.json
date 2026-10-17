@@ -1,0 +1,23 @@
+{
+  "complete": true,
+  "commands": 9,
+  "unexpected_exits": [
+    "circuit-all"
+  ],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "production_snapshot": "candidate-source-v5",
+  "preserved_incomplete_attempt": "candidate-validation-v4",
+  "v4_unchanged_dependency_closures": [
+    "hypercurve",
+    "csgrs",
+    "hyperdrc"
+  ],
+  "curve_test_command_unchanged": true,
+  "original_workload_gates_unchanged": true,
+  "text_failure_contract_migration": "Selected font or glyph failure returns typed Construction error, with no materialization report.",
+  "full_pre_push_matrix_executed": false,
+  "published_package_pipeline_executed": false
+}

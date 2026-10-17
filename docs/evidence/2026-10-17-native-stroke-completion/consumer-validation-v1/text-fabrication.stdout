@@ -1,0 +1,7 @@
+
+running 2 tests
+test certified_layer_images_emit_x2_copper_and_plated_excellon_files ... ok
+test pad_and_artwork_intent_emit_unit_aware_mask_paste_and_legend_images ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+

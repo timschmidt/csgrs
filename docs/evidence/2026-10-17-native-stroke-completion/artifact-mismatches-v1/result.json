@@ -1,0 +1,6218 @@
+{
+  "complete": true,
+  "runner_sha256": "f9bd8f445a235c7c48ed51d7bd555613b24eb2b9b51ae3ff96e2409f872b45c2",
+  "raw_stdout_sha256": "f4d7bd5369da903ea438350482fa641b3f5b232f46c0e5a2b72a0cf5f33649cd",
+  "original_failed_command": {
+    "name": "circuit-all",
+    "command": [
+      "cargo",
+      "test",
+      "--no-fail-fast",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--release",
+      "--all-features",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 52.51066635316238,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/hypercircuit-5bcbb88109d8a6a3": {
+        "sha256": "4b896037b6d2ae9bf214c8ce8610d49c22bfa348623d1da3c047c7fab8134262",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/4b896037b6d2ae9bf214c8ce8610d49c22bfa348623d1da3c047c7fab8134262/hypercircuit-5bcbb88109d8a6a3",
+        "bytes": 1079424
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/coppertrace_erc-e72b9f7241d54e1c": {
+        "sha256": "beb69262b2138a0921b3670438b28ad55a800024cd2efd1014fc7e4b42a57d9f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/beb69262b2138a0921b3670438b28ad55a800024cd2efd1014fc7e4b42a57d9f/coppertrace_erc-e72b9f7241d54e1c",
+        "bytes": 8370640
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/curved_routing-a83c7d0b24bc233b": {
+        "sha256": "0e80504f22d617d754e4e9c629b64e0ade9c25cc881e8b505b8b780bc95cd264",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/0e80504f22d617d754e4e9c629b64e0ade9c25cc881e8b505b8b780bc95cd264/curved_routing-a83c7d0b24bc233b",
+        "bytes": 28629824
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/intent-03284179ca29e723": {
+        "sha256": "c99f32feec075a9a438b7cc31bc2508269c408481316b3e9e564d17e2bbc0a5b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/c99f32feec075a9a438b7cc31bc2508269c408481316b3e9e564d17e2bbc0a5b/intent-03284179ca29e723",
+        "bytes": 7627088
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/fabrication-500f57fe86d3c6fe": {
+        "sha256": "d6788aa9f989b04c95d0ea0ea656b4361f3e5415c81fd1e621edef5ebbe618ae",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/d6788aa9f989b04c95d0ea0ea656b4361f3e5415c81fd1e621edef5ebbe618ae/fabrication-500f57fe86d3c6fe",
+        "bytes": 27357368
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/kicad_library-a5e830b6fb9ad5cc": {
+        "sha256": "6345c110c47386b2c771c21908045f95155aa298d6d6445991702126e0f58a85",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/6345c110c47386b2c771c21908045f95155aa298d6d6445991702126e0f58a85/kicad_library-a5e830b6fb9ad5cc",
+        "bytes": 9425184
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/kicad_schematic-c7b7be8cc8681a60": {
+        "sha256": "9da108bd99b1db03cd7adf462a51768527ed41df544bc337f2c58fb4a70e4abe",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/9da108bd99b1db03cd7adf462a51768527ed41df544bc337f2c58fb4a70e4abe/kicad_schematic-c7b7be8cc8681a60",
+        "bytes": 9337232
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/declarative-0b742126bfffe451": {
+        "sha256": "9179e4947d46cc1d4554fe4f512b538de10e325b4f3207ceb5ca1e9a5091177f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/9179e4947d46cc1d4554fe4f512b538de10e325b4f3207ceb5ca1e9a5091177f/declarative-0b742126bfffe451",
+        "bytes": 7830712
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/behavior-8620dd8091f2aaa4": {
+        "sha256": "ad8e8789f56162305c401a3537e13b7fffd2832d41f22d2b32cf1de003570427",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/ad8e8789f56162305c401a3537e13b7fffd2832d41f22d2b32cf1de003570427/behavior-8620dd8091f2aaa4",
+        "bytes": 7724792
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/layout-c05686ab1c53eabf": {
+        "sha256": "14c686c19921624bf0cee99b073d265cdf38511177c654f29e886a0550b20818",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/14c686c19921624bf0cee99b073d265cdf38511177c654f29e886a0550b20818/layout-c05686ab1c53eabf",
+        "bytes": 23456056
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/legacy_csgrs-d46aac768aa170ce": {
+        "sha256": "68b8ac84f67c56ff51288c9c04af8660aa2c12e559271468e964bc80e8816d3b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/68b8ac84f67c56ff51288c9c04af8660aa2c12e559271468e964bc80e8816d3b/legacy_csgrs-d46aac768aa170ce",
+        "bytes": 6418760
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/easyduino-8da81debc4d056f7": {
+        "sha256": "5950c6614667614f6ca52d4a04208368327a874bf27de6424b25d2e22ac64c65",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/5950c6614667614f6ca52d4a04208368327a874bf27de6424b25d2e22ac64c65/easyduino-8da81debc4d056f7",
+        "bytes": 29457200
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/erc-d2b5a82606895167": {
+        "sha256": "4382d9aa3069ec22089133e768143824cc9c74bbcf29302717d57833161f9093",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/4382d9aa3069ec22089133e768143824cc9c74bbcf29302717d57833161f9093/erc-d2b5a82606895167",
+        "bytes": 7829848
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/event_interchange-6daaf5329350b142": {
+        "sha256": "a0d640fac5ef18c617bfc690c2d5b5057f621f0f63a3fa67e058439bafb56f15",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/a0d640fac5ef18c617bfc690c2d5b5057f621f0f63a3fa67e058439bafb56f15/event_interchange-6daaf5329350b142",
+        "bytes": 8395104
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/placement-7b9ab9f777bed43a": {
+        "sha256": "46f0b1aa041db00ffba39d90aee886188535aae2a32f38c311c411b6b4bcd331",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/46f0b1aa041db00ffba39d90aee886188535aae2a32f38c311c411b6b4bcd331/placement-7b9ab9f777bed43a",
+        "bytes": 26093264
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/authoring-0a0c351023db7d05": {
+        "sha256": "c422065d20e7d01cfee0dfd765bf655f02086cefcf36e9a18d1a6f5a89275c73",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/c422065d20e7d01cfee0dfd765bf655f02086cefcf36e9a18d1a6f5a89275c73/authoring-0a0c351023db7d05",
+        "bytes": 28783816
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/package-559e11aa59431b72": {
+        "sha256": "fa92432c9c3b1cbd8d3f58450823b6ece6dbc43f66a2704f54ac1fea7bbbd2af",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/fa92432c9c3b1cbd8d3f58450823b6ece6dbc43f66a2704f54ac1fea7bbbd2af/package-559e11aa59431b72",
+        "bytes": 11704040
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/nonlinear-82df40faa7e768d7": {
+        "sha256": "cb90d2766b9d753588362224efdd564b281ed2a3ae1d5d19c1b11ede9d79b555",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/cb90d2766b9d753588362224efdd564b281ed2a3ae1d5d19c1b11ede9d79b555/nonlinear-82df40faa7e768d7",
+        "bytes": 13549208
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/schematic-76781f86c7b05211": {
+        "sha256": "cf0549c7d0ec98d11a595de0ca0097d6698ca64d90e25fac643d1446738829c1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/cf0549c7d0ec98d11a595de0ca0097d6698ca64d90e25fac643d1446738829c1/schematic-76781f86c7b05211",
+        "bytes": 13136144
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/stitching-7609487017241d48": {
+        "sha256": "e1ca398540d9b8da9a5ed88b7a24da8ef4b043794702eb47b92eae46a0297305",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/e1ca398540d9b8da9a5ed88b7a24da8ef4b043794702eb47b92eae46a0297305/stitching-7609487017241d48",
+        "bytes": 28479888
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/hierarchy-2c939f5c9b94a573": {
+        "sha256": "9dd5be84633b673b031bb5245a4bc5c095275bf3ebe99554d320730fcf3dffbd",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/9dd5be84633b673b031bb5245a4bc5c095275bf3ebe99554d320730fcf3dffbd/hierarchy-2c939f5c9b94a573",
+        "bytes": 9611488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/readme-df7ae28530df074c": {
+        "sha256": "b9a52998b51e02f85002babd0d7052b187c69e2991287e16602ef6a48ff1b72e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/b9a52998b51e02f85002babd0d7052b187c69e2991287e16602ef6a48ff1b72e/readme-df7ae28530df074c",
+        "bytes": 1110904
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/routing_corpus-bb5a7ae0cebcd5ff": {
+        "sha256": "26c13b03cdbc74f3c11bd56b61c3afafa89385fb2012fcbedc2e3019e027e212",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/26c13b03cdbc74f3c11bd56b61c3afafa89385fb2012fcbedc2e3019e027e212/routing_corpus-bb5a7ae0cebcd5ff",
+        "bytes": 23302648
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/autoroute-3be5a13034713f72": {
+        "sha256": "3b939172dfd14e36803bbb8e96a606a7a264bb27110b5e4f5b567423049a2a1e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/3b939172dfd14e36803bbb8e96a606a7a264bb27110b5e4f5b567423049a2a1e/autoroute-3be5a13034713f72",
+        "bytes": 29679464
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/interchange-ca62fb7b3c9def16": {
+        "sha256": "97477c6723e968a2c8276d8ebe464327581fc6ffa4e56d5ded6e975061d6f91f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/97477c6723e968a2c8276d8ebe464327581fc6ffa4e56d5ded6e975061d6f91f/interchange-ca62fb7b3c9def16",
+        "bytes": 14178160
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/project-c3543117141e05bb": {
+        "sha256": "e3608b984e6211a6d1db9d2d223bc20d8ef5e8b21e6df74e8de35145b88daa56",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/e3608b984e6211a6d1db9d2d223bc20d8ef5e8b21e6df74e8de35145b88daa56/project-c3543117141e05bb",
+        "bytes": 10140784
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/interface-0951dc221db32df3": {
+        "sha256": "01d056bf9c2df4985689c23012309037a0c58a723b3a48dd176917887a0e2940",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/01d056bf9c2df4985689c23012309037a0c58a723b3a48dd176917887a0e2940/interface-0951dc221db32df3",
+        "bytes": 8363008
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/mna-3054085ff67aed6c": {
+        "sha256": "2f1a388a0a2ff5a410ed78177bad9faa9fe0faae5c85ab936279097e73a2c819",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/2f1a388a0a2ff5a410ed78177bad9faa9fe0faae5c85ab936279097e73a2c819/mna-3054085ff67aed6c",
+        "bytes": 9678040
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/curved_outline-7bbd25b8f15c3519": {
+        "sha256": "05da0d0bc7427dab9bdd315c77352bb4aba5c3ca8ac96c165fa2b4b00d07929b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/05da0d0bc7427dab9bdd315c77352bb4aba5c3ca8ac96c165fa2b4b00d07929b/curved_outline-7bbd25b8f15c3519",
+        "bytes": 34848808
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/lceda-f58cb45edb1e919b": {
+        "sha256": "d01d243b9f6318c80a56bfa5c556fae320d1bc398a16d1b2cbea63a7e7747067",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/d01d243b9f6318c80a56bfa5c556fae320d1bc398a16d1b2cbea63a7e7747067/lceda-f58cb45edb1e919b",
+        "bytes": 23055288
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/cli-dc8ad2b2acfd80e7": {
+        "sha256": "60c8c6a014380e0c178e81e8cf910c8d747d7462c0f513e67bc0f175bdd7d609",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/60c8c6a014380e0c178e81e8cf910c8d747d7462c0f513e67bc0f175bdd7d609/cli-dc8ad2b2acfd80e7",
+        "bytes": 13101552
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/project_manifest-696edbd07d25cfd3": {
+        "sha256": "4817cd3d6f762b350becf208f1e6ab117710240383057b2ba43b4c7fcb252ee4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/4817cd3d6f762b350becf208f1e6ab117710240383057b2ba43b4c7fcb252ee4/project_manifest-696edbd07d25cfd3",
+        "bytes": 8295480
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/simulation-ed9aac35a118e9b5": {
+        "sha256": "4c7a3cbc50e46fc2329cba2578c6d510eda9ae536d848d3bc57e3ff2b6251805",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/4c7a3cbc50e46fc2329cba2578c6d510eda9ae536d848d3bc57e3ff2b6251805/simulation-ed9aac35a118e9b5",
+        "bytes": 9182048
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/mosfet-6593d42b9571db10": {
+        "sha256": "92127c85990e1d78ad1cde0d399a4fa50d77ec936c03f210ea29e0df1da6ee2c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/92127c85990e1d78ad1cde0d399a4fa50d77ec936c03f210ea29e0df1da6ee2c/mosfet-6593d42b9571db10",
+        "bytes": 13536272
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/coppertrace_examples-44b51916e61b32ef": {
+        "sha256": "13b4cbc1262b394c2200b9d1e41e6cac53b5e30deb6ff5529258694d07e5cbb5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/13b4cbc1262b394c2200b9d1e41e6cac53b5e30deb6ff5529258694d07e5cbb5/coppertrace_examples-44b51916e61b32ef",
+        "bytes": 12923168
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/release_workflow-b240bab07199e949": {
+        "sha256": "41da264199f59ade1821f0379ec6c9d59245719542455da4fa9e52c524ae993b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/41da264199f59ade1821f0379ec6c9d59245719542455da4fa9e52c524ae993b/release_workflow-b240bab07199e949",
+        "bytes": 36801920
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/schematic_auto-e5d6b36bffa8b90e": {
+        "sha256": "3e6c36e77c5d672985147eb3ef0d66ad1b3b4272aa7f71c53494063693a26826",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/3e6c36e77c5d672985147eb3ef0d66ad1b3b4272aa7f71c53494063693a26826/schematic_auto-e5d6b36bffa8b90e",
+        "bytes": 9397584
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/ac-b66539e72bfc2327": {
+        "sha256": "86234e19b524e02f8a45adf4817396d838ddea7fa9c07e4a679ab45083ab17a5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/86234e19b524e02f8a45adf4817396d838ddea7fa9c07e4a679ab45083ab17a5/ac-b66539e72bfc2327",
+        "bytes": 9627792
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/edit-f550697c95306137": {
+        "sha256": "07ae57d6a6e7d2dd069e93bef25b498c32ee18cfa446a97f70f65a3713e8c91e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/07ae57d6a6e7d2dd069e93bef25b498c32ee18cfa446a97f70f65a3713e8c91e/edit-f550697c95306137",
+        "bytes": 32697984
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/hypercircuit-23d9d466d9ae3b15": {
+        "sha256": "9219b02a0f36ac80e77cee688904c9d166ac1b8ecb9f644c15800d77d0781c74",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/9219b02a0f36ac80e77cee688904c9d166ac1b8ecb9f644c15800d77d0781c74/hypercircuit-23d9d466d9ae3b15",
+        "bytes": 32739888
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/event_simulation-3aa27844f4e30779": {
+        "sha256": "ea13c93cfd33431ede9b4af0f9f955fbcc44ec8d12214597c303797839f2549e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/ea13c93cfd33431ede9b4af0f9f955fbcc44ec8d12214597c303797839f2549e/event_simulation-3aa27844f4e30779",
+        "bytes": 8114064
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/dispatch_trace-16f9d0c3e2d0a0c2": {
+        "sha256": "69ebf685bd8babd0031645f1446fe438488df5cd0fec1bd8bb65008226b765d6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/69ebf685bd8babd0031645f1446fe438488df5cd0fec1bd8bb65008226b765d6/dispatch_trace-16f9d0c3e2d0a0c2",
+        "bytes": 7711496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/layout_module-b063a580e4b248b8": {
+        "sha256": "aba2d7581d8390b74f8c4a5bfc71ae52f6cd16cedff6269bb5887656300e6002",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/aba2d7581d8390b74f8c4a5bfc71ae52f6cd16cedff6269bb5887656300e6002/layout_module-b063a580e4b248b8",
+        "bytes": 25473664
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/workflow-9f1e911af1faa618": {
+        "sha256": "3ed7062b9984ab81d897b85221a042c4589171f202f4aaf547ce1984327f3ae7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/3ed7062b9984ab81d897b85221a042c4589171f202f4aaf547ce1984327f3ae7/workflow-9f1e911af1faa618",
+        "bytes": 35466800
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/materialize-c0bc1f655788cb22": {
+        "sha256": "57213250b29daa951fbdff3ea1fcd5901491e1af351cd4b082a1e5937d44ef47",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/57213250b29daa951fbdff3ea1fcd5901491e1af351cd4b082a1e5937d44ef47/materialize-c0bc1f655788cb22",
+        "bytes": 31898704
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/preview-4ac876316b90ec1a": {
+        "sha256": "e4785d0d3e831464a9d7d1ec3cdf895d71e53585652180643cf12dc48050ae0f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-executables-v1/e4785d0d3e831464a9d7d1ec3cdf895d71e53585652180643cf12dc48050ae0f/preview-4ac876316b90ec1a",
+        "bytes": 21992896
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "f4d7bd5369da903ea438350482fa641b3f5b232f46c0e5a2b72a0cf5f33649cd",
+    "stderr_sha256": "e90aa97d60a9891c33af95df797b434f3ba16a288be2f4d63fe97dd1a88c9afe",
+    "resources_sha256": "6453cf5474f3902aec3d157c7f9202e9362b80776267c2cc68ef458e5f7d4003"
+  },
+  "cases": {
+    "esp32_runs_end_to_end_through_hyperdrc": {
+      "kind": "json",
+      "differences": [
+        {
+          "path": "$.coverage.checks[0].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[1].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[2].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[3].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[4].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[5].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[6].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[7].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[8].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[9].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[10].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[11].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[12].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[13].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[14].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[15].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[16].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[17].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[18].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[19].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[20].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[21].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[22].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[23].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[24].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[25].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[26].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[27].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[28].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[29].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[30].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[31].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[32].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[33].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[34].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[35].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[36].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[37].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[38].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[39].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[40].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[41].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[42].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[43].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[44].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[45].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[46].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[47].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[48].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[49].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[50].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[51].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[52].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[53].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[54].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[55].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[56].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[57].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[58].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[59].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[60].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[61].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[62].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[63].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[64].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[65].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[66].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[67].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[68].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[69].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[70].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[71].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[72].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[73].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[74].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[75].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[76].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[77].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[78].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[79].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[80].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[81].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[82].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[83].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[84].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[85].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[86].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[87].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[88].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[89].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[90].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[91].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[92].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[93].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[94].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[95].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[96].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[97].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[98].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[99].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[100].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[101].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[102].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[103].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[104].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[105].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[106].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[107].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[108].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[109].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[110].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[111].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[112].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[113].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[114].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[115].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[116].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[117].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[118].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[119].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[120].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[121].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[122].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[123].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[124].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[125].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[126].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[127].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[128].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[129].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[130].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[131].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[132].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[133].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[134].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[135].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[136].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[137].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[138].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[139].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[140].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[141].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[142].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[143].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[144].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[145].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[146].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[147].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[148].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[149].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[150].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[151].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[152].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[153].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[154].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[155].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[156].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[157].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[158].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[159].check_version",
+          "expected": 20,
+          "actual": 21
+        }
+      ],
+      "sha256": {
+        "actual": "b3a0428305689adb1520b80fb741616dd6bff7a1e4cd853870b43a3bbc3765ae",
+        "expected": "d4e237c1b77a98216d9c80c6f0819cd206ee253833826fb02bf1b2a53345f3eb"
+      }
+    },
+    "esp32s3_runs_end_to_end_through_hyperdrc": {
+      "kind": "json",
+      "differences": [
+        {
+          "path": "$.coverage.checks[0].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[1].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[2].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[3].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[4].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[5].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[6].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[7].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[8].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[9].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[10].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[11].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[12].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[13].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[14].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[15].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[16].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[17].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[18].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[19].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[20].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[21].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[22].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[23].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[24].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[25].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[26].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[27].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[28].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[29].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[30].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[31].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[32].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[33].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[34].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[35].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[36].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[37].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[38].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[39].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[40].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[41].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[42].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[43].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[44].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[45].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[46].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[47].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[48].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[49].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[50].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[51].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[52].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[53].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[54].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[55].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[56].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[57].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[58].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[59].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[60].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[61].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[62].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[63].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[64].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[65].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[66].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[67].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[68].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[69].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[70].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[71].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[72].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[73].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[74].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[75].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[76].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[77].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[78].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[79].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[80].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[81].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[82].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[83].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[84].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[85].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[86].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[87].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[88].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[89].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[90].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[91].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[92].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[93].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[94].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[95].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[96].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[97].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[98].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[99].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[100].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[101].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[102].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[103].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[104].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[105].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[106].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[107].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[108].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[109].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[110].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[111].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[112].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[113].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[114].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[115].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[116].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[117].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[118].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[119].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[120].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[121].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[122].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[123].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[124].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[125].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[126].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[127].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[128].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[129].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[130].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[131].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[132].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[133].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[134].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[135].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[136].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[137].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[138].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[139].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[140].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[141].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[142].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[143].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[144].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[145].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[146].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[147].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[148].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[149].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[150].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[151].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[152].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[153].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[154].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[155].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[156].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[157].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[158].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[159].check_version",
+          "expected": 20,
+          "actual": 21
+        }
+      ],
+      "sha256": {
+        "actual": "64aca0494a1107cfb415eae9c6eda5838f613291e75c553780e8a7600843f517",
+        "expected": "04b3d92d6218d3ddb73a32dfa2c5c91bd1b564e609035be26ef6dab0a2479b22"
+      }
+    },
+    "nano_runs_end_to_end_through_hyperdrc": {
+      "kind": "json",
+      "differences": [
+        {
+          "path": "$.coverage.checks[0].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[1].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[2].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[3].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[4].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[5].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[6].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[7].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[8].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[9].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[10].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[11].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[12].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[13].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[14].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[15].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[16].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[17].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[18].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[19].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[20].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[21].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[22].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[23].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[24].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[25].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[26].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[27].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[28].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[29].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[30].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[31].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[32].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[33].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[34].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[35].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[36].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[37].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[38].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[39].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[40].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[41].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[42].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[43].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[44].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[45].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[46].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[47].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[48].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[49].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[50].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[51].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[52].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[53].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[54].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[55].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[56].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[57].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[58].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[59].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[60].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[61].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[62].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[63].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[64].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[65].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[66].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[67].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[68].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[69].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[70].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[71].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[72].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[73].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[74].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[75].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[76].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[77].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[78].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[79].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[80].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[81].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[82].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[83].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[84].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[85].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[86].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[87].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[88].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[89].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[90].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[91].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[92].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[93].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[94].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[95].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[96].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[97].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[98].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[99].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[100].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[101].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[102].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[103].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[104].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[105].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[106].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[107].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[108].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[109].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[110].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[111].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[112].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[113].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[114].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[115].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[116].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[117].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[118].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[119].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[120].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[121].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[122].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[123].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[124].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[125].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[126].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[127].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[128].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[129].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[130].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[131].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[132].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[133].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[134].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[135].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[136].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[137].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[138].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[139].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[140].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[141].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[142].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[143].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[144].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[145].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[146].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[147].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[148].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[149].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[150].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[151].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[152].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[153].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[154].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[155].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[156].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[157].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[158].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[159].check_version",
+          "expected": 20,
+          "actual": 21
+        }
+      ],
+      "sha256": {
+        "actual": "25be72d0dd282a4f2ea552b9e1f79ca1bcd087b93c51d5e53ab435c45db54a02",
+        "expected": "4f4e6673b793a23fe0bc00b799670198bb88050969e0f5d5d6c239e4cd1a436a"
+      }
+    },
+    "rp2040_runs_end_to_end_through_hyperdrc": {
+      "kind": "json",
+      "differences": [
+        {
+          "path": "$.coverage.checks[0].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[1].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[2].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[3].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[4].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[5].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[6].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[7].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[8].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[9].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[10].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[11].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[12].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[13].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[14].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[15].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[16].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[17].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[18].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[19].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[20].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[21].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[22].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[23].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[24].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[25].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[26].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[27].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[28].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[29].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[30].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[31].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[32].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[33].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[34].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[35].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[36].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[37].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[38].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[39].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[40].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[41].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[42].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[43].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[44].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[45].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[46].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[47].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[48].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[49].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[50].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[51].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[52].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[53].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[54].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[55].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[56].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[57].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[58].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[59].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[60].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[61].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[62].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[63].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[64].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[65].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[66].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[67].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[68].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[69].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[70].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[71].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[72].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[73].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[74].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[75].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[76].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[77].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[78].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[79].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[80].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[81].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[82].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[83].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[84].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[85].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[86].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[87].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[88].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[89].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[90].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[91].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[92].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[93].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[94].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[95].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[96].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[97].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[98].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[99].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[100].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[101].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[102].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[103].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[104].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[105].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[106].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[107].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[108].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[109].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[110].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[111].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[112].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[113].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[114].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[115].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[116].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[117].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[118].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[119].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[120].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[121].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[122].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[123].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[124].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[125].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[126].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[127].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[128].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[129].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[130].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[131].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[132].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[133].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[134].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[135].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[136].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[137].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[138].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[139].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[140].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[141].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[142].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[143].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[144].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[145].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[146].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[147].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[148].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[149].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[150].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[151].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[152].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[153].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[154].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[155].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[156].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[157].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[158].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[159].check_version",
+          "expected": 20,
+          "actual": 21
+        }
+      ],
+      "sha256": {
+        "actual": "792319f31fac7910f7ca91a79071b405c1ee60a721c94596aebcae5a4dc8c9b0",
+        "expected": "d283c7be8beca4e3f2ce752c23ac3b9bdb4219560232e57f12b20098a13d4c9a"
+      }
+    },
+    "stm32f103_runs_end_to_end_through_hyperdrc": {
+      "kind": "json",
+      "differences": [
+        {
+          "path": "$.coverage.checks[0].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[1].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[2].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[3].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[4].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[5].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[6].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[7].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[8].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[9].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[10].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[11].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[12].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[13].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[14].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[15].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[16].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[17].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[18].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[19].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[20].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[21].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[22].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[23].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[24].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[25].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[26].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[27].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[28].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[29].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[30].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[31].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[32].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[33].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[34].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[35].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[36].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[37].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[38].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[39].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[40].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[41].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[42].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[43].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[44].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[45].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[46].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[47].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[48].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[49].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[50].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[51].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[52].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[53].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[54].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[55].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[56].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[57].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[58].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[59].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[60].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[61].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[62].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[63].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[64].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[65].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[66].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[67].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[68].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[69].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[70].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[71].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[72].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[73].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[74].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[75].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[76].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[77].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[78].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[79].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[80].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[81].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[82].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[83].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[84].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[85].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[86].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[87].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[88].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[89].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[90].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[91].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[92].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[93].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[94].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[95].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[96].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[97].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[98].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[99].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[100].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[101].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[102].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[103].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[104].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[105].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[106].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[107].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[108].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[109].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[110].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[111].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[112].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[113].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[114].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[115].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[116].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[117].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[118].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[119].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[120].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[121].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[122].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[123].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[124].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[125].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[126].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[127].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[128].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[129].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[130].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[131].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[132].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[133].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[134].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[135].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[136].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[137].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[138].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[139].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[140].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[141].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[142].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[143].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[144].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[145].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[146].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[147].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[148].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[149].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[150].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[151].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[152].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[153].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[154].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[155].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[156].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[157].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[158].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[159].check_version",
+          "expected": 20,
+          "actual": 21
+        }
+      ],
+      "sha256": {
+        "actual": "5c057de4b6f0cf9319ca33f63ca198cc567d43536a313e2f1a4613be3a73919b",
+        "expected": "84d0efe06bb97602c319abae76ae5865dba7e98e1ce1ab0dff0a95c70a188f23"
+      }
+    },
+    "uno_runs_end_to_end_through_hyperdrc": {
+      "kind": "json",
+      "differences": [
+        {
+          "path": "$.coverage.checks[0].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[1].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[2].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[3].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[4].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[5].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[6].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[7].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[8].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[9].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[10].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[11].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[12].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[13].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[14].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[15].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[16].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[17].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[18].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[19].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[20].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[21].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[22].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[23].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[24].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[25].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[26].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[27].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[28].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[29].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[30].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[31].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[32].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[33].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[34].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[35].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[36].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[37].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[38].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[39].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[40].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[41].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[42].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[43].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[44].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[45].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[46].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[47].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[48].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[49].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[50].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[51].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[52].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[53].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[54].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[55].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[56].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[57].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[58].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[59].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[60].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[61].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[62].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[63].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[64].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[65].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[66].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[67].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[68].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[69].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[70].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[71].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[72].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[73].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[74].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[75].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[76].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[77].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[78].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[79].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[80].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[81].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[82].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[83].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[84].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[85].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[86].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[87].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[88].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[89].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[90].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[91].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[92].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[93].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[94].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[95].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[96].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[97].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[98].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[99].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[100].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[101].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[102].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[103].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[104].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[105].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[106].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[107].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[108].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[109].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[110].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[111].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[112].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[113].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[114].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[115].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[116].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[117].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[118].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[119].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[120].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[121].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[122].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[123].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[124].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[125].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[126].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[127].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[128].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[129].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[130].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[131].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[132].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[133].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[134].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[135].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[136].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[137].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[138].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[139].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[140].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[141].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[142].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[143].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[144].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[145].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[146].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[147].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[148].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[149].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[150].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[151].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[152].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[153].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[154].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[155].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[156].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[157].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[158].check_version",
+          "expected": 20,
+          "actual": 21
+        },
+        {
+          "path": "$.coverage.checks[159].check_version",
+          "expected": 20,
+          "actual": 21
+        }
+      ],
+      "sha256": {
+        "actual": "7d3dc6055a8408d553af96661b634c6f030251c9cb9bee6994d51aee19654316",
+        "expected": "3241c7a2b79a21571c056c56096cc897c0e56d1d19098d81a0333f7daf1bfa30"
+      }
+    },
+    "default_manufacturing_release_is_unsigned_deterministic_and_self_verifying": {
+      "kind": "zip",
+      "entry_order_identical": true,
+      "entries": [
+        {
+          "path": "assembly/assembly-v2.json",
+          "identical": true,
+          "sha256": {
+            "actual": "df8cd7f3cd276f28d1fff7333d2b56952b1571c5aabef8e897e19db0bc6efc0a",
+            "expected": "df8cd7f3cd276f28d1fff7333d2b56952b1571c5aabef8e897e19db0bc6efc0a"
+          },
+          "bytes": {
+            "actual": 3887,
+            "expected": 3887
+          }
+        },
+        {
+          "path": "assembly/assembly-v2.schema.json",
+          "identical": true,
+          "sha256": {
+            "actual": "16359c43540bffbf9c7fcec3f643695616ae0d7815e739fa1ca282283d7a19ea",
+            "expected": "16359c43540bffbf9c7fcec3f643695616ae0d7815e739fa1ca282283d7a19ea"
+          },
+          "bytes": {
+            "actual": 2541,
+            "expected": 2541
+          }
+        },
+        {
+          "path": "assembly/bom.csv",
+          "identical": true,
+          "sha256": {
+            "actual": "0a77aa0715ba3a9d3e34fc637d94b7734742194c1639e733b7082d8bf1dc32d1",
+            "expected": "0a77aa0715ba3a9d3e34fc637d94b7734742194c1639e733b7082d8bf1dc32d1"
+          },
+          "bytes": {
+            "actual": 134,
+            "expected": 134
+          }
+        },
+        {
+          "path": "assembly/bom.csv.dialect.json",
+          "identical": true,
+          "sha256": {
+            "actual": "cf552ca1fa7e8e9a159e44cb0fa0e11f5af2b0b744afe20a70eb5b0ea73cfef6",
+            "expected": "cf552ca1fa7e8e9a159e44cb0fa0e11f5af2b0b744afe20a70eb5b0ea73cfef6"
+          },
+          "bytes": {
+            "actual": 880,
+            "expected": 880
+          }
+        },
+        {
+          "path": "assembly/dnp.csv",
+          "identical": true,
+          "sha256": {
+            "actual": "575e902ce51ed21be1499f450304f6f26ff1381fcc11b61cffb6566c25d3ee3f",
+            "expected": "575e902ce51ed21be1499f450304f6f26ff1381fcc11b61cffb6566c25d3ee3f"
+          },
+          "bytes": {
+            "actual": 18,
+            "expected": 18
+          }
+        },
+        {
+          "path": "assembly/dnp.csv.dialect.json",
+          "identical": true,
+          "sha256": {
+            "actual": "a68f1001aa164e442315691231f59f51d41e6d0e6840edff89d999db771a0433",
+            "expected": "a68f1001aa164e442315691231f59f51d41e6d0e6840edff89d999db771a0433"
+          },
+          "bytes": {
+            "actual": 619,
+            "expected": 619
+          }
+        },
+        {
+          "path": "assembly/pick-and-place.csv",
+          "identical": true,
+          "sha256": {
+            "actual": "8d4d00ae7368fa7ec25994b6c7d273e76d0f896bacab90fe7c227cef1d4f1628",
+            "expected": "8d4d00ae7368fa7ec25994b6c7d273e76d0f896bacab90fe7c227cef1d4f1628"
+          },
+          "bytes": {
+            "actual": 147,
+            "expected": 147
+          }
+        },
+        {
+          "path": "assembly/pick-and-place.csv.dialect.json",
+          "identical": true,
+          "sha256": {
+            "actual": "e29be484efc152f254bb8e06b6f5be4af22cfea6d71e4ac6d4d578bf17dc7c6c",
+            "expected": "e29be484efc152f254bb8e06b6f5be4af22cfea6d71e4ac6d4d578bf17dc7c6c"
+          },
+          "bytes": {
+            "actual": 1054,
+            "expected": 1054
+          }
+        },
+        {
+          "path": "evidence/hyperdrc.json",
+          "identical": false,
+          "sha256": {
+            "actual": "2edfc4c6712933ce00dc4217ee2464341e22cbd6f35ec66c38d762169a2bd8d9",
+            "expected": "d886f4d995957d3ff17a5bd2f2454a1a3c19984a88e710b0384b07814ec070d4"
+          },
+          "bytes": {
+            "actual": 53852,
+            "expected": 53692
+          },
+          "json_differences": [
+            {
+              "path": "$.coverage.checks[0].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[1].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[2].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[3].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[4].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[5].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[6].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[7].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[8].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[9].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[10].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[11].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[12].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[13].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[14].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[15].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[16].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[17].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[18].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[19].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[20].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[21].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[22].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[23].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[24].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[25].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[26].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[27].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[28].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[29].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[30].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[31].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[32].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[33].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[34].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[35].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[36].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[37].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[38].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[39].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[40].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[41].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[42].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[43].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[44].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[45].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[46].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[47].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[48].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[49].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[50].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[51].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[52].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[53].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[54].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[55].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[56].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[57].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[58].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[59].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[60].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[61].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[62].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[63].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[64].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[65].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[66].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[67].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[68].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[69].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[70].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[71].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[72].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[73].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[74].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[75].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[76].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[77].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[78].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[79].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[80].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[81].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[82].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[83].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[84].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[85].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[86].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[87].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[88].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[89].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[90].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[91].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[92].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[93].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[94].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[95].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[96].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[97].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[98].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[99].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[100].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[101].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[102].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[103].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[104].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[105].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[106].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[107].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[108].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[109].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[110].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[111].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[112].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[113].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[114].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[115].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[116].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[117].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[118].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[119].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[120].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[121].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[122].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[123].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[124].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[125].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[126].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[127].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[128].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[129].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[130].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[131].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[132].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[133].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[134].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[135].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[136].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[137].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[138].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[139].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[140].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[141].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[142].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[143].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[144].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[145].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[146].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[147].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[148].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[149].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[150].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[151].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[152].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[153].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[154].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[155].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[156].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[157].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[158].check_version",
+              "expected": 1,
+              "actual": 21
+            },
+            {
+              "path": "$.coverage.checks[159].check_version",
+              "expected": 1,
+              "actual": 21
+            }
+          ]
+        },
+        {
+          "path": "fabrication/fluent-release-B_Cu.gbr",
+          "identical": true,
+          "sha256": {
+            "actual": "4392ddf6918ea2e6085d18ef28fd9d5130dcf03d09885cd96eb1baf4a96e1242",
+            "expected": "4392ddf6918ea2e6085d18ef28fd9d5130dcf03d09885cd96eb1baf4a96e1242"
+          },
+          "bytes": {
+            "actual": 4402,
+            "expected": 4402
+          }
+        },
+        {
+          "path": "fabrication/fluent-release-F_Components.gbr",
+          "identical": true,
+          "sha256": {
+            "actual": "1a1e3fb6d3252e8f4338c97320ef3dcf936928e7f29c0bb2df64f83e1b012d4f",
+            "expected": "1a1e3fb6d3252e8f4338c97320ef3dcf936928e7f29c0bb2df64f83e1b012d4f"
+          },
+          "bytes": {
+            "actual": 704,
+            "expected": 704
+          }
+        },
+        {
+          "path": "fabrication/fluent-release-F_Cu.gbr",
+          "identical": true,
+          "sha256": {
+            "actual": "2ecf89d32bd9b8520ccf5d0f18d53c88d24fe76e309058d10e0da0e9328796ef",
+            "expected": "2ecf89d32bd9b8520ccf5d0f18d53c88d24fe76e309058d10e0da0e9328796ef"
+          },
+          "bytes": {
+            "actual": 4930,
+            "expected": 4930
+          }
+        },
+        {
+          "path": "fabrication/fluent-release-F_Mask.gbr",
+          "identical": true,
+          "sha256": {
+            "actual": "6a5b6fef9daf9a8e9103e4d569b8b0e600eb9399f7f34c4b810b80cb4ec73690",
+            "expected": "6a5b6fef9daf9a8e9103e4d569b8b0e600eb9399f7f34c4b810b80cb4ec73690"
+          },
+          "bytes": {
+            "actual": 705,
+            "expected": 705
+          }
+        },
+        {
+          "path": "fabrication/fluent-release-F_Paste.gbr",
+          "identical": true,
+          "sha256": {
+            "actual": "d26fa6676517e9bf5e8dbc4ef0d90f4ef9532d8c54a8f5432c10f4a7705e51c1",
+            "expected": "d26fa6676517e9bf5e8dbc4ef0d90f4ef9532d8c54a8f5432c10f4a7705e51c1"
+          },
+          "bytes": {
+            "actual": 700,
+            "expected": 700
+          }
+        },
+        {
+          "path": "fabrication/fluent-release-PTH.drl",
+          "identical": true,
+          "sha256": {
+            "actual": "f8c6aa9a94ba7ea07ae649c2959174c2da6dec92cb9b89fbd37dfe1b26bb383e",
+            "expected": "f8c6aa9a94ba7ea07ae649c2959174c2da6dec92cb9b89fbd37dfe1b26bb383e"
+          },
+          "bytes": {
+            "actual": 128,
+            "expected": 128
+          }
+        },
+        {
+          "path": "fabrication/fluent-release-Profile.gbr",
+          "identical": true,
+          "sha256": {
+            "actual": "f183d71b5bef75d130a2cc5f99197dc7596e86d544605cdc92754ff32809aeed",
+            "expected": "f183d71b5bef75d130a2cc5f99197dc7596e86d544605cdc92754ff32809aeed"
+          },
+          "bytes": {
+            "actual": 398,
+            "expected": 398
+          }
+        },
+        {
+          "path": "fabrication/fluent-release-manifest.json",
+          "identical": true,
+          "sha256": {
+            "actual": "c3c6a3c5bed19994fb1f174b0b3529aa5d5ed248ed7e9c1854b782816a05f547",
+            "expected": "c3c6a3c5bed19994fb1f174b0b3529aa5d5ed248ed7e9c1854b782816a05f547"
+          },
+          "bytes": {
+            "actual": 3349,
+            "expected": 3349
+          }
+        },
+        {
+          "path": "fabrication/fluent-release-netlist.ipc",
+          "identical": true,
+          "sha256": {
+            "actual": "ff60f0c363f14fd6068cd334dd35680f10ad179ec62316d0ca62685b20706c11",
+            "expected": "ff60f0c363f14fd6068cd334dd35680f10ad179ec62316d0ca62685b20706c11"
+          },
+          "bytes": {
+            "actual": 309,
+            "expected": 309
+          }
+        },
+        {
+          "path": "fabrication/fluent-release.gbrjob",
+          "identical": true,
+          "sha256": {
+            "actual": "2137dd3aa659914832e94e61be01c76ab0137a70410a33a781649f7ab45ef583",
+            "expected": "2137dd3aa659914832e94e61be01c76ab0137a70410a33a781649f7ab45ef583"
+          },
+          "bytes": {
+            "actual": 1954,
+            "expected": 1954
+          }
+        },
+        {
+          "path": "manufacturing-release.json",
+          "identical": false,
+          "sha256": {
+            "actual": "6f91e1c579849d0e494b1b980287869e18cb5c90bdee1550f712aac684889115",
+            "expected": "b9d0a315c6c273f4e61e044c200c73d8552c1507e294b17e3c3fd92a9a36379d"
+          },
+          "bytes": {
+            "actual": 6641,
+            "expected": 6641
+          },
+          "json_differences": [
+            {
+              "path": "$.core.artifacts.artifacts[8].byte_length",
+              "expected": 53692,
+              "actual": 53852
+            },
+            {
+              "path": "$.core.artifacts.artifacts[8].digest",
+              "expected": "sha256:d886f4d995957d3ff17a5bd2f2454a1a3c19984a88e710b0384b07814ec070d4",
+              "actual": "sha256:2edfc4c6712933ce00dc4217ee2464341e22cbd6f35ec66c38d762169a2bd8d9"
+            },
+            {
+              "path": "$.core.drc_report_digest",
+              "expected": "sha256:d886f4d995957d3ff17a5bd2f2454a1a3c19984a88e710b0384b07814ec070d4",
+              "actual": "sha256:2edfc4c6712933ce00dc4217ee2464341e22cbd6f35ec66c38d762169a2bd8d9"
+            },
+            {
+              "path": "$.core_digest",
+              "expected": "sha256:85104f8800afa1ec3612790f52d817595816b2f80d38b5a97966f94f4b9f0cf5",
+              "actual": "sha256:af1a425c6901e82b872ab5c8f1e070a017e6c41dddebb948eb3b242e60218e25"
+            }
+          ]
+        },
+        {
+          "path": "metadata/manufacturing-release-v1.schema.json",
+          "identical": true,
+          "sha256": {
+            "actual": "6f6eb745ed0aa08b3f17a541d91577fc7e9683afd4cc2e21467586154c11a950",
+            "expected": "6f6eb745ed0aa08b3f17a541d91577fc7e9683afd4cc2e21467586154c11a950"
+          },
+          "bytes": {
+            "actual": 5710,
+            "expected": 5710
+          }
+        },
+        {
+          "path": "source/design.hypercircuit.json",
+          "identical": true,
+          "sha256": {
+            "actual": "265ea14fa0e66bd083278873071c64e959b249ecf6415560a134f127326527f3",
+            "expected": "265ea14fa0e66bd083278873071c64e959b249ecf6415560a134f127326527f3"
+          },
+          "bytes": {
+            "actual": 38329,
+            "expected": 38329
+          }
+        }
+      ],
+      "changed_entries": [
+        "evidence/hyperdrc.json",
+        "manufacturing-release.json"
+      ]
+    }
+  },
+  "snapshots_updated": false,
+  "runtime_executed": false,
+  "main_sources_modified": false
+}

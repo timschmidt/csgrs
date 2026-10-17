@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s cargo test --no-fail-fast --offline --locked -p hypercurve --release -- --test-threads=1"
+	User time (seconds): 1936.75
+	System time (seconds): 15.73
+	Percent of CPU this job got: 109%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 29:46.25
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 3157132
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 9728
+	Minor (reclaiming a frame) page faults: 5413335
+	Voluntary context switches: 102173
+	Involuntary context switches: 39688
+	Swaps: 0
+	File system inputs: 894376
+	File system outputs: 1658296
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

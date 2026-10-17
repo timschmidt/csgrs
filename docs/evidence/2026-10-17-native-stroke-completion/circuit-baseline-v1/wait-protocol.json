@@ -1,0 +1,9 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/reproduce_circuit_v1.py": "6256d401a2bada158240b7558daafa07e4a502c3530f9e0d90541dc74608eeb0",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/circuit-contract-v1.md": "d15bc305a67d1024abe5df62d01d3e1d90622b25c15cb1ddbc4ab10672d8c7e2"
+  },
+  "started_epoch": 1792220166.040863,
+  "wait_limit_seconds": 7200,
+  "wait_for": "candidate-validation-v4/result.json"
+}

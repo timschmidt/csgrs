@@ -1,0 +1,178 @@
+{
+  "core": {
+    "schema": "hypercircuit.manufacturing-release",
+    "version": 1,
+    "product": "fluent-release",
+    "revision": "design-0",
+    "variant": "default",
+    "generated_by": "hypercircuit/0.3.0",
+    "source_revision": null,
+    "coordinate_frame": {
+      "id": "board-native",
+      "unit": "Millimeter",
+      "x_direction": "Positive",
+      "y_direction": "Positive",
+      "handedness": "RightHanded",
+      "rotation": "CounterClockwisePositive",
+      "view": "TopLookingDown"
+    },
+    "standards": [],
+    "requirements": [],
+    "capability_profile_id": "generic-prototype",
+    "capability_profile_revision": "1",
+    "capability_profile_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+    "fabrication_manifest_digest": "sha256:c3c6a3c5bed19994fb1f174b0b3529aa5d5ed248ed7e9c1854b782816a05f547",
+    "assembly_digest": "sha256:404f68041fa55db18e239ba8e8543f7ad870eb194097f041610fd079e33ceb72",
+    "drc_report_digest": "sha256:d886f4d995957d3ff17a5bd2f2454a1a3c19984a88e710b0384b07814ec070d4",
+    "design_intent_digest": "sha256:8706caaf1c0cac952a92afaae60a8be8bc6b869a976380b428a6ebe450da22f5",
+    "mixed_signal_evidence": {
+      "not_required": {
+        "reason": "no release-specific mixed-signal certification requirement declared"
+      }
+    },
+    "test_evidence": {
+      "not_required": {
+        "reason": "no design-for-test requirements declared"
+      }
+    },
+    "panel_definition": null,
+    "release_clean": true,
+    "release_blockers": [],
+    "artifacts": {
+      "artifacts": [
+        {
+          "path": "assembly/assembly-v2.json",
+          "role": "assembly_data",
+          "byte_length": 3887,
+          "digest": "sha256:df8cd7f3cd276f28d1fff7333d2b56952b1571c5aabef8e897e19db0bc6efc0a"
+        },
+        {
+          "path": "assembly/assembly-v2.schema.json",
+          "role": {
+            "other": "json-schema"
+          },
+          "byte_length": 2541,
+          "digest": "sha256:16359c43540bffbf9c7fcec3f643695616ae0d7815e739fa1ca282283d7a19ea"
+        },
+        {
+          "path": "assembly/bom.csv",
+          "role": "bom",
+          "byte_length": 134,
+          "digest": "sha256:0a77aa0715ba3a9d3e34fc637d94b7734742194c1639e733b7082d8bf1dc32d1"
+        },
+        {
+          "path": "assembly/bom.csv.dialect.json",
+          "role": "assembly_data",
+          "byte_length": 880,
+          "digest": "sha256:cf552ca1fa7e8e9a159e44cb0fa0e11f5af2b0b744afe20a70eb5b0ea73cfef6"
+        },
+        {
+          "path": "assembly/dnp.csv",
+          "role": "assembly_data",
+          "byte_length": 18,
+          "digest": "sha256:575e902ce51ed21be1499f450304f6f26ff1381fcc11b61cffb6566c25d3ee3f"
+        },
+        {
+          "path": "assembly/dnp.csv.dialect.json",
+          "role": "assembly_data",
+          "byte_length": 619,
+          "digest": "sha256:a68f1001aa164e442315691231f59f51d41e6d0e6840edff89d999db771a0433"
+        },
+        {
+          "path": "assembly/pick-and-place.csv",
+          "role": "pick_and_place",
+          "byte_length": 147,
+          "digest": "sha256:8d4d00ae7368fa7ec25994b6c7d273e76d0f896bacab90fe7c227cef1d4f1628"
+        },
+        {
+          "path": "assembly/pick-and-place.csv.dialect.json",
+          "role": "assembly_data",
+          "byte_length": 1054,
+          "digest": "sha256:e29be484efc152f254bb8e06b6f5be4af22cfea6d71e4ac6d4d578bf17dc7c6c"
+        },
+        {
+          "path": "evidence/hyperdrc.json",
+          "role": "drc_report",
+          "byte_length": 53692,
+          "digest": "sha256:d886f4d995957d3ff17a5bd2f2454a1a3c19984a88e710b0384b07814ec070d4"
+        },
+        {
+          "path": "fabrication/fluent-release-B_Cu.gbr",
+          "role": "gerber",
+          "byte_length": 4402,
+          "digest": "sha256:4392ddf6918ea2e6085d18ef28fd9d5130dcf03d09885cd96eb1baf4a96e1242"
+        },
+        {
+          "path": "fabrication/fluent-release-F_Components.gbr",
+          "role": "gerber",
+          "byte_length": 704,
+          "digest": "sha256:1a1e3fb6d3252e8f4338c97320ef3dcf936928e7f29c0bb2df64f83e1b012d4f"
+        },
+        {
+          "path": "fabrication/fluent-release-F_Cu.gbr",
+          "role": "gerber",
+          "byte_length": 4930,
+          "digest": "sha256:2ecf89d32bd9b8520ccf5d0f18d53c88d24fe76e309058d10e0da0e9328796ef"
+        },
+        {
+          "path": "fabrication/fluent-release-F_Mask.gbr",
+          "role": "gerber",
+          "byte_length": 705,
+          "digest": "sha256:6a5b6fef9daf9a8e9103e4d569b8b0e600eb9399f7f34c4b810b80cb4ec73690"
+        },
+        {
+          "path": "fabrication/fluent-release-F_Paste.gbr",
+          "role": "gerber",
+          "byte_length": 700,
+          "digest": "sha256:d26fa6676517e9bf5e8dbc4ef0d90f4ef9532d8c54a8f5432c10f4a7705e51c1"
+        },
+        {
+          "path": "fabrication/fluent-release-PTH.drl",
+          "role": "drill",
+          "byte_length": 128,
+          "digest": "sha256:f8c6aa9a94ba7ea07ae649c2959174c2da6dec92cb9b89fbd37dfe1b26bb383e"
+        },
+        {
+          "path": "fabrication/fluent-release-Profile.gbr",
+          "role": "gerber",
+          "byte_length": 398,
+          "digest": "sha256:f183d71b5bef75d130a2cc5f99197dc7596e86d544605cdc92754ff32809aeed"
+        },
+        {
+          "path": "fabrication/fluent-release-manifest.json",
+          "role": "fabrication_manifest",
+          "byte_length": 3349,
+          "digest": "sha256:c3c6a3c5bed19994fb1f174b0b3529aa5d5ed248ed7e9c1854b782816a05f547"
+        },
+        {
+          "path": "fabrication/fluent-release-netlist.ipc",
+          "role": "netlist",
+          "byte_length": 309,
+          "digest": "sha256:ff60f0c363f14fd6068cd334dd35680f10ad179ec62316d0ca62685b20706c11"
+        },
+        {
+          "path": "fabrication/fluent-release.gbrjob",
+          "role": "gerber_job",
+          "byte_length": 1954,
+          "digest": "sha256:2137dd3aa659914832e94e61be01c76ab0137a70410a33a781649f7ab45ef583"
+        },
+        {
+          "path": "metadata/manufacturing-release-v1.schema.json",
+          "role": {
+            "other": "json-schema"
+          },
+          "byte_length": 5710,
+          "digest": "sha256:6f6eb745ed0aa08b3f17a541d91577fc7e9683afd4cc2e21467586154c11a950"
+        },
+        {
+          "path": "source/design.hypercircuit.json",
+          "role": "semantic_document",
+          "byte_length": 38329,
+          "digest": "sha256:265ea14fa0e66bd083278873071c64e959b249ecf6415560a134f127326527f3"
+        }
+      ]
+    }
+  },
+  "core_digest": "sha256:85104f8800afa1ec3612790f52d817595816b2f80d38b5a97966f94f4b9f0cf5",
+  "signatures": []
+}

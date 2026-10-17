@@ -1,0 +1,21 @@
+{
+  "observation_source": "Codex execution-session terminal results",
+  "sessions": [
+    {
+      "id": 6959,
+      "runner": "qualification_tail_v4.py",
+      "exit_code": 1,
+      "result": "Both complete Hypercircuit target replays passed 18 tests. All three UI commands exited 101 before compilation due to nested Cargo workspace discovery; the prerequisite guard stopped before compare_v4.py."
+    },
+    {
+      "id": 62291,
+      "runner": "prepare_ui_isolation_v1.py",
+      "exit_code": 0,
+      "result": "Live and isolated demo metadata resolved standalone workspaces; all 2835 final inputs copied byte-for-byte."
+    }
+  ],
+  "failed_ui_result_sha256": "b3f7b2572fb3bb0e9d5c80960abaedebd8ed591dc712b5b83b28c0a3874bc6e6",
+  "snapshot_replay_result_sha256": "2f11a58f7e6cf13c889d2e08297b4f51c6abc77b6e180b50375df91bdcacbbc1",
+  "main_sources_modified": false,
+  "cost_measurements_started_by_tail_v4": false
+}

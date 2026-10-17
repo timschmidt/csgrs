@@ -1,0 +1,43 @@
+[
+  {
+    "name": "compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/contract_tests_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/baseline-contracts-v1/contracts"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6189458188600838,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a99c8da8ad619bf12652ae65603ca3fe390c9aac8cd9288c782d6268a79ce424"
+  },
+  {
+    "name": "contracts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/baseline-contracts-v1/contracts",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.061770163010805845,
+    "stdout_sha256": "4d59933db211d21f1f7212d2ffb0f141fb7fd923d7d8589320eb56c70700d512",
+    "stderr_sha256": "302ed2d1a85329eea4d95c5aa4efd5979e8dbfd8aca0e29e0f2b8d02981c3704",
+    "resources_sha256": "6b990790884fd1b9296e187df8154ee46af899b0f55b2b93377016db112d4951"
+  }
+]

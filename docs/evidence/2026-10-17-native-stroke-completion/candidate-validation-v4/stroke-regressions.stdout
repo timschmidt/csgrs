@@ -1,0 +1,20 @@
+
+running 8 tests
+test butt_diagonal_area_keeps_the_exact_surd ... ok
+test capsule_aggregation_keeps_the_exact_path_without_finite_enclosures ... ok
+test diagonal_capsules_preserve_analytic_area_bounds_and_reusable_boundaries ... ok
+test independent_diagonal_capsules_preserve_exact_total_area ... ok
+test many_capsules_preserve_tangent_contacts_and_nested_union_area ... ok
+test native_stroke_and_warm_measurements_cannot_publish_an_exhausted_budget_result ... ok
+test native_stroke_construction_retains_zero_budget_direct_certificates ... ok
+test unresolved_single_line_closure_keeps_the_strict_blocker ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+
+
+running 2 tests
+test exact_extreme_axis_strokes_complete_without_refinement_budget ... ok
+test translated_reversed_strokes_keep_analytic_measurements_and_membership ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.71s
+

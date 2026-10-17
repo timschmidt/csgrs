@@ -1,0 +1,24 @@
+{
+  "runner_sha256": "7a262f9fd358de78be6279a7788c250ba32364cfd4a57d036ef8ff681ca96546",
+  "probe_sha256": "f354e6392ba2353c1e2c6e80ff1263de0316f9b0f705e9875184ee2df8d0679c",
+  "base_commit": "b137381247a03342ce5b6184710475fcc22c9d63",
+  "prior_protocol_sha256": "667b29d514d50a3239db8cbde68184dd01394b91d4003d244e9fcf0c4c477861",
+  "prior_counts": {
+    "curve_regressions": {
+      "passed": 6,
+      "failed": 2
+    },
+    "drc_regressions": {
+      "passed": 5,
+      "failed": 21
+    }
+  },
+  "prior_commands_sha256": "e7507d8fa99e5d2d9e8a8484823bb9731b17705524e3f0071f7d2d65dff68e64",
+  "preserved_failed_attempts": [
+    "reproduction-v1: missing hyperreal extern; no tests ran",
+    "reproduction-v2: full regressions ran; diagnostic probe used unavailable Segment2 From conversion"
+  ],
+  "completed_targets_reopened": false,
+  "timeout_seconds": 900,
+  "address_space_bytes": 8589934592
+}

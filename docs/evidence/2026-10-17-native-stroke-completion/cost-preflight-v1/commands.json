@@ -1,0 +1,29 @@
+[
+  {
+    "name": "compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost_probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost-preflight-v1/probe"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.1543791787698865,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "052f35421fb671dded90ee451338e5a5f7fbc28b69c8c2dd7e0e743fdbd7935d",
+    "resources_sha256": "349718bd3e3a90372fd4cadd89c7fa745ed34707ae0fb64d351b6cbe53b7bcfd"
+  }
+]

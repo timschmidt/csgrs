@@ -1,0 +1,11 @@
+error[E0432]: unresolved import `hyperreal`
+ --> /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/probe-source-v1/support/scalars.rs:3:5
+  |
+3 | use hyperreal::Real;
+  |     ^^^^^^^^^ use of unresolved module or unlinked crate `hyperreal`
+  |
+  = help: you might be missing a crate named `hyperreal`
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0432`.

@@ -1,0 +1,30 @@
+{
+  "runner_sha256": "ebc8e7e8a9bce877be8efc7a1502351cd81c1d8c1d923195279f03579c7a38cd",
+  "comparison_sha256": "acb69ae182baac65f2f042c41ebc240d9e33c2763c37ca77a6ee766fd180bcff",
+  "format_sources": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/Cargo.lock": {
+      "sha256": "510d33eefcdf7e1a5ad19672f6860e20d67154693fa2d25dbafa9319443d771d",
+      "retained": "format-sources/0-Cargo.lock"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/rational/arithmetic/representation.rs": {
+      "sha256": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9",
+      "retained": "format-sources/1-representation.rs"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/computable/node/representation.rs": {
+      "sha256": "ad937e21fa6568e56a0dc9a9fa9e27b5758a85cc94e813719f74d50d686cee31",
+      "retained": "format-sources/2-representation.rs"
+    },
+    "/home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/biguint/serde.rs": {
+      "sha256": "f4d4e6f2d56c9bab95d8b178682ebeba88965a36bcff42ccade3334712c9977a",
+      "retained": "format-sources/3-serde.rs"
+    },
+    "/home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint/serde.rs": {
+      "sha256": "a7275341ec518f27f4d955e95b6e302b786944e9462bf0c17c7087d073212943",
+      "retained": "format-sources/4-serde.rs"
+    }
+  },
+  "scope": "Actual area, actual bounds and native segment scalar outputs for the original and rebuilt regions; independent expected expressions and point-query strings are excluded.",
+  "depth": "Maximum nesting of serialized Computable internal fields; rational-only scalars have zero Computable depth.",
+  "coefficients": "Magnitude bit lengths of little-endian u32 limbs from the locked num-bigint 0.4.6 format, separately for integer nodes and rational numerator/denominator fields.",
+  "limitations": "Serialization expands shared expressions and omits cache/proof state. Counts are serialized trees, not unique live DAG nodes or peak intermediate work. No internal resource bound or total expression-growth claim follows."
+}

@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s cargo test --offline --locked -p hypercircuit --release --all-features --no-run --message-format=json"
+	User time (seconds): 1006.11
+	System time (seconds): 49.95
+	Percent of CPU this job got: 200%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 8:47.62
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2012384
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 7262
+	Minor (reclaiming a frame) page faults: 17420485
+	Voluntary context switches: 293070
+	Involuntary context switches: 33369
+	Swaps: 0
+	File system inputs: 2744
+	File system outputs: 5640488
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

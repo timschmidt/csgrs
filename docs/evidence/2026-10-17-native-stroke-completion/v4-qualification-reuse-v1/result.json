@@ -1,0 +1,324 @@
+{
+  "complete": true,
+  "runner_sha256": "fadd79d8f12bea6a1e8f84862be2c32bd94aa2cbea468f73434fb6264461103b",
+  "command": [
+    "cargo",
+    "metadata",
+    "--offline",
+    "--locked",
+    "--format-version=1",
+    "--no-deps",
+    "--all-features"
+  ],
+  "metadata_stdout_sha256": "178678922da42e1177067489048ed37f2cd39b37982d5cb2f85b9b3c5b73a817",
+  "metadata_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_manifest_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-preparation-v4/source-hashes.json.gz": "17b515ca062d03cc84260ef1bc29988725bed40703483b2526bfee113d949259",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-preparation-v5/source-hashes.json.gz": "d979cc00b9793d0729b14035e0a2691e5768efe26cb6ab10f8dfb46df3d51c21"
+  },
+  "changed_files": {
+    "crates/hypercircuit/src/materialize.rs": {
+      "v4": "4043ff357ab039ccf3a0ad187b4fdcd6830d31b96f9d4553c6195cbc80173807",
+      "v5": "6355b8cb6a73360ddb1a153ecaae1b5cd8754ad1679b36126bbcad7b4b6ddffe"
+    },
+    "crates/hypercircuit/tests/fabrication.rs": {
+      "v4": "e223c9dfd68497686c58b070c20cfe44abb0c68c46ba999b6bb0eed9023a3fb9",
+      "v5": "e2d6c1fd8744bd43b6f452347958fc8e8f67d0716e41708ea7f6febe0003ef91"
+    }
+  },
+  "conservative_workspace_dependency_edges": {
+    "csgrs-ffi": [
+      "csgrs",
+      "hyperlattice",
+      "hyperreal"
+    ],
+    "csgrs": [
+      "hypercurve",
+      "hyperlattice",
+      "hyperlimit",
+      "hypermesh",
+      "hyperphysics",
+      "hyperreal",
+      "hypersdf",
+      "hypertri"
+    ],
+    "hypercurve": [
+      "hyperlimit",
+      "hyperreal",
+      "hypersolve",
+      "hypertri"
+    ],
+    "hyperlimit": [
+      "hyperlattice",
+      "hyperreal"
+    ],
+    "hyperlattice": [
+      "hyperreal"
+    ],
+    "hyperreal": [],
+    "hypersolve": [
+      "hyperlattice",
+      "hyperlimit",
+      "hyperreal"
+    ],
+    "hypertri": [
+      "hyperlimit",
+      "hyperreal"
+    ],
+    "hypermesh": [
+      "hyperlattice",
+      "hyperlimit",
+      "hyperreal",
+      "hypertri"
+    ],
+    "hyperphysics": [
+      "hyperlattice",
+      "hyperlimit",
+      "hypermesh",
+      "hyperreal",
+      "hypersolve"
+    ],
+    "hypersdf": [
+      "hyperlattice",
+      "hyperlimit",
+      "hyperreal"
+    ],
+    "hyperbrep": [
+      "hypercurve",
+      "hyperlattice",
+      "hyperlimit",
+      "hyperreal",
+      "hypersolve",
+      "hypertri"
+    ],
+    "hypercircuit": [
+      "csgrs",
+      "hypercurve",
+      "hyperdrc",
+      "hyperlattice",
+      "hyperlimit",
+      "hyperpath",
+      "hyperphysics",
+      "hyperreal",
+      "hypersolve"
+    ],
+    "hyperdrc": [
+      "csgrs",
+      "hypercurve",
+      "hyperlattice",
+      "hyperlimit",
+      "hyperpath",
+      "hyperreal",
+      "hypersolve"
+    ],
+    "hyperpath": [
+      "hyperlimit",
+      "hyperreal",
+      "hypersolve"
+    ],
+    "hyperevolution": [
+      "hyperlimit",
+      "hyperreal"
+    ],
+    "hypergraphics": [
+      "hypercurve",
+      "hyperlattice",
+      "hyperlimit",
+      "hypermesh",
+      "hyperreal",
+      "hypertri"
+    ],
+    "hyperpack": [
+      "hypercurve",
+      "hyperlimit",
+      "hyperreal"
+    ],
+    "hyperparts": [
+      "hyperlimit",
+      "hyperreal"
+    ]
+  },
+  "reused_completed_observations": [
+    {
+      "name": "stroke-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hypercurve",
+        "--release",
+        "--test",
+        "native_linear_stroke",
+        "--test",
+        "native_linear_stroke_contracts",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "input_scope": "All snapshot files are byte-identical except two Hypercircuit-owned files; no conservative local dependency path from the tested package reaches Hypercircuit."
+    },
+    {
+      "name": "curve-default",
+      "command": [
+        "cargo",
+        "test",
+        "--no-fail-fast",
+        "--offline",
+        "--locked",
+        "-p",
+        "hypercurve",
+        "--release",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "input_scope": "All snapshot files are byte-identical except two Hypercircuit-owned files; no conservative local dependency path from the tested package reaches Hypercircuit."
+    },
+    {
+      "name": "root-all",
+      "command": [
+        "cargo",
+        "test",
+        "--no-fail-fast",
+        "--offline",
+        "--locked",
+        "-p",
+        "csgrs",
+        "--release",
+        "--all-features",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "input_scope": "All snapshot files are byte-identical except two Hypercircuit-owned files; no conservative local dependency path from the tested package reaches Hypercircuit."
+    },
+    {
+      "name": "root-minimal",
+      "command": [
+        "cargo",
+        "test",
+        "--no-fail-fast",
+        "--offline",
+        "--locked",
+        "-p",
+        "csgrs",
+        "--release",
+        "--no-default-features",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "input_scope": "All snapshot files are byte-identical except two Hypercircuit-owned files; no conservative local dependency path from the tested package reaches Hypercircuit."
+    },
+    {
+      "name": "native-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--no-fail-fast",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--",
+        "--test-threads=1",
+        "--skip",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--skip",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "--skip",
+        "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite"
+      ],
+      "exit_code": 0,
+      "input_scope": "All snapshot files are byte-identical except two Hypercircuit-owned files; no conservative local dependency path from the tested package reaches Hypercircuit."
+    },
+    {
+      "name": "full-board",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "input_scope": "All snapshot files are byte-identical except two Hypercircuit-owned files; no conservative local dependency path from the tested package reaches Hypercircuit."
+    },
+    {
+      "name": "copper-neck",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "input_scope": "All snapshot files are byte-identical except two Hypercircuit-owned files; no conservative local dependency path from the tested package reaches Hypercircuit."
+    },
+    {
+      "name": "gerber",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "input_scope": "All snapshot files are byte-identical except two Hypercircuit-owned files; no conservative local dependency path from the tested package reaches Hypercircuit."
+    },
+    {
+      "name": "docs",
+      "command": [
+        "cargo",
+        "doc",
+        "--offline",
+        "--locked",
+        "-p",
+        "hypercurve",
+        "--release",
+        "--all-features",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "input_scope": "All snapshot files are byte-identical except two Hypercircuit-owned files; no conservative local dependency path from the tested package reaches Hypercircuit."
+    }
+  ],
+  "whole_v4_passed": false,
+  "hypercircuit_or_combined_lint_reused": false,
+  "final_source_qualified": false,
+  "main_sources_modified": false
+}

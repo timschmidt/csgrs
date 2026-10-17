@@ -1,0 +1,19 @@
+{
+  "complete": true,
+  "base_commit": "b137381247a03342ce5b6184710475fcc22c9d63",
+  "source_inputs": 2834,
+  "source_hashes_sha256": "b417ee1f25feb942870ee5afc0a52488c081d14b19371c55bdf40eed177444e6",
+  "changes": {
+    "crates/hypercurve/src/bezier_region.rs": "4c0ad0b7a4f7935dba5f40b350159776b48226897b8d5f1405b89cf77b301164",
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b"
+  },
+  "runner_sha256": "2286580dd9c3f8a92bdd65e1af7d23e7201ecc4b1d0b3723f3c25c52d5026f39",
+  "preserved_failed_candidate": "candidate-validation-v1",
+  "archived_files_reused_exactly": {
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b"
+  },
+  "global_measurement_code_unchanged": true,
+  "main_sources_modified": false
+}

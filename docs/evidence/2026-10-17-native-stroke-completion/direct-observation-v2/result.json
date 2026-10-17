@@ -1,0 +1,17 @@
+{
+  "complete": true,
+  "probe_exit_code": 0,
+  "counts": {
+    "curve_regressions": {
+      "passed": 6,
+      "failed": 2
+    },
+    "drc_regressions": {
+      "passed": 5,
+      "failed": 21
+    }
+  },
+  "read_only_sources_and_libraries_unchanged": true,
+  "main_sources_modified": false,
+  "full_plan_complete": false
+}

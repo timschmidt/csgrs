@@ -1,0 +1,44 @@
+[
+  {
+    "name": "compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/libhyperdrc.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libanyhow-af4f35109210643f.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/direct_probe_v2.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/direct-observation-v2/probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3599516870453954,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a8c3427634a7e3de0082a6d944f306cddca0050ca0509be86569722c84386e55"
+  },
+  {
+    "name": "probe",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/direct-observation-v2/probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.042079583276063204,
+    "stdout_sha256": "b0ae5077520e61f58c913d9d08240d2f067558122bd8c617bdb8099cbb6886d7",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "99b1d58f0fe786ab2e8fde2af5fbe03e11cc66127d1f8980188310a093adaa57"
+  }
+]

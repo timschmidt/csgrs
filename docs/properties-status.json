@@ -12659,6 +12659,459 @@
       "Continue ordinary strict native-stroke completion and exact source fidelity using the preserved original regressions and unchanged workload gates; do not restore the rejected integration wholesale.",
       "Extend visible failures and provenance through the remaining modeling/format boundaries, then complete clean external distribution, release/workflow validation and the remaining properties."
     ]
+  },
+  "native_stroke_completion": {
+    "status": "kept: exact native single-line construction preserves downstream proof completion",
+    "main_parent_commit": "b137381247a03342ce5b6184710475fcc22c9d63",
+    "contract": "docs/evidence/2026-10-17-native-stroke-completion/contract-v3.md",
+    "decision": "docs/evidence/2026-10-17-native-stroke-completion/decision-v1.json",
+    "progress": "docs/evidence/2026-10-17-native-stroke-completion/progress-v1.md",
+    "checkpoint": "docs/evidence/2026-10-17-native-stroke-completion/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-native-stroke-completion/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "crates/hypercircuit/src/materialize.rs": "6355b8cb6a73360ddb1a153ecaae1b5cd8754ad1679b36126bbcad7b4b6ddffe",
+      "crates/hypercircuit/tests/fabrication.rs": "e2d6c1fd8744bd43b6f452347958fc8e8f67d0716e41708ea7f6febe0003ef91",
+      "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32.json": "b3a0428305689adb1520b80fb741616dd6bff7a1e4cd853870b43a3bbc3765ae",
+      "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32s3.json": "64aca0494a1107cfb415eae9c6eda5838f613291e75c553780e8a7600843f517",
+      "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/nano.json": "25be72d0dd282a4f2ea552b9e1f79ca1bcd087b93c51d5e53ab435c45db54a02",
+      "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/rp2040.json": "792319f31fac7910f7ca91a79071b405c1ee60a721c94596aebcae5a4dc8c9b0",
+      "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/stm32f103.json": "5c057de4b6f0cf9319ca33f63ca198cc567d43536a313e2f1a4613be3a73919b",
+      "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/uno.json": "7d3dc6055a8408d553af96661b634c6f030251c9cb9bee6994d51aee19654316",
+      "crates/hypercircuit/tests/fixtures/manufacturing-release/release-board-v1.zip": "aaae55e9957c7a2db67f3b60489d117afab7411b00f25a61e06e8c8de0e2d188",
+      "crates/hypercurve/README.md": "905fc28d5bbb2eab7ef5f355937f44cccebe01ab9af02971a04ea06f765d50b4",
+      "crates/hypercurve/src/bezier_region.rs": "f9d51503203a265b9397d29d7a0ba57d08d7484c621ebb354bd9f17f704cccca",
+      "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+      "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b",
+      "crates/hypercurve/tests/native_linear_stroke_contracts.rs": "174e36d4a368764f437046b78f7a5ad305c4c516e0922602bb1d052c072cebf6"
+    },
+    "single_line_kernel_admitted": true,
+    "general_exact_kicad_stroke_fidelity_claimed": false,
+    "original_curve_regressions": {
+      "baseline": {
+        "passed": 6,
+        "failed": 2,
+        "ignored": 0
+      },
+      "candidate": {
+        "passed": 8,
+        "failed": 0,
+        "ignored": 0
+      },
+      "newly_completed": [
+        "diagonal_capsules_preserve_analytic_area_bounds_and_reusable_boundaries",
+        "independent_diagonal_capsules_preserve_exact_total_area"
+      ],
+      "previous_passes_preserved": true
+    },
+    "added_contract_regressions": {
+      "baseline": {
+        "passed": 1,
+        "failed": 1,
+        "ignored": 0
+      },
+      "candidate": {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "typed_text_consumer_migration": {
+      "status": "kept: complete the typed text-constructor migration in public PCB materialization",
+      "owning_layer": "Hypercircuit materialization adapter",
+      "baseline": "The unchanged b1373812 snapshot fails compilation because a Result<CurveRegion2, ValidationError> is passed to a transform expecting CurveRegion2.",
+      "baseline_evidence": "circuit-baseline-v1/result.json",
+      "migration": "A selected invalid font or missing glyph now returns GeometryMaterializationError::Construction with its typed source. It cannot publish a partial successful report with a TextFontRejected omission. Absence of an optional production font policy remains an explicit TextArtwork omission.",
+      "certainty": "Use truetype_text_with_context and the existing consume_geometry receipt accumulator before rotation and translation. Selecting APPROXIMATE_512 alone does not downgrade successful exact text.",
+      "public_regressions": "Preserve every original valid fabrication assertion; test invalid font and missing B after valid A under STRICT -> APPROXIMATE_512 -> STRICT, retain the typed error source, then recover with valid text and Certified evidence.",
+      "validation": "consumer-validation-v1",
+      "same_completed_baseline_performance_comparison_available": false,
+      "performance_limitation": "Current baseline does not compile this consumer. Complete native test/Clippy/doc command resource observations and built artifacts are retained; no text-path speedup or before/after allocation claim is made.",
+      "built_artifacts": [
+        {
+          "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/hypercircuit-23d9d466d9ae3b15",
+          "sha256": "9219b02a0f36ac80e77cee688904c9d166ac1b8ecb9f644c15800d77d0781c74",
+          "bytes": 32739888,
+          "target_kind": [
+            "lib"
+          ],
+          "test_profile": true
+        },
+        {
+          "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/hypercircuit-5bcbb88109d8a6a3",
+          "sha256": "4b896037b6d2ae9bf214c8ce8610d49c22bfa348623d1da3c047c7fab8134262",
+          "bytes": 1079424,
+          "target_kind": [
+            "bin"
+          ],
+          "test_profile": true
+        },
+        {
+          "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/hypercircuit",
+          "sha256": "5820faa6305f7955525ea3bb4995ea555062e5d46a8296e3b9caa32a73a69fec",
+          "bytes": 34132040,
+          "target_kind": [
+            "bin"
+          ],
+          "test_profile": false
+        }
+      ]
+    },
+    "readiness_metadata_migration": {
+      "status": "kept: synchronize seven expected artifacts with committed readiness implementation version 21",
+      "evidence": "metadata-migration-v2/result.json",
+      "differences": "artifact-mismatches-v1/result.json",
+      "old_versions": {
+        "six_easyduino_reports": 20,
+        "manufacturing_release_drc_evidence": 1
+      },
+      "new_version": 21,
+      "independent_derivation": "Exact check-version byte substitutions, recomputed DRC length/SHA-256 and manifest core SHA-256, and independent ZIP reconstruction reproduce actual output byte-for-byte. All other report fields, findings, geometry, fabrication outputs and entry metadata are unchanged.",
+      "fixtures": [
+        {
+          "fixture": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32.json",
+          "expected_sha256": "d4e237c1b77a98216d9c80c6f0819cd206ee253833826fb02bf1b2a53345f3eb",
+          "actual_sha256": "b3a0428305689adb1520b80fb741616dd6bff7a1e4cd853870b43a3bbc3765ae",
+          "replacement_count": 160,
+          "only_changed_bytes": "check_version: 20 -> 21",
+          "independently_derived_bytes_match": true
+        },
+        {
+          "fixture": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32s3.json",
+          "expected_sha256": "04b3d92d6218d3ddb73a32dfa2c5c91bd1b564e609035be26ef6dab0a2479b22",
+          "actual_sha256": "64aca0494a1107cfb415eae9c6eda5838f613291e75c553780e8a7600843f517",
+          "replacement_count": 160,
+          "only_changed_bytes": "check_version: 20 -> 21",
+          "independently_derived_bytes_match": true
+        },
+        {
+          "fixture": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/nano.json",
+          "expected_sha256": "4f4e6673b793a23fe0bc00b799670198bb88050969e0f5d5d6c239e4cd1a436a",
+          "actual_sha256": "25be72d0dd282a4f2ea552b9e1f79ca1bcd087b93c51d5e53ab435c45db54a02",
+          "replacement_count": 160,
+          "only_changed_bytes": "check_version: 20 -> 21",
+          "independently_derived_bytes_match": true
+        },
+        {
+          "fixture": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/rp2040.json",
+          "expected_sha256": "d283c7be8beca4e3f2ce752c23ac3b9bdb4219560232e57f12b20098a13d4c9a",
+          "actual_sha256": "792319f31fac7910f7ca91a79071b405c1ee60a721c94596aebcae5a4dc8c9b0",
+          "replacement_count": 160,
+          "only_changed_bytes": "check_version: 20 -> 21",
+          "independently_derived_bytes_match": true
+        },
+        {
+          "fixture": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/stm32f103.json",
+          "expected_sha256": "84d0efe06bb97602c319abae76ae5865dba7e98e1ce1ab0dff0a95c70a188f23",
+          "actual_sha256": "5c057de4b6f0cf9319ca33f63ca198cc567d43536a313e2f1a4613be3a73919b",
+          "replacement_count": 160,
+          "only_changed_bytes": "check_version: 20 -> 21",
+          "independently_derived_bytes_match": true
+        },
+        {
+          "fixture": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/uno.json",
+          "expected_sha256": "3241c7a2b79a21571c056c56096cc897c0e56d1d19098d81a0333f7daf1bfa30",
+          "actual_sha256": "7d3dc6055a8408d553af96661b634c6f030251c9cb9bee6994d51aee19654316",
+          "replacement_count": 160,
+          "only_changed_bytes": "check_version: 20 -> 21",
+          "independently_derived_bytes_match": true
+        },
+        {
+          "fixture": "crates/hypercircuit/tests/fixtures/manufacturing-release/release-board-v1.zip",
+          "expected_sha256": "c22ba6c79b42b0c4754664b5b0f8fa03616ee2e7ae16401965287dfcbeb41e6d",
+          "actual_sha256": "aaae55e9957c7a2db67f3b60489d117afab7411b00f25a61e06e8c8de0e2d188",
+          "changed_entries": [
+            "evidence/hyperdrc.json",
+            "manufacturing-release.json"
+          ],
+          "version_substitutions": 160,
+          "old_version": 1,
+          "new_version": 21,
+          "drc_report_old_bytes": 53692,
+          "drc_report_new_bytes": 53852,
+          "independently_recomputed_drc_digest": "sha256:2edfc4c6712933ce00dc4217ee2464341e22cbd6f35ec66c38d762169a2bd8d9",
+          "independently_recomputed_core_digest": "sha256:af1a425c6901e82b872ab5c8f1e070a017e6c41dddebb948eb3b242e60218e25",
+          "entry_metadata_unchanged": true,
+          "independently_rebuilt_archive_matches": true
+        }
+      ],
+      "test_bodies_and_original_source_fixtures_unchanged": true,
+      "requalification": "snapshot-requalification-v1/result.json",
+      "replayed_targets": [
+        {
+          "name": "format",
+          "command": [
+            "cargo",
+            "fmt",
+            "--all",
+            "--",
+            "--check"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 10.428219562862068,
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "name": "easyduino-compile",
+          "command": [
+            "rustc",
+            "--edition=2024",
+            "--test",
+            "-D",
+            "warnings",
+            "-C",
+            "opt-level=3",
+            "-C",
+            "embed-bitcode=no",
+            "-C",
+            "strip=debuginfo",
+            "-L",
+            "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries",
+            "--cfg",
+            "feature=\"behavior-async\"",
+            "--cfg",
+            "feature=\"default\"",
+            "--cfg",
+            "feature=\"dispatch-trace\"",
+            "--cfg",
+            "feature=\"drc\"",
+            "--cfg",
+            "feature=\"geometry\"",
+            "--cfg",
+            "feature=\"interchange\"",
+            "--cfg",
+            "feature=\"layout\"",
+            "--cfg",
+            "feature=\"lceda\"",
+            "--extern",
+            "hypercircuit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhypercircuit-0c1062996ff0aa09.rlib",
+            "--extern",
+            "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperreal-d578492a8418771c.rlib",
+            "--extern",
+            "hypersolve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhypersolve-f6a62d041e9034a0.rlib",
+            "--extern",
+            "semver=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libsemver-58dd0db7a3e4e7d2.rlib",
+            "--extern",
+            "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperlattice-b35b077d355fc5d3.rlib",
+            "--extern",
+            "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperlimit-66cba4e68756764b.rlib",
+            "--extern",
+            "hyperpath=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperpath-1e9376b0e0a6fd36.rlib",
+            "--extern",
+            "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhypercurve-3eca6dc9d888e279.rlib",
+            "--extern",
+            "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libcsgrs.rlib",
+            "--extern",
+            "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperdrc-88d481e481cf6fad.rlib",
+            "--extern",
+            "hyperphysics=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperphysics-364917622161b9ab.rlib",
+            "--extern",
+            "serde=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libserde-84969463ebf1e798.rlib",
+            "--extern",
+            "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libserde_json-c986de8966ab4b5d.rlib",
+            "--extern",
+            "sha2=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libsha2-c0083845f9e38631.rlib",
+            "--extern",
+            "toml=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libtoml-193398757357852f.rlib",
+            "--extern",
+            "ring=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libring-5e607db6d007f472.rlib",
+            "--extern",
+            "zip=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libzip-3ba51f2c24434d27.rlib",
+            "--extern",
+            "quick_xml=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libquick_xml-3ce2dadfc8769ab8.rlib",
+            "--extern",
+            "unicode_normalization=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libunicode_normalization-f8dde0a13e53d4fe.rlib",
+            "--extern",
+            "proptest=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libproptest-b7ac7599fb585462.rlib",
+            "--crate-name",
+            "easyduino",
+            "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-source-v6/crates/hypercircuit/tests/easyduino.rs",
+            "-o",
+            "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-requalification-v1/easyduino"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 2.208459321875125,
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "name": "easyduino",
+          "command": [
+            "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-requalification-v1/easyduino",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 36.863358119968325,
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "name": "workflow-compile",
+          "command": [
+            "rustc",
+            "--edition=2024",
+            "--test",
+            "-D",
+            "warnings",
+            "-C",
+            "opt-level=3",
+            "-C",
+            "embed-bitcode=no",
+            "-C",
+            "strip=debuginfo",
+            "-L",
+            "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries",
+            "--cfg",
+            "feature=\"behavior-async\"",
+            "--cfg",
+            "feature=\"default\"",
+            "--cfg",
+            "feature=\"dispatch-trace\"",
+            "--cfg",
+            "feature=\"drc\"",
+            "--cfg",
+            "feature=\"geometry\"",
+            "--cfg",
+            "feature=\"interchange\"",
+            "--cfg",
+            "feature=\"layout\"",
+            "--cfg",
+            "feature=\"lceda\"",
+            "--extern",
+            "hypercircuit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhypercircuit-0c1062996ff0aa09.rlib",
+            "--extern",
+            "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperreal-d578492a8418771c.rlib",
+            "--extern",
+            "hypersolve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhypersolve-f6a62d041e9034a0.rlib",
+            "--extern",
+            "semver=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libsemver-58dd0db7a3e4e7d2.rlib",
+            "--extern",
+            "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperlattice-b35b077d355fc5d3.rlib",
+            "--extern",
+            "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperlimit-66cba4e68756764b.rlib",
+            "--extern",
+            "hyperpath=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperpath-1e9376b0e0a6fd36.rlib",
+            "--extern",
+            "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhypercurve-3eca6dc9d888e279.rlib",
+            "--extern",
+            "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libcsgrs.rlib",
+            "--extern",
+            "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperdrc-88d481e481cf6fad.rlib",
+            "--extern",
+            "hyperphysics=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libhyperphysics-364917622161b9ab.rlib",
+            "--extern",
+            "serde=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libserde-84969463ebf1e798.rlib",
+            "--extern",
+            "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libserde_json-c986de8966ab4b5d.rlib",
+            "--extern",
+            "sha2=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libsha2-c0083845f9e38631.rlib",
+            "--extern",
+            "toml=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libtoml-193398757357852f.rlib",
+            "--extern",
+            "ring=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libring-5e607db6d007f472.rlib",
+            "--extern",
+            "zip=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libzip-3ba51f2c24434d27.rlib",
+            "--extern",
+            "quick_xml=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libquick_xml-3ce2dadfc8769ab8.rlib",
+            "--extern",
+            "unicode_normalization=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libunicode_normalization-f8dde0a13e53d4fe.rlib",
+            "--extern",
+            "proptest=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-replay-libraries-v1/libraries/libproptest-b7ac7599fb585462.rlib",
+            "--crate-name",
+            "workflow",
+            "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-source-v6/crates/hypercircuit/tests/workflow.rs",
+            "-o",
+            "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-requalification-v1/workflow"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 2.220782147254795,
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "name": "workflow",
+          "command": [
+            "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-requalification-v1/workflow",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 4.398140641860664,
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "original_cargo_suite_preserved": {
+        "passed": 341,
+        "failed": 7,
+        "exit_code": 101
+      },
+      "final_corpus_coverage": {
+        "unchanged_other_target_passes": 330,
+        "complete_replayed_target_passes": 18,
+        "covered_configured_tests": 348
+      },
+      "whole_cargo_suite_relabelled_as_success": false
+    },
+    "original_drc_reproduction": {
+      "passed": 5,
+      "failed": 21,
+      "ignored": 0
+    },
+    "comparison": "docs/evidence/2026-10-17-native-stroke-completion/comparison-v1/result.json",
+    "intentional_migration": {
+      "representation": "Certified distinct single-line butt/round strokes now retain two native parallels and two endpoint caps before regularization. Boundary subdivision/order and equivalent scalar expression forms may differ from earlier general arrangement output. Mathematical area, bounds and point-set semantics have independent exact oracles; artifact equality is separate.",
+      "unchanged_domain": "Positive half-width, connectivity and corner-style validation remain before the branch. Unresolved endpoint distinctness, square caps and multiple spans retain their existing general route. No global area formula, source parser or finite projection changes.",
+      "archived_components": "The private helper and eight original regressions are byte-identical archived components, independently evaluated on the current stack. The full rejected 35-file integration remains rejected.",
+      "source_adapter": "KiCad noncoincident tracks still use the legacy finite rectangular adapter. This kernel change does not claim exact round-cap source ingress or resolve the 21 observed original DRC failures.",
+      "typed_text_consumer": "A selected invalid font or missing glyph now returns GeometryMaterializationError::Construction with its typed source. It cannot publish a partial successful report with a TextFontRejected omission. Absence of an optional production font policy remains an explicit TextArtwork omission.",
+      "readiness_expected_artifacts": "Exact check-version byte substitutions, recomputed DRC length/SHA-256 and manifest core SHA-256, and independent ZIP reconstruction reproduce actual output byte-for-byte. All other report fields, findings, geometry, fabrication outputs and entry metadata are unchanged.",
+      "report_artifacts": "Selected CPArti and HVP109A CLI JSON reports are compared in both standalone board-file and complete extracted-project contexts, independently of native boundary snapshots. The full-board test visits both projects in one process; CLI observations use separate processes. No report migration is intended in this kernel patch."
+    },
+    "preserved_failed_attempts": {
+      "reproduction-v1": "Missing hyperreal extern prevented test compilation; no tests executed.",
+      "reproduction-v2": "All original curve/DRC tests executed; the following direct diagnostic failed compilation because a LineSeg2-to-Segment2 From implementation does not exist. Corrected in direct-observation-v2.",
+      "candidate-v1": "Area-only circular shortcut loses two previously passing cases and leaves both diagonal failures; rejected with 4 passes and 4 failures.",
+      "contracts-observation-v1": "Wrong dependency search directory prevented compilation; corrected v2 passes both added contracts.",
+      "candidate-preparation-v3": "Formatting-only comparison against standalone rustfmt failed. Preserved source was not built; corrected v4 records Cargo-formatted inputs.",
+      "cost-preflight-v1": "Missing borrow on owned arc radius_squared prevented compilation; corrected v2 preflight passes. Preflight timing is excluded from benchmark evidence.",
+      "candidate-validation-v4 curve-all": "External 1800-second combined build/test timeout after 2272 passing test lines and no assertion failure; compilation took 7 minutes 57 seconds. The complete suite is requalified from the same source in a fresh target with compilation and execution bounded separately. Every test, policy and original board-operation limit is retained.",
+      "candidate-validation-v4 circuit-all and clippy": "Both fail on the text consumer type mismatch; the unchanged baseline reproduces that exact compiler error. The typed migration restores compilation and strict Clippy. The subsequent complete suite exposes seven stale artifact expectations, whose independent audit and complete target replays are recorded separately.",
+      "consumer-validation-v1 circuit-all": "Complete run has 341 passes and seven stale readiness-metadata artifact failures. All fields and archive entries are independently audited before the explicit expectation migration; both unmodified test targets are replayed completely.",
+      "metadata-migration-v1": "Verification expected spaced JSON tokens in the compact archive DRC evidence. No fixture was modified; corrected v2 independently verifies all bytes and digests.",
+      "qualification-tail-v3": "Stops before dependent work because consumer-v1 retains the seven snapshot failures. Tail v4 requires their complete replay before UI or measurement.",
+      "ui-validation-v1 and qualification-tail-v4": "Both complete Hypercircuit target replays pass, then all three demo commands fail before compilation because the nested snapshot discovers the outer workspace. The tail stops before measurements. Live and isolated Cargo metadata establish the harness-location cause; an identical external source copy and fresh target requalify the unchanged demo commands in ui-validation-v2. No manifest, lock, test or production input is changed.",
+      "qualification-tail-v1 and v2": "Both prerequisite guards stop before dependent build or cost work because v4 has curve-all, circuit-all and clippy failures. Terminal session observations are retained. Tail v3 subsequently stops on the stale artifact expectations; tail v4 requires their complete replay before demo and measurements."
+    },
+    "pending_native_paths_remaining": 0,
+    "native_disposition_preserved": true,
+    "independently_admitted_archived_components_sha256": {
+      "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+      "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b"
+    },
+    "full_archived_integration_admitted": false,
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "limitations": [
+      "The input contract is a single certified distinct line with positive half-width and butt/round caps. General square, multispan and unsupported symbolic completion are not expanded. Finite-grid membership is an independent finite oracle, not a proof of all points or all source expressions.",
+      "The retained parallels and certified cap radius/sweep preserve construction evidence used by existing kernel consumers. This does not establish complete end-to-end provenance for every transformation, serialization, import or public binding, or a universal P15/P19 closure proof.",
+      "Native KiCad source fidelity and the finite line_polygon adapter remain open. The full original 26-test DRC reproduction is retained at 5 passes and 21 failures; two old expectations use the superseded failed-region carrier. No credit is assigned to later unexecuted assertions.",
+      "Existing work-budget denial/recovery and zero-refinement constructions are exercised. Retained output serialization supplies expression-tree depth/node and integer/rational coefficient-size observations; it expands shared expressions and omits caches, so it does not measure unique live graph nodes or peak intermediate growth. No new internal total-work, heap-byte, expression-growth or cancellation bound is implemented. External containment, allocator requests and process RSS do not prove those bounds.",
+      "The measured operation includes exact source/path construction, stroke, area, bounds, native output, reconstruction, independent point queries and snapshot Value materialization. It excludes process startup, JSON encoding/file IO and final model destruction. Instrumented samples do not establish uninstrumented production latency or a universal speedup.",
+      "Ratios for baseline incomplete cases are changed-completion observations, not faster successful operations. All unfavorable time/allocation/retention/size rows are retained. Cache warming may strengthen facts; no identical cold/warm failure-history requirement is imposed.",
+      "Affected Hypercurve, CSGRS, HyperDRC and Hypercircuit native consumers are exercised. Nine passing v4 observations retain byte-identical dependency inputs; the dependency proof is in v4-qualification-reuse-v2. The final v6 snapshot adds the typed text consumer, its acceptance tests and seven independently derived readiness-metadata expectations to the five unchanged stroke files. The original Hypercircuit Cargo suite remains recorded as 341 passes, seven artifact failures and exit 101; complete replays of both affected targets pass 18 tests, alongside 330 unaffected passing tests. No failed command is relabelled as success. The direct demo consumer is covered by its release test suite, strict release Clippy and release WASM build. This is not a browser interaction test. No direct stroke_path binding exposure was found in the root C/JS/WASM APIs. Published-package consumer, minimum compiler, complete pre-push/CI debug combinations, coverage and all-property validation remain open. No push is performed.",
+      "The inherited physical artifact audit remains failed/incomplete with 27093 missing paths. New physical paths are audited separately without an inode-deduplicated, whole-history or zero-loss claim."
+    ],
+    "next": [
+      "Use the retained exact kernel construction to evaluate a narrow KiCad noncoincident-track adapter change, preserving typed source/load errors, complete source fixtures and unchanged full-board workload limits.",
+      "Continue the exact finite-adapter and ordinary strict-success frontier, then end-to-end certainty/provenance, clean external distribution and the remaining properties and workflow validation."
+    ]
   }
 },
   "status_meanings": {

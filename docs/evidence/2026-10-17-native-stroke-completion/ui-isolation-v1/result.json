@@ -1,0 +1,12 @@
+{
+  "complete": true,
+  "source": "/tmp/csgrs-native-stroke-ui-source-v1",
+  "source_inputs": 2835,
+  "source_hashes_sha256": "777951fcbdd62c5ce814b761fa526baf58ad4c88cdd1cec8635fc087cd211755",
+  "live_demo_workspace_root": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui",
+  "isolated_demo_workspace_root": "/tmp/csgrs-native-stroke-ui-source-v1/crates/hypercurve/examples/hypercurve_ui",
+  "all_final_v6_inputs_byte_identical": true,
+  "manifest_or_lock_changes": false,
+  "main_sources_modified": false,
+  "original_failed_validation_preserved": true
+}

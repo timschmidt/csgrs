@@ -1,0 +1,40 @@
+[
+  {
+    "name": "live-demo-metadata",
+    "command": [
+      "cargo",
+      "metadata",
+      "--offline",
+      "--locked",
+      "--no-deps",
+      "--format-version",
+      "1",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/Cargo.toml"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01960587501525879,
+    "stdout_sha256": "9b5a53cf801bdd8d4b3845b39d26c7d49abc844c275f70be06a2b0ac0065bef7",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f09ebb2a4ac40118e81b358e5cc6c301735abf6176fb7c63263e434057714b24"
+  },
+  {
+    "name": "isolated-demo-metadata",
+    "command": [
+      "cargo",
+      "metadata",
+      "--offline",
+      "--locked",
+      "--no-deps",
+      "--format-version",
+      "1",
+      "--manifest-path",
+      "/tmp/csgrs-native-stroke-ui-source-v1/crates/hypercurve/examples/hypercurve_ui/Cargo.toml"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01830772403627634,
+    "stdout_sha256": "4c384e647b8f33eb6a25394e43a9eb106b8d4b935d4be55a760269ec5e297f7c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2ccd25d6ca1e0a0951f8c31c6a873394601eb38836900cf1429615ab5b5fa88a"
+  }
+]

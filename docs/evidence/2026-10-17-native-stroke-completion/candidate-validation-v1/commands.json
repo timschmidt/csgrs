@@ -1,0 +1,75 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 10.530456107109785,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f37d3e1abf1b9690779549eb1627ffb2ba8fbacfe0be864820ac054862e21c64"
+  },
+  {
+    "name": "original-curve-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "native_linear_stroke",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 120.76081601623446,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v1/release/deps/native_linear_stroke-e62926b739997465": {
+        "sha256": "45e697fcafa37465ca5ea33db68f2fc3aff740ddb5e0e8bdd786a1c35a1bdfdf",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v1/45e697fcafa37465ca5ea33db68f2fc3aff740ddb5e0e8bdd786a1c35a1bdfdf/native_linear_stroke-e62926b739997465",
+        "bytes": 17989992
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "849d910be6f8d2b4db5a4a3b4480e7626417860f0820255cde98a536d34053f0",
+    "stderr_sha256": "9e5b3403924f01374b50c8f5c4358b0ddb2d9c1940f7b5cefb84b54d4b9a2d99",
+    "resources_sha256": "f78f6a6a6acdb8f2e92874dd8bcb78746577002cfd5d0b166769816693ecbcbb"
+  },
+  {
+    "name": "native-library",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 101.69738765666261,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "232b4c1e033403e85eb7a3e520b75ca4a79d0a06c92dab2bf5d384d5b9b43e25",
+    "stderr_sha256": "365ba920fdee80e273399d96b7e55a10334d512da24149aa6e63bb282547f084",
+    "resources_sha256": "13b02354dc38ecf7962acd1ca2e7298f00c3d76307539bfdb242b136664d4e9d"
+  }
+]

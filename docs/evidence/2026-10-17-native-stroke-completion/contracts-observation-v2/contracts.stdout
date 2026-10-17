@@ -1,0 +1,7 @@
+
+running 2 tests
+test exact_extreme_axis_strokes_complete_without_refinement_budget ... ok
+test translated_reversed_strokes_keep_analytic_measurements_and_membership ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.69s
+

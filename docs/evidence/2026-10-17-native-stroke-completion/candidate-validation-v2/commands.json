@@ -1,0 +1,75 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 10.503694353159517,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "77ff9937c02f29381227235b16de0f1276f431cb4b822793b0c1718b4f6f05a0"
+  },
+  {
+    "name": "original-curve-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "native_linear_stroke",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 120.66806529881433,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/deps/native_linear_stroke-e62926b739997465": {
+        "sha256": "ec21c1a02f77fefcb1044303d1b8f2fbbb2e9057bd1c7828d0cb48207d4250fe",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-executables-v2/ec21c1a02f77fefcb1044303d1b8f2fbbb2e9057bd1c7828d0cb48207d4250fe/native_linear_stroke-e62926b739997465",
+        "bytes": 17992768
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "1251ba71750376932152bef3cbf757a53fdaa46ddab21338b8693a2fa143de5c",
+    "stderr_sha256": "db3520f08e26f91862e43bb462f60c46d3f0b2b70307f7a8ffc3b0c8e2cdeaac",
+    "resources_sha256": "b207f1a022f396ddb290ff7e2074fb47c9a23433c1d7b66fc3ec8184347df535"
+  },
+  {
+    "name": "native-library",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 102.06048591807485,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "0707c9908f92fbba344085a0296a9fc49bffef755663ea32df361504e7bd3d83",
+    "stderr_sha256": "ff36722c04216e9c61c7641ff5d502b7ed6b866b4abfd0480e07050035e7c99d",
+    "resources_sha256": "98b51c03d8867e32c392d5035c29e073072f40774be7aeadae9375a43fc01f1a"
+  }
+]

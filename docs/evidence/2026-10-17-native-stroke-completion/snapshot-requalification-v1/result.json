@@ -1,0 +1,51 @@
+{
+  "complete": true,
+  "commands": 5,
+  "targets": {
+    "easyduino": {
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "test_names": [
+        "esp32_runs_end_to_end_through_hyperdrc",
+        "esp32s3_runs_end_to_end_through_hyperdrc",
+        "manifest_pins_the_complete_easyduino_repository_inventory",
+        "nano_full_fidelity_aggregate_obeys_the_selected_predicate_policy",
+        "nano_runs_end_to_end_through_hyperdrc",
+        "pinned_kicad_projects_import_to_exact_native_semantic_fixtures",
+        "rp2040_runs_end_to_end_through_hyperdrc",
+        "stm32f103_runs_end_to_end_through_hyperdrc",
+        "uno_runs_end_to_end_through_hyperdrc"
+      ],
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-requalification-v1/easyduino",
+      "binary_sha256": "54549b895c5b0cac1a564eb69cb365d61fcbfcb515236a21343901d5e1a49d47",
+      "binary_bytes": 29457640
+    },
+    "workflow": {
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "test_names": [
+        "centered_pad_materialization_avoids_spurious_offset_uncertainty",
+        "checked_fluent_design_reports_cohesive_release_evidence",
+        "checked_hierarchy_reports_release_from_its_path_qualified_flat_view",
+        "default_manufacturing_release_is_unsigned_deterministic_and_self_verifying",
+        "ordinary_release_runs_native_dft_requirements_with_source_evidence",
+        "panel_release_expands_components_and_test_access_without_losing_child_identity",
+        "release_resolves_controlled_impedance_materials_through_hyperphysics",
+        "release_rule_failures_remain_inspectable_reports",
+        "semantic_release_preserves_authored_intent_and_source_spans_in_drc_handoff"
+      ],
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/snapshot-requalification-v1/workflow",
+      "binary_sha256": "868bf38c51fc875bbef430712e250cbdfc961b4dc03121b36a87384c73685d17",
+      "binary_bytes": 35465240
+    }
+  },
+  "all_seven_prior_failures_replayed_successfully": true,
+  "all_source_and_library_inputs_unchanged": true,
+  "test_bodies_and_original_fixture_inputs_unchanged": true,
+  "snapshot_update_environment_disabled": true,
+  "main_sources_modified": false,
+  "original_cargo_suite_exit_code": 101,
+  "original_cargo_suite_relabelled_as_success": false
+}

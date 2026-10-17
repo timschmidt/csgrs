@@ -1,0 +1,43 @@
+[
+  {
+    "name": "compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/libhypercurve.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/deps/libhyperlimit-748af1e73cf3afdf.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/candidate-target-v2/release/deps/libhyperreal-833ddc6db119ca40.rlib",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/contract_tests_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/contracts-observation-v2/contracts"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6378697897307575,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b0735b712ab4e135a413629eea1afca847746928aa699995cdd06236af7ad157"
+  },
+  {
+    "name": "contracts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/contracts-observation-v2/contracts",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6988714947365224,
+    "stdout_sha256": "35b96866258c3bc2a3a4633c8bd997b3047ec6f47765cdd519339e6a06623983",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "065fda59ec0dfffbbfb67f13ed8c913c1cbb27528bf71ea371d1b935b37d94a0"
+  }
+]

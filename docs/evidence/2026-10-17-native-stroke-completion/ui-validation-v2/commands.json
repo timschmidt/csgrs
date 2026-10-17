@@ -1,0 +1,80 @@
+[
+  {
+    "name": "ui-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "crates/hypercurve/examples/hypercurve_ui/Cargo.toml",
+      "--release",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 300.3957299347967,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/ui-target-v2/release/deps/hypercurve_ui-f5fe2e1d3206a040": {
+        "sha256": "4a6d8b695bd4bcd986d7e19014fe2c5611ab41c36f9127db2c3ddc7a671e90e1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/ui-executables-v2/4a6d8b695bd4bcd986d7e19014fe2c5611ab41c36f9127db2c3ddc7a671e90e1/hypercurve_ui-f5fe2e1d3206a040",
+        "bytes": 23053552
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "8dfaecbf960bcc02c4455dce16788262e0db3f58a76472beba37e0bb772fb819",
+    "stderr_sha256": "8a7df0835881f9765708972b617c2ee106022c021c5fdab19eb515ff336ca4b8",
+    "resources_sha256": "fe6ab44f0fd34c6b1a27efb386c2b247ee104ca26d2aefe4dad6f7d1f1559c6b"
+  },
+  {
+    "name": "ui-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "crates/hypercurve/examples/hypercurve_ui/Cargo.toml",
+      "--release",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 49.53868745919317,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "0c19859b2aed2a0f1abf7a688ccccadf59225c738b72821cfc7e6010fd128f31",
+    "resources_sha256": "f3ef702f9b9b4b0d2e9d86b9f45e6a5740753de70e66f448c82ed9d2addf102f"
+  },
+  {
+    "name": "ui-wasm",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "crates/hypercurve/examples/hypercurve_ui/Cargo.toml",
+      "--release",
+      "--target",
+      "wasm32-unknown-unknown"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 150.17706958996132,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "5b09b50f94cd17ee54bdc106337437d01a64d6b6fb234381eea2f8973cad4489",
+    "resources_sha256": "e5fb58d4cc3c64b06133bdd5c45c23b44665fb52c5a637f35e538dd77ecdc274"
+  }
+]

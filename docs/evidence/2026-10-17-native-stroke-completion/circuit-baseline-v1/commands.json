@@ -1,0 +1,20 @@
+[
+  {
+    "name": "check",
+    "command": [
+      "cargo",
+      "check",
+      "--offline",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercircuit",
+      "--all-features"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 48.8539265608415,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "b8bcb2f92e276a91b0392ef589e43a9f243d4aba5ab7b6318067287b6ab96e34",
+    "resources_sha256": "93cdee9b2c9e5e62f823f5c2e056ae5a4ffa1fafd567493c89d659356b7713aa"
+  }
+]

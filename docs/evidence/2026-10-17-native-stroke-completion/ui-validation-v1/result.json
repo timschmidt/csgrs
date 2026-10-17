@@ -1,0 +1,16 @@
+{
+  "complete": true,
+  "commands": 3,
+  "unexpected_exits": [
+    "ui-tests",
+    "ui-clippy",
+    "ui-wasm"
+  ],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "affected_demo_consumer": "Polyline::outline -> CurveRegion2::stroke_path",
+  "tests_profile": "release; full pre-push debug matrix remains open",
+  "published_package_pipeline_executed": false
+}

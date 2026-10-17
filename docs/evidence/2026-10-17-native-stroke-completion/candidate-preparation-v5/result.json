@@ -1,0 +1,23 @@
+{
+  "complete": true,
+  "base_commit": "b137381247a03342ce5b6184710475fcc22c9d63",
+  "source_inputs": 2835,
+  "source_hashes_sha256": "d979cc00b9793d0729b14035e0a2691e5768efe26cb6ab10f8dfb46df3d51c21",
+  "changes": {
+    "crates/hypercircuit/src/materialize.rs": "6355b8cb6a73360ddb1a153ecaae1b5cd8754ad1679b36126bbcad7b4b6ddffe",
+    "crates/hypercircuit/tests/fabrication.rs": "e2d6c1fd8744bd43b6f452347958fc8e8f67d0716e41708ea7f6febe0003ef91",
+    "crates/hypercurve/README.md": "905fc28d5bbb2eab7ef5f355937f44cccebe01ab9af02971a04ea06f765d50b4",
+    "crates/hypercurve/src/bezier_region.rs": "f9d51503203a265b9397d29d7a0ba57d08d7484c621ebb354bd9f17f704cccca",
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b",
+    "crates/hypercurve/tests/native_linear_stroke_contracts.rs": "174e36d4a368764f437046b78f7a5ad305c4c516e0922602bb1d052c072cebf6"
+  },
+  "delta_from_v4": {
+    "crates/hypercircuit/src/materialize.rs": "6355b8cb6a73360ddb1a153ecaae1b5cd8754ad1679b36126bbcad7b4b6ddffe",
+    "crates/hypercircuit/tests/fabrication.rs": "e2d6c1fd8744bd43b6f452347958fc8e8f67d0716e41708ea7f6febe0003ef91"
+  },
+  "runner_sha256": "554ef938cab790194ea9ecd10004f56faa47b66b5f444f6591aec1ed9ca11333",
+  "stroke_sources_unchanged_from_v4": true,
+  "baseline_compile_failure_reproduced": true,
+  "main_sources_modified": false
+}

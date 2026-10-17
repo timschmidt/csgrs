@@ -1,0 +1,71 @@
+[
+  {
+    "name": "compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost_probe_v2.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost-preflight-v2/probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6438240008428693,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d5f3212692338a4475107b7dbeaef4c929f617ebcb52675700a0d9edafe78f23"
+  },
+  {
+    "name": "case-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost-preflight-v2/probe",
+      "0",
+      "round",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost-preflight-v2/case-0.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.025162354111671448,
+    "stdout_sha256": "bbb0b8e4eb7365d5efe5fb54a62feb5fa3cbd4877e02ed45ee38a6bb2e5f48c7",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4c9f62610f8ba83d69c6453ae0eedef135b3f47e3ebc40d52f16135e4a49473c"
+  },
+  {
+    "name": "case-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost-preflight-v2/probe",
+      "2",
+      "round",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost-preflight-v2/case-2.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17975861812010407,
+    "stdout_sha256": "792b5e55ea021945915aabe49d0de9f612262cd6be2b976bfcc400cb7d68e7ac",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "04bde17b8b399d5e742ab5eb5bdfe9cd77bfdda10d1fa80dbb96f80c598684c2"
+  },
+  {
+    "name": "case-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost-preflight-v2/probe",
+      "4",
+      "round",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/cost-preflight-v2/case-4.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.0898698819801211,
+    "stdout_sha256": "6f1249826253f55a897b9d5e4e5f94f12729c2f1e67846c133a4928e2cd00e74",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0296d3044c164b99d366540f9a99e252518511dbdd1e98629c0ec2502893b353"
+  }
+]

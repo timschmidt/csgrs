@@ -1,0 +1,18 @@
+{
+  "complete": true,
+  "base_commit": "b137381247a03342ce5b6184710475fcc22c9d63",
+  "source_inputs": 2835,
+  "source_hashes_sha256": "17b515ca062d03cc84260ef1bc29988725bed40703483b2526bfee113d949259",
+  "changes": {
+    "crates/hypercurve/README.md": "905fc28d5bbb2eab7ef5f355937f44cccebe01ab9af02971a04ea06f765d50b4",
+    "crates/hypercurve/src/bezier_region.rs": "f9d51503203a265b9397d29d7a0ba57d08d7484c621ebb354bd9f17f704cccca",
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b",
+    "crates/hypercurve/tests/native_linear_stroke_contracts.rs": "174e36d4a368764f437046b78f7a5ad305c4c516e0922602bb1d052c072cebf6"
+  },
+  "runner_sha256": "4486642bee41f239cb570db6ccf703a61cb5ebf3507c146eaa82ae25e05e48e0",
+  "preserved_preparation_failure": "candidate-preparation-v3: formatting-only difference from standalone rustfmt; no candidate build executed",
+  "production_behavior_unchanged_from_v2": true,
+  "added_public_contract_tests": 2,
+  "main_sources_modified": false
+}

@@ -1,0 +1,19 @@
+error[E0277]: the trait bound `Segment2: From<LineSeg2>` is not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/probe-source-v2/direct_probe_v1.rs:17:48
+   |
+17 |     let contour = Contour2::try_new(vec![right.into(),end,left.reversed().into(),start]).map_err(|e|e.to_string())?;
+   |                                                ^^^^ the trait `From<LineSeg2>` is not implemented for `Segment2`
+   |
+   = note: required for `LineSeg2` to implement `Into<Segment2>`
+
+error[E0277]: the trait bound `Segment2: From<LineSeg2>` is not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/probe-source-v2/direct_probe_v1.rs:17:75
+   |
+17 |     let contour = Contour2::try_new(vec![right.into(),end,left.reversed().into(),start]).map_err(|e|e.to_string())?;
+   |                                                                           ^^^^ the trait `From<LineSeg2>` is not implemented for `Segment2`
+   |
+   = note: required for `LineSeg2` to implement `Into<Segment2>`
+
+error: aborting due to 2 previous errors
+
+For more information about this error, try `rustc --explain E0277`.
