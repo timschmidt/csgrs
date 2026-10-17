@@ -17680,6 +17680,30 @@
     "full_plan_complete": false,
     "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
     "original_worktree_integration_pending": true
+  },
+  "in_scope_package_qualification": {
+    "status": "fourteen in-scope packages assembled and verified by native Cargo with all features",
+    "contract": "docs/evidence/2026-10-17-in-scope-packages/contract-v1.md",
+    "qualification": "docs/evidence/2026-10-17-in-scope-packages/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-in-scope-packages/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-in-scope-packages/artifact-expectations-v1.json.gz",
+    "verified_packages": 14,
+    "physical_archive_paths_hashed": 42,
+    "native_cargo_build_verification_enabled": true,
+    "prepared_candidate_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/checkout-release-candidate-v1",
+    "hypervoxel_deferred_by_user": true,
+    "dependency_blocked_in_scope_distributions": [
+      "csgrs",
+      "csgrs-ffi",
+      "hypercircuit",
+      "hyperdrc",
+      "hypersdf"
+    ],
+    "cache_index_admitted": false,
+    "release_qualification_complete": false,
+    "full_plan_complete": false,
+    "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
+    "original_worktree_integration_pending": true
   }
 },
   "status_meanings": {
