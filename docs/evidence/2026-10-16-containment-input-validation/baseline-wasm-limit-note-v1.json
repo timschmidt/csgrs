@@ -1,0 +1,13 @@
+{
+  "baseline_command": "baseline-validation-v1/wasm-containment-inputs",
+  "exit_code": 1,
+  "classification": "external-address-space-exhaustion-before-tests",
+  "diagnostic": "WebAssembly.Instance(): Out of memory: Cannot allocate Wasm memory for new instance",
+  "limit_bytes": 8589934592,
+  "native_reproduction_valid": true,
+  "binding_reproduction_evidence": "wasm-reproduction-v1/result.json",
+  "binding_reproduction_limit_bytes": 68719476736,
+  "binding_reproduction_passed_controls": 10,
+  "binding_reproduction_failed_assertions": 3,
+  "interpretation": "An expected nonzero exit alone is insufficient; only the separate full TAP test result supplies binding failure evidence. Failed smaller-limit output is retained."
+}

@@ -1,0 +1,18 @@
+{
+  "runner_sha256": "c2dcd731e5bdf436b469a9497efa2b3e059baa81bb4cf4af764cd45c1ef85ce7",
+  "probe_sha256": "393f7f6a73e0a68c4ea6828b2a4d2e44f25fb9f8c45a8f7457c20ca374788864",
+  "qualification_sha256": "50f8b50b2f8367d4967f2792ab818a16841fa517721624b4e9bdfd0547f7cdd7",
+  "artifacts_read_only_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm32-unknown-unknown/wasm/csgrs.wasm": "89da31de737db2943787da7479d59b76b40240a96c2b25013454e68b8419a118",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs.d.ts": "40953c33518de928d829277c7d17f70c984e9b88090f7428b5b341ccda2f4933",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs.js": "042fbbb1c5860ea51f863e1ba9c702a9ae4dbbb027b1616e39ece583513670f2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs_bg.wasm": "56ca11e30e67e5661007465b3045ca388e17afc5dabc2e88c93cc0cd00ca8012",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs_bg.wasm.d.ts": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/geometry_certainty.ts": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/io_contracts.js": "37fb65ed6e244e3e134178c1358f129f6fe33191028592e9e53043110b45fb19",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/io_contracts.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/mesh_errors.js": "5f133abd2e072712599372bdfcf2275b78c92b339c28e2e33a4d0877408f7efd",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/mesh_errors.ts": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614"
+  },
+  "scope": "Compare independently derived nonzero winding membership with current documented parity; preserve the mismatch as a separate open semantic issue. No geometry normalization or policy change."
+}

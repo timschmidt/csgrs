@@ -1,0 +1,11 @@
+{
+  "claim": "Measure the added correctness work; no speedup or uniform-memory claim.",
+  "variants": "Read-only baseline and candidate Hypermesh release libraries from the initial identical CSGRS all-feature test builds. Require identical Cargo fingerprint JSON including policy features and dependency fingerprints. Same probe compiler/flags; completed Cargo targets never reopened.",
+  "samples": "Five alternating fresh-process pairs, two policies, 16 fresh tetrahedra per policy; cold construction plus 4 queries, followed by 4 repeated queries on each retained mesh.",
+  "oracle": "A rational tetrahedron has interior x,y,z>0 and x+y+z<1. Query values are [true,false,false,false] for interior, source vertex, in-bounds outside, and out-of-bounds outside. Every outcome must be Certified. Full bool rows retained, not only hashes.",
+  "boundaries": "Cold includes native source/coordinate construction, all four queries, result materialization and retention of mesh facts. Warm includes four queries and full result materialization per mesh. Query-point construction, JSON formatting, process startup are outside phase timers but inside GNU time. Output geometry is never changed by this query.",
+  "memory": "Requested Rust allocation calls/bytes, retained-live delta and peak-extra live requested bytes per phase; separate post-mesh-drop released bytes. This allocator probe does not measure total heap capacity, foreign allocators or universal cache cleanup. Whole-process maximum RSS recorded.",
+  "size": "Retain both compiled probe binary sizes and hashes and both WASM artifact sizes where available; paths/debug/source metadata prevent interpreting raw size deltas as isolated optimization evidence.",
+  "resources": "External 120-second /8-GiB address-space limit per native sample; no internal work/heap/cancellation bound claimed. Run after all qualification builds finish; retain unfavorable samples.",
+  "measurement_scope": "The native contains_point query owns the changed validation. Modeling/WASM propagation is checked in their test suites. Before any measurement, feature-graph inspection showed that the later production build resolves dependency features differently from the test build; it is retained as a compilation check and excluded from this paired cost comparison."
+}

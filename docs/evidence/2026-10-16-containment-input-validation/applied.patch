@@ -1,0 +1,146 @@
+diff --git a/crates/hypermesh/src/mesh.rs b/crates/hypermesh/src/mesh.rs
+index da03e5f8d..0571d7aef 100644
+--- a/crates/hypermesh/src/mesh.rs
++++ b/crates/hypermesh/src/mesh.rs
+@@ -249,15 +249,20 @@ impl TriangleMesh {
+     /// an admissible policy. A stronger fact requires new native validation.
+     pub fn validate_closed_pwn(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<()>> {
+         let decisions = DecisionContext::new(context);
++        self.validate_closed_pwn_decision(&decisions)?;
++        Ok(decisions.finish(()))
++    }
++
++    fn validate_closed_pwn_decision(&self, decisions: &DecisionContext) -> HypermeshResult<()> {
+         let view = self.as_ref();
+         validate_non_empty_mesh_views(&[view])?;
+         if !self
+             .geometry_facts()
+-            .is_some_and(|facts| facts.valid_pwn.consume(&decisions))
++            .is_some_and(|facts| facts.valid_pwn.consume(decisions))
+         {
+-            validate_source_pwn(&decisions, view, 0)?;
++            validate_source_pwn(decisions, view, 0)?;
+         }
+-        Ok(decisions.finish(()))
++        Ok(())
+     }
+ 
+     /// Resolves a triangle's position rows, preserving invalid-index diagnostics.
+@@ -953,6 +958,13 @@ impl TriangleMesh {
+ 
+     /// Tests strict solid containment using exact boundary predicates and ray
+     /// parity. Points on a triangle, edge, or vertex are not inside.
++    ///
++    /// Canonical empty geometry (both buffers empty) returns `false`. Every
++    /// other input must satisfy [`Self::validate_closed_pwn`], including queries
++    /// outside its bounds or on a source face. Invalid geometry returns its
++    /// typed error before a containment shortcut can answer. Validation facts
++    /// contribute their certainty and obey the same policy and source identity
++    /// rules as explicit validation.
+     pub fn contains_point(
+         &self,
+         context: &MeshContext,
+@@ -968,9 +980,10 @@ impl TriangleMesh {
+         decisions: &DecisionContext,
+         point: &Point3,
+     ) -> HypermeshResult<bool> {
+-        if self.triangles.is_empty() {
++        if self.positions.is_empty() && self.triangles.is_empty() {
+             return Ok(false);
+         }
++        self.validate_closed_pwn_decision(decisions)?;
+         let bounds = match self.exact_bounds_decision(decisions) {
+             Ok(bounds) => bounds,
+             Err(HypermeshError::PredicateUndecided { .. }) => None,
+diff --git a/src/solid.rs b/src/solid.rs
+index 42f464c11..669b20993 100644
+--- a/src/solid.rs
++++ b/src/solid.rs
+@@ -2077,6 +2077,11 @@ pub fn distribute_arc_with_context(
+ }
+ 
+ /// Exact point containment through the retained native triangle query path.
++///
++/// Canonical empty geometry returns `false`; every other input must be a valid
++/// closed-PWN mesh. Malformed input fails before bounds or boundary shortcuts.
++/// Points on source triangles are excluded by the native strict containment
++/// query. This convenience entry point selects the strict predicate policy.
+ pub fn contains_point(
+     mesh: &TriangleMesh,
+     point: &Point3,
+@@ -2086,6 +2091,9 @@ pub fn contains_point(
+ }
+ 
+ /// Classifies a point with the selected policy and reports aggregate certainty.
++///
++/// Source validation and query decisions share the returned certainty receipt.
++/// A cached approximate validation fact cannot certify a strict query.
+ pub fn contains_point_with_context(
+     mesh: &TriangleMesh,
+     point: &Point3,
+diff --git a/src/wasm/mesh_js.rs b/src/wasm/mesh_js.rs
+index 73edffc85..b91cbe11a 100644
+--- a/src/wasm/mesh_js.rs
++++ b/src/wasm/mesh_js.rs
+@@ -242,6 +242,9 @@ impl MeshJs {
+             .unchecked_into()
+     }
+ 
++    /// Strict containment: canonical empty geometry returns false. Malformed
++    /// closed-solid input throws GeometryError with code invalid_input, even
++    /// when the point is outside its bounds or on a source triangle.
+     #[wasm_bindgen(js_name = containsPoint)]
+     pub fn contains_point(&self, point: &Point3Js) -> Result<bool, JsValue> {
+         solid::contains_point(&self.inner, &point.inner).map_err(mesh_error)
+@@ -490,6 +493,8 @@ impl MeshJs {
+             .map_err(geometry_error)
+     }
+ 
++    /// Containment with the certainty of both source validation and the query.
++    /// Malformed input throws GeometryError; unresolved predicates keep Unknown.
+     #[wasm_bindgen(js_name = containsPointWithContext)]
+     pub fn contains_point_with_context(
+         &self,
+diff --git a/tests/wasm/mesh_errors.cjs b/tests/wasm/mesh_errors.cjs
+index 03ea40a43..201a4c6b4 100644
+--- a/tests/wasm/mesh_errors.cjs
++++ b/tests/wasm/mesh_errors.cjs
+@@ -105,3 +105,38 @@ test("successful membership retains its own query status and consumed certainty"
+     }
+   } finally { mesh.free(); }
+ });
++
++for (const [name, construct] of [
++  ["open", () => malformed()],
++  ["degenerate", () => malformed(true)],
++  ["positions-only", () => MeshJs.fromArrays(Float64Array.from([0,0,0]), new Uint32Array())],
++]) {
++  test("membership rejects "+name+" input before bounds and boundary shortcuts", () => {
++    const mesh = construct();
++    try {
++      for (const xyz of [[10,10,10],[0,0,0]]) {
++        const point = new Point3Js(...xyz);
++        try {
++          invalid(capture(() => mesh.containsPoint(point)));
++          for (const approximate of [false,true,false]) {
++            invalid(capture(() => mesh.containsPointWithContext(point,approximate)));
++          }
++        } finally { point.free(); }
++      }
++    } finally { mesh.free(); }
++  });
++}
++test("canonical empty membership is a decided certified false", () => {
++  const mesh = new MeshJs(), point = new Point3Js(0,0,0);
++  try {
++    assert.equal(mesh.containsPoint(point),false);
++    for (const approximate of [false,true]) {
++      const result = mesh.containsPointWithContext(point,approximate);
++      try {
++        assert.equal(result.status,GeometryQueryStatusJs.Decided);
++        assert.equal(result.value,false);
++        assert.equal(result.certainty,GeometryCertaintyJs.Certified);
++      } finally { result.free(); }
++    }
++  } finally { point.free(); mesh.free(); }
++});

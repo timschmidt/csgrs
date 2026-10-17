@@ -1,0 +1,17 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs.js:2545
+let wasmInstance = new WebAssembly.Instance(wasmModule, __wbg_get_imports());
+                   ^
+
+RangeError: WebAssembly.Instance(): Out of memory: Cannot allocate Wasm memory for new instance
+    at Object.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs.js:2545:20)
+    at Module._compile (node:internal/modules/cjs/loader:1705:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1838:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Module._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Module.require (node:internal/modules/cjs/loader:1463:12)
+    at require (node:internal/modules/helpers:147:16)
+    at Object.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs:4:74)
+
+Node.js v22.22.2

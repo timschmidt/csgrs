@@ -1,0 +1,56 @@
+[
+  {
+    "name": "nested_same_orientation",
+    "approximate": false,
+    "expected_nonzero_winding_membership": true,
+    "independently_derived_winding_magnitude": 2,
+    "observed": false,
+    "status": 0,
+    "certainty": 0
+  },
+  {
+    "name": "nested_same_orientation",
+    "approximate": true,
+    "expected_nonzero_winding_membership": true,
+    "independently_derived_winding_magnitude": 2,
+    "observed": false,
+    "status": 0,
+    "certainty": 0
+  },
+  {
+    "name": "nested_same_orientation",
+    "approximate": false,
+    "expected_nonzero_winding_membership": true,
+    "independently_derived_winding_magnitude": 2,
+    "observed": false,
+    "status": 0,
+    "certainty": 0
+  },
+  {
+    "name": "coincident_opposite_orientation",
+    "approximate": false,
+    "expected_nonzero_winding_membership": false,
+    "independently_derived_winding_magnitude": 0,
+    "observed": true,
+    "status": 0,
+    "certainty": 0
+  },
+  {
+    "name": "coincident_opposite_orientation",
+    "approximate": true,
+    "expected_nonzero_winding_membership": false,
+    "independently_derived_winding_magnitude": 0,
+    "observed": true,
+    "status": 0,
+    "certainty": 0
+  },
+  {
+    "name": "coincident_opposite_orientation",
+    "approximate": false,
+    "expected_nonzero_winding_membership": false,
+    "independently_derived_winding_magnitude": 0,
+    "observed": true,
+    "status": 0,
+    "certainty": 0
+  }
+]

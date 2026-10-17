@@ -1,0 +1,500 @@
+{
+  "status": "kept: native containment validates source topology and consumes its certainty before query shortcuts",
+  "main_parent_commit": "c9690a7cbd03c79e485bd7670ca10fe68bc5e45e",
+  "implementation_sha256": {
+    "crates/hypermesh/src/mesh.rs": "2deb9169e27c76daa905ab5bff913e1eaf5e4e4675b6a6274573a43879f063d7",
+    "src/solid.rs": "ed9fa1f62cbf67bf0b10678fc99ba02e289b35105df69fe9165d0472be5a2bf6",
+    "src/wasm/mesh_js.rs": "417a7412906082ee3873b756a5ca13cc019d8342f4d9d67ab0f64d4057e79645",
+    "tests/containment_inputs.rs": "93dc69ee47c33a82a672842522118c0b7f69947ed934585b2c74f1bf943eef2d",
+    "tests/wasm/mesh_errors.cjs": "1a5129979f47215143796240f1529054608c50cd7b07232540b9a0ba940d172d"
+  },
+  "contract": "contract-v2.md",
+  "validation": {
+    "baseline-validation-v1": [
+      {
+        "name": "containment-inputs",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--test",
+          "containment_inputs",
+          "--",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 101,
+        "elapsed_seconds": 334.0861426675692,
+        "summaries": 1,
+        "passed": 4,
+        "failed": 6,
+        "ignored": 0
+      },
+      {
+        "name": "wasm-containment-inputs",
+        "command": [
+          "node",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs.js"
+        ],
+        "exit_code": 1,
+        "elapsed_seconds": 0.3958622100763023,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "candidate-validation-v2": [
+      {
+        "name": "format",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 10.908664599992335,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "containment-inputs",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--test",
+          "containment_inputs",
+          "--",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 338.79936979105696,
+        "summaries": 1,
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "mesh-and-modeling-all-features",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 317.30756573937833,
+        "summaries": 57,
+        "passed": 688,
+        "failed": 0,
+        "ignored": 8
+      },
+      {
+        "name": "modeling-minimal",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--no-default-features"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 158.12661603000015,
+        "summaries": 39,
+        "passed": 142,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "all-feature-all-target-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 58.43066691700369,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "minimal-all-target-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--no-default-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 21.207356785889715,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "all-feature-docs",
+        "command": [
+          "cargo",
+          "doc",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--no-deps"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 36.25101752579212,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "cost-libraries",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--message-format=json"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 250.3402045168914,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "wasm-validation-v2": [
+      {
+        "name": "shell-syntax",
+        "command": [
+          "bash",
+          "-n",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-source-v2/scripts/test-wasm-bindings.sh"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.22744697984308004,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "real-consumers",
+        "command": [
+          "bash",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-source-v2/scripts/test-wasm-bindings.sh"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 168.2019091108814,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "wasm-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--profile",
+          "wasm",
+          "--target",
+          "wasm32-unknown-unknown",
+          "--no-default-features",
+          "--features",
+          "wasm",
+          "--lib",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 26.38204244384542,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    ]
+  },
+  "baseline_native": {
+    "passed": 4,
+    "failed": 6
+  },
+  "baseline_wasm": {
+    "passed": 10,
+    "failed": 3,
+    "evidence": "wasm-reproduction-v1/result.json"
+  },
+  "new_native_tests": 10,
+  "mesh_wasm_tests": 13,
+  "prior_io_wasm_tests": 12,
+  "typescript_scope": "geometry_certainty.ts typechecked; io_contracts.ts and mesh_errors.ts compiled and executed",
+  "all_final_source_inputs_match_qualified_snapshot": true,
+  "cost": "cost-v1/result.json",
+  "cost_summary": [
+    {
+      "policy": "strict",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.0382096960485017,
+          "allocation_calls_delta": 128,
+          "allocated_bytes_delta": 15872,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0241344312768925,
+          "allocation_calls_delta": 128,
+          "allocated_bytes_delta": 15872,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 1.4192705482352406,
+          "allocation_calls_delta": 128,
+          "allocated_bytes_delta": 15872,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 1.109871127376564,
+          "allocation_calls_delta": 128,
+          "allocated_bytes_delta": 15872,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 0.8815757226576776,
+          "allocation_calls_delta": 128,
+          "allocated_bytes_delta": 15872,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0382096960485017
+    },
+    {
+      "policy": "strict",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 0.8220670761997039,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0151464541171864,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.7688507402178015,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.9634564728184075,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 0.7998523232012225,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 0.8220670761997039
+    },
+    {
+      "policy": "approximate",
+      "phase": "cold_construct_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.0406927598882112,
+          "allocation_calls_delta": 128,
+          "allocated_bytes_delta": 15872,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0547321142123838,
+          "allocation_calls_delta": 128,
+          "allocated_bytes_delta": 15872,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.8064480885965988,
+          "allocation_calls_delta": 128,
+          "allocated_bytes_delta": 15872,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 1.0125412450882405,
+          "allocation_calls_delta": 128,
+          "allocated_bytes_delta": 15872,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 0.8179755961690913,
+          "allocation_calls_delta": 128,
+          "allocated_bytes_delta": 15872,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 1.0125412450882405
+    },
+    {
+      "policy": "approximate",
+      "phase": "warm_query",
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 0.9521203483590397,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 0.884013950114965,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.796937172183035,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.987949703600445,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 0.8724829912882969,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0
+        }
+      ],
+      "median_elapsed_ratio": 0.884013950114965
+    }
+  ],
+  "cost_claim": "Focused instrumented cost/allocation observations for the added validation; no speedup or universal memory claim",
+  "intentional_migration": "Malformed source fails typed; a strict query whose source validity is undecided now remains undecided even for an out-of-bounds point; approximate validation contributes its receipt. See contract-v2.md.",
+  "known_winding_gap": {
+    "diagnostic": "winding-followup-v1/result.json",
+    "cases": 2,
+    "policy_observations": 6,
+    "unchanged_nonzero_winding_mismatches": 6,
+    "fixed": false
+  },
+  "preparation_failures_preserved": "preparation-failure-v1.json",
+  "baseline_wasm_infrastructure_failure": "baseline-wasm-limit-note-v1.json",
+  "containment_input_validation_admitted": true,
+  "full_set_membership_correctness_claimed": false,
+  "published_package_pipeline_executed": false,
+  "full_pre_push_matrix_executed": false,
+  "complete_artifact_audit_passed": false,
+  "historical_missing_paths": 27093,
+  "native_disposition_preserved": true,
+  "full_plan_complete": false,
+  "next": [
+    "Repair solid containment agreement with nonzero winding using the retained nested-same-orientation and coincident-opposite-orientation diagnostics; audit boundary and tangent-ray semantics at the native owning layer before implementation.",
+    "Continue typed failures, ordinary strict completion, provenance, clean external distribution and the remaining properties without weakening preserved tests or the rejected native integration workload gates."
+  ]
+}

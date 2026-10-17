@@ -1,0 +1,15 @@
+{
+  "complete": true,
+  "base_commit": "c9690a7cbd03c79e485bd7670ca10fe68bc5e45e",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1",
+  "source_inputs": 2827,
+  "runner_sha256": "4688c46868de8e6c69c8830e8682b28aded12ca639282d2ac4fb0f94be3a63a8",
+  "source_hashes_sha256": "c028bbf7ca74be8699259d67bd08b344e76fb4131b4d8aaa583fabc24823d089",
+  "main_input_hashes_sha256": "166ae6331baf44356f88910ec9a6089bdd9dea9eedeb00e968b729252d14e5bb",
+  "prototype_sha256": {
+    "contract.json": "6e2f968044ca04edd163277ddeca95f8070b704c6e49cae99ded7e19d33d6506",
+    "tests/containment_inputs.rs": "93dc69ee47c33a82a672842522118c0b7f69947ed934585b2c74f1bf943eef2d",
+    "tests/wasm/mesh_errors.cjs": "1a5129979f47215143796240f1529054608c50cd7b07232540b9a0ba940d172d"
+  },
+  "runtime_changed": false
+}

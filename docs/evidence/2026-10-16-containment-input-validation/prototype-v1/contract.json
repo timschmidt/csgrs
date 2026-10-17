@@ -1,0 +1,13 @@
+{
+  "base_commit": "c9690a7cbd03c79e485bd7670ca10fe68bc5e45e",
+  "owning_layer": "hypermesh TriangleMesh source topology validation; csgrs and WASM consume the native query",
+  "properties": ["P4", "P6", "P8", "P9", "P18", "P22", "P25", "P30"],
+  "domain": "Canonical empty positions/triangles returns false; every other solid query first requires the existing nonempty closed-PWN contract. Missing one buffer, out-of-range indices, degenerate triangles, open edges and unbalanced edges retain existing native diagnostics.",
+  "semantics": "This change guards source validity before existing containment logic. Existing strict boundary exclusion and ray-parity behavior for valid inputs are preserved; this does not certify that parity implements nonzero winding for all nested or overlapping PWN inputs.",
+  "certainty": "Validation facts must be consumed into the same query receipt, with existing identity/mutation/policy rules. Approximate validation cannot satisfy strict calls. Local certainty does not establish analytic fidelity or inherited construction provenance.",
+  "missing_test": "Current query returns false before topology validation on out-of-bounds or boundary points and vertices-only geometry. New native/modeling and actual WASM assertions require typed errors.",
+  "oracle": "Invalid fixtures have independently counted edges and indices. Positive tetrahedron interior derives from x,y,z>0 and x+y+z<1; canonical empty is false. Wrappers agreeing is only propagation evidence.",
+  "resources": "No new internal work, heap-byte or cancellation limits claimed. Validation reuses the native valid_pwn fact. Fresh external build/test containment and cold/warm cost observations will be retained; no speedup claim.",
+  "migration": "Malformed queries that formerly returned an apparently successful bool now fail with native typed errors (GeometryError invalid_input at WASM). Supported valid answers and query Unknown handling remain unchanged.",
+  "acceptance": "Reproduce on pinned current sources; native and downstream correctness, real WASM JS/TS consumers, formatting, Clippy, docs; retain source/lock/toolchain/commands/raw output and cost data. Full release/pre-push/property acceptance remains open."
+}

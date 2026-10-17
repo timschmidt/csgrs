@@ -1,0 +1,55 @@
+{
+  "complete": true,
+  "commands": 3,
+  "unexpected_exits": [],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "real_js_and_compiled_typescript_consumers_passed": true,
+  "public_contract_tests": 25,
+  "mesh_contract_tests": 13,
+  "prior_io_contract_tests": 12,
+  "artifacts": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm32-unknown-unknown/wasm/csgrs.wasm": {
+      "sha256": "89da31de737db2943787da7479d59b76b40240a96c2b25013454e68b8419a118",
+      "bytes": 12249174
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs.d.ts": {
+      "sha256": "40953c33518de928d829277c7d17f70c984e9b88090f7428b5b341ccda2f4933",
+      "bytes": 16737
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs.js": {
+      "sha256": "042fbbb1c5860ea51f863e1ba9c702a9ae4dbbb027b1616e39ece583513670f2",
+      "bytes": 81478
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs_bg.wasm": {
+      "sha256": "56ca11e30e67e5661007465b3045ca388e17afc5dabc2e88c93cc0cd00ca8012",
+      "bytes": 11195998
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs_bg.wasm.d.ts": {
+      "sha256": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+      "bytes": 14726
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/geometry_certainty.ts": {
+      "sha256": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7",
+      "bytes": 3098
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/io_contracts.js": {
+      "sha256": "37fb65ed6e244e3e134178c1358f129f6fe33191028592e9e53043110b45fb19",
+      "bytes": 4009
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/io_contracts.ts": {
+      "sha256": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e",
+      "bytes": 4087
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/mesh_errors.js": {
+      "sha256": "5f133abd2e072712599372bdfcf2275b78c92b339c28e2e33a4d0877408f7efd",
+      "bytes": 1960
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/mesh_errors.ts": {
+      "sha256": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614",
+      "bytes": 1926
+    }
+  }
+}

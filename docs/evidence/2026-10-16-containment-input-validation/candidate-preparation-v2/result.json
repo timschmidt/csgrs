@@ -1,0 +1,17 @@
+{
+  "complete": true,
+  "runner_sha256": "57c67a9a13004a97c81ef477caa780735c18947e0f847c8c6fa0bb29942d41a0",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-source-v2",
+  "source_inputs": 2827,
+  "source_hashes_sha256": "1a86b4b029c40eab7fcc1b6da8b9c5f63a3ca34dd9437ab94e3c69fde5262d0b",
+  "changes": {
+    "crates/hypermesh/src/mesh.rs": "2deb9169e27c76daa905ab5bff913e1eaf5e4e4675b6a6274573a43879f063d7",
+    "src/solid.rs": "ed9fa1f62cbf67bf0b10678fc99ba02e289b35105df69fe9165d0472be5a2bf6",
+    "src/wasm/mesh_js.rs": "417a7412906082ee3873b756a5ca13cc019d8342f4d9d67ab0f64d4057e79645",
+    "tests/containment_inputs.rs": "93dc69ee47c33a82a672842522118c0b7f69947ed934585b2c74f1bf943eef2d",
+    "tests/wasm/mesh_errors.cjs": "1a5129979f47215143796240f1529054608c50cd7b07232540b9a0ba940d172d"
+  },
+  "baseline_contract_sha256": "6e2f968044ca04edd163277ddeca95f8070b704c6e49cae99ded7e19d33d6506",
+  "baseline_test_format_only_difference": false,
+  "main_sources_modified": false
+}

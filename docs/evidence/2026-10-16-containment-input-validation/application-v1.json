@@ -1,0 +1,561 @@
+{
+  "main_parent_commit": "c9690a7cbd03c79e485bd7670ca10fe68bc5e45e",
+  "implementation_sha256": {
+    "crates/hypermesh/src/mesh.rs": "2deb9169e27c76daa905ab5bff913e1eaf5e4e4675b6a6274573a43879f063d7",
+    "src/solid.rs": "ed9fa1f62cbf67bf0b10678fc99ba02e289b35105df69fe9165d0472be5a2bf6",
+    "src/wasm/mesh_js.rs": "417a7412906082ee3873b756a5ca13cc019d8342f4d9d67ab0f64d4057e79645",
+    "tests/containment_inputs.rs": "93dc69ee47c33a82a672842522118c0b7f69947ed934585b2c74f1bf943eef2d",
+    "tests/wasm/mesh_errors.cjs": "1a5129979f47215143796240f1529054608c50cd7b07232540b9a0ba940d172d"
+  },
+  "final_source_inputs": 2827,
+  "qualified_source_hashes_sha256": "1a86b4b029c40eab7fcc1b6da8b9c5f63a3ca34dd9437ab94e3c69fde5262d0b",
+  "final_input_hashes_sha256": "134a3d785345a41bfa0bb04537064c67455a5b87115bcc6764fc8e25021a23fa",
+  "all_final_inputs_match_qualified_sources": true,
+  "retained_completed_evidence": {
+    "prototype-v1/contract.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/prototype-v1/contract.json",
+      "sha256": "6e2f968044ca04edd163277ddeca95f8070b704c6e49cae99ded7e19d33d6506"
+    },
+    "prototype-v1/tests/containment_inputs.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/prototype-v1/tests/containment_inputs.rs",
+      "sha256": "93dc69ee47c33a82a672842522118c0b7f69947ed934585b2c74f1bf943eef2d"
+    },
+    "prototype-v1/tests/wasm/mesh_errors.cjs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/prototype-v1/tests/wasm/mesh_errors.cjs",
+      "sha256": "1a5129979f47215143796240f1529054608c50cd7b07232540b9a0ba940d172d"
+    },
+    "baseline-preparation-v1/main-input-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-preparation-v1/main-input-hashes.json.gz",
+      "sha256": "166ae6331baf44356f88910ec9a6089bdd9dea9eedeb00e968b729252d14e5bb"
+    },
+    "baseline-preparation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-preparation-v1/result.json",
+      "sha256": "5ec25ce9a2940d8d47f9122356e67d66acc496a0339f2b1e83950f71cf162617"
+    },
+    "baseline-preparation-v1/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-preparation-v1/source-hashes.json.gz",
+      "sha256": "c028bbf7ca74be8699259d67bd08b344e76fb4131b4d8aaa583fabc24823d089"
+    },
+    "candidate-preparation-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-preparation-v2/result.json",
+      "sha256": "8beb27a3a96bd367ab3cd64109c1ad2a638490864a904eab7624dfef52d7aaad"
+    },
+    "candidate-preparation-v2/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-preparation-v2/source-hashes.json.gz",
+      "sha256": "1a86b4b029c40eab7fcc1b6da8b9c5f63a3ca34dd9437ab94e3c69fde5262d0b"
+    },
+    "baseline-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-validation-v1/commands.json",
+      "sha256": "e3476308a07b86b4221b5d18e1fe24f055795029abbb6110fa8ec276f32f2de3"
+    },
+    "baseline-validation-v1/containment-inputs.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-validation-v1/containment-inputs.resources",
+      "sha256": "c7b83d4f413c3762533d318c534665319eb8e48ad94927fc014ac81a39bc2050"
+    },
+    "baseline-validation-v1/containment-inputs.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-validation-v1/containment-inputs.stderr",
+      "sha256": "dbfb17f53661ef4cad8bf2451a96cf3fff57197eb3267dd5f6974c2d288b42ac"
+    },
+    "baseline-validation-v1/containment-inputs.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-validation-v1/containment-inputs.stdout",
+      "sha256": "498381f574e37e9a55559a84eb075d914107e8ca1194527c677c360317971e29"
+    },
+    "baseline-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-validation-v1/protocol.json",
+      "sha256": "f237033819d9f5f21db4fd213c35a43f5c2e2de35fc063fec65e6eb11fad85ba"
+    },
+    "baseline-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-validation-v1/result.json",
+      "sha256": "e03cd1724681df520e9d982fee2aee910377499ddda4c75e0a3d83b28e94a98e"
+    },
+    "baseline-validation-v1/wasm-containment-inputs.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-validation-v1/wasm-containment-inputs.resources",
+      "sha256": "5e18def9f8e83ed85bd90aa6684e7ad34755e1c770f2c82b1f2410f202e10f9c"
+    },
+    "baseline-validation-v1/wasm-containment-inputs.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-validation-v1/wasm-containment-inputs.stderr",
+      "sha256": "f0e91141d092ce25338695852f11ae075436c001fff06945dd8021136f44dca4"
+    },
+    "baseline-validation-v1/wasm-containment-inputs.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-validation-v1/wasm-containment-inputs.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-reproduction-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-reproduction-v1/protocol.json",
+      "sha256": "4f4902acd9ff1a5184294a85792ebfad37628f7d49932bbe17b1b8a651dd029a"
+    },
+    "wasm-reproduction-v1/resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-reproduction-v1/resources",
+      "sha256": "0ce10f132db33f5b3173fbea84a2cf8c74ba188562970349dd0e4ac78db66c99"
+    },
+    "wasm-reproduction-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-reproduction-v1/result.json",
+      "sha256": "72cfa5d0456b52a061cf4834a889c93369377f02a4799e559a9cdac97afe5c7b"
+    },
+    "wasm-reproduction-v1/stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-reproduction-v1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-reproduction-v1/stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-reproduction-v1/stdout",
+      "sha256": "192e190bb6056ec7ba3c84259169ff7aa7884656c8dd8cc10130abd9d8d18f29"
+    },
+    "winding-diagnostic-v1/probe.cjs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-diagnostic-v1/probe.cjs",
+      "sha256": "393f7f6a73e0a68c4ea6828b2a4d2e44f25fb9f8c45a8f7457c20ca374788864"
+    },
+    "winding-diagnostic-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-diagnostic-v1/protocol.json",
+      "sha256": "2f2d9d8a910e941dd4cec3985fdfac74cf62a4cf50e03162057d08c7af0e1b90"
+    },
+    "winding-diagnostic-v1/resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-diagnostic-v1/resources",
+      "sha256": "114e48899b1d44ddd398aa2047a39d5dc7f5cbb2e66c27b84c205ac3b7b83222"
+    },
+    "winding-diagnostic-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-diagnostic-v1/result.json",
+      "sha256": "d2ce4b175af6ecb333115e142ccaf48d6973bb92dc56c545f67e21a92d15ff97"
+    },
+    "winding-diagnostic-v1/run.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-diagnostic-v1/run.py",
+      "sha256": "edabdd174ef94b2990317bc164555c12fabdbe7840bf3f1f70e9e695d9b2024f"
+    },
+    "winding-diagnostic-v1/stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-diagnostic-v1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "winding-diagnostic-v1/stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-diagnostic-v1/stdout",
+      "sha256": "46a1c56812c0ab6fecb75200643f0534af0e13a1532abd3e7916ab4b42191f5e"
+    },
+    "winding-followup-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-followup-v1/protocol.json",
+      "sha256": "f4769f08a8909b9906dc1378c917c2b400f92f4dd324f9c75d8161dd7aab37f2"
+    },
+    "winding-followup-v1/resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-followup-v1/resources",
+      "sha256": "7f326cadd935d72e2014c5057538fd7a489d0a4ba6a6b2fa4dd02df541ed6da3"
+    },
+    "winding-followup-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-followup-v1/result.json",
+      "sha256": "e8416e7065ed21e3d5b8972e3bf8ed33c2b183a6202a0ff799f80ec3c4160dd8"
+    },
+    "winding-followup-v1/run.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-followup-v1/run.py",
+      "sha256": "c2dcd731e5bdf436b469a9497efa2b3e059baa81bb4cf4af764cd45c1ef85ce7"
+    },
+    "winding-followup-v1/stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-followup-v1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "winding-followup-v1/stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-followup-v1/stdout",
+      "sha256": "46a1c56812c0ab6fecb75200643f0534af0e13a1532abd3e7916ab4b42191f5e"
+    },
+    "candidate-validation-v2/all-feature-all-target-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/all-feature-all-target-clippy.resources",
+      "sha256": "aa1b0853447498f4ef6b48f99204b2660feed2446c2859ac8d6d5ceccd3b1f20"
+    },
+    "candidate-validation-v2/all-feature-all-target-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/all-feature-all-target-clippy.stderr",
+      "sha256": "b0df441a596b2f8b65143ee7b7a808e73ac062f0433b67a632dc447c400572f9"
+    },
+    "candidate-validation-v2/all-feature-all-target-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/all-feature-all-target-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v2/all-feature-docs.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/all-feature-docs.resources",
+      "sha256": "2a36aeb3ec6dced8f28fa1693c994c3c76baf8280823d8eb8cc2c05581d58ebf"
+    },
+    "candidate-validation-v2/all-feature-docs.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/all-feature-docs.stderr",
+      "sha256": "1fbaf2129ba2cc15499f86e54dbf50ad9914527250bd2b8a68b9d8549162626e"
+    },
+    "candidate-validation-v2/all-feature-docs.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/all-feature-docs.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v2/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/commands.json",
+      "sha256": "1c0bc1864c8908a4de46b5328df69db311afbbc43e37e7da8e8cc54e40470238"
+    },
+    "candidate-validation-v2/containment-inputs.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/containment-inputs.resources",
+      "sha256": "ee2bba36efb9e735c591f4b1b59ec8f6b8120fdede5f8fe691dc2b755d0cec51"
+    },
+    "candidate-validation-v2/containment-inputs.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/containment-inputs.stderr",
+      "sha256": "3957e654ef7809724c8ad3d47c11c95d3077377773d0c69d3cd51a4bf5fd36a5"
+    },
+    "candidate-validation-v2/containment-inputs.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/containment-inputs.stdout",
+      "sha256": "93769951fb1218fd02ab70e382d09f4bf072f5ecbab2aa1e4b280e8c5ea8ab90"
+    },
+    "candidate-validation-v2/cost-libraries.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/cost-libraries.resources",
+      "sha256": "dbd8636af61ca6db7556b1e27e7b8871d4572b045d9893922b74e44fc0cfa663"
+    },
+    "candidate-validation-v2/cost-libraries.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/cost-libraries.stderr",
+      "sha256": "b9331f063880c54fc9705ed64868d03761d1ac6708f5da66f2c6a482d6e4f728"
+    },
+    "candidate-validation-v2/cost-libraries.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/cost-libraries.stdout",
+      "sha256": "97f46ec3d3654444dad28fc44999abae4cdf1551c932063f3b36c43c981540f9"
+    },
+    "candidate-validation-v2/format.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/format.resources",
+      "sha256": "8b3801bcd02faabb72954525f7900eae74bbe6e30bffb551dc1754d4776b201a"
+    },
+    "candidate-validation-v2/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v2/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v2/mesh-and-modeling-all-features.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/mesh-and-modeling-all-features.resources",
+      "sha256": "83c399050af08db9ed425131176ba711e21ce9b9b3f8a68b350419528358b7c6"
+    },
+    "candidate-validation-v2/mesh-and-modeling-all-features.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/mesh-and-modeling-all-features.stderr",
+      "sha256": "71fa900f3729cb1fef8f24dbcd0dfcbe005366771229fda4c06c82dd1896c300"
+    },
+    "candidate-validation-v2/mesh-and-modeling-all-features.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/mesh-and-modeling-all-features.stdout",
+      "sha256": "282111639eb4c7e35848b79e9715e32e2bd8a7fde1c3c7ac7b6d622470477836"
+    },
+    "candidate-validation-v2/minimal-all-target-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/minimal-all-target-clippy.resources",
+      "sha256": "0c2be5407b9dffeaea5755f03cc1707f585d475fc89ac1379fc83dd886d8bba6"
+    },
+    "candidate-validation-v2/minimal-all-target-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/minimal-all-target-clippy.stderr",
+      "sha256": "cd95e4591f71fd17e3cd7015d0fe59cda2988011d6a6a1e99268c500c3a26c6d"
+    },
+    "candidate-validation-v2/minimal-all-target-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/minimal-all-target-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v2/modeling-minimal.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/modeling-minimal.resources",
+      "sha256": "8111ef4dcf71c5d96e9281185088645727a9799e46bc2cfa837f1e5dd4d93411"
+    },
+    "candidate-validation-v2/modeling-minimal.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/modeling-minimal.stderr",
+      "sha256": "ded6da496fbcac1960a8a7c67462a73241b89800491b407fb812b2fc0bff67d5"
+    },
+    "candidate-validation-v2/modeling-minimal.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/modeling-minimal.stdout",
+      "sha256": "aba2a37d1dd68c1cbc051b2355a488fe6d008f5b05597b826d011ebaca237249"
+    },
+    "candidate-validation-v2/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/protocol.json",
+      "sha256": "6f0d9fb9addeacd1059a770a865e1f92bc340da6694d51c8d3610235a32c844f"
+    },
+    "candidate-validation-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-validation-v2/result.json",
+      "sha256": "545dd5ea9f6cc2f2030910f6792ea558f49e92ac1e79536838fdc6a300b46075"
+    },
+    "wasm-validation-v2/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/commands.json",
+      "sha256": "1c538d9727281254aee4a8895415c53ce786a2c875b1cd0359b36d46f162d056"
+    },
+    "wasm-validation-v2/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/protocol.json",
+      "sha256": "d09e25738f99f91d6dabbbe26799cf0d2c22cbf995e6d69d590729aeb412b77f"
+    },
+    "wasm-validation-v2/real-consumers.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/real-consumers.resources",
+      "sha256": "2f266c926c46a455183de5872f1dff59ac4231cf473a546170691bf8830108dc"
+    },
+    "wasm-validation-v2/real-consumers.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/real-consumers.stderr",
+      "sha256": "75f4988e1cfefa790f043369efd9a84b882d569a55ce5008eccdb81123808ed8"
+    },
+    "wasm-validation-v2/real-consumers.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/real-consumers.stdout",
+      "sha256": "165b7c10a74b833711caa5729dde69814d0c007bb642e9c52d2b3b41af18dc97"
+    },
+    "wasm-validation-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/result.json",
+      "sha256": "50f8b50b2f8367d4967f2792ab818a16841fa517721624b4e9bdfd0547f7cdd7"
+    },
+    "wasm-validation-v2/shell-syntax.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/shell-syntax.resources",
+      "sha256": "e17b94824d10af29fc23192125548a81eea8f172b7402ac86d2ce558b03aa0cd"
+    },
+    "wasm-validation-v2/shell-syntax.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/shell-syntax.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v2/shell-syntax.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/shell-syntax.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v2/wasm-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/wasm-clippy.resources",
+      "sha256": "e99d00a44521c59fd8bce5761a19a2b1c1883909e76e656292c21c0938b4ff9e"
+    },
+    "wasm-validation-v2/wasm-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/wasm-clippy.stderr",
+      "sha256": "97e309378b56aa500d6285fd1ad4dd8f5eb2558fed46a633cec317bc45f1ac0c"
+    },
+    "wasm-validation-v2/wasm-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-validation-v2/wasm-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/00-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/00-baseline.resources",
+      "sha256": "be9bfeb842b5a82962333c2f3bf6d6c9451f9f805f11a6a87ecae5f7251c2096"
+    },
+    "cost-v1/00-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/00-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/00-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/00-baseline.stdout",
+      "sha256": "26040bd6cec4bc14c734bbe805c9e8d2bc4b690d70596b0775d205fd72b7075a"
+    },
+    "cost-v1/00-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/00-candidate.resources",
+      "sha256": "48151f3af803354ca5e160c1b26c6f96f63983ab38d59e7fdb88bd9a0b21ee5a"
+    },
+    "cost-v1/00-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/00-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/00-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/00-candidate.stdout",
+      "sha256": "e1dc5865fc5e0d066966edcf54aaa121ea6c0c302cefdc4a03116f66d0881056"
+    },
+    "cost-v1/01-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/01-baseline.resources",
+      "sha256": "9c25e5315064521a945c99cae0b6548fdd39c5ded3061045b08d944b38d4c9dd"
+    },
+    "cost-v1/01-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/01-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/01-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/01-baseline.stdout",
+      "sha256": "246369d75195882c19ef22855d22df485b46e33b3d0318234a49452ee31377e5"
+    },
+    "cost-v1/01-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/01-candidate.resources",
+      "sha256": "7991b1c10ffcd0b9ce47d540884cc85f9b312fc5f2007884cbedf1fdbc4c089d"
+    },
+    "cost-v1/01-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/01-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/01-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/01-candidate.stdout",
+      "sha256": "ed1fde53be3a7dbdfd37a5c9fe87b3e40a323b3f10f837519c4c0607c472a5ed"
+    },
+    "cost-v1/02-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/02-baseline.resources",
+      "sha256": "37449fd4e302ffb0414586dad6d4e7a6c07bca65a404f5be696663432698451d"
+    },
+    "cost-v1/02-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/02-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/02-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/02-baseline.stdout",
+      "sha256": "8584693dbb2b2a2ef138a20e960e417ff2ff70c6d5fec0faf7fdbee2c35e96f3"
+    },
+    "cost-v1/02-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/02-candidate.resources",
+      "sha256": "fd7163af9d0543123195de4f40576a3df73538f01f39fed3d0611990e60d51f6"
+    },
+    "cost-v1/02-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/02-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/02-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/02-candidate.stdout",
+      "sha256": "6c6a537966014f8580c0117d18d15d1f9c06f8e1fab359231e78085adb2c024f"
+    },
+    "cost-v1/03-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/03-baseline.resources",
+      "sha256": "bcfbf5c69d1b10b361015ef8713539decf2a4dccbaade2c939be2909e4033599"
+    },
+    "cost-v1/03-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/03-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/03-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/03-baseline.stdout",
+      "sha256": "2b407b15a9d80050d985284497d22b1b19952ce17d54425e6697bc2a80147adf"
+    },
+    "cost-v1/03-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/03-candidate.resources",
+      "sha256": "aa176afc13b4ab603c91f915853ecbc9ce6d8bdbb1cb373b2d0700de4a10fb90"
+    },
+    "cost-v1/03-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/03-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/03-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/03-candidate.stdout",
+      "sha256": "23079af2afd12c0e7b6b8da3e76a49df4877e2908a465c42aa0fe5c19f81faa3"
+    },
+    "cost-v1/04-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/04-baseline.resources",
+      "sha256": "c86f495221679848f13f7c4ca127d176d13c14fb4ee994126783a7ec408ac720"
+    },
+    "cost-v1/04-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/04-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/04-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/04-baseline.stdout",
+      "sha256": "8e1c1d295aab918bc678df9c91f48ac1c9d215cdf9cfe13975bc3abee158d6c2"
+    },
+    "cost-v1/04-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/04-candidate.resources",
+      "sha256": "ab876e15b6d78b1325acddaa8263dd10749a958560ee474b25f80cf446426d04"
+    },
+    "cost-v1/04-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/04-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/04-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/04-candidate.stdout",
+      "sha256": "4b37b41e2b4f3691eef2942a4ba9f7b4ff218582cc4f290138b8077248df6f45"
+    },
+    "cost-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/commands.json",
+      "sha256": "f2ca7a60e6ccf18ab81e39e8be5c7bb992894d5a79dfb67d295c753beb9d5bf3"
+    },
+    "cost-v1/compile-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/compile-baseline.resources",
+      "sha256": "f1007b53026129fa098d4605f3dd68f69a3174b2412c42f12df66dd6004926b4"
+    },
+    "cost-v1/compile-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/compile-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/compile-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/compile-baseline.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/compile-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/compile-candidate.resources",
+      "sha256": "cbb53d0393002c52564a57bb5560fcbf567c8d077e4e8cdd0f0585ca3f3c68bd"
+    },
+    "cost-v1/compile-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/compile-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/compile-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/compile-candidate.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/protocol.json",
+      "sha256": "49469223b5df60a816bef16fc3323ad344ee718b587bbc3a832c9c5d8adcb714"
+    },
+    "cost-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/result.json",
+      "sha256": "03cdf1fde46fd6aa21df04408d05a5f80baab6b469a7a02f9f6576c94d7a70fc"
+    },
+    "apply_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/apply_v1.py",
+      "sha256": "d4d12c16b9de502fd16d6f68876c2afef50f61d66e60dbd23536bae7a943c91b"
+    },
+    "assess_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/assess_v1.py",
+      "sha256": "1cfe9bd80324cb7ec916ff9b44918729b1d3070e9d71ef0847ddac1e52c59cc3"
+    },
+    "baseline-wasm-limit-note-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-wasm-limit-note-v1.json",
+      "sha256": "dced5cdd3e4b1601934c84fc79acc01f28bad29cff0ba82ef85fc887c1c2af0a"
+    },
+    "baseline_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline_v1.py",
+      "sha256": "ddd905ae822356f6fd19da46a01707ec15ea62a10914fcbe54c647fea7fa6973"
+    },
+    "candidate_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate_v1.py",
+      "sha256": "33d60c90d77960da379bd35fd54d55a8de15d0e42963d3aa317e0a5406bc09ff"
+    },
+    "candidate_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate_v2.py",
+      "sha256": "c6c7cbedece1989048d6c83c4225daac931041204702a1a69c39a17b41bd3311"
+    },
+    "checkpoint_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/checkpoint_v1.py",
+      "sha256": "796b2cef1badace41b428f93157855a364e3dc57538d748d1bb5534fbc729958"
+    },
+    "contract-v2.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/contract-v2.md",
+      "sha256": "eeede80d8181719d8b45ab54f4525e5c4456d46f265aecd4fd1e425fad12f9c5"
+    },
+    "cost-contract-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-contract-v1.json",
+      "sha256": "4eb313e308c0e56ba8146cdad2f5be871f7158d0e7e04c5ef5744bcbc4be1ec5"
+    },
+    "cost_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost_v1.py",
+      "sha256": "75a4f0f2a6d945b977d7117691ff4fdbd1f3e0f9a7f1122f6476bc64c2d427a2"
+    },
+    "cost_v1.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost_v1.rs",
+      "sha256": "5f8dbe02cd7246c9f01b840636c4b9f9e3c94d835fad67d90affd956bb463a1a"
+    },
+    "preparation-failure-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/preparation-failure-v1.json",
+      "sha256": "ca60b3c47908c93341106021d8456a91734bb97fcf5c77e0936fc0d3d0104161"
+    },
+    "prepare_baseline_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/prepare_baseline_v1.py",
+      "sha256": "4688c46868de8e6c69c8830e8682b28aded12ca639282d2ac4fb0f94be3a63a8"
+    },
+    "prepare_candidate_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/prepare_candidate_v1.py",
+      "sha256": "4c22b5c53ce948af5d9cf1002d0a2d3cc1a9d2efc32268d1dbf15a010f767281"
+    },
+    "prepare_candidate_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/prepare_candidate_v2.py",
+      "sha256": "57c67a9a13004a97c81ef477caa780735c18947e0f847c8c6fa0bb29942d41a0"
+    },
+    "validation_common_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/validation_common_v1.py",
+      "sha256": "54fa39d061027736c5d604c32abcc7982750d24405b105de12c22a7c3d35f94f"
+    },
+    "validation_common_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/validation_common_v2.py",
+      "sha256": "4238d4731752a2db3e7bbb8d6867b7a46d0ac37da0e6d520ff1669e9fdd05b54"
+    },
+    "wasm_reproduction_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm_reproduction_v1.py",
+      "sha256": "405ccda4a0027e7512dec18ab607fbc4dd0989fcb8691ea7454dc4a0d3c6cb56"
+    },
+    "wasm_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm_v1.py",
+      "sha256": "1784f3114a5b1b05cb7582628b6c601682e1e64a6ff0f11a93f2393b8a253660"
+    },
+    "wasm_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm_v2.py",
+      "sha256": "c365a4be244dfba3cb6fda8bb473c5e46983c308e3e6db4acdd27336e46e3399"
+    }
+  },
+  "format_command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "format_exit_code": 0,
+  "format_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "format_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "pending_native_paths_remaining": 0,
+  "native_disposition_preserved": true,
+  "full_plan_complete": false
+}

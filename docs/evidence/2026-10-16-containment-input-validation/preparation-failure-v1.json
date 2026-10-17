@@ -1,0 +1,11 @@
+{
+  "attempt": "prepare_candidate_v1.py",
+  "failure": "AssertionError matching solid::contains_point_with_context documentation text",
+  "source_snapshot": "candidate-source-v1",
+  "snapshot_disposition": "retained incomplete, not used as qualification input",
+  "subsequent_attempt": "candidate_v1.py",
+  "subsequent_failure": "FileNotFoundError for candidate-preparation-v1/result.json before any command execution",
+  "created_empty_targets_retained": true,
+  "main_sources_modified": false,
+  "correction": "prepare_candidate_v2.py matches the current documentation text and creates distinct source/preparation paths; validation_common_v2.py creates distinct targets/output paths"
+}

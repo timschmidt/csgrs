@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "command": [
+    "node",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/winding-diagnostic-v1/probe.cjs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs.js"
+  ],
+  "elapsed_seconds": 0.14950840594246984,
+  "observations": 6,
+  "nonzero_winding_mismatches": 6,
+  "artifacts_unchanged": true,
+  "stdout_sha256": "46a1c56812c0ab6fecb75200643f0534af0e13a1532abd3e7916ab4b42191f5e",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "7f326cadd935d72e2014c5057538fd7a489d0a4ba6a6b2fa4dd02df541ed6da3"
+}

@@ -1,0 +1,133 @@
+TAP version 13
+# Subtest: union retains invalid-input errors for either operand beside empty
+ok 1 - union retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 6.643234
+  type: 'test'
+  ...
+# Subtest: intersection retains invalid-input errors for either operand beside empty
+ok 2 - intersection retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.698663
+  type: 'test'
+  ...
+# Subtest: difference retains invalid-input errors for either operand beside empty
+ok 3 - difference retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.58462
+  type: 'test'
+  ...
+# Subtest: xor retains invalid-input errors for either operand beside empty
+ok 4 - xor retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.542853
+  type: 'test'
+  ...
+# Subtest: insufficient hull geometry keeps its typed failure for every policy
+ok 5 - insufficient hull geometry keeps its typed failure for every policy
+  ---
+  duration_ms: 1.551434
+  type: 'test'
+  ...
+# Subtest: zero subdivision fails visibly even for canonical empty geometry
+ok 6 - zero subdivision fails visibly even for canonical empty geometry
+  ---
+  duration_ms: 0.609228
+  type: 'test'
+  ...
+# Subtest: mesh diagnostics remain ordinary host errors after all native inputs are freed
+ok 7 - mesh diagnostics remain ordinary host errors after all native inputs are freed
+  ---
+  duration_ms: 3.113827
+  type: 'test'
+  ...
+# Subtest: successful empty outputs retain certainty and compose through STL reimport
+ok 8 - successful empty outputs retain certainty and compose through STL reimport
+  ---
+  duration_ms: 3.228189
+  type: 'test'
+  ...
+# Subtest: successful membership retains its own query status and consumed certainty
+ok 9 - successful membership retains its own query status and consumed certainty
+  ---
+  duration_ms: 5.283438
+  type: 'test'
+  ...
+# Subtest: membership rejects open input before bounds and boundary shortcuts
+not ok 10 - membership rejects open input before bounds and boundary shortcuts
+  ---
+  duration_ms: 1.074786
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs:114:3'
+  failureType: 'testCodeFailure'
+  error: 'failed operation returned a successful value'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'fail'
+  stack: |-
+    capture (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs:11:10)
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs:120:19)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: membership rejects degenerate input before bounds and boundary shortcuts
+not ok 11 - membership rejects degenerate input before bounds and boundary shortcuts
+  ---
+  duration_ms: 0.28489
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs:114:3'
+  failureType: 'testCodeFailure'
+  error: 'failed operation returned a successful value'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'fail'
+  stack: |-
+    capture (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs:11:10)
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs:120:19)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: membership rejects positions-only input before bounds and boundary shortcuts
+not ok 12 - membership rejects positions-only input before bounds and boundary shortcuts
+  ---
+  duration_ms: 0.188067
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs:114:3'
+  failureType: 'testCodeFailure'
+  error: 'failed operation returned a successful value'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'fail'
+  stack: |-
+    capture (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs:11:10)
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs:120:19)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: canonical empty membership is a decided certified false
+ok 13 - canonical empty membership is a decided certified false
+  ---
+  duration_ms: 0.183457
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 10
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 57.712982

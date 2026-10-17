@@ -1,0 +1,63 @@
+[
+  {
+    "name": "shell-syntax",
+    "command": [
+      "bash",
+      "-n",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-source-v2/scripts/test-wasm-bindings.sh"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.22744697984308004,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "e17b94824d10af29fc23192125548a81eea8f172b7402ac86d2ce558b03aa0cd"
+  },
+  {
+    "name": "real-consumers",
+    "command": [
+      "bash",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-source-v2/scripts/test-wasm-bindings.sh"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 168.2019091108814,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "165b7c10a74b833711caa5729dde69814d0c007bb642e9c52d2b3b41af18dc97",
+    "stderr_sha256": "75f4988e1cfefa790f043369efd9a84b882d569a55ce5008eccdb81123808ed8",
+    "resources_sha256": "2f266c926c46a455183de5872f1dff59ac4231cf473a546170691bf8830108dc"
+  },
+  {
+    "name": "wasm-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--profile",
+      "wasm",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--no-default-features",
+      "--features",
+      "wasm",
+      "--lib",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 26.38204244384542,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "97e309378b56aa500d6285fd1ad4dd8f5eb2558fed46a633cec317bc45f1ac0c",
+    "resources_sha256": "e99d00a44521c59fd8bce5761a19a2b1c1883909e76e656292c21c0938b4ff9e"
+  }
+]

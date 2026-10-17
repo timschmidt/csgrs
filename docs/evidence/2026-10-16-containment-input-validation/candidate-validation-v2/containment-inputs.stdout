@@ -1,0 +1,15 @@
+
+running 10 tests
+test approximate_topology_fact_keeps_its_receipt_and_cannot_certify_strict_queries ... ok
+test canonical_empty_membership_is_certified_false ... ok
+test closed_tetrahedron_answers_match_independent_halfspace_expectations ... ok
+test degenerate_input_survives_bounds_and_boundary_shortcuts ... ok
+test invalid_indices_survive_bounds_and_boundary_shortcuts ... ok
+test missing_one_geometry_buffer_is_not_canonical_empty ... ok
+test open_input_survives_bounds_and_boundary_shortcuts ... ok
+test simultaneous_clones_reuse_only_valid_source_facts ... ok
+test unbalanced_input_survives_bounds_and_boundary_shortcuts ... ok
+test warmed_validation_does_not_survive_geometry_mutation ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

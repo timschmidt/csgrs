@@ -12424,6 +12424,53 @@
       "Use the preserved native regressions for smaller independently admitted repairs without weakening original workload gates.",
       "Continue ordinary strict completion, clean external distribution and remaining properties work."
     ]
+  },
+  "containment_input_validation": {
+    "status": "kept: native containment validates source topology and consumes its certainty before query shortcuts",
+    "main_parent_commit": "c9690a7cbd03c79e485bd7670ca10fe68bc5e45e",
+    "contract": "docs/evidence/2026-10-16-containment-input-validation/contract-v2.md",
+    "progress": "docs/evidence/2026-10-16-containment-input-validation/progress-v1.md",
+    "decision": "docs/evidence/2026-10-16-containment-input-validation/decision-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-containment-input-validation/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-containment-input-validation/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "crates/hypermesh/src/mesh.rs": "2deb9169e27c76daa905ab5bff913e1eaf5e4e4675b6a6274573a43879f063d7",
+      "src/solid.rs": "ed9fa1f62cbf67bf0b10678fc99ba02e289b35105df69fe9165d0472be5a2bf6",
+      "src/wasm/mesh_js.rs": "417a7412906082ee3873b756a5ca13cc019d8342f4d9d67ab0f64d4057e79645",
+      "tests/containment_inputs.rs": "93dc69ee47c33a82a672842522118c0b7f69947ed934585b2c74f1bf943eef2d",
+      "tests/wasm/mesh_errors.cjs": "1a5129979f47215143796240f1529054608c50cd7b07232540b9a0ba940d172d"
+    },
+    "cost": "docs/evidence/2026-10-16-containment-input-validation/cost-v1/result.json",
+    "cost_contract": "docs/evidence/2026-10-16-containment-input-validation/cost-contract-v1.json",
+    "baseline_native": {
+      "passed": 4,
+      "failed": 6
+    },
+    "baseline_wasm": {
+      "passed": 10,
+      "failed": 3,
+      "evidence": "wasm-reproduction-v1/result.json"
+    },
+    "new_native_tests": 10,
+    "mesh_wasm_tests": 13,
+    "containment_input_validation_admitted": true,
+    "full_set_membership_correctness_claimed": false,
+    "known_winding_gap": {
+      "diagnostic": "winding-followup-v1/result.json",
+      "cases": 2,
+      "policy_observations": 6,
+      "unchanged_nonzero_winding_mismatches": 6,
+      "fixed": false
+    },
+    "intentional_migration": "Malformed source fails typed; a strict query whose source validity is undecided now remains undecided even for an out-of-bounds point; approximate validation contributes its receipt. See contract-v2.md.",
+    "pending_native_paths_remaining": 0,
+    "native_disposition_preserved": true,
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "next": [
+      "Repair solid containment agreement with nonzero winding using the retained nested-same-orientation and coincident-opposite-orientation diagnostics; audit boundary and tangent-ray semantics at the native owning layer before implementation.",
+      "Continue typed failures, ordinary strict completion, provenance, clean external distribution and the remaining properties without weakening preserved tests or the rejected native integration workload gates."
+    ]
   }
 },
   "status_meanings": {

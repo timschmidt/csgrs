@@ -1,0 +1,154 @@
+[
+  {
+    "name": "compile-baseline",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-target-v1/release/deps",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-target-v1/release/deps/libhypermesh-98c5db38df7e7da0.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/baseline-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.5026350268162787,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f1007b53026129fa098d4605f3dd68f69a3174b2412c42f12df66dd6004926b4"
+  },
+  {
+    "name": "compile-candidate",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-target-v2/release/deps",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-target-v2/release/deps/libhypermesh-98c5db38df7e7da0.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/candidate-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.4351348262280226,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "cbb53d0393002c52564a57bb5560fcbf567c8d077e4e8cdd0f0585ca3f3c68bd"
+  },
+  {
+    "name": "00-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/baseline-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005721656605601311,
+    "stdout_sha256": "26040bd6cec4bc14c734bbe805c9e8d2bc4b690d70596b0775d205fd72b7075a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "be9bfeb842b5a82962333c2f3bf6d6c9451f9f805f11a6a87ecae5f7251c2096"
+  },
+  {
+    "name": "00-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/candidate-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005816010758280754,
+    "stdout_sha256": "e1dc5865fc5e0d066966edcf54aaa121ea6c0c302cefdc4a03116f66d0881056",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "48151f3af803354ca5e160c1b26c6f96f63983ab38d59e7fdb88bd9a0b21ee5a"
+  },
+  {
+    "name": "01-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/candidate-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.011040862649679184,
+    "stdout_sha256": "ed1fde53be3a7dbdfd37a5c9fe87b3e40a323b3f10f837519c4c0607c472a5ed",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7991b1c10ffcd0b9ce47d540884cc85f9b312fc5f2007884cbedf1fdbc4c089d"
+  },
+  {
+    "name": "01-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/baseline-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005419497843831778,
+    "stdout_sha256": "246369d75195882c19ef22855d22df485b46e33b3d0318234a49452ee31377e5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9c25e5315064521a945c99cae0b6548fdd39c5ded3061045b08d944b38d4c9dd"
+  },
+  {
+    "name": "02-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/baseline-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005852727685123682,
+    "stdout_sha256": "8584693dbb2b2a2ef138a20e960e417ff2ff70c6d5fec0faf7fdbee2c35e96f3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "37449fd4e302ffb0414586dad6d4e7a6c07bca65a404f5be696663432698451d"
+  },
+  {
+    "name": "02-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/candidate-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005834769923239946,
+    "stdout_sha256": "6c6a537966014f8580c0117d18d15d1f9c06f8e1fab359231e78085adb2c024f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fd7163af9d0543123195de4f40576a3df73538f01f39fed3d0611990e60d51f6"
+  },
+  {
+    "name": "03-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/candidate-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005612205248326063,
+    "stdout_sha256": "23079af2afd12c0e7b6b8da3e76a49df4877e2908a465c42aa0fe5c19f81faa3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "aa176afc13b4ab603c91f915853ecbc9ce6d8bdbb1cb373b2d0700de4a10fb90"
+  },
+  {
+    "name": "03-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/baseline-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005343783646821976,
+    "stdout_sha256": "2b407b15a9d80050d985284497d22b1b19952ce17d54425e6697bc2a80147adf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "bcfbf5c69d1b10b361015ef8713539decf2a4dccbaade2c939be2909e4033599"
+  },
+  {
+    "name": "04-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/baseline-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00524681992828846,
+    "stdout_sha256": "8e1c1d295aab918bc678df9c91f48ac1c9d215cdf9cfe13975bc3abee158d6c2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c86f495221679848f13f7c4ca127d176d13c14fb4ee994126783a7ec408ac720"
+  },
+  {
+    "name": "04-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost-v1/candidate-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005051822867244482,
+    "stdout_sha256": "4b37b41e2b4f3691eef2942a4ba9f7b4ff218582cc4f290138b8077248df6f45",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ab876e15b6d78b1325acddaa8263dd10749a958560ee474b25f80cf446426d04"
+  }
+]

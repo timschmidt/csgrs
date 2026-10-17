@@ -249,15 +249,20 @@ impl TriangleMesh {
     /// an admissible policy. A stronger fact requires new native validation.
     pub fn validate_closed_pwn(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<()>> {
         let decisions = DecisionContext::new(context);
+        self.validate_closed_pwn_decision(&decisions)?;
+        Ok(decisions.finish(()))
+    }
+
+    fn validate_closed_pwn_decision(&self, decisions: &DecisionContext) -> HypermeshResult<()> {
         let view = self.as_ref();
         validate_non_empty_mesh_views(&[view])?;
         if !self
             .geometry_facts()
-            .is_some_and(|facts| facts.valid_pwn.consume(&decisions))
+            .is_some_and(|facts| facts.valid_pwn.consume(decisions))
         {
-            validate_source_pwn(&decisions, view, 0)?;
+            validate_source_pwn(decisions, view, 0)?;
         }
-        Ok(decisions.finish(()))
+        Ok(())
     }
 
     /// Resolves a triangle's position rows, preserving invalid-index diagnostics.
@@ -953,6 +958,13 @@ impl TriangleMesh {
 
     /// Tests strict solid containment using exact boundary predicates and ray
     /// parity. Points on a triangle, edge, or vertex are not inside.
+    ///
+    /// Canonical empty geometry (both buffers empty) returns `false`. Every
+    /// other input must satisfy [`Self::validate_closed_pwn`], including queries
+    /// outside its bounds or on a source face. Invalid geometry returns its
+    /// typed error before a containment shortcut can answer. Validation facts
+    /// contribute their certainty and obey the same policy and source identity
+    /// rules as explicit validation.
     pub fn contains_point(
         &self,
         context: &MeshContext,
@@ -968,9 +980,10 @@ impl TriangleMesh {
         decisions: &DecisionContext,
         point: &Point3,
     ) -> HypermeshResult<bool> {
-        if self.triangles.is_empty() {
+        if self.positions.is_empty() && self.triangles.is_empty() {
             return Ok(false);
         }
+        self.validate_closed_pwn_decision(decisions)?;
         let bounds = match self.exact_bounds_decision(decisions) {
             Ok(bounds) => bounds,
             Err(HypermeshError::PredicateUndecided { .. }) => None,

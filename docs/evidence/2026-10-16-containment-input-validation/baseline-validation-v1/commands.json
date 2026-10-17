@@ -1,0 +1,51 @@
+[
+  {
+    "name": "containment-inputs",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--test",
+      "containment_inputs",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 101,
+    "elapsed_seconds": 334.0861426675692,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-target-v1/release/deps/containment_inputs-a77923e5f14d9793": {
+        "sha256": "758d40fc67b725536cc3ea338d275d23e87514a9e3673a6f7c39b334c17bab74",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-executables-v1/758d40fc67b725536cc3ea338d275d23e87514a9e3673a6f7c39b334c17bab74/containment_inputs-a77923e5f14d9793",
+        "bytes": 18953040
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "498381f574e37e9a55559a84eb075d914107e8ca1194527c677c360317971e29",
+    "stderr_sha256": "dbfb17f53661ef4cad8bf2451a96cf3fff57197eb3267dd5f6974c2d288b42ac",
+    "resources_sha256": "c7b83d4f413c3762533d318c534665319eb8e48ad94927fc014ac81a39bc2050"
+  },
+  {
+    "name": "wasm-containment-inputs",
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/baseline-source-v1/tests/wasm/mesh_errors.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "elapsed_seconds": 0.3958622100763023,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f0e91141d092ce25338695852f11ae075436c001fff06945dd8021136f44dca4",
+    "resources_sha256": "5e18def9f8e83ed85bd90aa6684e7ad34755e1c770f2c82b1f2410f202e10f9c"
+  }
+]

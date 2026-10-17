@@ -1,0 +1,9 @@
+{
+  "exit_code": 1,
+  "expected_failure_reproduced": true,
+  "passed": 10,
+  "failed": 3,
+  "stdout_sha256": "192e190bb6056ec7ba3c84259169ff7aa7884656c8dd8cc10130abd9d8d18f29",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "0ce10f132db33f5b3173fbea84a2cf8c74ba188562970349dd0e4ac78db66c99"
+}
