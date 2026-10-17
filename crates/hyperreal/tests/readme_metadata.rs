@@ -10,29 +10,22 @@ fn readme_version_matches_crate_version() {
 
 #[test]
 fn gmp_binding_remains_a_development_only_dependency() {
-    let manifest = include_str!("../Cargo.toml");
-    let (_, after_dependencies) = manifest
-        .split_once("[dependencies]")
+    let manifest: toml::Table = include_str!("../Cargo.toml")
+        .parse()
+        .expect("Cargo.toml is valid TOML");
+    let release_dependencies = manifest["dependencies"]
+        .as_table()
         .expect("manifest has a normal dependency table");
-    let (release_dependencies, after_dev_dependencies) = after_dependencies
-        .split_once("[dev-dependencies]")
+    let dev_dependencies = manifest["dev-dependencies"]
+        .as_table()
         .expect("manifest has a development dependency table");
-    let dev_dependencies = after_dev_dependencies
-        .lines()
-        .take_while(|line| !line.starts_with('['))
-        .collect::<Vec<_>>()
-        .join("\n");
 
     assert!(
-        !release_dependencies
-            .lines()
-            .any(|line| line.trim_start().starts_with("rug ")),
+        !release_dependencies.contains_key("rug"),
         "the GMP binding must not enter Hyperreal's release dependency graph"
     );
     assert!(
-        dev_dependencies
-            .lines()
-            .any(|line| line.trim_start().starts_with("rug ")),
+        dev_dependencies.contains_key("rug"),
         "competitive GMP benchmarks require rug as a development dependency"
     );
 }

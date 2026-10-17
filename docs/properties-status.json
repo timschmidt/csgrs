@@ -17639,6 +17639,24 @@
     "full_plan_complete": false,
     "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
     "original_worktree_integration_pending": true
+  },
+  "hyperreal_package_migration": {
+    "status": "admitted Hyperreal package migration; whole-stack release remains open",
+    "contract": "docs/evidence/2026-10-17-hyperreal-package-migration/contract-v1.md",
+    "qualification": "docs/evidence/2026-10-17-hyperreal-package-migration/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-hyperreal-package-migration/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-hyperreal-package-migration/artifact-expectations-v1.json.gz",
+    "archive_bytes_before": 108043832,
+    "archive_bytes_after": 4012052,
+    "retained_replay_bundles": 63,
+    "readme_test_passes": 16,
+    "negative_controls_rejected": 2,
+    "package_migration_admitted": true,
+    "cache_index_admitted": false,
+    "release_qualification_complete": false,
+    "full_plan_complete": false,
+    "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
+    "original_worktree_integration_pending": true
   }
 },
   "status_meanings": {

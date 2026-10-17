@@ -6,6 +6,8 @@ repository = "https://github.com/timschmidt/hyperreal/"
 version = "0.13.1"
 edition = "2024"
 readme = "README.md"
+# Full validation replay bundles remain in the repository.
+exclude = ["/benchmarks/checkpoints/*.tar.gz"]
 keywords = ["real", "rational", "arithmetic", "exact", "math"]
 categories = ["mathematics", "science", "data-structures"]
 
@@ -35,6 +37,7 @@ proptest = "1.7.0"
 # graph and arithmetic implementation must remain independent of GMP.
 rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
 serde_json = "1.0.149"
+toml = "=0.8.23"
 
 [[bin]]
 name = "hyperreal"

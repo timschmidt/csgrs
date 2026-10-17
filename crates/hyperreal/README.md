@@ -11,7 +11,7 @@ routing, packing, voxel, and design-readiness crates.
 The crate does not try to be a complete computer algebra system. Its job is to
 preserve exact or refinement-ready structure until a caller can make a
 certified decision—or report that the available evidence is insufficient.
-Version `0.13.1` is the current crate release documented here.
+Version `0.13.1` describes the unreleased source in this checkout.
 
 ## Why exact-aware real arithmetic?
 
@@ -65,15 +65,13 @@ explain their representations in more depth.
 
 ## Quick start
 
-Create a project and add Hyperreal:
+From the repository root, run the checked-in example for this source version:
 
 ```sh
-cargo new exact-scalars
-cd exact-scalars
-cargo add hyperreal
+cargo run -p hyperreal --example readme_quickstart
 ```
 
-Replace `src/main.rs` with:
+The example is:
 
 <!-- quickstart:start -->
 ```rust
@@ -94,13 +92,7 @@ fn main() -> Result<(), Problem> {
 ```
 <!-- quickstart:end -->
 
-Run it:
-
-```sh
-cargo run
-```
-
-The same program is checked in as
+The program is checked in as
 [`examples/readme_quickstart.rs`](examples/readme_quickstart.rs), compiled by
 the test suite, and compared byte-for-byte with this README block.
 
@@ -351,6 +343,11 @@ triangulations, meshes, boundary representations, and CSG grammar.
   feature matrix, fuzzing, and executable-line measurement.
 - [`benchmarks.md`](benchmarks.md) contains generated benchmark summaries.
 - Generate the complete API reference with `cargo doc --open`.
+
+The Cargo package includes the source, examples, tests, regression fixtures,
+and checkpoint summaries. Full validation replay bundles under
+`benchmarks/checkpoints/*.tar.gz` remain in the repository and are excluded
+from the package; use a repository checkout to replay those archived runs.
 
 ## References
 
