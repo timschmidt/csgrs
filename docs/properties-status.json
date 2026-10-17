@@ -12471,6 +12471,63 @@
       "Repair solid containment agreement with nonzero winding using the retained nested-same-orientation and coincident-opposite-orientation diagnostics; audit boundary and tangent-ray semantics at the native owning layer before implementation.",
       "Continue typed failures, ordinary strict completion, provenance, clean external distribution and the remaining properties without weakening preserved tests or the rejected native integration workload gates."
     ]
+  },
+  "containment_winding": {
+    "status": "kept: native nonzero-winding containment and cancelled single-ray sheet composition",
+    "main_parent_commit": "d4eee9a675fa51d84eb0eb29503dd802bdcdbd19",
+    "contract": "docs/evidence/2026-10-16-containment-winding/contract-v1.md",
+    "progress": "docs/evidence/2026-10-16-containment-winding/progress-v1.md",
+    "decision": "docs/evidence/2026-10-16-containment-winding/decision-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-containment-winding/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-containment-winding/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "crates/hypermesh/src/mesh.rs": "48cc06b0021069e181f80af6676f2c29d03acc65518a550de019e4b895e415a6",
+      "crates/hypermesh/src/winding.rs": "219481f885d9d5be440bb6073fa791f0f8ef81454ab5bbd72a4458011882b4a5",
+      "crates/hypermesh/src/minkowski.rs": "bf0520a9fa307b3e08c4038e59593fe798357b483851e632870cc6bb82fadfbf",
+      "src/solid.rs": "4ae0c121336859e35d92f74e25fab92ea355b3abd5bebdc8c7b929014c6aabcf",
+      "src/wasm/mesh_js.rs": "6186e60b129ea4894a44acb4c6c5f87ec2b62b0c2b25f1dd915e0af79cfb29fd",
+      "scripts/test-wasm-bindings.sh": "469c3ab86f41f011f3eb33c8cf47e9b52882d146d0e1985b5b2084fc8540b429",
+      "tests/containment_winding.rs": "2c6887cb0f5b339453830ea4da4b8fed1be75189363995881584f7c09ec6df95",
+      "tests/wasm/containment_winding.cjs": "096433dac5f844f3ffe09f8470e07c787fe229b7e9e0ccd68205b66e9cb993fe",
+      "crates/hypermesh/src/surface_arrangement.rs": "2e549cb339a20b237ee44881cce5c70317104b231f018497236829ea35543fd4"
+    },
+    "cost": "docs/evidence/2026-10-16-containment-winding/cost-v1/result.json",
+    "cost_contract": "docs/evidence/2026-10-16-containment-winding/cost-contract-v1.json",
+    "baseline_native": {
+      "passed": 5,
+      "failed": 10,
+      "evidence": "baseline-v6/native-tests.stdout",
+      "scope": "15 tests; parameter loops stop at their first failure, so later subcases are not credited as reproduced failures."
+    },
+    "baseline_wasm": {
+      "passed": 4,
+      "failed": 5,
+      "evidence": "baseline-v6/wasm-tests.stdout"
+    },
+    "new_native_tests": 15,
+    "new_arrangement_guard_tests": 1,
+    "winding_wasm_tests": 9,
+    "containment_winding_admitted": true,
+    "universal_set_membership_correctness_claimed": false,
+    "intentional_migration": "Containment replaces ray parity and blanket source-face exclusion with strict interior of the regularized nonzero-winding set. Shared Minkowski winding diagnostics use mesh labels; typed errors, checked sums, direction order and cancellation sites remain.",
+    "pending_native_paths_remaining": 0,
+    "native_disposition_preserved": true,
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "limitations": [
+      "No total-work, heap-byte, expression-growth or cancellation bound for containment or its native boundary arrangement; expression depth and coefficient growth were not instrumented in the focused cost probe.",
+      "Source-boundary queries can now require arrangement work; all measured increases are retained, with no optimization claim.",
+      "The tested rational, affine and pi-translated domain is evidence, not a theorem establishing all possible closed-PWN symbolic inputs.",
+      "Published-package pipeline, full pre-push/CI matrix, full provenance chain and coverage remain open.",
+      "The inherited artifact audit remains failed/incomplete with 27093 missing paths; new physical files are audited separately.",
+      "The rejected 35-file integration remains archived and excluded from runtime source.",
+      "The combined package test command retains the pre-existing Cargo output-name collision warnings for the two basic examples; the same warnings are present in the qualified E31 baseline. They are not caused by this patch."
+    ],
+    "next": [
+      "Investigate reusing certified global bounds to reject non-interior boundary points before arranging the surface; compare against this corrected implementation and preserve every successful semantic case. This opportunity is not implemented or credited here.",
+      "Continue the preserved strict-success and typed-failure frontier, including smaller independently qualified repairs from the rejected native integration; keep original workload gates.",
+      "Complete end-to-end provenance and the clean external documented distribution pipeline, then the remaining properties, full workflow matrix and measured coverage."
+    ]
   }
 },
   "status_meanings": {

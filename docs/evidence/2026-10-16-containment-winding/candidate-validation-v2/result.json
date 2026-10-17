@@ -1,0 +1,12 @@
+{
+  "complete": true,
+  "commands": 8,
+  "unexpected_exits": [
+    "mesh-and-modeling-all-features",
+    "all-feature-all-target-clippy"
+  ],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false
+}

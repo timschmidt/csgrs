@@ -1,0 +1,252 @@
+WASM certainty, query status, geometry, and invalid-input checks passed
+WASM export projection, failure, cache and composition contracts passed
+TAP version 13
+# Subtest: array length failures retain the invalid-input category
+ok 1 - array length failures retain the invalid-input category
+  ---
+  duration_ms: 2.928219
+  type: 'test'
+  ...
+# Subtest: array nonfinite failures retain the invalid-input category
+ok 2 - array nonfinite failures retain the invalid-input category
+  ---
+  duration_ms: 0.43522
+  type: 'test'
+  ...
+# Subtest: array index failures retain the invalid-input category
+ok 3 - array index failures retain the invalid-input category
+  ---
+  duration_ms: 0.332077
+  type: 'test'
+  ...
+# Subtest: binary projection collapse retains typed format detail
+ok 4 - binary projection collapse retains typed format detail
+  ---
+  duration_ms: 4.439166
+  type: 'test'
+  ...
+# Subtest: binary overflow retains coordinate field and target
+ok 5 - binary overflow retains coordinate field and target
+  ---
+  duration_ms: 0.29415
+  type: 'test'
+  ...
+# Subtest: ASCII export failure retains typed format detail
+ok 6 - ASCII export failure retains typed format detail
+  ---
+  duration_ms: 0.43015
+  type: 'test'
+  ...
+# Subtest: successful exports and recovery remain unchanged
+ok 7 - successful exports and recovery remain unchanged
+  ---
+  duration_ms: 4.65149
+  type: 'test'
+  ...
+# Subtest: canonical empty native imports compose
+ok 8 - canonical empty native imports compose
+  ---
+  duration_ms: 12.210473
+  type: 'test'
+  ...
+# Subtest: both native STL encodings reimport and compose at ordinary and tiny scales
+ok 9 - both native STL encodings reimport and compose at ordinary and tiny scales
+  ---
+  duration_ms: 22.714562
+  type: 'test'
+  ...
+# Subtest: malformed bytes retain the parser IO category
+ok 10 - malformed bytes retain the parser IO category
+  ---
+  duration_ms: 0.635226
+  type: 'test'
+  ...
+# Subtest: nonfinite STL coordinates remain malformed input
+ok 11 - nonfinite STL coordinates remain malformed input
+  ---
+  duration_ms: 0.495116
+  type: 'test'
+  ...
+# Subtest: invalid STL topology retains its validation cause after disposal
+ok 12 - invalid STL topology retains its validation cause after disposal
+  ---
+  duration_ms: 0.892969
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 87.431384
+TAP version 13
+# Subtest: union retains invalid-input errors for either operand beside empty
+ok 1 - union retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 9.62038
+  type: 'test'
+  ...
+# Subtest: intersection retains invalid-input errors for either operand beside empty
+ok 2 - intersection retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.678924
+  type: 'test'
+  ...
+# Subtest: difference retains invalid-input errors for either operand beside empty
+ok 3 - difference retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.531993
+  type: 'test'
+  ...
+# Subtest: xor retains invalid-input errors for either operand beside empty
+ok 4 - xor retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.513494
+  type: 'test'
+  ...
+# Subtest: insufficient hull geometry keeps its typed failure for every policy
+ok 5 - insufficient hull geometry keeps its typed failure for every policy
+  ---
+  duration_ms: 1.430292
+  type: 'test'
+  ...
+# Subtest: zero subdivision fails visibly even for canonical empty geometry
+ok 6 - zero subdivision fails visibly even for canonical empty geometry
+  ---
+  duration_ms: 0.58492
+  type: 'test'
+  ...
+# Subtest: mesh diagnostics remain ordinary host errors after all native inputs are freed
+ok 7 - mesh diagnostics remain ordinary host errors after all native inputs are freed
+  ---
+  duration_ms: 3.280895
+  type: 'test'
+  ...
+# Subtest: successful empty outputs retain certainty and compose through STL reimport
+ok 8 - successful empty outputs retain certainty and compose through STL reimport
+  ---
+  duration_ms: 3.042851
+  type: 'test'
+  ...
+# Subtest: successful membership retains its own query status and consumed certainty
+ok 9 - successful membership retains its own query status and consumed certainty
+  ---
+  duration_ms: 4.557948
+  type: 'test'
+  ...
+# Subtest: membership rejects open input before bounds and boundary shortcuts
+ok 10 - membership rejects open input before bounds and boundary shortcuts
+  ---
+  duration_ms: 0.655825
+  type: 'test'
+  ...
+# Subtest: membership rejects degenerate input before bounds and boundary shortcuts
+ok 11 - membership rejects degenerate input before bounds and boundary shortcuts
+  ---
+  duration_ms: 0.314919
+  type: 'test'
+  ...
+# Subtest: membership rejects positions-only input before bounds and boundary shortcuts
+ok 12 - membership rejects positions-only input before bounds and boundary shortcuts
+  ---
+  duration_ms: 0.244123
+  type: 'test'
+  ...
+# Subtest: canonical empty membership is a decided certified false
+ok 13 - canonical empty membership is a decided certified false
+  ---
+  duration_ms: 0.214045
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 39.931361
+TAP version 13
+# Subtest: nonzero set containment: nested material
+ok 1 - nonzero set containment: nested material
+  ---
+  duration_ms: 33.211122
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: coincident cancellation
+ok 2 - nonzero set containment: coincident cancellation
+  ---
+  duration_ms: 12.432347
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: overlapping material
+ok 3 - nonzero set containment: overlapping material
+  ---
+  duration_ms: 29.30725
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: opposite overlap
+ok 4 - nonzero set containment: opposite overlap
+  ---
+  duration_ms: 11.605574
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: shared internal face
+ok 5 - nonzero set containment: shared internal face
+  ---
+  duration_ms: 6.893397
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: cavity boundary
+ok 6 - nonzero set containment: cavity boundary
+  ---
+  duration_ms: 4.874045
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: tangent ray contact
+ok 7 - nonzero set containment: tangent ray contact
+  ---
+  duration_ms: 3.103907
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: reversed multiplicity
+ok 8 - nonzero set containment: reversed multiplicity
+  ---
+  duration_ms: 4.139616
+  type: 'test'
+  ...
+# Subtest: cancelled flat PWN source has empty regularized interior
+not ok 9 - cancelled flat PWN source has empty regularized interior
+  ---
+  duration_ms: 1.186619
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v1/tests/wasm/containment_winding.cjs:68:1'
+  failureType: 'testCodeFailure'
+  error: 'could not construct exact surface arrangement: two-facet radial edge has one geometric ray'
+  code: 'geometry_failure'
+  name: 'GeometryError'
+  stack: |-
+    __wbg_new_b667d279fd5aa943 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v1/wasm-bindings-node/csgrs.js:2195:25)
+    csgrs.wasm.<js_sys[62147ddc831095f2]::Error>::new::__wbg_new_b667d279fd5aa943 externref shim (wasm://wasm/csgrs.wasm-02a883da:wasm-function[8415]:0x92fe3c)
+    csgrs.wasm.<js_sys[62147ddc831095f2]::Error>::new (wasm://wasm/csgrs.wasm-02a883da:wasm-function[8624]:0x930b7d)
+    csgrs.wasm.csgrs[30c5336b91c3e1ec]::wasm::mesh_js::geometry_exception (wasm://wasm/csgrs.wasm-02a883da:wasm-function[5870]:0x8ec01d)
+    csgrs.wasm.csgrs[30c5336b91c3e1ec]::wasm::mesh_js::geometry_error (wasm://wasm/csgrs.wasm-02a883da:wasm-function[6411]:0x902e2d)
+    csgrs.wasm.meshjs_containsPoint (wasm://wasm/csgrs.wasm-02a883da:wasm-function[4117]:0x863b6f)
+    csgrs.wasm.meshjs_containsPoint multivalue shim (wasm://wasm/csgrs.wasm-02a883da:wasm-function[8151]:0x92dabd)
+    MeshJs.containsPoint (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v1/wasm-bindings-node/csgrs.js:963:26)
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v1/tests/wasm/containment_winding.cjs:74:27)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 8
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 124.573957

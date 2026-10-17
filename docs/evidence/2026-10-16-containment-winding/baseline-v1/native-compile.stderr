@@ -1,0 +1,15 @@
+error[E0463]: can't find crate for `csgrs`
+ --> /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v1/tests/containment_winding.rs:3:5
+  |
+3 | use csgrs::{GeometryCertainty, GeometryContext, Real, TriangleMesh, solid};
+  |     ^^^^^ can't find crate
+
+error[E0463]: can't find crate for `hypermesh`
+ --> /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v1/tests/containment_winding.rs:4:5
+  |
+4 | use hypermesh::{BooleanOp, BooleanProgram, MeshCertainty, Point3, Triangle};
+  |     ^^^^^^^^^ can't find crate
+
+error: aborting due to 2 previous errors
+
+For more information about this error, try `rustc --explain E0463`.

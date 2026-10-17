@@ -1,0 +1,29 @@
+{
+  "purpose": "Correctness migration with full cost disclosure; no optimization claim.",
+  "control_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/cost_v1.rs",
+  "control_sha256": "5f8dbe02cd7246c9f01b840636c4b9f9e3c94d835fad67d90affd956bb463a1a",
+  "variants": "Qualified E31 current production Hypermesh and corrected candidate production Hypermesh, with identical Cargo dependency/feature fingerprints. Completed targets are read-only.",
+  "pairs": 5,
+  "process_order": "baseline/candidate alternating by pair, separately for unchanged control and expanded matrix",
+  "control_queries": 256,
+  "matrix_cases": 21,
+  "matrix_queries_per_process": 672,
+  "policies": [
+    "STRICT",
+    "APPROXIMATE_512"
+  ],
+  "cache_conditions": "Each process is fresh. Cold phases construct 8 new meshes per matrix case (16 for control); warm phases reuse these mesh identities. Process scalar caches and earlier cases are not reset. No new retained cache is introduced.",
+  "timing": "Cold construction, complete query, certainty/value/error materialization and retained source vector; warm complete query and result materialization. Query and independent expected-value construction precede timing. Atomic allocator instrumentation is included in both variants.",
+  "metrics": [
+    "completion category and certainty",
+    "wall nanoseconds",
+    "allocation/reallocation calls and requested bytes",
+    "retained requested bytes",
+    "peak extra requested bytes",
+    "released requested bytes at source drop",
+    "native probe and WASM artifact sizes",
+    "process peak RSS from time -v"
+  ],
+  "comparison": "Compare latency only when both observations complete the same expected value Certified. Keep wrong or typed-failure baselines, all individual pairs and unfavorable results; they are not faster successful completion.",
+  "limits": "Per-command external elapsed 180s and virtual-address 8GiB; no internal total-work, heap-byte, cancellation or expression-growth bound is claimed."
+}

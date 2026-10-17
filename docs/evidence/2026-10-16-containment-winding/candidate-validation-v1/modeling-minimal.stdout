@@ -1,0 +1,111 @@
+
+running 32 tests
+test adapter::tests::i128_adapter_rejects_fractional_output ... ok
+test adapter::tests::f32_graphics_adapter_preserves_strict_overflow_error ... ok
+test adapter::tests::f64_mesh_adapter_converts_at_edges ... ok
+test adapter::tests::exact_and_integer_graphics_adapters_keep_generic_conversion ... ok
+test context::tests::contexts_and_certainty_remain_one_byte ... ok
+test adapter::tests::primitive_graphics_adapters_match_core_gpu_buffers ... ok
+test context::tests::one_context_derives_matching_kernel_policies ... ok
+test parts::assembly::tests::parent_explode_keeps_child_step_seated ... ok
+test parts::attachment::tests::zero_axis_is_rejected ... ok
+test parts::assembly::tests::suppressed_explode_stays_put ... ok
+test parts::attachment::tests::mate_matches_origin_and_axis ... ok
+test parts::dimension::tests::dimension_x_keeps_the_exact_length ... ok
+test parts::bom::tests::quantities_merge_and_sort ... ok
+test parts::dimension::tests::zero_and_negative_lengths_are_rejected ... ok
+test parts::manual::tests::manual_contains_instructions_and_reports_gaps ... ok
+test parts::blueprint::tests::nearer_box_hides_a_covered_edge_and_no_explode_still_occludes ... ok
+test parts::blueprint::tests::overlapping_depth_splits_an_edge_into_visible_and_unknown ... ok
+test parts::blueprint::tests::svg_export_records_hidden_dashes ... ok
+test parts::occlude::tests::undecided_depth_stays_unknown ... ok
+test solid::tests::constructors_return_native_hypermesh_geometry ... ok
+test solid::tests::primitive_sample_count_arithmetic_is_checked ... ok
+test solid::tests::sampled_circle_retains_exact_cardinal_angles ... ok
+test solid::tests::loft_uses_each_cap_plane_and_rejects_nonplanar_sections ... ok
+test solid::tests::polyhedron_certifies_symbolically_planar_faces_before_normalization ... ok
+test parts::occlude::tests::cube_feature_edges_are_visible ... ok
+test solid::tests::fluent_boolean_returns_reusable_native_geometry ... ok
+test parts::occlude::tests::front_box_hides_rear_feature_edges ... ok
+test parts::occlude::tests::suppressed_front_box_still_hides_the_rear_box ... ok
+test parts::occlude::tests::svg_snapshot_mentions_a_rear_coordinate ... ok
+test parts::occlude::tests::half_covered_edge_splits ... ok
+test solid::tests::nominal_direct_solid_catalog_is_closed_and_consistently_indexed ... ok
+test solid::tests::arrows_and_orientation_reversing_transforms_keep_outward_manifold_winding ... ok
+
+test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+
+running 2 tests
+test invalid_operands_keep_typed_failures_even_when_paired_with_empty ... ok
+test undecided_booleans_keep_typed_failures_across_scalar_families ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test adversarial_regression_fixtures_are_recorded ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test original_batch_shells_and_incremental_union_remain_consumable ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+
+running 6 tests
+test bounds_reject_malformed_indices ... ok
+test cached_position_bounds_do_not_validate_mutated_indices ... ok
+test empty_bounds_are_absent_rather_than_a_point_at_the_origin ... ok
+test undecided_bounds_retain_their_category_through_the_adapter ... ok
+test undecided_bounds_do_not_become_an_origin_box_or_empty_model ... ok
+test placement_preserves_exact_box_geometry_and_empty_composition ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 10 tests
+test canonical_empty_membership_is_certified_false ... ok
+test degenerate_input_survives_bounds_and_boundary_shortcuts ... ok
+test missing_one_geometry_buffer_is_not_canonical_empty ... ok
+test invalid_indices_survive_bounds_and_boundary_shortcuts ... ok
+test unbalanced_input_survives_bounds_and_boundary_shortcuts ... ok
+test open_input_survives_bounds_and_boundary_shortcuts ... ok
+test simultaneous_clones_reuse_only_valid_source_facts ... ok
+test warmed_validation_does_not_survive_geometry_mutation ... ok
+test approximate_topology_fact_keeps_its_receipt_and_cannot_certify_strict_queries ... ok
+test closed_tetrahedron_answers_match_independent_halfspace_expectations ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 12 tests
+test a_cancelled_flat_source_has_empty_regularized_interior ... FAILED
+test a_tangent_vertex_contact_does_not_create_interior ... ok
+test nested_outward_shells_have_nonzero_interior_winding ... ok
+test unary_regularization_and_containment_share_nonzero_set_meaning ... ok
+test reversed_inner_shell_retains_a_cavity_and_its_boundary ... ok
+test opposite_coincident_shells_cancel_everywhere ... ok
+test nonzero_membership_commutes_with_an_invertible_affine_map ... ok
+test touching_shells_remove_their_internal_shared_face ... ok
+test nested_source_faces_edges_and_vertices_can_be_strictly_inside ... ok
+test opposite_overlap_cancels_only_the_shared_volume ... ok
+test winding_multiplicity_and_global_reversal_preserve_the_represented_set ... ok
+test overlapping_outward_shells_do_not_create_a_parity_hole ... ok
+
+failures:
+
+---- a_cancelled_flat_source_has_empty_regularized_interior stdout ----
+
+thread 'a_cancelled_flat_source_has_empty_regularized_interior' (39316) panicked at tests/containment_winding.rs:370:79:
+called `Result::unwrap()` on an `Err` value: SurfaceArrangementFailed { reason: "two-facet radial edge has one geometric ray" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    a_cancelled_flat_source_has_empty_regularized_interior
+
+test result: FAILED. 11 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

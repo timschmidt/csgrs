@@ -1,0 +1,63 @@
+[
+  {
+    "name": "shell-syntax",
+    "command": [
+      "bash",
+      "-n",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/scripts/test-wasm-bindings.sh"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.23971355892717838,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "dfe48c4348393c536d19ab70a7c58b951217869140f8844e30eb9d6eff02eb83"
+  },
+  {
+    "name": "real-consumers",
+    "command": [
+      "bash",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/scripts/test-wasm-bindings.sh"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 177.22014310536906,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "7dcd35b273a7563744735970025f3a836356ddcd4c4511263d8d0b5a826d1e77",
+    "stderr_sha256": "d47aa9e26b8984354c384b8632924201fe106060ac3d71c4810dc879959016b3",
+    "resources_sha256": "d5d74a62a6048bed9c2b67c24e2f512d08b0f01d341d839d25f7bb2ecffe644d"
+  },
+  {
+    "name": "wasm-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--profile",
+      "wasm",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--no-default-features",
+      "--features",
+      "wasm",
+      "--lib",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 28.52426281105727,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "5b897b8e78e07727a925dcd929c95da4490758f4302803807257607e9480310c",
+    "resources_sha256": "650b9b2ab95256f328e6ef7c6b2d8a9d90074af7ff3af69118b4519327019f6d"
+  }
+]

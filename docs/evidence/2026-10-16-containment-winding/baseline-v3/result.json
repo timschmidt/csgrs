@@ -1,0 +1,9 @@
+{
+  "complete": true,
+  "native_test_exit_code": 101,
+  "wasm_test_exit_code": 1,
+  "native_test_binary_sha256": "68b4fab1d263176f8a9c528f3366ed1c9b7dbdbdc49812c8c45399eb2106da85",
+  "current_inputs_unchanged": true,
+  "read_only_artifacts_unchanged": true,
+  "candidate_admitted": false
+}

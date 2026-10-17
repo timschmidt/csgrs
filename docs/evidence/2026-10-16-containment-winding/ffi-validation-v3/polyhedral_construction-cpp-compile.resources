@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s c++ -std=c++17 -O2 -Wall -Wextra -Werror -I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include -I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/polyhedral_construction.cpp -L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release -Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release -lcsgrs_ffi -o /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/polyhedral_construction-cpp"
+	User time (seconds): 0.27
+	System time (seconds): 0.06
+	Percent of CPU this job got: 96%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.34
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 87332
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1
+	Minor (reclaiming a frame) page faults: 24176
+	Voluntary context switches: 26
+	Involuntary context switches: 16
+	Swaps: 0
+	File system inputs: 576
+	File system outputs: 128
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

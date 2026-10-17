@@ -1,0 +1,481 @@
+diff --git a/crates/hypermesh/src/mesh.rs b/crates/hypermesh/src/mesh.rs
+index 0571d7aef..4c1dec08d 100644
+--- a/crates/hypermesh/src/mesh.rs
++++ b/crates/hypermesh/src/mesh.rs
+@@ -22,6 +22,7 @@ use crate::polygon::{
+ };
+ use crate::predicate::classify_point_decision;
+ use crate::storage_hash::StorageHashMap;
++use crate::winding::mesh_winding_number_decision;
+ 
+ mod concatenation;
+ 
+@@ -956,8 +957,12 @@ impl TriangleMesh {
+         Ok(unique_hits)
+     }
+ 
+-    /// Tests strict solid containment using exact boundary predicates and ray
+-    /// parity. Points on a triangle, edge, or vertex are not inside.
++    /// Tests strict interior of the regularized nonzero-winding solid.
++    ///
++    /// Oriented crossings retain winding multiplicity and cancellation. Points
++    /// on the represented set's boundary are excluded; internal source faces,
++    /// edges and vertices follow the represented set's interior. Source-face
++    /// queries reuse the native Boolean arrangement to establish that boundary.
+     ///
+     /// Canonical empty geometry (both buffers empty) returns `false`. Every
+     /// other input must satisfy [`Self::validate_closed_pwn`], including queries
+@@ -965,6 +970,11 @@ impl TriangleMesh {
+     /// typed error before a containment shortcut can answer. Validation facts
+     /// contribute their certainty and obey the same policy and source identity
+     /// rules as explicit validation.
++    ///
++    /// Off-surface winding uses at most `8n + 1` candidate directions for `n`
++    /// triangles. Boundary regularization uses the native arrangement. These
++    /// algorithms have no total-work, heap-byte or cancellation limit; the ray
++    /// count does not bound scalar expression growth or arrangement work.
+     pub fn contains_point(
+         &self,
+         context: &MeshContext,
+@@ -1002,6 +1012,33 @@ impl TriangleMesh {
+                 }
+             }
+         }
++        if self.point_on_surface_decision(decisions, point)? {
++            let regularized = crate::boolean(
++                &MeshContext::new(decisions.policy()),
++                &[self.as_ref()],
++                crate::BooleanProgram::Operation(crate::BooleanOp::Union),
++            )?;
++            decisions.absorb(regularized.certainty);
++            let normalized = regularized.value.into_triangle_meshes()?.pop().ok_or(
++                HypermeshError::SurfaceArrangementFailed {
++                    reason: "containment regularization produced no result",
++                },
++            )?;
++            if normalized.point_on_surface_decision(decisions, point)? {
++                return Ok(false);
++            }
++            return Ok(
++                mesh_winding_number_decision(decisions, &normalized, point, || Ok(()))? != 0,
++            );
++        }
++        Ok(mesh_winding_number_decision(decisions, self, point, || Ok(()))? != 0)
++    }
++
++    fn point_on_surface_decision(
++        &self,
++        decisions: &DecisionContext,
++        point: &Point3,
++    ) -> HypermeshResult<bool> {
+         let query = hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
+         for triangle in self.triangles.iter() {
+             let [a, b, c] = triangle.indices();
+@@ -1033,19 +1070,10 @@ impl TriangleMesh {
+                     | hyperlimit::Triangle3Location::OnEdge
+                     | hyperlimit::Triangle3Location::OnVertex
+             ) {
+-                return Ok(false);
++                return Ok(true);
+             }
+         }
+-        let direction = Vector3::from_xyz(
+-            Real::one(),
+-            (Real::from(3_u8) / Real::from(8_u8)).expect("eight is nonzero"),
+-            (Real::from(5_u8) / Real::from(16_u8)).expect("sixteen is nonzero"),
+-        );
+-        Ok(self
+-            .ray_intersections_decision(decisions, point, &direction)?
+-            .len()
+-            % 2
+-            == 1)
++        Ok(false)
+     }
+ 
+     /// Intersects consecutive polyline segments with native triangles and
+diff --git a/crates/hypermesh/src/minkowski.rs b/crates/hypermesh/src/minkowski.rs
+index 3878db79e..c0ceacc62 100644
+--- a/crates/hypermesh/src/minkowski.rs
++++ b/crates/hypermesh/src/minkowski.rs
+@@ -14,11 +14,10 @@ use crate::context::DecisionContext;
+ use crate::convex_hull::convex_hull_impl;
+ use crate::geometry::affine_projective_point_decision;
+ use crate::predicate::classify_point_decision;
+-use crate::winding::{RayFacetRelation, ray_triangle_relation};
++use crate::winding::mesh_winding_number_decision;
+ use crate::{
+     BooleanOp, BooleanProgram, Classification, HypermeshError, HypermeshResult, MeshContext,
+-    MeshOutcome, Plane, Point3, Real, Triangle, TriangleMesh, Vector3, boolean,
+-    certify_convex_mesh,
++    MeshOutcome, Plane, Point3, Real, Triangle, TriangleMesh, boolean, certify_convex_mesh,
+ };
+ 
+ /// Optional collection limits and cooperative cancellation for a solid sum.
+@@ -328,7 +327,10 @@ fn convex_cells(
+         centroid.x *= &inverse;
+         centroid.y *= &inverse;
+         centroid.z *= &inverse;
+-        if winding_at_cell_point(decisions, &source, &centroid, options)? != 0 {
++        if mesh_winding_number_decision(decisions, &source, &centroid, || {
++            options.check_cancelled()
++        })? != 0
++        {
+             retained.push(cell);
+         }
+     }
+@@ -459,73 +461,3 @@ fn split_cell(
+         convex_hull_impl(decisions, &points[1], &groups[1], None)?,
+     ])
+ }
+-
+-fn winding_at_cell_point(
+-    decisions: &DecisionContext,
+-    source: &TriangleMesh,
+-    point: &Point3,
+-    options: &MinkowskiOptions<'_>,
+-) -> HypermeshResult<i32> {
+-    // Each face-parallel or edge-hit condition excludes at most two parameters
+-    // on (1,t,t²): at most 4 constraints per source triangle. The centroid is
+-    // strictly inside an arrangement cell, hence on no source supporting plane.
+-    let candidates = source
+-        .triangles
+-        .len()
+-        .checked_mul(8)
+-        .and_then(|n| n.checked_add(1))
+-        .ok_or(HypermeshError::CapacityOverflow {
+-            operation: "Minkowski winding rays",
+-        })?;
+-    let mut unknown = false;
+-    'directions: for parameter in 0..candidates {
+-        options.check_cancelled()?;
+-        let t =
+-            Real::from(
+-                u64::try_from(parameter).map_err(|_| HypermeshError::CapacityOverflow {
+-                    operation: "Minkowski winding ray parameter",
+-                })?,
+-            );
+-        let direction = Vector3::from_xyz(Real::one(), t.clone(), &t * &t);
+-        let local = decisions.isolated();
+-        let mut winding = 0_i32;
+-        for triangle in source.triangles.iter() {
+-            options.check_cancelled()?;
+-            match ray_triangle_relation(
+-                &local,
+-                source.triangle_points(*triangle)?,
+-                point,
+-                &direction,
+-            ) {
+-                Ok(RayFacetRelation::Miss) => {}
+-                Ok(RayFacetRelation::Ahead { frontward }) => {
+-                    winding = winding
+-                        .checked_add(if frontward { 1 } else { -1 })
+-                        .ok_or(HypermeshError::WindingOverflow)?;
+-                }
+-                Ok(RayFacetRelation::Degenerate) => continue 'directions,
+-                Ok(RayFacetRelation::Origin { .. }) => {
+-                    return Err(HypermeshError::SurfaceArrangementFailed {
+-                        reason: "Minkowski cell witness lies on a source triangle",
+-                    });
+-                }
+-                Err(HypermeshError::PredicateUndecided { .. }) => {
+-                    unknown = true;
+-                    continue 'directions;
+-                }
+-                Err(error) => return Err(error),
+-            }
+-        }
+-        decisions.absorb(local.certainty());
+-        return Ok(winding);
+-    }
+-    if unknown {
+-        Err(HypermeshError::PredicateUndecided {
+-            predicate: "Minkowski cell winding",
+-        })
+-    } else {
+-        Err(HypermeshError::SurfaceArrangementFailed {
+-            reason: "Minkowski winding rays could not avoid source edges and parallel faces",
+-        })
+-    }
+-}
+diff --git a/crates/hypermesh/src/surface_arrangement.rs b/crates/hypermesh/src/surface_arrangement.rs
+index 34b6badac..adc63cb4d 100644
+--- a/crates/hypermesh/src/surface_arrangement.rs
++++ b/crates/hypermesh/src/surface_arrangement.rs
+@@ -703,12 +703,25 @@ fn assemble_surface_cells(
+                 max_radial_degree.max(compact_len(edge_end - edge_start, "surface radial degree")?);
+         }
+         let uses = &edge_uses[edge_start..edge_end];
++        // A bundled sheet can end at an edge without bounding any volume:
++        // opposite copies of one flat triangle are a closed PWN source. Uses
++        // are sorted by facet, so matching endpoints prove one geometric ray.
++        // Admit its cyclic zero-angle strata only when the exact aggregate
++        // transition cancels in every operand. An open or cross-operand sheet
++        // must still fail the ordinary radial-topology checks.
++        let transition_start = uses[0].facet as usize * operand_count;
++        let cancelled_bundle = uses.len() > 1
++            && uses[0].facet == uses[uses.len() - 1].facet
++            && _transitions[transition_start..transition_start + operand_count]
++                .iter()
++                .all(|&delta| delta == 0);
+         if let [first, second] = uses {
+             assemble_two_sheet_edge(
+                 decisions,
+                 &surface.points,
+                 &pending,
+                 edge,
++                cancelled_bundle,
+                 first,
+                 second,
+                 &contributions,
+@@ -729,6 +742,7 @@ fn assemble_surface_cells(
+                 &surface.points,
+                 &pending,
+                 edge,
++                cancelled_bundle,
+                 uses,
+                 &mut radial,
+                 &mut layer_boundaries,
+@@ -1011,6 +1025,7 @@ fn assemble_two_sheet_edge(
+     points: &[Point3],
+     facets: &[PendingFacet],
+     edge: [u32; 2],
++    cancelled_bundle: bool,
+     first: &EdgeUse,
+     second: &EdgeUse,
+     contributions: &[FacetContribution],
+@@ -1024,6 +1039,7 @@ fn assemble_two_sheet_edge(
+         radially_separated_face_pair_keys,
+     )?;
+     if !retained_separation
++        && !cancelled_bundle
+         && same_radial_ray(decisions, points, edge, first.opposite, second.opposite)?
+     {
+         return Err(HypermeshError::SurfaceArrangementFailed {
+@@ -1291,6 +1307,7 @@ fn assemble_radial_ring(
+     points: &[Point3],
+     facets: &[PendingFacet],
+     edge: [u32; 2],
++    cancelled_bundle: bool,
+     uses: &[EdgeUse],
+     radial: &mut Vec<RadialUse>,
+     layer_boundaries: &mut Vec<SheetLayerBoundary>,
+@@ -1383,7 +1400,7 @@ fn assemble_radial_ring(
+             distinct_rays += 1;
+         }
+     }
+-    if distinct_rays < 2 {
++    if distinct_rays < 2 && !cancelled_bundle {
+         return Err(HypermeshError::SurfaceArrangementFailed {
+             reason: "surface radial edge has fewer than two geometric rays",
+         });
+@@ -6089,6 +6106,59 @@ mod tests {
+         }
+     }
+ 
++    #[test]
++    fn one_ray_requires_cancellation_in_each_operand() {
++        for copies in [1, 2] {
++            for cross_operand in [false, true] {
++                let mut polygons = Vec::new();
++                for copy in 0..copies {
++                    let mut first =
++                        triangle([p(0, 0, 0), p(4, 0, 0), p(0, 4, 0)], 0, copy * 2, [0, 1, 2]);
++                    first.delta_w = vec![1, 0];
++                    let mut second = if cross_operand {
++                        triangle(
++                            [p(0, 4, 0), p(4, 0, 0), p(0, 0, 0)],
++                            1,
++                            copy * 2 + 1,
++                            [2, 1, 0],
++                        )
++                    } else {
++                        triangle(
++                            [p(0, 0, 0), p(4, 0, 0), p(0, 4, 0)],
++                            0,
++                            copy * 2 + 1,
++                            [0, 1, 2],
++                        )
++                    };
++                    second.delta_w = if cross_operand {
++                        vec![0, 1]
++                    } else {
++                        vec![1, 0]
++                    };
++                    polygons.extend([first, second]);
++                }
++                for policy in [
++                    hyperlimit::PredicatePolicy::STRICT,
++                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
++                ] {
++                    let context = MeshContext::new(policy);
++                    let decisions = DecisionContext::new(&context);
++                    assert_eq!(
++                        arrange_surface(&decisions, &polygons).err().unwrap(),
++                        HypermeshError::SurfaceArrangementFailed {
++                            reason: if copies == 1 {
++                                "two-facet radial edge has one geometric ray"
++                            } else {
++                                "surface radial edge has fewer than two geometric rays"
++                            },
++                        }
++                    );
++                    assert_eq!(decisions.certainty(), MeshCertainty::Certified);
++                }
++            }
++        }
++    }
++
+     #[test]
+     fn open_surface_is_rejected_by_exact_radial_topology() {
+         let polygons = vec![triangle(
+@@ -6758,6 +6828,7 @@ mod tests {
+                                     points,
+                                     &facets,
+                                     [0, 1],
++                                    false,
+                                     &uses,
+                                     &mut Vec::new(),
+                                     &mut Vec::new(),
+diff --git a/crates/hypermesh/src/winding.rs b/crates/hypermesh/src/winding.rs
+index 369d0ae85..ad3316cff 100644
+--- a/crates/hypermesh/src/winding.rs
++++ b/crates/hypermesh/src/winding.rs
+@@ -3,7 +3,7 @@
+ use crate::context::DecisionContext;
+ use crate::error::{HypermeshError, HypermeshResult};
+ use crate::predicate::classify_real;
+-use crate::{Classification, Point3, Vector3};
++use crate::{Classification, Point3, Real, TriangleMesh, Vector3};
+ 
+ /// Winding number vector: one integer per input mesh.
+ pub type WindingNumberVector = Vec<i32>;
+@@ -202,6 +202,83 @@ pub(crate) fn ray_triangle_relation(
+     }
+ }
+ 
++/// Winding of a validated closed PWN source away from its triangles.
++///
++/// Reuses exact oriented crossings without deduplicating multiplicity. A
++/// complete direction supplies its own certainty; abandoned proof attempts
++/// cannot qualify that independent completed proof. The finite direction count
++/// is not a total-work, heap-byte or scalar-growth bound.
++pub(crate) fn mesh_winding_number_decision(
++    decisions: &DecisionContext,
++    source: &TriangleMesh,
++    point: &Point3,
++    mut check_cancelled: impl FnMut() -> HypermeshResult<()>,
++) -> HypermeshResult<i32> {
++    // Each face-parallel or edge-hit condition excludes at most two parameters
++    // on (1,t,t²): at most 4 constraints per source triangle. The caller excludes
++    // source triangles from the query point. Coplanar points outside a triangle
++    // cannot create a forward hit on it; parallel rays are retried.
++    let candidates = source
++        .triangles
++        .len()
++        .checked_mul(8)
++        .and_then(|n| n.checked_add(1))
++        .ok_or(HypermeshError::CapacityOverflow {
++            operation: "mesh winding rays",
++        })?;
++    let mut unknown = false;
++    'directions: for parameter in 0..candidates {
++        check_cancelled()?;
++        let t =
++            Real::from(
++                u64::try_from(parameter).map_err(|_| HypermeshError::CapacityOverflow {
++                    operation: "mesh winding ray parameter",
++                })?,
++            );
++        let direction = Vector3::from_xyz(Real::one(), t.clone(), &t * &t);
++        let local = decisions.isolated();
++        let mut winding = 0_i32;
++        for triangle in source.triangles.iter() {
++            check_cancelled()?;
++            match ray_triangle_relation(
++                &local,
++                source.triangle_points(*triangle)?,
++                point,
++                &direction,
++            ) {
++                Ok(RayFacetRelation::Miss) => {}
++                Ok(RayFacetRelation::Ahead { frontward }) => {
++                    winding = winding
++                        .checked_add(if frontward { 1 } else { -1 })
++                        .ok_or(HypermeshError::WindingOverflow)?;
++                }
++                Ok(RayFacetRelation::Degenerate) => continue 'directions,
++                Ok(RayFacetRelation::Origin { .. }) => {
++                    return Err(HypermeshError::SurfaceArrangementFailed {
++                        reason: "mesh winding query lies on a source triangle",
++                    });
++                }
++                Err(HypermeshError::PredicateUndecided { .. }) => {
++                    unknown = true;
++                    continue 'directions;
++                }
++                Err(error) => return Err(error),
++            }
++        }
++        decisions.absorb(local.certainty());
++        return Ok(winding);
++    }
++    if unknown {
++        Err(HypermeshError::PredicateUndecided {
++            predicate: "mesh point winding",
++        })
++    } else {
++        Err(HypermeshError::SurfaceArrangementFailed {
++            reason: "mesh winding rays could not avoid source edges and parallel faces",
++        })
++    }
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+diff --git a/scripts/test-wasm-bindings.sh b/scripts/test-wasm-bindings.sh
+index 6ea0aa332..9a4252639 100644
+--- a/scripts/test-wasm-bindings.sh
++++ b/scripts/test-wasm-bindings.sh
+@@ -28,6 +28,7 @@ node tests/wasm/geometry_certainty.cjs "${wasm_bindings_dir}/csgrs.js"
+ node tests/wasm/export_projection.cjs "${wasm_bindings_dir}/csgrs.js"
+ node tests/wasm/io_contracts.cjs "${wasm_bindings_dir}/csgrs.js"
+ node tests/wasm/mesh_errors.cjs "${wasm_bindings_dir}/csgrs.js"
++node tests/wasm/containment_winding.cjs "${wasm_bindings_dir}/csgrs.js"
+ cp tests/wasm/geometry_certainty.ts "${wasm_bindings_dir}/geometry_certainty.ts"
+ "${tsc_bin}" --noEmit --strict --target ES2020 --lib ES2020,DOM,ESNext.Disposable \
+     --module Node16 --moduleResolution Node16 \
+diff --git a/src/solid.rs b/src/solid.rs
+index 669b20993..db335f042 100644
+--- a/src/solid.rs
++++ b/src/solid.rs
+@@ -2080,8 +2080,10 @@ pub fn distribute_arc_with_context(
+ ///
+ /// Canonical empty geometry returns `false`; every other input must be a valid
+ /// closed-PWN mesh. Malformed input fails before bounds or boundary shortcuts.
+-/// Points on source triangles are excluded by the native strict containment
+-/// query. This convenience entry point selects the strict predicate policy.
++/// This is strict interior of the regularized nonzero-winding solid: internal
++/// source faces follow the represented set, and the external set boundary is
++/// excluded. This convenience entry point selects the strict predicate policy.
++/// See [`TriangleMesh::contains_point`] for the native resource contract.
+ pub fn contains_point(
+     mesh: &TriangleMesh,
+     point: &Point3,
+diff --git a/src/wasm/mesh_js.rs b/src/wasm/mesh_js.rs
+index b91cbe11a..22c811408 100644
+--- a/src/wasm/mesh_js.rs
++++ b/src/wasm/mesh_js.rs
+@@ -242,8 +242,10 @@ impl MeshJs {
+             .unchecked_into()
+     }
+ 
+-    /// Strict containment: canonical empty geometry returns false. Malformed
+-    /// closed-solid input throws GeometryError with code invalid_input, even
++    /// Strict interior of the regularized nonzero-winding solid. Internal
++    /// source faces follow represented-set membership; its boundary is excluded.
++    /// Canonical empty geometry returns false. Malformed closed-solid input
++    /// throws GeometryError with code invalid_input, even
+     /// when the point is outside its bounds or on a source triangle.
+     #[wasm_bindgen(js_name = containsPoint)]
+     pub fn contains_point(&self, point: &Point3Js) -> Result<bool, JsValue> {

@@ -22,6 +22,7 @@ use crate::polygon::{
 };
 use crate::predicate::classify_point_decision;
 use crate::storage_hash::StorageHashMap;
+use crate::winding::mesh_winding_number_decision;
 
 mod concatenation;
 
@@ -956,8 +957,12 @@ impl TriangleMesh {
         Ok(unique_hits)
     }
 
-    /// Tests strict solid containment using exact boundary predicates and ray
-    /// parity. Points on a triangle, edge, or vertex are not inside.
+    /// Tests strict interior of the regularized nonzero-winding solid.
+    ///
+    /// Oriented crossings retain winding multiplicity and cancellation. Points
+    /// on the represented set's boundary are excluded; internal source faces,
+    /// edges and vertices follow the represented set's interior. Source-face
+    /// queries reuse the native Boolean arrangement to establish that boundary.
     ///
     /// Canonical empty geometry (both buffers empty) returns `false`. Every
     /// other input must satisfy [`Self::validate_closed_pwn`], including queries
@@ -965,6 +970,11 @@ impl TriangleMesh {
     /// typed error before a containment shortcut can answer. Validation facts
     /// contribute their certainty and obey the same policy and source identity
     /// rules as explicit validation.
+    ///
+    /// Off-surface winding uses at most `8n + 1` candidate directions for `n`
+    /// triangles. Boundary regularization uses the native arrangement. These
+    /// algorithms have no total-work, heap-byte or cancellation limit; the ray
+    /// count does not bound scalar expression growth or arrangement work.
     pub fn contains_point(
         &self,
         context: &MeshContext,
@@ -1002,6 +1012,33 @@ impl TriangleMesh {
                 }
             }
         }
+        if self.point_on_surface_decision(decisions, point)? {
+            let regularized = crate::boolean(
+                &MeshContext::new(decisions.policy()),
+                &[self.as_ref()],
+                crate::BooleanProgram::Operation(crate::BooleanOp::Union),
+            )?;
+            decisions.absorb(regularized.certainty);
+            let normalized = regularized.value.into_triangle_meshes()?.pop().ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "containment regularization produced no result",
+                },
+            )?;
+            if normalized.point_on_surface_decision(decisions, point)? {
+                return Ok(false);
+            }
+            return Ok(
+                mesh_winding_number_decision(decisions, &normalized, point, || Ok(()))? != 0,
+            );
+        }
+        Ok(mesh_winding_number_decision(decisions, self, point, || Ok(()))? != 0)
+    }
+
+    fn point_on_surface_decision(
+        &self,
+        decisions: &DecisionContext,
+        point: &Point3,
+    ) -> HypermeshResult<bool> {
         let query = hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
         for triangle in self.triangles.iter() {
             let [a, b, c] = triangle.indices();
@@ -1033,19 +1070,10 @@ impl TriangleMesh {
                     | hyperlimit::Triangle3Location::OnEdge
                     | hyperlimit::Triangle3Location::OnVertex
             ) {
-                return Ok(false);
+                return Ok(true);
             }
         }
-        let direction = Vector3::from_xyz(
-            Real::one(),
-            (Real::from(3_u8) / Real::from(8_u8)).expect("eight is nonzero"),
-            (Real::from(5_u8) / Real::from(16_u8)).expect("sixteen is nonzero"),
-        );
-        Ok(self
-            .ray_intersections_decision(decisions, point, &direction)?
-            .len()
-            % 2
-            == 1)
+        Ok(false)
     }
 
     /// Intersects consecutive polyline segments with native triangles and

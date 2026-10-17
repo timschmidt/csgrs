@@ -1,0 +1,6 @@
+{
+  "complete": false,
+  "reason": "Runner selected the previous 12-test probe while expecting 15. New controls were not executed. Original baseline remains reproduced, not expanded.",
+  "original_runner_sha256": "9967f333a29862f4ed84c5567c9971c36b698a99b012cb2e279bfd7d0d8ddadf",
+  "correction": "Fresh baseline-v5 selects prototype-v3 consistently; no prior files are modified."
+}

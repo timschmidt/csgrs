@@ -1,0 +1,34 @@
+   Compiling autocfg v1.5.0
+   Compiling proc-macro2 v1.0.106
+   Compiling num-traits v0.2.19
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.45
+   Compiling num-integer v0.1.46
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.6
+   Compiling num-iter v0.1.45
+   Compiling syn v3.0.6
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/hyperreal)
+   Compiling thiserror v2.0.21
+   Compiling thiserror-impl v2.0.21
+   Compiling syn v2.0.117
+   Compiling base64 v0.22.1
+   Compiling equivalent v1.0.2
+   Compiling foldhash v0.1.5
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/hypersolve)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/hypermesh)
+   Compiling allocator-api2 v0.2.21
+   Compiling hashbrown v0.15.5
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/hyperphysics)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/hypercurve)
+   Compiling doc-image-embed v0.2.1
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3)
+   Compiling csgrs-ffi v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi)
+    Finished `release` profile [optimized] target(s) in 2m 12s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release/deps/csgrs_ffi-393fd1eb2bc5369f)
+   Doc-tests csgrs_ffi

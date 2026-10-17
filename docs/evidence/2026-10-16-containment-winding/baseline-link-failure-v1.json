@@ -1,0 +1,7 @@
+{
+  "failed_attempt": "baseline_v1.py",
+  "failure": "rustc E0463 before any test execution: dependency search directory used the public root library output directory",
+  "correction": "baseline_v2.py takes the native dependency directory from the Hypermesh rlib path and writes a fresh output directory",
+  "old_attempt_preserved": true,
+  "runtime_sources_changed": false
+}

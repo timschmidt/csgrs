@@ -1,0 +1,35 @@
+
+running 10 tests
+test approximate_topology_fact_keeps_its_receipt_and_cannot_certify_strict_queries ... ok
+test canonical_empty_membership_is_certified_false ... ok
+test closed_tetrahedron_answers_match_independent_halfspace_expectations ... ok
+test degenerate_input_survives_bounds_and_boundary_shortcuts ... ok
+test invalid_indices_survive_bounds_and_boundary_shortcuts ... ok
+test missing_one_geometry_buffer_is_not_canonical_empty ... ok
+test open_input_survives_bounds_and_boundary_shortcuts ... ok
+test simultaneous_clones_reuse_only_valid_source_facts ... ok
+test unbalanced_input_survives_bounds_and_boundary_shortcuts ... ok
+test warmed_validation_does_not_survive_geometry_mutation ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 15 tests
+test a_cancelled_flat_source_has_empty_regularized_interior ... ok
+test a_tangent_vertex_contact_does_not_create_interior ... ok
+test cancelled_flat_sheets_compose_with_a_closed_volume ... ok
+test cancelled_flat_sheets_regularize_to_canonical_empty ... ok
+test nested_outward_shells_have_nonzero_interior_winding ... ok
+test nested_source_faces_edges_and_vertices_can_be_strictly_inside ... ok
+test nonzero_membership_commutes_with_an_invertible_affine_map ... ok
+test opposite_coincident_shells_cancel_everywhere ... ok
+test opposite_overlap_cancels_only_the_shared_volume ... ok
+test overlapping_outward_shells_do_not_create_a_parity_hole ... ok
+test reversed_inner_shell_retains_a_cavity_and_its_boundary ... ok
+test symbolic_translation_retains_certified_boundary_and_interior_queries ... ok
+test touching_shells_remove_their_internal_shared_face ... ok
+test unary_regularization_and_containment_share_nonzero_set_meaning ... ok
+test winding_multiplicity_and_global_reversal_preserve_the_represented_set ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.89s
+

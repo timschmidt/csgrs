@@ -1,0 +1,162 @@
+TAP version 13
+# Subtest: nonzero set containment: nested material
+not ok 1 - nonzero set containment: nested material
+  ---
+  duration_ms: 21.669063
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/wasm/containment_winding.cjs:41:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    [3,3,3]
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/wasm/containment_winding.cjs:52:20)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: nonzero set containment: coincident cancellation
+not ok 2 - nonzero set containment: coincident cancellation
+  ---
+  duration_ms: 4.983079
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/wasm/containment_winding.cjs:41:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    [1,1,1]
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/wasm/containment_winding.cjs:52:20)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: nonzero set containment: overlapping material
+not ok 3 - nonzero set containment: overlapping material
+  ---
+  duration_ms: 6.488425
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/wasm/containment_winding.cjs:41:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    [3,1,1]
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/wasm/containment_winding.cjs:52:20)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: nonzero set containment: opposite overlap
+ok 4 - nonzero set containment: opposite overlap
+  ---
+  duration_ms: 11.014745
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: shared internal face
+not ok 5 - nonzero set containment: shared internal face
+  ---
+  duration_ms: 1.16533
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/wasm/containment_winding.cjs:41:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    [2,1,1]
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/wasm/containment_winding.cjs:52:20)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: nonzero set containment: cavity boundary
+ok 6 - nonzero set containment: cavity boundary
+  ---
+  duration_ms: 5.536101
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: tangent ray contact
+not ok 7 - nonzero set containment: tangent ray contact
+  ---
+  duration_ms: 1.115133
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/wasm/containment_winding.cjs:41:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    [0,0,0]
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/wasm/containment_winding.cjs:52:20)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: nonzero set containment: reversed multiplicity
+ok 8 - nonzero set containment: reversed multiplicity
+  ---
+  duration_ms: 2.681656
+  type: 'test'
+  ...
+# Subtest: cancelled flat PWN source has empty regularized interior
+ok 9 - cancelled flat PWN source has empty regularized interior
+  ---
+  duration_ms: 0.648135
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 4
+# fail 5
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 72.510807

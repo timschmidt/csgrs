@@ -1,0 +1,24 @@
+Command exited with non-zero status 101
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s cargo test --locked --release -p csgrs --no-default-features"
+	User time (seconds): 276.94
+	System time (seconds): 12.78
+	Percent of CPU this job got: 196%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:27.79
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2004572
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 2995
+	Minor (reclaiming a frame) page faults: 4611434
+	Voluntary context switches: 65115
+	Involuntary context switches: 15343
+	Swaps: 0
+	File system inputs: 511400
+	File system outputs: 1286592
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 101

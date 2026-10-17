@@ -1,0 +1,5 @@
+{
+  "complete": false,
+  "reason": "Rust E0277: Arc slice was not iterated via iter(); no tests ran.",
+  "correction": "prototype-v4 changes only iteration syntax; fresh baseline-v6 retains all assertions."
+}

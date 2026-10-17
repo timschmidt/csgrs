@@ -1,0 +1,299 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 10.797671747859567,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "074e1738d8f41cd672cf076f04280ef31bad70acfad744b3902f3ca21cbf2a62"
+  },
+  {
+    "name": "containment-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--test",
+      "containment_inputs",
+      "--test",
+      "containment_winding",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 337.79707652376965,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/containment_winding-2eac9180939f11ea": {
+        "sha256": "0b31b0b8c5e5b11e23e33ba036da58f40cd0989b76578c60000eefcb0127a791",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/0b31b0b8c5e5b11e23e33ba036da58f40cd0989b76578c60000eefcb0127a791/containment_winding-2eac9180939f11ea",
+        "bytes": 20075024
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/containment_inputs-a77923e5f14d9793": {
+        "sha256": "4a9cab190c137e72cd5031970b000de4111187046bf43e44b12d931eca01347d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/4a9cab190c137e72cd5031970b000de4111187046bf43e44b12d931eca01347d/containment_inputs-a77923e5f14d9793",
+        "bytes": 20208496
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "1659864ac274be1c081754771704491e627a34535b69e27458db7fe40c3e559e",
+    "stderr_sha256": "bee780a2e77e6d825758d928e5e9498bd16c09521c3e79a515b9a8d0ca767c7e",
+    "resources_sha256": "f76f9534f6358dbc44521ac2fd82784d6d632d8613e8dbaa112a65fa893ec64b"
+  },
+  {
+    "name": "mesh-and-modeling-all-features",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "-p",
+      "csgrs",
+      "--all-features"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 166.62093733577058,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/adversarial_deep-3524fa7bbe59fb41": {
+        "sha256": "b15e301dc92d2e69168d03429015f25a254e39291120e3cc72e041ecc5b9ce67",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/b15e301dc92d2e69168d03429015f25a254e39291120e3cc72e041ecc5b9ce67/adversarial_deep-3524fa7bbe59fb41",
+        "bytes": 33862968
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/bounds_failures-0fc7fcf7f06da181": {
+        "sha256": "710e9f776b58d4c27e2ba5722d93a5d33dd399b7eb8fc3d01ba08d3e390078b5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/710e9f776b58d4c27e2ba5722d93a5d33dd399b7eb8fc3d01ba08d3e390078b5/bounds_failures-0fc7fcf7f06da181",
+        "bytes": 34089064
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/adversarial_fixtures-d5ce777d444c12d4": {
+        "sha256": "e5c3ac673101fb932e92143989beef1814bd16b37598f4a36b61f0c9a61520f0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/e5c3ac673101fb932e92143989beef1814bd16b37598f4a36b61f0c9a61520f0/adversarial_fixtures-d5ce777d444c12d4",
+        "bytes": 1112712
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/adversarial_extrusions-cf32579e1d30802a": {
+        "sha256": "81ee75cc1c462b4cdef5b5e260edf7b20e38f65944496e9f8626a0ffd84ec9d3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/81ee75cc1c462b4cdef5b5e260edf7b20e38f65944496e9f8626a0ffd84ec9d3/adversarial_extrusions-cf32579e1d30802a",
+        "bytes": 32504280
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/batch_common_cells-a4a1718b4fc21bfd": {
+        "sha256": "d2ee7478fa3166e88705d5a4b360fcedc50f12b521e754c1e041bcf20d825736",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/d2ee7478fa3166e88705d5a4b360fcedc50f12b521e754c1e041bcf20d825736/batch_common_cells-a4a1718b4fc21bfd",
+        "bytes": 20455760
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/csgrs-93d348bd4ceabfa9": {
+        "sha256": "9da6309894527d64668a12090728b43d7f1fd175efe5519aa134cbbc475a2424",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/9da6309894527d64668a12090728b43d7f1fd175efe5519aa134cbbc475a2424/csgrs-93d348bd4ceabfa9",
+        "bytes": 39728488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/containment_inputs-67de595c2f045205": {
+        "sha256": "6d6e56b2cfe4404aa8fab551cfc5aa809bb5a21cc7714a00e110bfc6bf8337a1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/6d6e56b2cfe4404aa8fab551cfc5aa809bb5a21cc7714a00e110bfc6bf8337a1/containment_inputs-67de595c2f045205",
+        "bytes": 20206560
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/containment_winding-e674e78d9df35447": {
+        "sha256": "beb482e92c4bbae75a1fbcd71212104cc70ca173e20c6022f754cddca73baa26",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/beb482e92c4bbae75a1fbcd71212104cc70ca173e20c6022f754cddca73baa26/containment_winding-e674e78d9df35447",
+        "bytes": 20073272
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/adapter_boolean_failures-143a145938953cd1": {
+        "sha256": "a5fc353680a1de779f64221cd0fd94266b18d337f937855cf53091e6ca0ac0a0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/a5fc353680a1de779f64221cd0fd94266b18d337f937855cf53091e6ca0ac0a0/adapter_boolean_failures-143a145938953cd1",
+        "bytes": 20635824
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/competitive-65bb942677ea42fd": {
+        "sha256": "3b7c10cf94b3e7f57587a080c68cd17c94f0168b857bd2fe08a37fcfb6e32fb0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/3b7c10cf94b3e7f57587a080c68cd17c94f0168b857bd2fe08a37fcfb6e32fb0/competitive-65bb942677ea42fd",
+        "bytes": 21061744
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/adversarial-a23193ac53ab0758": {
+        "sha256": "0171efc607f8d72188bc04c4ee82d1ce645af72addaef3aab00a18643a1c9335",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/0171efc607f8d72188bc04c4ee82d1ce645af72addaef3aab00a18643a1c9335/adversarial-a23193ac53ab0758",
+        "bytes": 34105720
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/adversarial_stress-62a3a6e59ba92c96": {
+        "sha256": "5387c0692b2a93d21af3eb30127c88c850b542092f606595ffcf01de686d0c04",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/5387c0692b2a93d21af3eb30127c88c850b542092f606595ffcf01de686d0c04/adversarial_stress-62a3a6e59ba92c96",
+        "bytes": 33648048
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "0d67a8477edce46b1733bade9ea219f8429d26fa161990137617d41a5ac52c0a",
+    "stderr_sha256": "0d67df754fa62d960e974cb7e1a7e8b1a801b57917119ba14e61a63471cbe78a",
+    "resources_sha256": "86e8b59e455039ec85bda13c5fe3e5a3b7afb9da85e09b6c69bde0201672f967"
+  },
+  {
+    "name": "modeling-minimal",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 148.5249338792637,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/batch_common_cells-95a76a9364b0dff9": {
+        "sha256": "7331dc3c7ce938742742037d0f4408ec897777f4424d42f6d7e256ff66a3154d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/7331dc3c7ce938742742037d0f4408ec897777f4424d42f6d7e256ff66a3154d/batch_common_cells-95a76a9364b0dff9",
+        "bytes": 6333608
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/containment_inputs-8b8ba142265b5e91": {
+        "sha256": "bc69217524d24c63f1665c72fef2e95507f5c2ed9a83af59be45a63c2c5f53ab",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/bc69217524d24c63f1665c72fef2e95507f5c2ed9a83af59be45a63c2c5f53ab/containment_inputs-8b8ba142265b5e91",
+        "bytes": 6296432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/containment_winding-8a800865f1034dbb": {
+        "sha256": "c3d4de53afa49d7fb148c149abc66a07805ebf565695d5be4ca83eb2536e9d69",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/c3d4de53afa49d7fb148c149abc66a07805ebf565695d5be4ca83eb2536e9d69/containment_winding-8a800865f1034dbb",
+        "bytes": 6193936
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/adapter_boolean_failures-4f1ca3000d3fc581": {
+        "sha256": "0710ccf7205f3bc595341a9669809d787c230c8519d1042938257ee1812d80f8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/0710ccf7205f3bc595341a9669809d787c230c8519d1042938257ee1812d80f8/adapter_boolean_failures-4f1ca3000d3fc581",
+        "bytes": 6476136
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/bounds_failures-c661a92a5b4c7962": {
+        "sha256": "87e2fdebb2199b1cbd172c8332f684dd1de5bac3044548077dc9f5abfeefe692",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/87e2fdebb2199b1cbd172c8332f684dd1de5bac3044548077dc9f5abfeefe692/bounds_failures-c661a92a5b4c7962",
+        "bytes": 6548608
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/adversarial_fixtures-f3fb997ef2084a11": {
+        "sha256": "ab45b33d1b49ffe2b24ee01931ceb2cefce00955cb8f8a135a1599187c40be56",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/ab45b33d1b49ffe2b24ee01931ceb2cefce00955cb8f8a135a1599187c40be56/adversarial_fixtures-f3fb997ef2084a11",
+        "bytes": 1112712
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v1/release/deps/csgrs-12b72f0ccdd38706": {
+        "sha256": "c841400bd0513c30664144b4a70954461e53d63c3b22ea46aef73f0bc8cf4100",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-executables-v1/c841400bd0513c30664144b4a70954461e53d63c3b22ea46aef73f0bc8cf4100/csgrs-12b72f0ccdd38706",
+        "bytes": 7352656
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "cb689535d9d949edab6a60ab8078fca4eb3bee022755bc79990864878dfe7013",
+    "stderr_sha256": "be9b0db860be644b038c3a902167b113d5b2307f8a2829830495b4b8fc72e39f",
+    "resources_sha256": "c66adcd04fb841aeaad42f0843ff3623934d8d50eed5aedff9e57090480f5a62"
+  },
+  {
+    "name": "all-feature-all-target-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 59.87541257124394,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "b1f465a4f533cf4157ac6e14e3da747a40ab297005556cd3ebd4efc5ad108f2d",
+    "resources_sha256": "68761b19ae6088a528bce9b68f5aa261baed6c0a55653b6bca1fafb2530bfa7a"
+  },
+  {
+    "name": "minimal-all-target-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 21.341199367307127,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "c80a869b3dc85495606edddda1136cdc7d19f9ae44f685046e29f3635b412335",
+    "resources_sha256": "0dc57833b47ec6fd712b94031f21aae241e9345da674833aaea94d5468367550"
+  },
+  {
+    "name": "all-feature-docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 35.87966540502384,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": "-D warnings",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f9ef645e40d888dd24c576e041d252fafedf4727813b398026ea6e38f08b6737",
+    "resources_sha256": "a6847d6579d1a2b27e306148db110c2aecdaedde64c6545d9d3c044df6640e70"
+  },
+  {
+    "name": "cost-libraries",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 262.007550640963,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "9f4c45c761f8988d7e505a156a3a8faad23bd545fc0bf13233896b239e974fe4",
+    "stderr_sha256": "586f6de61154950d8d26dd55e7d5054ad2894ac7abf794d024611b8e304512b1",
+    "resources_sha256": "7ee742414075f650a240c237961fb48f14f2c8aca20184d143bc16a70c7b4faf"
+  }
+]

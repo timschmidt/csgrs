@@ -1,0 +1,54 @@
+{
+  "complete": true,
+  "commands": 24,
+  "unexpected_exits": [],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "real_c_cpp_python_consumers_executed": true,
+  "new_cancelled_sheet_consumers": [
+    "C: 72 operation/order/geometry cases plus downstream composition",
+    "C++: 4 operations plus downstream composition",
+    "Python: 72 operation/order/geometry cases plus downstream composition"
+  ],
+  "end_to_end_certainty_interface_claimed": false,
+  "artifacts": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release/libcsgrs_ffi.so": {
+      "sha256": "3ac9c48accd90472cd207292ba74259765948cc6164d4de2d913b94e3ac221f0",
+      "bytes": 19813792
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/boolean_failures-c": {
+      "sha256": "cf945e62c8730dee0a1809f16e658d0c05cfd3d072f25036982e570b6c35015c",
+      "bytes": 13576
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/cancelled_flat-cpp": {
+      "sha256": "5ff8384129a3bd8cc37a378e2bd84e51b89b0fe1e4e2404971fe82089644709f",
+      "bytes": 19544
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/empty_composition-cpp": {
+      "sha256": "49a0ff9a30a137fde20f207fff5042e94051aebcbc0266ea7bf9317c042a156d",
+      "bytes": 20784
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/empty_composition-c": {
+      "sha256": "a3db92d909ef7b498ad9491ad12f280d1c4d6398a30e14d1ba04c01433b773e2",
+      "bytes": 17712
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/polyhedral_construction-c": {
+      "sha256": "761ce26081fc58de4f1b3dd314d71c4ab30fe6ef2aec3a3225007fd07d9e692c",
+      "bytes": 13056
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/polyhedral_construction-cpp": {
+      "sha256": "bd55b925b33b014988c7a896f65bdd302a39559acdb9e58a4b52928cfea75800",
+      "bytes": 20048
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/cancelled_flat-c": {
+      "sha256": "16d65e8badb85a6aea74a8db74b4e6bf60b42a3062a5ea404f1a4f62a3d3d8b4",
+      "bytes": 13512
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/boolean_failures-cpp": {
+      "sha256": "4c9edfa139e48bd1050b5a1191bab26d490bf8a94926e7d86aa04f064607778d",
+      "bytes": 25112
+    }
+  }
+}

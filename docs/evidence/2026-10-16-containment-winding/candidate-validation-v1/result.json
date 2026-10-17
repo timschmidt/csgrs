@@ -1,0 +1,13 @@
+{
+  "complete": true,
+  "commands": 8,
+  "unexpected_exits": [
+    "containment-regressions",
+    "mesh-and-modeling-all-features",
+    "modeling-minimal"
+  ],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false
+}

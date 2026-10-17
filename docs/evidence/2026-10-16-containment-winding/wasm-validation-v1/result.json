@@ -1,0 +1,38 @@
+{
+  "complete": true,
+  "commands": 3,
+  "unexpected_exits": [
+    "real-consumers"
+  ],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "real_js_and_compiled_typescript_consumers_passed": false,
+  "public_contract_tests": 34,
+  "mesh_contract_tests": 13,
+  "winding_contract_tests": 9,
+  "prior_io_contract_tests": 12,
+  "artifacts": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": {
+      "sha256": "dd69235ab2d07bc9ffea522d8103aa3783e98d6adf873ba6a072596e4a416a5f",
+      "bytes": 12199216
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v1/wasm-bindings-node/csgrs.d.ts": {
+      "sha256": "f7dc8e7da4872b9058f3e59a278a2946793bad1e6249391af4dc9a62c066759f",
+      "bytes": 16872
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v1/wasm-bindings-node/csgrs.js": {
+      "sha256": "8a1a2f460a4e4d2ae250bb7e56fe5fbd9c9a3249288ea66252aa959f8091581e",
+      "bytes": 81613
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm": {
+      "sha256": "9ddcb041ec0972764375517b5b06c8fc03678b08e2c17ad95a11ed4d224fb6ca",
+      "bytes": 11149558
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm.d.ts": {
+      "sha256": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+      "bytes": 14726
+    }
+  }
+}

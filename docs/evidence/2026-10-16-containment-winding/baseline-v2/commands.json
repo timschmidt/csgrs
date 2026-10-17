@@ -1,0 +1,52 @@
+[
+  {
+    "name": "native-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-target-v2/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-target-v2/release/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-target-v2/release/deps/libhypermesh-00e48e0deaa4b5f0.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v1/tests/containment_winding.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/baseline-v2/native-winding-tests"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.1191023588180542,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "811b31b61e4d911101bbae8c4a0ae1a1c2c931e03548eb676d5549db1643f6df"
+  },
+  {
+    "name": "native-tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/baseline-v2/native-winding-tests",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.016535037197172642,
+    "stdout_sha256": "6b61b6b4d423aba3a2d8520ff2db8356af8ee148853540ad65c94bcb3a9e0abb",
+    "stderr_sha256": "26e260de60c03d57df8eb220d899bbd5f14fc8529750a369309a3fb71017f6c3",
+    "resources_sha256": "fd061132be3accac89b3639e2d68394b26450d56b2e65da17d435a62cd4aaea0"
+  },
+  {
+    "name": "wasm-tests",
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v1/tests/wasm/containment_winding.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.31008634297177196,
+    "stdout_sha256": "8550add789771273838ed2c01deb3ee6c5de576b41248e6b052027ad6fcc2e7d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2e9276489eb4a79656a460b49f46ce964dbd9adcb42b5324094c2e7e7a86bc36"
+  }
+]

@@ -1,0 +1,6 @@
+{
+  "scope": "Real C, C++ and Python consumers of the changed native arrangement through the existing scalar mesh ABI. Existing empty, typed-Boolean and polyhedral tests also run.",
+  "oracle": "A triangle and its opposite have zero winding. Repeated copies at z=1/2,1,2 represent empty; all four Boolean operations with a unit cube obey exact empty identities. Dyadic retained cube vertices make the exact volume-six sum representable in binary64; plane support and downstream composition are checked separately.",
+  "certainty_limit": "These existing C-family adapters expose status and errors, not an end-to-end certainty receipt. This validation does not certify the missing receipt/provenance interface or a published distribution.",
+  "source": "Same frozen final candidate-source-v3 used by native and WASM qualification. No runtime or repository source changes."
+}

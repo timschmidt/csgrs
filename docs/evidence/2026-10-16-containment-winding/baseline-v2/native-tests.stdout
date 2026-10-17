@@ -1,0 +1,28 @@
+
+running 11 tests
+test a_tangent_vertex_contact_does_not_create_interior ... FAILED
+test nested_outward_shells_have_nonzero_interior_winding ... FAILED
+test nested_source_faces_edges_and_vertices_can_be_strictly_inside ... FAILED
+test nonzero_membership_commutes_with_an_invertible_affine_map ... FAILED
+test opposite_coincident_shells_cancel_everywhere ... FAILED
+test opposite_overlap_cancels_only_the_shared_volume ... ok
+test overlapping_outward_shells_do_not_create_a_parity_hole ... FAILED
+test reversed_inner_shell_retains_a_cavity_and_its_boundary ... ok
+test touching_shells_remove_their_internal_shared_face ... FAILED
+test unary_regularization_and_containment_share_nonzero_set_meaning ... FAILED
+test winding_multiplicity_and_global_reversal_preserve_the_represented_set ... ok
+
+failures:
+
+failures:
+    a_tangent_vertex_contact_does_not_create_interior
+    nested_outward_shells_have_nonzero_interior_winding
+    nested_source_faces_edges_and_vertices_can_be_strictly_inside
+    nonzero_membership_commutes_with_an_invertible_affine_map
+    opposite_coincident_shells_cancel_everywhere
+    overlapping_outward_shells_do_not_create_a_parity_hole
+    touching_shells_remove_their_internal_shared_face
+    unary_regularization_and_containment_share_nonzero_set_meaning
+
+test result: FAILED. 3 passed; 8 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

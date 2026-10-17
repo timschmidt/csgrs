@@ -1,0 +1,506 @@
+[
+  {
+    "name": "ffi-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs-ffi"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 133.60393873089924,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release/deps/csgrs_ffi-393fd1eb2bc5369f": {
+        "sha256": "e52ac8a1ea9abb33fc73c8bc8fe18ea241b8c9257905ad4951b74783c0e02ddd",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/e52ac8a1ea9abb33fc73c8bc8fe18ea241b8c9257905ad4951b74783c0e02ddd/csgrs_ffi-393fd1eb2bc5369f",
+        "bytes": 18347040
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "9463c74ad425b26fb048f526008c5e2c2abdd1f4cd7630bc7c087df2f839c437",
+    "stderr_sha256": "22f6eb993a4b0d699908a612bd91ed31b52b5e6a3aad6b457fcc0c9b4f93572d",
+    "resources_sha256": "486f7ec2aa993671bbed3f20345a487aeda9611eadeb1ff68f77431168e06db9"
+  },
+  {
+    "name": "ffi-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs-ffi",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 22.312455403152853,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "a95ef40c18c2973c298d9a6163d3193a0f5401ee5e5f84d1e25883dd94193ddc",
+    "resources_sha256": "a952509a20e7b715d7d6b9a58b79da110e5350edfcdbcfebbf053a721159598a"
+  },
+  {
+    "name": "ffi-docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs-ffi",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 20.977919682394713,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": "-D warnings",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "11095701d7176d6bd9ed29e6f42441d14e7169b482335596caed184b692a86e2",
+    "resources_sha256": "ef1f8a6c9c5435c5d3729c8be08d9e214e8a49065d31fef8ee9d7e9099837ec1"
+  },
+  {
+    "name": "ffi-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs-ffi"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.36185162188485265,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "1ff8bbcb4151dc887e69b78a29bc241d5062cba4757aa5f4639926ae712a8181",
+    "resources_sha256": "76d178ddde11f10c16976be06fc8c09b2fa41e49bad17838770ff3f8fd9c1730"
+  },
+  {
+    "name": "empty_composition-c-compile",
+    "command": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/empty_composition.c",
+      "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-lcsgrs_ffi",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/empty_composition-c"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.40614128485322,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a27e115230381aa620fc81ce9343f0926fbe579d61d0727abd867663494db470"
+  },
+  {
+    "name": "empty_composition-c",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/empty_composition-c"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.2231725137680769,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "9129339c006d2d6c8870eaeade18c45c9302dabd88de9be2a1d9bdf24ba6f286",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2557d1cd24eaeedc2c13cc6bd02006412170860116913c6fe02dd843c8d26b9b"
+  },
+  {
+    "name": "empty_composition-cpp-compile",
+    "command": [
+      "c++",
+      "-std=c++17",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/empty_composition.cpp",
+      "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-lcsgrs_ffi",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/empty_composition-cpp"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.6909518511965871,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ac2b4b4b486f0452ae5ec3201d0ba849530e4aef5aab0bf4196b13c4112594f4"
+  },
+  {
+    "name": "empty_composition-cpp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/empty_composition-cpp"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.22693141596391797,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "338ae8643ba3e40ec977a07d50e13b739c9deac7bb1b08b598a848d3f92bf045",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "36fa2ee766f71c9a277c4c7ba275887641ee975843ff3c1525bc8f4c6f49c449"
+  },
+  {
+    "name": "empty_composition-python",
+    "command": [
+      "python3",
+      "-B",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/empty_composition.py"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.26757095800712705,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "bcc2468e5a7a09608b8b1a2e0a056984088d66dd03917be28ef41c96c12baeb0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4ededac3e1069ace70522b6a2ef0a38d14eda88b4885cb5bb9673c7bf69458f3"
+  },
+  {
+    "name": "boolean_failures-c-compile",
+    "command": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/boolean_failures.c",
+      "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-lcsgrs_ffi",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/boolean_failures-c"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.28122646221891046,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5bd3a3ff81e40a7c63fc53895dde5d779514444b104b1bee49fa0ac271e879d1"
+  },
+  {
+    "name": "boolean_failures-c",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/boolean_failures-c"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.21595528908073902,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "fc1ace1df53c7005fdd8fe549c9d997186a05525472b3453d35d8edb49272a81",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "e31fe2b1e3ebb402ec82bbd75628ef40845b4a7d625d20cdfed56564f4e68028"
+  },
+  {
+    "name": "boolean_failures-cpp-compile",
+    "command": [
+      "c++",
+      "-std=c++17",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/boolean_failures.cpp",
+      "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-lcsgrs_ffi",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/boolean_failures-cpp"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.5872834511101246,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "1e73f2cb27f8724b8aa7f2e61a7bf44e917dcbde77f9237afeccb50dd8f1170b"
+  },
+  {
+    "name": "boolean_failures-cpp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/boolean_failures-cpp"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.2197614680044353,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "13b478586290a64dc0a2723c10f9b2b75a846dc9a9e2d96d7f2dd12f75f83aa3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2af0828c508b19a04622c9ac1daf2fb8e6939f08c1df06af79ae77e6d9d1fd44"
+  },
+  {
+    "name": "boolean_failures-python",
+    "command": [
+      "python3",
+      "-B",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/boolean_failures.py"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.2491226838901639,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "62221b2708622dd0fcff3945a3e561957913fb0b9b68131a41d03fb55338d17b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "17b422794570a8076649cb07f9027075a24c3a55864fa131d83ad0bd97dd9936"
+  },
+  {
+    "name": "polyhedral_construction-c-compile",
+    "command": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/polyhedral_construction.c",
+      "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-lcsgrs_ffi",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/polyhedral_construction-c"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.27538879169151187,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "18cb15319cef6b1af281aac23d0f89c0740118198966c8ce0db3f6e4c0bb97cb"
+  },
+  {
+    "name": "polyhedral_construction-c",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/polyhedral_construction-c"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.2110015582293272,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e9638699cfd33ebe86a9ab1190b4cea2ec16f0bb060357a603415e9f1a613f66",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7ac208a377c0200c0feeb2fed0cb5e8f41d1b324f107b7c9015e619eae1b7eb3"
+  },
+  {
+    "name": "polyhedral_construction-cpp-compile",
+    "command": [
+      "c++",
+      "-std=c++17",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/polyhedral_construction.cpp",
+      "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-lcsgrs_ffi",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/polyhedral_construction-cpp"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.5576949808746576,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "50cf3535008f296646c171f09a2a53603854a8f860a123cef4a2a9ee353523d0"
+  },
+  {
+    "name": "polyhedral_construction-cpp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/polyhedral_construction-cpp"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.21866954304277897,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "54137792d2f8c0588b3a630ea1451deaeb2450e71b648ca1e982da020db255cf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "20cb937180979aabb33f9a966d6217b897a3b90017e4ad86022a3049e7895feb"
+  },
+  {
+    "name": "polyhedral_construction-python",
+    "command": [
+      "python3",
+      "-B",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/polyhedral_construction.py"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.25424228282645345,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "aa6f0aff06fa8b6293226fff3512696a70b0280bb6bd1cc08b9be26b73e0a581",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9ad56e72ecf13eb7c9b2cefec770da2bb1603fc8ac8d2d02d2d5ccfc30a6f649"
+  },
+  {
+    "name": "cancelled_flat-c-compile",
+    "command": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-probes-v1/cancelled_flat.c",
+      "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-lcsgrs_ffi",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/cancelled_flat-c"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.3002066910266876,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "43c78fed75867cfdabb32fc2ac6e7ca8fdcafd58e886df9c446643f02a4511ab"
+  },
+  {
+    "name": "cancelled_flat-c",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/cancelled_flat-c"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.26438669580966234,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "095dc2a5294051685fce23b89dba94a5d9442708192cbd2aa105e4e91cf6747c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "affdfd9048fedca23ea7986c5a2850b38b7d012657b8c188e3e615107630dfc0"
+  },
+  {
+    "name": "cancelled_flat-cpp-compile",
+    "command": [
+      "c++",
+      "-std=c++17",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+      "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-probes-v1/cancelled_flat.cpp",
+      "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+      "-lcsgrs_ffi",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/cancelled_flat-cpp"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.5577320270240307,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "288a971e290533b92c2330e741e721a47e4b65e5ceb30757211fb8e7854881e0"
+  },
+  {
+    "name": "cancelled_flat-cpp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/cancelled_flat-cpp"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.22740080393850803,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "995f38b41714f653eec1896b1bc792831f1541e2054348f39eaaaf4b832ccd56",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b55e8127e055990b5777eebac05ad447b23424be692a594b85b1acf11d26799e"
+  },
+  {
+    "name": "cancelled_flat-python",
+    "command": [
+      "python3",
+      "-B",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-probes-v1/cancelled_flat.py",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/python"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.31748109590262175,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "585cbdbf990eda39d59c2b3ddc35685aab0f76b53e01e44486d023f2977244f0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ae1e7346f24fae2a3196f790b247189590c9fb359fd5a3b957120588e1ecea14"
+  }
+]

@@ -1,0 +1,24 @@
+Command exited with non-zero status 101
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s cargo test --locked --release -p hypermesh -p csgrs --all-features"
+	User time (seconds): 312.38
+	System time (seconds): 28.73
+	Percent of CPU this job got: 205%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:45.72
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 906272
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 9244
+	Minor (reclaiming a frame) page faults: 7762039
+	Voluntary context switches: 252582
+	Involuntary context switches: 25398
+	Swaps: 0
+	File system inputs: 526504
+	File system outputs: 3884400
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 101

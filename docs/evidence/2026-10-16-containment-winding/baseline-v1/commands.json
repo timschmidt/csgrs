@@ -1,0 +1,26 @@
+[
+  {
+    "name": "native-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-target-v2/release",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-target-v2/release/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-target-v2/release/deps/libhypermesh-00e48e0deaa4b5f0.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v1/tests/containment_winding.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/baseline-v1/native-winding-tests"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.09705684380605817,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "baf3b7bc7ce974edc34ee4b1bcf7ed0903feeef8451f107c45bb8b2647ef989d",
+    "resources_sha256": "937638a535ca80a1ab219d15e4df5f8663ee88dfa0fc2efb6fbfd64e6216056b"
+  }
+]

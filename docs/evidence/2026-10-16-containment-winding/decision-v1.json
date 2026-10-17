@@ -1,0 +1,1186 @@
+{
+  "status": "kept: native nonzero-winding containment and cancelled single-ray sheet composition",
+  "main_parent_commit": "d4eee9a675fa51d84eb0eb29503dd802bdcdbd19",
+  "implementation_sha256": {
+    "crates/hypermesh/src/mesh.rs": "48cc06b0021069e181f80af6676f2c29d03acc65518a550de019e4b895e415a6",
+    "crates/hypermesh/src/winding.rs": "219481f885d9d5be440bb6073fa791f0f8ef81454ab5bbd72a4458011882b4a5",
+    "crates/hypermesh/src/minkowski.rs": "bf0520a9fa307b3e08c4038e59593fe798357b483851e632870cc6bb82fadfbf",
+    "src/solid.rs": "4ae0c121336859e35d92f74e25fab92ea355b3abd5bebdc8c7b929014c6aabcf",
+    "src/wasm/mesh_js.rs": "6186e60b129ea4894a44acb4c6c5f87ec2b62b0c2b25f1dd915e0af79cfb29fd",
+    "scripts/test-wasm-bindings.sh": "469c3ab86f41f011f3eb33c8cf47e9b52882d146d0e1985b5b2084fc8540b429",
+    "tests/containment_winding.rs": "2c6887cb0f5b339453830ea4da4b8fed1be75189363995881584f7c09ec6df95",
+    "tests/wasm/containment_winding.cjs": "096433dac5f844f3ffe09f8470e07c787fe229b7e9e0ccd68205b66e9cb993fe",
+    "crates/hypermesh/src/surface_arrangement.rs": "2e549cb339a20b237ee44881cce5c70317104b231f018497236829ea35543fd4"
+  },
+  "contract": "contract-v1.md",
+  "validation": {
+    "candidate-validation-v1": [
+      {
+        "name": "format",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 10.797671747859567,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "containment-regressions",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--test",
+          "containment_inputs",
+          "--test",
+          "containment_winding",
+          "--",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 101,
+        "elapsed_seconds": 337.79707652376965,
+        "summaries": 2,
+        "passed": 21,
+        "failed": 1,
+        "ignored": 0
+      },
+      {
+        "name": "mesh-and-modeling-all-features",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features"
+        ],
+        "exit_code": 101,
+        "elapsed_seconds": 166.62093733577058,
+        "summaries": 12,
+        "passed": 139,
+        "failed": 1,
+        "ignored": 0
+      },
+      {
+        "name": "modeling-minimal",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--no-default-features"
+        ],
+        "exit_code": 101,
+        "elapsed_seconds": 148.5249338792637,
+        "summaries": 7,
+        "passed": 63,
+        "failed": 1,
+        "ignored": 0
+      },
+      {
+        "name": "all-feature-all-target-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 59.87541257124394,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "minimal-all-target-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--no-default-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 21.341199367307127,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "all-feature-docs",
+        "command": [
+          "cargo",
+          "doc",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--no-deps"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 35.87966540502384,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "cost-libraries",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--message-format=json"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 262.007550640963,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "wasm-validation-v1": [
+      {
+        "name": "shell-syntax",
+        "command": [
+          "bash",
+          "-n",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v1/scripts/test-wasm-bindings.sh"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.22276239190250635,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "real-consumers",
+        "command": [
+          "bash",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v1/scripts/test-wasm-bindings.sh"
+        ],
+        "exit_code": 1,
+        "elapsed_seconds": 168.52533111395314,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "wasm-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--profile",
+          "wasm",
+          "--target",
+          "wasm32-unknown-unknown",
+          "--no-default-features",
+          "--features",
+          "wasm",
+          "--lib",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 27.104614555835724,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "candidate-validation-v2": [
+      {
+        "name": "format",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 10.955311956815422,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "containment-regressions",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--test",
+          "containment_inputs",
+          "--test",
+          "containment_winding",
+          "--",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 352.5791073474102,
+        "summaries": 2,
+        "passed": 25,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "mesh-and-modeling-all-features",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features"
+        ],
+        "exit_code": 101,
+        "elapsed_seconds": 102.5260260249488,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "modeling-minimal",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--no-default-features"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 183.12756574712694,
+        "summaries": 40,
+        "passed": 157,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "all-feature-all-target-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 101,
+        "elapsed_seconds": 60.350262473803014,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "minimal-all-target-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--no-default-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 24.185275357216597,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "all-feature-docs",
+        "command": [
+          "cargo",
+          "doc",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--no-deps"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 39.67158410931006,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "cost-libraries",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--message-format=json"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 265.1288216128014,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "wasm-validation-v2": [
+      {
+        "name": "shell-syntax",
+        "command": [
+          "bash",
+          "-n",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v2/scripts/test-wasm-bindings.sh"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.22701028129085898,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "real-consumers",
+        "command": [
+          "bash",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v2/scripts/test-wasm-bindings.sh"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 184.2331758402288,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "wasm-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--profile",
+          "wasm",
+          "--target",
+          "wasm32-unknown-unknown",
+          "--no-default-features",
+          "--features",
+          "wasm",
+          "--lib",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 27.57364630838856,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "candidate-validation-v3": [
+      {
+        "name": "format",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 10.9576990227215,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "containment-regressions",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--test",
+          "containment_inputs",
+          "--test",
+          "containment_winding",
+          "--",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 363.03371040476486,
+        "summaries": 2,
+        "passed": 25,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "mesh-and-modeling-all-features",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 331.41141859069467,
+        "summaries": 58,
+        "passed": 704,
+        "failed": 0,
+        "ignored": 8
+      },
+      {
+        "name": "modeling-minimal",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--no-default-features"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 167.2746991701424,
+        "summaries": 40,
+        "passed": 157,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "all-feature-all-target-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 60.21122179413214,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "minimal-all-target-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--no-default-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 21.40038489829749,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "all-feature-docs",
+        "command": [
+          "cargo",
+          "doc",
+          "--locked",
+          "--release",
+          "-p",
+          "hypermesh",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--no-deps"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 36.539408661890775,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "cost-libraries",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs",
+          "--all-features",
+          "--message-format=json"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 258.73763808468357,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "wasm-validation-v3": [
+      {
+        "name": "shell-syntax",
+        "command": [
+          "bash",
+          "-n",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/scripts/test-wasm-bindings.sh"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.23971355892717838,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "real-consumers",
+        "command": [
+          "bash",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/scripts/test-wasm-bindings.sh"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 177.22014310536906,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "wasm-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--profile",
+          "wasm",
+          "--target",
+          "wasm32-unknown-unknown",
+          "--no-default-features",
+          "--features",
+          "wasm",
+          "--lib",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 28.52426281105727,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "ffi-validation-v3": [
+      {
+        "name": "ffi-tests",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs-ffi"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 133.60393873089924,
+        "summaries": 2,
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "ffi-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs-ffi",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 22.312455403152853,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "ffi-docs",
+        "command": [
+          "cargo",
+          "doc",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs-ffi",
+          "--no-deps"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 20.977919682394713,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "ffi-library",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--release",
+          "-p",
+          "csgrs-ffi"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.36185162188485265,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "empty_composition-c-compile",
+        "command": [
+          "cc",
+          "-std=c11",
+          "-O2",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/empty_composition.c",
+          "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-lcsgrs_ffi",
+          "-o",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/empty_composition-c"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.40614128485322,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "empty_composition-c",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/empty_composition-c"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.2231725137680769,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "empty_composition-cpp-compile",
+        "command": [
+          "c++",
+          "-std=c++17",
+          "-O2",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/empty_composition.cpp",
+          "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-lcsgrs_ffi",
+          "-o",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/empty_composition-cpp"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.6909518511965871,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "empty_composition-cpp",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/empty_composition-cpp"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.22693141596391797,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "empty_composition-python",
+        "command": [
+          "python3",
+          "-B",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/empty_composition.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.26757095800712705,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "boolean_failures-c-compile",
+        "command": [
+          "cc",
+          "-std=c11",
+          "-O2",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/boolean_failures.c",
+          "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-lcsgrs_ffi",
+          "-o",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/boolean_failures-c"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.28122646221891046,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "boolean_failures-c",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/boolean_failures-c"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.21595528908073902,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "boolean_failures-cpp-compile",
+        "command": [
+          "c++",
+          "-std=c++17",
+          "-O2",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/boolean_failures.cpp",
+          "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-lcsgrs_ffi",
+          "-o",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/boolean_failures-cpp"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.5872834511101246,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "boolean_failures-cpp",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/boolean_failures-cpp"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.2197614680044353,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "boolean_failures-python",
+        "command": [
+          "python3",
+          "-B",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/boolean_failures.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.2491226838901639,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "polyhedral_construction-c-compile",
+        "command": [
+          "cc",
+          "-std=c11",
+          "-O2",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/polyhedral_construction.c",
+          "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-lcsgrs_ffi",
+          "-o",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/polyhedral_construction-c"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.27538879169151187,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "polyhedral_construction-c",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/polyhedral_construction-c"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.2110015582293272,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "polyhedral_construction-cpp-compile",
+        "command": [
+          "c++",
+          "-std=c++17",
+          "-O2",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/polyhedral_construction.cpp",
+          "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-lcsgrs_ffi",
+          "-o",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/polyhedral_construction-cpp"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.5576949808746576,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "polyhedral_construction-cpp",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/polyhedral_construction-cpp"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.21866954304277897,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "polyhedral_construction-python",
+        "command": [
+          "python3",
+          "-B",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/tests/ffi/polyhedral_construction.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.25424228282645345,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "cancelled_flat-c-compile",
+        "command": [
+          "cc",
+          "-std=c11",
+          "-O2",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-probes-v1/cancelled_flat.c",
+          "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-lcsgrs_ffi",
+          "-o",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/cancelled_flat-c"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.3002066910266876,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "cancelled_flat-c",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/cancelled_flat-c"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.26438669580966234,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "cancelled_flat-cpp-compile",
+        "command": [
+          "c++",
+          "-std=c++17",
+          "-O2",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/crates/csgrs-ffi/include",
+          "-I/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/cpp",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-probes-v1/cancelled_flat.cpp",
+          "-L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-target-v3/release",
+          "-lcsgrs_ffi",
+          "-o",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/cancelled_flat-cpp"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.5577320270240307,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "cancelled_flat-cpp",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-executables-v3/consumers/cancelled_flat-cpp"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.22740080393850803,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "cancelled_flat-python",
+        "command": [
+          "python3",
+          "-B",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/ffi-probes-v1/cancelled_flat.py",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v3/bindings/python"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.31748109590262175,
+        "summaries": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    ]
+  },
+  "baseline_native": {
+    "passed": 5,
+    "failed": 10,
+    "evidence": "baseline-v6/native-tests.stdout",
+    "scope": "15 tests; parameter loops stop at their first failure, so later subcases are not credited as reproduced failures."
+  },
+  "baseline_wasm": {
+    "passed": 4,
+    "failed": 5,
+    "evidence": "baseline-v6/wasm-tests.stdout"
+  },
+  "candidate_native_focused": 25,
+  "new_native_tests": 15,
+  "new_arrangement_unit_tests": 1,
+  "wasm_winding_tests": 9,
+  "prior_mesh_wasm_tests": 13,
+  "prior_io_wasm_tests": 12,
+  "typescript_scope": "geometry_certainty.ts typechecked; io_contracts.ts and mesh_errors.ts compiled and executed",
+  "native_bindings": {
+    "consumer_families": [
+      "C",
+      "C++",
+      "Python"
+    ],
+    "existing_contracts": [
+      "empty_composition",
+      "boolean_failures",
+      "polyhedral_construction"
+    ],
+    "new_contract": "ffi-probes-v1/contract.json",
+    "certainty_limit": "Existing C-family wrappers expose status/errors, not an end-to-end certainty receipt; that interface remains open."
+  },
+  "all_final_source_inputs_match_qualified_snapshot": true,
+  "cost": "cost-v1/result.json",
+  "cost_completion_categories": {
+    "baseline": {
+      "certified_completion": 2080,
+      "incorrect_result": 1280
+    },
+    "candidate": {
+      "certified_completion": 3360
+    }
+  },
+  "control_certified_queries": 2560,
+  "candidate_matrix_certified_queries": 3360,
+  "cost_claim": "Instrumented completed-contract observations only; no speedup claim. Ratios are omitted when baseline or candidate fails to complete the same Certified result.",
+  "intentional_migration": "Containment replaces ray parity and blanket source-face exclusion with strict interior of the regularized nonzero-winding set. Shared Minkowski winding diagnostics use mesh labels; typed errors, checked sums, direction order and cancellation sites remain.",
+  "arrangement_proof": "A single canonical facet bundle with exact zero transition in every operand may end as a cyclic zero-angle sheet stack. Existing absolute winding propagation and geometric outer-side consistency still validate it. Single open sheets, uncancelled copies and opposite sheets in different operands remain rejected.",
+  "attempts_preserved": [
+    "baseline-v1 link search path failure before tests",
+    "baseline-v4 selected the older probe while expecting the expanded count",
+    "baseline-v5 Arc iteration compile failure before tests",
+    "candidate/wasm-v1 flat-source regression; TypeScript stages not reached in WASM v1",
+    "candidate-v2 new unit assertion failed to compile because its success type lacked Debug; focused native and complete WASM consumers passed; v3 changes only test error extraction"
+  ],
+  "containment_winding_admitted": true,
+  "universal_set_membership_correctness_claimed": false,
+  "published_package_pipeline_executed": false,
+  "full_pre_push_matrix_executed": false,
+  "complete_artifact_audit_passed": false,
+  "historical_missing_paths": 27093,
+  "native_disposition_preserved": true,
+  "full_plan_complete": false,
+  "limitations": [
+    "No total-work, heap-byte, expression-growth or cancellation bound for containment or its native boundary arrangement; expression depth and coefficient growth were not instrumented in the focused cost probe.",
+    "Source-boundary queries can now require arrangement work; all measured increases are retained, with no optimization claim.",
+    "The tested rational, affine and pi-translated domain is evidence, not a theorem establishing all possible closed-PWN symbolic inputs.",
+    "Published-package pipeline, full pre-push/CI matrix, full provenance chain and coverage remain open.",
+    "The inherited artifact audit remains failed/incomplete with 27093 missing paths; new physical files are audited separately.",
+    "The rejected 35-file integration remains archived and excluded from runtime source.",
+    "The combined package test command retains the pre-existing Cargo output-name collision warnings for the two basic examples; the same warnings are present in the qualified E31 baseline. They are not caused by this patch."
+  ],
+  "next": [
+    "Investigate reusing certified global bounds to reject non-interior boundary points before arranging the surface; compare against this corrected implementation and preserve every successful semantic case. This opportunity is not implemented or credited here.",
+    "Continue the preserved strict-success and typed-failure frontier, including smaller independently qualified repairs from the rejected native integration; keep original workload gates.",
+    "Complete end-to-end provenance and the clean external documented distribution pipeline, then the remaining properties, full workflow matrix and measured coverage."
+  ]
+}

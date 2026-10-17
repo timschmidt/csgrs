@@ -28,6 +28,7 @@ node tests/wasm/geometry_certainty.cjs "${wasm_bindings_dir}/csgrs.js"
 node tests/wasm/export_projection.cjs "${wasm_bindings_dir}/csgrs.js"
 node tests/wasm/io_contracts.cjs "${wasm_bindings_dir}/csgrs.js"
 node tests/wasm/mesh_errors.cjs "${wasm_bindings_dir}/csgrs.js"
+node tests/wasm/containment_winding.cjs "${wasm_bindings_dir}/csgrs.js"
 cp tests/wasm/geometry_certainty.ts "${wasm_bindings_dir}/geometry_certainty.ts"
 "${tsc_bin}" --noEmit --strict --target ES2020 --lib ES2020,DOM,ESNext.Disposable \
     --module Node16 --moduleResolution Node16 \

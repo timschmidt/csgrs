@@ -1,0 +1,237 @@
+WASM certainty, query status, geometry, and invalid-input checks passed
+WASM export projection, failure, cache and composition contracts passed
+TAP version 13
+# Subtest: array length failures retain the invalid-input category
+ok 1 - array length failures retain the invalid-input category
+  ---
+  duration_ms: 3.542497
+  type: 'test'
+  ...
+# Subtest: array nonfinite failures retain the invalid-input category
+ok 2 - array nonfinite failures retain the invalid-input category
+  ---
+  duration_ms: 0.538923
+  type: 'test'
+  ...
+# Subtest: array index failures retain the invalid-input category
+ok 3 - array index failures retain the invalid-input category
+  ---
+  duration_ms: 0.410981
+  type: 'test'
+  ...
+# Subtest: binary projection collapse retains typed format detail
+ok 4 - binary projection collapse retains typed format detail
+  ---
+  duration_ms: 5.080532
+  type: 'test'
+  ...
+# Subtest: binary overflow retains coordinate field and target
+ok 5 - binary overflow retains coordinate field and target
+  ---
+  duration_ms: 0.354475
+  type: 'test'
+  ...
+# Subtest: ASCII export failure retains typed format detail
+ok 6 - ASCII export failure retains typed format detail
+  ---
+  duration_ms: 0.450429
+  type: 'test'
+  ...
+# Subtest: successful exports and recovery remain unchanged
+ok 7 - successful exports and recovery remain unchanged
+  ---
+  duration_ms: 6.343995
+  type: 'test'
+  ...
+# Subtest: canonical empty native imports compose
+ok 8 - canonical empty native imports compose
+  ---
+  duration_ms: 13.163127
+  type: 'test'
+  ...
+# Subtest: both native STL encodings reimport and compose at ordinary and tiny scales
+ok 9 - both native STL encodings reimport and compose at ordinary and tiny scales
+  ---
+  duration_ms: 28.160858
+  type: 'test'
+  ...
+# Subtest: malformed bytes retain the parser IO category
+ok 10 - malformed bytes retain the parser IO category
+  ---
+  duration_ms: 0.673134
+  type: 'test'
+  ...
+# Subtest: nonfinite STL coordinates remain malformed input
+ok 11 - nonfinite STL coordinates remain malformed input
+  ---
+  duration_ms: 0.483207
+  type: 'test'
+  ...
+# Subtest: invalid STL topology retains its validation cause after disposal
+ok 12 - invalid STL topology retains its validation cause after disposal
+  ---
+  duration_ms: 0.911707
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 96.711597
+TAP version 13
+# Subtest: union retains invalid-input errors for either operand beside empty
+ok 1 - union retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 6.364914
+  type: 'test'
+  ...
+# Subtest: intersection retains invalid-input errors for either operand beside empty
+ok 2 - intersection retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.697242
+  type: 'test'
+  ...
+# Subtest: difference retains invalid-input errors for either operand beside empty
+ok 3 - difference retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.615628
+  type: 'test'
+  ...
+# Subtest: xor retains invalid-input errors for either operand beside empty
+ok 4 - xor retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.572981
+  type: 'test'
+  ...
+# Subtest: insufficient hull geometry keeps its typed failure for every policy
+ok 5 - insufficient hull geometry keeps its typed failure for every policy
+  ---
+  duration_ms: 1.617059
+  type: 'test'
+  ...
+# Subtest: zero subdivision fails visibly even for canonical empty geometry
+ok 6 - zero subdivision fails visibly even for canonical empty geometry
+  ---
+  duration_ms: 0.606218
+  type: 'test'
+  ...
+# Subtest: mesh diagnostics remain ordinary host errors after all native inputs are freed
+ok 7 - mesh diagnostics remain ordinary host errors after all native inputs are freed
+  ---
+  duration_ms: 3.666509
+  type: 'test'
+  ...
+# Subtest: successful empty outputs retain certainty and compose through STL reimport
+ok 8 - successful empty outputs retain certainty and compose through STL reimport
+  ---
+  duration_ms: 3.198591
+  type: 'test'
+  ...
+# Subtest: successful membership retains its own query status and consumed certainty
+ok 9 - successful membership retains its own query status and consumed certainty
+  ---
+  duration_ms: 4.717226
+  type: 'test'
+  ...
+# Subtest: membership rejects open input before bounds and boundary shortcuts
+ok 10 - membership rejects open input before bounds and boundary shortcuts
+  ---
+  duration_ms: 0.687043
+  type: 'test'
+  ...
+# Subtest: membership rejects degenerate input before bounds and boundary shortcuts
+ok 11 - membership rejects degenerate input before bounds and boundary shortcuts
+  ---
+  duration_ms: 0.345926
+  type: 'test'
+  ...
+# Subtest: membership rejects positions-only input before bounds and boundary shortcuts
+ok 12 - membership rejects positions-only input before bounds and boundary shortcuts
+  ---
+  duration_ms: 0.252813
+  type: 'test'
+  ...
+# Subtest: canonical empty membership is a decided certified false
+ok 13 - canonical empty membership is a decided certified false
+  ---
+  duration_ms: 0.302539
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 39.096919
+TAP version 13
+# Subtest: nonzero set containment: nested material
+ok 1 - nonzero set containment: nested material
+  ---
+  duration_ms: 31.253027
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: coincident cancellation
+ok 2 - nonzero set containment: coincident cancellation
+  ---
+  duration_ms: 12.524131
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: overlapping material
+ok 3 - nonzero set containment: overlapping material
+  ---
+  duration_ms: 29.058627
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: opposite overlap
+ok 4 - nonzero set containment: opposite overlap
+  ---
+  duration_ms: 13.41395
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: shared internal face
+ok 5 - nonzero set containment: shared internal face
+  ---
+  duration_ms: 6.912996
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: cavity boundary
+ok 6 - nonzero set containment: cavity boundary
+  ---
+  duration_ms: 4.802041
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: tangent ray contact
+ok 7 - nonzero set containment: tangent ray contact
+  ---
+  duration_ms: 3.155924
+  type: 'test'
+  ...
+# Subtest: nonzero set containment: reversed multiplicity
+ok 8 - nonzero set containment: reversed multiplicity
+  ---
+  duration_ms: 4.137906
+  type: 'test'
+  ...
+# Subtest: cancelled flat PWN source has empty regularized interior
+ok 9 - cancelled flat PWN source has empty regularized interior
+  ---
+  duration_ms: 1.317869
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 120.620857
+TypeScript native STL pipeline and discriminated errors passed

@@ -14,11 +14,10 @@ use crate::context::DecisionContext;
 use crate::convex_hull::convex_hull_impl;
 use crate::geometry::affine_projective_point_decision;
 use crate::predicate::classify_point_decision;
-use crate::winding::{RayFacetRelation, ray_triangle_relation};
+use crate::winding::mesh_winding_number_decision;
 use crate::{
     BooleanOp, BooleanProgram, Classification, HypermeshError, HypermeshResult, MeshContext,
-    MeshOutcome, Plane, Point3, Real, Triangle, TriangleMesh, Vector3, boolean,
-    certify_convex_mesh,
+    MeshOutcome, Plane, Point3, Real, Triangle, TriangleMesh, boolean, certify_convex_mesh,
 };
 
 /// Optional collection limits and cooperative cancellation for a solid sum.
@@ -328,7 +327,10 @@ fn convex_cells(
         centroid.x *= &inverse;
         centroid.y *= &inverse;
         centroid.z *= &inverse;
-        if winding_at_cell_point(decisions, &source, &centroid, options)? != 0 {
+        if mesh_winding_number_decision(decisions, &source, &centroid, || {
+            options.check_cancelled()
+        })? != 0
+        {
             retained.push(cell);
         }
     }
@@ -458,74 +460,4 @@ fn split_cell(
         convex_hull_impl(decisions, &points[0], &groups[0], None)?,
         convex_hull_impl(decisions, &points[1], &groups[1], None)?,
     ])
-}
-
-fn winding_at_cell_point(
-    decisions: &DecisionContext,
-    source: &TriangleMesh,
-    point: &Point3,
-    options: &MinkowskiOptions<'_>,
-) -> HypermeshResult<i32> {
-    // Each face-parallel or edge-hit condition excludes at most two parameters
-    // on (1,t,t²): at most 4 constraints per source triangle. The centroid is
-    // strictly inside an arrangement cell, hence on no source supporting plane.
-    let candidates = source
-        .triangles
-        .len()
-        .checked_mul(8)
-        .and_then(|n| n.checked_add(1))
-        .ok_or(HypermeshError::CapacityOverflow {
-            operation: "Minkowski winding rays",
-        })?;
-    let mut unknown = false;
-    'directions: for parameter in 0..candidates {
-        options.check_cancelled()?;
-        let t =
-            Real::from(
-                u64::try_from(parameter).map_err(|_| HypermeshError::CapacityOverflow {
-                    operation: "Minkowski winding ray parameter",
-                })?,
-            );
-        let direction = Vector3::from_xyz(Real::one(), t.clone(), &t * &t);
-        let local = decisions.isolated();
-        let mut winding = 0_i32;
-        for triangle in source.triangles.iter() {
-            options.check_cancelled()?;
-            match ray_triangle_relation(
-                &local,
-                source.triangle_points(*triangle)?,
-                point,
-                &direction,
-            ) {
-                Ok(RayFacetRelation::Miss) => {}
-                Ok(RayFacetRelation::Ahead { frontward }) => {
-                    winding = winding
-                        .checked_add(if frontward { 1 } else { -1 })
-                        .ok_or(HypermeshError::WindingOverflow)?;
-                }
-                Ok(RayFacetRelation::Degenerate) => continue 'directions,
-                Ok(RayFacetRelation::Origin { .. }) => {
-                    return Err(HypermeshError::SurfaceArrangementFailed {
-                        reason: "Minkowski cell witness lies on a source triangle",
-                    });
-                }
-                Err(HypermeshError::PredicateUndecided { .. }) => {
-                    unknown = true;
-                    continue 'directions;
-                }
-                Err(error) => return Err(error),
-            }
-        }
-        decisions.absorb(local.certainty());
-        return Ok(winding);
-    }
-    if unknown {
-        Err(HypermeshError::PredicateUndecided {
-            predicate: "Minkowski cell winding",
-        })
-    } else {
-        Err(HypermeshError::SurfaceArrangementFailed {
-            reason: "Minkowski winding rays could not avoid source edges and parallel faces",
-        })
-    }
 }

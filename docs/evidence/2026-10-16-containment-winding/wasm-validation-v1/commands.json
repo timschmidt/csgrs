@@ -1,0 +1,63 @@
+[
+  {
+    "name": "shell-syntax",
+    "command": [
+      "bash",
+      "-n",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v1/scripts/test-wasm-bindings.sh"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.22276239190250635,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4c9ef195957c1cc223bd0335ae55824268f63629483793e2eaa09654c5a92464"
+  },
+  {
+    "name": "real-consumers",
+    "command": [
+      "bash",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v1/scripts/test-wasm-bindings.sh"
+    ],
+    "exit_code": 1,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 168.52533111395314,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e1e96a22462c8b0c9792d0c806c02c8a2e404eab7535e6734721c07f1c77c56f",
+    "stderr_sha256": "61dc41ea7447c60759f2d499fb75ed084502ebcf7fa3c4ca40aca4884367b44d",
+    "resources_sha256": "973c0fdfcdf1e7aa5f699e64d1ad62dda0a1eedb67de4bd75d015428c382ea7d"
+  },
+  {
+    "name": "wasm-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--profile",
+      "wasm",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--no-default-features",
+      "--features",
+      "wasm",
+      "--lib",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 27.104614555835724,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "af3484b8ace12cc088a0fa419b55dedab6905e6c7f4299b88817f75f3f29c15c",
+    "resources_sha256": "efaf92a75f763d13d57ed35b199601deb75949eea37dc08006a964ed73fb51f0"
+  }
+]

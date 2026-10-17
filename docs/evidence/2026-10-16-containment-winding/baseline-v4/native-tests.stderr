@@ -1,0 +1,41 @@
+
+thread 'a_tangent_vertex_contact_does_not_create_interior' (37501) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/containment_winding.rs:121:13:
+assertion `left == right` failed: native query [0, 0, 0] under GeometryContext { predicates: PredicatePolicy(0) }
+  left: true
+ right: false
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'nested_outward_shells_have_nonzero_interior_winding' (37502) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/containment_winding.rs:121:13:
+assertion `left == right` failed: native query [3, 3, 3] under GeometryContext { predicates: PredicatePolicy(0) }
+  left: false
+ right: true
+
+thread 'nested_source_faces_edges_and_vertices_can_be_strictly_inside' (37503) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/containment_winding.rs:121:13:
+assertion `left == right` failed: native query [2, 3, 3] under GeometryContext { predicates: PredicatePolicy(0) }
+  left: false
+ right: true
+
+thread 'nonzero_membership_commutes_with_an_invertible_affine_map' (37504) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/containment_winding.rs:121:13:
+assertion `left == right` failed: native query [3, 3, 3] under GeometryContext { predicates: PredicatePolicy(0) }
+  left: false
+ right: true
+
+thread 'opposite_coincident_shells_cancel_everywhere' (37505) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/containment_winding.rs:121:13:
+assertion `left == right` failed: native query [1, 1, 1] under GeometryContext { predicates: PredicatePolicy(0) }
+  left: true
+ right: false
+
+thread 'overlapping_outward_shells_do_not_create_a_parity_hole' (37507) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/containment_winding.rs:121:13:
+assertion `left == right` failed: native query [3, 1, 1] under GeometryContext { predicates: PredicatePolicy(0) }
+  left: false
+ right: true
+
+thread 'touching_shells_remove_their_internal_shared_face' (37509) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/containment_winding.rs:121:13:
+assertion `left == right` failed: native query [2, 1, 1] under GeometryContext { predicates: PredicatePolicy(0) }
+  left: false
+ right: true
+
+thread 'unary_regularization_and_containment_share_nonzero_set_meaning' (37510) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v2/tests/containment_winding.rs:339:17:
+assertion `left == right` failed: query [3, 3, 3]
+  left: false
+ right: true

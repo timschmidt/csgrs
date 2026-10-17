@@ -1,0 +1,70 @@
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v2/release/examples/basic
+  |
+  = note: the example target `basic` in package `hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v2/crates/hypermesh)` has the same output filename as the example target `basic` in package `csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v2)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-target-v2/release/examples/basic.dwp
+  |
+  = note: the example target `basic` in package `hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v2/crates/hypermesh)` has the same output filename as the example target `basic` in package `csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v2)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+   Compiling indexmap v2.14.0
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v2/crates/hypermesh)
+   Compiling bevy_reflect v0.18.1
+   Compiling bevy_ecs v0.18.1
+   Compiling bevy_math v0.18.1
+   Compiling bevy_app v0.18.1
+   Compiling bevy_time v0.18.1
+   Compiling bevy_diagnostic v0.18.1
+   Compiling bevy_log v0.18.1
+   Compiling bevy_asset v0.18.1
+   Compiling bevy_transform v0.18.1
+   Compiling bevy_mesh v0.18.1
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v2/crates/hyperphysics)
+   Compiling anstyle v1.0.14
+   Compiling clap_lex v1.1.1
+   Compiling plotters-backend v0.3.7
+   Compiling plotters-svg v0.3.7
+   Compiling clap_builder v4.6.7
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v2)
+   Compiling itertools v0.10.5
+   Compiling serde_spanned v0.6.9
+   Compiling toml_datetime v0.6.11
+   Compiling toml_write v0.1.2
+   Compiling winnow v0.7.15
+   Compiling same-file v1.0.6
+   Compiling cast v0.3.0
+   Compiling criterion-plot v0.5.0
+   Compiling walkdir v2.5.0
+   Compiling toml_edit v0.22.27
+   Compiling clap v4.6.7
+   Compiling plotters v0.3.7
+   Compiling tinytemplate v1.2.1
+   Compiling is-terminal v0.4.17
+   Compiling oorandom v11.1.5
+   Compiling anes v0.1.6
+   Compiling criterion v0.5.1
+   Compiling toml v0.8.23
+error[E0277]: `surface_arrangement::ExactSurfaceArrangement` doesn't implement `Debug`
+    --> crates/hypermesh/src/surface_arrangement.rs:6147:64
+     |
+6147 |                         arrange_surface(&decisions, &polygons).unwrap_err(),
+     |                                                                ^^^^^^^^^^ the trait `Debug` is not implemented for `surface_arrangement::ExactSurfaceArrangement`
+     |
+note: required by a bound in `Result::<T, E>::unwrap_err`
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:1324:12
+     |
+1322 |     pub fn unwrap_err(self) -> E
+     |            ---------- required by a bound in this associated function
+1323 |     where
+1324 |         T: fmt::Debug,
+     |            ^^^^^^^^^^ required by this bound in `Result::<T, E>::unwrap_err`
+help: consider annotating `surface_arrangement::ExactSurfaceArrangement` with `#[derive(Debug)]`
+     |
+4018 + #[derive(Debug)]
+4019 | pub(crate) struct ExactSurfaceArrangement {
+     |
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `hypermesh` (lib test) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

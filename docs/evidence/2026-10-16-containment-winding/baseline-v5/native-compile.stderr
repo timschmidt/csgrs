@@ -1,0 +1,12 @@
+error[E0277]: `&Arc<[Triangle]>` is not an iterator
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v3/tests/containment_winding.rs:416:21
+    |
+416 |     for triangle in &output.triangles {
+    |                     ^^^^^^^^^^^^^^^^^ `&Arc<[Triangle]>` is not an iterator
+    |
+    = help: the trait `Iterator` is not implemented for `&Arc<[Triangle]>`
+    = note: required for `&Arc<[Triangle]>` to implement `IntoIterator`
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0277`.

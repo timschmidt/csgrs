@@ -1,0 +1,34 @@
+{
+  "base_commit": "d4eee9a675fa51d84eb0eb29503dd802bdcdbd19",
+  "runner_and_probes_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v1/contract-v1.md": "3b57000b0e3a0427336412129c542a62342d3c3254d51dabab64eb6f73fcc9be",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v1/tests/containment_winding.rs": "338575566a21ec02e9ec47611551edeca8f39cc02d937ea790bfb558a4309761",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/prototype-v1/tests/wasm/containment_winding.cjs": "a7d86f46b972bf73d5bf5381fa06d4a1887df9840278b84d82b533bc3bc9c55b",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/baseline_v1.py": "a6f4977364c4ed0f9c5a4e04ad628cf61620429a7fec1ba3b5b268bca7d11fa5"
+  },
+  "current_inputs_sha256": "490e36090d2100267c4c4a852196a5d9953b0c602ae34e4c5fbb56dfcd15ff15",
+  "read_only_artifacts_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-target-v2/release/libcsgrs.rlib": "db5105a9b4a37e14a2e01712c1643664c2319ae38c77271651ee9c65028b5920",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm32-unknown-unknown/wasm/csgrs.wasm": "89da31de737db2943787da7479d59b76b40240a96c2b25013454e68b8419a118",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs.d.ts": "40953c33518de928d829277c7d17f70c984e9b88090f7428b5b341ccda2f4933",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs.js": "042fbbb1c5860ea51f863e1ba9c702a9ae4dbbb027b1616e39ece583513670f2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs_bg.wasm": "56ca11e30e67e5661007465b3045ca388e17afc5dabc2e88c93cc0cd00ca8012",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/csgrs_bg.wasm.d.ts": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/geometry_certainty.ts": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/io_contracts.js": "37fb65ed6e244e3e134178c1358f129f6fe33191028592e9e53043110b45fb19",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/io_contracts.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/mesh_errors.js": "5f133abd2e072712599372bdfcf2275b78c92b339c28e2e33a4d0877408f7efd",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/wasm-target-v2/wasm-bindings-node/mesh_errors.ts": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614"
+  },
+  "qualified_source_manifest_sha256": "134a3d785345a41bfa0bb04537064c67455a5b87115bcc6764fc8e25021a23fa",
+  "native_libraries": {
+    "csgrs": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-target-v2/release/libcsgrs.rlib",
+    "hypermesh": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-input-validation/candidate-target-v2/release/deps/libhypermesh-00e48e0deaa4b5f0.rlib"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "source_difference": "Only admission current_work metadata differs from the prior qualified snapshot; all current runtime inputs match.",
+  "completed_targets_reopened": false,
+  "external_seconds_per_command": 180,
+  "native_address_space_bytes": 8589934592,
+  "wasm_address_space_bytes": 68719476736
+}

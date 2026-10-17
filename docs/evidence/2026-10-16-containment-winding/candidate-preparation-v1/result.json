@@ -1,0 +1,21 @@
+{
+  "complete": true,
+  "base_commit": "d4eee9a675fa51d84eb0eb29503dd802bdcdbd19",
+  "runner_sha256": "66bdd105eb37f26cf2812a6d5d576250888e17c632e22fa99c292b82383e30d3",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/containment-winding/candidate-source-v1",
+  "source_inputs": 2829,
+  "source_hashes_sha256": "2a78fc0aeee6d6032ded94e3bdc117f8a2b127856926dbd3a0a81586d6855a88",
+  "changes": {
+    "crates/hypermesh/src/mesh.rs": "48cc06b0021069e181f80af6676f2c29d03acc65518a550de019e4b895e415a6",
+    "crates/hypermesh/src/winding.rs": "219481f885d9d5be440bb6073fa791f0f8ef81454ab5bbd72a4458011882b4a5",
+    "crates/hypermesh/src/minkowski.rs": "bf0520a9fa307b3e08c4038e59593fe798357b483851e632870cc6bb82fadfbf",
+    "src/solid.rs": "4ae0c121336859e35d92f74e25fab92ea355b3abd5bebdc8c7b929014c6aabcf",
+    "src/wasm/mesh_js.rs": "6186e60b129ea4894a44acb4c6c5f87ec2b62b0c2b25f1dd915e0af79cfb29fd",
+    "scripts/test-wasm-bindings.sh": "469c3ab86f41f011f3eb33c8cf47e9b52882d146d0e1985b5b2084fc8540b429",
+    "tests/containment_winding.rs": "1d2bc58fa099324b44cd4c0d1ed53e44c4d258faef7ffa4bde105fe7c6e11f6e",
+    "tests/wasm/containment_winding.cjs": "096433dac5f844f3ffe09f8470e07c787fe229b7e9e0ccd68205b66e9cb993fe"
+  },
+  "contract_sha256": "3b57000b0e3a0427336412129c542a62342d3c3254d51dabab64eb6f73fcc9be",
+  "main_sources_modified": false,
+  "diagnostic_migration": "Shared winding failures now use mesh winding labels instead of Minkowski-specific labels. Typed variants, checked overflow, direction schedule and Minkowski cancellation checks are preserved."
+}
