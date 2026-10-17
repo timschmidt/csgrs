@@ -6,10 +6,11 @@ HyperBRep and exact scalar arithmetic belongs to Hyperreal.
 
 The crate reads and writes bounded Part 21 syntax, imports an explicitly
 selected faceted or supported advanced representation into strictly validated
-native HyperBRep solids, and exports selected planar/cylindrical/ring-torus solids with
+native HyperBRep solids, and exports selected planar/cylindrical/conical/ring-torus solids with
 line/circle boundaries to STEP.
 Advanced import includes circular edges on planes, cylinders and ring tori and supplied
-planar/cylindrical/toroidal pcurves. Coordinates
+planar/cylindrical/toroidal pcurves and conical LINE revolutions with supplied
+line pcurves. Coordinates
 and authored unit conversions remain exact. Whole-document/product traversal,
 other analytic/spline mappings, cavity shells and approximate export remain unfinished.
 
@@ -151,7 +152,7 @@ It checks the exact volume and deterministic archive replay independently of
 STEP output; the faceted writer rejects its curved carriers.
 
 `step::write_advanced` emits explicit `VERTEX_POINT`/`EDGE_CURVE` identities,
-directed uses, bounds and `ADVANCED_FACE` records on native planes, cylinders and ring tori.
+directed uses, bounds and `ADVANCED_FACE` records on native planes, cylinders, cones and ring tori.
 It retains straight lines and circular arcs, including closed circular edges,
 shared seams and partial arcs. The borrowed `AdvancedStep` report maps every
 used native entity to its output entity and retains exact output curve parameter
@@ -199,5 +200,21 @@ The [admission record](../hyperbrep/docs/evidence/2026-10-16-torus-exchange/READ
 separates native, STEP and resource evidence. Horn/spindle tori, other torus-curve
 families and loops requiring additional periodic subdivision remain unsupported.
 Radii, vertices and frame encodings must satisfy the existing exact-number
-contract; irrational band boundaries are not rounded. Cone STEP exchange,
-general Boolean closure and package/binding release qualification remain open.
+contract; irrational band boundaries are not rounded. General Boolean closure
+and package/binding release qualification remain open.
+
+Cone exchange uses `SURFACE_OF_REVOLUTION`, a `LINE` generator and
+`AXIS1_PLACEMENT`. Native `ConicalRevolution` recognition proves the carrier and
+branch; ordinary native validation proves whole boundary images and the solid.
+Source LINE V retains its authored origin, magnitude and sign. Each imported
+`SourceFace::parameters` exposes the support entity and exact affine map from
+native UV to source UV, including declared units and periodic lifts.
+The writer can use a finite cap anchor when an exact apex has no finite decimal
+encoding. It never approximates the semi-angle or an unencodable split vertex.
+The [cone example](examples/cone_step.rs) exports and reimports a whole frustum,
+rotated halves, an axial band, both reunion orders and a nonterminating apex,
+then checks native continuation and archive replay. See the
+[mapping contract](docs/STEP_MAPPING.md#conical-line-revolutions) and
+[admission evidence](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md).
+Direct `CONICAL_SURFACE`, B-spline generators, general revolution mappings,
+apex-ending solids and arbitrary cone trims remain outside this exchange subset.

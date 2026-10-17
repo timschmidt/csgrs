@@ -232,8 +232,11 @@ implements the selected circular latitude/meridian domain with both angular
 units, explicit seams and exact finite-decimal encoding. It preserves repeated
 native subdivision/replay through a necessary shared inverse-angle certificate
 and native contact/image facts. Preserve the scalar baseline, rejected BREP
-recognizers and all performance/representation observations. General torus trims,
-cone parameter/encoding proofs and clean package delivery remain separate work.
+recognizers and all performance/representation observations. The
+[conical LINE exchange increment](evidence/2026-10-17-cone-exchange/README.md)
+adds native generator/axis recognition, branch-preserving charts, exact per-face
+source maps and finite generator anchors. General torus trims, further conical
+source charts and clean package delivery remain separate work.
 This ownership direction changes who performs dependency work; it does not
 weaken the shared properties or close any work-package gate.
 
@@ -2237,9 +2240,11 @@ their own supported-domain proofs. Retain the selected ring-torus workflows,
 independent exact measures, supplied two-axis source maps, seam/malformed-input
 controls and four native split/reload cycles. Do not credit
 source-path WASM or an optional floating-point oracle as shipped release coverage.
-The [cone encoding feasibility note](evidence/2026-10-16-torus-exchange/future-cone-exchange.md)
-identifies an exact swept-surface candidate and its schema constraints; qualify
-native continuation and parameter correspondence before adopting that encoding.
+The [earlier cone encoding feasibility note](evidence/2026-10-16-torus-exchange/future-cone-exchange.md)
+identified an exact swept-surface candidate and its schema constraints. The
+[conical LINE exchange record](evidence/2026-10-17-cone-exchange/README.md)
+now qualifies its selected source charts and complete native continuation;
+other generator and trim families still require their own proofs.
 The torus increment also improves two original rational-sector diagnostics;
 independent native probes check both through split/replay, recut and empty
 recovery. Preserve the [two-slot review](evidence/2026-10-16-torus-exchange/frontier-migration.json),
@@ -2260,9 +2265,28 @@ identity inputs as positive checks and separate terminal-policy controls.
 Preserve all 175 completed BREP/curve/STEP benchmark cases and every historical
 adverse row. General expanded-coordinate queries remain an open domain; do not
 discard an available endpoint witness and demand that scalar algebra recreate
-it. Next qualify exact cone STEP parameter correspondence and encoding against
-the [updated feasibility note](evidence/2026-10-17-cone-continuation/future-cone-step.md), keeping native slant-distance semantics distinct
-from exchange chart units. Do not credit native completion as exchange support.
+it. Exact conical LINE-revolution exchange now follows the
+[updated feasibility note](evidence/2026-10-17-cone-continuation/future-cone-step.md)
+with native slant-distance semantics kept distinct from source generator V.
+The native `ConicalRevolution` proof owns carrier incidence, branch selection
+and the reversible chart. HyperBRep IO applies declared units, retains
+`SourceSurfaceParameters`, validates supplied pcurves through the native builder,
+and emits exact finite anchors when an apex has no terminating decimal.
+Single periodic side faces and independently lifted rectangle evidence retain
+whole-edge, orientation and complete nonoverlapping coverage requirements.
+The original unsupported cone fixtures become stronger complete exchange/replay
+checks; independent unsupported, invalid, uncertain, resource and unencodable
+split-vertex controls remain. Preserve all 175 preceding main cost cases and
+the new complete exchange workflow; no old rejection is a successful-work
+performance baseline.
+
+Continue native contact/arrangement work toward broader Booleans and the
+intersection/embedding prerequisites for fillets, shelling and sweeps. The
+[next-domain obligations](evidence/2026-10-17-cone-exchange/next-domains.md)
+separate finite B-spline generator recognition, singular apex topology, direct
+conical charts, source persistence and delivery/resource gates. Each requires
+its native proof and complete edited consumer path. No finite exchange subset
+closes WP14a/b or establishes general Boolean closure.
 
 Supporting changes in surrounding crates are permitted when a HyperBRep
 feature requires them. Preserve crate boundaries: implement the invariant in

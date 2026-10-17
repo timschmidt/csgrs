@@ -2,6 +2,6 @@
 mod acceptance;
 
 #[test]
-fn repeated_curved_booleans_report_exchange_blockers_then_recover() {
-    acceptance::failures_and_recovery();
+fn repeated_curved_booleans_complete_exchange_and_recover() {
+    acceptance::exchange_and_recovery();
 }

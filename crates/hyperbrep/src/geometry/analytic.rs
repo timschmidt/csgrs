@@ -42,6 +42,26 @@ pub struct CylinderGeometry<'a> {
     pub radius: &'a Real,
 }
 
+/// A borrowed exact right-circular-cone frame and semi-angle.
+///
+/// The right-handed frame is orthonormal. Parameters `(u,v)` evaluate as
+/// `apex + v*(sin(semi_angle)*(x*cos(u)+y*sin(u)) + cos(semi_angle)*axis)`.
+/// V is nonnegative slant distance, not axial height or radius. The apex is
+/// singular; this view does not change the source parameter domain.
+#[derive(Clone, Copy, Debug)]
+pub struct ConeGeometry<'a> {
+    /// Cone apex at slant distance zero.
+    pub apex: &'a Point3,
+    /// Unit radial direction at longitude zero.
+    pub x: &'a Vector3,
+    /// Unit radial direction at longitude pi/2.
+    pub y: &'a Vector3,
+    /// Unit axis pointing into the selected branch.
+    pub axis: &'a Vector3,
+    /// Exact semi-angle strictly between zero and pi/2.
+    pub semi_angle: &'a Real,
+}
+
 /// A borrowed exact ring-torus frame and radii.
 ///
 /// The right-handed axes are orthonormal. Both surface parameters are angles:
@@ -90,6 +110,21 @@ impl Curve3 {
 }
 
 impl Surface {
+    /// Borrows the authored native cone without fitting or changing its chart.
+    /// Other surface families return `None`.
+    pub fn conical_geometry(&self) -> Option<ConeGeometry<'_>> {
+        let SurfaceGeometry::Cone(cone) = &self.data.geometry else {
+            return None;
+        };
+        Some(ConeGeometry {
+            apex: &cone.apex,
+            x: &cone.frame.x,
+            y: &cone.frame.y,
+            axis: &cone.frame.z,
+            semi_angle: &cone.semi_angle,
+        })
+    }
+
     /// Borrows the exact ring-torus carrier without changing its chart or frame.
     /// Other surface families return `None`.
     pub fn toroidal_geometry(&self) -> Option<TorusGeometry<'_>> {

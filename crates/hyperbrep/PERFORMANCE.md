@@ -992,3 +992,12 @@ sizes or operation-wide resource bounds. A median of unrelated case ratios is
 not an aggregate speedup. Earlier adverse observations and open cost gates
 remain visible. Isolate repeated proof costs under this complete baseline before
 changing scheduling or caches; preserve exact receipts and failed controls.
+
+
+## Exact conical STEP exchange (2026-10-17)
+
+All 175 preceding main benchmark cases retain their exact receipts across 18 preserved corpora. One new complete cone exchange workflow adds absolute cost, for 19 corpora and 111 processes. 1 existing timing rows exceed a 1.10 ratio; maximum 1.123806. 40 rows increase allocation calls or requested bytes. The dependency supplement preserves all 196 cases in 18 processes, with 2 ratios above 1.10 and maximum 1.223467.
+
+The new completed workflow has median 2850.531 ms per call, 19204391 allocation requests and 1213465037 requested bytes. It includes exact checks, STEP materialization/reimport, source maps, cold native replay, repeated Booleans and empty recovery. The prior unsupported result is not a successful-work comparison.
+
+The unchanged geometric contracts retain their inputs and receipts. Consumer cost also includes additional source-map provenance and the extended graph/formula oracle; this is not a pure-kernel optimization claim. Every adverse timing, allocation and size observation remains in the report. Shared-host timings, allocator requests, process RSS and harness sizes do not prove aggregate speedups or retained-heap/package bounds. See the [admission record](docs/evidence/2026-10-17-cone-exchange/README.md), [main costs](docs/evidence/2026-10-17-cone-exchange/benchmark-summary.json) and [dependency costs](docs/evidence/2026-10-17-cone-exchange/dependency-costs-v1/summary.json).

@@ -1,5 +1,8 @@
 //! Explicit STEP topology, with exact curve evidence admitted before publication.
 mod circles;
+mod cone;
+#[cfg(test)]
+mod cone_tests;
 mod curves;
 mod faces;
 mod pcurves;
@@ -12,13 +15,14 @@ use super::{
     error::{insert, push},
     geometry::Plane,
     imported::{
-        EdgeSource, EdgeUseSource, ImportedBody, SourceCurveParameters, UseSource, VertexSource,
+        EdgeSource, EdgeUseSource, FaceSource, ImportedBody, SourceCurveParameters,
+        SourceSurfaceParameters, UseSource, VertexSource,
     },
 };
 use hyperbrep::{
-    Curve3, Direction, EdgeKey, FaceKey, GeometryError, ModelBuilder, Orientation,
-    ParameterCorrespondence, ParameterDomain, Pcurve, Point3, Real, STRICT_PREDICATES, SurfaceKey,
-    Vector3, VertexKey, WireKey,
+    ConeBranch, ConicalRevolution, Curve3, Direction, EdgeKey, GeometryError, ModelBuilder,
+    Orientation, ParameterCorrespondence, ParameterDomain, Pcurve, Point3, Real, STRICT_PREDICATES,
+    SurfaceKey, Vector3, VertexKey, WireKey,
 };
 use hypercurve::{Contour2, Curve2, LineSeg2, Point2, Segment2};
 use hyperlimit::{PredicateOutcome, compare_reals};
@@ -68,19 +72,22 @@ struct Edge {
 }
 #[derive(Clone)]
 struct FaceSurface {
-    geometry: Plane,
+    /// STEP AXIS2 frame for elementary supports; a revolution owns its chart.
+    geometry: Option<Plane>,
     key: SurfaceKey,
     support: surfaces::Support,
+    parameters: SourceSurfaceParameters,
 }
 struct Builder {
     model: ModelBuilder,
     by_vertex: HashMap<u64, Vertex>,
     by_edge: HashMap<u64, Edge>,
-    by_surface: HashMap<u64, FaceSurface>,
+    by_surface: HashMap<(u64, Option<ConeBranch>), FaceSurface>,
+    by_revolution: HashMap<u64, ConicalRevolution>,
     angle_scale: Option<Real>,
     vertices: Vec<(VertexSource, VertexKey)>,
     edges: Vec<EdgeSource>,
-    faces: Vec<(u64, FaceKey)>,
+    faces: Vec<FaceSource>,
     loops: Vec<(u64, u64, WireKey)>,
     edge_uses: Vec<UseSource>,
 }
@@ -105,6 +112,7 @@ pub(super) fn body(
         by_vertex: HashMap::new(),
         by_edge: HashMap::new(),
         by_surface: HashMap::new(),
+        by_revolution: HashMap::new(),
         angle_scale: units
             .plane_angle
             .as_ref()
@@ -123,8 +131,8 @@ pub(super) fn body(
             return Err(site.invalid("duplicate shell face"));
         }
         let face = builder.face(resolver, face_id, scale)?;
-        push(&mut builder.faces, (face_id, face.clone())).map_err(|kind| site.error(kind))?;
-        push(&mut faces, face).map_err(|kind| site.error(kind))?;
+        push(&mut faces, face.key.clone()).map_err(|kind| site.error(kind))?;
+        push(&mut builder.faces, face).map_err(|kind| site.error(kind))?;
     }
     if faces.is_empty() {
         return Err(site.invalid("empty closed shell"));

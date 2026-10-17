@@ -7,14 +7,23 @@ impl Builder {
         resolver: &mut Resolver<'_, '_, '_>,
         id: u64,
         scale: &Real,
-    ) -> Result<FaceKey, Error> {
+    ) -> Result<FaceSource, Error> {
         let mut args = resolver.simple(id, "ADVANCED_FACE")?;
         let site = args.site;
         resolver.text(args.next()?, site)?;
         let bounds = args.list()?;
-        let surface = self.surface(resolver, args.reference()?, scale)?;
+        let surface_id = args.reference()?;
         let forward = args.boolean()?;
         args.finish()?;
+        let branch = match self.conical_source(resolver, surface_id, scale)? {
+            Some(source) => {
+                Some(self.conical_branch(resolver, &source, bounds.clone(), scale, site)?)
+            }
+            None => None,
+        };
+        let surface = self.surface(resolver, surface_id, scale, branch)?;
+        let forward = forward
+            ^ matches!(&surface.support, surfaces::Support::Cone(chart) if chart.reverses_orientation());
         let orientation = if forward {
             Orientation::Forward
         } else {
@@ -70,9 +79,15 @@ impl Builder {
                 "one finite parameter-space outer bound",
             ))
         })?;
-        self.model
+        let key = self
+            .model
             .face(&surface.key, orientation, &outer, &holes)
-            .map_err(|e| site.error(ErrorKind::Build(e)))
+            .map_err(|e| site.error(ErrorKind::Build(e)))?;
+        Ok(FaceSource {
+            source: id,
+            key,
+            parameters: surface.parameters,
+        })
     }
     fn edge_loop(
         &mut self,

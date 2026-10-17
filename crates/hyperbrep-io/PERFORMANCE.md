@@ -338,3 +338,12 @@ New workflows include exact assertions and full output materialization inside ti
 Native harness size changes range from 6,880 to 65,176 bytes. The WASM harness changes by 318,775 bytes and now includes 90 probe groups; this is not a matched package-size comparison. Cumulative allocator requests and process RSS do not bound retained heap or total work. Four native subdivision/reload cycles grow the archive from 91,506 to 142,937 bytes and serialized Computable occurrences from 780 to 2,089. Their maximum serialized depth rises from 16 to 18. These five states establish no arbitrary-depth or cancellation guarantee.
 
 Retain this as an exact feature extension with the disclosed adverse costs, not an optimization. Whole-image admission, finite-decimal encoding and typed failures remain authoritative. Optional OCCT checks and source-path WASM execution do not close the shipped-package, MSRV or language-binding gates. The original successful geometry, policies, byte contracts and full-size hard cases remain the baseline for further cost work.
+
+
+## Exact conical STEP exchange (2026-10-17)
+
+All 175 preceding main benchmark cases retain their exact receipts across 18 preserved corpora. One new complete cone exchange workflow adds absolute cost, for 19 corpora and 111 processes. 1 existing timing rows exceed a 1.10 ratio; maximum 1.123806. 40 rows increase allocation calls or requested bytes. The dependency supplement preserves all 196 cases in 18 processes, with 2 ratios above 1.10 and maximum 1.223467.
+
+The new completed workflow has median 2850.531 ms per call, 19204391 allocation requests and 1213465037 requested bytes. It includes exact checks, STEP materialization/reimport, source maps, cold native replay, repeated Booleans and empty recovery. The prior unsupported result is not a successful-work comparison.
+
+The unchanged geometric contracts retain their inputs and receipts. Consumer cost also includes additional source-map provenance and the extended graph/formula oracle; this is not a pure-kernel optimization claim. Every adverse timing, allocation and size observation remains in the report. Shared-host timings, allocator requests, process RSS and harness sizes do not prove aggregate speedups or retained-heap/package bounds. See the [admission record](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md), [main costs](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/benchmark-summary.json) and [dependency costs](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/dependency-costs-v1/summary.json).

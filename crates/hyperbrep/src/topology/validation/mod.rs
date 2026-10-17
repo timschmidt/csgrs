@@ -5,6 +5,7 @@ mod cone;
 mod cylinder;
 mod image;
 mod loft;
+mod periodic_rectangles;
 mod planar;
 mod prism;
 mod prism_topology;

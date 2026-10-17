@@ -21,7 +21,7 @@ pub use error::{Error, ErrorKind, Resource};
 pub use header::Header;
 pub use imported::{
     EdgeUseSource, ImportedBody, ImportedRepresentation, SourceCurveParameters, SourceEdge,
-    SourceEdgeUse, SourceFace, SourceVertex, VertexSource,
+    SourceEdgeUse, SourceFace, SourceSurfaceParameters, SourceVertex, VertexSource,
 };
 pub use units::{ContextUnits, Uncertainty, Unit, UnitKind};
 pub use write::{

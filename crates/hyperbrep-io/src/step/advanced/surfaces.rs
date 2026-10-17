@@ -15,6 +15,7 @@ pub(super) enum Support {
     Plane,
     Cylinder(Cylinder),
     Torus(torus::Torus),
+    Cone(hyperbrep::ConicalRevolutionChart),
 }
 
 impl FaceSurface {
@@ -27,6 +28,7 @@ impl FaceSurface {
             Support::Plane => [false, false],
             Support::Cylinder(_) => [true, false],
             Support::Torus(_) => [true, true],
+            Support::Cone(_) => [true, false],
         }
     }
 }
@@ -37,10 +39,14 @@ impl Builder {
         resolver: &mut Resolver<'_, '_, '_>,
         id: u64,
         scale: &Real,
+        branch: Option<ConeBranch>,
     ) -> Result<FaceSurface, Error> {
         let entity = resolver.entity(id)?;
         let site = Site::entity(entity);
         let record = entity.components().next().expect("syntax component");
+        if !entity.is_complex() && record.name() == "SURFACE_OF_REVOLUTION" {
+            return self.conical_surface(resolver, id, scale, branch, site);
+        }
         if entity.is_complex()
             || !matches!(
                 record.name(),
@@ -49,7 +55,7 @@ impl Builder {
         {
             return Err(site.error(ErrorKind::Unsupported("advanced support surface")));
         }
-        if let Some(surface) = self.by_surface.get(&id) {
+        if let Some(surface) = self.by_surface.get(&(id, None)) {
             return Ok(surface.clone());
         }
         let mut args = Args::new(record, site);
@@ -91,12 +97,30 @@ impl Builder {
             .model
             .surface(native)
             .map_err(|e| site.error(ErrorKind::Build(e)))?;
+        let inverse =
+            |value: &Real| (Real::one() / value).map_err(|e| site.error(ErrorKind::Numeric(e)));
+        let u_scale = if matches!(support, Support::Plane) {
+            scale
+        } else {
+            self.angular_scale(site)?
+        };
+        let v_scale = if matches!(support, Support::Torus(_)) {
+            self.angular_scale(site)?
+        } else {
+            scale
+        };
         let surface = FaceSurface {
-            geometry,
+            geometry: Some(geometry),
             key,
             support,
+            parameters: SourceSurfaceParameters {
+                surface: id,
+                origin: hyperbrep::Point2::origin(),
+                u: hyperbrep::Vector2::x() * inverse(u_scale)?,
+                v: hyperbrep::Vector2::y() * inverse(v_scale)?,
+            },
         };
-        cache(&mut self.by_surface, id, surface.clone(), site)?;
+        cache(&mut self.by_surface, (id, None), surface.clone(), site)?;
         Ok(surface)
     }
 }
@@ -111,57 +135,62 @@ impl FaceSurface {
         previous: Option<&Point2>,
         site: Site,
     ) -> Result<(Segment2, ParameterCorrespondence), Error> {
-        let plane = &self.geometry;
         let direction = if forward { Real::one() } else { -Real::one() };
-        let segment = if let Support::Cylinder(cylinder) = &self.support {
-            let from_height = (from - &plane.origin).dot(&cylinder.axis);
-            let to_height = (to - &plane.origin).dot(&cylinder.axis);
-            let angle = if let Some(previous) = previous {
-                // The loop has already checked shared vertex identity. The
-                // preceding use and native image validation certify this lift.
-                previous.x().clone()
-            } else {
-                let projected = from.clone() + cylinder.axis.clone() * -&from_height;
-                circles::circle_parameter(&cylinder.iso, &projected, site)?
-            };
-            let end_angle = if let Some(circle) = &edge.circle {
-                let normal = aligned_normals(&circle.normal, &cylinder.axis, site)?;
-                &angle + &circle.sweep * normal * &direction
-            } else {
-                angle.clone()
-            };
-            Segment2::Line(
-                LineSeg2::try_new(
-                    Point2::new(angle, from_height),
-                    Point2::new(end_angle, to_height),
-                )
-                .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?,
-            )
-        } else if let Support::Torus(torus) = &self.support {
-            torus.boundary_segment(plane, edge, from, &direction, previous, site)?
+        let segment = if let Support::Cone(chart) = &self.support {
+            cone::boundary_segment(chart, edge, from, to, &direction, previous, site)?
         } else {
-            let project = |point: &Point3| {
-                let delta = point - &plane.origin;
-                Point2::new(delta.dot(&plane.x), delta.dot(&plane.y))
-            };
-            if let Some(circle) = &edge.circle {
-                let normal = aligned_normals(&circle.normal, &plane.x.cross(&plane.y), site)?;
-                let clockwise = order(site, &(&circle.sweep * normal * &direction), &Real::zero())?
-                    == Ordering::Less;
-                Segment2::Arc(
-                    CircularArc2::try_from_center(
-                        project(from),
-                        project(to),
-                        project(&circle.center),
-                        clockwise,
+            let plane = self.geometry.as_ref().expect("elementary support frame");
+            if let Support::Cylinder(cylinder) = &self.support {
+                let from_height = (from - &plane.origin).dot(&cylinder.axis);
+                let to_height = (to - &plane.origin).dot(&cylinder.axis);
+                let angle = if let Some(previous) = previous {
+                    // The loop has already checked shared vertex identity. The
+                    // preceding use and native image validation certify this lift.
+                    previous.x().clone()
+                } else {
+                    let projected = from.clone() + cylinder.axis.clone() * -&from_height;
+                    circles::circle_parameter(&cylinder.iso, &projected, site)?
+                };
+                let end_angle = if let Some(circle) = &edge.circle {
+                    let normal = aligned_normals(&circle.normal, &cylinder.axis, site)?;
+                    &angle + &circle.sweep * normal * &direction
+                } else {
+                    angle.clone()
+                };
+                Segment2::Line(
+                    LineSeg2::try_new(
+                        Point2::new(angle, from_height),
+                        Point2::new(end_angle, to_height),
                     )
                     .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?,
                 )
+            } else if let Support::Torus(torus) = &self.support {
+                torus.boundary_segment(plane, edge, from, &direction, previous, site)?
             } else {
-                Segment2::Line(
-                    LineSeg2::try_new(project(from), project(to))
+                let project = |point: &Point3| {
+                    let delta = point - &plane.origin;
+                    Point2::new(delta.dot(&plane.x), delta.dot(&plane.y))
+                };
+                if let Some(circle) = &edge.circle {
+                    let normal = aligned_normals(&circle.normal, &plane.x.cross(&plane.y), site)?;
+                    let clockwise =
+                        order(site, &(&circle.sweep * normal * &direction), &Real::zero())?
+                            == Ordering::Less;
+                    Segment2::Arc(
+                        CircularArc2::try_from_center(
+                            project(from),
+                            project(to),
+                            project(&circle.center),
+                            clockwise,
+                        )
                         .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?,
-                )
+                    )
+                } else {
+                    Segment2::Line(
+                        LineSeg2::try_new(project(from), project(to))
+                            .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?,
+                    )
+                }
             }
         };
         let correspondence = if matches!(segment, Segment2::Arc(_)) {

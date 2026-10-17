@@ -48,9 +48,23 @@ impl Builder {
         let site = args.site;
         resolver.text(args.next()?, site)?;
         let surface_id = args.reference()?;
-        let surface = self.surface(resolver, surface_id, scale)?;
         let representation = args.reference()?;
         args.finish()?;
+        let branch = match self.conical_source(resolver, surface_id, scale)? {
+            Some(source) => {
+                let first = source.branch_at(&self.by_vertex[&edge.start].point);
+                let branch = match first {
+                    Err(GeometryError::SingularSurfaceParameter) => {
+                        source.branch_at(&self.by_vertex[&edge.end].point)
+                    }
+                    other => other,
+                }
+                .map_err(|e| site.error(ErrorKind::Geometry(e)))?;
+                Some(branch)
+            }
+            None => None,
+        };
+        let surface = self.surface(resolver, surface_id, scale, branch)?;
         let mut args = resolver.simple(representation, "DEFINITIONAL_REPRESENTATION")?;
         let representation_site = args.site;
         resolver.text(args.next()?, representation_site)?;
@@ -85,14 +99,14 @@ impl Builder {
                 if let Some(line) = source_line.filter(|_| surface.is_plane()) {
                     // Preserve the exact infinite affine-line certificate and
                     // its source maps. Curved images use the native query below.
-                    let plane = surface.geometry;
+                    let plane = surface.geometry.as_ref().expect("plane support frame");
                     let mapped = curves::Line {
                         source: id,
-                        origin: plane.origin
+                        origin: plane.origin.clone()
                             + plane.x.clone() * (origin.x() * scale)
                             + plane.y.clone() * (origin.y() * scale),
-                        velocity: plane.x * (&velocity[0] * scale)
-                            + plane.y * (&velocity[1] * scale),
+                        velocity: plane.x.clone() * (&velocity[0] * scale)
+                            + plane.y.clone() * (&velocity[1] * scale),
                     };
                     line.same_oriented_image(&mapped, geometry_site)?;
                     return Ok(CheckedPcurve {
@@ -107,18 +121,34 @@ impl Builder {
                 } else {
                     scale
                 };
-                let v_scale = if angular[1] {
+                let unit_parameter = Real::one();
+                let v_scale = if matches!(surface.support, surfaces::Support::Cone(_)) {
+                    &unit_parameter
+                } else if angular[1] {
                     self.angular_scale(site)?
                 } else {
                     scale
                 };
-                let origin = Point2::new(origin.x() * u_scale, origin.y() * v_scale);
-                let velocity = [&velocity[0] * u_scale, &velocity[1] * v_scale];
+                let mut origin = Point2::new(origin.x() * u_scale, origin.y() * v_scale);
+                let mut velocity = [&velocity[0] * u_scale, &velocity[1] * v_scale];
                 if angular[0] && order(site, &velocity[0], &Real::zero())? == Ordering::Equal {
                     seam = Some((0, origin.x().clone()));
                 } else if angular[1] && order(site, &velocity[1], &Real::zero())? == Ordering::Equal
                 {
                     seam = Some((1, origin.y().clone()));
+                }
+                if let surfaces::Support::Cone(chart) = &surface.support {
+                    // Seam evidence above is in the authored angular frame.
+                    // A reversed native chart need not put that seam at +tau.
+                    let mapped = chart.native_parameters(&hyperbrep::Point2::new(
+                        origin.x().clone(),
+                        origin.y().clone(),
+                    ));
+                    origin = Point2::new(mapped.x, mapped.y);
+                    velocity = [
+                        &velocity[0] * chart.angular_scale(),
+                        &velocity[1] * chart.slant_scale(),
+                    ];
                 }
                 let (segment, correspondence) =
                     surface.boundary_segment(edge, first, second, true, None, site)?;
@@ -182,11 +212,9 @@ impl Builder {
                     Curve3::circle_arc(point3(&center), x, y, radius, Real::zero(), Real::tau())
                         .map_err(|e| site.error(ErrorKind::Geometry(e)))?;
                 let project = |point: &Point3| {
-                    let delta = point - &surface.geometry.origin;
-                    Point2::new(
-                        delta.dot(&surface.geometry.x),
-                        delta.dot(&surface.geometry.y),
-                    )
+                    let plane = surface.geometry.as_ref().expect("plane support frame");
+                    let delta = point - &plane.origin;
+                    Point2::new(delta.dot(&plane.x), delta.dot(&plane.y))
                 };
                 let from = project(first);
                 let to = project(second);

@@ -63,7 +63,7 @@ pub(super) fn point(out: &mut Output, point: &Point3) -> Result<u64, WriteError>
     })
 }
 
-fn direction(out: &mut Output, vector: &Vector3) -> Result<u64, WriteError> {
+pub(super) fn direction_values(vector: &Vector3, out: &Output) -> Result<Vector3, WriteError> {
     // Check every directly retained rational component before any projective
     // division. Normalized rational directions may share an irrational factor.
     for i in 0..3 {
@@ -98,6 +98,11 @@ fn direction(out: &mut Output, vector: &Vector3) -> Result<u64, WriteError> {
         }
         Err(error) => return Err(error),
     };
+    Ok(ratios)
+}
+
+pub(super) fn direction(out: &mut Output, vector: &Vector3) -> Result<u64, WriteError> {
+    let ratios = direction_values(vector, out)?;
     out.entity("DIRECTION", |out| {
         out.put("'',(")?;
         out.number(&ratios[0])?;

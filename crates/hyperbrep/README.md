@@ -547,8 +547,8 @@ source trace indices and model revisions. The
 and [evidence](docs/evidence/2026-10-16-sector-cuts/README.md) state the coverage.
 Ring-torus STEP exchange now covers exact latitude/meridian boundaries in the
 named whole/half/quarter and rational-band corpus. Both angular coordinates,
-periodic lifts, source maps and strict failures remain explicit; cone STEP and
-general Boolean closure remain open. See the
+periodic lifts, source maps and strict failures remain explicit;
+general Boolean closure remains open. See the
 [torus exchange admission record](docs/evidence/2026-10-16-torus-exchange/README.md).
 Rationally rotated complementary torus cuts also reconstruct in both operand
 orders. The full-size acceptance workflows continue through two edge-split,
@@ -564,6 +564,19 @@ root and trigonometric proofs; Hypercurve retains the circular chart and paired
 overlap endpoint evidence. The [cone continuation record](docs/evidence/2026-10-17-cone-continuation/README.md)
 states this finite domain, explicit uncertainty-fixture migration and remaining
 exchange/resource limits.
+
+`ConicalRevolution::from_line` recognizes an exact line revolved around a unit
+axis. It retains the original line and axis, proves their intersection, and
+constructs either `ConeBranch` relative to the apex parameter. The owned chart
+maps source angle/line parameters to native angle/slant distance and supplies
+a certified point inverse away from the apex. Skew, parallel, perpendicular,
+off-carrier and unresolved inputs have typed outcomes. `Surface::conical_geometry`
+borrows a native cone's exact frame and semi-angle for consumers.
+Cone shell validation also admits a single periodic side face and independently
+lifted rectangular partitions after exact period reduction; whole edge images,
+orientation and complete nonoverlapping coverage remain required. This supports
+native continuation after exact conical LINE-revolution STEP exchange in
+HyperBRep IO. See the [cone exchange record](docs/evidence/2026-10-17-cone-exchange/README.md).
 
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.

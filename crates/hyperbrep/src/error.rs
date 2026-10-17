@@ -5,6 +5,17 @@ use std::fmt;
 use hyperlimit::{Escalation, RefinementNeed};
 use hyperreal::Problem;
 
+/// A nonzero line generator does not revolve into a right circular cone.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NonConicalGeneratorReason {
+    /// The generator is parallel to the revolution axis.
+    Parallel,
+    /// The generator is perpendicular to the revolution axis.
+    Perpendicular,
+    /// The generator has axial and radial components but misses the axis.
+    Skew,
+}
+
 /// Failure while constructing or evaluating exact geometry.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum GeometryError {
@@ -57,6 +68,9 @@ pub enum GeometryError {
     DegenerateExtrusionDirection,
     /// A revolution axis is not certified to be a unit vector.
     InvalidRevolutionAxis,
+    /// Exact recognition proved that the line does not generate a cone.
+    /// This does not claim that its general surface of revolution is invalid.
+    NonConicalGenerator(NonConicalGeneratorReason),
     /// An analytic surface frame is not certified orthonormal.
     InvalidSurfaceFrame,
     /// An analytic surface radius is not certified strictly positive.
@@ -93,6 +107,8 @@ pub enum GeometryError {
     UnsupportedPcurveContour,
     /// A point is not on the requested finite curve.
     PointNotOnCurve,
+    /// A point is not on the requested surface carrier.
+    PointNotOnSurface,
     /// Hypercurve rejected or could not certify a planar curve operation.
     PlanarCurve(hypercurve::ExactCurveError),
     /// Hypercurve rejected planar curve construction.
@@ -158,6 +174,9 @@ impl fmt::Display for GeometryError {
             }
             Self::InvalidRadius => formatter.write_str("surface radius must be positive"),
             Self::InvalidConeAngle => formatter.write_str("invalid cone semi-angle"),
+            Self::NonConicalGenerator(reason) => {
+                write!(formatter, "line generator is not conical: {reason:?}")
+            }
             Self::InvalidTorusRadii => formatter.write_str("invalid ring-torus radii"),
             Self::SurfaceParameterOutsideDomain => {
                 formatter.write_str("parameter lies outside the exact surface domain")
@@ -193,6 +212,7 @@ impl fmt::Display for GeometryError {
                 formatter.write_str("pcurve family is unsupported in face contours")
             }
             Self::PointNotOnCurve => formatter.write_str("point is not on the finite curve"),
+            Self::PointNotOnSurface => formatter.write_str("point is not on the surface carrier"),
             Self::PlanarCurve(error) => write!(formatter, "planar curve operation failed: {error}"),
             Self::PlanarCurveConstruction(error) => {
                 write!(formatter, "planar curve construction failed: {error}")

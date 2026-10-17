@@ -1,12 +1,12 @@
-//! Repeated torus Booleans complete exchange; cones remain explicit blockers.
-use hyperbrep::{OperationContext, Real, SurfaceKind, WorkBudget, boolean, builder};
-use hyperbrep_io::step::{StepBody, StepWriteOptions, WriteErrorKind, write_advanced};
+//! Repeated torus and cone Booleans retain their exact exchange contracts.
+use hyperbrep::{OperationContext, Real, WorkBudget, boolean, builder};
+use hyperbrep_io::step::{StepBody, StepWriteOptions, write_advanced};
 #[allow(dead_code)]
 #[path = "torus_exchange.rs"]
 mod torus;
 use torus::seam;
 
-pub fn failures_and_recovery() {
+pub fn exchange_and_recovery() {
     let context = OperationContext::strict(WorkBudget {
         refinements: 10_000,
         promotions: 1000,
@@ -21,42 +21,24 @@ pub fn failures_and_recovery() {
             ("reconstructed", boolean::union(&half, &other).unwrap()),
         ] {
             let replay = seam::reload(result.model());
-            if kind < 2 {
-                let (expected_volume, expected_area) = if name == "recut" {
-                    (volume.clone(), area.clone())
-                } else {
-                    let full = Real::from(40) * Real::pi() * Real::pi();
-                    (full.clone(), full)
-                };
-                torus::round_trip(
-                    replay.solids().next().unwrap(),
-                    &options,
-                    &expected_volume,
-                    &expected_area,
-                    &[],
-                );
-                continue;
-            }
-            let error = write_advanced(
-                &[StepBody {
-                    solid: replay.solids().next().unwrap(),
-                    name,
-                }],
+            let (expected_volume, expected_area) = if name == "recut" {
+                (volume.clone(), area.clone())
+            } else if kind == 2 {
+                (
+                    Real::from(78) * Real::pi(),
+                    (Real::from(29) + Real::from(21) * Real::from(5).sqrt().unwrap()) * Real::pi(),
+                )
+            } else {
+                let full = Real::from(40) * Real::pi() * Real::pi();
+                (full.clone(), full)
+            };
+            torus::round_trip(
+                replay.solids().next().unwrap(),
                 &options,
-                &context,
-            )
-            .result
-            .unwrap()
-            .unwrap_err();
-            assert!(
-                matches!(
-                    error.kind,
-                    WriteErrorKind::UnsupportedSurface(SurfaceKind::Cone)
-                ),
-                "{error:?}"
+                &expected_volume,
+                &expected_area,
+                &[],
             );
-            assert_eq!(error.body, Some(0));
-            assert!(error.entity.is_some());
         }
     }
     let cylinder = builder::cylinder(2.into(), 4.into()).unwrap();

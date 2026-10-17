@@ -1,12 +1,12 @@
-//! Completed torus exchange and explicit unsupported cone recovery.
-use hyperbrep::{OperationContext, SurfaceKind, WorkBudget, boolean, builder};
-use hyperbrep_io::step::{StepBody, StepWriteOptions, WriteErrorKind, write_advanced};
+//! Complete torus and cone exchange on the original seam-cut fixtures.
+use hyperbrep::{OperationContext, WorkBudget, boolean, builder};
+use hyperbrep_io::step::{StepBody, StepWriteOptions, write_advanced};
 #[allow(dead_code)]
 #[path = "torus_exchange.rs"]
 mod torus;
 use torus::seam;
 
-pub fn failures_and_recovery() {
+pub fn exchange_and_recovery() {
     let context = OperationContext::strict(WorkBudget {
         refinements: 10_000,
         promotions: 1000,
@@ -15,30 +15,7 @@ pub fn failures_and_recovery() {
     for kind in 0..3 {
         let (source, cutter, volume, area) = seam::fixture(kind);
         let half = boolean::intersection(&source, &cutter).unwrap();
-        if kind < 2 {
-            torus::round_trip(half.bodies().next().unwrap(), &options, &volume, &area, &[]);
-            continue;
-        }
-        let error = write_advanced(
-            &[StepBody {
-                solid: half.bodies().next().unwrap(),
-                name: "half",
-            }],
-            &options,
-            &context,
-        )
-        .result
-        .unwrap()
-        .unwrap_err();
-        assert!(
-            matches!(
-                error.kind,
-                WriteErrorKind::UnsupportedSurface(SurfaceKind::Cone)
-            ),
-            "{error:?}"
-        );
-        assert_eq!(error.body, Some(0));
-        assert!(error.entity.is_some());
+        torus::round_trip(half.bodies().next().unwrap(), &options, &volume, &area, &[]);
         seam::reload(half.model());
     }
     let cylinder = builder::cylinder(2.into(), 4.into()).unwrap();

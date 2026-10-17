@@ -111,6 +111,112 @@ fn boolean(value: Value<'_, '_>, expected: bool) {
     );
 }
 
+fn surface_sample(file: &StepFile<'_>, id: u64, uv: &Point2) -> (Point3, Vector3) {
+    if name(file, id) == "SURFACE_OF_REVOLUTION" {
+        let line = reference(argument(file, id, 1));
+        assert_eq!(name(file, line), "LINE");
+        let p = point(file, reference(argument(file, line, 1)));
+        let vector_id = reference(argument(file, line, 2));
+        let d = vector(file, reference(argument(file, vector_id, 1)))
+            .normalize_checked()
+            .unwrap()
+            * scalar(argument(file, vector_id, 2));
+        let placement = reference(argument(file, id, 2));
+        assert_eq!(name(file, placement), "AXIS1_PLACEMENT");
+        let c = point(file, reference(argument(file, placement, 1)));
+        let a = match argument(file, placement, 2).kind() {
+            ValueKind::Omitted => Vector3::z(),
+            ValueKind::Reference(axis) => vector(file, axis).normalize_checked().unwrap(),
+            other => panic!("axis direction: {other:?}"),
+        };
+        let rotate = |v: Vector3| {
+            v.clone() * uv.x.clone().cos()
+                + a.clone() * a.dot(&v) * (Real::one() - uv.x.clone().cos())
+                + a.cross(&v) * uv.x.clone().sin()
+        };
+        let radial = rotate(p + d.clone() * &uv.y - &c);
+        let normal = a.cross(&radial).cross(&rotate(d));
+        return (c + radial, normal);
+    }
+    let (origin, x, y, z) = frame(file, reference(argument(file, id, 1)));
+    match name(file, id) {
+        "PLANE" => (origin + x.clone() * &uv.x + y.clone() * &uv.y, x.cross(&y)),
+        "CYLINDRICAL_SURFACE" => {
+            let radial = x * uv.x.clone().cos() + y * uv.x.clone().sin();
+            (
+                origin + radial.clone() * scalar(argument(file, id, 2)) + z * &uv.y,
+                radial,
+            )
+        }
+        "TOROIDAL_SURFACE" => {
+            let major = scalar(argument(file, id, 2));
+            let minor = scalar(argument(file, id, 3));
+            let radial = x * uv.x.clone().cos() + y * uv.x.clone().sin();
+            (
+                origin
+                    + radial.clone() * (major + &minor * uv.y.clone().cos())
+                    + z.clone() * minor * uv.y.clone().sin(),
+                radial * uv.y.clone().cos() + z * uv.y.clone().sin(),
+            )
+        }
+        other => panic!("unadmitted surface {other}"),
+    }
+}
+
+/// Checks each imported chart map against the independent source formula.
+pub fn source_maps(file: &StepFile<'_>, imported: &ImportedRepresentation) {
+    let length = &imported.units().length.scale_to_si;
+    for body in imported.bodies() {
+        for face in body.faces() {
+            let parameters = face.parameters;
+            assert_eq!(
+                reference(argument(file, face.source, 2)),
+                parameters.surface
+            );
+            for edge_use in face
+                .face
+                .outer()
+                .into_iter()
+                .chain(face.face.inner())
+                .flat_map(|w| w.edge_uses())
+            {
+                let pc = edge_use.pcurve();
+                let a = pc.domain_start().unwrap();
+                let b = pc.domain_end().unwrap();
+                let t = (a.try_real().unwrap() + b.try_real().unwrap()) * ratio(1, 2);
+                let im = pc.point_at(&t.into()).unwrap();
+                let uv = im.coordinates().unwrap();
+                let uv = Point2::new(uv.x().clone(), uv.y().clone());
+                let mut source = parameters.map(&uv);
+                if name(file, parameters.surface) != "PLANE" {
+                    let angle = &imported.units().plane_angle.as_ref().unwrap().scale_to_si;
+                    source.x *= angle;
+                    if name(file, parameters.surface) == "TOROIDAL_SURFACE" {
+                        source.y *= angle;
+                    }
+                }
+                let (point, mut normal) = surface_sample(file, parameters.surface, &source);
+                equal_point(
+                    &face.face.surface().point_at(&uv).unwrap(),
+                    &Point3::new(point.x * length, point.y * length, point.z * length),
+                );
+                let mut native = face.face.surface().normal_at(&uv).unwrap();
+                if argument(file, face.source, 3).kind() == ValueKind::Enumeration("F") {
+                    normal = -normal;
+                }
+                if face.face.orientation() == Orientation::Reversed {
+                    native = -native;
+                }
+                equal(&normal.cross(&native).norm_squared(), &Real::zero());
+                assert_eq!(
+                    compare_reals(&normal.dot(&native), &Real::zero(), STRICT_PREDICATES).value(),
+                    Some(Ordering::Greater)
+                );
+            }
+        }
+    }
+}
+
 /// Independently interprets the selected STEP carrier formulas and all topology.
 /// It does not call the geometry importer or use the writer's geometry views.
 pub fn graph(output: &AdvancedStep<'_>, scale: &Real) {
@@ -287,7 +393,6 @@ pub fn graph(output: &AdvancedStep<'_>, scale: &Real) {
                     .map(|w| body.wires().iter().find(|e| e.source == *w).unwrap().bound)
                     .collect::<Vec<_>>()
             );
-            let (origin, x, y, z) = frame(&file, reference(argument(&file, face.surface, 1)));
             for use_ in wires.iter().flat_map(|w| w.edge_uses()) {
                 let pcurve = use_.pcurve();
                 let a = pcurve.domain_start().unwrap();
@@ -299,39 +404,18 @@ pub fn graph(output: &AdvancedStep<'_>, scale: &Real) {
                 let native = face.source.surface().point_at(&uv).unwrap();
                 let native_uv = uv.clone();
                 let uv = face.parameters.map(&uv);
-                let encoded = match name(&file, face.surface) {
-                    "PLANE" => origin.clone() + x.clone() * &uv.x + y.clone() * &uv.y,
-                    "CYLINDRICAL_SURFACE" => {
-                        origin.clone()
-                            + (x.clone() * &uv.x.clone().cos() + y.clone() * &uv.x.clone().sin())
-                                * scalar(argument(&file, face.surface, 2))
-                            + z.clone() * &uv.y
-                    }
-                    "TOROIDAL_SURFACE" => {
-                        let major = scalar(argument(&file, face.surface, 2));
-                        let minor = scalar(argument(&file, face.surface, 3));
-                        origin.clone()
-                            + (x.clone() * uv.x.clone().cos() + y.clone() * uv.x.clone().sin())
-                                * (major + &minor * uv.y.clone().cos())
-                            + z.clone() * minor * uv.y.clone().sin()
-                    }
-                    other => panic!("unadmitted surface {other}"),
-                };
+                let (encoded, mut encoded_normal) = surface_sample(&file, face.surface, &uv);
                 equal_point(
                     &native,
                     &Point3::new(encoded.x * scale, encoded.y * scale, encoded.z * scale),
                 );
-                if face.source.surface().kind() == SurfaceKind::Extrusion {
+                if matches!(
+                    face.source.surface().kind(),
+                    SurfaceKind::Extrusion | SurfaceKind::Cone
+                ) {
                     // Independently compare oriented geometric normals, rather
                     // than assuming that changing charts preserves face sense.
                     let mut native_normal = face.source.surface().normal_at(&native_uv).unwrap();
-                    let mut encoded_normal = match name(&file, face.surface) {
-                        "PLANE" => x.cross(&y),
-                        "CYLINDRICAL_SURFACE" => {
-                            x.clone() * uv.x.clone().cos() + y.clone() * uv.x.sin()
-                        }
-                        _ => unreachable!(),
-                    };
                     if face.source.orientation() == Orientation::Reversed {
                         native_normal = -native_normal;
                     }

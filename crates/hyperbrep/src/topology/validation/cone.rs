@@ -97,7 +97,27 @@ impl ArenaModelBuilder {
             insert_sorted_real(&mut u_values, &u_max)?;
             insert_sorted_real(&mut v_values, &v_min)?;
             insert_sorted_real(&mut v_values, &v_max)?;
-            face_coordinates.push((u_min, u_max, v_min, v_max));
+            face_coordinates.push([u_min, u_max, v_min, v_max]);
+        }
+        // Independently authored charts can use different integral U lifts.
+        // Keep the original topology and maps; reduce only the coverage
+        // evidence when it cannot already fit in one common period.
+        if let (Some(first), Some(last)) = (u_values.first(), u_values.last())
+            && decided_model_order(compare_reals(
+                &(last - first),
+                &Real::tau(),
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Greater
+        {
+            let Some(rebased) = super::periodic_rectangles::rebase(&face_coordinates)? else {
+                return Ok(None);
+            };
+            face_coordinates = rebased;
+            u_values.clear();
+            for [u0, u1, _, _] in &face_coordinates {
+                insert_sorted_real(&mut u_values, u0)?;
+                insert_sorted_real(&mut u_values, u1)?;
+            }
         }
         let cap_groups = self.planar_face_groups(faces)?;
         if !matches!(cap_groups.len(), 2..=4)
@@ -130,7 +150,7 @@ impl ArenaModelBuilder {
             unreachable!("cone kind carries cone exact data");
         };
         let mut cells = HashSet::new();
-        for (u_min, u_max, face_v_min, face_v_max) in &face_coordinates {
+        for [u_min, u_max, face_v_min, face_v_max] in &face_coordinates {
             let u_start = exact_real_index(&u_values, u_min)?;
             let u_end = exact_real_index(&u_values, u_max)?;
             let v_start = exact_real_index(&v_values, face_v_min)?;
@@ -199,13 +219,13 @@ impl ArenaModelBuilder {
             }
             CertifiedConeFrustumRegion::LongitudinalHalf { interior_normal }
         } else {
-            if face_coordinates.len() < 4
-                || u_values.len() < 5
-                || !real_values_equal(
-                    &(u_values.last().expect("frustum u grid") - &u_values[0]),
-                    &Real::tau(),
-                )?
-                || cells.len() != (u_values.len() - 1) * (v_values.len() - 1)
+            // Full-period edges can bound one periodic side face. Completeness
+            // follows from the exact tau span and nonoverlapping rectangular
+            // cell coverage above, independently of the number of partitions.
+            if !real_values_equal(
+                &(u_values.last().expect("frustum u grid") - &u_values[0]),
+                &Real::tau(),
+            )? || cells.len() != (u_values.len() - 1) * (v_values.len() - 1)
             {
                 return Ok(None);
             }

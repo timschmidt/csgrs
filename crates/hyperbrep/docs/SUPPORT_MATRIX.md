@@ -891,5 +891,38 @@ witnesses to this finite domain. The original partition, native incidence
 capture, overlap trim and complete workflows are separate regressions. No
 topology epsilon, display chord, scalar formula in BREP or serialized proof
 privilege is introduced. General cone Boolean closure and standalone expanded
-coordinate queries remain open. Cone STEP still returns a typed unsupported
-surface diagnostic; native continuation does not establish exchange support.
+coordinate queries remain open. Conical LINE-revolution STEP support is
+qualified separately below; native continuation alone does not establish exchange support.
+
+## Exact conical LINE exchange
+
+`ConicalRevolution::from_line` retains and recognizes the exact source generator
+and unit axis. `ConeBranch` is relative to the apex parameter, independently of
+the sign of authored V. The chart maps source angle/line parameter to native
+angle/slant distance, exposes orientation, and proves point inversion away
+from the apex. Skew, parallel, perpendicular, off-carrier, singular and undecided
+inputs retain typed outcomes. `Surface::conical_geometry` borrows the native
+frame and semi-angle.
+
+HyperBRep IO reads and writes the selected `SURFACE_OF_REVOLUTION`/`LINE`/
+`AXIS1_PLACEMENT` subset, including supplied line pcurves and exact native-to-source
+face maps. Native recognition owns the proof; IO owns units, source IDs and
+encoding. A finite cap anchor can encode the original height-7 cone whose apex
+Z=35/3 is not a finite decimal. Neither angles nor split vertices are rounded.
+One periodic conical side face and independently lifted rectangular partitions
+pass native admission only with exact whole-edge images, closed orientation,
+cap agreement and complete single coverage.
+
+The [admission record](evidence/2026-10-17-cone-exchange/README.md) covers the
+original full-size 5-to-2 height-6 frustum, the exact (3/5,4/5)-rotated 40-unit
+cutter, halves, band/remainder, both reunion orders, recuts, empty recovery and
+cold archives. Further groups cover independent manual LINE inputs, source
+direction/parameter reversals, declared units, supplied pcurves, similarities,
+reflections and typed failures. The [public example](../../hyperbrep-io/examples/cone_step.rs)
+performs ten complete exchanges and subsequent native operations.
+
+Direct `CONICAL_SURFACE`, B-spline generators, arbitrary cone trims, apex-ending
+solids and broad revolution exchange remain open. Irrational subdivision
+vertices can be valid natively while unencodable in this exact STEP subset.
+Total-work/heap/cancellation admission, general Boolean closure and actual
+package/binding release remain separate gates.

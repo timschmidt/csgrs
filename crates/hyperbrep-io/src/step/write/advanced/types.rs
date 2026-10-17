@@ -36,6 +36,8 @@ pub struct WrittenAdvancedEdge<'a> {
 /// native parameters, including unwrapped circular angles and seam identities.
 /// Plane output coordinates are in the selected length unit; cylinder U is in
 /// radians and V is in that length unit. Both torus coordinates are in radians.
+/// A conical surface of revolution uses radians and the emitted unit-line
+/// parameter; its exact longitude/slant offsets remain in this map.
 /// This is encoding metadata, not a surface.
 #[derive(Clone, Debug)]
 pub struct WrittenSurfaceParameters {
@@ -60,7 +62,8 @@ pub struct WrittenAdvancedFace<'a> {
     pub source: FaceRef<'a>,
     /// Output ADVANCED_FACE ID.
     pub entity: u64,
-    /// Output PLANE, CYLINDRICAL_SURFACE or TOROIDAL_SURFACE ID.
+    /// Output PLANE, CYLINDRICAL_SURFACE, TOROIDAL_SURFACE or conical
+    /// SURFACE_OF_REVOLUTION ID.
     pub surface: u64,
     /// Native-to-output surface parameter map.
     pub parameters: WrittenSurfaceParameters,

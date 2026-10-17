@@ -2,10 +2,12 @@ use super::{
     Error, ErrorKind,
     decode::{Args, Resolver, Site, reference},
     error::{insert, push},
-    imported::{EdgeUseSource, ImportedBody, UseSource, VertexSource},
+    imported::{
+        EdgeUseSource, FaceSource, ImportedBody, SourceSurfaceParameters, UseSource, VertexSource,
+    },
 };
 use hyperbrep::{
-    Curve3, Direction, EdgeKey, FaceKey, ModelBuilder, Orientation, ParameterCorrespondence,
+    Curve3, Direction, EdgeKey, ModelBuilder, Orientation, ParameterCorrespondence,
     ParameterDomain, Pcurve, Point3, Real, VertexKey, WireKey,
 };
 use hypercurve::{Curve2, LineSeg2, Point2};
@@ -18,7 +20,7 @@ struct Builder {
     by_point: HashMap<(Rational, Rational, Rational), (usize, VertexKey)>,
     points: Vec<Point3>,
     vertices: Vec<(VertexSource, VertexKey)>,
-    faces: Vec<(u64, FaceKey)>,
+    faces: Vec<FaceSource>,
     loops: Vec<(u64, u64, WireKey)>,
     edge_uses: Vec<UseSource>,
     edges: HashMap<(usize, usize), EdgeKey>,
@@ -57,8 +59,8 @@ pub(super) fn body(
             return Err(site.invalid("duplicate shell face"));
         }
         let face = builder.face(resolver, face_id, scale)?;
-        push(&mut builder.faces, (face_id, face.clone())).map_err(|kind| site.error(kind))?;
-        push(&mut faces, face).map_err(|kind| site.error(kind))?;
+        push(&mut faces, face.key.clone()).map_err(|kind| site.error(kind))?;
+        push(&mut builder.faces, face).map_err(|kind| site.error(kind))?;
     }
     if faces.is_empty() {
         return Err(site.invalid("empty closed shell"));
@@ -142,12 +144,13 @@ impl Builder {
         resolver: &mut Resolver<'_, '_, '_>,
         id: u64,
         scale: &Real,
-    ) -> Result<FaceKey, Error> {
+    ) -> Result<FaceSource, Error> {
         let mut args = resolver.simple(id, "FACE_SURFACE")?;
         let site = args.site;
         resolver.text(args.next()?, site)?;
         let bounds = args.list()?;
-        let plane = resolver.plane(args.reference()?, scale)?;
+        let surface_id = args.reference()?;
+        let plane = resolver.plane(surface_id, scale)?;
         let orientation = if args.boolean()? {
             Orientation::Forward
         } else {
@@ -290,8 +293,20 @@ impl Builder {
             }
         }
         let outer = outer.ok_or_else(|| site.error(ErrorKind::Expected("one FACE_OUTER_BOUND")))?;
-        self.model
+        let key = self
+            .model
             .face(&surface, orientation, &outer, &holes)
-            .map_err(|e| site.error(ErrorKind::Build(e)))
+            .map_err(|e| site.error(ErrorKind::Build(e)))?;
+        let inverse = (Real::one() / scale).map_err(|e| site.error(ErrorKind::Numeric(e)))?;
+        Ok(FaceSource {
+            source: id,
+            key,
+            parameters: SourceSurfaceParameters {
+                surface: surface_id,
+                origin: hyperbrep::Point2::origin(),
+                u: hyperbrep::Vector2::x() * &inverse,
+                v: hyperbrep::Vector2::y() * inverse,
+            },
+        })
     }
 }

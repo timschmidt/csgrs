@@ -19,6 +19,7 @@ completeness and performance retain that priority order under
 | `interpreted_entities()` / `retained_entities()` | Sorted distinct interpreted IDs and source-order raw-retained IDs; disjoint and together covering every DATA instance. |
 | `ImportedBody::edge_uses()` | Bound/loop IDs, typed polygon-segment or oriented-edge source, directed source endpoint identities and native edge-use reference. |
 | `ImportedBody::explicit_edges()` | Explicit EDGE_CURVE identity, source geometry/master IDs, exact directed parameter maps for every supplied supported representation and native edge reference. |
+| `ImportedBody::faces()` | Source face and support IDs, bound native face and exact `SourceSurfaceParameters` affine map from native UV to the authored source chart. |
 | `write_faceted(bodies, options, context)` | All explicitly selected supported native solid occurrences as one AP214 common faceted representation/product, or a typed failure. |
 | `FacetedStep::bodies()` | Borrowed model-bound source-to-output mappings for every vertex, face, wire and directed edge use. |
 
@@ -165,7 +166,8 @@ independent. A conversion named `degree` uses its authored exact decimal factor;
 it never substitutes symbolic `pi/180`. Uncertainty metadata cannot make an
 off-carrier decimal vertex incident.
 
-Ellipses, analytic surfaces other than the ring tori described below, and spline exchange remain typed unsupported.
+Ellipses, analytic surfaces outside the torus/conical-revolution subsets described
+below, and spline exchange remain typed unsupported.
 The planar line/supplied-pcurve mapping above is unchanged. Every selected body
 must finish admission before any result is
 published; all source entities remain interpreted or raw-retained. The exact
@@ -194,6 +196,7 @@ parametric context. Supported basis combinations are:
 | Constant-height circle | LINE | CYLINDRICAL_SURFACE | U uses angle, V uses length |
 | Axial line | LINE | CYLINDRICAL_SURFACE | U uses angle, V uses length |
 | Torus latitude or meridian circle | LINE | TOROIDAL_SURFACE | Both U and V use angle, independently of length |
+| Cone latitude circle or generator line | LINE | SURFACE_OF_REVOLUTION of LINE | U uses angle; V is the original generator parameter, then mapped by the native conical chart |
 
 The pcurve vector is normalized in its authored parameter coordinates before
 the two basis scales are applied. Plane-circle placements normalize their 2D
@@ -220,8 +223,9 @@ decimal such as `6.283185307179586` is not exact `tau`; this encoding is rejecte
 even in an ambient approximate-policy scope. This increment provides those
 checks, not a successful finite-decimal exact seam fixture. Toroidal seam checks
 apply to either angular axis and require both pcurves to bound that same axis.
-Other seam surfaces,
-trimmed/spline pcurves and explicit approximation/healing remain open.
+Conical seams use the same exact 0/tau test in the authored angular chart before
+native chart reversal. Other seam surfaces, trimmed/spline pcurves and explicit
+approximation/healing remain open.
 
 Malformed supplied encodings now reach their referenced definitions: missing
 definition IDs report `MissingEntity`, rather than the former unsupported-family
@@ -364,11 +368,12 @@ retains its existing instrumented-work meaning.
 ## Exact native analytic export
 
 `write_advanced` accepts selected validated outer-shell solids on `Plane` and
-`Cylinder` and ring `Torus` carriers, plus exact linear extrusions of lines and circles swept
+`Cylinder`, `Cone` and ring `Torus` carriers, plus exact linear extrusions of lines and circles swept
 normal to their plane, with `Line` and `CircleArc` edges. It emits
 `ADVANCED_BREP_SHAPE_REPRESENTATION`, `MANIFOLD_SOLID_BREP`, `CLOSED_SHELL`,
 `ADVANCED_FACE`, explicit bounds/loops/oriented uses, `EDGE_CURVE`,
-`VERTEX_POINT`, `LINE`/`CIRCLE`, and `PLANE`/`CYLINDRICAL_SURFACE`/`TOROIDAL_SURFACE`.
+`VERTEX_POINT`, `LINE`/`CIRCLE`, and
+`PLANE`/`CYLINDRICAL_SURFACE`/`TOROIDAL_SURFACE`/conical `SURFACE_OF_REVOLUTION`.
 Topology follows model-bound identity: shared edges stay shared, closed circles
 reuse their single vertex, and two seam uses remain separate directed records.
 Coincident coordinates and repeated body occurrences do not weld identities.
@@ -466,6 +471,73 @@ independent surface/measure checks, source maps, repeated modeling, native repla
 malformed inputs and resource limits. The [example](../examples/torus_step.rs)
 demonstrates the public source workflow. These selected workflows do not close
 WP14a/b or establish package release readiness.
+
+## Conical line revolutions
+
+The selected conical encoding is `SURFACE_OF_REVOLUTION` with a `LINE` generator
+and `AXIS1_PLACEMENT`. Its source chart rotates `P+t*D` around `(C,a)` by U.
+U uses the context's angle unit; V is t in the referenced LINE's parameterization.
+This follows the [STEP surface-of-revolution definition](https://www.steptools.com/stds/smrl/data/resource_docs/geometric_and_topological_representation/sys/4_schema.htm#surface_of_revolution).
+Length conversion applies to P, C and D before native recognition. AXIS1's
+optional axis defaults to Z; supplied directions normalize exactly. LINE's
+VECTOR magnitude and oriented direction remain part of D, including negative source t.
+
+HyperBRep's `ConicalRevolution::from_line` owns the incidence proof. It requires
+nonzero radial and axial generator components and proves that the infinite
+line meets the axis exactly. Parallel, perpendicular and skew generators have
+typed reasons. A non-apex boundary vertex selects one branch relative to the
+apex parameter t0. No point sample proves a whole face: the ordinary native
+builder still checks every spatial edge/pcurve image, orientation, coverage,
+closed incidence and supported solid. Apex-only branch witnesses fail explicitly.
+
+For source axial coefficient c, speed n and branch sign b, native coordinates
+are `u_native = sign(b*c)*u_radians` and `v_native = b*n*(t-t0)`.
+Native cone V is nonnegative slant distance. The chart determinant has sign c,
+which participates in face orientation. Supplied line pcurves use this same
+native map; applying cylinder length-coordinate semantics to their V is wrong.
+Canonical point inversion selects one longitude, while connected loop assembly
+retains continuous periodic lifts and native whole-edge admission.
+
+`SourceFace::parameters` records the original support ID and native-to-source
+affine origin and basis vectors. It includes source angular units, source LINE
+offset/speed, reversed axis/generator charts and periodic lifts. Plane maps use
+inverse length units, cylinders use inverse angle/length units, and tori use
+inverse angle units on both coordinates. A map is not a finite-face membership
+certificate. It is immutable borrowed metadata scoped to the imported revision;
+native JSON does not persist the external STEP document/accounting object.
+
+One source revolution can describe both cone branches. Recognition is cached
+per body import, and native surface cache keys additionally include the branch.
+Successful proofs alone are cached. Units, source identity and strict policy
+are fixed by the import. A vertex-only branch prepass avoids recursive pcurve
+construction. Resolver visits remain charged, while actual loop assembly alone
+charges edge-use cardinality. Cardinalities do not bound total scalar work or
+retained heap; no new cancellation guarantee is introduced.
+
+The writer emits a unit-speed LINE generator and direct spatial boundary curves.
+It tries the native apex first, then certified finite boundary-height anchors
+and authored endpoints, checking decimal and direction representability before
+selection. This admits the radius-5 to radius-2, height-7 frustum even though
+its exact apex Z=35/3 is not a finite decimal. A chosen native anchor `(u0,v0)`
+maps to output `(u-u0, (v-v0)/metres_per_unit)`. Axis origin and generator origin
+describe the original carrier exactly; the angle is never approximated.
+Numeric/resource failures propagate and cannot trigger approximate fallback.
+
+The admitted workflow corpus includes whole frusta, rationally rotated
+complementary halves, an axial band and remainder, reunion in either order,
+repeated recuts, empty recovery, cold archives, similarities/reflections and
+independent manual LINE fixtures. Native validation also accepts one periodic
+conical side face and independently lifted rectangular partitions with exact
+single coverage. Exact irrational split vertices remain `NonRational` writer
+failures, with their original native geometry intact. Direct `CONICAL_SURFACE`,
+B-spline generators, arbitrary revolution/trim exchange, apex-ending solids,
+void shells and broader Boolean closure remain open.
+
+The [example](../examples/cone_step.rs) uses the public API. The
+[admission record](../../hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md)
+retains the original unsupported inputs as stronger successes, independent
+negative controls, source-map/formula checks and the full measured workflows.
+This finite extension does not close WP14a/b or the distribution gates.
 
 ## Remaining exchange work
 

@@ -1,7 +1,7 @@
 use super::ContextUnits;
 use hyperbrep::{
-    EdgeKey, EdgeRef, EdgeUseKey, EdgeUseRef, FaceKey, FaceRef, Model, Real, SolidKey, SolidRef,
-    VertexKey, VertexRef, WireKey,
+    EdgeKey, EdgeRef, EdgeUseKey, EdgeUseRef, FaceKey, FaceRef, Model, Point2, Real, SolidKey,
+    SolidRef, Vector2, VertexKey, VertexRef, WireKey,
 };
 
 /// The source identity authorizing a native vertex.
@@ -35,6 +35,39 @@ pub struct SourceFace<'a> {
     pub source: u64,
     /// Native face in this imported body.
     pub face: FaceRef<'a>,
+    /// Original support identity and complete native-to-source parameter map.
+    pub parameters: &'a SourceSurfaceParameters,
+}
+/// Exact affine map from a native surface chart to its authored STEP chart.
+///
+/// Angular coordinates use the source context's plane-angle unit. Plane
+/// coordinates and cylinder V use its length unit. A revolved LINE's V is the
+/// original line parameter, including its magnitude, sign and shifted origin.
+/// Periodic lifts are retained; this metadata neither clamps parameters nor
+/// asserts membership in the finite face.
+#[derive(Clone, Debug)]
+pub struct SourceSurfaceParameters {
+    /// Original support-surface entity ID. Different native cone branches may
+    /// share this ID while retaining different maps.
+    pub surface: u64,
+    /// Source UV corresponding to native (0, 0).
+    pub origin: Point2,
+    /// Source UV change for one native U unit.
+    pub u: Vector2,
+    /// Source UV change for one native V unit.
+    pub v: Vector2,
+}
+impl SourceSurfaceParameters {
+    /// Maps native parameters without rounding or periodic reduction.
+    pub fn map(&self, point: &Point2) -> Point2 {
+        self.origin.clone() + self.u.clone() * &point.x + self.v.clone() * &point.y
+    }
+}
+#[derive(Debug)]
+pub(super) struct FaceSource {
+    pub source: u64,
+    pub key: FaceKey,
+    pub parameters: SourceSurfaceParameters,
 }
 /// Source description of one directed boundary use.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -123,7 +156,7 @@ pub struct ImportedBody {
     pub(super) model: Model,
     pub(super) solid: SolidKey,
     pub(super) vertices: Vec<(VertexSource, VertexKey)>,
-    pub(super) faces: Vec<(u64, FaceKey)>,
+    pub(super) faces: Vec<FaceSource>,
     pub(super) loops: Vec<(u64, u64, WireKey)>,
     pub(super) edge_uses: Vec<UseSource>,
     pub(super) edges: Vec<EdgeSource>,
@@ -156,9 +189,10 @@ impl ImportedBody {
     }
     /// Source faces in shell order.
     pub fn faces(&self) -> impl ExactSizeIterator<Item = SourceFace<'_>> {
-        self.faces.iter().map(|(source, key)| SourceFace {
-            source: *source,
-            face: self.model.face(key).expect("published key"),
+        self.faces.iter().map(|item| SourceFace {
+            source: item.source,
+            face: self.model.face(&item.key).expect("published key"),
+            parameters: &item.parameters,
         })
     }
     /// Bound and loop source IDs with their native wire, including holes.

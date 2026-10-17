@@ -14,10 +14,12 @@ use crate::Parameter;
 use crate::error::{GeometryError, GeometryResult};
 
 mod analytic;
+mod conical_revolution;
 mod location;
 mod point;
 mod transform;
-pub use analytic::{CircularArcGeometry, CylinderGeometry, TorusGeometry};
+pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
+pub use conical_revolution::{ConeBranch, ConicalRevolution, ConicalRevolutionChart};
 use location::{
     locate_ellipse_arc_parameters, locate_line_parameter, locate_nurbs_parameters,
     locate_rational_bezier_parameters,
@@ -3094,7 +3096,11 @@ impl Surface {
         })
     }
 
-    /// Constructs a right circular cone with nonnegative radial-height `v`.
+    /// Constructs a right circular cone with nonnegative slant distance `v`.
+    ///
+    /// The exact parameterization is
+    /// `apex + v*(sin(semi_angle)*(x*cos(u) + y*sin(u)) + cos(semi_angle)*axis)`.
+    /// The apex at `v=0` is a parameter singularity.
     pub fn cone(
         apex: Point3,
         x: Vector3,

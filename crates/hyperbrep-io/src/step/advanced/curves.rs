@@ -137,7 +137,7 @@ impl Resolver<'_, '_, '_> {
         self.text(args.next()?, site)?;
         args.finish()
     }
-    fn line3(&mut self, id: u64, scale: &Real) -> Result<Line, Error> {
+    pub(super) fn line3(&mut self, id: u64, scale: &Real) -> Result<Line, Error> {
         let entity = self.entity(id)?;
         let site = Site::entity(entity);
         let record = entity.components().next().expect("syntax component");

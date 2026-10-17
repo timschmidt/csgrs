@@ -1,4 +1,5 @@
 //! Explicit native topology over the selected exact analytic STEP carriers.
+mod cone;
 mod geometry;
 mod types;
 
@@ -10,7 +11,7 @@ use super::{
 };
 use hyperbrep::{
     Curve3Kind, Direction, EdgeRef, EntityKind, FaceRef, GeometryError, Orientation, Point3, Real,
-    SurfaceRef, VertexRef, WireRef,
+    SurfaceKind, SurfaceRef, VertexRef, WireRef,
 };
 use std::collections::HashMap;
 pub use types::*;
@@ -318,7 +319,11 @@ impl<'a> Body<'a> {
         let (surface, parameters, reversed) = if let Some(value) = self.supports.get(&support) {
             value.clone()
         } else {
-            let value = geometry::surface(out, &support, scale)?;
+            let value = if support.kind() == SurfaceKind::Cone {
+                cone::surface(out, source, scale)?
+            } else {
+                geometry::surface(out, &support, scale)?
+            };
             self.supports
                 .try_reserve(1)
                 .map_err(|_| site.error(WriteErrorKind::Allocation))?;

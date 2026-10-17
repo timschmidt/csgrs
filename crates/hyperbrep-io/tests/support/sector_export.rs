@@ -1,5 +1,5 @@
-//! Torus sectors complete exchange; irrational bands and cones remain explicit.
-use hyperbrep::{Matrix4, OperationContext, SurfaceKind, WorkBudget, boolean, builder};
+//! Torus and cone sectors complete exchange; irrational torus bands stay typed.
+use hyperbrep::{Matrix4, OperationContext, WorkBudget, boolean, builder};
 use hyperbrep_io::step::{StepBody, StepWriteOptions, WriteErrorKind, write_advanced};
 #[allow(dead_code)]
 #[path = "torus_exchange.rs"]
@@ -25,7 +25,7 @@ pub fn failures_and_recovery() {
             ),
         ] {
             let replay = seam::reload(result.model());
-            if kind < 2 {
+            if kind != 3 {
                 let difference = name == "sector-difference";
                 let (volume, area) = sectors::expected(kind, difference);
                 let samples = sectors::samples(kind, usize::from(difference), &Matrix4::identity());
@@ -49,15 +49,10 @@ pub fn failures_and_recovery() {
             .result
             .unwrap()
             .unwrap_err();
-            let expected = if kind == 3 {
-                matches!(error.kind, WriteErrorKind::NonRational)
-            } else {
-                matches!(
-                    error.kind,
-                    WriteErrorKind::UnsupportedSurface(SurfaceKind::Cone)
-                )
-            };
-            assert!(expected, "{error:?}");
+            assert!(
+                matches!(error.kind, WriteErrorKind::NonRational),
+                "{error:?}"
+            );
             assert_eq!(error.body, Some(0));
             assert!(error.entity.is_some());
         }
