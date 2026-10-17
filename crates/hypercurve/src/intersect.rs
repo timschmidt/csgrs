@@ -2425,6 +2425,13 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let endpoint_parameter = &sine * &sine + &cosine * &cosine;
+        // Preserve the original identity as a newly certified proof case.
+        assert_eq!(
+            endpoint_parameter.exact_rational_normal_form(),
+            Some(hyperreal::Rational::one())
+        );
+        // A separate angle-addition identity retains the terminal-policy control.
+        let endpoint_parameter = Real::one() + crate::test_support::terminally_unresolved_zero();
         let arc = CircularArc2::try_from_center(
             Point2::from_values(1, 0),
             Point2::from_values(0, 1),
@@ -2466,6 +2473,13 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        // Preserve the original identity as a newly certified proof case.
+        assert_eq!(
+            unresolved_zero.exact_rational_normal_form(),
+            Some(hyperreal::Rational::zero())
+        );
+        // A separate angle-addition identity retains the terminal-policy control.
+        let unresolved_zero = crate::test_support::terminally_unresolved_zero();
         let first = Point2::new(Real::one(), unresolved_zero);
         let second = Point2::from_values(1, 0);
         assert_eq!(

@@ -200,6 +200,30 @@ fn actual_evidence_controls_certainty_across_policy_sequences() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let unknown = &sine * &sine + &cosine * &cosine - Real::one();
+    // The original boundary sample now has an exact zero proof. Keep the
+    // original grid as a certified invalid-boundary check in every policy.
+    let mut original_values = vec![Real::one(); 9];
+    original_values[0] = unknown;
+    let original_grid = MarchingSquaresGrid {
+        x: &axis,
+        y: &axis,
+        values: &original_values,
+    };
+    for policy in [
+        PredicatePolicy::STRICT,
+        PredicatePolicy::APPROXIMATE_512,
+        PredicatePolicy::STRICT,
+    ] {
+        let result = evaluate_under(policy, || marching_squares(&original_grid));
+        assert!(matches!(
+            result.certified().unwrap(),
+            Err(MarchingSquaresError::BoundaryNotExterior { sample: [0, 0] })
+        ));
+    }
+    // A separate angle-addition zero preserves the unresolved/terminal cases.
+    let unknown = (Real::e() + Real::one()).sin()
+        - Real::e().sin() * Real::one().cos()
+        - Real::e().cos() * Real::one().sin();
     let mut values = vec![Real::one(); 9];
     values[0] = unknown;
     let grid = MarchingSquaresGrid {

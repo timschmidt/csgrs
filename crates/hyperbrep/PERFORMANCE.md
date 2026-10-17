@@ -947,3 +947,48 @@ Measure repeated exact proof attempts against this complete feature baseline
 before changing scheduling or caching. A new proof attempt's contribution to
 any observed slowdown has not been isolated. Preserve every original input,
 successful receipt, invalid-input control and explicit unresolved outcome.
+
+
+## Exact rotated cone continuation (2026-10-17)
+
+The [admission record](docs/evidence/2026-10-17-cone-continuation/README.md)
+qualifies the original cone band and both complementary reconstruction orders,
+including two further native continuation cycles. This extends exact completion;
+it is not an optimization. The additional algebra attempt follows every previous
+successful proof path and may add work when earlier attempts are insufficient.
+
+All 172 existing completed main cases retain their receipts across eighteen corpora and 108 alternating processes. Three new complete cone workflows have absolute costs only. 0 existing timing rows exceed a 1.10 ratio, with maximum 1.053376; 18 rows increase allocation calls or requested bytes. The dependency supplement retains all 196 scalar/predicate/rounding cases in eighteen processes, including 0 ratios above 1.10 and maximum 1.073448.
+
+All existing main timing ratios above 1.10:
+
+| Case | Candidate/baseline median |
+| --- | ---: |
+| No rows above 1.10 | — |
+
+New complete-workflow absolute costs, including cold replay, exact measures,
+classification, topology, both further cycles and archive receipts:
+
+| Case | Seconds | Allocation calls | Requested bytes |
+| --- | ---: | ---: | ---: |
+| `sectors/rotated_cone_reconstruction_false` | 3.618879 | 25,411,660 | 1,647,315,954 |
+| `sectors/rotated_cone_reconstruction_true` | 3.184539 | 22,029,258 | 1,410,698,862 |
+| `sectors/rotated_cone_band` | 9.341455 | 74,202,224 | 4,608,022,429 |
+
+Requested bytes are cumulative allocator requests over each completed workload,
+not peak or retained memory. Process RSS and serialized archive sizes are
+recorded separately in the linked evidence.
+
+All dependency timing ratios above 1.10:
+
+| Case | Candidate/baseline median |
+| --- | ---: |
+| No rows above 1.10 | — |
+
+Every allocation, RSS and size row remains in the linked record, including
+increases. Sector process resources include three new cases; edge-image process
+resources include an extended untimed preflight; WASM adds nine groups. These
+are shared-host harness observations, not controlled-host speedups, package
+sizes or operation-wide resource bounds. A median of unrelated case ratios is
+not an aggregate speedup. Earlier adverse observations and open cost gates
+remain visible. Isolate repeated proof costs under this complete baseline before
+changing scheduling or caches; preserve exact receipts and failed controls.

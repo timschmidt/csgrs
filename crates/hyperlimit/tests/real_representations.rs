@@ -569,6 +569,25 @@ fn unresolved_opaque_terminal_form_respects_policy_boundary() {
         terminal_zero.detailed_facts().symbolic.kind,
         StructuralKind::ComputableOpaque
     );
+    // Preserve the original opaque representation and its newly certified zero.
+    for policy in [STRICT, APPROX, STRICT] {
+        assert!(matches!(
+            classify_real_sign(&terminal_zero, policy),
+            PredicateOutcome::Decided {
+                value: Sign::Zero,
+                certainty: hyperlimit::Certainty::Exact | hyperlimit::Certainty::Filtered,
+                ..
+            }
+        ));
+    }
+    // This independent exact angle-addition zero retains terminal-path coverage.
+    let terminal_zero = (Real::e() + Real::one()).sin()
+        - Real::e().sin() * Real::one().cos()
+        - Real::e().cos() * Real::one().sin();
+    assert_eq!(
+        terminal_zero.detailed_facts().symbolic.kind,
+        StructuralKind::ComputableOpaque
+    );
     assert!(matches!(
         classify_real_sign(&terminal_zero, STRICT),
         PredicateOutcome::Unknown { .. }

@@ -824,9 +824,10 @@ Four torus STEP attempts now reach exact scalar-encoding checks and return
 recovers. Those irrational boundary values are not rounded for exchange.
 
 The historical nine-fixture diagnostic retained cylinder, cone and torus
-continuation blockers. The current 81-slot rerun has 78 native results and three
-undecided cone continuations; see the
-[reviewed frontier](evidence/2026-10-17-curved-continuation/continuation-frontier.json).
+continuation blockers. The current 81-slot rerun has 81 native results; see the
+[reviewed frontier](evidence/2026-10-17-cone-continuation/continuation-frontier.json).
+The three formerly undecided cone workflows now have independent full-size
+analytic and repeated-composition acceptance.
 Both formerly exhausted rationally rotated torus union orders now complete
 and have independent repeated native composition tests.
 Its successful body counts are not independent set proofs. The two newly
@@ -871,4 +872,24 @@ repair the reproduced chart-boundary and endpoint-incidence failures. BREP's
 strict validation remains authoritative. The [admission record](evidence/2026-10-17-curved-continuation/README.md)
 retains every original failure, unchanged existing receipt, repeated-growth
 observation and adverse cost. This finite domain does not establish arbitrary
-torus Boolean closure, cone completion or whole-operation resource bounds.
+torus Boolean closure or whole-operation resource bounds. The later cone domain
+is documented separately below.
+
+
+## Rationally rotated cone continuation
+
+The radius-5 to radius-2, height-6 cone frustum and a 40-unit cutter rotated by
+exact (3/5,4/5) complete the axial band and complementary reconstruction in
+both operand orders. Each workflow runs two edge-split/archive-reload/recut/
+reunion/empty-recovery cycles. Exact independent volume and area, sixteen point
+expectations with 1/10^12 offsets, and paired edge incidence remain required on
+live and cold-replayed states.
+
+The [admission record](evidence/2026-10-17-cone-continuation/README.md) binds
+Hyperreal's shared exact relations and Hypercurve's retained circle/overlap
+witnesses to this finite domain. The original partition, native incidence
+capture, overlap trim and complete workflows are separate regressions. No
+topology epsilon, display chord, scalar formula in BREP or serialized proof
+privilege is introduced. General cone Boolean closure and standalone expanded
+coordinate queries remain open. Cone STEP still returns a typed unsupported
+surface diagnostic; native continuation does not establish exchange support.

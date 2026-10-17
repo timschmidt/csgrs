@@ -96,11 +96,41 @@ pub fn parameter_and_radius_failures() {
 }
 
 pub fn unresolved_is_not_success() {
-    // This exact zero is outside the current shared trigonometric proof
-    // frontier. Keep strict reuse separate from terminal-policy evaluation.
+    // The original fixture now has a unit-circle proof. Preserve its exact
+    // input and require certified success in every policy scope.
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let phase = &sine * &sine + &cosine * &cosine - Real::one();
+    let original = &sine * &sine + &cosine * &cosine - Real::one();
+    let gap = (Real::one() / Real::from(1_000_000_000_000_u64)).unwrap();
+    for sign in [-1, 0, 1] {
+        let candidate = cylinder(
+            Real::one(),
+            original.clone() + Real::from(sign) * &gap,
+            Real::tau(),
+        );
+        for policy in [
+            hypercurve::PredicatePolicy::STRICT,
+            hypercurve::PredicatePolicy::APPROXIMATE_512,
+            hypercurve::PredicatePolicy::STRICT,
+        ] {
+            let result = hypercurve::evaluate_under(policy, || candidate.check());
+            assert_eq!(
+                result.certified().unwrap(),
+                if sign == 0 {
+                    Ok(())
+                } else {
+                    Err(BuildError::EdgeUseSupportMismatch)
+                }
+            );
+        }
+    }
+
+    // Angle addition independently proves this second phase is zero. Its
+    // identity remains outside the shared exact frontier, so a validation
+    // failure must survive strict -> approximate -> strict reuse.
+    let phase = (Real::e() + Real::one()).sin()
+        - Real::e().sin() * Real::one().cos()
+        - Real::e().cos() * Real::one().sin();
     let candidate = cylinder(Real::one(), phase, Real::tau());
     for policy in [
         hypercurve::PredicatePolicy::STRICT,

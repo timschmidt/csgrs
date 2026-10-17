@@ -4481,6 +4481,13 @@ fn check_selected_fiber_rational_overlap(exact_center: bool) {
                         let sine = Real::e().sin();
                         let cosine = Real::e().cos();
                         let zero = &sine * &sine + &cosine * &cosine - Real::one();
+                        // Preserve the original identity as a newly certified proof case.
+                        assert_eq!(
+                            zero.exact_rational_normal_form(),
+                            Some(hyperreal::Rational::zero())
+                        );
+                        // A separate angle-addition identity retains the terminal-policy control.
+                        let zero = crate::test_support::terminally_unresolved_zero();
                         assert_eq!(real_sign(&zero, attempt), Some(RealSign::Zero));
                     }
                     circle
@@ -4717,6 +4724,13 @@ fn selected_fiber_rational_component_publishes_its_isolated_endpoint() {
                             let sine = Real::e().sin();
                             let cosine = Real::e().cos();
                             let zero = &sine * &sine + &cosine * &cosine - Real::one();
+                            // Preserve the original identity as a newly certified proof case.
+                            assert_eq!(
+                                zero.exact_rational_normal_form(),
+                                Some(hyperreal::Rational::zero())
+                            );
+                            // A separate angle-addition identity retains the terminal-policy control.
+                            let zero = crate::test_support::terminally_unresolved_zero();
                             assert_eq!(real_sign(&zero, attempt), Some(RealSign::Zero));
                         }
                         circle
@@ -4904,6 +4918,13 @@ fn selected_fiber_angle_query_observes_its_requested_policy() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    // Preserve the original identity as a newly certified proof case.
+    assert_eq!(
+        zero.exact_rational_normal_form(),
+        Some(hyperreal::Rational::zero())
+    );
+    // A separate angle-addition identity retains the terminal-policy control.
+    let zero = crate::test_support::terminally_unresolved_zero();
     let outcome =
         crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
             parameter.order_to_real(&zero, attempt).unwrap()
@@ -4992,6 +5013,13 @@ fn assert_mapped_angle_query_policy(parameter: &BezierAlgebraicCuspSemicirclePar
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    // Preserve the original identity as a newly certified proof case.
+    assert_eq!(
+        zero.exact_rational_normal_form(),
+        Some(hyperreal::Rational::zero())
+    );
+    // A separate angle-addition identity retains the terminal-policy control.
+    let zero = crate::test_support::terminally_unresolved_zero();
     // The bounded exact pass cannot certify this identity on the pinned
     // scalar stack. A terminal-enabled query may consume its zero decision,
     // but must not change a subsequent strict query's authority.
@@ -5348,6 +5376,13 @@ fn retained_chord_coordinate_and_linear_queries_observe_requested_policy() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let opaque_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    // Preserve the original identity as a newly certified proof case.
+    assert_eq!(
+        opaque_zero.exact_rational_normal_form(),
+        Some(hyperreal::Rational::zero())
+    );
+    // A separate angle-addition identity retains the terminal-policy control.
+    let opaque_zero = crate::test_support::terminally_unresolved_zero();
     for (axis, coordinate) in [(Axis2::X, Real::one()), (Axis2::Y, Real::zero())] {
         assert_eq!(
             point
@@ -5405,6 +5440,13 @@ fn retained_chord_derived_queries_match_exact_affine_oracles_and_requested_polic
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let opaque_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    // Preserve the original identity as a newly certified proof case.
+    assert_eq!(
+        opaque_zero.exact_rational_normal_form(),
+        Some(hyperreal::Rational::zero())
+    );
+    // A separate angle-addition identity retains the terminal-policy control.
+    let opaque_zero = crate::test_support::terminally_unresolved_zero();
     // P=(1,0), C=(0,0): C+r(P-C)+s*J(P-C)+T=(r+tx,s+ty).
     for (radial, perpendicular, tx, ty) in [(1_i8, 0_i8, 2_i8, 3_i8), (2, 3, 4, 5), (-2, 1, 0, -4)]
     {
@@ -5827,6 +5869,13 @@ fn mapped_circle_inverse_cache_retains_policy_without_strong_source_ownership() 
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    // Preserve the original identity as a newly certified proof case.
+    assert_eq!(
+        zero.exact_rational_normal_form(),
+        Some(hyperreal::Rational::zero())
+    );
+    // A separate angle-addition identity retains the terminal-policy control.
+    let zero = crate::test_support::terminally_unresolved_zero();
     for key in &keys {
         let retain_approximately = || {
             crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
@@ -5903,6 +5952,13 @@ fn mapped_circle_rational_cache_preserves_consumed_policy() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    // Preserve the original identity as a newly certified proof case.
+    assert_eq!(
+        zero.exact_rational_normal_form(),
+        Some(hyperreal::Rational::zero())
+    );
+    // A separate angle-addition identity retains the terminal-policy control.
+    let zero = crate::test_support::terminally_unresolved_zero();
     let constructed =
         crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
             assert_eq!(real_sign(&zero, attempt), Some(RealSign::Zero));
@@ -5974,6 +6030,13 @@ fn mapped_circle_diameter_cache_preserves_consumed_policy() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    // Preserve the original identity as a newly certified proof case.
+    assert_eq!(
+        zero.exact_rational_normal_form(),
+        Some(hyperreal::Rational::zero())
+    );
+    // A separate angle-addition identity retains the terminal-policy control.
+    let zero = crate::test_support::terminally_unresolved_zero();
     let constructed =
         crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
             assert_eq!(real_sign(&zero, attempt), Some(RealSign::Zero));
@@ -7296,6 +7359,13 @@ fn represented_circle_retained_point_incidence_observes_requested_policy() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let opaque_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    // Preserve the original identity as a newly certified proof case.
+    assert_eq!(
+        opaque_zero.exact_rational_normal_form(),
+        Some(hyperreal::Rational::zero())
+    );
+    // A separate angle-addition identity retains the terminal-policy control.
+    let opaque_zero = crate::test_support::terminally_unresolved_zero();
     let radius_squared = Real::one() + opaque_zero;
     for _ in 0..2 {
         let query = |policy: &CurveContext, force_strict| {
@@ -20133,6 +20203,13 @@ fn selected_circle_partition_coalescing_obeys_terminal_policy() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let terminal_delta = &sine * &sine + &cosine * &cosine - Real::one();
+    // Preserve the original identity as a newly certified proof case.
+    assert_eq!(
+        terminal_delta.exact_rational_normal_form(),
+        Some(hyperreal::Rational::zero())
+    );
+    // A separate angle-addition identity retains the terminal-policy control.
+    let terminal_delta = crate::test_support::terminally_unresolved_zero();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
@@ -47817,6 +47894,13 @@ fn selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact()
                     let sine = Real::e().sin();
                     let cosine = Real::e().cos();
                     let zero = &sine * &sine + &cosine * &cosine - Real::one();
+                    // Preserve the original identity as a newly certified proof case.
+                    assert_eq!(
+                        zero.exact_rational_normal_form(),
+                        Some(hyperreal::Rational::zero())
+                    );
+                    // A separate angle-addition identity retains the terminal-policy control.
+                    let zero = crate::test_support::terminally_unresolved_zero();
                     assert_eq!(real_sign(&zero, attempt), Some(RealSign::Zero));
                 }
                 circle

@@ -8,10 +8,17 @@ fn point(x: i64, y: i64, z: Real) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), z)
 }
 
-fn terminal_zero() -> Real {
+fn original_unit_circle_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     &sine * &sine + &cosine * &cosine - Real::one()
+}
+
+// Angle addition keeps the independently justified terminal-zero cases.
+fn terminal_zero() -> Real {
+    (Real::e() + Real::one()).sin()
+        - Real::e().sin() * Real::one().cos()
+        - Real::e().cos() * Real::one().sin()
 }
 
 #[test]
@@ -171,4 +178,57 @@ fn ray_through_an_exact_vertex_of_a_computable_triangle_is_a_certified_boundary_
         value.triangle_location,
         Some(hyperlimit::Triangle3Location::OnVertex)
     );
+}
+
+#[test]
+fn original_unit_circle_inputs_now_produce_certified_composite_reports() {
+    let a = point(0, 0, Real::zero());
+    let b = point(1, 0, Real::zero());
+    let c = point(0, 1, Real::zero());
+    let origin = point(0, 0, original_unit_circle_zero());
+    let direction = point(0, 0, Real::one());
+    let plane = Plane3::new(point(0, 0, Real::zero()), original_unit_circle_zero());
+    for policy in [
+        PredicatePolicy::STRICT,
+        PredicatePolicy::APPROXIMATE_512,
+        PredicatePolicy::STRICT,
+    ] {
+        let PredicateOutcome::Decided {
+            value: ray,
+            certainty: Certainty::Exact | Certainty::Filtered,
+            ..
+        } = classify_ray_triangle3_intersection_report(&origin, &direction, &a, &b, &c, policy)
+        else {
+            panic!("the original ray now has an exact unit-circle proof");
+        };
+        assert_eq!(
+            ray.relation,
+            hyperlimit::RayTriangleIntersection::BoundaryTouch
+        );
+        assert_eq!(
+            ray.triangle_location,
+            Some(hyperlimit::Triangle3Location::OnVertex)
+        );
+        assert_eq!(ray.parameter, Some(Real::zero()));
+        ray.validate_against_sources(&origin, &direction, &a, &b, &c, PredicatePolicy::STRICT)
+            .unwrap();
+        let PredicateOutcome::Decided {
+            value: halfspace,
+            certainty: Certainty::Exact | Certainty::Filtered,
+            ..
+        } = classify_halfspace_feasibility3(core::slice::from_ref(&plane), policy)
+        else {
+            panic!("the original halfspace now has an exact unit-circle proof");
+        };
+        assert!(halfspace.is_feasible());
+        assert!(matches!(
+            halfspace
+                .validate_against_planes(core::slice::from_ref(&plane), PredicatePolicy::STRICT),
+            PredicateOutcome::Decided {
+                value: true,
+                certainty: Certainty::Exact | Certainty::Filtered,
+                ..
+            }
+        ));
+    }
 }

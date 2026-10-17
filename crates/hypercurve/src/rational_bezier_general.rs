@@ -1374,6 +1374,7 @@ impl From<RationalQuadraticBezier2> for RationalBezier2 {
     }
 }
 
+mod circle_incidence;
 mod intersections;
 mod parameter_images;
 use parameter_images::*;
@@ -2628,6 +2629,12 @@ impl RationalBezier2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        if unit_covers_range
+            && let Some(incidence) =
+                self.retained_circle_incidence_on_unit_subrange(point, range, policy)?
+        {
+            return Ok(Classification::Decided(incidence));
         }
         if unit_covers_range && self.has_certified_injective_axis(policy) {
             for (parameter, endpoint) in [(Real::zero(), self.start()), (Real::one(), self.end())] {
@@ -6531,6 +6538,9 @@ fn from_homogeneous(
 }
 
 #[cfg(test)]
+mod circle_incidence_tests;
+
+#[cfg(test)]
 mod tests {
     #[test]
     fn implicit_conic_contacts_exclude_projective_poles() {
@@ -7820,6 +7830,13 @@ mod tests {
             let sine = Real::e().sin();
             let cosine = Real::e().cos();
             let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+            // Preserve the original identity as a newly certified proof case.
+            assert_eq!(
+                unresolved_zero.exact_rational_normal_form(),
+                Some(hyperreal::Rational::zero())
+            );
+            // A separate angle-addition identity retains the terminal-policy control.
+            let unresolved_zero = crate::test_support::terminally_unresolved_zero();
             let curve = RationalBezier2::try_new(
                 [Real::zero(), unresolved_zero, Real::one()]
                     .into_iter()

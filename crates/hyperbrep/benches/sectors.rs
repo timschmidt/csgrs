@@ -5,6 +5,9 @@
 mod acceptance;
 use acceptance::seam;
 #[allow(dead_code)]
+#[path = "../tests/support/cone_continuation.rs"]
+mod cone;
+#[allow(dead_code)]
 #[path = "../tests/support/rotated_reconstruction.rs"]
 mod reconstruction;
 use std::alloc::{GlobalAlloc, Layout, System};
@@ -93,4 +96,13 @@ fn main() {
             || reconstruction::workflow(swapped),
         );
     }
+    for swapped in [false, true] {
+        measure(
+            &format!("sectors/rotated_cone_reconstruction_{swapped}"),
+            1,
+            "certified",
+            || cone::reconstruction(swapped),
+        );
+    }
+    measure("sectors/rotated_cone_band", 1, "certified", cone::band);
 }

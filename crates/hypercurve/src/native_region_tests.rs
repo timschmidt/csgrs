@@ -878,6 +878,13 @@ fn unordered_native_arrangement_obeys_the_approximate_512_terminal() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    // Preserve the original identity as a newly certified proof case.
+    assert_eq!(
+        unresolved_zero.exact_rational_normal_form(),
+        Some(hyperreal::Rational::zero())
+    );
+    // A separate angle-addition identity retains the terminal-policy control.
+    let unresolved_zero = crate::test_support::terminally_unresolved_zero();
     let first_sum = sine;
     let second_sum = first_sum.clone() + unresolved_zero;
     let lines = vec![
@@ -1279,6 +1286,13 @@ fn approximate_region_bounds_order_approximately_coincident_representations() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let height = &sine * &sine + &cosine * &cosine - Real::one();
+    // Preserve the original identity as a newly certified proof case.
+    assert_eq!(
+        height.exact_rational_normal_form(),
+        Some(hyperreal::Rational::zero())
+    );
+    // A separate angle-addition identity retains the terminal-policy control.
+    let height = crate::test_support::terminally_unresolved_zero();
     let diamond = region(
         vec![
             Contour2::from_bulge_vertices(&[

@@ -570,6 +570,49 @@ impl PiAcosLinearForm {
 }
 
 impl PiAtanLinearForm {
+    fn quarter_turn_parts(self) -> Option<(bool, Sign, Sign, Computable)> {
+        if self.constant.sign() != Sign::NoSign
+            || (!self.atan.is_one() && !self.atan.is_minus_one())
+        {
+            return None;
+        }
+        // Keep the integer-pi path free of a new rational scaling step. Odd multiples
+        // of pi/2 exchange the sine and cosine numerators; their signs follow
+        // the exact quarter-turn rotation, without refining either angle.
+        let Some(multiple) = self.pi.integer_magnitude() else {
+            let doubled = &self.pi * Rational::new(2);
+            let quarter_turns = doubled.integer_magnitude()?;
+            let sine_sign = if quarter_turns.bit(1) ^ (self.pi.sign() == Sign::Minus) {
+                Sign::Minus
+            } else {
+                Sign::Plus
+            };
+            let cosine_sign = if self.atan.is_minus_one() {
+                sine_sign
+            } else if sine_sign == Sign::Plus {
+                Sign::Minus
+            } else {
+                Sign::Plus
+            };
+            return Some((true, sine_sign, cosine_sign, self.argument?));
+        };
+        let cosine_sign = if multiple.bit(0) {
+            Sign::Minus
+        } else {
+            Sign::Plus
+        };
+        let sine_sign = if self.atan.is_minus_one() {
+            match cosine_sign {
+                Sign::Plus => Sign::Minus,
+                Sign::Minus => Sign::Plus,
+                Sign::NoSign => unreachable!("integer-pi parity has a nonzero orientation"),
+            }
+        } else {
+            cosine_sign
+        };
+        Some((false, sine_sign, cosine_sign, self.argument?))
+    }
+
     fn scaled(mut self, scale: Rational) -> Self {
         self.constant *= &scale;
         self.pi *= &scale;
@@ -920,46 +963,7 @@ impl Computable {
     ) -> Option<(bool, Sign, Sign, Computable)> {
         let form = self.pi_atan_linear_form(64)
             .or_else(|| self.pi_atan_laurent_form(64))?;
-        if form.constant.sign() != Sign::NoSign
-            || (!form.atan.is_one() && !form.atan.is_minus_one())
-        {
-            return None;
-        }
-        // Keep the integer-pi path free of a new rational scaling step. Odd multiples
-        // of pi/2 exchange the sine and cosine numerators; their signs follow
-        // the exact quarter-turn rotation, without refining either angle.
-        let Some(multiple) = form.pi.integer_magnitude() else {
-            let doubled = &form.pi * Rational::new(2);
-            let quarter_turns = doubled.integer_magnitude()?;
-            let sine_sign = if quarter_turns.bit(1) ^ (form.pi.sign() == Sign::Minus) {
-                Sign::Minus
-            } else {
-                Sign::Plus
-            };
-            let cosine_sign = if form.atan.is_minus_one() {
-                sine_sign
-            } else if sine_sign == Sign::Plus {
-                Sign::Minus
-            } else {
-                Sign::Plus
-            };
-            return Some((true, sine_sign, cosine_sign, form.argument?));
-        };
-        let cosine_sign = if multiple.bit(0) {
-            Sign::Minus
-        } else {
-            Sign::Plus
-        };
-        let sine_sign = if form.atan.is_minus_one() {
-            match cosine_sign {
-                Sign::Plus => Sign::Minus,
-                Sign::Minus => Sign::Plus,
-                Sign::NoSign => unreachable!("integer-pi parity has a nonzero orientation"),
-            }
-        } else {
-            cosine_sign
-        };
-        Some((false, sine_sign, cosine_sign, form.argument?))
+        form.quarter_turn_parts()
     }
 
     /// Exact diagonal rotations `k*pi/4 +/- atan(x)`, for odd integer k.

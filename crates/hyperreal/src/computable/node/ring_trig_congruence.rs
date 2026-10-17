@@ -8,9 +8,32 @@ impl<'a> RingRecognition<'a> {
         argument: &'a Computable,
         depth: usize,
     ) -> Option<RingPolynomial> {
+        if depth == 0 {
+            return None;
+        }
+        // Only the later relation attempt populates this positive cache.
+        // A structurally identical function has the already admitted argument
+        // and domain; cold serialization need not preserve pointer sharing.
+        for index in 0..self.rational_trig_values.len() {
+            self.charge()?;
+            let (known, rational) = &self.rational_trig_values[index];
+            if Computable::internal_structural_eq(known, value) {
+                return Self::constant(rational.clone());
+            }
+        }
         // Admit the argument before matching its function value. In particular,
         // an invalid or unproved inverse cannot disappear through congruence.
         let argument = self.expand_quotient(argument, depth)?;
+        if self.rational_squares.is_some()
+            && let Some(rational) = self.rational_trig_projection(value, &argument)
+        {
+            self.additional_relation_used = true;
+            if self.rational_trig_values.len() < Self::MAX_ATOMS {
+                self.charge()?;
+                self.rational_trig_values.push((value, rational.clone()));
+            }
+            return Self::constant(rational);
+        }
         for index in 0..self.atoms.len() {
             self.charge()?;
             if !matches!(
@@ -53,6 +76,9 @@ impl<'a> RingRecognition<'a> {
         let index = self.atoms.len() as u8;
         self.atoms.push(value);
         self.trig_arguments.as_mut()?.push((index, argument));
+        if self.rational_squares.is_some() {
+            self.register_unit_circle_pair(index)?;
+        }
         Some(RingPolynomial {
             terms: vec![(vec![index], Rational::one())],
         })

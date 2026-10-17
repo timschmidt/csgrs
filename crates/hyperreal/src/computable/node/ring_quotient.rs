@@ -102,6 +102,18 @@ impl<'a> RingRecognition<'a> {
     }
 
     fn project_quotient(&mut self, value: &RingQuotient) -> Option<Rational> {
+        if !self.unit_circle_pairs.is_empty() {
+            let numerator = self.reduce_unit_circle_pairs(value.numerator.clone())?;
+            let denominator = match &value.denominator {
+                Some(denominator) => Some(self.reduce_unit_circle_pairs(denominator.clone())?),
+                None => None,
+            };
+            return self.project_reduced_quotient(&RingQuotient::new(numerator, denominator));
+        }
+        self.project_reduced_quotient(value)
+    }
+
+    fn project_reduced_quotient(&mut self, value: &RingQuotient) -> Option<Rational> {
         self.charge()?;
         if value.numerator.terms.is_empty() {
             return Some(Rational::zero());

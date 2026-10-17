@@ -2249,12 +2249,20 @@ extends both exhausted torus union orders through two complete split/reload/
 recut/reunion/empty-recovery cycles with independent exact measures and point
 expectations. Its certified rounding and function-congruence proofs belong in
 Hyperreal; BREP keeps strict incidence and archive validation. The 81-slot
-inventory now has 78 native results and three undecided cone continuations.
-These diagnostic counts do not replace independent semantic acceptance.
-Preserve all 172 completed BREP/curve/STEP benchmark cases and every historical
-adverse cost row. Investigate the [retained cone scalar blocker](evidence/2026-10-17-curved-continuation/next-cone-proof.md)
-through the existing scalar algebra authority, then requalify its full native
-composition. The independent cone identity is not production support.
+inventory now has 81 native results after the [cone continuation increment](evidence/2026-10-17-cone-continuation/README.md).
+Its three formerly undecided cone workflows also have independent full-size
+analytic measures, near-boundary classification and two complete continuation
+cycles. These diagnostic counts do not replace semantic acceptance.
+Hyperreal owns the shared root/reciprocal/trigonometric proofs; Hypercurve owns
+retained circular incidence and paired overlap endpoint images. The stronger
+proofs require an explicit uncertainty-fixture migration, retaining the old
+identity inputs as positive checks and separate terminal-policy controls.
+Preserve all 175 completed BREP/curve/STEP benchmark cases and every historical
+adverse row. General expanded-coordinate queries remain an open domain; do not
+discard an available endpoint witness and demand that scalar algebra recreate
+it. Next qualify exact cone STEP parameter correspondence and encoding against
+the [updated feasibility note](evidence/2026-10-17-cone-continuation/future-cone-step.md), keeping native slant-distance semantics distinct
+from exchange chart units. Do not credit native completion as exchange support.
 
 Supporting changes in surrounding crates are permitted when a HyperBRep
 feature requires them. Preserve crate boundaries: implement the invariant in

@@ -556,6 +556,14 @@ archive-reload, recut and empty-recovery cycles, checking exact measures,
 paired incidence and near-boundary points. Shared scalar rounding and
 function-congruence proofs preserve the cold replay contract; see the
 [continuation record](docs/evidence/2026-10-17-curved-continuation/README.md).
+Rationally rotated cone-frustum cuts also complete the axial-band workflow
+and complementary reconstruction in both operand orders. Each runs two further
+split/reload/recut/reunion/empty-recovery cycles with independent exact measures,
+paired incidence and near-boundary classification. Hyperreal supplies the shared
+root and trigonometric proofs; Hypercurve retains the circular chart and paired
+overlap endpoint evidence. The [cone continuation record](docs/evidence/2026-10-17-cone-continuation/README.md)
+states this finite domain, explicit uncertainty-fixture migration and remaining
+exchange/resource limits.
 
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.

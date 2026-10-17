@@ -1747,6 +1747,13 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        // Preserve the original identity as a newly certified proof case.
+        assert_eq!(
+            unresolved_zero.exact_rational_normal_form(),
+            Some(hyperreal::Rational::zero())
+        );
+        // A separate angle-addition identity retains the terminal-policy control.
+        let unresolved_zero = crate::test_support::terminally_unresolved_zero();
         let end = start.clone() + unresolved_zero;
         (start, end)
     }
