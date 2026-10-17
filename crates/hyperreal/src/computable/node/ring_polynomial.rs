@@ -21,6 +21,10 @@ struct RingRecognition<'a> {
     // Earlier polynomial/quotient attempts keep their original arithmetic.
     root_squares: bool,
     root_square_used: bool,
+    // Present only in the later function-congruence attempt. Argument
+    // projections share this attempt's atoms, budgets and lifetime.
+    trig_arguments: Option<Vec<(u8, RingQuotient)>>,
+    trig_congruence_used: bool,
 }
 
 impl<'a> RingRecognition<'a> {
@@ -41,6 +45,8 @@ impl<'a> RingRecognition<'a> {
             signal: &value.signal,
             root_squares: false,
             root_square_used: false,
+            trig_arguments: None,
+            trig_congruence_used: false,
         }
     }
 
@@ -260,7 +266,12 @@ impl<'a> RingRecognition<'a> {
                 }
                 Some(sum)
             }
-            // Roots, transcendental functions and opaque inverses retain
+            Approximation::PrescaledSin(argument) | Approximation::PrescaledCos(argument)
+                if self.trig_arguments.is_some() =>
+            {
+                self.trig_atom(value, argument, depth - 1)
+            }
+            // Roots, other transcendental functions and opaque inverses retain
             // their identity. No algebraic independence is assumed: a zero
             // polynomial is zero for any valid real values of its atoms.
             _ => self.atom(value),

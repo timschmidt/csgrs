@@ -334,6 +334,8 @@ impl Real {
 
     /// Certified floor as an integer.
     ///
+    /// After ordinary bounded comparisons, an exact rational normal form can
+    /// certify an otherwise unresolved integer boundary using the same value.
     /// Returns [`Problem::Exhausted`] when bounded exact-real refinement cannot
     /// certify the integer boundary.
     pub fn floor_certified(&self) -> Result<BigInt, Problem> {
@@ -349,6 +351,12 @@ impl Real {
             if let Some(floor) = self.certified_floor_candidate(&candidate) {
                 return Ok(floor);
             }
+        }
+        // Refinement may expose exact facts needed by symbolic normalization.
+        // A failed comparison is not a proof that the rational form is absent.
+        if let Some(rational) = self.exact_rational_normal_form() {
+            crate::trace_dispatch!("real", "integer-rounding", "floor-rational-normal-form");
+            return Ok(Self::exact_rational_floor(&rational));
         }
         Err(Problem::Exhausted)
     }
@@ -366,7 +374,11 @@ impl Real {
         match self.certified_eq_until(&floor_real, Self::CERTIFIED_INTEGER_COMPARE_TOLERANCE) {
             CertifiedRealEquality::Equal { .. } => Ok(floor),
             CertifiedRealEquality::NotEqual { .. } => Ok(floor + 1),
-            CertifiedRealEquality::Unknown { .. } => Err(Problem::Exhausted),
+            CertifiedRealEquality::Unknown { .. } => {
+                let rational = self.exact_rational_normal_form().ok_or(Problem::Exhausted)?;
+                crate::trace_dispatch!("real", "integer-rounding", "ceil-rational-normal-form");
+                Ok(Self::exact_rational_ceil(&rational))
+            }
         }
     }
 

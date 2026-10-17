@@ -550,6 +550,12 @@ named whole/half/quarter and rational-band corpus. Both angular coordinates,
 periodic lifts, source maps and strict failures remain explicit; cone STEP and
 general Boolean closure remain open. See the
 [torus exchange admission record](docs/evidence/2026-10-16-torus-exchange/README.md).
+Rationally rotated complementary torus cuts also reconstruct in both operand
+orders. The full-size acceptance workflows continue through two edge-split,
+archive-reload, recut and empty-recovery cycles, checking exact measures,
+paired incidence and near-boundary points. Shared scalar rounding and
+function-congruence proofs preserve the cold replay contract; see the
+[continuation record](docs/evidence/2026-10-17-curved-continuation/README.md).
 
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.

@@ -2244,9 +2244,17 @@ The torus increment also improves two original rational-sector diagnostics;
 independent native probes check both through split/replay, recut and empty
 recovery. Preserve the [two-slot review](evidence/2026-10-16-torus-exchange/frontier-migration.json),
 including its unresolved direct torus measure comparison and exact normalized
-oracle. The 81-slot inventory now has 76 native results, three undecided cone
-continuations and two exhausted torus reconstructions. These diagnostic counts
-do not replace independent semantic acceptance of each workflow.
+oracle. The [rotated reconstruction increment](evidence/2026-10-17-curved-continuation/README.md)
+extends both exhausted torus union orders through two complete split/reload/
+recut/reunion/empty-recovery cycles with independent exact measures and point
+expectations. Its certified rounding and function-congruence proofs belong in
+Hyperreal; BREP keeps strict incidence and archive validation. The 81-slot
+inventory now has 78 native results and three undecided cone continuations.
+These diagnostic counts do not replace independent semantic acceptance.
+Preserve all 172 completed BREP/curve/STEP benchmark cases and every historical
+adverse cost row. Investigate the [retained cone scalar blocker](evidence/2026-10-17-curved-continuation/next-cone-proof.md)
+through the existing scalar algebra authority, then requalify its full native
+composition. The independent cone identity is not production support.
 
 Supporting changes in surrounding crates are permitted when a HyperBRep
 feature requires them. Preserve crate boundaries: implement the invariant in

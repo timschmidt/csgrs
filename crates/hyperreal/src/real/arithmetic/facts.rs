@@ -108,6 +108,10 @@ impl Real {
     /// reduce pairs of the built-in `sqrt(2)` and `sqrt(3)` atoms to 2 and 3.
     /// Other atoms remain opaque. Every scan and coefficient reduction consumes
     /// work; inverse-domain obligations and cancellation remain enforced.
+    /// Finally, a separate attempt with the same limits may identify sine or
+    /// cosine values whose arguments have equal admitted quotient forms. Nested
+    /// argument proofs share the remaining budgets and enforce inverse domains;
+    /// different functions and unresolved argument equalities remain distinct.
     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
         if let Some(rational) = self.exact_rational() {
             return Some(rational);
@@ -117,7 +121,8 @@ impl Real {
             .bounded_laurent_rational(64)
             .or_else(|| computable.bounded_ring_rational())
             .or_else(|| computable.bounded_quotient_rational())
-            .or_else(|| computable.bounded_root_square_rational())?;
+            .or_else(|| computable.bounded_root_square_rational())
+            .or_else(|| computable.bounded_trig_congruence_rational())?;
         Some(rational * &self.rational)
     }
 

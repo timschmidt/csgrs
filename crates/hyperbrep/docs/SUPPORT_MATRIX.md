@@ -824,9 +824,11 @@ Four torus STEP attempts now reach exact scalar-encoding checks and return
 recovers. Those irrational boundary values are not rounded for exchange.
 
 The historical nine-fixture diagnostic retained cylinder, cone and torus
-continuation blockers. The current 81-slot rerun has 76 native results, three
-undecided cone continuations and two exhausted torus reconstructions; see the
-[reviewed frontier](evidence/2026-10-16-torus-exchange/continuation-frontier.json).
+continuation blockers. The current 81-slot rerun has 78 native results and three
+undecided cone continuations; see the
+[reviewed frontier](evidence/2026-10-17-curved-continuation/continuation-frontier.json).
+Both formerly exhausted rationally rotated torus union orders now complete
+and have independent repeated native composition tests.
 Its successful body counts are not independent set proofs. The two newly
 completed rational-sector slots have separate full-size exact composition probes.
 General oblique closure, further torus/cone STEP domains, complete provenance/resource admission
@@ -853,3 +855,20 @@ The necessary shared scalar inverse-angle certificate and retained native
 contact/image facts have separate baseline regressions; neither changes policy
 nor promotes approximate data. This domain does not establish arbitrary torus
 Booleans, general STEP conformance or release/resource admission.
+
+
+## Rationally rotated torus reconstruction
+
+The original R=5,r=2 torus and 40-unit cutter rotated by exact (3/5,4/5)
+produce complementary halves that reconstruct in both union orders, including
+from separately reloaded operands. Two further edge-split/reload/recut/
+remainder/reunion/empty-recovery cycles retain independent exact volume/area,
+paired incidence and fifteen point expectations with 1/10^12 boundary offsets.
+Cold replay occurs before live-object semantic queries.
+
+Shared Hyperreal certified rounding and bounded same-function congruence
+repair the reproduced chart-boundary and endpoint-incidence failures. BREP's
+strict validation remains authoritative. The [admission record](evidence/2026-10-17-curved-continuation/README.md)
+retains every original failure, unchanged existing receipt, repeated-growth
+observation and adverse cost. This finite domain does not establish arbitrary
+torus Boolean closure, cone completion or whole-operation resource bounds.

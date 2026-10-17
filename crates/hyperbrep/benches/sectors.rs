@@ -3,6 +3,10 @@
 #[allow(dead_code)]
 #[path = "../tests/support/sectors.rs"]
 mod acceptance;
+use acceptance::seam;
+#[allow(dead_code)]
+#[path = "../tests/support/rotated_reconstruction.rs"]
+mod reconstruction;
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::hint::black_box;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -81,4 +85,12 @@ fn main() {
         "certified",
         acceptance::annular_partition,
     );
+    for swapped in [false, true] {
+        measure(
+            &format!("sectors/rotated_torus_reconstruction_{swapped}"),
+            1,
+            "certified",
+            || reconstruction::workflow(swapped),
+        );
+    }
 }

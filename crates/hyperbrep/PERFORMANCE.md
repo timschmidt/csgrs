@@ -896,3 +896,54 @@ Native harness size changes range from 6,880 to 65,176 bytes. The WASM harness c
 The separate dependency microcost supplement records 175 cases in 12 processes, with 5 median ratios above 1.10 and maximum 1.452677. Its scalar baseline was reconstructed after the blocker was discovered; it was not frozen prospectively. Criterion alone supplies no geometric completion or allocation receipt. The four complete dependency library suites preserve all 3,514 named outcomes (3,508 passed, six ignored); the separately reproduced inherited zero-factor debug failures remain.
 
 The [follow-up experiment](docs/evidence/2026-10-16-torus-exchange/future-angle-costs.md) targets repeated proof work while preserving every successful workflow. No individual helper's contribution has yet been isolated. Prior archive, spline, cached-arc, pcurve, provenance and prism cost observations remain open. All broader work-package, resource and delivery gates remain open.
+
+
+## Exact rotated reconstruction (2026-10-17)
+
+The [source-bound record](docs/evidence/2026-10-17-curved-continuation/README.md)
+qualifies two formerly exhausted full-size torus reconstructions and their
+repeated native composition. This is an exact-completion extension, not an
+optimization. Existing successful proof paths remain first; later exact
+rounding and function-congruence attempts may add work.
+
+The complete 108-process campaign preserves all 170 existing receipts across eighteen corpora; two new completed reconstruction workflows have separate absolute costs. 8 existing timing rows exceed 1.10, with maximum ratio 1.261011; 30 rows increase allocation calls or requested bytes. The dependency supplement retains all 196 scalar/predicate/rounding cases across eighteen processes, with 1 ratio above 1.10 and maximum 1.108295.
+
+All main timing ratios above 1.10:
+
+| Case | Candidate/baseline median |
+| --- | ---: |
+| `circles/circles/closed_fresh_document` | 1.219381 |
+| `circles/circles/closed_reused_document` | 1.261011 |
+| `circles/circles/partial_fresh_document` | 1.248502 |
+| `circles/circles/partial_reused_document` | 1.249149 |
+| `circles/circles/edits_replay_composition` | 1.167773 |
+| `kernel/spline_kernel/rational_bilinear_tensor_plane_complete_containment` | 1.149944 |
+| `kernel/boolean_kernel/sphere_planar_conic_trim_graph` | 1.115818 |
+| `oblique/oblique/millimetre_reflection` | 1.102625 |
+
+New complete-workflow absolute medians, including cold replay, exact measures,
+classification, topology, two further cycles and full archive receipts:
+
+| Case | Seconds | Allocation calls | Requested bytes |
+| --- | ---: | ---: | ---: |
+| `sectors/rotated_torus_reconstruction_false` | 13.705385 | 97,057,293 | 7,332,676,263 |
+| `sectors/rotated_torus_reconstruction_true` | 14.514327 | 103,895,846 | 7,763,426,189 |
+
+All dependency microcost ratios above 1.10:
+
+| Case | Candidate/baseline median |
+| --- | ---: |
+| `scalar_micro/symbolic_reductions/div_pi_square_e` | 1.108295 |
+
+All raw samples and adverse allocation, RSS and size observations remain in
+the record. All prospective frozen baselines have matching library features
+and profiles. Sector whole-process resources/size include two additional
+workflows, and WASM adds four groups. These are harness observations, not
+package sizes, controlled-host performance or total-resource bounds. Earlier
+cost gates remain open; later favorable rows do not discharge them.
+
+Follow the [proof-cost investigation](docs/evidence/2026-10-17-curved-continuation/future-proof-costs.md).
+Measure repeated exact proof attempts against this complete feature baseline
+before changing scheduling or caching. A new proof attempt's contribution to
+any observed slowdown has not been isolated. Preserve every original input,
+successful receipt, invalid-input control and explicit unresolved outcome.
