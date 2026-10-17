@@ -154,6 +154,20 @@ measurement blocker remains an independent open case. A local strict decision
 does not certify an earlier approximate source's intent; full source-qualification
 delivery and general persistent-curve measurement remain separate obligations.
 
+The [axial intersection prerequisite](evidence/2026-10-17-partial-prism/README.md) retains native
+plane/cylinder line correspondence through authored periodic charts, exact
+boundary contacts and both partition/selection stages. Coplanar convex cap
+subdivisions now cold-replay, classify and compose; profile extraction uses the
+complete cap cover, and projected circles retain their angular parameter map.
+Touching/disjoint tool differences complete native and transformed STEP
+continuations. The three original genuine partial-depth differences and the
+covering reversed difference still lack a certified result shell. Implement
+the [remaining shell proof](evidence/2026-10-17-partial-prism/shell-proof-design.md) next, preserving
+all original full-size cases and exact thin layers. Positive volume, completed
+selection or a list of overlapping slab bodies cannot substitute for complete
+embedded-shell admission. Keep all current completed workflows and adverse
+costs while extending that domain.
+
 Upstream mesh containment now validates closed PWN input before shortcuts and
 tests strict interior of the regularized nonzero-winding set. Multiplicity,
 canceling sheets and internal source faces follow the represented material,

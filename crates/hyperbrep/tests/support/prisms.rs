@@ -508,33 +508,46 @@ pub fn annular_cut() -> u64 {
 
 /// Partial-height slabs must not be silently treated as through cuts.
 pub fn slab_boundaries() {
-    use hyperbrep::BooleanError;
+    use hyperbrep::{BooleanError, BuildError, ConstructionError};
     let source = builder::cylinder(5.into(), 6.into()).unwrap();
     let delta = q(1, 1_000_000) * q(1, 1_000_000);
-    for (lower, upper) in [
-        (Real::from(-20), Real::from(6) - &delta),
-        (delta.clone(), Real::from(20)),
-        (Real::from(2), Real::from(4)),
-        (Real::from(6), Real::from(20)),
-        (Real::from(6) + &delta, Real::from(20)),
+    for (lower, upper, partial) in [
+        (Real::from(-20), Real::from(6) - &delta, true),
+        (delta.clone(), Real::from(20), true),
+        (Real::from(2), Real::from(4), true),
+        (Real::from(6), Real::from(20), false),
+        (Real::from(6) + &delta, Real::from(20), false),
     ] {
         let cutter = builder::cuboid(
             Point3::new(0.into(), (-20).into(), lower),
             Point3::new(20.into(), 20.into(), upper),
         )
         .unwrap();
-        match boolean::difference(&source, &cutter).unwrap_err() {
-            BooleanError::FallbackFailed { optimized, graph } => {
-                assert!(matches!(
-                    *optimized,
-                    BooleanError::IncompatibleExtrusionSlabs
-                ));
-                assert!(matches!(
-                    *graph,
-                    BooleanError::FacePartitionUnsupported { .. }
-                ));
+        let result = boolean::difference(&source, &cutter);
+        if partial {
+            match result.unwrap_err() {
+                BooleanError::FallbackFailed { optimized, graph } => {
+                    assert!(matches!(
+                        *optimized,
+                        BooleanError::IncompatibleExtrusionSlabs
+                    ));
+                    assert!(matches!(
+                        *graph,
+                        BooleanError::Construction(ConstructionError::Build(
+                            BuildError::UnsupportedSolidShell(_)
+                        ))
+                    ));
+                }
+                error => panic!("unexpected outcome: {error:?}"),
             }
-            error => panic!("unexpected outcome: {error:?}"),
+        } else {
+            check_measures_and_replay(
+                &result.unwrap(),
+                &[Real::from(150) * Real::pi()],
+                &(Real::from(110) * Real::pi()),
+                "touching or disjoint axial slab",
+            );
+            assert!(boolean::intersection(&source, &cutter).unwrap().is_empty());
         }
         assert_eq!(source.bodies().count(), 1);
     }

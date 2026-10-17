@@ -2548,20 +2548,25 @@ fn copy_selected_wire(
                 curve = curve.reversed().map_err(GeometryError::from)?;
             }
             let pcurve = crate::Pcurve::new(curve);
-            let pcurve_start = pcurve.represented_start()?;
-            let pcurve_end = pcurve.represented_end()?;
-            let (edge_start, edge_end) = match direction {
-                crate::Direction::Forward => (mapped_domain.start(), mapped_domain.end()),
-                crate::Direction::Reversed => (mapped_domain.end(), mapped_domain.start()),
-            };
-            let scale = ((edge_end - edge_start) / (pcurve_end - pcurve_start))
-                .map_err(GeometryError::Numeric)?;
-            let offset = edge_start - &scale * pcurve_start;
-            (
-                pcurve,
+            let correspondence = if pcurve.kind() == hypercurve::CurveFamily2::CircularArc {
+                // Native circular projection retains the whole circle image,
+                // but its rational parameter is not affine in the spatial
+                // angle. Preserve the existing angular relation for replay.
+                crate::ParameterCorrespondence::angular_sweep()
+            } else {
+                let pcurve_start = pcurve.represented_start()?;
+                let pcurve_end = pcurve.represented_end()?;
+                let (edge_start, edge_end) = match direction {
+                    crate::Direction::Forward => (mapped_domain.start(), mapped_domain.end()),
+                    crate::Direction::Reversed => (mapped_domain.end(), mapped_domain.start()),
+                };
+                let scale = ((edge_end - edge_start) / (pcurve_end - pcurve_start))
+                    .map_err(GeometryError::Numeric)?;
+                let offset = edge_start - &scale * pcurve_start;
                 crate::ParameterCorrespondence::affine(scale, offset)
-                    .map_err(ConstructionError::from)?,
-            )
+                    .map_err(ConstructionError::from)?
+            };
+            (pcurve, correspondence)
         } else {
             let pcurve = if reversed {
                 source_pcurve.reversed()?
@@ -4511,6 +4516,57 @@ fn trim_supported_surface_lines(
 ) -> Result<FacePairTrim, GeometryError> {
     let first_surface = face_surface(first_model, first_face);
     let second_surface = face_surface(second_model, second_face);
+    let planar_bound = match (first_surface.kind(), second_surface.kind()) {
+        (crate::SurfaceKind::Plane, crate::SurfaceKind::Cylinder) => {
+            Some((first_model, first_face))
+        }
+        (crate::SurfaceKind::Cylinder, crate::SurfaceKind::Plane) => {
+            Some((second_model, second_face))
+        }
+        _ => None,
+    };
+    if let Some((plane_model, plane_face)) = planar_bound {
+        let mut fragments = Vec::new();
+        for line in lines {
+            // Every contact lies in this finite planar-face span. Retain both
+            // exact charts before clipping so periodic lifts and boundary
+            // endpoint witnesses use the same path as other surface curves.
+            let (start, end) = match spanning_segment_on_planar_face(
+                plane_model,
+                plane_face,
+                &line.point,
+                &line.direction,
+            )? {
+                Classification::Decided(Some(span)) => span,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
+            };
+            let Some(trace) = SurfaceIntersectionCurve::on_plane_cylinder_line(
+                Curve3::line(start, end)?,
+                first_surface,
+                second_surface,
+            )?
+            else {
+                return Ok(FacePairTrim::NotAvailable);
+            };
+            match trim_retained_surface_curve(
+                first_model,
+                first_face,
+                second_model,
+                second_face,
+                &trace,
+            )? {
+                FacePairTrim::SurfaceCurveFragments(parts) => fragments.extend(parts),
+                FacePairTrim::NoContact | FacePairTrim::NoCurveInterior => {}
+                other => return Ok(other),
+            }
+        }
+        return Ok(if fragments.is_empty() {
+            FacePairTrim::NoCurveInterior
+        } else {
+            FacePairTrim::SurfaceCurveFragments(fragments)
+        });
+    }
     let mut fragments = Vec::new();
     for line in lines {
         let first = match line_face_trim_intervals(first_model, first_face, line)? {

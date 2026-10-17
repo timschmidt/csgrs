@@ -1,5 +1,18 @@
 # HyperBREP Performance Contract
 
+## 2026-10-17: axial intersection and cold continuation prerequisites
+
+Kept for exact capability and downstream consumption. [Admission evidence](docs/evidence/2026-10-17-partial-prism/README.md)
+retains all original failed cases, the reversed-bore regression and the circular
+parameter-map failure. Genuine partial-depth shells remain unsupported.
+
+The matched campaign retains all 180 preceding case receipts across twenty full corpora in three alternating pairs; four new complete workflow rows have absolute costs in three further processes (123 processes total). Median case ratio 1.001813, range 0.801846–1.053511; 0 rows exceed the 10% review marker and 25 have increased allocation requests. All adverse rows, raw logs, process CPU/wall/RSS, allocator requests and executable sizes remain published. The new exact domain and continued consumption justify feature retention; this is not an optimization or an all-cohort performance-gate claim. Shared-host timing, requested allocation bytes and harness sizes do not establish speedup significance, retained-heap bounds or distribution size.
+
+[All adverse rows and new absolute costs](docs/evidence/2026-10-17-partial-prism/costs.md) include the complete
+four-workflow native/STEP consumer, with one warmup and three measured iterations
+per process. Existing source qualification, resource, package and historical
+performance obligations remain open. All 28 work packages remain open/in progress.
+
 ## 2026-10-16: retain positive builder admission proofs
 
 Kept after the [source-bound qualification](docs/evidence/2026-10-16-builder-certificates/README.md).

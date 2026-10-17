@@ -60,3 +60,7 @@ harness = false
 [[bench]]
 name = "region_exchange"
 harness = false
+
+[[bench]]
+name = "axial_exchange"
+harness = false

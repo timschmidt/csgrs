@@ -202,7 +202,7 @@ strict-convexity certificate.
 | Finite line / cone | None, tangent/simple points, generator overlap; lower nappe rejected |
 | Plane / sphere | None, tangent point, full circle; authored-axis transverse circles retain exact pcurves on both carriers |
 | Sphere / sphere | None, coincident, tangent point, full circle |
-| Plane / cylinder | Perpendicular circle; oblique ellipse; axial-parallel none, tangent line, or two lines |
+| Plane / cylinder | Perpendicular circle; oblique ellipse; axial-parallel none, tangent line, or two lines, with exact native affine axial correspondence and authored-periodic trim transfer |
 | Plane / cone | Transverse lower none, apex point, or upper circle; axis-containing two lower-bounded upper-nappe generator rays with exact affine pcurves on both operands |
 | Plane / torus | Axis-transverse none, tangent circle, or two latitude circles; axis-containing two meridian circles; parallel-to-axis outer point tangency or strict separation |
 | Plane / extrusion surface | Transverse native line/rational Bézier/NURBS curve; parallel none or lifted profile-contact lines |
@@ -346,6 +346,19 @@ stitching on partially clipped tensor operands, and the rest of the
 analytic/spline pair matrix.
 
 ## Booleans
+
+The [axial continuation evidence](evidence/2026-10-17-partial-prism/README.md) admits touching/disjoint
+cylinder/tool differences through exact measures, cold replay, further cuts,
+reconstruction, empty recovery and transformed STEP exchange. It also proves
+whole axial traces, both operand partitions and selection for the three original
+partial-depth cuts; those results still fail explicitly at `UnsupportedSolidShell`.
+The original 24-case prism corpus now has 20 native results and four unsupported
+cases, including the covering reversed difference. This diagnostic count does
+not certify every possible composition. Complete oriented coplanar convex
+covers may contain curved internal subdivisions; cancellation proves their
+coverage before cold shell admission. Native prism profile queries combine all
+top-cap pieces, and planar circular Boolean transfers preserve `AngularSweep`.
+General curved embedding and partial-depth result shells remain open.
 
 Public `union`, `intersection`, `difference` and `symmetric_difference` consume
 two `&BodySet` operands and return `BodySet`. Empty identities retain the

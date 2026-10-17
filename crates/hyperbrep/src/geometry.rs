@@ -14,6 +14,7 @@ use crate::Parameter;
 use crate::error::{GeometryError, GeometryResult};
 
 mod analytic;
+mod axial_lines;
 mod conical_revolution;
 mod location;
 mod point;

@@ -1785,6 +1785,47 @@
       "validation": "Native/IO release suites pass 560 all-feature and 552 minimal-feature tests; eight new focused tests pass in debug. Both all-target Clippy configurations, external consumer lints, warning-denied rustdoc, nine STEP examples, fuzz-target compilation and formatting pass. The warning-denied standalone WASM build executes 119 groups with zero imports, preserving all 111 preceding groups. Four normalized stroke workflows and two multi-component workflows complete exact measures, incidence, near-boundary classification, cold native replay, STEP import and continued Boolean/empty recovery checks. Optional OCCT reads independently check all six new STEP outputs. All 81 preceding native diagnostic outcomes, all 24 prism outcomes and 71 old STEP files are preserved. The unchanged general-path control retains two butt successes, four byte-identical artifacts and two round-cap UnsupportedMeasurement failures. The absent-API compile failure, initial test API errors and missing reader argument remain recorded; their corrections do not weaken acceptance. Scalar/dependency implementations are unchanged from the merged baseline; its two inherited zero-factor debug failures remain upstream-owned.",
       "cost_evidence": "Three fresh benchmark processes each execute one warmup and three measured iterations of all four new complete stroke workflows, with exact checks and STEP/native materialization inside timing. Three further processes execute both multi-component workflows; 24 alternating old-path processes retain every success and unsupported failure. Old successful-process timing observations: Butt-reverse-false ratio 1.019337; Butt-reverse-true ratio 1.029781. All latency, allocator requests, process RSS, artifact checksums and executable sizes remain. These are absolute new-capability costs and short shared-host preservation observations, not a general speedup, retained-heap bound or package-size claim. Private construction and existing callers are unchanged; historical broad benchmark campaigns are not reattributed to this source.",
       "limits": "This exposes the existing native component constructor through a strict model-owning API. It does not add general rational-path area, a new planar arrangement or broader Boolean/analytic closure. A local strict construction does not certify an earlier approximate source intent; complete source-qualification delivery remains open. Solver budgets do not bound total work, expression growth, retained heap or cancellation. Source-path native/WASM consumers and optional OCCT reads do not establish package/MSRV, actual C/Python/JavaScript bindings, formal proofs, coverage, runtime fuzz/ASan/lexicase, release or the full pre-push matrix. All 28 work packages remain open or in progress. No push is included."
+    },
+    {
+      "id": "axial-intersection-prerequisites-2026-10-17",
+      "work_packages": [
+        "WP00",
+        "WP03",
+        "WP04",
+        "WP06",
+        "WP07",
+        "WP08",
+        "WP14a",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P3",
+        "P6",
+        "P8",
+        "P9",
+        "P11",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Retain exact axial plane/cylinder traces through periodic trimming and boundary witnesses. Prove complete coplanar convex covers for cold admission, aggregate every prism top-cap piece and preserve AngularSweep on projected circular Boolean pcurves. Add exact native/STEP/WASM continuations and complete-work evidence.",
+      "source": "../src/geometry/axial_lines.rs",
+      "evidence": "evidence/2026-10-17-partial-prism/manifest.json",
+      "validation": "Native/IO release suites pass 573 all-feature and 565 minimal-feature tests. Thirteen new focused debug tests, both all-target warning-denied Clippy configurations, external consumer and diagnostic lints, warning-denied rustdoc, nine STEP examples, fuzz-target compilation, formatting and 127 actual source-path WASM groups with zero imports pass. Four touching/disjoint transformed STEP/native workflows complete independent exact measures, incidence, near-boundary classification, cold replay, Boolean continuation and empty recovery. Partial-depth inputs now complete retained axial traces, both operand partitions and selections; the cold partitioned tool box also classifies and composes. All 24 original prism inputs remain: 20 native results, four unsupported; the three true partial-depth differences and covering reversed difference still lack shell admission. All 81 preceding native diagnostic outcomes, 71 preceding STEP files and twelve preceding region/component artifacts remain unchanged. Original general-path round-cap measurement blockers remain. The initial compile errors, failed consumers, full-suite/WASM bore regression and cold circular-correspondence failure are retained with source bytes. Scalar/dependency runtime is unchanged and inherited zero-factor failures remain upstream-owned.",
+      "cost_evidence": "The matched campaign retains all 180 preceding case receipts across twenty full corpora in three alternating pairs; four new complete workflow rows have absolute costs in three further processes (123 processes total). Median case ratio 1.001813, range 0.801846\u20131.053511; 0 rows exceed the 10% review marker and 25 have increased allocation requests. All adverse rows, raw logs, process CPU/wall/RSS, allocator requests and executable sizes remain published. The new exact domain and continued consumption justify feature retention; this is not an optimization or an all-cohort performance-gate claim. Shared-host timing, requested allocation bytes and harness sizes do not establish speedup significance, retained-heap bounds or distribution size.",
+      "limits": "Three genuine partial-depth cylinder differences and the covering reversed difference remain unsupported at native shell admission. Preserve every original full-size input and exact 1e-12 gap; complete the shell proof next. One preceding native prism result still has an unencodable STEP vertex. General curved embedding, Boolean closure and complete STEP/EXPRESS/AP support remain open. No total-work, retained-heap, expression/coefficient-growth or end-to-end cancellation bound is added. Existing solver-work counters and external test timeouts are distinct. Source qualification, shipped package/MSRV, actual C/Python/JavaScript distribution, full coverage, formal proofs, runtime fuzz/ASan/lexicase, release and complete pre-push gates remain open. No push; all 28 work packages stay open/in progress. Inherited scalar zero-factor failures, historical adverse BREP costs and unrelated upstream work remain separate obligations. No supporting runtime bytes change in this increment."
     }
   ],
   "work_packages": [
@@ -1958,6 +1999,8 @@
     }
   ],
   "next_actions": [
+    "Complete genuine partial-depth cylinder/prism result shells using the prospective contact/embedding or piecewise-prismatic cover proof in evidence/2026-10-17-partial-prism/shell-proof-design.md. Retain all 24 original cases, the three partial-depth differences and reversed covering difference, every original 1e-12 gap, current cold partition/classification/continuation proofs, four new complete STEP workflows and all 127 WASM groups. Do not replace missing shell authority with volume or a surface whitelist.",
+    "Use evidence/2026-10-17-partial-prism/manifest.json for the current axial prerequisite baseline: 180 preserved benchmark receipts, four absolute new complete-work rows, all adverse observations and failed attempts. Genuine partial-depth result admission remains the next capability, not completed by its successful tracing stages. Supporting crate changes remain authorized in their owner; unrelated repairs remain upstream-owned.",
     "Preserve the public normalized-region extrusion corpus: four butt/round stroke workflows, two multi-component STEP workflows, native holes/islands/empty/invalid-height/certainty/budget controls, exact artifacts and 119 WASM groups. General rational-path side measurement and source-qualification delivery require separate proofs and complete consumers; retain the original unsupported inputs.",
     "Use region-extrusion for the current public profile feature and stroke-upstream-integration for merged be2a0c37b ownership guidance. Preserve all 81 native diagnostic outcomes, 24 prism outcomes, 71 old STEP artifacts, six new complete exchanges and historical 176 main/196 dependency benchmark contracts. New source needs fresh applicable evidence; historical timings do not qualify later changes. Supporting crate changes needed for BREP features are authorized; unrelated repairs stay with their owner.",
     "Preserve and extend named BREP strict workflows with independent set, topology and source-fidelity checks. Observe upstream drilled-body and dependency corrections during integration; unrelated repairs remain upstream work. Record all seven outcome categories and the concrete failing BREP stage (WP00/WP21, P39).",

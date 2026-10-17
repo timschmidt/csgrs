@@ -1358,6 +1358,7 @@ impl ArenaModel {
             }
         }
 
+        let mut top_region = None::<CurveRegion2>;
         for face_id in &shell.faces {
             let face = self.face(*face_id).expect("validated shell face");
             let mut profiles = Vec::with_capacity(face.inner().len() + 1);
@@ -1371,26 +1372,31 @@ impl ArenaModel {
                         .vertex(start)
                         .expect("validated vertex")
                         .represented_point()?;
+                    let endpoint = self
+                        .vertex(end)
+                        .expect("validated vertex")
+                        .represented_point()?;
+                    // A reversed side can start at the top cap. Reject its
+                    // axial edge before projection could collapse it to a point.
                     if decided_model_order(compare_reals(
                         &point.z,
                         &z_max,
                         crate::STRICT_PREDICATES,
                     ))? != std::cmp::Ordering::Equal
+                        || decided_model_order(compare_reals(
+                            &endpoint.z,
+                            &z_max,
+                            crate::STRICT_PREDICATES,
+                        ))? != std::cmp::Ordering::Equal
                     {
                         is_top = false;
                         break;
                     }
-                    segments.push(
-                        self.projected_model_cap_segment(
-                            *edge_use_id,
-                            self.vertex(start)
-                                .expect("validated vertex")
-                                .represented_point()?,
-                            self.vertex(end)
-                                .expect("validated vertex")
-                                .represented_point()?,
-                        )?,
-                    );
+                    segments.push(self.projected_model_cap_segment(
+                        *edge_use_id,
+                        point,
+                        endpoint,
+                    )?);
                 }
                 if !is_top {
                     break;
@@ -1401,14 +1407,22 @@ impl ArenaModel {
                 let outer = profiles.remove(0);
                 let region = CurveRegion2::try_from_native_contours(vec![outer], profiles)
                     .map_err(GeometryError::from)?;
-                return Ok(Some(CertifiedZPrismProfile {
-                    region,
-                    z_min,
-                    z_max,
-                }));
+                // A shape-preserving partition can split a cap into several
+                // faces. The profile is their complete material cover, not
+                // whichever face happens to occur first in the arena.
+                top_region = Some(match top_region {
+                    None => region,
+                    Some(previous) => previous
+                        .boolean_region(&region, BooleanOp::Union)
+                        .map_err(GeometryError::from)?,
+                });
             }
         }
-        Ok(None)
+        Ok(top_region.map(|region| CertifiedZPrismProfile {
+            region,
+            z_min,
+            z_max,
+        }))
     }
 
     pub(crate) fn certified_sphere_profile(

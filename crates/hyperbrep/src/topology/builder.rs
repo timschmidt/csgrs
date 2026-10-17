@@ -470,6 +470,7 @@ impl ArenaModelBuilder {
                 false
             } else {
                 self.certify_convex_planar_shell(outer)?
+                    || self.certify_partitioned_convex_planar_shell(outer)?
             };
             let general_planar = if analytic_closed
                 || simple_prism

@@ -2,6 +2,7 @@
 
 mod analytic_image;
 mod cone;
+mod convex_groups;
 mod cylinder;
 mod image;
 mod loft;
