@@ -84,3 +84,27 @@ test('cancelled flat PWN source has empty regularized interior',()=>{
     }
   } finally { mesh.free(); }
 });
+
+
+test('all six supporting planes preserve nearby binary64 membership',()=>{
+  const mesh=MeshJs.cube(2);
+  try {
+    for (let axis=0;axis<3;++axis) for (const upper of [false,true]) for (const sign of [-1,0,1]) {
+      const xyz=[1,1,1],edge=upper?2:0;
+      xyz[axis]=upper?2-sign*1e-12:sign*1e-12;
+      assert.equal(xyz[axis]===edge,sign===0);
+      const point=new Point3Js(...xyz);
+      try {
+        assert.equal(mesh.containsPoint(point),sign>0);
+        for (const approximate of [false,true,false]) {
+          const result=mesh.containsPointWithContext(point,approximate);
+          try {
+            assert.equal(result.status,GeometryQueryStatusJs.Decided);
+            assert.equal(result.certainty,GeometryCertaintyJs.Certified);
+            assert.equal(result.value,sign>0);
+          } finally { result.free(); }
+        }
+      } finally { point.free(); }
+    }
+  } finally { mesh.free(); }
+});

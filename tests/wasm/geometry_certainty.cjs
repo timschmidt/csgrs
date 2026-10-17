@@ -358,6 +358,18 @@ try {
   const surfacePoint = keep(new Point3Js(0.5, 0, 0.5));
   for (const approximate of [false, true, false]) {
     const result = keep(restoredCube.containsPointWithContext(surfacePoint, approximate));
+    // The certified lower supporting plane proves non-interiority of this
+    // retained mesh, without proving fidelity of the inverse rotation.
+    assert.equal(result.status, Status.Decided);
+    assert.equal(result.value, false);
+    assert.equal(result.certainty, Certainty.Certified);
+    assert.equal(result.reason, undefined);
+  }
+  // Its upper coordinate still requires the unresolved trigonometric identity.
+  // Keep strict uncertainty and qualified approximate evidence observable.
+  const unresolvedSurfacePoint = keep(new Point3Js(1, 0.5, 0.5));
+  for (const approximate of [false, true, false]) {
+    const result = keep(restoredCube.containsPointWithContext(unresolvedSurfacePoint, approximate));
     assert.equal(result.status, approximate ? Status.Decided : Status.Unknown);
     assert.equal(result.value, approximate ? false : undefined);
     assert.equal(result.certainty, approximate ? Certainty.Approximate512Consumed : undefined);

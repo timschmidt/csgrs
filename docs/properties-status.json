@@ -12528,6 +12528,61 @@
       "Continue the preserved strict-success and typed-failure frontier, including smaller independently qualified repairs from the rejected native integration; keep original workload gates.",
       "Complete end-to-end provenance and the clean external documented distribution pipeline, then the remaining properties, full workflow matrix and measured coverage."
     ]
+  },
+  "containment_bounds": {
+    "status": "kept: certified supporting bounds avoid unnecessary containment arrangement",
+    "main_parent_commit": "311d04fbbe5635a29fe7e754b838cccc4b8add53",
+    "contract": "docs/evidence/2026-10-16-containment-bounds/contract-v1.md",
+    "progress": "docs/evidence/2026-10-16-containment-bounds/progress-v1.md",
+    "decision": "docs/evidence/2026-10-16-containment-bounds/decision-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-containment-bounds/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-containment-bounds/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "crates/hypermesh/src/mesh.rs": "991c3bb367e2a0ae9d0c2563e632ce558a2418fe5d4a18ad33546055efc8981c",
+      "tests/containment_bounds.rs": "8e000e76b610a145edf3c1eb483c30a8f029afee3e77961f6de0d4486b239117",
+      "tests/wasm/containment_winding.cjs": "220bd9851f6fbcf7ed209015729935581e930dc26876cc629f42f1aa1b21a6ff",
+      "tests/wasm/geometry_certainty.cjs": "cc7046b2641cdedeca1797746d24eb9f0d2f40fab8bd980219255564abdd966a"
+    },
+    "cost": "docs/evidence/2026-10-16-containment-bounds/cost-v2/result.json",
+    "cost_contract": "docs/evidence/2026-10-16-containment-bounds/cost-contract-v1.json",
+    "baseline_native": {
+      "passed": 4,
+      "failed": 0,
+      "evidence": "baseline-v1/native-tests.stdout"
+    },
+    "baseline_wasm": {
+      "passed": 10,
+      "failed": 0,
+      "evidence": "baseline-v1/wasm-tests.stdout"
+    },
+    "new_native_tests": 4,
+    "winding_wasm_tests": 10,
+    "containment_bounds_admitted": true,
+    "all_preregistered_allocation_gates_passed": true,
+    "stronger_proof_evidence": "docs/evidence/2026-10-16-containment-bounds/supporting-fact-v1/result.json",
+    "new_certified_completion_cases_separately_demonstrated": 1,
+    "native_v1_reuse": "All Rust sources, manifests, dependencies and native tests are identical in final v2; only tests/wasm/geometry_certainty.cjs changed and was requalified by wasm-validation-v2.",
+    "preserved_failed_attempt": "wasm-validation-v1 fails an old assertion requiring Unknown; later consumer stages were not reached. Final v2 requires Certified false for the same query and adds a separate upper-face Unknown/qualified case.",
+    "universal_set_membership_correctness_claimed": false,
+    "intentional_migration": null,
+    "pending_native_paths_remaining": 0,
+    "native_disposition_preserved": true,
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "limitations": [
+      "Containment and fallback arrangement still have no internal total-work, heap-byte, expression-growth or cancellation bound. The focused probe counts allocator requests and peak live requested bytes; it does not instrument scalar expression depth or coefficient growth.",
+      "Five allocator-instrumented pairs establish these completed-query allocation changes; they do not establish uninstrumented production latency, a universal speedup or cross-library superiority.",
+      "No new claim of end-to-end construction provenance, manifoldness or fidelity to an analytic source follows from the local containment receipt.",
+      "C, C++, Python and Go do not expose this native containment query and were not rerun for this change. Real JavaScript and compiled TypeScript consumers were run.",
+      "The published-package pipeline, full pre-push/CI matrix, coverage and broader properties plan remain open; nothing was pushed.",
+      "The inherited artifact audit remains failed/incomplete with 27093 missing paths; fresh physical files are audited separately.",
+      "The rejected 35-file native integration remains archived and excluded from runtime source; its original workload gates remain in force.",
+      "The combined native package test command retains the pre-existing Cargo output-name collision warnings for the two basic examples. The same warnings occur in the qualified E32 baseline."
+    ],
+    "next": [
+      "Continue ordinary strict completion and typed failure repairs from the preserved native regressions, using smaller changes with independent exact expectations and unchanged original workload gates.",
+      "Complete end-to-end certainty/provenance and the clean external documented distribution pipeline, then the remaining properties, workflow matrix and measured coverage."
+    ]
   }
 },
   "status_meanings": {
