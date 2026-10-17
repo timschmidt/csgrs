@@ -13219,6 +13219,44 @@
       "Repair the owning kernel or composition invariant with independent semantic and cache/budget tests; preserve every original workload gate before reconsidering exact track ingress.",
       "Continue the full properties plan, including independently justified components of the rejected archive, ordinary strict completion, provenance and complete external user-path validation."
     ]
+  },
+  "native_track_cost_attribution": {
+    "status": "observed: native aggregation dominates the rejected exact-track workload; separate neck cost remains",
+    "main_parent_commit": "7906f9da08ad55ad2f36719a9375ed702f896707",
+    "contract": "docs/evidence/2026-10-17-native-track-cost-attribution/contract-v1.md",
+    "decision": "docs/evidence/2026-10-17-native-track-cost-attribution/decision-v1.json",
+    "progress": "docs/evidence/2026-10-17-native-track-cost-attribution/progress-v1.md",
+    "checkpoint": "docs/evidence/2026-10-17-native-track-cost-attribution/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-native-track-cost-attribution/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {},
+    "source_changes_applied": false,
+    "completed_diagnostic_commands": 6,
+    "full_project_observations": 4,
+    "owning_layer_findings": [
+      "The full layer-sanity application group includes copper aggregation. CPArti candidate attribution assigns most of that group to aggregation, not to the public layer_sanity function alone.",
+      "The verified aggregation stack enters CurveRegionBooleanContext unary candidate pairs and CurveIntersectionBatchCache::circular_support_relation. Current code scans all retained support-pair entries with arithmetic Point2 equality. This is a concrete optimization candidate, not a measured fraction of whole-stage time.",
+      "Later perf samples include scalar interval/conversion and retained-ray classification work. Call-graph unwinding is incomplete; 598 cycle samples with zero reported losses do not establish reliable inclusive percentages or a single cause.",
+      "The verified neck stack enters native offset regularization and retained-loop bounds. The independent neck resource limit remains a separate admission requirement; faster source aggregation alone cannot make it pass."
+    ],
+    "native_disposition_preserved": true,
+    "pending_native_paths_remaining": 0,
+    "full_archived_integration_admitted": false,
+    "native_runtime_admitted": false,
+    "full_plan_complete": false,
+    "limitations": [
+      "Diagnostic stage timings compare different represented source sets, carry instrumentation and use one process per board. They are not speedup claims or a replacement for the original full-project gates.",
+      "All returned findings, including geometry uncertainty, remain in raw JSON. Certified local evaluation receipts do not establish exact source intent, topology of every report or certification of readiness heuristics.",
+      "The public checks are executed in application order; earlier stages warm later queries. Cold-neck mode is implemented in the probe but was not executed here. E36 retains the separately executed cold-neck failure.",
+      "Baseline libraries come from completed E35 consumer validation and candidate libraries from completed E36 v4 CLI validation. Source manifests, full library hashes, exact flags and toolchain are retained; different feature histories and geometry preclude a performance-only comparison.",
+      "No new kernel code, cache, internal resource bound or provenance mechanism is implemented. External containment and process RSS are not heap-byte or total-work proofs.",
+      "Historical artifact audit remains failed/incomplete with 27093 missing paths. Only this new diagnostic evidence is added to the physical manifest."
+    ],
+    "next": [
+      "Reproduce a growing batch of native circular supports against the unchanged kernel. Compare exact support-key indexing with existing linear lookup while preserving ordered pairs, independent exact intersection oracles, symbolic fallback, uncertainty, policy admissibility, budget recovery and output determinism.",
+      "Measure allocations, retained state and cold/warm lookup costs over the same completed input/output contract. Retain unfavorable cases; no indexed cache is admitted from this stack sample alone.",
+      "Investigate native loop-bound reuse and neck construction evidence separately. Any repair must preserve exact geometry and prove its own acceptance tests before replaying both original full-project resource gates.",
+      "Continue the complete properties plan, typed failures, ordinary strict completion and shipped user-path validation. E36 and the original full native bundle remain unadmitted."
+    ]
   }
 },
   "status_meanings": {
