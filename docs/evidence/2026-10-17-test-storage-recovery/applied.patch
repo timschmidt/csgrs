@@ -1,0 +1,111 @@
+diff --git a/crates/hyperdrc/src/conversion.rs b/crates/hyperdrc/src/conversion.rs
+index a04be1a43..2136f40a8 100644
+--- a/crates/hyperdrc/src/conversion.rs
++++ b/crates/hyperdrc/src/conversion.rs
+@@ -668,8 +668,10 @@ mod tests {
+     #[test]
+     fn converter_provenance_hashes_inputs_and_manifests_outputs() {
+         let process_id = process::id();
+-        let temp_input = PathBuf::from(format!("/tmp/hyperdrc-provenance-input-{process_id}"));
+-        let temp_output = PathBuf::from(format!("/tmp/hyperdrc-provenance-output-{process_id}"));
++        let temp_input =
++            std::env::temp_dir().join(format!("hyperdrc-provenance-input-{process_id}"));
++        let temp_output =
++            std::env::temp_dir().join(format!("hyperdrc-provenance-output-{process_id}"));
+         let _ = remove_dir_all(&temp_input);
+         let _ = remove_dir_all(&temp_output);
+         std::fs::create_dir_all(temp_input.join("nested")).unwrap();
+@@ -1080,8 +1082,8 @@ mod tests {
+     #[test]
+     fn convert_executes_successful_converter_and_returns_output_paths() {
+         let process_id = process::id();
+-        let temp_input = PathBuf::from(format!("/tmp/hyperdrc-conv-input-{process_id}"));
+-        let temp_output = PathBuf::from(format!("/tmp/hyperdrc-conv-output-{process_id}"));
++        let temp_input = std::env::temp_dir().join(format!("hyperdrc-conv-input-{process_id}"));
++        let temp_output = std::env::temp_dir().join(format!("hyperdrc-conv-output-{process_id}"));
+         let _ = remove_dir_all(&temp_input);
+         let _ = remove_dir_all(&temp_output);
+         std::fs::create_dir_all(&temp_input).unwrap();
+@@ -1132,8 +1134,9 @@ mod tests {
+     #[test]
+     fn convert_executes_successful_kicad_cli_converter_and_returns_output_paths() {
+         let process_id = process::id();
+-        let temp_input = PathBuf::from(format!("/tmp/hyperdrc-kicad-input-{process_id}.kicad_pcb"));
+-        let temp_output = PathBuf::from(format!("/tmp/hyperdrc-kicad-output-{process_id}"));
++        let temp_input =
++            std::env::temp_dir().join(format!("hyperdrc-kicad-input-{process_id}.kicad_pcb"));
++        let temp_output = std::env::temp_dir().join(format!("hyperdrc-kicad-output-{process_id}"));
+         let _ = std::fs::remove_file(&temp_input);
+         let _ = remove_dir_all(&temp_output);
+         std::fs::write(&temp_input, "(kicad_pcb)").unwrap();
+@@ -1249,8 +1252,10 @@ mod tests {
+     #[test]
+     fn convert_reports_directory_creation_failure() {
+         let process_id = process::id();
+-        let temp_input = PathBuf::from(format!("/tmp/hyperdrc-conv-input-{process_id}"));
+-        let temp_output_file = PathBuf::from(format!("/tmp/hyperdrc-output-file-{process_id}.txt"));
++        let temp_input =
++            std::env::temp_dir().join(format!("hyperdrc-conv-failure-input-{process_id}"));
++        let temp_output_file =
++            std::env::temp_dir().join(format!("hyperdrc-output-file-{process_id}.txt"));
+         let _ = remove_dir_all(&temp_input);
+         std::fs::create_dir_all(&temp_input).unwrap();
+         std::fs::write(&temp_output_file, "file-path-conflict").unwrap();
+@@ -1284,6 +1289,6 @@ mod tests {
+ 
+         assert!(message.contains("failed to create"));
+         let _ = remove_dir_all(&temp_input);
+-        let _ = std::fs::remove_file(format!("/tmp/hyperdrc-output-file-{process_id}.txt"));
++        let _ = std::fs::remove_file(&request.output_dir);
+     }
+ }
+diff --git a/crates/hyperdrc/src/parquet_report.rs b/crates/hyperdrc/src/parquet_report.rs
+index 55630e6b2..90fb94729 100644
+--- a/crates/hyperdrc/src/parquet_report.rs
++++ b/crates/hyperdrc/src/parquet_report.rs
+@@ -39,7 +39,6 @@ pub fn write_report_parquet(report: &Report, path: &Path) -> Result<()> {
+ #[cfg(test)]
+ mod tests {
+     use std::fs::File;
+-    use std::path::PathBuf;
+ 
+     use arrow_array::StringArray;
+     use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
+@@ -97,10 +96,8 @@ mod tests {
+             summary: report_summary(&active, 1),
+             violations: active,
+         };
+-        let path = PathBuf::from(format!(
+-            "/tmp/hyperdrc-report-{}.parquet",
+-            std::process::id()
+-        ));
++        let path =
++            std::env::temp_dir().join(format!("hyperdrc-report-{}.parquet", std::process::id()));
+         let _ = std::fs::remove_file(&path);
+ 
+         write_report_parquet(&report, &path).unwrap();
+diff --git a/crates/hyperdrc/src/sqlite_report.rs b/crates/hyperdrc/src/sqlite_report.rs
+index 164a98b5b..e0b8d7f83 100644
+--- a/crates/hyperdrc/src/sqlite_report.rs
++++ b/crates/hyperdrc/src/sqlite_report.rs
+@@ -195,7 +195,6 @@ fn severity_label(severity: Severity) -> &'static str {
+ 
+ #[cfg(test)]
+ mod tests {
+-    use std::path::PathBuf;
+ 
+     use rusqlite::Connection;
+ 
+@@ -252,10 +251,8 @@ mod tests {
+             summary: report_summary(&active, 1),
+             violations: active,
+         };
+-        let path = PathBuf::from(format!(
+-            "/tmp/hyperdrc-report-{}.sqlite",
+-            std::process::id()
+-        ));
++        let path =
++            std::env::temp_dir().join(format!("hyperdrc-report-{}.sqlite", std::process::id()));
+         let _ = std::fs::remove_file(&path);
+ 
+         write_report_sqlite(&report, &path).unwrap();

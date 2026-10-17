@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "command_failures": [
+    "compile-tests"
+  ],
+  "source_and_read_only_dependencies_unchanged": true,
+  "cargo_target_closed": true,
+  "selected_temporary_directory_cleaned": true,
+  "cache_index_included": false,
+  "production_prefixes_unchanged": true,
+  "source_changes_applied": false,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false
+}

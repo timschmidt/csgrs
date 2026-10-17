@@ -1,0 +1,37 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/replay_temp_v4.py": "b85a8e4f8325a742a16c1f824da7dfc5738771cd68929983c6403563a148ef31",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-validation-v3/protocol.json": "338e5199ab193406d05f5291bff38cf86c0790f57f1bf4a97b6b034582126eb5",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-validation-v3/commands.json": "b3b7a42d937645d56c61787198ad6a49ccc488fd422a2431365eb494813084ff",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-validation-v3/result.json": "2f610aea84caf083c50f298554019669d2d57723b14edd6df20cfb797b9540f8",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-preparation-v1/source-hashes.json.gz": "6bdda7c96ae0cb3b2097d94a645d4a9b68a3a0266a75c6d6f9811b7e71dc678c",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-replay-v4/selected-temporary-directory/write-control": "fc0501dae502a3707cfe15f423af251d1d515d2b03c9a60317f56aab43fdacb0"
+  },
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-candidate-source-v1",
+  "reused_dependency_protocol": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-validation-v3/protocol.json",
+  "environment": {
+    "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-replay-v4/compiler-scratch",
+    "CARGO_MANIFEST_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-candidate-source-v1/crates/hyperdrc",
+    "CARGO_MANIFEST_PATH": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-candidate-source-v1/crates/hyperdrc/Cargo.toml",
+    "CARGO_PKG_NAME": "hyperdrc",
+    "CARGO_CRATE_NAME": "hyperdrc",
+    "CARGO_PKG_VERSION": "0.3.0",
+    "CARGO_PKG_AUTHORS": "",
+    "CARGO_PKG_DESCRIPTION": "Command line design readiness checks for printed circuit board Gerber files",
+    "CARGO_PKG_HOMEPAGE": "",
+    "CARGO_PKG_REPOSITORY": "https://github.com/timschmidt/hyperdrc",
+    "CARGO_PKG_LICENSE": "MIT",
+    "CARGO_PKG_LICENSE_FILE": "",
+    "CARGO_PKG_RUST_VERSION": "1.95.0",
+    "CARGO_PKG_VERSION_MAJOR": "0",
+    "CARGO_PKG_VERSION_MINOR": "3",
+    "CARGO_PKG_VERSION_PATCH": "0",
+    "CARGO_PKG_VERSION_PRE": ""
+  },
+  "correction": "Supply Cargo package metadata, including empty AUTHORS for this manifest, to the CLI derive macro in the direct test build.",
+  "source_changes_since_passed_format_and_clippy": false,
+  "completed_cargo_targets_reopened": false,
+  "external_timeout_seconds": 1800,
+  "address_space_bytes": 8589934592,
+  "cache_index_included": false
+}

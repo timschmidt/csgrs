@@ -1,0 +1,27 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/reproduce_temp_v1.py": "23dbd2fccfc739563d113561bef50465af3a9d82ad1515214ce66019a684a1db",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e/hyperdrc-f2524bbb15bdb74d": "7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/reused-native-artifacts-v1.json": "d4873bd7ab16cd5b4f9a1d0bda7ade93ed33ea7a414930ef26b5cf2006aae550",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/contract-v1.md": "6013df1586009145a0776542c607c397d942a1c87063b2bc2bbfa56b1ce3e1f2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-reproduction-v1/selected-temporary-directory/write-control": "c61fee26603b847b7d7ccb83e93e2d8e6d1c4e48755d26c2e1e245949d40f09b"
+  },
+  "tests": [
+    "conversion::tests::convert_executes_successful_converter_and_returns_output_paths",
+    "conversion::tests::convert_executes_successful_kicad_cli_converter_and_returns_output_paths",
+    "conversion::tests::convert_reports_directory_creation_failure",
+    "conversion::tests::converter_provenance_hashes_inputs_and_manifests_outputs",
+    "parquet_report::tests::writes_readable_parquet_report",
+    "sqlite_report::tests::writes_queryable_sqlite_report"
+  ],
+  "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-reproduction-v1/selected-temporary-directory",
+  "custom_storage_write_succeeded": true,
+  "containment": "Python Popen process group, 60 second deadline, 8 GiB address space, core dumps disabled.",
+  "current_test_source_equivalence": {
+    "crates/hyperdrc/src/conversion.rs": "82530d53f3a777394ac6226446e57f52d4a3f5c35fd11da4861ff159a0eb7b1b",
+    "crates/hyperdrc/src/parquet_report.rs": "38684fb9fbe1e419e0ba37bba003755a9e4f68389f64709c77dd356814a54418",
+    "crates/hyperdrc/src/sqlite_report.rs": "27d6503c7443b14cb4fedd65451fc3927fa3e01ce8f417cb15a1411a632eda09"
+  },
+  "library_scope": "Reuse E38 executable; only the isolated cache proposal differs in geometry dependencies. The reproduced failures occur in the unchanged filesystem fixture setup/output, not geometric decisions.",
+  "quota_before": "Disk quotas for user tim (uid 1000): \n     Filesystem   space   quota   limit   grace   files   quota   limit   grace\n          tmpfs  45590M  51490M  51490M            119k       0       0        \n          tmpfs  51490M  51490M  51490M            161k       0       0        \n"
+}

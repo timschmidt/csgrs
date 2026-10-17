@@ -1,0 +1,7 @@
+
+thread 'sqlite_report::tests::writes_queryable_sqlite_report' (1999819) panicked at crates/hyperdrc/src/sqlite_report.rs:261:45:
+called `Result::unwrap()` on an `Err` value: disk I/O error
+
+Caused by:
+    Error code 778: disk I/O error
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

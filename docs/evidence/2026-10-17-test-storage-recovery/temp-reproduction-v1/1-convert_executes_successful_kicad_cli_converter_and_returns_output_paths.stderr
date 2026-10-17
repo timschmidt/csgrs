@@ -1,0 +1,4 @@
+
+thread 'conversion::tests::convert_executes_successful_kicad_cli_converter_and_returns_output_paths' (1999811) panicked at crates/hyperdrc/src/conversion.rs:1139:52:
+called `Result::unwrap()` on an `Err` value: Os { code: 122, kind: QuotaExceeded, message: "Disk quota exceeded" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

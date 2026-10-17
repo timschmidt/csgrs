@@ -1,0 +1,23 @@
+{
+  "complete": true,
+  "command_failures": [],
+  "all_report_bytes_identical": true,
+  "reports": {
+    "cparti": {
+      "all_values_and_order_identical": true,
+      "serialized_bytes_identical": true,
+      "sha256": "a6b088f54b8e9dc3a67ea726babf76e0b10f3638aa0ebab062a3392df9286f7f",
+      "bytes": 1237513,
+      "violation_count": 12
+    },
+    "hvp109a": {
+      "all_values_and_order_identical": true,
+      "serialized_bytes_identical": true,
+      "sha256": "19d5fc9193052d5a8527c660f455286b094d367c9964901b745327c62a561b63",
+      "bytes": 186558,
+      "violation_count": 201
+    }
+  },
+  "read_only_inputs_unchanged": true,
+  "performance_comparison_claimed": false
+}

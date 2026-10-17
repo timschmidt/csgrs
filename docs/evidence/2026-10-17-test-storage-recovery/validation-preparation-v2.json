@@ -1,0 +1,6 @@
+{
+  "failed_runner_preserved": "validate_temp_v1.py",
+  "failure_before_build_or_target_creation": "Cargo emits both CSGRS rlib and shared library; the direct Rust test needs the rlib.",
+  "correction": "Select the rlib for each declared Rust dependency; preserve the independent source/dependency checks.",
+  "v2_runner_sha256": "4d6137ca43f6705acd8ba7fbf8ae8e0e60e56516cbb620aed38e611fdaa231c6"
+}

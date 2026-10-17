@@ -13259,7 +13259,7 @@
     ]
   },
   "circle_support_index": {
-    "status": "unadmitted: exact circle-support index passes focused semantics and original workload gates; full qualification interrupted by storage quota",
+    "status": "unadmitted: focused semantics, original workload gates and full-project report bytes pass; remaining affected-crate and binding qualification is open",
     "main_parent_commit": "da8b64c1948abc26ad06490784165b15143f5def",
     "progress_classification": "progress",
     "contract": "docs/evidence/2026-10-17-circle-support-index/contract-v1.md",
@@ -13295,10 +13295,55 @@
       "Full pre-push, published-package, MSRV, formal-proof, coverage and directed-campaign targets remain open."
     ],
     "next": [
-      "After storage recovery, use fresh targets for remaining full Hypercurve, CSGRS, HyperDRC, Hypercircuit and boundary qualification; do not reopen completed targets.",
-      "Reproduce the five native file-output failures without quota exhaustion, preserving the original assertions.",
-      "Complete full-project byte comparisons and matched cost measurements, then decide whether to apply the three-file candidate.",
-      "If retained, reevaluate exact KiCad ingress independently against its unchanged workloads; preserve all broader properties targets."
+      "Requalify the indexed candidate with the admitted temporary-directory repair, using fresh build targets or verified read-only dependency reuse.",
+      "Complete remaining Hypercurve, CSGRS, Hypercircuit and actual binding checks and matched cost evidence before deciding cache retention.",
+      "Preserve the rejected exact-track importer until its own unchanged workload and migration contracts pass."
+    ],
+    "full_project_report_comparison": "docs/evidence/2026-10-17-test-storage-recovery/project-reports-v1/result.json",
+    "independent_test_storage_repair": "docs/evidence/2026-10-17-test-storage-recovery/application-v1.json"
+  },
+  "test_storage_recovery": {
+    "status": "kept: file-output tests honor selected temporary storage; cache report bytes preserved but cache remains unadmitted",
+    "progress_classification": "progress",
+    "main_parent_commit": "8982f85b09740ab89309e3be9b6a970b65c50ec8",
+    "contract": "docs/evidence/2026-10-17-test-storage-recovery/contract-v1.md",
+    "decision": "docs/evidence/2026-10-17-test-storage-recovery/decision-v1.json",
+    "progress": "docs/evidence/2026-10-17-test-storage-recovery/progress-v1.md",
+    "checkpoint": "docs/evidence/2026-10-17-test-storage-recovery/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-test-storage-recovery/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "crates/hyperdrc/src/conversion.rs": "f1ca13372f42fd13ca6c061dc8d61e1230cc5f65b2daba43ad6ffb7a260ef62f",
+      "crates/hyperdrc/src/parquet_report.rs": "93fa0b9cf5a55ca5d9cd26b260baa45b511bc53cd68bbad505d77a391a61e37d",
+      "crates/hyperdrc/src/sqlite_report.rs": "7d4c6b9748f1aeed6c2530d9bc47cbe3af61d1931bd2b04c4d0ec321d78e1b86"
+    },
+    "production_prefixes_unchanged": true,
+    "source_changes_applied": true,
+    "reproduced_file_output_failures": 5,
+    "passing_tests": {
+      "conversion-tests": 18,
+      "parquet-test": 1,
+      "sqlite-test": 1
+    },
+    "native_report_comparison": "docs/evidence/2026-10-17-test-storage-recovery/project-reports-v1/result.json",
+    "cache_index_admitted": false,
+    "native_disposition_preserved": true,
+    "pending_native_paths_remaining": 0,
+    "full_archived_integration_admitted": false,
+    "native_runtime_admitted": false,
+    "full_plan_complete": false,
+    "limitations": [
+      "No production geometry, predicate, report-format or API change.",
+      "Converter test stubs still use /bin/true; this repair does not establish all-operating-system support.",
+      "E38 native failures remain recorded failures; the complete indexed candidate still needs qualification with the independently validated test fix.",
+      "Report equality is scoped to the complete CPArti and HVP109A projects at the same fixed paths; it is not an analytic source-fidelity proof or timing claim.",
+      "Full curve/modeling/circuit/binding qualification, matched performance and published-package validation remain open.",
+      "The /tmp quota is still exhausted; repository-local lint validation retained a 768 MiB free-space reserve and did not hit it.",
+      "Inherited audit remains incomplete with 27,093 missing paths; all original property and future-work obligations remain active."
+    ],
+    "next": [
+      "Requalify the indexed candidate with the admitted temporary-directory repair, using fresh build targets or verified read-only dependency reuse.",
+      "Complete remaining Hypercurve, CSGRS, Hypercircuit and actual binding checks and matched cost evidence before deciding cache retention.",
+      "Preserve the rejected exact-track importer until its own unchanged workload and migration contracts pass."
     ]
   }
 },

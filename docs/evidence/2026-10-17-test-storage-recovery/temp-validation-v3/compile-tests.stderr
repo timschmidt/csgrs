@@ -1,0 +1,14 @@
+error: cannot derive `author` from Cargo.toml
+       
+       = note: `CARGO_PKG_AUTHORS` environment variable is not set
+       
+       = help: use `author = "..."` to set author manually
+       
+       
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-candidate-source-v1/crates/hyperdrc/src/cli.rs:595:11
+    |
+595 | #[command(author, version, about)]
+    |           ^^^^^^
+
+error: aborting due to 1 previous error
+

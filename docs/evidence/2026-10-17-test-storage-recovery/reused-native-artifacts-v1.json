@@ -1,0 +1,78 @@
+{
+  "complete": true,
+  "native_build_command": [
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "-p",
+    "hyperdrc",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "native_build_exit_code": 0,
+  "checkpoint_sha256": "3d4158459e5486b20be56a2e5e305d41d546ccde79b5371699383eb908ff3453",
+  "closed_target_reopened": false,
+  "cli": {
+    "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/d1a4b3d5960743ed599abc7b6c4c0bfcbee3a8e78101d55a7eaff75c13237e06/hyperdrc",
+    "sha256": "d1a4b3d5960743ed599abc7b6c4c0bfcbee3a8e78101d55a7eaff75c13237e06",
+    "bytes": 42936544,
+    "target": {
+      "kind": [
+        "bin"
+      ],
+      "crate_types": [
+        "bin"
+      ],
+      "name": "hyperdrc",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/src/main.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": false,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    }
+  },
+  "lib_tests": {
+    "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e/hyperdrc-f2524bbb15bdb74d",
+    "sha256": "7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e",
+    "bytes": 54268976,
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperdrc",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": true
+    }
+  },
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2",
+  "relevant_test_sources_identical_to_current_main": {
+    "crates/hyperdrc/src/conversion.rs": "82530d53f3a777394ac6226446e57f52d4a3f5c35fd11da4861ff159a0eb7b1b",
+    "crates/hyperdrc/src/parquet_report.rs": "38684fb9fbe1e419e0ba37bba003755a9e4f68389f64709c77dd356814a54418",
+    "crates/hyperdrc/src/sqlite_report.rs": "27d6503c7443b14cb4fedd65451fc3927fa3e01ce8f417cb15a1411a632eda09"
+  },
+  "cache_prototype_isolated": true,
+  "cache_admitted": false
+}

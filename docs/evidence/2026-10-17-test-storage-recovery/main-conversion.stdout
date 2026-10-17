@@ -1,0 +1,23 @@
+
+running 18 tests
+test conversion::tests::conversion_output_points_at_generated_gerber_directory ... ok
+test conversion::tests::convert_reports_directory_creation_failure ... ok
+test conversion::tests::convert_reports_command_failure_as_contextual_error ... ok
+test conversion::tests::convert_reports_missing_converter_binary ... ok
+test conversion::tests::default_conversion_output_dir_is_stable_and_separate_per_input ... ok
+test conversion::tests::kicad_cli_command_exports_gerbers_to_output_dir ... ok
+test conversion::tests::kicad_cli_drc_command_exports_json_report_to_output_dir ... ok
+test conversion::tests::kicad_cli_drill_command_exports_excellon_to_output_dir ... ok
+test conversion::tests::kicad_cli_handoff_commands_export_package_and_mechanical_files ... ok
+test conversion::tests::kicad_cli_ipcd356_command_exports_test_netlist_to_output_dir ... ok
+test conversion::tests::converter_provenance_hashes_inputs_and_manifests_outputs ... ok
+test conversion::tests::kicad_cli_position_command_exports_csv_centroid_to_output_dir ... ok
+test conversion::tests::kicad_cli_review_commands_export_named_drawing_sidecars ... ok
+test conversion::tests::transjlc_command_includes_color_images_when_supplied ... ok
+test conversion::tests::transjlc_command_includes_extra_backend_args ... ok
+test conversion::tests::transjlc_request_keeps_backend_specific_options_together ... ok
+test conversion::tests::convert_executes_successful_converter_and_returns_output_paths ... ok
+test conversion::tests::convert_executes_successful_kicad_cli_converter_and_returns_output_paths ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 1541 filtered out; finished in 0.01s
+

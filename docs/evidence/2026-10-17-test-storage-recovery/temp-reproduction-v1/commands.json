@@ -1,0 +1,122 @@
+[
+  {
+    "name": "0-convert_executes_successful_converter_and_returns_output_paths",
+    "test": "conversion::tests::convert_executes_successful_converter_and_returns_output_paths",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e/hyperdrc-f2524bbb15bdb74d",
+      "conversion::tests::convert_executes_successful_converter_and_returns_output_paths",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "pid": 1999803,
+    "exit_code": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.009369326289743185,
+    "temporary_roots": [],
+    "stdout_sha256": "0af43a2f8f8da8860c3b51fa01481b832f58188a8c86a25bd5c38bee419339ca",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "1-convert_executes_successful_kicad_cli_converter_and_returns_output_paths",
+    "test": "conversion::tests::convert_executes_successful_kicad_cli_converter_and_returns_output_paths",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e/hyperdrc-f2524bbb15bdb74d",
+      "conversion::tests::convert_executes_successful_kicad_cli_converter_and_returns_output_paths",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "pid": 1999810,
+    "exit_code": 101,
+    "timed_out": false,
+    "elapsed_seconds": 0.0053572519682347775,
+    "temporary_roots": [
+      "/tmp/hyperdrc-kicad-input-1999810.kicad_pcb"
+    ],
+    "stdout_sha256": "f7095c9ffce2a673aa37dd4cbe1f0c2f0072d195a258a233da6d8d681bfe482a",
+    "stderr_sha256": "3b372ccb5eaca7cc50722b9bdf589077fe3fe82b68f14f14f5e04df6c3b0900b"
+  },
+  {
+    "name": "2-convert_reports_directory_creation_failure",
+    "test": "conversion::tests::convert_reports_directory_creation_failure",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e/hyperdrc-f2524bbb15bdb74d",
+      "conversion::tests::convert_reports_directory_creation_failure",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "pid": 1999812,
+    "exit_code": 101,
+    "timed_out": false,
+    "elapsed_seconds": 0.005276907701045275,
+    "temporary_roots": [
+      "/tmp/hyperdrc-output-file-1999812.txt",
+      "/tmp/hyperdrc-conv-input-1999812"
+    ],
+    "stdout_sha256": "7012ceaae4b52a9514113aa5726cbe285a06518deda3c81fb40c6878aa848fc3",
+    "stderr_sha256": "38431ccd421c4754c0ab628101bf999d3542adc4676f779619f7e33b679db2e6"
+  },
+  {
+    "name": "3-converter_provenance_hashes_inputs_and_manifests_outputs",
+    "test": "conversion::tests::converter_provenance_hashes_inputs_and_manifests_outputs",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e/hyperdrc-f2524bbb15bdb74d",
+      "conversion::tests::converter_provenance_hashes_inputs_and_manifests_outputs",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "pid": 1999814,
+    "exit_code": 101,
+    "timed_out": false,
+    "elapsed_seconds": 0.005395790096372366,
+    "temporary_roots": [
+      "/tmp/hyperdrc-provenance-output-1999814",
+      "/tmp/hyperdrc-provenance-input-1999814"
+    ],
+    "stdout_sha256": "b31cfec48e4e40b9749610aeff130cd6b5edf79c8b212c4b00a5bd48347acf6b",
+    "stderr_sha256": "04b1cc8f986f2ce729d3122b9987e539d27014296881a3359acc5215925c0cf0"
+  },
+  {
+    "name": "4-writes_readable_parquet_report",
+    "test": "parquet_report::tests::writes_readable_parquet_report",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e/hyperdrc-f2524bbb15bdb74d",
+      "parquet_report::tests::writes_readable_parquet_report",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "pid": 1999816,
+    "exit_code": 101,
+    "timed_out": false,
+    "elapsed_seconds": 0.005402628798037767,
+    "temporary_roots": [
+      "/tmp/hyperdrc-report-1999816.parquet"
+    ],
+    "stdout_sha256": "cbfd31ec8a22937f741a499ad04fbe2795aa3b112be79d57798dd118deaa896e",
+    "stderr_sha256": "27a56b3da404ae1dc24738b5b265c3fada72d8fc73aa0bc3219e06ae1808345c"
+  },
+  {
+    "name": "5-writes_queryable_sqlite_report",
+    "test": "sqlite_report::tests::writes_queryable_sqlite_report",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e/hyperdrc-f2524bbb15bdb74d",
+      "sqlite_report::tests::writes_queryable_sqlite_report",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "pid": 1999818,
+    "exit_code": 101,
+    "timed_out": false,
+    "elapsed_seconds": 0.00521093187853694,
+    "temporary_roots": [
+      "/tmp/hyperdrc-report-1999818.sqlite"
+    ],
+    "stdout_sha256": "6c9d76453c747dd9f9665fac6dad37ec8c8e7be149151613fd1baaaa75d33316",
+    "stderr_sha256": "1906c2ec800dde71fd3031c55bc618093a17c5dcb77603f7b79c78a65b1f476f"
+  }
+]

@@ -1,0 +1,701 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/project_reports_v1.py": "c5ace8c35f4372c51a135c70ae32828ff013cc7bcdc4eea738e66559fe719f9f",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-17-native-stroke-completion/project-reports-v1/protocol.json": "81de70ac8cbdc1cf4f62dc36142cc814b79f3cf56df41501538a626e61333bfc",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/hyperdrc": "8a74b435a8266b8b144b5ae83e53c29b14721e0a7ad0aeeff38120b7444352e1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/d1a4b3d5960743ed599abc7b6c4c0bfcbee3a8e78101d55a7eaff75c13237e06/hyperdrc": "d1a4b3d5960743ed599abc7b6c4c0bfcbee3a8e78101d55a7eaff75c13237e06",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/result.json": "68b707605cf22044d4576630323d89073b5f3150ea43378d6df4ddb8b24cef37",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/commands.json": "bc66a2733aa1bb49d40463f4b86b725a5ab33ba0e7675223a8b4a3acd3864efc"
+  },
+  "project_files": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/L_Chilisin_BMRx00040412.kicad_mod": {
+      "sha256": "cf184f144dd497dd2ca4e670acf007fbcea688155d817fad14b561143afbd448",
+      "bytes": 5058,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/L_Chilisin_BMRx00040412.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/MountingHole_2.2mm_M2_Pad_Via.kicad_mod": {
+      "sha256": "50c913ca0c5726bb172f489449c1005d4d2d74e34a2ba41c272ba918f3f64b3a",
+      "bytes": 4508,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/MountingHole_2.2mm_M2_Pad_Via.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/NS-Tech_Grove_1x04_P2mm_Vertical.kicad_mod": {
+      "sha256": "b6c5b04442e88c7553a1b8b8e7dd9a1e9bbbf1bb6b70bc1c0b72563fb236898f",
+      "bytes": 6404,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/NS-Tech_Grove_1x04_P2mm_Vertical.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/Texas_VSON-HR-8_1.5x2mm_P0.5mm.kicad_mod": {
+      "sha256": "bde816c28e1c011e1379203961c6bfe961a213895a904761c55bea12e3747341",
+      "bytes": 6303,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/Texas_VSON-HR-8_1.5x2mm_P0.5mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/Texas_S-PDSO-G8_3x3mm_P0.65mm.kicad_mod": {
+      "sha256": "671c638035df6d0ac9b924f92808b629bf4ab8974205f81060396fdca3181a27",
+      "bytes": 6727,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/Texas_S-PDSO-G8_3x3mm_P0.65mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SOP-8_3.9x4.9mm_P1.27mm.kicad_mod": {
+      "sha256": "542d86cad465bf22ed34c98104ba3f77fead4a0be5ab4c0ad03206df01018744",
+      "bytes": 6847,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SOP-8_3.9x4.9mm_P1.27mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/TO-277B.kicad_mod": {
+      "sha256": "18ba7363e3b9987b01a57475e17a03ac397ed02574abc75062051a139cce345f",
+      "bytes": 8131,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/TO-277B.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/C_1206_3216Metric.kicad_mod": {
+      "sha256": "4852b80b5422d8b3e693c251a6db649acb479975e021f48e7b5685a3b302e71d",
+      "bytes": 4580,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/C_1206_3216Metric.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/XLITX_3641AS.kicad_mod": {
+      "sha256": "22f0ce4fe7f73780e65774d38875bc4c8976bc2c40f1e42914d9cfce51c713c6",
+      "bytes": 7488,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/XLITX_3641AS.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/Crystal_SMD_3225-4Pin_3.2x2.5mm.kicad_mod": {
+      "sha256": "34b0605d20937a52c11c15e7306d234dea9855e75926c76c15f19d53c4c399b6",
+      "bytes": 4883,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/Crystal_SMD_3225-4Pin_3.2x2.5mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SOT-23-6.kicad_mod": {
+      "sha256": "c70626cc5d731ba7cd4dbf2ecbb82a69f9ed5af3af3b24b974a6ecc497b33601",
+      "bytes": 6207,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SOT-23-6.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/NetTie-2_SMD_Pad0.2355mm.kicad_mod": {
+      "sha256": "43d637334b472afb8eef8610176b462055e90edb94a2192cab9861f2742b1f62",
+      "bytes": 2354,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/NetTie-2_SMD_Pad0.2355mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/AAWO_logo_13.5x4.7mm.kicad_mod": {
+      "sha256": "c0f9b5a003ee532d902a4867155fa227c977d87fb3bbd2394d01193b9817594c",
+      "bytes": 10328,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/AAWO_logo_13.5x4.7mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SOT-363_SC-70-6.kicad_mod": {
+      "sha256": "f3143c9eb2588aeee8ceb9e0a77124c46db6dd34a9f92d208576350c3640409e",
+      "bytes": 5620,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SOT-363_SC-70-6.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/PinHeader_1x02_P2.54mm_Vertical.kicad_mod": {
+      "sha256": "9a40969013b3bd76080301ef98ceb0a27dd3f013fc85001d1ea5366ac5e298ca",
+      "bytes": 5102,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/PinHeader_1x02_P2.54mm_Vertical.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod": {
+      "sha256": "1ec2f2704a13d5cf555fec895cc7b17906e84899bc6f009150b3a4f61bad4db8",
+      "bytes": 5994,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/Symbol_Barrel_Polarity.kicad_mod": {
+      "sha256": "8b2cccd219ac98e824b45aca0c6e409b53d3d43ce0ed2bb5410db003b1f88576",
+      "bytes": 2200,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/Symbol_Barrel_Polarity.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/OSHW-Logo2_7.3x6mm_SilkScreen.kicad_mod": {
+      "sha256": "42fd3905954c88d42647b85a45741f2304e7ee5c856e6c2f39483e7167dc64c2",
+      "bytes": 29719,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/OSHW-Logo2_7.3x6mm_SilkScreen.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/LED_0603_1608Metric.kicad_mod": {
+      "sha256": "2eca9c80966448e8ab27a629497ef1ff97882991a531ebf41ed897ae36388e80",
+      "bytes": 4801,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/LED_0603_1608Metric.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SOIC-24W_7.5x15.4mm_P1.27mm.kicad_mod": {
+      "sha256": "8b99cd02f28524308ef48f3887044a401d07ab27a66df68b1d7c0d9bb51ff98f",
+      "bytes": 10822,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SOIC-24W_7.5x15.4mm_P1.27mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/PinHeader_2x07_P2.54mm_Vertical.kicad_mod": {
+      "sha256": "00cc9214d14b57268b38b66ddb9f913f8b7a5eaf2c99441f3c7381222dfb3063",
+      "bytes": 8219,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/PinHeader_2x07_P2.54mm_Vertical.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal.kicad_mod": {
+      "sha256": "be889ccb7fa2eaa5acc807dc0b887d677dd4f1d3952e811c4a26deee3f7430c0",
+      "bytes": 8746,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/C_0805_2012Metric.kicad_mod": {
+      "sha256": "673b09d44d5183043b9b1161e6a04d4aa8c9928a655db25b1161d66754b70f84",
+      "bytes": 4650,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/C_0805_2012Metric.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/D_SOD-923.kicad_mod": {
+      "sha256": "f945789d8cdf32b1cfc6656cb9693b72f3fc6417d2c2e69e57a7354ead766226",
+      "bytes": 6869,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/D_SOD-923.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/TestPoint_Pad_D1.0mm.kicad_mod": {
+      "sha256": "da7d141dce908ceba1670d257247f202e026b77b58d7aa4cf4ec0623a28bfb8b",
+      "bytes": 2398,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/TestPoint_Pad_D1.0mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SOT-23.kicad_mod": {
+      "sha256": "79ef80cf7653be93aba0dada593cfe21e242550abc27a91053744854fc8572b8",
+      "bytes": 5518,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SOT-23.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SMA_Samtec_SMA-J-P-H-ST-EM1_EdgeMount.kicad_mod": {
+      "sha256": "429278c9ba5c3acc2fce3b1b166c8a48d4311901d7653269a56cc0d34eef37cb",
+      "bytes": 8455,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SMA_Samtec_SMA-J-P-H-ST-EM1_EdgeMount.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/PinSocket_2x10_P2.54mm_Vertical.kicad_mod": {
+      "sha256": "1f2f9eae4dd7fbe519bd8210b47b2f08536f2cf25c754e1bb71ef276b5ac9d1c",
+      "bytes": 9653,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/PinSocket_2x10_P2.54mm_Vertical.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SO-14_3.9x8.65mm_P1.27mm.kicad_mod": {
+      "sha256": "5cbf6a875b3be2411f394daa752acc3b0ca11ae8bb9f4350128ed62e907f9cad",
+      "bytes": 7668,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SO-14_3.9x8.65mm_P1.27mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/CP_Elec_4x5.4.kicad_mod": {
+      "sha256": "bb094a633d5a00b1b8db2839707ff62ef2b0a3ff1f719dde90d8f90f8301cdfa",
+      "bytes": 8250,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/CP_Elec_4x5.4.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/Texas_S-PWSON-N10_4x4mm_ThermalVias.kicad_mod": {
+      "sha256": "1d9abb4500855ad06e9e47427c38b20295bbe73681eb3a87cc6ceaffd228a7ab",
+      "bytes": 11033,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/Texas_S-PWSON-N10_4x4mm_ThermalVias.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SW_SPDT_PCM12.kicad_mod": {
+      "sha256": "e39cd71625c2720ef885c3c906c60464c470b3a01b9007a7aea79b345be7a88a",
+      "bytes": 8570,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SW_SPDT_PCM12.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/LQFP-48-1EP_7x7mm_P0.5mm_EP3.6x3.6mm.kicad_mod": {
+      "sha256": "bc20c6e9272d3f9c01955bbca31f50e5c9b0041872d3a541b8a4ef1ca05ee1c7",
+      "bytes": 21599,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/LQFP-48-1EP_7x7mm_P0.5mm_EP3.6x3.6mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/BarrelJack_Horizontal.kicad_mod": {
+      "sha256": "c73f9b511a20f13f087c38582b29e6543afed5d143a2718720a77292a8fd612b",
+      "bytes": 7172,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/BarrelJack_Horizontal.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/C_0402_1005Metric.kicad_mod": {
+      "sha256": "cb8a2873def2da18ee31d13ebec3f6f06dbf34e7b49324684eacbefc91c8a45d",
+      "bytes": 4572,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/C_0402_1005Metric.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SOIC-16W_7.5x10.3mm_P1.27mm.kicad_mod": {
+      "sha256": "1d97a1367dda6f8c9b7a88cf2738a9ca4d30f25002516dbc626b63fa63bf7abf",
+      "bytes": 9095,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SOIC-16W_7.5x10.3mm_P1.27mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/CP_Elec_6.3x7.7.kicad_mod": {
+      "sha256": "6148244b1378e7b4d2dba333de28c57591338f398e9d3084cab010f471620e10",
+      "bytes": 8245,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/CP_Elec_6.3x7.7.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/R_0603_1608Metric.kicad_mod": {
+      "sha256": "7fce17d66e8629384e006680a855a384cb75664d5eaebef0515dbc108d1c7851",
+      "bytes": 4582,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/R_0603_1608Metric.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/L_TDK_SPM7054VT.kicad_mod": {
+      "sha256": "05e709ce28c9c036446ee3d3a986c2f69e3e87efa455226ed2fee2cad0584763",
+      "bytes": 4496,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/L_TDK_SPM7054VT.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SW_DIP_SPSTx08_Slide_KingTek_DSHP08TS_W7.62mm_P1.27mm.kicad_mod": {
+      "sha256": "54609a5857c62b82ea932131092470c42d18f2b2a6c65c4ee4b7d660f764caa9",
+      "bytes": 24567,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SW_DIP_SPSTx08_Slide_KingTek_DSHP08TS_W7.62mm_P1.27mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/R_0402_1005Metric.kicad_mod": {
+      "sha256": "44d895ea503c1daa8645217f5d5a428b55ec9a5e373542ac2a88082f11f2b451",
+      "bytes": 4595,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/R_0402_1005Metric.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/Xilinx_FTG256.kicad_mod": {
+      "sha256": "b444bdaa43e858183ee92124c980b715eafdaa5637dcbb627b400535ef94a1f7",
+      "bytes": 59755,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/Xilinx_FTG256.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/C_0603_1608Metric.kicad_mod": {
+      "sha256": "907684b773ef9cfbed6fa8b082e976fb7fd85dc64951c58161cac7ac3c2bd1ac",
+      "bytes": 4573,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/C_0603_1608Metric.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SW_Push_TSC015A035_4.5x4.5mm_H4.5mm.kicad_mod": {
+      "sha256": "07536fb24c7bcc2956b8662d37a21e25fb8c3f54a324dfb4c675c2b829be7868",
+      "bytes": 5278,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SW_Push_TSC015A035_4.5x4.5mm_H4.5mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/Oscillator_SMD_Abracon_ASDMB-4Pin_2.5x2.0mm.kicad_mod": {
+      "sha256": "d7047accc68d2178834479e279eedab2ac2c72af03b17d1226cc2814af843322",
+      "bytes": 5015,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/Oscillator_SMD_Abracon_ASDMB-4Pin_2.5x2.0mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm.kicad_mod": {
+      "sha256": "8e9a9cb8d532ee0c181c4ee4bfc91c2e8b5f2d2b47ced4e564919ab50ab64a39",
+      "bytes": 3441,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/TSOP-II-44_10.16x18.41mm_P0.8mm.kicad_mod": {
+      "sha256": "e478cb4207ea9319d03771239e4c261c5b98c4639cc95003063344b58bb65fb9",
+      "bytes": 15365,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/TSOP-II-44_10.16x18.41mm_P0.8mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/TSSOP-28_4.4x9.7mm_P0.65mm.kicad_mod": {
+      "sha256": "dbd32b1000e8c2b78e9b25fa92a73db6bf044cadf71c2b6138edbdaf2e33a9d9",
+      "bytes": 11176,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/TSSOP-28_4.4x9.7mm_P0.65mm.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA.pretty/L_0402_1005Metric.kicad_mod": {
+      "sha256": "9e3c94ad19e9952bc9c0671bf385513da01085de6155a1c5b0397374f8e09e54",
+      "bytes": 4185,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA.pretty/L_0402_1005Metric.kicad_mod"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-B_Cu.gbr": {
+      "sha256": "b66fadddac390d77144a665092b0db3b71e4e9a376e7b2950f3843706804f839",
+      "bytes": 740461,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-B_Cu.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-User_7.gbr": {
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30",
+      "bytes": 438,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-User_7.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-User_1.gbr": {
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30",
+      "bytes": 438,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-User_1.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-User_3.gbr": {
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30",
+      "bytes": 438,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-User_3.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-F_Paste.gbr": {
+      "sha256": "76cf5479defbcd1ac27069082659f1e3005547b70c13e31894203c0d678230be",
+      "bytes": 48899,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-F_Paste.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-B_Mask.gbr": {
+      "sha256": "0ea66d2c6e6c6e83f0b731c2d8d0a75cc366a32a02a28175205a6f5a25c68ccb",
+      "bytes": 8552,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-B_Mask.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-User_9.gbr": {
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30",
+      "bytes": 438,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-User_9.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-PTH-drl.gbr": {
+      "sha256": "5364b4e610ef0f4239b496e012d32c54692d608146da3718f07344967141fb00",
+      "bytes": 33756,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-PTH-drl.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-User_8.gbr": {
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30",
+      "bytes": 438,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-User_8.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-F_Cu.gbr": {
+      "sha256": "7ab9cd7bd1d7920532cee4d6732e7a2539beb01f90d56d73d1f2378872498841",
+      "bytes": 1575556,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-F_Cu.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-job.gbrjob": {
+      "sha256": "8484e2f381d9968df263588274ff3df1faec195eca8bd027b5ed21e28e0173fd",
+      "bytes": 5045,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-job.gbrjob"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-B_Silkscreen.gbr": {
+      "sha256": "1832836a11ed5fe415d452bdcc2ac30665d8232ad46504f4b414a9206c3c30d7",
+      "bytes": 40844,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-B_Silkscreen.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-B_Paste.gbr": {
+      "sha256": "65fe5ffff375bd37ebe50beda9ecc2e3549d1115e703c658070b645ba1f1a8d1",
+      "bytes": 2803,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-B_Paste.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-User_2.gbr": {
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30",
+      "bytes": 438,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-User_2.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-User_5.gbr": {
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30",
+      "bytes": 438,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-User_5.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-User_6.gbr": {
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30",
+      "bytes": 438,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-User_6.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-NPTH-drl.gbr": {
+      "sha256": "1e279b91ddce840f99c6f48038f262e30b40a6f0cd1974a7c0fa276d92207bfd",
+      "bytes": 1182,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-NPTH-drl.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-User_4.gbr": {
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30",
+      "bytes": 438,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-User_4.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-F_Mask.gbr": {
+      "sha256": "7d0e224d6335a4b709a9bd07b87024420398c846818625097b289fcf3d7788be",
+      "bytes": 54400,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-F_Mask.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-Edge_Cuts.gbr": {
+      "sha256": "37b7fddb833ea46f9b4d88e8b84c8b2afcddfaa244f1a32d5cb3355a6efb2c1f",
+      "bytes": 699,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-Edge_Cuts.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerber_output/CPArti FPGA dev board-F_Silkscreen.gbr": {
+      "sha256": "abfe8927a7cb2229b72dcb2288cd5147dc9eb9b2a28311b0b63c9d38846f91f8",
+      "bytes": 963552,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerber_output/CPArti FPGA dev board-F_Silkscreen.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerbers/CPArti FPGA dev board-B_Cu.gbr": {
+      "sha256": "c006b220e3a0b27052d11f6833ccdb4590832b6d46ca5446ab8ce6a17d1f8f58",
+      "bytes": 740535,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerbers/CPArti FPGA dev board-B_Cu.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerbers/CPArti FPGA dev board-F_Paste.gbr": {
+      "sha256": "52287425daffab4e9b4386921f029e54825008abee93d581fb5a057aa6d162c3",
+      "bytes": 48973,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerbers/CPArti FPGA dev board-F_Paste.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerbers/CPArti FPGA dev board-B_Mask.gbr": {
+      "sha256": "16099e401069e3679ee3c113c6b7fed668dc2eb12345fa545705af060b1fede8",
+      "bytes": 8626,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerbers/CPArti FPGA dev board-B_Mask.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerbers/CPArti FPGA dev board-F_Cu.gbr": {
+      "sha256": "f3bdbd942046a75ccd5b6109d1b1130cdaecd58ae80a194cba4de40603be7c0e",
+      "bytes": 1575630,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerbers/CPArti FPGA dev board-F_Cu.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerbers/CPArti FPGA dev board-job.gbrjob": {
+      "sha256": "1c140d530828024a5f334e98495f5c128703182b4f46a590fd3dd085ae307db1",
+      "bytes": 3894,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerbers/CPArti FPGA dev board-job.gbrjob"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerbers/CPArti FPGA dev board-B_Silkscreen.gbr": {
+      "sha256": "a7e8653802da90b24e553882626a4c178ebef39923eb8a7752da366a7e3f0337",
+      "bytes": 40918,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerbers/CPArti FPGA dev board-B_Silkscreen.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerbers/CPArti FPGA dev board-B_Paste.gbr": {
+      "sha256": "b33410c956a7a1f9709c688ea874a1997e635de1becb8f54555ee34cbac0224f",
+      "bytes": 2877,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerbers/CPArti FPGA dev board-B_Paste.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerbers/CPArti FPGA dev board-F_Mask.gbr": {
+      "sha256": "ea98bb5379fbb038f6754a008759f3cfd274c79af42461a81c70f37e9f6c499b",
+      "bytes": 54474,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerbers/CPArti FPGA dev board-F_Mask.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerbers/CPArti FPGA dev board-Edge_Cuts.gbr": {
+      "sha256": "50cdf365b53f7d873240c6ff819c742c33e968e9dbe5e9e109d4b38e0193cb72",
+      "bytes": 773,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerbers/CPArti FPGA dev board-Edge_Cuts.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/gerbers/CPArti FPGA dev board-F_Silkscreen.gbr": {
+      "sha256": "5d7ab1833d75b08bada7948edbba522db62565c75031799b5a455a5109b50206",
+      "bytes": 963626,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "gerbers/CPArti FPGA dev board-F_Silkscreen.gbr"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/CPArti FPGA dev board.kicad_prl": {
+      "sha256": "c5060e50c9cb25e9e9809752c52e239da595b719ccea05055bd57693ee924276",
+      "bytes": 2552,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "CPArti FPGA dev board.kicad_prl"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/LEDs.kicad_sch": {
+      "sha256": "c7e81e1b18ff1322ad6d3eae36627e71586b2a989ae6cffc108dc20d63e57bfc",
+      "bytes": 193699,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "LEDs.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA_Power.kicad_sch": {
+      "sha256": "730a6ed2e794fcd9bdaf8f6f589969584a177d61d067d0fa4aeff8f307621918",
+      "bytes": 173597,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA_Power.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/power.kicad_sch": {
+      "sha256": "4de2c50bab5a8bb93f0bd9a1ac5065ab01fc8871b7b439bfaac62f7265083fff",
+      "bytes": 327272,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "power.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/SRAM.kicad_sch": {
+      "sha256": "822acdb38e5524a23c2b3ba253dd7f60a3c7fcab386e546a2015541b847d2ad4",
+      "bytes": 53038,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "SRAM.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/CPArti FPGA dev board.kicad_dru": {
+      "sha256": "64b05ceb7215708b2c86750a1093bcc235b575fc7d8f197d78d89119aba3efac",
+      "bytes": 617,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "CPArti FPGA dev board.kicad_dru"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/Programmable_delay.kicad_sch": {
+      "sha256": "89c29d4a138df69910856f9e5b5e767de16b0f6b13cacdc98c83da97ec31388a",
+      "bytes": 116005,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "Programmable_delay.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/config.kicad_sch": {
+      "sha256": "71060f0198d178416370b7417ea978196bea44e8492d53ea5ab0ca8ccfc9661a",
+      "bytes": 247785,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "config.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/DAC.kicad_sch": {
+      "sha256": "6373dda03625bf66994a7ed2f1ef90f8b95254ce11a29fc6841ab2708b9a2879",
+      "bytes": 166674,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "DAC.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/High_freq.kicad_sch": {
+      "sha256": "798e686b443ba8310ca1f853f44192cd53dfc9d7f6bd2bad7922abfd55fb2dfc",
+      "bytes": 104575,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "High_freq.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/fp-lib-table": {
+      "sha256": "31976d52c410f8516b12edfdeab7f8b5808b1bcbe11dae652e49dc494437dec9",
+      "bytes": 235,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "fp-lib-table"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/User_buttons_SWs.kicad_sch": {
+      "sha256": "bac88c04e35f46e529049d77e07fe1e973605c0f03cf394e1d15a7c954449506",
+      "bytes": 150204,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "User_buttons_SWs.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA_banks_14-15.kicad_sch": {
+      "sha256": "bb1b7712836e85f0992777a79566b13153c2e3336bc29a00e7ba00786dfb1867",
+      "bytes": 233259,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA_banks_14-15.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/CPArti FPGA dev board.kicad_sch": {
+      "sha256": "630b842d06bf2262ae13ec8550e1e7f94311a412f253013f3c9b592bb969f4cb",
+      "bytes": 26273,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "CPArti FPGA dev board.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/CPArti FPGA dev board.kicad_pro": {
+      "sha256": "b6165099fd023fd06d5ac9a251ad884ad80dc452bbac06a64128289e842b12fe",
+      "bytes": 26082,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "CPArti FPGA dev board.kicad_pro"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/USB.kicad_sch": {
+      "sha256": "9758921117d2585827543abba1d97e81950616c41f151771a656697ad73bc8d6",
+      "bytes": 175373,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "USB.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/FPGA_banks_34-35.kicad_sch": {
+      "sha256": "eca2b0ef9192a49b4e9c29e30b168d014ad5b9997d4290b5ba61aa4b3d3868dd",
+      "bytes": 240998,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "FPGA_banks_34-35.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/sym-lib-table": {
+      "sha256": "bbbdf7d41537cc244ff3e81d6b7455d89289c05eca9a1a47e871a16be5ef24e0",
+      "bytes": 150,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "sym-lib-table"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/cparti/CPArti FPGA dev board.kicad_pcb": {
+      "sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a",
+      "bytes": 8177693,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "entry": "CPArti FPGA dev board.kicad_pcb"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/hvp109a/HVP109A_Interface.kicad_sch": {
+      "sha256": "e3b1ea7b74a96f7d5e25d3c0f8c6d18ffb938d05b5a71a186dc06867101a9518",
+      "bytes": 2775879,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/HVP109A.zip",
+      "entry": "HVP109A_Interface.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/hvp109a/HVP109A_Power.kicad_sch": {
+      "sha256": "14ad7a58306b5ab63778488b075cc92cba116559df479dcb62fa7b2b02745b49",
+      "bytes": 2643419,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/HVP109A.zip",
+      "entry": "HVP109A_Power.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/hvp109a/HVP109A.kicad_prl": {
+      "sha256": "0f5cb1bf3b5ab428453e0f26e022d027e625571bd4d24c0e74a232bf2fdeece9",
+      "bytes": 2568,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/HVP109A.zip",
+      "entry": "HVP109A.kicad_prl"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/hvp109a/HVP109A.kicad_pcb": {
+      "sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6",
+      "bytes": 5611517,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/HVP109A.zip",
+      "entry": "HVP109A.kicad_pcb"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/hvp109a/HVP109A.kicad_sch": {
+      "sha256": "c410078da6c0ef2b18cad9031d62ca6b963306380828a0fdcb602d49ea14d29e",
+      "bytes": 8773124,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/HVP109A.zip",
+      "entry": "HVP109A.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/hvp109a/HVP109A_GaN.kicad_sch": {
+      "sha256": "c9259b8cdd67f4929c1220c2b035673a9164f428f07cce38d4f06e8d192b5c5e",
+      "bytes": 5632781,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/HVP109A.zip",
+      "entry": "HVP109A_GaN.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/hvp109a/_autosave-HVP109A.kicad_pcb": {
+      "sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6",
+      "bytes": 5611517,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/HVP109A.zip",
+      "entry": "_autosave-HVP109A.kicad_pcb"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/hvp109a/HVP109A_Hardware.kicad_sch": {
+      "sha256": "bb5e6d18f632fc599bd9b58081b89ceb79a5525a577cc54842a03ef759180e05",
+      "bytes": 2423214,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/HVP109A.zip",
+      "entry": "HVP109A_Hardware.kicad_sch"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/project-reports-v1/inputs/hvp109a/HVP109A.kicad_pro": {
+      "sha256": "d8d6dfda69c9f8d93817af31148b4efcffa7f6112c78a2cc1d0aeccbb647c52e",
+      "bytes": 18991,
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/HVP109A.zip",
+      "entry": "HVP109A.kicad_pro"
+    }
+  },
+  "baseline_source_differences": {
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32.json": {
+      "baseline": "d4e237c1b77a98216d9c80c6f0819cd206ee253833826fb02bf1b2a53345f3eb",
+      "current": "b3a0428305689adb1520b80fb741616dd6bff7a1e4cd853870b43a3bbc3765ae"
+    },
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32s3.json": {
+      "baseline": "04b3d92d6218d3ddb73a32dfa2c5c91bd1b564e609035be26ef6dab0a2479b22",
+      "current": "64aca0494a1107cfb415eae9c6eda5838f613291e75c553780e8a7600843f517"
+    },
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/nano.json": {
+      "baseline": "4f4e6673b793a23fe0bc00b799670198bb88050969e0f5d5d6c239e4cd1a436a",
+      "current": "25be72d0dd282a4f2ea552b9e1f79ca1bcd087b93c51d5e53ab435c45db54a02"
+    },
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/rp2040.json": {
+      "baseline": "d283c7be8beca4e3f2ce752c23ac3b9bdb4219560232e57f12b20098a13d4c9a",
+      "current": "792319f31fac7910f7ca91a79071b405c1ee60a721c94596aebcae5a4dc8c9b0"
+    },
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/stm32f103.json": {
+      "baseline": "84d0efe06bb97602c319abae76ae5865dba7e98e1ce1ab0dff0a95c70a188f23",
+      "current": "5c057de4b6f0cf9319ca33f63ca198cc567d43536a313e2f1a4613be3a73919b"
+    },
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/uno.json": {
+      "baseline": "3241c7a2b79a21571c056c56096cc897c0e56d1d19098d81a0333f7daf1bfa30",
+      "current": "7d3dc6055a8408d553af96661b634c6f030251c9cb9bee6994d51aee19654316"
+    },
+    "crates/hypercircuit/tests/fixtures/manufacturing-release/release-board-v1.zip": {
+      "baseline": "c22ba6c79b42b0c4754664b5b0f8fa03616ee2e7ae16401965287dfcbeb41e6d",
+      "current": "aaae55e9957c7a2db67f3b60489d117afab7411b00f25a61e06e8c8de0e2d188"
+    },
+    "docs/properties-status.json": {
+      "baseline": "3a03cad4dae7ad2a07b3a555c58789d006bdcd24e2930047baf284b5b391a4f6",
+      "current": "38e8dc3ec154e3c7fc4fb7b30542c10a6b0379017e49f836c2d511116b34fc8c"
+    }
+  },
+  "native_baseline_implementation_inputs_identical": true,
+  "cache": "Independent process per complete project and variant; every original project file is read-only.",
+  "external_timeout_seconds": 1800,
+  "address_space_bytes": 8589934592,
+  "performance_comparison_claimed": false,
+  "qualification_incomplete": true,
+  "purpose": "Preserve report values, order, serialized bytes and checksums; this is not an independent source-fidelity oracle."
+}

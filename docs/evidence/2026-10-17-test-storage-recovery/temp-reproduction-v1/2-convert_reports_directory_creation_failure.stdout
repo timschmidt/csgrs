@@ -1,0 +1,11 @@
+
+running 1 test
+test conversion::tests::convert_reports_directory_creation_failure ... FAILED
+
+failures:
+
+failures:
+    conversion::tests::convert_reports_directory_creation_failure
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1558 filtered out; finished in 0.00s
+

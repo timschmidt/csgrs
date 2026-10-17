@@ -1,0 +1,44 @@
+{
+  "complete": true,
+  "expected_control_passed": 1,
+  "expected_file_failures_reproduced": 5,
+  "selected_TMPDIR_writable_but_unused": true,
+  "raw_failed_artifacts": {
+    "/tmp/hyperdrc-kicad-input-1999810.kicad_pcb": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "test": "conversion::tests::convert_executes_successful_kicad_cli_converter_and_returns_output_paths"
+    },
+    "/tmp/hyperdrc-output-file-1999812.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "test": "conversion::tests::convert_reports_directory_creation_failure"
+    },
+    "/tmp/hyperdrc-provenance-input-1999814/board.kicad_pcb": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "test": "conversion::tests::converter_provenance_hashes_inputs_and_manifests_outputs"
+    },
+    "/tmp/hyperdrc-report-1999816.parquet": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "test": "parquet_report::tests::writes_readable_parquet_report"
+    },
+    "/tmp/hyperdrc-report-1999818.sqlite": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "test": "sqlite_report::tests::writes_queryable_sqlite_report"
+    }
+  },
+  "temporary_roots": [
+    "/tmp/hyperdrc-kicad-input-1999810.kicad_pcb",
+    "/tmp/hyperdrc-output-file-1999812.txt",
+    "/tmp/hyperdrc-conv-input-1999812",
+    "/tmp/hyperdrc-provenance-output-1999814",
+    "/tmp/hyperdrc-provenance-input-1999814",
+    "/tmp/hyperdrc-report-1999816.parquet",
+    "/tmp/hyperdrc-report-1999818.sqlite"
+  ],
+  "source_changes_applied": false,
+  "main_sources_unchanged": true
+}

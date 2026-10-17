@@ -39,7 +39,6 @@ pub fn write_report_parquet(report: &Report, path: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use std::fs::File;
-    use std::path::PathBuf;
 
     use arrow_array::StringArray;
     use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
@@ -97,10 +96,8 @@ mod tests {
             summary: report_summary(&active, 1),
             violations: active,
         };
-        let path = PathBuf::from(format!(
-            "/tmp/hyperdrc-report-{}.parquet",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("hyperdrc-report-{}.parquet", std::process::id()));
         let _ = std::fs::remove_file(&path);
 
         write_report_parquet(&report, &path).unwrap();

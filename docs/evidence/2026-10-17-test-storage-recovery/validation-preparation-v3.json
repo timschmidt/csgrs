@@ -1,0 +1,6 @@
+{
+  "failed_runner_preserved": "validate_temp_v2.py",
+  "failure_before_build_or_target_creation": "Retained build contains zip 2.4.2 and zip 7.2.0; the declared HyperDRC dependency resolves to zip 2.4.2.",
+  "correction": "Resolve ambiguous names using the exact direct dependency version in Cargo.lock, then select its rlib.",
+  "v3_runner_sha256": "a3090699c0ff8ba1549b76cd474d044e3f27d2f42b1ddf5436d3da7ad443d94d"
+}

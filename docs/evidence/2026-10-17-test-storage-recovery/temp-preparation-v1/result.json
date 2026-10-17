@@ -1,0 +1,18 @@
+{
+  "complete": true,
+  "base_commit": "8982f85b09740ab89309e3be9b6a970b65c50ec8",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-candidate-source-v1",
+  "source_inputs": 2835,
+  "source_hashes_sha256": "6bdda7c96ae0cb3b2097d94a645d4a9b68a3a0266a75c6d6f9811b7e71dc678c",
+  "main_input_hashes_sha256": "8179ee78682d7d77653a5b03b3f529a1affbaa0da3fe905dad6e7c34e35b3f65",
+  "changes": {
+    "crates/hyperdrc/src/conversion.rs": "f1ca13372f42fd13ca6c061dc8d61e1230cc5f65b2daba43ad6ffb7a260ef62f",
+    "crates/hyperdrc/src/parquet_report.rs": "93fa0b9cf5a55ca5d9cd26b260baa45b511bc53cd68bbad505d77a391a61e37d",
+    "crates/hyperdrc/src/sqlite_report.rs": "7d4c6b9748f1aeed6c2530d9bc47cbe3af61d1931bd2b04c4d0ec321d78e1b86"
+  },
+  "production_prefixes_unchanged": true,
+  "assertion_lines_unchanged": true,
+  "cache_index_included": false,
+  "source_changes_applied": false,
+  "runner_sha256": "4e6044096d483aee98b8cb4849c518b965efe84f9db7c7d1a889702af5116a10"
+}

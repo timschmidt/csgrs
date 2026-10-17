@@ -1,0 +1,11 @@
+
+running 1 test
+test parquet_report::tests::writes_readable_parquet_report ... FAILED
+
+failures:
+
+failures:
+    parquet_report::tests::writes_readable_parquet_report
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1558 filtered out; finished in 0.00s
+

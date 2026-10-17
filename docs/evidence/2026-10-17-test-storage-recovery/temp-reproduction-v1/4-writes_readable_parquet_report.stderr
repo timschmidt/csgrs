@@ -1,0 +1,8 @@
+
+thread 'parquet_report::tests::writes_readable_parquet_report' (1999817) panicked at crates/hyperdrc/src/parquet_report.rs:106:46:
+called `Result::unwrap()` on an `Err` value: failed to finish Parquet report /tmp/hyperdrc-report-1999816.parquet
+
+Caused by:
+    0: External: Disk quota exceeded (os error 122)
+    1: Disk quota exceeded (os error 122)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

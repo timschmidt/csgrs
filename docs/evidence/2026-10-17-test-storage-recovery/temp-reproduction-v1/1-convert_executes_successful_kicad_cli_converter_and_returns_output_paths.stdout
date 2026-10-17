@@ -1,0 +1,11 @@
+
+running 1 test
+test conversion::tests::convert_executes_successful_kicad_cli_converter_and_returns_output_paths ... FAILED
+
+failures:
+
+failures:
+    conversion::tests::convert_executes_successful_kicad_cli_converter_and_returns_output_paths
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1558 filtered out; finished in 0.00s
+
