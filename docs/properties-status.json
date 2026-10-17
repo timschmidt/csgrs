@@ -17623,6 +17623,22 @@
     "full_plan_complete": false,
     "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
     "original_worktree_integration_pending": true
+  },
+  "circle_support_demo_package_qualification": {
+    "status": "demo CI passed; workspace package assembly failed on excluded Hypervoxel registry dependency",
+    "contract": "docs/evidence/2026-10-17-circle-support-demo-packages/contract-v1.md",
+    "qualification": "docs/evidence/2026-10-17-circle-support-demo-packages/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-circle-support-demo-packages/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-circle-support-demo-packages/artifact-expectations-v1.json.gz",
+    "demo_tests_passed": 42,
+    "demo_release_wasm_built": true,
+    "workspace_package_assembly_passed": false,
+    "staged_packages_verified": 8,
+    "hyperreal_archive_bytes": 108043832,
+    "cache_index_admitted": false,
+    "full_plan_complete": false,
+    "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
+    "original_worktree_integration_pending": true
   }
 },
   "status_meanings": {
