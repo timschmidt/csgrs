@@ -17704,6 +17704,45 @@
     "full_plan_complete": false,
     "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
     "original_worktree_integration_pending": true
+  },
+  "native_cache_combination": {
+    "status": "rejected: at least one original resource gate still fails",
+    "contract": "docs/evidence/2026-10-17-native-cache-combination/contract-v1.md",
+    "qualification": "docs/evidence/2026-10-17-native-cache-combination/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-native-cache-combination/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-native-cache-combination/artifact-expectations-v1.json.gz",
+    "baseline_missing_claims": 14,
+    "candidate_focused_passed": 61,
+    "original_resource_gates": {
+      "copper-neck": {
+        "exit_code": 101,
+        "process_elapsed_seconds": 348.15280456701294,
+        "assertion_time_seconds": 125.863821098,
+        "assertion_time_unit": "check-body wall seconds",
+        "original_threshold_seconds": 60
+      },
+      "full-board": {
+        "exit_code": 101,
+        "process_elapsed_seconds": 358.3082602522336,
+        "assertion_time_seconds": 356.278636776,
+        "assertion_time_unit": "worker CPU seconds",
+        "original_threshold_seconds": 120
+      },
+      "gerber": {
+        "exit_code": 0,
+        "process_elapsed_seconds": 0.10874770814552903,
+        "assertion_time_seconds": null,
+        "assertion_time_unit": "wall seconds",
+        "original_threshold_seconds": 120
+      }
+    },
+    "cache_index_admitted": false,
+    "exact_ingress_admitted": false,
+    "hypervoxel_deferred_by_user": true,
+    "external_distribution_complete": false,
+    "full_plan_complete": false,
+    "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
+    "original_worktree_integration_pending": true
   }
 },
   "status_meanings": {
