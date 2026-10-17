@@ -1,0 +1,80 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/measure_v1.py": "0675430f7d20a6bee28e992e9a79ac34789205b5a67e4ca2a262ef852b3fefbe",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/runner_v1.py": "0b5629bf2920908bb882caab85cce6412ed236fef1f8ef18dc238bbcf503a3cb",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/contract-v1.md": "ad4478e9afb8db8cc688ac6dce930ad0cc4d47042bf1c6fc646a36c2db223e07",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/result.json": "c267619de1f421d84c837bef2c0c7c38005ee63e361ee233a005b2f131fdfa1d",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/protocol.json": "49c2046f76cc92137e7cffedd107a703f378ad11e99fc627088344f2a61fcf18",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests": "9917debc506fdc5907d395f02f2252b2e08b45f51f9cdfa114f1d85702e0f5dc",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests": "d9ab6801909a7cc7a0c8b3aeab974e189d3bafa0b5492b7022dbe0fa7cbf6b9d"
+  },
+  "schedule": [
+    [
+      0,
+      4,
+      "baseline"
+    ],
+    [
+      0,
+      4,
+      "candidate"
+    ],
+    [
+      0,
+      128,
+      "candidate"
+    ],
+    [
+      0,
+      128,
+      "baseline"
+    ],
+    [
+      0,
+      16,
+      "baseline"
+    ],
+    [
+      0,
+      16,
+      "candidate"
+    ],
+    [
+      0,
+      9,
+      "candidate"
+    ],
+    [
+      0,
+      9,
+      "baseline"
+    ],
+    [
+      0,
+      1,
+      "baseline"
+    ],
+    [
+      0,
+      1,
+      "candidate"
+    ],
+    [
+      0,
+      8,
+      "candidate"
+    ],
+    [
+      0,
+      8,
+      "baseline"
+    ]
+  ],
+  "repetitions": 1,
+  "seed": 20261017,
+  "production_bytes_unchanged_from_e42": true,
+  "full_timing_contract": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/contract-v1.md",
+  "completion_required": "Two independently checked strict secant witnesses per query; complete ordered rows every batch.",
+  "measurements_sequential": true,
+  "no_instrumentation_in_latency": true
+}

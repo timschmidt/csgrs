@@ -1,0 +1,2438 @@
+[
+  {
+    "name": "n4-r0-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2654598602093756,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815054848,
+        "runtime_free_bytes": 663408640,
+        "host_available_memory_bytes": 8650874880
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "a077f55a34874713508e58ffe7a03384506cf57d04690d03908c759bd0d12a61",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8494314ab5a655f61503aac0f319563c0f356bfe91c6750108960407748041e2"
+  },
+  {
+    "name": "n4-r0-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2153388848528266,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815054848,
+        "runtime_free_bytes": 663384064,
+        "host_available_memory_bytes": 8650874880
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "16bf49a1ed31ddf15d449e0bd50451c4bb89495eaa970a7077f49d2504a3715c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b9959ae6cd1bbf6ca679559df1cfb8557a69a6d2d530297a8ea9e0b94a0381f2"
+  },
+  {
+    "name": "n128-r0-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.31534933019429445,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815054848,
+        "runtime_free_bytes": 663367680,
+        "host_available_memory_bytes": 8650874880
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "3b5c23270af4c467ff4d5e6650b20af11676679e6694146e994aba4920878e0d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "bae4612f7537c4eb7bf13e6bea417fa38450963824bd220d3a64e6e3406f7c69"
+  },
+  {
+    "name": "n128-r0-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8160979128442705,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815054848,
+        "runtime_free_bytes": 663347200,
+        "host_available_memory_bytes": 8650874880
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "2dd6f706eef3a20dbc60ad2c387457d904eb0d26c3c597d052b3c85baf4a410d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5aaf98ed86227a3f5c4425bb6900c7e565f03ccafa6b55eff6460ec7764fab2a"
+  },
+  {
+    "name": "n16-r0-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.315371158067137,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663326720,
+        "host_available_memory_bytes": 8650604544
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "7435e3f8049ca635cd7e3d9ec0726ca09ac053de0aa97a8dfd862edec80f153d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "36a96c1e1a6bbb911f94fa3492c511fb90e7e81f03e66b130eaf6fa8478103f3"
+  },
+  {
+    "name": "n16-r0-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.31547050131484866,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663306240,
+        "host_available_memory_bytes": 8650375168
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "521c12cd3cdb5b7a869255a88213b6d5394c52858f84bf063bc1d327daf4f612",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "973e9f79c0d7fba214dc8c4490eae1f739d8a2d4c2b66e802f52127886d53e5e"
+  },
+  {
+    "name": "n9-r0-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2653489070944488,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663289856,
+        "host_available_memory_bytes": 8649093120
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "3cfa65412a7363940c3f59e1a0ce33b0932c59728276c652827379de983d3a2a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7cf95db1ade8b59cbea0fa37ede7e1e8f731d5d25267746b1fc20fc697d4c75e"
+  },
+  {
+    "name": "n9-r0-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2653363882564008,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663269376,
+        "host_available_memory_bytes": 8648843264
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "4415a98648de7d17bd1de5c5aad4ba8deea936afae89e3405c42dfec70ee4244",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4732a6f6c50a16343753bfd5f2eaec4e59d355b9e5ecff7a25288040d4d66371"
+  },
+  {
+    "name": "n1-r0-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16518653323873878,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663252992,
+        "host_available_memory_bytes": 8648511488
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "99da058b5bda9bf51ffa472afe711f226bbb9ec3e4b91ec8027c13c9429645cb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7ebcaa80f5ba827f624857fcf8fc51e67e0a80d113c802a01aabd85270ccfcb6"
+  },
+  {
+    "name": "n1-r0-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2153642326593399,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663232512,
+        "host_available_memory_bytes": 8648511488
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "1186a7de779666e6f7b8a3dd99d89e9dc3ad9c090f844bb61e3c397dd8feecfc",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "071c3be96b2d4b951afd65e02de84861fe995bf7267fd9f637f07750b8ffd9b3"
+  },
+  {
+    "name": "n8-r0-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26521357567980886,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663216128,
+        "host_available_memory_bytes": 8648511488
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "edc6f697276bb11071c1d26deb134eeaca6999cd54598c5f04a6dde659e6ad8d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b5b20a2d1560566f98dba62babf75a2d7e18922092a9d5400554dbf96e2920b2"
+  },
+  {
+    "name": "n8-r0-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26550762727856636,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663199744,
+        "host_available_memory_bytes": 8649420800
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "f82170da9f2a131b52cc3f765bc05a9b0292cfe6ff9fc0dd2b16f3c1489de8bd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "66ffd05582e272a5fd998652882b29ee7befeaf3a6da62e66e508be12f284b31"
+  },
+  {
+    "name": "n4-r1-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.21548288501799107,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663183360,
+        "host_available_memory_bytes": 8649162752
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "6f76c97a4bfcb4ec720516ee5a566f66c871213f2e8c601b702919aca12fe3f9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "935fdf411c395c6ae0efb6cda094634651e96153b51aea7ed46445c9e0acff26"
+  },
+  {
+    "name": "n4-r1-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.215274210087955,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663158784,
+        "host_available_memory_bytes": 8650280960
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "d6e6eeb6c1c16175775744e592c4618df95fd6243a3646eeb65dbedf63b4f6d6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f2e11e5453bbf6c2ef83c6fdaf452bad708e0d776c0f72ea3b57b0df0f452ccb"
+  },
+  {
+    "name": "n1-r1-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16505767218768597,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663142400,
+        "host_available_memory_bytes": 8650280960
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "888a1869b2f1c72ef162f3cf301c3c83bcdd57b834b2abcbf0fa64f368554dc4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0f1ab955eebedca8c21c4ca158232f766fdf1c99cb45f9c0621e7249d04b299f"
+  },
+  {
+    "name": "n1-r1-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16499743703752756,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663126016,
+        "host_available_memory_bytes": 8650285056
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "404598b266149be625aef1fd4dc5530c864a81069015a44d97da623ab3cabbfb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ea1aa101aabee6e6c30d46791bc11a46a5d4430e3946f7939e9f829843e797b4"
+  },
+  {
+    "name": "n128-r1-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.31535660894587636,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663109632,
+        "host_available_memory_bytes": 8650735616
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "c3d6dc1a579a943ad8e0474a14e69b7710071ec90a09933a897786abca35d917",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "aae1d11993bd87787c87ac819920dc0d55ec71792ae3b43a62ffd7691a320ec7"
+  },
+  {
+    "name": "n128-r1-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.816090933047235,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663085056,
+        "host_available_memory_bytes": 8652247040
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "717da4a5b721be8cda3e53bdae9d773aff3183225d217153154d2f3a1ab9e361",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f685927e904d6542cb47454fe9465943830bbabe1659d1f38cca990013b27675"
+  },
+  {
+    "name": "n8-r1-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.265211695805192,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663064576,
+        "host_available_memory_bytes": 8656199680
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "bc5e6149b287288569435bbcea7a52d47b8bc978ac4de9cf81e3fe161fd8f148",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "14a02241dda2f14b0edeb9ee72f72ece950ba2328dd24bb96284b200a596b6d9"
+  },
+  {
+    "name": "n8-r1-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2651163740083575,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663048192,
+        "host_available_memory_bytes": 8656199680
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "75214e741504c3d6aa02ba8546b1003cd36f2c55b48fbf949c4892c6583ff237",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3c4b01bc39eb0b42bf990f214b72883793f40b67fe1355303b5fe9121e70ddd7"
+  },
+  {
+    "name": "n16-r1-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.31543873297050595,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663027712,
+        "host_available_memory_bytes": 8656257024
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "6fe69b0d4206c738e3f0a458da176a742513647b479d7e0c9b734b54ece26c99",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "363a510155ed3864488b7aa231f20fd4dc15e1efd1f955ae23ac562760cb807f"
+  },
+  {
+    "name": "n16-r1-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3153158617205918,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 663007232,
+        "host_available_memory_bytes": 8655740928
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "bee5d61aa89197d0a9fa9493428c6e404ff8dd99e38108ee2a546046616c44f6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "470a6b01d1b04909ac99f7e35263124653987a6b5b5ed759ae48deab6d9858be"
+  },
+  {
+    "name": "n9-r1-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2652956508100033,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 662990848,
+        "host_available_memory_bytes": 8655818752
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "2690b03cdf5b8f1d8523dd48c96d83473df54a271ab203a0e935988a719a0676",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "17a10597b16ef321e0e6a980cda820da1b69a6cf7a7611162d85bf9ea4df469b"
+  },
+  {
+    "name": "n9-r1-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2653036401607096,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 662974464,
+        "host_available_memory_bytes": 8656158720
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "281c6df641aeaca6da52d28bf4ee293ee7dcc63e8dd630c0067ea859110bb5f6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c4219ae8cc213ea4639493af3b9dc07451ecabd4d34a4137d00904f9349471a2"
+  },
+  {
+    "name": "n4-r2-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.21524286223575473,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 662958080,
+        "host_available_memory_bytes": 8656216064
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "089007b6e28069a1ca37ee4b383ec4d31f2010d0e78b83f5d4742225dbb262cf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7fb48a347f46122c05eb3ca2a8d0637f6c16fa56796f870757e0bda6026a28ea"
+  },
+  {
+    "name": "n4-r2-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2152546108700335,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 662937600,
+        "host_available_memory_bytes": 8656822272
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "c40d770a933ed9936395b8238e41eaf8683dd18e6cbeec136e9146c97a6862ac",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "560493212069147bfb3208188311fd43e69a4eb3e682e8cb27e0a4ae0bd0738b"
+  },
+  {
+    "name": "n1-r2-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.21515568811446428,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 662917120,
+        "host_available_memory_bytes": 8656105472
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "4e7d6e166b336823bceb22b9033d37fe218dcc52eb7dbd7ade01c851dd5dfcee",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3cc232498039c71be93577c4e0b46028a1903e2a18acf31cd7763a56d4dd162c"
+  },
+  {
+    "name": "n1-r2-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16514171613380313,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 662900736,
+        "host_available_memory_bytes": 8655532032
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "5a704fb64f60f5bc9e50f742e3e0da3b19eb2cec81f8528d92632c0b97903b63",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9ed40a7354d32305a89721470c0c7cf87af4931cb9a3982b17835fe419bb5789"
+  },
+  {
+    "name": "n8-r2-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2651356519199908,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815050752,
+        "runtime_free_bytes": 662884352,
+        "host_available_memory_bytes": 8656834560
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "b29ec922a5a72640c77072fdb36be83d2fb1cca9b5cee5a3f06f186889422d61",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b27f75c6ebbcfb3946bc406f99475f73784e25db1b8232a52c6e86cc2fb2f6bf"
+  },
+  {
+    "name": "n8-r2-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.265157210174948,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662863872,
+        "host_available_memory_bytes": 8659107840
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "433205391f43287732b553d5d2797014661526edfab000d47a44479e314ebe31",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "1e315d5d78a37867c5d8705c9ae0bea1ea6311c647e25fb68518c1bedbe2fe00"
+  },
+  {
+    "name": "n128-r2-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.315476770978421,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662847488,
+        "host_available_memory_bytes": 8660017152
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "006b219f40252395724fcc377f5384915d2e49fdf5e20eb74b674f963a477013",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "24d5268a7b6d1ee8785746307bfdf96c1b8abe4ded460c852899852df140ffb4"
+  },
+  {
+    "name": "n128-r2-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8160755150020123,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662827008,
+        "host_available_memory_bytes": 8660041728
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "44bf1f52e7bc57d5b90d110c45b47ce306f1e453d725a2068372e63c8c7fb503",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7f873f2ed36c5f4c0d7cc4477feda8d67d584d244264c416df8ad80bf8c66251"
+  },
+  {
+    "name": "n16-r2-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3153568487614393,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662802432,
+        "host_available_memory_bytes": 8657448960
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "0ddba3bc253e44e17d0b30b90e62b0a98c670141c89ee23876af070c82bdbc12",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3875b73d9efc33efa67ce7b43401c335b3895a3d26bcc495754178be588aa02f"
+  },
+  {
+    "name": "n16-r2-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3153250706382096,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662781952,
+        "host_available_memory_bytes": 8656695296
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "7f5f97028d6fd421f818aa1d4a64af2df9131b1d1f3c3e42841e8a21497909d6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9c0d2d26f93d883fd4e8b3b8a87695345219be657c8ddc46c1f1d34958243012"
+  },
+  {
+    "name": "n9-r2-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2653153301216662,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662765568,
+        "host_available_memory_bytes": 8655147008
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "2108a7cd8a7da6751c46deed02d0275ec358b934dcf330e2a97b1ba594f698a6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8a02f16d148711445ecf141c3ada20dc6dd8b073fa532178eec25c66ad5ebf13"
+  },
+  {
+    "name": "n9-r2-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2652871608734131,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662749184,
+        "host_available_memory_bytes": 8655151104
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "d1006b49696218add0f7ed9661036f49982ae818f74f4a8877265bd25c344b3e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9de74beced9785b190704499ff1de343646579b49670ff2e660fc9e16f443f8e"
+  },
+  {
+    "name": "n1-r3-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1653158743865788,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662732800,
+        "host_available_memory_bytes": 8654888960
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "54dc4dad14b60afe540fdf756a8d6b23e65a494b6693beb857b9853ce2759dc9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8f504aa86c038efa6af65b6c92e0aad52cfa461b9c351a4c6aa85170f9e02037"
+  },
+  {
+    "name": "n1-r3-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16527370736002922,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662712320,
+        "host_available_memory_bytes": 8656093184
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "b8913e1ee885349ea77d36073b50084663b4e2ad61dd31ea579cd15f01a56bf4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "59ecf0f1939e79fde9dd450e504fa407c6ddc574a984fd1ff24bb569b5c78b6b"
+  },
+  {
+    "name": "n8-r3-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26518039917573333,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662695936,
+        "host_available_memory_bytes": 8657002496
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "2677e2e3e0fafba025d1773e02c3f722f106ede0f832ccf092b7f1733c6987ec",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "15d7b5279fe944804caf31bf2a25da703f6af169145caaee089003734bc6b3ef"
+  },
+  {
+    "name": "n8-r3-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2652543340809643,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662675456,
+        "host_available_memory_bytes": 8657469440
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "f52c4b0f39440ff4f9c4e6a449adf8f3587732b95a5bc5d613fa1eede410bafa",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "eea0ebd8318b01c10db9a505e09837ec0705223af3ef9158c35484c8a0eea305"
+  },
+  {
+    "name": "n9-r3-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26526839286088943,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662659072,
+        "host_available_memory_bytes": 8657448960
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "1858ead50840a90c062d4e49b3e98254bf56822b18f93949131f75b61f4d7e70",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "75af4f2e27ce7c16c8cd1f3c0dde80837004e628ec70bf80a8617f6961ca8612"
+  },
+  {
+    "name": "n9-r3-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26525471406057477,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662638592,
+        "host_available_memory_bytes": 8657190912
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "fab8fb71c0c5017f57c67f3854f6559c045434c404ed6d7ca3c1d498d596c5dc",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0f3db0d8a279e5525301dedf84140145cfdae0dbdd949fcc212a0005bff71e7a"
+  },
+  {
+    "name": "n16-r3-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3153186817653477,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662622208,
+        "host_available_memory_bytes": 8657190912
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "249d64709aec7c35ce0e469e0ba019ed9d2f6977c3f55ae1af538896fa1cec6d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "209cafe7311701f0dfa23375976f5f4a149a779a1a028e0075aa0b9f62a23515"
+  },
+  {
+    "name": "n16-r3-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.31529200403019786,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662605824,
+        "host_available_memory_bytes": 8657190912
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "cf6ab1ae502b6f4cb6bd6ee9e317dabccdcb876ec0b1a20cd74b5151db005ef4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "788f87f10ac4b2a1075bc5fc813873007275d9c78d406c9c298011f9ce032a2f"
+  },
+  {
+    "name": "n128-r3-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3155442657880485,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662589440,
+        "host_available_memory_bytes": 8661250048
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "4e7b2292c75e2145ab365b2c3119b90781e2d5d95cd301899eced2ed3b36586d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b9f3c1ee7267c2842935e6745acd6dff18280d3706d69a74a4e87d1b2960e425"
+  },
+  {
+    "name": "n128-r3-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8158753793686628,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662560768,
+        "host_available_memory_bytes": 8661250048
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "7489c6cfa7c16323679d1b22b305133a7938e6eabf65c7f9b16ff51be972ced5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "377a1c50806abbb85988a90b879436a154b9a389af8c9b629661582c652cc51b"
+  },
+  {
+    "name": "n4-r3-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.21523531200364232,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662540288,
+        "host_available_memory_bytes": 8662183936
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "f66aa004f1c1046c7c50a8d09b47baeb7c87b610ed3ed643f979bfebd2ab16f1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ecadf582bac68d1a6c677dca60f9f9ffa28ffb00f2d54c1ce6c1372f7acadc0d"
+  },
+  {
+    "name": "n4-r3-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2152939890511334,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662523904,
+        "host_available_memory_bytes": 8662441984
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "dc4d3fb207dc61102799d7c0694ea82931750669ec7ee625da35071cfa27f337",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "13a6b6ba1d3f628ad625d37ad77faabb0ae3769dc539a07a38f6be0928b6ef83"
+  },
+  {
+    "name": "n128-r4-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8160879439674318,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662507520,
+        "host_available_memory_bytes": 8661954560
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "4cd7ab140facce1b0b5825176368ee2007cad3b377d8a22a4804e63a8fdd6f2f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "40afb4deff0d067aecfe4fb69d2bc3ccdb4f5621e30eecc87f0549b56b50b165"
+  },
+  {
+    "name": "n128-r4-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.31532258074730635,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662482944,
+        "host_available_memory_bytes": 8661696512
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "df8b37c1b617bbca6ce2428bb7faafc203298755aacc977f90625547c6b23958",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2f73448c33d27e2085de1a525231524c130a4d77bcc47a835f30053bd41f7516"
+  },
+  {
+    "name": "n1-r4-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16512498818337917,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662462464,
+        "host_available_memory_bytes": 8661438464
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "b16ccd163bbcd9144d427d0df5b538ba91cd1de29100a41c691b3704b90336df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0fb64cb73b5454a8ece8a1e6385d94cc373cfc8378f77ad5b23e0bf2af90162d"
+  },
+  {
+    "name": "n1-r4-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16529106628149748,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662441984,
+        "host_available_memory_bytes": 8661438464
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "4a2eee456ecc2eece4c1ec73cf1126b31903b9cc9544eb3a3ca02b63d1d1da4e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "076f23c2135fda567d282354f48d24110b77b3cf181342f5db3d37facc21231b"
+  },
+  {
+    "name": "n8-r4-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26531407982110977,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662425600,
+        "host_available_memory_bytes": 8659935232
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "a20aa59f5ef5e101a106957a820bd9401c73e653944d768a1475eff96f8a0160",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8f4458fd3d58d2b20d6558e0d0d7cffd210645b8cae079df40bbcee274cd56f6"
+  },
+  {
+    "name": "n8-r4-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26531619019806385,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662405120,
+        "host_available_memory_bytes": 8659484672
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "3f3ebfe1221be3372676077f343885cc531ef67237338dfacc68a0f39f500a1d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ba3991d03374109f076255578b609ba889feee1494bdd8c79e1ec73c32dbbe7c"
+  },
+  {
+    "name": "n4-r4-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.21545083820819855,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662388736,
+        "host_available_memory_bytes": 8657666048
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "59ac9987d0358330657037819b5cc7d785efc904ec09cbea673c36f66faca872",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7327c0dde4c5909c6d3e902f6410764274d9d6390e41c5cd632a268b9ff1574c"
+  },
+  {
+    "name": "n4-r4-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.21537789329886436,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662372352,
+        "host_available_memory_bytes": 8657408000
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "19faf633e762006d1c0f0d59cd796770027d381c5267e38e5885a0aad05075cf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "bcf3eeefbac4e242b0834e173165d3cbef69da4ca72ca51e25ee8f6672cc3271"
+  },
+  {
+    "name": "n16-r4-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.31530944211408496,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662355968,
+        "host_available_memory_bytes": 8658759680
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "449b5a24c753b09fbb167be38ebe623e8b3ee465cd94e56cf555c309da2bd668",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "312ae1d95f45fe070c71587275830871b54d5d628bbc87853c3cb3d470d690cb"
+  },
+  {
+    "name": "n16-r4-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3153334413655102,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662335488,
+        "host_available_memory_bytes": 8658759680
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "1e069f929aecbf343f92e72c791b0047d12d3232f83d8146b5ff6a36065151cf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7019201e6b2255879a1ac307b8a28766f562705807726663ed134b58b243a133"
+  },
+  {
+    "name": "n9-r4-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2654640688560903,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662315008,
+        "host_available_memory_bytes": 8656953344
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "ed26691efc9106a72eede9ac9c886df0495dd233459534bdafc23f8176f16bb2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b60f55ea68ff94bde11de86a0fc8f30fbdc03bddce0ca0e8b40defe4f7c3ece2"
+  },
+  {
+    "name": "n9-r4-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2652339553460479,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662298624,
+        "host_available_memory_bytes": 8657645568
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "016981051c6efd7aae11727dfaca7a987b98d3cc053363b33b03cf6e425a70c8",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5bc7ca14f367ce869732f7447c7116bbdc5c0a082b8407bc834f09a22f12fe62"
+  },
+  {
+    "name": "n16-r5-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3154223538003862,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662282240,
+        "host_available_memory_bytes": 8656355328
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "59c3c67427ed4beb275f568ee9e642074802c15e53cf0acd57ff0b557b8dd888",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "bf20adaa8edf4cf0b4ae0d372ca25ac0b713c7569600c60f3adaedc65e88103d"
+  },
+  {
+    "name": "n16-r5-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.31543203396722674,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662261760,
+        "host_available_memory_bytes": 8655581184
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "7c6db2db9af984c9359dbea5aac2a7d8eb7044f7eda3b042dd4eb33e98f42624",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2f0f080ee47aa38fdb1d1200ed7f46e8e53968c1faa80653b81edaff1d067d1a"
+  },
+  {
+    "name": "n9-r5-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2652873918414116,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662245376,
+        "host_available_memory_bytes": 8655585280
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "c09208406c3a61eea8e0c5fdfa6e48be23d9f1abb555ec0465c55b84230481bb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3e2df6e3d5268fd9dc1ea5e279a7337e8d28235259d10e7993fb0002b6a7b023"
+  },
+  {
+    "name": "n9-r5-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2652874509803951,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815046656,
+        "runtime_free_bytes": 662228992,
+        "host_available_memory_bytes": 8657858560
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "4ecbb3369cbb40ca38db3ac91c4228249cd33dbb145f41d3444effff1edcd93e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "1b7ecfc0985e0dc6a7e1b5948eff650a325193f7e8cfeda992b2723a5771b119"
+  },
+  {
+    "name": "n128-r5-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3152959533035755,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815038464,
+        "runtime_free_bytes": 662208512,
+        "host_available_memory_bytes": 8658677760
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "5d3693ab1fcb2b0fca08b76e89deeabf6e52b5f9f21757725e1a2595e554aef8",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ae7708e86a1269c887da350b647e26f2823958e444e2f320616fb29ddee2491b"
+  },
+  {
+    "name": "n128-r5-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8159566931426525,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815038464,
+        "runtime_free_bytes": 662183936,
+        "host_available_memory_bytes": 8658677760
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "d4f66f9a65e8014726a48a0c7217e52ee492f2b4ea502795b61042f0d1d2f17b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6a8956cfb88d4af6a6a946a8a0132163c0225f894486d8bfa095516560936970"
+  },
+  {
+    "name": "n1-r5-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16521374136209488,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 662163456,
+        "host_available_memory_bytes": 8659087360
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "e0de79281249625d75841ebfe22db2b7135965405e7006a0c38574e9b2460bb2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "396fe1b8c25ed304014b323bcefd66d2a04bb62ad32cf9474f9874709a12218d"
+  },
+  {
+    "name": "n1-r5-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.21553186187520623,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 662147072,
+        "host_available_memory_bytes": 8658309120
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "72f4ba1722aadfd135a355bfb85d306066e684f3478a3730a558e05d2c1e2a8a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "41dd3b57d972d6fabcb49c2c6a55c24254e332847929dbcba64b588ff4a62c34"
+  },
+  {
+    "name": "n4-r5-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26529178209602833,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 662130688,
+        "host_available_memory_bytes": 8658317312
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "5fb8702d442ae8864ff1948a1fe109dd610f4e99b5f590d6d4b351a6af49747c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "655673ea57250e25761e4042318b05d60254648a46561b0d28e481b69f204385"
+  },
+  {
+    "name": "n4-r5-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2152266427874565,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 662114304,
+        "host_available_memory_bytes": 8658325504
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "017e42ae70e8ac64ce592ec4039eaf86b9fe021eb7e97e3992be6b0e548e1f7f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "415a0e14d925a06a5218544eb32b7f14306c090d3cd589c81be8b3217e100e1e"
+  },
+  {
+    "name": "n8-r5-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26535635720938444,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 662089728,
+        "host_available_memory_bytes": 8657158144
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "25ffe300baa2b4908e6b80ff0eca96086b18f98fa6fd231def84a614afc9a1d2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0cb2bee7f8ae2ea2dd7bbe0d59c6731713fb0783ac8d95413ea8c96ba1e100ea"
+  },
+  {
+    "name": "n8-r5-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26536146691069007,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 662073344,
+        "host_available_memory_bytes": 8657158144
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "1ac6a5243e1ce9dc1f7e4ed59290fa1fcd67d8f177b2fdeb08077ef4d5f3088a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "94d40820720d775be3d82fba9eae8c20465153ab5ba48bffa4ece99f4a0149c8"
+  },
+  {
+    "name": "n1-r6-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1650921101681888,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 662056960,
+        "host_available_memory_bytes": 8655011840
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "dd1e8117ef238ecb7e1c4a2b8153ee39c5fb15b74939a20cd7b616c29b363467",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "60201f40aeb1a84be642cd2993aada887a63cfa12f78f4b83b8a29968d7ca84f"
+  },
+  {
+    "name": "n1-r6-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16513436706736684,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 662040576,
+        "host_available_memory_bytes": 8654102528
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "1"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "f085643d90b11c4b4c5e40d181799ff3d9df2752801da48240dc5937ac38b23b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9a7d6619db2b77075aa8d9dec050e9e5a19197cc8811e81aba6b84739981aefc"
+  },
+  {
+    "name": "n4-r6-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.21531586721539497,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 662020096,
+        "host_available_memory_bytes": 8654102528
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "c7bc6a302c09339cb71f25da8a2ee0cd7a24622f6393d860b78d694496c3ae3b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f7623177b25274e1b8b78288a70f328036c2a7559f98c36ec7fd3727b21f1502"
+  },
+  {
+    "name": "n4-r6-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.21518098609521985,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 662003712,
+        "host_available_memory_bytes": 8655478784
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "4"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "8857b779dd182bf3ed1d3fa8aca24347a7a3a7f03865790354f0df0ada686248",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0fa3dd11b6de84838d239fa31b857441bf476509cd96b0c393bd71ee5573c36a"
+  },
+  {
+    "name": "n16-r6-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.31532332161441445,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 661987328,
+        "host_available_memory_bytes": 8655548416
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "a5d7255ac1a030b5d7a01e4390c8c00124e1b9acbaaa973b6ae29f73f8d672ec",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "055ba9ddcfeb5ac60f03e0e6231a7660290edb4324c7a2ad1fdaebebe95b909f"
+  },
+  {
+    "name": "n16-r6-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3153566187247634,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 661966848,
+        "host_available_memory_bytes": 8654913536
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "16"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "6e20d8fedc92de234b73f9455050da0f89a6f61d258bca0321fa656826d3e26b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "aa7318425f9b5a2cd233e11f4ac95e777f3e8183dfdcc3841852d412a30e045b"
+  },
+  {
+    "name": "n9-r6-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26544409105554223,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 661946368,
+        "host_available_memory_bytes": 8654913536
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "2e2673aa38883a225fa5f47116322f94d62f06d38b344dbe0f5175d98d7a2f36",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a2ca816fd5e322d26db5f929fca479d32427a67410b1923302a55b3d2651e66e"
+  },
+  {
+    "name": "n9-r6-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26515486976131797,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 661929984,
+        "host_available_memory_bytes": 8655822848
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "9"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "91c4994f5786ab923dd28aa3ff69c9507c64b7e25e569a6a2a9819d03fed8bed",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7e3f14836b2af5ba28adb20dcfb7f28072b39351433ad15e3ba352f394136453"
+  },
+  {
+    "name": "n128-r6-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8159955600276589,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 661913600,
+        "host_available_memory_bytes": 8655949824
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "e3656864d3c541191763096c6a60cdfb63a957ee1cf4f5e05dca4dfe6cedc5bf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0f35054743fe77ee977137dcad91071afb2f52d46568a5fe810f5f72dbbf8f0c"
+  },
+  {
+    "name": "n128-r6-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.31534652039408684,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815034368,
+        "runtime_free_bytes": 661893120,
+        "host_available_memory_bytes": 8658960384
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "128"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "87beb00edb279a4d0d1687a3bea7f560aa26a66f2145130710cfdc4beec84014",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "cde5496fee3b97726b8d58a990712b225756ab1ac6048e26aac728c413b91e53"
+  },
+  {
+    "name": "n8-r6-candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2652886309660971,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815017984,
+        "runtime_free_bytes": 661868544,
+        "host_available_memory_bytes": 8661307392
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "54b8571695766653fa987d21c6134c2b87845c96468aee10996ee46ceae5df05",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3b3d83c7bccb121dd1215f5c3939dc97777f83f3e04ce642df147bbd50028d9b"
+  },
+  {
+    "name": "n8-r6-baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.26531671918928623,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 815017984,
+        "runtime_free_bytes": 661848064,
+        "host_available_memory_bytes": 8660533248
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SMALL_BATCH_N": "8"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "236fc3ebbaa4273885232458c66b0286a66df9c67286f45c3af779b702052407",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "294e4c69a512a15d3051127341bdd9a49cb4088caa3e07ffd041ba1c7fccd6b1"
+  }
+]

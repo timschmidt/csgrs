@@ -1,0 +1,11 @@
+
+running 1 test
+test curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost ... CIRCLE_SMALL_SAMPLE {"count":1,"batches":65536,"queries":65536,"phase":"cold","seconds":0.110912525}
+CIRCLE_SMALL_ROWS [["3", "4", "3", "-4"]]
+CIRCLE_SMALL_SAMPLE {"count":1,"batches":65536,"queries":65536,"phase":"warm","seconds":0.048454408}
+CIRCLE_SMALL_ROWS [["3", "4", "3", "-4"]]
+CIRCLE_SMALL_CERTAINTY Certified
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1745 filtered out; finished in 0.16s
+

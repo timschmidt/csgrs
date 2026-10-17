@@ -1,0 +1,29 @@
+{
+  "name": "n4-r3-baseline",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+    "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+    "--exact",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.21523531200364232,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 815046656,
+      "runtime_free_bytes": 662540288,
+      "host_available_memory_bytes": 8662183936
+    }
+  ],
+  "environment_overrides": {
+    "CIRCLE_SMALL_BATCH_N": "4"
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "f66aa004f1c1046c7c50a8d09b47baeb7c87b610ed3ed643f979bfebd2ab16f1",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "ecadf582bac68d1a6c677dca60f9f9ffa28ffb00f2d54c1ce6c1372f7acadc0d"
+}

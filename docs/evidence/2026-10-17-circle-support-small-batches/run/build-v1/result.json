@@ -1,0 +1,20 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "binaries": {
+    "baseline": {
+      "path": "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+      "sha256": "9917debc506fdc5907d395f02f2252b2e08b45f51f9cdfa114f1d85702e0f5dc",
+      "bytes": 46953864
+    },
+    "candidate": {
+      "path": "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+      "sha256": "d9ab6801909a7cc7a0c8b3aeab974e189d3bafa0b5492b7022dbe0fa7cbf6b9d",
+      "bytes": 47001272
+    }
+  },
+  "command_failures": [],
+  "main_sources_unchanged": true,
+  "frozen_sources_and_dependencies_unchanged": true,
+  "cache_admitted": false
+}

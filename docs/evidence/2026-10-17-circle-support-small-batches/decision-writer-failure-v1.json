@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "target/properties/circle-support-small-batches/decision_v1.py"
+  ],
+  "exception": "KeyError: 'proposal_sha256'",
+  "cause": "The E42 decision has no top-level proposal_sha256; the proposal result carries it.",
+  "record_source": "Observed execution output; no separate original stdout/stderr file was captured for this helper.",
+  "enclosing_shell_exit_code": 0,
+  "python_exit_code_separately_captured": false,
+  "implementation_or_measurements_changed": false,
+  "executed_helper_preserved_sha256": "ef1da81f3c079fb792785c85b9eb327ab843cfeed06830b840b94ce109849316"
+}

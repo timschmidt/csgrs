@@ -1,0 +1,29 @@
+{
+  "name": "n128-r5-candidate",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+    "curve_intersection::circle_support_small_batch_probe::small_batch_complete_cost",
+    "--exact",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.3152959533035755,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 815038464,
+      "runtime_free_bytes": 662208512,
+      "host_available_memory_bytes": 8658677760
+    }
+  ],
+  "environment_overrides": {
+    "CIRCLE_SMALL_BATCH_N": "128"
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "5d3693ab1fcb2b0fca08b76e89deeabf6e52b5f9f21757725e1a2595e554aef8",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "ae7708e86a1269c887da350b647e26f2823958e444e2f320616fb29ddee2491b"
+}

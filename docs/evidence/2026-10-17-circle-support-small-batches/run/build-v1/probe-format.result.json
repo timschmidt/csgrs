@@ -1,0 +1,27 @@
+{
+  "name": "probe-format",
+  "command": [
+    "rustfmt",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/small_batch_probe_v1.rs"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.03331857919692993,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 815517696,
+      "runtime_free_bytes": 813346816,
+      "host_available_memory_bytes": 8611930112
+    }
+  ],
+  "environment_overrides": {},
+  "scratch_remaining": [],
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "010f064d269428f21237222ffbb299768b186d326c51d7a391df456d6bf7b000"
+}

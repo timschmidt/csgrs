@@ -1,0 +1,101 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "process_samples": 84,
+  "expected_process_samples": 84,
+  "phase_observations": 168,
+  "command_failures": [],
+  "all_completed_observations_certified": true,
+  "all_completed_exact_ordered_rows_identical": true,
+  "independent_oracles_checked": true,
+  "read_only_inputs_unchanged": true,
+  "decisive_rejection_cases": [
+    {
+      "count": 4,
+      "phase": "cold",
+      "baseline_seconds": [
+        0.133635353,
+        0.117225171,
+        0.119466237,
+        0.121905379,
+        0.119518253,
+        0.120009879,
+        0.116738774
+      ],
+      "candidate_seconds": [
+        0.137034349,
+        0.142974841,
+        0.140427175,
+        0.137003441,
+        0.139083558,
+        0.146865153,
+        0.138492499
+      ],
+      "baseline_median_seconds": 0.119518253,
+      "candidate_median_seconds": 0.139083558,
+      "candidate_over_baseline": 1.1637013971414056,
+      "positive_paired_differences": 7,
+      "candidate_min_exceeds_baseline_max": true,
+      "predeclared_rejection_criterion_met": true
+    },
+    {
+      "count": 8,
+      "phase": "cold",
+      "baseline_seconds": [
+        0.133840489,
+        0.136527544,
+        0.13483418,
+        0.136049177,
+        0.135181646,
+        0.136745369,
+        0.150373192
+      ],
+      "candidate_seconds": [
+        0.160044607,
+        0.165217781,
+        0.165555618,
+        0.162542595,
+        0.165782753,
+        0.161708882,
+        0.160201286
+      ],
+      "baseline_median_seconds": 0.136049177,
+      "candidate_median_seconds": 0.162542595,
+      "candidate_over_baseline": 1.19473412911568,
+      "positive_paired_differences": 7,
+      "candidate_min_exceeds_baseline_max": true,
+      "predeclared_rejection_criterion_met": true
+    },
+    {
+      "count": 9,
+      "phase": "cold",
+      "baseline_seconds": [
+        0.137751479,
+        0.136416821,
+        0.139619441,
+        0.140789881,
+        0.139703885,
+        0.138268984,
+        0.137419922
+      ],
+      "candidate_seconds": [
+        0.164964759,
+        0.163577895,
+        0.169725471,
+        0.165127948,
+        0.163761191,
+        0.165282387,
+        0.165458215
+      ],
+      "baseline_median_seconds": 0.138268984,
+      "candidate_median_seconds": 0.165127948,
+      "candidate_over_baseline": 1.1942515466809243,
+      "positive_paired_differences": 7,
+      "candidate_min_exceeds_baseline_max": true,
+      "predeclared_rejection_criterion_met": true
+    }
+  ],
+  "summary_sha256": "fbf4a21c06fa12f9c83018409693452c8dee9665bc9086ed05836112a516001e",
+  "cache_admitted": false,
+  "full_plan_complete": false
+}

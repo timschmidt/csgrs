@@ -1,0 +1,16 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "process_samples": 12,
+  "expected_process_samples": 12,
+  "phase_observations": 24,
+  "command_failures": [],
+  "all_completed_observations_certified": true,
+  "all_completed_exact_ordered_rows_identical": true,
+  "independent_oracles_checked": true,
+  "read_only_inputs_unchanged": true,
+  "decisive_rejection_cases": [],
+  "summary_sha256": "4bd2b06e347949fb48eadfb096a101946522f46723a71467e4f8b16326a3ba06",
+  "cache_admitted": false,
+  "full_plan_complete": false
+}

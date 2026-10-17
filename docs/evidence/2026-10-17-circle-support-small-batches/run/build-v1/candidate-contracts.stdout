@@ -1,0 +1,13 @@
+
+running 8 tests
+test curve_intersection::circle_support_cache_tests::distinct_supports_and_warm_hits_keep_independent_circle_oracles ... ok
+test curve_intersection::circle_support_cache_tests::exhausted_attempt_does_not_poison_later_support_proof ... ok
+test curve_intersection::circle_support_cache_tests::independent_batches_keep_policy_receipts_and_concurrent_results ... ok
+test curve_intersection::circle_support_cache_tests::large_supports_keep_exact_witnesses_across_small_batch_transition ... ok
+test curve_intersection::circle_support_cache_tests::ordered_pairs_tangency_coincidence_and_containment_keep_their_meaning ... ok
+test curve_intersection::circle_support_cache_tests::subrange_and_superrange_supports_preserve_exact_witnesses ... ok
+test curve_intersection::circle_support_cache_tests::symbolic_and_rational_supports_share_one_correct_batch ... ok
+test curve_intersection::circle_support_cache_tests::value_equal_rebuilt_supports_and_changed_geometry_do_not_alias ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 1738 filtered out; finished in 0.01s
+

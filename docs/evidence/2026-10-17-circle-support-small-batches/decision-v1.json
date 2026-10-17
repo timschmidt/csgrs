@@ -1,0 +1,549 @@
+{
+  "main_parent_commit": "6479d3ba982777a1e9ecc8ce24ef83752d2e474b",
+  "status": "rejected: guarded index has stable 16\u201319.5% cold regressions on completed small batches",
+  "retention_decision": "rejected",
+  "cache_index_admitted": false,
+  "source_changes_applied": false,
+  "main_sources_modified": false,
+  "implementation_sha256": {},
+  "proposal_sha256": {
+    "crates/hypercurve/src/curve_intersection.rs": "31e8ae30b71d7538c44105d74e78260efa2e793414a22b42b0544060ef38a134",
+    "crates/hypercurve/src/circle_support_cache_tests.rs": "9e2cd9b5f44c19c4a5e7a5758d4232719ed796ffed8fcbeed334714501886c75",
+    "crates/hypercurve/README.md": "fc2ae41175b00141d46afbfb781dc5f1fb4b2e76120af4a5f32575e4f5b3845e"
+  },
+  "previous_qualification_decision": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-17-circle-support-guarded/decision-v1.json",
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/decision_v2.py": "4dc433696b451d356e50a8b96e6e87e5efacd0136dcb61af51088276350ed9df",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/contract-v1.md": "ad4478e9afb8db8cc688ac6dce930ad0cc4d47042bf1c6fc646a36c2db223e07",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/progress-v1.md": "38beb226201cf02f7a60114e768bfe61e27e9c9a1adbe9a581b6c8ab2e19002a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/build_v1.py": "379983ee2b4eb86e5d25de2273c86012d5f42bde74dacf26a19a1288a6f61365",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/runner_v1.py": "0b5629bf2920908bb882caab85cce6412ed236fef1f8ef18dc238bbcf503a3cb",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/measure_v1.py": "0675430f7d20a6bee28e992e9a79ac34789205b5a67e4ca2a262ef852b3fefbe",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/small_batch_probe_v1.rs": "2443464fc5b702e009c841ccc8aa1f9180f1652bdeaa64fab77fc71ef33194b2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-17-circle-support-guarded/decision-v1.json": "0a0999ec7a193b714a8aa8696f19160747aa6f488f5a87634b243c7244e46d97",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/proposal-v1/result.json": "1b6341533a413420b0037bc3304f1cc31afb7d5cade783e025ab0a50d9b363f9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/decision_v1.py": "ef1da81f3c079fb792785c85b9eb327ab843cfeed06830b840b94ce109849316",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-small-batches/decision-writer-failure-v1.json": "bd710adb98c4efff15eda41b2da601331a0f411fbc4b3476aa8dd81d8003cc5b",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/protocol.json": "49c2046f76cc92137e7cffedd107a703f378ad11e99fc627088344f2a61fcf18",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/commands.json": "d3a29012e660992b772f7f0d371b64a37c13440f9527acc128bfb23cd9416e5e",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/result.json": "c267619de1f421d84c837bef2c0c7c38005ee63e361ee233a005b2f131fdfa1d",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/cost-preflight-v1/protocol.json": "424c3bae8a11d52a8ce459d79c57e200f6af1820a3ca10883d64363d8ee15d4e",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/cost-preflight-v1/commands.json": "6d93837558ea4504c5d2fc90d5e957f68c5904c4afe878f6b169253e29f42d9a",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/cost-preflight-v1/result.json": "fa5fac06be302c2ff050dca01a3a2e73e850ea20cc03165e1f20f4ed85de2057",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/cost-matched-v1/protocol.json": "451cdaa530c04f14dc8263a5a4ee505df4313cbfd34637062b2d03fadb37c3e3",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/cost-matched-v1/commands.json": "91c4a24a2077612bde28c66d78b73ba11f5ecd14b99e68fb0b2921b64e583c56",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/cost-matched-v1/result.json": "6847e48fb1b7bce0e73d203a3e2c465b0dca0f3164b6f821f1a3e5cd5af4b7f8",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/cost-matched-v1/samples.json": "0dbed8933486ec8c4e099173894587e156a0943503af703ed063013c04b85706",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/cost-matched-v1/summary.json": "fbf4a21c06fa12f9c83018409693452c8dee9665bc9086ed05836112a516001e",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/cost-matched-v1/witnesses.json": "f8f968e53815893213968af15427e7b7f93edf89ce0bf7ad7f9f153f7ce0b154"
+  },
+  "preserved_bookkeeping_failure": {
+    "command": [
+      "python3",
+      "-B",
+      "target/properties/circle-support-small-batches/decision_v1.py"
+    ],
+    "exception": "KeyError: 'proposal_sha256'",
+    "cause": "The E42 decision has no top-level proposal_sha256; the proposal result carries it.",
+    "record_source": "Observed execution output; no separate original stdout/stderr file was captured for this helper.",
+    "enclosing_shell_exit_code": 0,
+    "python_exit_code_separately_captured": false,
+    "implementation_or_measurements_changed": false,
+    "executed_helper_preserved_sha256": "ef1da81f3c079fb792785c85b9eb327ab843cfeed06830b840b94ce109849316"
+  },
+  "results": {
+    "build": {
+      "complete": true,
+      "output_closed": true,
+      "binaries": {
+        "baseline": {
+          "path": "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+          "sha256": "9917debc506fdc5907d395f02f2252b2e08b45f51f9cdfa114f1d85702e0f5dc",
+          "bytes": 46953864
+        },
+        "candidate": {
+          "path": "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+          "sha256": "d9ab6801909a7cc7a0c8b3aeab974e189d3bafa0b5492b7022dbe0fa7cbf6b9d",
+          "bytes": 47001272
+        }
+      },
+      "command_failures": [],
+      "main_sources_unchanged": true,
+      "frozen_sources_and_dependencies_unchanged": true,
+      "cache_admitted": false
+    },
+    "preflight": {
+      "complete": true,
+      "output_closed": true,
+      "process_samples": 12,
+      "expected_process_samples": 12,
+      "phase_observations": 24,
+      "command_failures": [],
+      "all_completed_observations_certified": true,
+      "all_completed_exact_ordered_rows_identical": true,
+      "independent_oracles_checked": true,
+      "read_only_inputs_unchanged": true,
+      "decisive_rejection_cases": [],
+      "summary_sha256": "4bd2b06e347949fb48eadfb096a101946522f46723a71467e4f8b16326a3ba06",
+      "cache_admitted": false,
+      "full_plan_complete": false
+    },
+    "matched": {
+      "complete": true,
+      "output_closed": true,
+      "process_samples": 84,
+      "expected_process_samples": 84,
+      "phase_observations": 168,
+      "command_failures": [],
+      "all_completed_observations_certified": true,
+      "all_completed_exact_ordered_rows_identical": true,
+      "independent_oracles_checked": true,
+      "read_only_inputs_unchanged": true,
+      "decisive_rejection_cases": [
+        {
+          "count": 4,
+          "phase": "cold",
+          "baseline_seconds": [
+            0.133635353,
+            0.117225171,
+            0.119466237,
+            0.121905379,
+            0.119518253,
+            0.120009879,
+            0.116738774
+          ],
+          "candidate_seconds": [
+            0.137034349,
+            0.142974841,
+            0.140427175,
+            0.137003441,
+            0.139083558,
+            0.146865153,
+            0.138492499
+          ],
+          "baseline_median_seconds": 0.119518253,
+          "candidate_median_seconds": 0.139083558,
+          "candidate_over_baseline": 1.1637013971414056,
+          "positive_paired_differences": 7,
+          "candidate_min_exceeds_baseline_max": true,
+          "predeclared_rejection_criterion_met": true
+        },
+        {
+          "count": 8,
+          "phase": "cold",
+          "baseline_seconds": [
+            0.133840489,
+            0.136527544,
+            0.13483418,
+            0.136049177,
+            0.135181646,
+            0.136745369,
+            0.150373192
+          ],
+          "candidate_seconds": [
+            0.160044607,
+            0.165217781,
+            0.165555618,
+            0.162542595,
+            0.165782753,
+            0.161708882,
+            0.160201286
+          ],
+          "baseline_median_seconds": 0.136049177,
+          "candidate_median_seconds": 0.162542595,
+          "candidate_over_baseline": 1.19473412911568,
+          "positive_paired_differences": 7,
+          "candidate_min_exceeds_baseline_max": true,
+          "predeclared_rejection_criterion_met": true
+        },
+        {
+          "count": 9,
+          "phase": "cold",
+          "baseline_seconds": [
+            0.137751479,
+            0.136416821,
+            0.139619441,
+            0.140789881,
+            0.139703885,
+            0.138268984,
+            0.137419922
+          ],
+          "candidate_seconds": [
+            0.164964759,
+            0.163577895,
+            0.169725471,
+            0.165127948,
+            0.163761191,
+            0.165282387,
+            0.165458215
+          ],
+          "baseline_median_seconds": 0.138268984,
+          "candidate_median_seconds": 0.165127948,
+          "candidate_over_baseline": 1.1942515466809243,
+          "positive_paired_differences": 7,
+          "candidate_min_exceeds_baseline_max": true,
+          "predeclared_rejection_criterion_met": true
+        }
+      ],
+      "summary_sha256": "fbf4a21c06fa12f9c83018409693452c8dee9665bc9086ed05836112a516001e",
+      "cache_admitted": false,
+      "full_plan_complete": false
+    },
+    "complete_phase_summary": [
+      {
+        "count": 1,
+        "phase": "cold",
+        "baseline_seconds": [
+          0.103807943,
+          0.105475089,
+          0.104170548,
+          0.108287605,
+          0.103567509,
+          0.104933906,
+          0.102753766
+        ],
+        "candidate_seconds": [
+          0.112196476,
+          0.110912525,
+          0.114293512,
+          0.111059235,
+          0.110453736,
+          0.115405695,
+          0.111512783
+        ],
+        "baseline_median_seconds": 0.104170548,
+        "candidate_median_seconds": 0.111512783,
+        "candidate_over_baseline": 1.070482829753377,
+        "positive_paired_differences": 7,
+        "candidate_min_exceeds_baseline_max": true,
+        "predeclared_rejection_criterion_met": false
+      },
+      {
+        "count": 1,
+        "phase": "warm",
+        "baseline_seconds": [
+          0.052977438,
+          0.053662431,
+          0.051151194,
+          0.051677678,
+          0.052556517,
+          0.051227819,
+          0.05163547
+        ],
+        "candidate_seconds": [
+          0.049852203,
+          0.048454408,
+          0.04770728,
+          0.049584471,
+          0.048040158,
+          0.048588529,
+          0.049086365
+        ],
+        "baseline_median_seconds": 0.051677678,
+        "candidate_median_seconds": 0.048588529,
+        "candidate_over_baseline": 0.9402227592346545,
+        "positive_paired_differences": 0,
+        "candidate_min_exceeds_baseline_max": false,
+        "predeclared_rejection_criterion_met": false
+      },
+      {
+        "count": 4,
+        "phase": "cold",
+        "baseline_seconds": [
+          0.133635353,
+          0.117225171,
+          0.119466237,
+          0.121905379,
+          0.119518253,
+          0.120009879,
+          0.116738774
+        ],
+        "candidate_seconds": [
+          0.137034349,
+          0.142974841,
+          0.140427175,
+          0.137003441,
+          0.139083558,
+          0.146865153,
+          0.138492499
+        ],
+        "baseline_median_seconds": 0.119518253,
+        "candidate_median_seconds": 0.139083558,
+        "candidate_over_baseline": 1.1637013971414056,
+        "positive_paired_differences": 7,
+        "candidate_min_exceeds_baseline_max": true,
+        "predeclared_rejection_criterion_met": true
+      },
+      {
+        "count": 4,
+        "phase": "warm",
+        "baseline_seconds": [
+          0.080667984,
+          0.066655698,
+          0.065758139,
+          0.066435322,
+          0.067350549,
+          0.067389657,
+          0.06617494
+        ],
+        "candidate_seconds": [
+          0.063686391,
+          0.063312718,
+          0.063173567,
+          0.062480065,
+          0.064610228,
+          0.065106054,
+          0.063670333
+        ],
+        "baseline_median_seconds": 0.066655698,
+        "candidate_median_seconds": 0.063670333,
+        "candidate_over_baseline": 0.9552121560560358,
+        "positive_paired_differences": 0,
+        "candidate_min_exceeds_baseline_max": false,
+        "predeclared_rejection_criterion_met": false
+      },
+      {
+        "count": 8,
+        "phase": "cold",
+        "baseline_seconds": [
+          0.133840489,
+          0.136527544,
+          0.13483418,
+          0.136049177,
+          0.135181646,
+          0.136745369,
+          0.150373192
+        ],
+        "candidate_seconds": [
+          0.160044607,
+          0.165217781,
+          0.165555618,
+          0.162542595,
+          0.165782753,
+          0.161708882,
+          0.160201286
+        ],
+        "baseline_median_seconds": 0.136049177,
+        "candidate_median_seconds": 0.162542595,
+        "candidate_over_baseline": 1.19473412911568,
+        "positive_paired_differences": 7,
+        "candidate_min_exceeds_baseline_max": true,
+        "predeclared_rejection_criterion_met": true
+      },
+      {
+        "count": 8,
+        "phase": "warm",
+        "baseline_seconds": [
+          0.079239352,
+          0.080515635,
+          0.078997749,
+          0.078767315,
+          0.079588628,
+          0.079969322,
+          0.093609745
+        ],
+        "candidate_seconds": [
+          0.075073389,
+          0.077146616,
+          0.076632142,
+          0.075034912,
+          0.075849206,
+          0.07607106,
+          0.076452854
+        ],
+        "baseline_median_seconds": 0.079588628,
+        "candidate_median_seconds": 0.07607106,
+        "candidate_over_baseline": 0.9558031330807713,
+        "positive_paired_differences": 0,
+        "candidate_min_exceeds_baseline_max": false,
+        "predeclared_rejection_criterion_met": false
+      },
+      {
+        "count": 9,
+        "phase": "cold",
+        "baseline_seconds": [
+          0.137751479,
+          0.136416821,
+          0.139619441,
+          0.140789881,
+          0.139703885,
+          0.138268984,
+          0.137419922
+        ],
+        "candidate_seconds": [
+          0.164964759,
+          0.163577895,
+          0.169725471,
+          0.165127948,
+          0.163761191,
+          0.165282387,
+          0.165458215
+        ],
+        "baseline_median_seconds": 0.138268984,
+        "candidate_median_seconds": 0.165127948,
+        "candidate_over_baseline": 1.1942515466809243,
+        "positive_paired_differences": 7,
+        "candidate_min_exceeds_baseline_max": true,
+        "predeclared_rejection_criterion_met": true
+      },
+      {
+        "count": 9,
+        "phase": "warm",
+        "baseline_seconds": [
+          0.080192996,
+          0.08028272,
+          0.079922235,
+          0.080477777,
+          0.08058367,
+          0.080022039,
+          0.081675925
+        ],
+        "candidate_seconds": [
+          0.081177269,
+          0.079670373,
+          0.082851614,
+          0.081531975,
+          0.0805768,
+          0.080920777,
+          0.081004281
+        ],
+        "baseline_median_seconds": 0.08028272,
+        "candidate_median_seconds": 0.081004281,
+        "candidate_over_baseline": 1.0089877497922342,
+        "positive_paired_differences": 4,
+        "candidate_min_exceeds_baseline_max": false,
+        "predeclared_rejection_criterion_met": false
+      },
+      {
+        "count": 16,
+        "phase": "cold",
+        "baseline_seconds": [
+          0.173030984,
+          0.17323099,
+          0.17323963,
+          0.174278428,
+          0.177833454,
+          0.177424723,
+          0.175586528
+        ],
+        "candidate_seconds": [
+          0.181565887,
+          0.176523294,
+          0.175348075,
+          0.179468611,
+          0.177717082,
+          0.175089272,
+          0.177827494
+        ],
+        "baseline_median_seconds": 0.174278428,
+        "candidate_median_seconds": 0.177717082,
+        "candidate_over_baseline": 1.0197308068443214,
+        "positive_paired_differences": 5,
+        "candidate_min_exceeds_baseline_max": false,
+        "predeclared_rejection_criterion_met": false
+      },
+      {
+        "count": 16,
+        "phase": "warm",
+        "baseline_seconds": [
+          0.100637162,
+          0.101042383,
+          0.101114358,
+          0.101754624,
+          0.100978617,
+          0.103250721,
+          0.102192655
+        ],
+        "candidate_seconds": [
+          0.087210265,
+          0.090292883,
+          0.088200116,
+          0.08828968,
+          0.087969062,
+          0.087266361,
+          0.087901337
+        ],
+        "baseline_median_seconds": 0.101114358,
+        "candidate_median_seconds": 0.087969062,
+        "candidate_over_baseline": 0.8699957527297953,
+        "positive_paired_differences": 0,
+        "candidate_min_exceeds_baseline_max": false,
+        "predeclared_rejection_criterion_met": false
+      },
+      {
+        "count": 128,
+        "phase": "cold",
+        "baseline_seconds": [
+          0.442067968,
+          0.43651481,
+          0.440808164,
+          0.436716406,
+          0.436894384,
+          0.435799968,
+          0.435375608
+        ],
+        "candidate_seconds": [
+          0.171168452,
+          0.168896658,
+          0.173457195,
+          0.172121356,
+          0.171521148,
+          0.168308819,
+          0.171043271
+        ],
+        "baseline_median_seconds": 0.436716406,
+        "candidate_median_seconds": 0.171168452,
+        "candidate_over_baseline": 0.39194417623962585,
+        "positive_paired_differences": 0,
+        "candidate_min_exceeds_baseline_max": false,
+        "predeclared_rejection_criterion_met": false
+      },
+      {
+        "count": 128,
+        "phase": "warm",
+        "baseline_seconds": [
+          0.356841387,
+          0.354142263,
+          0.35636118,
+          0.357765333,
+          0.355274735,
+          0.363561215,
+          0.356984387
+        ],
+        "candidate_seconds": [
+          0.092444354,
+          0.093104039,
+          0.093017175,
+          0.093274398,
+          0.091627051,
+          0.091343151,
+          0.091589623
+        ],
+        "baseline_median_seconds": 0.356841387,
+        "candidate_median_seconds": 0.092444354,
+        "candidate_over_baseline": 0.25906287041755055,
+        "positive_paired_differences": 0,
+        "candidate_min_exceeds_baseline_max": false,
+        "predeclared_rejection_criterion_met": false
+      }
+    ]
+  },
+  "native_disposition_preserved": true,
+  "pending_native_paths_remaining": 0,
+  "full_archived_integration_admitted": false,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "limitations": [
+    "Private-kernel no-feature matched diagnostic, not an end-to-end or shipped-package speed claim.",
+    "No new allocation or size claim; E42 evidence remains preserved.",
+    "Remaining downstream, full Cargo feature/target/manifest, native/report and real binding qualification is not run for this rejected version.",
+    "No internal total-work or cache-byte bound; external containment and fixed resource reserves apply.",
+    "27,093 inherited physical artifact paths remain missing; no whole-history preservation claim.",
+    "Full release, pre-push, coverage, directed campaign, formal proof and properties-plan work remains open."
+  ],
+  "next": [
+    "Prototype lazy index construction only in a fresh isolated revision; reproduce and preserve these small-batch results, the earlier shared-coefficient regression and the full exact support corpus.",
+    "Require a successor to pass the original native workload limits, exact report contracts, full affected consumers and real bindings before any admission.",
+    "Continue ordinary strict-mode completion, typed failures, end-to-end evidence and clean external distribution under the complete properties plan."
+  ]
+}

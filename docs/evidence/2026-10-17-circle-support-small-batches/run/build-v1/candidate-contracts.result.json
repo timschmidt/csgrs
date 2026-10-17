@@ -1,0 +1,25 @@
+{
+  "name": "candidate-contracts",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/candidate-tests",
+    "curve_intersection::circle_support_cache_tests::",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.01715991972014308,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 815185920,
+      "runtime_free_bytes": 663707648,
+      "host_available_memory_bytes": 8543383552
+    }
+  ],
+  "environment_overrides": {},
+  "scratch_remaining": [],
+  "stdout_sha256": "1a09224fd9a242b34cd931f0bb0a66fdf284805ad7ed8074079d2ee37a9173a4",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "492b17c661b1e00152f2803a0ef38e1435aef62d4e7d28a253d67b8539196555"
+}

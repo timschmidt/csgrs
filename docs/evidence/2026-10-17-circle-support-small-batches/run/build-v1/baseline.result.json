@@ -1,0 +1,141 @@
+{
+  "name": "baseline",
+  "command": [
+    "rustc",
+    "--crate-name",
+    "hypercurve",
+    "--edition=2024",
+    "--test",
+    "crates/hypercurve/src/lib.rs",
+    "-C",
+    "opt-level=3",
+    "-C",
+    "codegen-units=16",
+    "-C",
+    "embed-bitcode=no",
+    "-D",
+    "warnings",
+    "-L",
+    "dependency=/tmp/csgrs-circle-support-baseline-v1/release/deps",
+    "-o",
+    "/run/user/1000/csgrs-circle-support-small-batches-v1/build-v1/baseline-tests",
+    "--extern",
+    "hyperreal=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperreal-86511eec4d66f0cc.rlib",
+    "--extern",
+    "hypersolve=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhypersolve-a58f596b7de02570.rlib",
+    "--extern",
+    "hyperlimit=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperlimit-2ad10ffcdb42be91.rlib",
+    "--extern",
+    "num=/tmp/csgrs-circle-support-baseline-v1/release/deps/libnum-36df5186e93ba5a2.rlib",
+    "--extern",
+    "geo=/tmp/csgrs-circle-support-baseline-v1/release/deps/libgeo-33e2c5cd72e991cc.rlib",
+    "--extern",
+    "proptest=/tmp/csgrs-circle-support-baseline-v1/release/deps/libproptest-01da0546681a5c32.rlib"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 78.72428739210591,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 815517696,
+      "runtime_free_bytes": 757743616,
+      "host_available_memory_bytes": 8568164352
+    },
+    {
+      "elapsed_seconds": 5.002139503136277,
+      "repository_free_bytes": 815509504,
+      "runtime_free_bytes": 757739520,
+      "host_available_memory_bytes": 7836856320
+    },
+    {
+      "elapsed_seconds": 10.002405585255474,
+      "repository_free_bytes": 815505408,
+      "runtime_free_bytes": 757739520,
+      "host_available_memory_bytes": 7602630656
+    },
+    {
+      "elapsed_seconds": 15.002626850269735,
+      "repository_free_bytes": 815505408,
+      "runtime_free_bytes": 757739520,
+      "host_available_memory_bytes": 7037456384
+    },
+    {
+      "elapsed_seconds": 20.002861625049263,
+      "repository_free_bytes": 815505408,
+      "runtime_free_bytes": 757739520,
+      "host_available_memory_bytes": 6695251968
+    },
+    {
+      "elapsed_seconds": 25.00308427028358,
+      "repository_free_bytes": 815505408,
+      "runtime_free_bytes": 757739520,
+      "host_available_memory_bytes": 6403969024
+    },
+    {
+      "elapsed_seconds": 30.00331320427358,
+      "repository_free_bytes": 815497216,
+      "runtime_free_bytes": 757739520,
+      "host_available_memory_bytes": 6094123008
+    },
+    {
+      "elapsed_seconds": 35.00357707682997,
+      "repository_free_bytes": 815464448,
+      "runtime_free_bytes": 757739520,
+      "host_available_memory_bytes": 5190307840
+    },
+    {
+      "elapsed_seconds": 40.003878807183355,
+      "repository_free_bytes": 815448064,
+      "runtime_free_bytes": 757739520,
+      "host_available_memory_bytes": 5990555648
+    },
+    {
+      "elapsed_seconds": 45.00414751796052,
+      "repository_free_bytes": 815443968,
+      "runtime_free_bytes": 757739520,
+      "host_available_memory_bytes": 6268039168
+    },
+    {
+      "elapsed_seconds": 50.00446434691548,
+      "repository_free_bytes": 815443968,
+      "runtime_free_bytes": 755707904,
+      "host_available_memory_bytes": 6030532608
+    },
+    {
+      "elapsed_seconds": 55.00475995708257,
+      "repository_free_bytes": 815415296,
+      "runtime_free_bytes": 729124864,
+      "host_available_memory_bytes": 6558314496
+    },
+    {
+      "elapsed_seconds": 60.00502162985504,
+      "repository_free_bytes": 815403008,
+      "runtime_free_bytes": 706994176,
+      "host_available_memory_bytes": 7337013248
+    },
+    {
+      "elapsed_seconds": 65.00526041397825,
+      "repository_free_bytes": 815394816,
+      "runtime_free_bytes": 706994176,
+      "host_available_memory_bytes": 7482671104
+    },
+    {
+      "elapsed_seconds": 70.00550044793636,
+      "repository_free_bytes": 815386624,
+      "runtime_free_bytes": 698372096,
+      "host_available_memory_bytes": 7765897216
+    },
+    {
+      "elapsed_seconds": 75.00571698416024,
+      "repository_free_bytes": 815378432,
+      "runtime_free_bytes": 698372096,
+      "host_available_memory_bytes": 7766163456
+    }
+  ],
+  "environment_overrides": {},
+  "scratch_remaining": [],
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "6b5b88ec464b0178b987972c56b7d0b8bdb2afa84f35a9cbcd2912a734fddf2d"
+}
