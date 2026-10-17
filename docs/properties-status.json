@@ -16960,6 +16960,126 @@
     "checkpoint": "docs/evidence/2026-10-17-circle-support-small-batches/checkpoint-v1.json",
     "artifact_expectations": "docs/evidence/2026-10-17-circle-support-small-batches/artifact-expectations-v1.json.gz",
     "previous_qualification_decision": "docs/evidence/2026-10-17-circle-support-guarded/decision-v1.json"
+  },
+  "circle_support_lazy_index": {
+    "complete": true,
+    "main_parent_commit": "f638d2df303d68103b09c3179c78601642879bf1",
+    "status": "unadmitted: lazy index completes local qualification; measured transition costs and downstream acceptance remain open",
+    "retention_decision": "unadmitted",
+    "cache_index_admitted": false,
+    "source_changes_applied": false,
+    "implementation_sha256": {},
+    "proposal_sha256": {
+      "crates/hypercurve/src/curve_intersection.rs": "1fcd89f0b48730f58cdc11ae042fbca6926302f5163354ec7bb4e434ba2da673",
+      "crates/hypercurve/src/circle_support_cache_tests.rs": "4d7b2fdcee72fc064361de4bc91fb5ce8eac342188ca02f830a543a283c3184c",
+      "crates/hypercurve/README.md": "3a5a6e4cc9a909e99ffc4b0a91fe411460f464417c93e1797b1d7d220fa7de5a"
+    },
+    "library_results": {
+      "corpus-v1": {
+        "passed": 1743,
+        "failed": 0,
+        "ignored": 4
+      },
+      "all-feature-library-v1": {
+        "passed": 1750,
+        "failed": 0,
+        "ignored": 9
+      }
+    },
+    "matched_small_processes": 140,
+    "matched_support_processes": 210,
+    "aggregate_shared_processes": 112,
+    "aggregate_shared_comparison": {
+      "baseline_seconds": [
+        0.0038084069999999998,
+        0.003953206,
+        0.00392405,
+        0.003946977,
+        0.003964456,
+        0.003755932,
+        0.003907331
+      ],
+      "candidate_seconds": [
+        0.004204572,
+        0.0042495169999999995,
+        0.00451689,
+        0.004314295,
+        0.004555357,
+        0.004243419,
+        0.004334943
+      ],
+      "baseline_median_seconds": 0.00392405,
+      "candidate_median_seconds": 0.004314295,
+      "candidate_over_baseline_median": 1.0994495482983142,
+      "positive_paired_differences": 7,
+      "candidate_range_above_baseline": true,
+      "predeclared_rejection_criterion_met": false
+    },
+    "small_cold_33_regression_retained": {
+      "count": 33,
+      "phase": "cold",
+      "baseline_seconds": [
+        0.215041133,
+        0.221060769,
+        0.21406925,
+        0.21914414,
+        0.214319932,
+        0.214766842,
+        0.219797956
+      ],
+      "candidate_seconds": [
+        0.243865181,
+        0.233626025,
+        0.232664871,
+        0.235105254,
+        0.235344537,
+        0.235081865,
+        0.23951945
+      ],
+      "baseline_median_seconds": 0.215041133,
+      "candidate_median_seconds": 0.235105254,
+      "candidate_over_baseline": 1.0933036425175457,
+      "positive_paired_differences": 7,
+      "candidate_min_exceeds_baseline_max": true,
+      "predeclared_rejection_criterion_met": false
+    },
+    "allocation_observations": 20,
+    "diagnostic_binary_sizes": {
+      "baseline": {
+        "file_bytes": 46953248,
+        "text_bytes": 33448132,
+        "data_bytes": 1305808,
+        "bss_bytes": 2840
+      },
+      "candidate": {
+        "file_bytes": 46975904,
+        "text_bytes": 33457324,
+        "data_bytes": 1305336,
+        "bss_bytes": 2304
+      }
+    },
+    "native_disposition_preserved": true,
+    "pending_native_paths_remaining": 0,
+    "full_archived_integration_admitted": false,
+    "native_runtime_admitted": false,
+    "full_plan_complete": false,
+    "limits": [
+      "Private-kernel comparison; no end-to-end, package-size or isolated-cache-heap claim.",
+      "Internal work and heap-byte bounds remain open; experiments use external containment.",
+      "Full affected Cargo/downstream/native/report/binding and release validation remains open.",
+      "27,093 inherited missing physical artifacts remain disclosed."
+    ],
+    "next": [
+      "Evaluate an early direct small-hit return and activation cost without weakening any previous case.",
+      "Require all affected downstream, original native workload/report and real binding gates before retention.",
+      "Continue every remaining property and target, including ordinary strict completion, provenance and the shipped user path."
+    ],
+    "contract": "docs/evidence/2026-10-17-circle-support-lazy-index/contract-v1.md",
+    "decision": "docs/evidence/2026-10-17-circle-support-lazy-index/decision-v1.json",
+    "progress": "docs/evidence/2026-10-17-circle-support-lazy-index/progress-v1.md",
+    "checkpoint": "docs/evidence/2026-10-17-circle-support-lazy-index/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-circle-support-lazy-index/artifact-expectations-v1.json.gz",
+    "raw_evidence_archive": "docs/evidence/2026-10-17-circle-support-lazy-index/raw-evidence-v1.tar.xz"
   }
 },
   "status_meanings": {
