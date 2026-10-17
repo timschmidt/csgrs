@@ -17,6 +17,7 @@ mod analytic;
 mod axial_lines;
 mod conical_revolution;
 mod location;
+mod periodic_charts;
 mod point;
 mod transform;
 pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
@@ -3320,7 +3321,7 @@ impl Surface {
         }
     }
 
-    /// Proves equality of the authored cone/torus parameterizations, including
+    /// Proves equality of authored periodic analytic parameterizations, including
     /// frame orientation. Coincidence of their unparameterized images alone
     /// is insufficient for reusing face-local boundary curves.
     pub(crate) fn same_periodic_analytic_parameterization(
@@ -3329,6 +3330,17 @@ impl Surface {
     ) -> GeometryResult<bool> {
         let (first_origin, first_frame, second_origin, second_frame, equal_parameters) =
             match (&self.data.geometry, &other.data.geometry) {
+                (SurfaceGeometry::Cylinder(first), SurfaceGeometry::Cylinder(second)) => (
+                    &first.origin,
+                    &first.frame,
+                    &second.origin,
+                    &second.frame,
+                    decided_order(compare_reals(
+                        &first.radius,
+                        &second.radius,
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Equal,
+                ),
                 (SurfaceGeometry::Cone(first), SurfaceGeometry::Cone(second)) => (
                     &first.apex,
                     &first.frame,

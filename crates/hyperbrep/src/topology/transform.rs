@@ -3,6 +3,8 @@
 use crate::geometry::TransformMetric;
 use crate::topology::*;
 
+mod affine_prisms;
+
 #[cfg(test)]
 mod tests;
 
@@ -94,6 +96,15 @@ impl ArenaModel {
             let reverses_orientation =
                 affine_transform_orientation(transform)? == std::cmp::Ordering::Less;
             let metric = TransformMetric::new(transform);
+            if self
+                .data
+                .surfaces
+                .iter()
+                .any(|surface| surface.kind() == SurfaceKind::Cylinder)
+                && matches!(metric.scale(), Err(GeometryError::UnsupportedTransform))
+            {
+                return self.cylinder_prisms_as_extrusions()?.transformed(transform);
+            }
             let curves = self
                 .data
                 .curves
@@ -549,6 +560,28 @@ impl ArenaModel {
                         .transpose()
                 })
                 .collect::<Result<Vec<_>, GeometryError>>()?;
+            let certified_axial_shells = self
+                .data
+                .certified_axial_shells
+                .iter()
+                .map(|certificate| {
+                    certificate
+                        .as_ref()
+                        .map(|certificate| {
+                            Ok(CertifiedAxialShell {
+                                origin: transform
+                                    .transform_point3(&certificate.origin)
+                                    .map_err(GeometryError::Numeric)?,
+                                u: transform.transform_direction3(&certificate.u),
+                                v: transform.transform_direction3(&certificate.v),
+                                axis: transform.transform_direction3(&certificate.axis),
+                                heights: certificate.heights.clone(),
+                                bands: certificate.bands.clone(),
+                            })
+                        })
+                        .transpose()
+                })
+                .collect::<Result<Vec<_>, GeometryError>>()?;
             let wires = if reverses_orientation {
                 self.data
                     .wires
@@ -593,6 +626,7 @@ impl ArenaModel {
                     certified_lofts,
                     certified_curve_sweeps,
                     certified_prisms,
+                    certified_axial_shells,
                     bounds: OnceLock::new(),
                     face_contours: (0..self.data.faces.len())
                         .map(|_| OnceLock::new())

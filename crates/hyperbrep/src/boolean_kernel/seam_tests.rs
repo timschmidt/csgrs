@@ -6,6 +6,60 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
 }
 
 #[test]
+fn collinear_trace_union_keeps_tiny_gaps_and_distinct_curved_images() {
+    let mut traces = Vec::new();
+    for (a, b) in [(0, 2), (4, 2), (1, 3), (7, 6)] {
+        push_unique_planar_trace(&mut traces, Curve3::line(p(a, 0, 0), p(b, 0, 0)).unwrap())
+            .unwrap();
+    }
+    assert_eq!(traces.len(), 2);
+    let delta: Real = "1e-12".parse().unwrap();
+    push_unique_planar_trace(
+        &mut traces,
+        Curve3::line(
+            Point3::new(Real::from(4) + delta, 0.into(), 0.into()),
+            p(5, 0, 0),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(traces.len(), 3);
+    let mut arcs = Vec::new();
+    for y in [Vector3::y(), -Vector3::y()] {
+        push_unique_planar_trace(&mut arcs, circle(Vector3::x(), y, 0.into(), Real::pi())).unwrap();
+    }
+    assert_eq!(arcs.len(), 2);
+}
+
+#[test]
+fn partial_circle_dedup_uses_complete_anchored_map() {
+    let plane = Surface::plane(p(0, 0, 0), Vector3::x(), Vector3::y()).unwrap();
+    let retain = |c| SurfaceIntersectionCurve::on_plane(c, &plane).unwrap();
+    let quarter = (Real::pi() / Real::from(2)).unwrap();
+    let first = circle(Vector3::x(), Vector3::y(), 0.into(), quarter.clone());
+    let equivalent = circle(Vector3::y(), Vector3::x(), 0.into(), quarter.clone());
+    let result = circle_traces::coalesce_planar_images(
+        &plane,
+        vec![retain(first.clone()), retain(equivalent)],
+    )
+    .unwrap();
+    assert_eq!(result.len(), 1);
+    let complement = circle(Vector3::y(), -Vector3::x(), 0.into(), Real::tau() - quarter);
+    let result =
+        circle_traces::coalesce_planar_images(&plane, vec![retain(first), retain(complement)])
+            .unwrap();
+    assert_eq!(result.len(), 1);
+    assert_eq!(
+        exact_order(
+            &(result[0].curve().domain().end() - result[0].curve().domain().start()),
+            &Real::tau()
+        )
+        .unwrap(),
+        Ordering::Equal
+    );
+}
+
+#[test]
 fn rational_torus_latitude_retains_contact_through_all_incident_faces() {
     let (source, solid) = crate::construction::torus(10.into(), 5.into()).unwrap();
     let (cutter, cutter_solid) =
@@ -366,8 +420,20 @@ fn native_circle_trace_union_requires_complete_coverage_in_actual_charts() {
     duplicate.domain_start = Real::pi();
     duplicate.domain_end = Real::tau();
     let duplicate = Curve3::from_exact_data(Curve3ExactData::EllipseArc(duplicate)).unwrap();
-    let result = coalesce_circle_traces(&plane, vec![retain(upper), retain(duplicate)]).unwrap();
-    assert_eq!(result.len(), 2);
+    let result =
+        coalesce_circle_traces(&plane, vec![retain(upper.clone()), retain(duplicate)]).unwrap();
+    // Complete-map deduplication now retains one copy of the same upper half.
+    // In particular it must not invent the missing lower semicircle.
+    assert_eq!(result.len(), 1);
+    assert!(exact_edge_curve_equal(result[0].curve(), &upper, false).unwrap());
+    assert_eq!(
+        exact_order(
+            &(result[0].curve().domain().end() - result[0].curve().domain().start()),
+            &Real::pi()
+        )
+        .unwrap(),
+        Ordering::Equal
+    );
 }
 
 #[test]

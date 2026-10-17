@@ -1,5 +1,11 @@
 # HyperBRep IO
 
+Exact plane/cylinder partial-depth results complete STEP export, cold import and
+continued Booleans in the [axial-shell corpus](../hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md).
+Native line/circle extrusion walls now retain analytic carriers and their actual
+orientation; this is an intentional serialization migration. General affine,
+fillet and other unsupported carrier families retain their own open gates.
+
 Pure Rust CAD exchange for the Hyper geometry stack. This crate owns syntax,
 source-entity accounting and exchange policy; authoritative geometry belongs to
 HyperBRep and exact scalar arithmetic belongs to Hyperreal.

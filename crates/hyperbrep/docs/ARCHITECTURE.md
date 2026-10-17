@@ -1340,3 +1340,38 @@ The [evidence](evidence/2026-10-16-oblique-cuts/README.md) also retains all nine
 wider oblique fixtures and their failures. This extends parameter evidence
 reuse; it does not supply a general curved-shell embedding proof or general
 oblique Boolean closure.
+
+## Axial-shell certificates and native carrier transport
+
+Topology's [axial-shell admission](../src/topology/validation/axial_shell.rs)
+proves complete plane/cylinder boundary structure before publishing a partial-depth
+solid. All native lateral edge/chart images are constant through each open
+height band. Shared axial edge identities assemble simple section loops whose
+individual winding transitions prove multiplicity one; Hypercurve owns the
+resulting material regions. Exact cap differences, event contacts and connected
+vertex links establish the transitions and embedding. Separate void shells and
+general curved embedding remain outside this certificate.
+
+`CertifiedAxialShell` is private immutable model data: a frame, exact event
+heights and region/area bands. It is indexed by the owning solid, scoped to that
+model's geometry and strict proof. Builder admission and validated transfer
+retain it; edits clear it and cold archives reconstruct it. There is no public
+proof flag, separate mutable cache or global identity key. Stored regions and
+vectors have no independent retained-byte budget; this is not a heap or total-work
+bound. Native volume and point classification consume the same certificate,
+including exact event-side ownership and transformed frames.
+
+[Cylinder chart transitions](../src/geometry/periodic_charts.rs) prove complete
+angular sign/phase and axial sign/displacement maps. Boolean selection retains
+the source UV witness and checks the opposite authored trim directly. Native
+iso traces keep complete spatial/pcurve images; meridian support subdivisions
+only partition the existing face and preserve original intersection incidences.
+
+Native line/circle extrusion walls now publish planes/cylinders with explicit
+chart and orientation maps. This is a greenfield representation/API migration,
+with the measured artifact differences recorded in the [feature evidence](evidence/2026-10-17-axial-shells/README.md).
+Before a supported non-similarity transform of a certified prism, exact
+[carrier promotion](../src/topology/transform/affine_prisms.rs) restores a finite
+extrusion representation over the actual angular trims. Its equation and pcurves
+are unchanged, preserving the original axial-shear domain. Other unsupported
+analytic affine images still fail explicitly; no fitting or tolerance is used.

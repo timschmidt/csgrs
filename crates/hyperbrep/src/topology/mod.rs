@@ -119,6 +119,7 @@ struct ModelData {
     certified_lofts: Vec<Option<CertifiedLoftShell>>,
     certified_curve_sweeps: Vec<Option<CertifiedCurveSweepShell>>,
     certified_prisms: Vec<Option<CertifiedPrismShell>>,
+    certified_axial_shells: Vec<Option<CertifiedAxialShell>>,
     bounds: OnceLock<Option<Aabb>>,
     face_contours: Vec<OnceLock<Vec<Contour2>>>,
 }
@@ -134,6 +135,26 @@ struct CertifiedSolid {
     loft: Option<CertifiedLoftShell>,
     curve_sweep: Option<CertifiedCurveSweepShell>,
     prism: Option<CertifiedPrismShell>,
+    axial: Option<CertifiedAxialShell>,
+}
+
+/// A complete oriented boundary proof, reconstructed from native faces. Each
+/// open height band has this exact material section. The frame is orthonormal
+/// on admission; validated transforms may carry an invertible affine frame.
+#[derive(Clone, Debug)]
+struct CertifiedAxialShell {
+    origin: Point3,
+    u: Vector3,
+    v: Vector3,
+    axis: Vector3,
+    heights: Vec<Real>,
+    bands: Vec<CertifiedAxialBand>,
+}
+
+#[derive(Clone, Debug)]
+struct CertifiedAxialBand {
+    region: CurveRegion2,
+    area: Real,
 }
 
 /// Builder-owned proofs have two scopes: admission is partial, whereas a
@@ -650,6 +671,7 @@ fn invalidate_model_certificates(data: &mut ModelData) {
     data.certified_lofts.fill(None);
     data.certified_curve_sweeps.fill(None);
     data.certified_prisms.fill(None);
+    data.certified_axial_shells.fill(None);
 }
 
 fn compact_wire_arena(

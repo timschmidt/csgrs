@@ -130,7 +130,14 @@ pub fn holes() -> u64 {
             output.bodies()[0]
                 .faces()
                 .iter()
-                .any(|f| f.orientation != f.source.orientation())
+                .all(|f| f.orientation == f.source.orientation())
+        );
+        assert!(
+            output.bodies()[0]
+                .faces()
+                .iter()
+                .any(|f| f.source.surface().kind() == SurfaceKind::Cylinder
+                    && f.source.orientation() == Orientation::Reversed)
         );
         for byte in output.text().bytes() {
             receipt = (receipt ^ u64::from(byte)).wrapping_mul(0x100000001b3);
@@ -198,7 +205,7 @@ pub fn malformed() {
     let face = output.bodies()[0]
         .faces()
         .iter()
-        .find(|f| f.source.surface().kind() == SurfaceKind::Extrusion)
+        .find(|f| f.source.surface().kind() == SurfaceKind::Cylinder)
         .unwrap();
     let row = output
         .text()

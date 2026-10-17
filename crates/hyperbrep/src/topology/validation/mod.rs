@@ -1,6 +1,7 @@
 //! Local and global construction certificates.
 
 mod analytic_image;
+mod axial_shell;
 mod cone;
 mod convex_groups;
 mod cylinder;

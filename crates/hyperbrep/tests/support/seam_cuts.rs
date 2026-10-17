@@ -6,7 +6,7 @@ use hyperbrep::{
 use std::cmp::Ordering;
 #[allow(dead_code)]
 #[path = "closed_cylinder.rs"]
-mod closed_cylinder;
+pub mod closed_cylinder;
 
 pub fn ratio(n: i32, d: i32) -> Real {
     (Real::from(n) / Real::from(d)).unwrap()

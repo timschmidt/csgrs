@@ -1,5 +1,21 @@
 # HyperBREP Performance Contract
 
+## 2026-10-17: partial-depth axial shells and continued modeling
+
+Kept for exact capability and downstream consumption. [Admission evidence](docs/evidence/2026-10-17-axial-shells/README.md)
+retains the four original blocked result cases, their complete continuations,
+and the original shear and periodic failures. Native extrusion carriers and
+some native/STEP artifacts intentionally migrate; this is not performance-only
+work.
+
+All 184 preceding cases across 21 full benchmark corpora retain original inputs, iterations, assertions and materialization; 6 changed receipts are explicit representation migrations, with deterministic per-revision output and separate semantic acceptance. Eight new complete workflows have absolute cost only. Three alternating pairs per old corpus and three new-corpus processes total 129 fresh processes. Median case ratio 1.000016, range 0.782783–1.753610; 3 rows exceed the 10% review marker and 85 have increased allocation requests. All raw/adverse observations, CPU/wall/RSS, requested allocation bytes and executable sizes remain. Exact capability and continued consumption justify retention as a feature, not an optimization or all-cohort performance admission. Shared-host timings do not establish significance; allocation requests do not bound live heap and harness sizes are not distribution sizes. The NURBS-boundary path-extrusion probe regresses from 0.690851 to 1.211483 ms (1.753610x), with all three candidate samples slower than all three baselines; butt-region exchange regresses by 13.3% and 15.3%. These adverse results require follow-up isolation, not dismissal as timer noise. New complete workflows take about 2.1-3.1 seconds and request about 0.75-1.13 GB cumulatively; eight-row process peak RSS is 23,572-24,036 KiB.
+
+[All adverse rows and new absolute costs](docs/evidence/2026-10-17-axial-shells/costs.md) retain the full
+workloads and all raw samples. [Artifact and receipt review](docs/evidence/2026-10-17-axial-shells/migration-review.md)
+separates deterministic representation changes from semantic preservation.
+Source qualification, resource, package and historical performance obligations
+remain open. All 28 work packages remain open/in progress.
+
 ## 2026-10-17: axial intersection and cold continuation prerequisites
 
 Kept for exact capability and downstream consumption. [Admission evidence](docs/evidence/2026-10-17-partial-prism/README.md)

@@ -1,6 +1,6 @@
 //! Axial intersection proofs and complete touching/disjoint-tool continuations.
-//! Partial-depth result admission remains a separate, explicitly failing gate.
-use hyperbrep::boolean::{BooleanError, BooleanOperation, FacePairRelation, FacePairTrim};
+//! Partial-depth results retain whole-shell admission through cold replay.
+use hyperbrep::boolean::{BooleanOperation, FacePairRelation, FacePairTrim};
 use hyperbrep::*;
 
 #[allow(dead_code)]
@@ -87,13 +87,20 @@ fn check_traces(graph: &boolean::SolidIntersectionGraph) -> usize {
     axial
 }
 
+#[allow(dead_code)]
+#[path = "axial_shells.rs"]
+mod axial_shells;
+
 pub fn partial_stages() {
     let delta: Real = "1e-12".parse().unwrap();
-    for (lower, upper) in [
+    for (kind, (lower, upper)) in [
         ((-20).into(), Real::from(6) - &delta),
         (delta.clone(), 20.into()),
         (2.into(), 4.into()),
-    ] {
+    ]
+    .into_iter()
+    .enumerate()
+    {
         let source = builder::cylinder(5.into(), 6.into()).unwrap();
         let tool = builder::cuboid(
             Point3::new(0.into(), (-20).into(), lower.clone()),
@@ -168,18 +175,9 @@ pub fn partial_stages() {
                 selection.partitioned().model().faces().count()
             );
         }
-        // Completion of the proof stages must not bypass solid admission.
-        let BooleanError::FallbackFailed { graph, .. } =
-            boolean::difference(&source, &tool).unwrap_err()
-        else {
-            panic!("partial-depth shell admission is a separate capability gate");
-        };
-        assert!(matches!(
-            *graph,
-            BooleanError::Construction(ConstructionError::Build(
-                BuildError::UnsupportedSolidShell(_)
-            ))
-        ));
+        let result = boolean::difference(&source, &tool).unwrap();
+        axial_shells::verify(result.model(), kind, &Matrix4::identity());
+        axial_shells::verify(&replay(result.model()), kind, &Matrix4::identity());
         assert_eq!(
             source.model().to_json().unwrap(),
             replay(source.model()).to_json().unwrap()

@@ -136,6 +136,7 @@ impl ArenaModel {
                             loft: self.data.certified_lofts[index].clone(),
                             curve_sweep: self.data.certified_curve_sweeps[index].clone(),
                             prism: self.data.certified_prisms[index].clone(),
+                            axial: self.data.certified_axial_shells[index].clone(),
                         },
                     )
                 } else {

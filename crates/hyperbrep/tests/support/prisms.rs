@@ -507,17 +507,23 @@ pub fn annular_cut() -> u64 {
 }
 
 /// Partial-height slabs must not be silently treated as through cuts.
+#[allow(dead_code)]
+#[path = "axial_shells.rs"]
+mod axial_shells;
+
 pub fn slab_boundaries() {
-    use hyperbrep::{BooleanError, BuildError, ConstructionError};
     let source = builder::cylinder(5.into(), 6.into()).unwrap();
     let delta = q(1, 1_000_000) * q(1, 1_000_000);
-    for (lower, upper, partial) in [
+    for (kind, (lower, upper, partial)) in [
         (Real::from(-20), Real::from(6) - &delta, true),
         (delta.clone(), Real::from(20), true),
         (Real::from(2), Real::from(4), true),
         (Real::from(6), Real::from(20), false),
         (Real::from(6) + &delta, Real::from(20), false),
-    ] {
+    ]
+    .into_iter()
+    .enumerate()
+    {
         let cutter = builder::cuboid(
             Point3::new(0.into(), (-20).into(), lower),
             Point3::new(20.into(), 20.into(), upper),
@@ -525,21 +531,13 @@ pub fn slab_boundaries() {
         .unwrap();
         let result = boolean::difference(&source, &cutter);
         if partial {
-            match result.unwrap_err() {
-                BooleanError::FallbackFailed { optimized, graph } => {
-                    assert!(matches!(
-                        *optimized,
-                        BooleanError::IncompatibleExtrusionSlabs
-                    ));
-                    assert!(matches!(
-                        *graph,
-                        BooleanError::Construction(ConstructionError::Build(
-                            BuildError::UnsupportedSolidShell(_)
-                        ))
-                    ));
-                }
-                error => panic!("unexpected outcome: {error:?}"),
-            }
+            let result = result.unwrap();
+            axial_shells::verify(result.model(), kind, &Matrix4::identity());
+            axial_shells::verify(
+                &axial_shells::replay(result.model()),
+                kind,
+                &Matrix4::identity(),
+            );
         } else {
             check_measures_and_replay(
                 &result.unwrap(),

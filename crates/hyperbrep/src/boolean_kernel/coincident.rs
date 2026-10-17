@@ -1,4 +1,4 @@
-//! Boundary traces on coincident analytic carriers with identical charts.
+//! Boundary traces on coincident analytic carriers with certified chart maps.
 
 use super::*;
 
@@ -9,11 +9,6 @@ pub(super) fn common_parameter_boundary_traces(
     target_face: FaceId,
     target_operand: SurfaceIntersectionOperand,
 ) -> Result<Classification<Option<Vec<SurfaceIntersectionCurve>>>, GeometryError> {
-    if !face_surface(source_model, source_face)
-        .same_periodic_analytic_parameterization(face_surface(target_model, target_face))?
-    {
-        return Ok(Classification::Decided(None));
-    }
     let face = source_model
         .face(source_face)
         .expect("validated source face");
@@ -45,8 +40,14 @@ pub(super) fn common_parameter_boundary_traces(
             let pcurve = source_model
                 .pcurve(edge_use.pcurve())
                 .expect("validated pcurve");
-            let Some(trace) = SurfaceIntersectionCurve::from_certified_iso_boundary(
-                curve, pcurve, scale, offset,
+            let Some(trace) = SurfaceIntersectionCurve::from_coincident_iso_boundary(
+                curve,
+                pcurve,
+                scale,
+                offset,
+                face_surface(source_model, source_face),
+                face_surface(target_model, target_face),
+                target_operand,
             )?
             else {
                 return Ok(Classification::Decided(None));

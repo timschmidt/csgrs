@@ -69,6 +69,9 @@ impl ArenaModel {
             if let Some(prism) = &self.data.certified_prisms[solid_id.index()] {
                 return self.classify_point_against_prism(prism, point);
             }
+            if let Some(axial) = &self.data.certified_axial_shells[solid_id.index()] {
+                return Self::classify_point_against_axial(axial, point);
+            }
             for shell in std::iter::once(&solid.outer).chain(solid.voids.iter()) {
                 for face in &self.shell(*shell).expect("validated shell ID").faces {
                     let signed = self.face_plane_value(*face, point)?;
@@ -696,6 +699,53 @@ impl ArenaModel {
                 std::cmp::Ordering::Greater => SolidPointLocation::Outside,
             },
         )
+    }
+
+    fn classify_point_against_axial(
+        axial: &CertifiedAxialShell,
+        point: &Point3,
+    ) -> Result<SolidPointLocation, QueryError> {
+        let offset = point - &axial.origin;
+        let determinant = axial.u.dot(&axial.v.cross(&axial.axis));
+        let x = (offset.dot(&axial.v.cross(&axial.axis)) / &determinant)
+            .map_err(GeometryError::Numeric)?;
+        let y = (axial.u.dot(&offset.cross(&axial.axis)) / &determinant)
+            .map_err(GeometryError::Numeric)?;
+        let height =
+            (axial.u.dot(&axial.v.cross(&offset)) / determinant).map_err(GeometryError::Numeric)?;
+        let point = hypercurve::CurvePoint2::from(CurvePoint2::new(x, y));
+        let classify = |index: Option<usize>| -> Result<SolidPointLocation, QueryError> {
+            let Some(band) = index.and_then(|i| axial.bands.get(i)) else {
+                return Ok(SolidPointLocation::Outside);
+            };
+            Ok(
+                match band
+                    .region
+                    .classify_point(&point)
+                    .map_err(GeometryError::from)?
+                {
+                    RegionPointLocation::Inside => SolidPointLocation::Inside,
+                    RegionPointLocation::Outside => SolidPointLocation::Outside,
+                    RegionPointLocation::Boundary => SolidPointLocation::Boundary,
+                },
+            )
+        };
+        for (index, event) in axial.heights.iter().enumerate() {
+            match decided_model_order(compare_reals(&height, event, crate::STRICT_PREDICATES))? {
+                std::cmp::Ordering::Less => return classify(index.checked_sub(1)),
+                std::cmp::Ordering::Equal => {
+                    let a = classify(index.checked_sub(1))?;
+                    let b = classify(Some(index))?;
+                    return Ok(if a == b {
+                        a
+                    } else {
+                        SolidPointLocation::Boundary
+                    });
+                }
+                std::cmp::Ordering::Greater => {}
+            }
+        }
+        Ok(SolidPointLocation::Outside)
     }
 
     pub(in crate::topology) fn classify_point_against_prism(

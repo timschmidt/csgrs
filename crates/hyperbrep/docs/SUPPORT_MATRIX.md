@@ -143,9 +143,9 @@ domain. General nonuniform analytic promotion remains open. See the
 | `cuboid` | Shared line edges / planes | Yes | Yes | Yes | Affine / exact |
 | `extrude` / `extrude_region(s)` | Line prisms, holes, components | Yes | Yes | Yes | Affine / exact |
 | `extrude_with_voids` | Nested inward line-prism shells | Yes | Yes | Yes | Affine / exact |
-| `extrude_contour(_regions)` | Native line/arc caps and extrusion sides | Yes | Yes | Yes | Family-preserving / exact |
+| `extrude_contour(_regions)` | Native line/arc caps and plane/cylinder sides | Yes | Yes | Yes | Family-preserving / exact |
 | `extrude_curve_region` | Normalized `CurveRegion2` material components and holes, retaining native line/arc images and the original component proof; empty material gives empty bodies | Exact for native line/normal-circle sides; persistent fallback families retain their measurement restrictions | Exact certified component area × height | Exact height interval and retained material-region test | Family-preserving / exact |
-| `extrude_path(_region(s))` | Native `CurvePath2` caps and one exact extrusion side per persistent path curve; through-holes share one genus shell | Exact for line, normal-circle, and certified transverse-monotone planar rational Bézier/NURBS sides; other variable-speed sides unsupported | Exact Hypercurve outer-minus-hole area × height | Exact height interval and `CurvePath2` material-region test | Family-preserving / exact |
+| `extrude_path(_region(s))` | Native `CurvePath2` caps and one exact side per persistent path curve (native lines/circles specialize to planes/cylinders); through-holes share one genus shell | Exact for line, normal-circle, and certified transverse-monotone planar rational Bézier/NURBS sides; other variable-speed sides unsupported | Exact Hypercurve outer-minus-hole area × height | Exact height interval and `CurvePath2` material-region test | Family-preserving / exact |
 | `cylinder` | Circular caps and one cylinder carrier | Yes | `pi*r²*h` | Analytic | Certified similarity / exact |
 | `sphere` | One boundaryless closed-surface face | `4*pi*r²` | `4*pi*r³/3` | Analytic radial test | Certified similarity / exact |
 | `sphere_with_voids` | Complete outer and inward spherical faces | Yes | Exact sphere subtraction | Analytic radial test | Certified similarity / exact |
@@ -347,18 +347,24 @@ analytic/spline pair matrix.
 
 ## Booleans
 
-The [axial continuation evidence](evidence/2026-10-17-partial-prism/README.md) admits touching/disjoint
-cylinder/tool differences through exact measures, cold replay, further cuts,
-reconstruction, empty recovery and transformed STEP exchange. It also proves
-whole axial traces, both operand partitions and selection for the three original
-partial-depth cuts; those results still fail explicitly at `UnsupportedSolidShell`.
-The original 24-case prism corpus now has 20 native results and four unsupported
-cases, including the covering reversed difference. This diagnostic count does
-not certify every possible composition. Complete oriented coplanar convex
-covers may contain curved internal subdivisions; cancellation proves their
-coverage before cold shell admission. Native prism profile queries combine all
-top-cap pieces, and planar circular Boolean transfers preserve `AngularSweep`.
-General curved embedding and partial-depth result shells remain open.
+The [axial-shell evidence](evidence/2026-10-17-axial-shells/README.md) completes the three original
+partial-depth cylinder cuts and covering reversed difference. Eight rationally
+rotated/reflected workflows verify independent measures, incidence, thin-layer
+and event classification, cold replay, repeated cuts, reconstruction, transverse
+cuts, empty recovery and STEP reimport. Scale and +/-100-turn closed periodic
+seams have additional continuation controls. All 24 original prism cases now
+return native results; one diagonal result still rejects an unencodable STEP
+vertex. These counts do not certify arbitrary combinations.
+
+Admission requires whole-band lateral coverage, unit section winding, exact cap
+transitions, shared contact topology and one connected cycle per vertex link.
+A retained frame/height/region certificate owns volume and point classification.
+Separate void shells and general non-axial curved embedding remain outside this
+proof. Native line/circle extrusion sides publish planes/cylinders, deliberately
+changing native/STEP bytes; exact finite extrusion promotion preserves supported
+prism shears. Generic rational profiles retain their extrusion carrier.
+Coincident-cylinder ownership retains the source UV and exact chart transition;
+conflicting material sides return `CoincidentOwnershipAmbiguous`.
 
 Public `union`, `intersection`, `difference` and `symmetric_difference` consume
 two `&BodySet` operands and return `BodySet`. Empty identities retain the
@@ -716,8 +722,9 @@ domain. `BooleanOperation` maps the resulting inside/outside evidence to
 face rather than carrying a skipped-nonplane list. Coincident planar boundaries
 are overpartitioned by exact straight support arrangements and resolved from
 the two oriented material sides. Cone/torus faces with exactly equal parameterizations and affine iso-boundaries
-also retain finite boundary traces through native partitioning. Other curved
-coincidence remains a typed unsupported boundary; the completed workflow domain
+also retain finite boundary traces through native partitioning. Coincident cylinders additionally retain complete angular/axial chart transitions
+and authored-periodic trim ownership. Other curved coincidence remains a typed
+unsupported boundary; the completed workflow domain
 is specified below.
 
 `SolidIntersectionGraph::stitch_selected_faces` transfers the selected

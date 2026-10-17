@@ -34,11 +34,11 @@ use crate::topology::{
     CertifiedSphereProfile, CertifiedTorusProfile, CertifiedZPrismProfile,
 };
 use crate::{
-    Aabb, ArenaFacePartition, ArenaModel, ArenaModelBuilder, Curve3, CurveParameterLocation,
-    FaceId, GeometryError, Matrix4, Point3, QueryError, Real, ShellId, SolidId, SolidPointLocation,
-    Surface, SurfaceBounds, SurfaceIntersectionCurve, SurfaceIntersectionLine,
-    SurfaceIntersectionOperand, SurfaceIntersectionRay, SurfaceSurfaceIntersection,
-    TopologyEditError,
+    Aabb, ArenaFacePartition, ArenaModel, ArenaModelBuilder, Curve3, Curve3Kind,
+    CurveParameterLocation, FaceId, GeometryError, Matrix4, Point3, QueryError, Real, ShellId,
+    SolidId, SolidPointLocation, Surface, SurfaceBounds, SurfaceIntersectionCurve,
+    SurfaceIntersectionLine, SurfaceIntersectionOperand, SurfaceIntersectionRay,
+    SurfaceSurfaceIntersection, TopologyEditError,
 };
 
 /// A regularized Boolean result in the currently supported solid matrix.
@@ -397,8 +397,8 @@ pub enum BooleanError {
         /// Curved face whose boundary ownership cannot yet be certified.
         face: FaceId,
     },
-    /// Multiple coincident opposite faces claim the same planar patch.
-    CoplanarOwnershipAmbiguous {
+    /// Coincident opposite faces disagree about the material side.
+    CoincidentOwnershipAmbiguous {
         /// Partitioned face whose ownership is ambiguous.
         face: FaceId,
     },
@@ -479,7 +479,7 @@ impl fmt::Display for BooleanError {
                 formatter,
                 "curved face {face:?} lies on the opposite boundary without certified material-side ownership"
             ),
-            Self::CoplanarOwnershipAmbiguous { face } => {
+            Self::CoincidentOwnershipAmbiguous { face } => {
                 write!(
                     formatter,
                     "coincident ownership is ambiguous for face {face:?}"
@@ -881,6 +881,9 @@ fn partition_graph_faces(
             crate::SurfaceKind::Plane | crate::SurfaceKind::Sphere
         ) {
             curves = coalesce_circle_traces(surface, curves)?;
+        } else if surface.kind() == crate::SurfaceKind::Cylinder {
+            curves = periodic::axial_support_traces(&staged, face, curves, operand)?;
+            curves = periodic::disjoint_iso_traces(curves, operand)?;
         }
         let (next, partition) = staged.split_face_by_surface_curves(face, &curves, operand)?;
         staged = next;
@@ -1360,19 +1363,55 @@ fn planar_line_support_split_traces(
 
 fn push_unique_planar_trace(
     traces: &mut Vec<Curve3>,
-    candidate: Curve3,
+    mut candidate: Curve3,
 ) -> Result<(), GeometryError> {
-    let start = candidate.evaluate_real(candidate.domain().start())?;
-    let end = candidate.evaluate_real(candidate.domain().end())?;
-    for trace in traces.iter() {
-        let trace_start = trace.evaluate_real(trace.domain().start())?;
-        let trace_end = trace.evaluate_real(trace.domain().end())?;
-        if (points_exactly_equal(&start, &trace_start)? && points_exactly_equal(&end, &trace_end)?)
-            || (points_exactly_equal(&start, &trace_end)?
-                && points_exactly_equal(&end, &trace_start)?)
-        {
+    let mut index = 0;
+    while index < traces.len() {
+        let trace = &traces[index];
+        if curve_domains_certify_same_parameterization(
+            &candidate,
+            candidate.domain(),
+            trace,
+            trace.domain(),
+        ) {
             return Ok(());
         }
+        if candidate.kind() == Curve3Kind::Line && trace.kind() == Curve3Kind::Line {
+            let start = trace.start()?;
+            let direction = trace.end()? - &start;
+            let a = candidate.start()? - &start;
+            let b = candidate.end()? - &start;
+            if exact_order(&direction.cross(&a).norm_squared(), &Real::zero())? == Ordering::Equal
+                && exact_order(&direction.cross(&b).norm_squared(), &Real::zero())?
+                    == Ordering::Equal
+            {
+                let norm = direction.norm_squared();
+                let a = (a.dot(&direction) / &norm).map_err(GeometryError::Numeric)?;
+                let b = (b.dot(&direction) / norm).map_err(GeometryError::Numeric)?;
+                let lower = exact_min(&a, &b)?;
+                let upper = exact_max(&a, &b)?;
+                if exact_order(&lower, &Real::one())? != Ordering::Greater
+                    && exact_order(&upper, &Real::zero())? != Ordering::Less
+                {
+                    if exact_order(&lower, &Real::zero())? != Ordering::Less
+                        && exact_order(&upper, &Real::one())? != Ordering::Greater
+                    {
+                        return Ok(());
+                    }
+                    // The complete collinear intervals overlap or meet. Their
+                    // union is one split trace; the graph retains both source
+                    // incidences. Strict separation, however tiny, is a gap.
+                    candidate = Curve3::line(
+                        start.clone() + direction.clone() * exact_min(&lower, &Real::zero())?,
+                        start + direction * exact_max(&upper, &Real::one())?,
+                    )?;
+                    traces.remove(index);
+                    index = 0;
+                    continue;
+                }
+            }
+        }
+        index += 1;
     }
     traces.push(candidate);
     Ok(())
@@ -1406,20 +1445,49 @@ fn select_graph_faces(
             .surface(face_record.surface())
             .expect("validated face surface");
         let mut classified_witness = None;
-        for witness in face_interior_witnesses(&model, face)? {
+        let mut boundary_action = None;
+        for (witness, parameter) in face_interior_parameter_witnesses(&model, face)? {
+            if surface.kind() == crate::SurfaceKind::Cylinder {
+                let action = match resolve_coincident_boundary_action(
+                    graph, operation, first, &model, face, &witness, &parameter,
+                ) {
+                    Ok(action) => action,
+                    Err(
+                        BooleanError::Geometry(GeometryError::PredicateUnresolved { .. })
+                        | BooleanError::Unresolved(_),
+                    ) => FaceSelectionAction::BoundaryNeedsResolution,
+                    Err(error) => return Err(error),
+                };
+                if action != FaceSelectionAction::BoundaryNeedsResolution {
+                    // Coincident carrier and exact trim membership already
+                    // prove this witness is on the opposite boundary. Reusing
+                    // that fact avoids reconstructing an unrelated radial
+                    // expression in the opposite solid classifier.
+                    classified_witness = Some((witness, parameter, SolidPointLocation::Boundary));
+                    boundary_action = Some(action);
+                    break;
+                }
+            }
             let location = opposite_model.classify_point(opposite_solid, &witness)?;
             if classified_witness.is_none() || location != SolidPointLocation::Boundary {
-                classified_witness = Some((witness, location));
+                classified_witness = Some((witness, parameter, location));
             }
             if location != SolidPointLocation::Boundary {
                 break;
             }
         }
-        let (witness, location) = classified_witness
+        let (witness, parameter, location) = classified_witness
             .ok_or(BooleanError::FaceInteriorWitnessUnavailable { face, reason: None })?;
-        let action = if location == SolidPointLocation::Boundary {
-            if surface.kind() == crate::SurfaceKind::Plane {
-                resolve_planar_boundary_action(graph, operation, first, &model, face, &witness)?
+        let action = if let Some(action) = boundary_action {
+            action
+        } else if location == SolidPointLocation::Boundary {
+            if matches!(
+                surface.kind(),
+                crate::SurfaceKind::Plane | crate::SurfaceKind::Cylinder
+            ) {
+                resolve_coincident_boundary_action(
+                    graph, operation, first, &model, face, &witness, &parameter,
+                )?
             } else {
                 return Err(BooleanError::FaceBoundaryOwnershipUnsupported { face });
             }
@@ -1441,13 +1509,14 @@ fn select_graph_faces(
     })
 }
 
-fn resolve_planar_boundary_action(
+fn resolve_coincident_boundary_action(
     graph: &ArenaSolidIntersectionGraph,
     operation: BooleanOperation,
     first: bool,
     source_model: &ArenaModel,
     face: FaceId,
     witness: &Point3,
+    parameter: &crate::Point2,
 ) -> Result<FaceSelectionAction, BooleanError> {
     let source_face = source_model.face(face).expect("validated selected face");
     let source_surface = source_model
@@ -1466,7 +1535,7 @@ fn resolve_planar_boundary_action(
         let opposite_surface = opposite_model
             .surface(opposite_face.surface())
             .expect("validated opposite surface");
-        if opposite_surface.kind() != crate::SurfaceKind::Plane
+        if opposite_surface.kind() != source_surface.kind()
             || !matches!(
                 source_surface.intersect_surface(opposite_surface)?,
                 SurfaceSurfaceIntersection::Coincident
@@ -1474,9 +1543,18 @@ fn resolve_planar_boundary_action(
         {
             continue;
         }
-        let Some(contains) =
+        let contains = if let Some(parameter) =
+            source_surface.coincident_cylinder_parameter(opposite_surface, parameter)?
+        {
+            Some(parameters_in_face_trim(
+                opposite_model,
+                opposite_face_id,
+                vec![hypercurve::Point2::new(parameter.x, parameter.y)],
+            )?)
+        } else {
             point_in_supported_face_trim(opposite_model, opposite_face_id, witness)?
-        else {
+        };
+        let Some(contains) = contains else {
             continue;
         };
         match contains {
@@ -1484,14 +1562,25 @@ fn resolve_planar_boundary_action(
             Classification::Uncertain(reason) => return Err(BooleanError::Unresolved(reason)),
             Classification::Decided(true) => {}
         }
-        let agree = oriented_plane_normals_agree(
-            source_surface,
-            source_face.orientation(),
-            opposite_surface,
-            opposite_face.orientation(),
-        )?;
-        if material_sides_agree.replace(agree).is_some() {
-            return Err(BooleanError::CoplanarOwnershipAmbiguous { face });
+        let agree = if source_surface.kind() == crate::SurfaceKind::Cylinder {
+            // Both validated right-handed cylinder frames have an outward
+            // radial normal everywhere, independently of phase or axis sign.
+            source_face.orientation() == opposite_face.orientation()
+        } else {
+            oriented_plane_normals_agree(
+                source_surface,
+                source_face.orientation(),
+                opposite_surface,
+                opposite_face.orientation(),
+            )?
+        };
+        // A witness may lie on a seam between two valid, coplanar/coaxial
+        // subdivisions. Their agreeing material sides establish one answer.
+        if material_sides_agree
+            .replace(agree)
+            .is_some_and(|previous| previous != agree)
+        {
+            return Err(BooleanError::CoincidentOwnershipAmbiguous { face });
         }
     }
     let Some(material_sides_agree) = material_sides_agree else {
@@ -1563,6 +1652,16 @@ fn planar_face_interior_witness(model: &ArenaModel, face: FaceId) -> Result<Poin
 }
 
 fn face_interior_witnesses(model: &ArenaModel, face: FaceId) -> Result<Vec<Point3>, BooleanError> {
+    Ok(face_interior_parameter_witnesses(model, face)?
+        .into_iter()
+        .map(|(point, _)| point)
+        .collect())
+}
+
+fn face_interior_parameter_witnesses(
+    model: &ArenaModel,
+    face: FaceId,
+) -> Result<Vec<(Point3, crate::Point2)>, BooleanError> {
     let face_record = model.face(face).expect("validated face");
     let surface = model
         .surface(face_record.surface())
@@ -1572,7 +1671,7 @@ fn face_interior_witnesses(model: &ArenaModel, face: FaceId) -> Result<Vec<Point
             surface_parameter_witness(surface.domain().u())?,
             surface_parameter_witness(surface.domain().v())?,
         );
-        return Ok(vec![surface.point_at(&parameter)?]);
+        return Ok(vec![(surface.point_at(&parameter)?, parameter)]);
     };
     if surface.kind() == crate::SurfaceKind::Sphere {
         let wire = model.wire(outer).expect("validated spherical trim wire");
@@ -1618,12 +1717,8 @@ fn face_interior_witnesses(model: &ArenaModel, face: FaceId) -> Result<Vec<Point
         let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
         return (0..4)
             .map(|index| {
-                surface
-                    .point_at(&crate::Point2::new(
-                        &quarter * Real::from(index),
-                        latitude.clone(),
-                    ))
-                    .map_err(BooleanError::from)
+                let parameter = crate::Point2::new(&quarter * Real::from(index), latitude.clone());
+                Ok((surface.point_at(&parameter)?, parameter))
             })
             .collect();
     }
@@ -1718,10 +1813,8 @@ fn face_interior_witnesses(model: &ArenaModel, face: FaceId) -> Result<Vec<Point
     for candidate in candidates {
         match model.classify_surface_parameter_on_face(face, &candidate)? {
             Classification::Decided(ContourPointLocation::Inside) => {
-                witnesses.push(surface.point_at(&crate::Point2::new(
-                    candidate.x().clone(),
-                    candidate.y().clone(),
-                ))?);
+                let parameter = crate::Point2::new(candidate.x().clone(), candidate.y().clone());
+                witnesses.push((surface.point_at(&parameter)?, parameter));
                 if witnesses.len() == 8 {
                     break;
                 }
@@ -5184,22 +5277,68 @@ fn point_in_supported_face_trim(
     let Some(parameters) = surface_parameters_of_point(surface, point)? else {
         return Ok(None);
     };
+    Ok(Some(parameters_in_face_trim(model, face, parameters)?))
+}
+
+fn parameters_in_face_trim(
+    model: &ArenaModel,
+    face: FaceId,
+    parameters: Vec<hypercurve::Point2>,
+) -> Result<Classification<bool>, GeometryError> {
+    let surface = face_surface(model, face);
     let region = planar_face_region(model, face)?;
+    let parameters = if matches!(
+        surface.domain().u(),
+        crate::SurfaceParameterDomain::Periodic { .. }
+    ) || matches!(
+        surface.domain().v(),
+        crate::SurfaceParameterDomain::Periodic { .. }
+    ) {
+        let bounds = match crate::error::classified_present(region.bounds())? {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let mut lifted = Vec::new();
+        for point in parameters {
+            let u = periodic::periodic_offsets(
+                surface.domain().u(),
+                point.x(),
+                point.x(),
+                bounds.min_x(),
+                bounds.max_x(),
+            )?;
+            let v = periodic::periodic_offsets(
+                surface.domain().v(),
+                point.y(),
+                point.y(),
+                bounds.min_y(),
+                bounds.max_y(),
+            )?;
+            for u in &u {
+                for v in &v {
+                    lifted.push(hypercurve::Point2::new(point.x() + u, point.y() + v));
+                }
+            }
+        }
+        lifted
+    } else {
+        parameters
+    };
     let mut unresolved = None;
     for parameter in parameters {
         match crate::error::classified(region.classify_point(&parameter.clone().into()))? {
             Classification::Decided(RegionPointLocation::Inside)
             | Classification::Decided(RegionPointLocation::Boundary) => {
-                return Ok(Some(Classification::Decided(true)));
+                return Ok(Classification::Decided(true));
             }
             Classification::Decided(RegionPointLocation::Outside) => {}
             Classification::Uncertain(reason) => unresolved = Some(reason),
         }
     }
-    Ok(Some(match unresolved {
+    Ok(match unresolved {
         Some(reason) => Classification::Uncertain(reason),
         None => Classification::Decided(false),
-    }))
+    })
 }
 
 fn surface_parameters_of_point(
@@ -7304,6 +7443,48 @@ mod tests {
         );
         assert!(skew.certified_right_prism_frame(solid).unwrap().is_none());
         assert!(skew.certified_z_prism_profile(solid).unwrap().is_none());
+        for map in [
+            shear.clone(),
+            Matrix4::from_row_major([
+                -Real::one(),
+                0.into(),
+                (-1).into(),
+                0.into(),
+                0.into(),
+                1.into(),
+                0.into(),
+                0.into(),
+                0.into(),
+                0.into(),
+                1.into(),
+                0.into(),
+                0.into(),
+                0.into(),
+                0.into(),
+                1.into(),
+            ]),
+        ] {
+            let moved = model.transformed(&map).unwrap();
+            let text = moved.to_json().unwrap();
+            let cold = crate::ImportedModel::from_json(&text, &crate::ArchiveLimits::default())
+                .unwrap()
+                .validate()
+                .unwrap();
+            assert_eq!(cold.to_json().unwrap(), text);
+            assert_eq!(
+                exact_order(
+                    &cold.solid_volume(solid).unwrap(),
+                    &(Real::from(6) * Real::pi())
+                )
+                .unwrap(),
+                Ordering::Equal
+            );
+            let inside = map.transform_point3(&p(0, 0, 3)).unwrap();
+            assert_eq!(
+                cold.classify_point(solid, &inside).unwrap(),
+                SolidPointLocation::Inside
+            );
+        }
     }
 
     #[test]
@@ -11071,6 +11252,32 @@ mod tests {
         .unwrap();
         let (extruded, extruded_solid) =
             crate::construction::extrude_contour(&profile, Real::zero(), Real::from(3)).unwrap();
+        // Native straight profiles now publish plane carriers. Re-author the
+        // identical complete side maps as generic extrusions so this original
+        // dispatch/trim regression continues to exercise Plane/Extrusion.
+        assert!(
+            extruded
+                .surfaces()
+                .all(|(_, surface)| surface.kind() == crate::SurfaceKind::Plane)
+        );
+        let mut edit = extruded.edit();
+        let mut authored = 0;
+        for (id, surface) in extruded.surfaces() {
+            let SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
+                unreachable!()
+            };
+            if vectors_exactly_equal(&v, &crate::Vector3::z()).unwrap() {
+                edit.replace_surface(
+                    id,
+                    Surface::extrusion(Curve3::line(origin.clone(), origin + u).unwrap(), v)
+                        .unwrap(),
+                )
+                .unwrap();
+                authored += 1;
+            }
+        }
+        assert_eq!(authored, 4);
+        let extruded = edit.commit().unwrap();
         let (cutter, cutter_solid) = crate::construction::cuboid(p(1, -1, 1), p(3, 3, 2)).unwrap();
         let graph = intersection_graph(&extruded, extruded_solid, &cutter, cutter_solid).unwrap();
         for pair in graph.intersections() {

@@ -2256,10 +2256,8 @@ fn add_persistent_curve_region(
     for index in 0..count {
         let next = next_indices[index];
         let domain = &domains[index];
-        let surface = builder.surface(Surface::extrusion(
-            bottom_curves[index].clone(),
-            Vector3::z(),
-        )?)?;
+        let carrier = native_extrusion_carrier(&bottom_curves[index])?;
+        let surface = builder.surface(carrier.surface)?;
         let specs = [
             (
                 bottom_edges[index],
@@ -2298,8 +2296,14 @@ fn add_persistent_curve_region(
         ];
         let mut uses = Vec::with_capacity(4);
         for (edge, direction, start, end, correspondence) in specs {
+            let mapped = |point: CurvePoint2| {
+                CurvePoint2::new(
+                    point.x() * &carrier.u_scale + &carrier.u_offset,
+                    point.y() * &carrier.v_scale,
+                )
+            };
             let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-                LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+                LineSeg2::try_new(mapped(start), mapped(end)).map_err(GeometryError::from)?,
             )))?;
             uses.push(builder.edge_use_with_image_certificate(
                 edge,
@@ -2310,7 +2314,7 @@ fn add_persistent_curve_region(
             )?);
         }
         let wire = builder.wire_with_simplicity_certificate(uses, true)?;
-        side_faces.push(builder.face(surface, Orientation::Forward, wire, Vec::new())?);
+        side_faces.push(builder.face(surface, carrier.orientation, wire, Vec::new())?);
     }
     let mut faces = vec![bottom_face, top_face];
     faces.extend(side_faces);
@@ -2326,6 +2330,73 @@ fn add_persistent_curve_region(
         builder.solid(shell, Vec::new())?
     };
     Ok(solid)
+}
+
+struct ExtrusionCarrier {
+    surface: Surface,
+    orientation: Orientation,
+    u_scale: Real,
+    u_offset: Real,
+    v_scale: Real,
+}
+
+/// Specialize the complete vertical extrusion of a known native profile.
+/// The affine chart map changes surface coordinates, never the edge parameter
+/// correspondence. Circle frames from `spatial_segment_curve` lie in XY;
+/// their axis is +Z for material contours and -Z for clockwise holes.
+fn native_extrusion_carrier(curve: &Curve3) -> Result<ExtrusionCarrier, ConstructionError> {
+    let mut carrier = ExtrusionCarrier {
+        surface: Surface::extrusion(curve.clone(), Vector3::z())?,
+        orientation: Orientation::Forward,
+        u_scale: Real::one(),
+        u_offset: Real::zero(),
+        v_scale: Real::one(),
+    };
+    match curve.exact_data() {
+        Curve3ExactData::Line(line) => {
+            let inverse_span = (Real::one() / (curve.domain().end() - curve.domain().start()))
+                .map_err(GeometryError::Numeric)?;
+            let direction = (&line.end - &line.start) * inverse_span;
+            carrier.surface = Surface::plane(
+                line.start - direction.clone() * curve.domain().start(),
+                direction,
+                Vector3::z(),
+            )?;
+        }
+        Curve3ExactData::EllipseArc(arc) if arc.circle => {
+            let axis = arc.x.cross(&arc.y);
+            let axial_sign = axis.dot(&Vector3::z());
+            // This is a complete carrier proof, not an endpoint fit. Retain
+            // the generic extrusion if the profile plane is not horizontal.
+            if !matches!(
+                compare_reals(
+                    &(&axial_sign * &axial_sign),
+                    &Real::one(),
+                    crate::STRICT_PREDICATES
+                ),
+                PredicateOutcome::Decided {
+                    value: std::cmp::Ordering::Equal,
+                    ..
+                }
+            ) {
+                return Ok(carrier);
+            }
+            carrier.u_scale = Real::from(arc.direction);
+            carrier.u_offset = arc.angle_at_start - &carrier.u_scale * arc.domain_start;
+            carrier.v_scale = axial_sign;
+            carrier.orientation = match decided_construction_order(compare_reals(
+                &(&carrier.u_scale * &carrier.v_scale),
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? {
+                std::cmp::Ordering::Less => Orientation::Reversed,
+                _ => Orientation::Forward,
+            };
+            carrier.surface = Surface::cylinder(arc.center, arc.x, arc.y, axis, arc.x_radius)?;
+        }
+        _ => {}
+    }
+    Ok(carrier)
 }
 
 fn spatial_segment_curve(

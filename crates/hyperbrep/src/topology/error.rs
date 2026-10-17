@@ -480,6 +480,8 @@ pub enum BuildError {
     },
     /// A closed-shell edge pair traverses in the same direction.
     InconsistentSolidEdgeOrientation(EdgeId),
+    /// The incident edge germs do not form one circular vertex link.
+    NonManifoldSolidVertex(VertexId),
     /// A closed planar shell encloses no certified nonzero signed volume.
     DegenerateShellVolume(ShellId),
     /// A solid's outer shell is not certified outward-oriented.
@@ -488,7 +490,7 @@ pub enum BuildError {
     OutwardVoidShell(ShellId),
     /// The shell is not recognized by the active non-self-intersection proof.
     UnsupportedSolidShell(ShellId),
-    /// Planar face sheets contact away from one shared topological edge or vertex.
+    /// Face sheets contact away from one shared topological edge or vertex.
     SelfIntersectingSolidShell(ShellId),
     /// A void shell is not strictly contained by the outer shell.
     VoidShellOutside(ShellId),

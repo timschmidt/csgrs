@@ -75,12 +75,7 @@ fn normalized_strokes_keep_native_circle_surfaces_and_exact_measures() {
             let circle_sides = bodies
                 .model()
                 .faces()
-                .filter(|face| {
-                    face.surface()
-                        .geometry()
-                        .extrusion_profile_and_direction()
-                        .is_some_and(|(profile, _)| profile.kind() == Curve3Kind::CircleArc)
-                })
+                .filter(|face| face.surface().kind() == SurfaceKind::Cylinder)
                 .count();
             if cap == OffsetCap::Round {
                 assert!(circle_sides >= 2);
@@ -88,14 +83,10 @@ fn normalized_strokes_keep_native_circle_surfaces_and_exact_measures() {
                 assert_eq!(circle_sides, 0);
             }
             for face in bodies.model().faces() {
-                if let Some((profile, _)) =
-                    face.surface().geometry().extrusion_profile_and_direction()
-                {
-                    assert!(matches!(
-                        profile.kind(),
-                        Curve3Kind::Line | Curve3Kind::CircleArc
-                    ));
-                }
+                assert!(matches!(
+                    face.surface().kind(),
+                    SurfaceKind::Plane | SurfaceKind::Cylinder
+                ));
             }
             let volume = if cap == OffsetCap::Round {
                 Real::from(30) + Real::from(3) * Real::pi()

@@ -700,6 +700,13 @@ impl ArenaModel {
                 let jacobian = prism.u.dot(&prism.v.cross(&prism.extrusion)).abs();
                 return Ok(area * jacobian * (&prism.parameter_max - &prism.parameter_min));
             }
+            if let Some(axial) = &self.data.certified_axial_shells[id.index()] {
+                let mut volume = Real::zero();
+                for (band, heights) in axial.bands.iter().zip(axial.heights.windows(2)) {
+                    volume += &band.area * (&heights[1] - &heights[0]);
+                }
+                return Ok(volume * axial.u.dot(&axial.v.cross(&axial.axis)).abs());
+            }
             let signed_six_volume = std::iter::once(&solid.outer)
                 .chain(solid.voids.iter())
                 .map(|shell| self.signed_shell_six_volume(*shell))

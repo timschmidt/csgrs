@@ -483,7 +483,20 @@ impl ArenaModelBuilder {
             } else {
                 self.certify_planar_shell_non_self_intersection(outer)?
             };
-            if !analytic_closed {
+            let axial = if !analytic_closed
+                && !simple_prism
+                && !line_arc_prism
+                && curve_sweep.is_none()
+                && loft.is_none()
+                && !convex_planar
+                && !general_planar
+                && voids.is_empty()
+            {
+                self.certified_axial_shell(outer)?
+            } else {
+                None
+            };
+            if !analytic_closed && axial.is_none() {
                 self.validate_outer_shell_orientation(outer)?;
             }
             if !analytic_closed
@@ -495,6 +508,7 @@ impl ArenaModelBuilder {
                 && loft.is_none()
                 && !convex_planar
                 && !general_planar
+                && axial.is_none()
             {
                 return Err(BuildError::UnsupportedSolidShell(outer));
             }
@@ -552,6 +566,7 @@ impl ArenaModelBuilder {
                     loft: if voids.is_empty() { loft } else { None },
                     curve_sweep: if voids.is_empty() { curve_sweep } else { None },
                     prism: None,
+                    axial,
                 }));
             for shell in shells {
                 self.shell_solid[shell.index()] = Some(id);
@@ -619,6 +634,7 @@ impl ArenaModelBuilder {
                 revolution: None,
                 loft: None,
                 curve_sweep: None,
+                axial: None,
                 prism: Some(CertifiedPrismShell {
                     profile: CertifiedPrismProfile::CurveRegion { region, area },
                     origin: Point3::new(Real::zero(), Real::zero(), z_min.clone()),
@@ -828,6 +844,35 @@ impl ArenaModelBuilder {
                 .map_err(|error| ValidationReport {
                     errors: vec![error],
                 })?;
+            let certified_axial_shells = self
+                .solids
+                .iter()
+                .enumerate()
+                .map(|(index, solid)| {
+                    let eligible = solid.voids.is_empty()
+                        && certified_prisms[index].is_none()
+                        && certified_cylinders[index].is_none()
+                        && certified_lofts[index].is_none()
+                        && certified_curve_sweeps[index].is_none()
+                        && certified_spheres[index].is_none()
+                        && certified_sphere_pairs[index].is_none()
+                        && certified_cone_frustums[index].is_none()
+                        && certified_tori[index].is_none()
+                        && certified_revolutions[index].is_none();
+                    if let Some(certificate) =
+                        self.solid_certificates[index].reuse(|proof| &proof.axial, eligible)
+                    {
+                        Ok(certificate)
+                    } else if eligible {
+                        self.certified_axial_shell(solid.outer)
+                    } else {
+                        Ok(None)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| ValidationReport {
+                    errors: vec![error],
+                })?;
             Ok(ArenaModel {
                 data: Arc::new(ModelData {
                     vertices: self.vertices,
@@ -856,6 +901,7 @@ impl ArenaModelBuilder {
                     certified_lofts,
                     certified_curve_sweeps,
                     certified_prisms,
+                    certified_axial_shells,
                     bounds: OnceLock::new(),
                     face_contours: (0..face_count).map(|_| OnceLock::new()).collect(),
                 }),

@@ -16,7 +16,24 @@ pub(super) fn coalesce_planar_images(
             }
         }
         match matching {
-            Some(index) => groups[index].push(curve),
+            Some(index) => {
+                // The same partial arc may arrive through a cylinder and a
+                // coincident planar cap with different handedness or phase.
+                // Compare their complete anchored angular maps; matching end
+                // points alone would also discard the complementary arc.
+                let duplicate = groups[index].iter().any(|existing| {
+                    matches!(
+                        exact_edge_curve_equal(curve.curve(), existing.curve(), false),
+                        Ok(true)
+                    ) || matches!(
+                        exact_edge_curve_equal(curve.curve(), existing.curve(), true),
+                        Ok(true)
+                    )
+                });
+                if !duplicate {
+                    groups[index].push(curve);
+                }
+            }
             None => groups.push(vec![curve]),
         }
     }

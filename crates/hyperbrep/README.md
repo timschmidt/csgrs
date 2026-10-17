@@ -1,5 +1,20 @@
 # HyperBREP
 
+Partial-depth plane/cylinder Booleans now admit piecewise prismatic shells from
+complete native boundaries. The supported axial-shell domain includes thin
+remaining layers, internal notches, holes, cold archive replay, exact similarities,
+periodic seams and subsequent cuts/reconstruction/empty recovery. Shared topology,
+oriented section winding and cap transitions are certified before publication;
+unsupported surface arrangements remain typed failures. See the
+[axial-shell admission record](docs/evidence/2026-10-17-axial-shells/README.md).
+
+Native line/circle extrusion walls use plane/cylinder carriers. This intentionally
+changes native archive and STEP output bytes. Certified prism images under a
+supported axial shear retain exact extrusion carriers; no fitting or tolerance
+is introduced. Numerical certainty, manifold validity and format fidelity remain
+separate claims. General affine images of partial-depth analytic shells and full
+work/heap/cancellation bounds remain open.
+
 Hyper-native exact boundary representation for CAD.
 
 HyperBREP uses `hyperreal::Real` as its only authoritative scalar and familiar
