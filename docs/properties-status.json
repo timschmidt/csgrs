@@ -17397,6 +17397,23 @@
     "release_ready": false,
     "cache_index_admitted": false,
     "full_plan_complete": false
+  },
+  "package_artifact_whitespace_recovery": {
+    "status": "kept: exact generated runner preserved with one scoped EOF-whitespace exception",
+    "base_revision": "af717ed75f8ff385787eb05a562cf79610212799",
+    "contract": "docs/evidence/2026-10-17-package-artifact-whitespace/contract-v1.md",
+    "recovery": "docs/evidence/2026-10-17-package-artifact-whitespace/recovery-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-package-artifact-whitespace/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-package-artifact-whitespace/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "docs/evidence/.gitattributes": "de02203e30b716fa7909ed01884d094b57d2b1677f0b64f5f61acbf53df7aa25"
+    },
+    "prior_commit_verified_blobs": 26,
+    "original_failed_check_preserved": true,
+    "raw_artifact_unchanged": true,
+    "release_ready": false,
+    "cache_index_admitted": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
