@@ -538,7 +538,20 @@ impl ArenaModelBuilder {
                 outer,
                 voids: voids.clone(),
             });
-            self.retained_solid_certificates.push(None);
+            // Retain only completed strict proofs, after all admission and
+            // nesting checks succeed. Shell-only facts do not certify cavities.
+            self.solid_certificates
+                .push(BuilderSolidCertificates::Admitted(CertifiedSolid {
+                    cylinder,
+                    sphere,
+                    sphere_pair: if voids.is_empty() { sphere_pair } else { None },
+                    cone_frustum: if voids.is_empty() { cone_frustum } else { None },
+                    torus: if voids.is_empty() { torus } else { None },
+                    revolution: if voids.is_empty() { revolution } else { None },
+                    loft: if voids.is_empty() { loft } else { None },
+                    curve_sweep: if voids.is_empty() { curve_sweep } else { None },
+                    prism: None,
+                }));
             for shell in shells {
                 self.shell_solid[shell.index()] = Some(id);
             }
@@ -574,7 +587,8 @@ impl ArenaModelBuilder {
             outer,
             voids: voids.clone(),
         });
-        self.retained_solid_certificates.push(Some(certificate));
+        self.solid_certificates
+            .push(BuilderSolidCertificates::Transferred(certificate));
         for shell in shells {
             self.shell_solid[shell.index()] = Some(id);
         }
@@ -648,8 +662,10 @@ impl ArenaModelBuilder {
                 .iter()
                 .enumerate()
                 .map(|(index, solid)| {
-                    if let Some(certificate) = &self.retained_solid_certificates[index] {
-                        Ok(certificate.prism.clone())
+                    if let Some(certificate) = self.solid_certificates[index]
+                        .reuse(|certificate| &certificate.prism, solid.voids.is_empty())
+                    {
+                        Ok(certificate)
                     } else if solid.voids.is_empty() {
                         self.certified_prism_shell(solid.outer)
                     } else {
@@ -665,8 +681,10 @@ impl ArenaModelBuilder {
                 .iter()
                 .enumerate()
                 .map(|(index, solid)| {
-                    if let Some(certificate) = &self.retained_solid_certificates[index] {
-                        Ok(certificate.cylinder.clone())
+                    if let Some(certificate) = self.solid_certificates[index]
+                        .reuse(|certificate| &certificate.cylinder, true)
+                    {
+                        Ok(certificate)
                     } else {
                         self.certified_cylinder_solid(solid)
                     }
@@ -680,8 +698,11 @@ impl ArenaModelBuilder {
                 .iter()
                 .enumerate()
                 .map(|(index, solid)| {
-                    if let Some(certificate) = &self.retained_solid_certificates[index] {
-                        Ok(certificate.loft.clone())
+                    if let Some(certificate) = self.solid_certificates[index].reuse(
+                        |certificate| &certificate.loft,
+                        solid.voids.is_empty() && certified_prisms[index].is_none(),
+                    ) {
+                        Ok(certificate)
                     } else if solid.voids.is_empty() && certified_prisms[index].is_none() {
                         self.certified_loft_shell(solid.outer)
                     } else {
@@ -697,8 +718,11 @@ impl ArenaModelBuilder {
                 .iter()
                 .enumerate()
                 .map(|(index, solid)| {
-                    if let Some(certificate) = &self.retained_solid_certificates[index] {
-                        Ok(certificate.curve_sweep.clone())
+                    if let Some(certificate) = self.solid_certificates[index].reuse(
+                        |certificate| &certificate.curve_sweep,
+                        solid.voids.is_empty(),
+                    ) {
+                        Ok(certificate)
                     } else if solid.voids.is_empty() {
                         self.certified_curve_sweep_shell(solid.outer)
                     } else {
@@ -714,8 +738,10 @@ impl ArenaModelBuilder {
                 .iter()
                 .enumerate()
                 .map(|(index, solid)| {
-                    if let Some(certificate) = &self.retained_solid_certificates[index] {
-                        Ok(certificate.sphere.clone())
+                    if let Some(certificate) = self.solid_certificates[index]
+                        .reuse(|certificate| &certificate.sphere, true)
+                    {
+                        Ok(certificate)
                     } else {
                         self.certified_sphere_solid(solid)
                     }
@@ -729,8 +755,11 @@ impl ArenaModelBuilder {
                 .iter()
                 .enumerate()
                 .map(|(index, solid)| {
-                    if let Some(certificate) = &self.retained_solid_certificates[index] {
-                        Ok(certificate.sphere_pair.clone())
+                    if let Some(certificate) = self.solid_certificates[index].reuse(
+                        |certificate| &certificate.sphere_pair,
+                        solid.voids.is_empty(),
+                    ) {
+                        Ok(certificate)
                     } else if solid.voids.is_empty() {
                         self.certified_sphere_pair_shell(solid.outer)
                     } else {
@@ -746,8 +775,11 @@ impl ArenaModelBuilder {
                 .iter()
                 .enumerate()
                 .map(|(index, solid)| {
-                    if let Some(certificate) = &self.retained_solid_certificates[index] {
-                        Ok(certificate.cone_frustum.clone())
+                    if let Some(certificate) = self.solid_certificates[index].reuse(
+                        |certificate| &certificate.cone_frustum,
+                        solid.voids.is_empty(),
+                    ) {
+                        Ok(certificate)
                     } else if solid.voids.is_empty() {
                         self.certified_cone_frustum_shell(solid.outer)
                     } else {
@@ -763,8 +795,10 @@ impl ArenaModelBuilder {
                 .iter()
                 .enumerate()
                 .map(|(index, solid)| {
-                    if let Some(certificate) = &self.retained_solid_certificates[index] {
-                        Ok(certificate.torus.clone())
+                    if let Some(certificate) = self.solid_certificates[index]
+                        .reuse(|certificate| &certificate.torus, solid.voids.is_empty())
+                    {
+                        Ok(certificate)
                     } else if solid.voids.is_empty() {
                         self.certified_torus_shell(solid.outer)
                     } else {
@@ -780,8 +814,11 @@ impl ArenaModelBuilder {
                 .iter()
                 .enumerate()
                 .map(|(index, solid)| {
-                    if let Some(certificate) = &self.retained_solid_certificates[index] {
-                        Ok(certificate.revolution.clone())
+                    if let Some(certificate) = self.solid_certificates[index].reuse(
+                        |certificate| &certificate.revolution,
+                        solid.voids.is_empty(),
+                    ) {
+                        Ok(certificate)
                     } else {
                         self.certified_revolution_solid(solid)
                     }

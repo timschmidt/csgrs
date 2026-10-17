@@ -1,5 +1,32 @@
 # HyperBREP Performance Contract
 
+## 2026-10-16: retain positive builder admission proofs
+
+Kept after the [source-bound qualification](docs/evidence/2026-10-16-builder-certificates/README.md).
+The builder reuses successful strict admission proofs, retries missing families,
+and preserves complete validated-transfer semantics. No validation, output
+materialization, policy, representation or artifact migration is changed.
+
+All 167 original cases across 17 corpora preserve their exact receipts in three
+alternating CPU-0 pairs (102 processes). Four fresh/reused circular-import cases
+have candidate/baseline time ratios 0.721784–0.778750 and fewer allocator
+requests. This local result is not a whole-kernel or controlled-host speedup.
+The sole row above the 10% review marker is the unchanged arc executable's
+structural replay, 5.85585 to 6.48705 ns (1.107790). Both executable hashes are
+identical; retain the observation without attributing it to this BREP change
+or claiming an all-row timing pass. Other slower rows remain in the complete
+report, including analytic export ratios up to 1.051813.
+
+Eleven rows request eight additional bytes per operation (sixteen for the two
+two-body cases), with no additional allocation calls. Across all corpora,
+median process peak-RSS deltas range from -480 to +372 KiB. Native harness size
+deltas range from -424 to +17,920 bytes; the 83-group WASM probe grows 12,198
+bytes. These costs are accepted for the measured reduction in repeated proof
+work. Allocator requests and process RSS do not establish retained-heap bounds;
+harness sizes are not distribution sizes. Earlier campaigns and unresolved
+regressions remain historical evidence, not waived or arithmetically combined
+with these ratios. All 28 work-package gates remain open or in progress.
+
 ## 2026-10-15: direct circular STEP composition and scalar certificates
 
 The [source-bound evidence](docs/evidence/2026-10-15-step-circles/README.md)

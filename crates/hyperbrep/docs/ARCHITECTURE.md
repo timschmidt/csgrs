@@ -453,6 +453,19 @@ Certificates are compact retained facts used for exact volume and point
 classification. They are rebuilt from geometry and topology after persistence.
 Supported transforms update the certificate directly and preserve its proof.
 
+Successful builder admission now retains its positive strict family proofs
+until `finish` or drop. These partial records differ from a validated transfer's
+complete available proof set: a missing admission proof still invokes the
+existing recognizer. Whole-solid sphere/cylinder facts include their supported
+voids; outer-shell facts are reusable only without voids. Finalization still
+derives the secondary prism proof and applies the prism/loft eligibility rules.
+Ownership, orientation, nesting and global orphan validation remain mandatory.
+Edits invalidate certificates before replay. The private line-pcurve rewrite
+cannot reach an admitted boundary, and later appended faces cannot change a
+shell-scoped proof. Retention is one owned record per solid, with no global key
+or eviction policy; this does not bound retained bytes, total work or cancellation.
+See the [proof-scope review and executed evidence](evidence/2026-10-16-builder-certificates/README.md).
+
 Torus certification derives longitude/latitude rectangles from the current
 trimmed topology. Longitude cells must cover one complete period. Latitude
 cells are split at every exact trim and at the four canonical quarter angles,

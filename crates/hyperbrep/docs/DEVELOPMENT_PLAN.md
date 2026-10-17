@@ -215,6 +215,18 @@ the original oversized cutters and all formerly supported planar exports;
 never broaden the shortcut from close endpoint values or corner samples.
 Future extensions must continue through the supported interchange path. A native
 Boolean followed by a typed export blocker is not a completed STEP workflow.
+The [builder proof-reuse increment](evidence/2026-10-16-builder-certificates/README.md)
+retains positive admission facts without changing that feature domain. Its
+matched 167-case campaign preserves every receipt and all 54 retained artifacts;
+fresh/reused circular import improves locally, while all adverse timing,
+allocation and size observations remain published. Partial admission and
+validated-transfer proof sets have distinct semantics. Keep secondary prism
+derivation, cavity scope, failed-admission recovery and edit invalidation.
+This does not close earlier cost regressions or total-work/heap/cancellation
+contracts. Further STEP families need exact chart and scalar-encoding proofs;
+the [cone/torus exchange notes](evidence/2026-10-16-builder-certificates/next-exchange-research.md)
+identify parameter-convention and representability questions for reproduction
+before implementation. They are research, not implemented exchange support.
 This ownership direction changes who performs dependency work; it does not
 weaken the shared properties or close any work-package gate.
 

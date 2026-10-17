@@ -49,6 +49,8 @@ use records::FaceBoundary;
 pub use records::*;
 
 #[cfg(test)]
+mod builder_tests;
+#[cfg(test)]
 mod tests;
 
 enum FaceSplitEndpointLocation {
@@ -132,6 +134,31 @@ struct CertifiedSolid {
     loft: Option<CertifiedLoftShell>,
     curve_sweep: Option<CertifiedCurveSweepShell>,
     prism: Option<CertifiedPrismShell>,
+}
+
+/// Builder-owned proofs have two scopes: admission is partial, whereas a
+/// validated transfer preserves its complete set of available certificates.
+/// A missing admission proof must be retried, never cached as impossible.
+#[derive(Debug)]
+enum BuilderSolidCertificates {
+    Admitted(CertifiedSolid),
+    Transferred(CertifiedSolid),
+}
+
+impl BuilderSolidCertificates {
+    fn reuse<T: Clone>(
+        &self,
+        family: impl FnOnce(&CertifiedSolid) -> &Option<T>,
+        admissible: bool,
+    ) -> Option<Option<T>> {
+        match self {
+            Self::Transferred(certificates) => Some(family(certificates).clone()),
+            Self::Admitted(certificates) if admissible => family(certificates)
+                .as_ref()
+                .map(|proof| Some(proof.clone())),
+            Self::Admitted(_) => None,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -671,6 +698,16 @@ struct FaceLineMaterial {
 }
 
 /// Incremental constructor for a canonical validated model.
+///
+/// Successful solid admission retains strict proofs for the lifetime of this
+/// builder. Finalization reuses those proofs and derives any remaining
+/// applicable families. Adding records cannot change an admitted boundary;
+/// model edits invalidate affected proof state before replay. Failed admission
+/// publishes neither a solid nor its proofs.
+///
+/// Retention is one record per admitted solid, released when the builder is
+/// consumed or dropped. This is not a heap-byte, total-work or cancellation
+/// budget, and there is no global cache or configurable eviction policy here.
 #[derive(Debug, Default)]
 pub struct ArenaModelBuilder {
     vertices: Vec<Vertex>,
@@ -689,5 +726,8 @@ pub struct ArenaModelBuilder {
     wire_face: Vec<Option<FaceId>>,
     face_shell: Vec<Option<ShellId>>,
     shell_solid: Vec<Option<SolidId>>,
-    retained_solid_certificates: Vec<Option<CertifiedSolid>>,
+    // One record per successfully admitted solid, owned until finish/drop.
+    // Appended records cannot mutate that solid's geometry or boundary uses.
+    // This is an entry-count bound, not a bound on retained expression bytes.
+    solid_certificates: Vec<BuilderSolidCertificates>,
 }
