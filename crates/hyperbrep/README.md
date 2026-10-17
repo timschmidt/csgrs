@@ -203,6 +203,13 @@ The clean-break implementation currently provides:
   construction from native `CurvePath2` line, circle, rational Bézier, and
   NURBS boundaries, including spline-bounded through-holes, exact volume, and
   material classification;
+- `builder::extrude_curve_region` consumes a regularized `CurveRegion2`
+  directly, retaining its component proof and certified native line/arc view.
+  Round stroke profiles keep native circular sides through exact area queries,
+  STEP exchange and subsequent modeling. Material components, holes, islands
+  and canonical empty geometry use the same native construction authority;
+  height ordering is checked even for empty input. General rational-profile
+  measurement restrictions remain explicit;
 - exact affine `builder::{sweep, sweep_region}` for polygonal linear-path
   sweeps in an explicit model-space profile frame, including through-holes
   and shear without a hidden moving-frame policy;

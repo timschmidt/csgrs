@@ -2,7 +2,7 @@
 
 use super::*;
 pub use crate::construction::{ExtrusionVoid, SphereVoid};
-use hypercurve::{Contour2, CurvePath2};
+use hypercurve::{Contour2, CurvePath2, CurveRegion2};
 
 /// Constructs one exact axis-aligned cuboid as a validated canonical model.
 ///
@@ -240,6 +240,30 @@ pub fn extrude_path_regions(
 ) -> Result<BodySet, ConstructionError> {
     let (model, solids) = crate::construction::extrude_path_regions(regions, z_min, z_max)?;
     Ok(BodySet::from_parts(model, solids))
+}
+
+/// Extrudes a regularized [`CurveRegion2`] between two z coordinates.
+///
+/// Hypercurve's retained material components determine the solids and their
+/// holes. Its certified native line/arc view preserves circular side surfaces,
+/// including circles represented by rational boundary spans. The original
+/// component remains the solid's planar support proof; no fitting or display
+/// geometry is used. Other persistent boundary families retain their existing
+/// construction and measurement restrictions as typed errors.
+///
+/// `z_min` must be strictly less than `z_max`, including for an empty region.
+/// Empty material returns an empty body set. Predicate decisions remain strict
+/// inside an ambient curve approximation scope, and an enclosing
+/// [`OperationContext`] continues to account for solver work.
+pub fn extrude_curve_region(
+    region: &CurveRegion2,
+    z_min: Real,
+    z_max: Real,
+) -> Result<BodySet, ConstructionError> {
+    crate::context::strict(|| {
+        let (model, solids) = crate::construction::extrude_curve_region(region, z_min, z_max)?;
+        Ok(BodySet::from_parts(model, solids))
+    })
 }
 
 /// Revolves one exact simple radial/axial polygon around the z axis.

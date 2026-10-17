@@ -142,14 +142,17 @@ The [stroke integration](evidence/2026-10-17-stroke-upstream-integration/README.
 incorporates upstream `be2a0c37b` after the conical STEP increment. Hypercurve
 owns the exact single-line butt/round stroke fast path. Its regularized region
 and certified native contour view remain the authority for extrusion; boundary
-subdivision can change without changing the represented set. Future BREP
-consumers should accept `CurveRegion2` directly where its retained line/arc
-evidence is sufficient, while preserving the complete original component and
-its source qualification. Do not reconstruct native circle identity by fitting
-the rational Bézier paths returned by `boundary_paths()`. The integration's
-unchanged round-cap path measurement blocker remains an independent open case;
-a new normalized-region entry point must earn complete native, replay, STEP,
-Boolean and empty-recovery acceptance separately.
+subdivision can change without changing the represented set. The
+[normalized-region extrusion increment](evidence/2026-10-17-region-extrusion/README.md)
+adds `builder::extrude_curve_region`, reusing the native component constructor
+under a strict scope. Four butt/round stroke workflows and two nested/disconnected
+material workflows complete exact measurement, native replay, STEP, Boolean reuse
+and empty recovery. Retain the complete original component proof; do not
+reconstruct native circle identity by fitting the rational Bézier paths returned
+by `boundary_paths()`. The integration's unchanged round-cap general-path
+measurement blocker remains an independent open case. A local strict decision
+does not certify an earlier approximate source's intent; full source-qualification
+delivery and general persistent-curve measurement remain separate obligations.
 
 Upstream mesh containment now validates closed PWN input before shortcuts and
 tests strict interior of the regularized nonzero-winding set. Multiplicity,
@@ -2312,6 +2315,16 @@ separate finite B-spline generator recognition, singular apex topology, direct
 conical charts, source persistence and delivery/resource gates. Each requires
 its native proof and complete edited consumer path. No finite exchange subset
 closes WP14a/b or establishes general Boolean closure.
+
+Keep normalized-region extrusion as the ordinary profile route when Hypercurve
+already owns material components and native boundary evidence. Preserve its
+holes/islands, disconnected/empty material, reversal, invalid-height, strict-scope,
+budget-exhaustion and native/STEP/WASM continuation checks. Arbitrary rational
+path side measurement must earn its own exact integration or typed limitation;
+the supported region route does not erase the earlier failed path inputs. The
+new complete workflow costs are absolute observations. Existing private callers
+are unchanged, and historical broad benchmark results remain tied to their
+original source revisions.
 
 Supporting changes in surrounding crates are permitted when a HyperBRep
 feature requires them. Preserve crate boundaries: implement the invariant in

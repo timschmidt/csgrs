@@ -182,6 +182,21 @@ unit selection does not change the source model. The shared input selection is n
 `StepBody`; the former `FacetedBody` name was removed without an alias. Existing
 faceted encoding and its deterministic output contract remain supported.
 
+The [normalized-region example](examples/region_extrusion_step.rs) takes
+Hypercurve butt and round strokes directly through
+`builder::extrude_curve_region`, preserving their certified native circle
+geometry. It checks exact measures, translation, cold archive replay, STEP
+reimport, Boolean reuse and empty recovery in both traversal directions:
+
+```sh
+cargo run -p hyperbrep-io --example region_extrusion_step --release -- /tmp/region-step
+```
+
+This route retains the region's component proof and native contour view.
+General rational Bézier extrusion-face measurement remains a separate
+restriction of `builder::extrude_path`; converting a region to boundary paths
+does not preserve every available native circle specialization.
+
 ANCHOR, REFERENCE,
 SIGNATURE sections, scoped/value/constant references return explicit blockers.
 Schema-independent syntax success grants no geometric authority.

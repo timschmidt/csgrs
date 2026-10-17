@@ -1748,6 +1748,43 @@
       "validation": "Merged-source native/IO release suites pass 552 all-feature and 544 minimal-feature tests. Hypercurve's all-feature library and two upstream stroke targets pass 1755 tests with 6 existing ignores; the ten new stroke controls also pass in debug. Both native all-target Clippy configurations, the stroke/consumer lints, warning-denied rustdoc, eight STEP examples, fuzz-target compilation and Cargo formatting pass. The warning-denied standalone WASM build executes all 111 groups with zero imports. All 81 preceding native diagnostic outcomes and 71 original STEP artifacts are preserved. Optional OCCT readers pass their independent topology/measure expectations. The new four-case stroke-path consumer completes two butt workflows with four byte-identical STEP/native artifacts; both round workflows retain Geometry(UnsupportedMeasurement) on both revisions. Its original all-cases-success contract remains failed. The inherited zero-factor debug failure is reproduced in both scalar feature configurations and left with its owner.",
       "cost_evidence": "Three fresh processes per phase and original stroke case preserve all outcomes and completed artifacts. The two successful workflows have complete-process timing/RSS observations; the two unsupported workflows have no successful-work ratio. All raw samples and executable sizes remain recorded (25798760 baseline and 25798848 candidate bytes). These shared-host observations do not establish a speedup, retained-heap bound, allocation count or shipped-package size. The preceding 176-case cone campaign and 196-case dependency campaign remain historical evidence on their pinned source, including every adverse timing/allocation observation. Completed-case observations: Butt-reverse-false 21.829 to 20.139 ms (ratio 0.922602), RSS 13540 to 13504 KiB; Butt-reverse-true 20.985 to 21.027 ms (ratio 1.002017), RSS 13548 to 13212 KiB.",
       "limits": "This merge adds no BREP runtime algorithm and does not admit the unsupported round-cap path measurement workflow. A public normalized-region extrusion entry point is separate future work; preserve the general rational-path blocker while qualifying that extension. General Boolean/analytic exchange closure, whole-operation work/heap/cancellation bounds, package/MSRV and actual C/Python/JavaScript delivery, formal proofs, coverage, runtime fuzz/ASan/lexicase, release and the full pre-push matrix remain open. All 28 work packages remain open or in progress. No push is part of this checkpoint."
+    },
+    {
+      "id": "public-normalized-region-extrusion-2026-10-17",
+      "work_packages": [
+        "WP00",
+        "WP01",
+        "WP08",
+        "WP14a",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P11",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Expose strict builder::extrude_curve_region over the existing native component constructor; preserve native line/circle evidence, original component support, holes, islands and empty material. Add native, STEP, example, complete-work benchmark and standalone WASM consumers.",
+      "source": "../src/ownership/builder.rs",
+      "evidence": "evidence/2026-10-17-region-extrusion/manifest.json",
+      "validation": "Native/IO release suites pass 560 all-feature and 552 minimal-feature tests; eight new focused tests pass in debug. Both all-target Clippy configurations, external consumer lints, warning-denied rustdoc, nine STEP examples, fuzz-target compilation and formatting pass. The warning-denied standalone WASM build executes 119 groups with zero imports, preserving all 111 preceding groups. Four normalized stroke workflows and two multi-component workflows complete exact measures, incidence, near-boundary classification, cold native replay, STEP import and continued Boolean/empty recovery checks. Optional OCCT reads independently check all six new STEP outputs. All 81 preceding native diagnostic outcomes, all 24 prism outcomes and 71 old STEP files are preserved. The unchanged general-path control retains two butt successes, four byte-identical artifacts and two round-cap UnsupportedMeasurement failures. The absent-API compile failure, initial test API errors and missing reader argument remain recorded; their corrections do not weaken acceptance. Scalar/dependency implementations are unchanged from the merged baseline; its two inherited zero-factor debug failures remain upstream-owned.",
+      "cost_evidence": "Three fresh benchmark processes each execute one warmup and three measured iterations of all four new complete stroke workflows, with exact checks and STEP/native materialization inside timing. Three further processes execute both multi-component workflows; 24 alternating old-path processes retain every success and unsupported failure. Old successful-process timing observations: Butt-reverse-false ratio 1.019337; Butt-reverse-true ratio 1.029781. All latency, allocator requests, process RSS, artifact checksums and executable sizes remain. These are absolute new-capability costs and short shared-host preservation observations, not a general speedup, retained-heap bound or package-size claim. Private construction and existing callers are unchanged; historical broad benchmark campaigns are not reattributed to this source.",
+      "limits": "This exposes the existing native component constructor through a strict model-owning API. It does not add general rational-path area, a new planar arrangement or broader Boolean/analytic closure. A local strict construction does not certify an earlier approximate source intent; complete source-qualification delivery remains open. Solver budgets do not bound total work, expression growth, retained heap or cancellation. Source-path native/WASM consumers and optional OCCT reads do not establish package/MSRV, actual C/Python/JavaScript bindings, formal proofs, coverage, runtime fuzz/ASan/lexicase, release or the full pre-push matrix. All 28 work packages remain open or in progress. No push is included."
     }
   ],
   "work_packages": [
@@ -1921,8 +1958,8 @@
     }
   ],
   "next_actions": [
-    "Expose strict normalized CurveRegion2 extrusion through the ordinary model-owning builder, reusing the existing native component/line-arc proof. Reproduce the missing public API first; qualify original butt/round strokes, holes, disconnected/empty material, invalid heights, certainty, cold replay, STEP, continued Booleans and resource observations. Preserve the existing rational-path measurement blockers separately.",
-    "Use the stroke-upstream-integration record for the merged be2a0c37b source and the cone-exchange record for the latest geometry/STEP feature. Preserve 81 native diagnostic outcomes, 71 preceding STEP artifacts, all conical subdivisions and failure controls, and the 176 main/196 dependency benchmark contracts. New source requires fresh applicable evidence; historical timings do not qualify later merges. Supporting crate work is allowed when needed for BREP features; leave unrelated repairs to their owner.",
+    "Preserve the public normalized-region extrusion corpus: four butt/round stroke workflows, two multi-component STEP workflows, native holes/islands/empty/invalid-height/certainty/budget controls, exact artifacts and 119 WASM groups. General rational-path side measurement and source-qualification delivery require separate proofs and complete consumers; retain the original unsupported inputs.",
+    "Use region-extrusion for the current public profile feature and stroke-upstream-integration for merged be2a0c37b ownership guidance. Preserve all 81 native diagnostic outcomes, 24 prism outcomes, 71 old STEP artifacts, six new complete exchanges and historical 176 main/196 dependency benchmark contracts. New source needs fresh applicable evidence; historical timings do not qualify later changes. Supporting crate changes needed for BREP features are authorized; unrelated repairs stay with their owner.",
     "Preserve and extend named BREP strict workflows with independent set, topology and source-fidelity checks. Observe upstream drilled-body and dependency corrections during integration; unrelated repairs remain upstream work. Record all seven outcome categories and the concrete failing BREP stage (WP00/WP21, P39).",
     "Preserve the completed half-case recut/clear/reconstruct workflows in evidence/2026-10-16-curved-coplanar/manifest.json alongside the sector extension: nine original exact configurations and 54 transformed variants, full-size geometry, near samples, split/reflection/replay, source parameters and public overlap provenance. The five formerly blocked quarter/band diagnostics now complete in evidence/2026-10-16-sector-cuts/continuation-frontier.json. Further composition extensions must retain these successes and independently verify represented-set identities (WP03/WP06/WP07/WP08, P17-P20/P35/P39).",
     "Complete the documented-package pipeline in clean external consumers and actual affected bindings; verify features, dependency versions, MSRV, certainty and format-specific round trips. Local paths, source builds and WASM probes do not close delivery gates (WP17/WP18/WP23, P37).",
@@ -1934,12 +1971,12 @@
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue WP14a from selected exact Plane/Cylinder/ring-Torus exchange, with LINE/CIRCLE edges, both torus angular maps, explicit periodic seams and finite-decimal failures. Preserve independent graph/measure/OCCT checks, transformed and unit-scaled native replay, canonical empty continuation and four rational-band split/reload cycles. Extend further families through native whole-image proofs and exact parameter/encoding contracts. WP14b retains general spline/trim/void/mapped/assembly exchange and explicit healing/approximation; source maps do not establish complete document/history persistence.",
     "Continue every BREP work package and its cross-stack integration requirements. Supporting changes in other crates are authorized when needed to implement HyperBRep features while preserving crate boundaries and qualifying affected consumers. Unrelated known breakage remains with the concurrent thread; do not duplicate those repairs or postpone BREP work for broader dashboard failures. Check upstream at coherent checkpoints, preserve both histories and source-bound evidence, and requalify affected compositions after merges. Foundational progress does not close broader project gates.",
-    "Preserve every historical feature/integration baseline, raw failed probe and complete cost campaign. For further cone exchange, reproduce the current blocker and evaluate the exact swept-surface construction in evidence/2026-10-16-torus-exchange/future-cone-exchange.md. Its line direction, slant parameters, positive-nappe restriction, apex strata and interoperability require separate proofs; the note establishes no implemented cone exchange. Additional torus chart/gluing and direct aggregate-comparison work retain the full admitted fixtures and typed limits. Close resource and shipped-consumer gates under their declared contracts.",
+    "Preserve every historical baseline, failed probe and complete cost campaign. Exact finite conical LINE-revolution exchange is implemented in cone-exchange; its next-domains.md separates finite B-spline generator recognition, direct conical charts, singular apex topology and source-document persistence. Reproduce each next blocker on current source and admit native proof, exact exchange and continued modeling together. Broader torus chart/gluing, whole-operation resources and shipped-consumer gates remain open.",
     "Investigate the sector increment\u2019s paired/multi-hole affine-tensor bridge costs (1.389189 and 1.312397 observed ratios). Preserve full wire simplicity/nesting validation and the crossing-hole rejection control; reuse native evidence rather than restoring an unjustified simplicity certificate. Keep the three arc/STEP timing rows and the inherited scalar zero-factor failure visible. Coordinate unrelated scalar repair through upstream.",
     "Upstream 99b88f707 is integrated, including exact binary64 decimal export, binary32 projected-triangle validation and typed WASM STL import/export errors. Preserve the native and real JS/TS consumers, text/error migrations and documented source-fidelity limits. Use message/code/cause.code directly; no compatibility shim. Fetch again at coherent checkpoints, freeze each qualification source and preserve both histories and ledger ownership. BREP/IO remain the implementation focus; unrelated native timing, storage and remaining boundary work stays upstream-owned."
   ],
   "acceptance_contract": {
-    "upstream_revision": "99b88f707b04053de7f40a86d6d029e3c07460d9",
+    "upstream_revision": "be2a0c37bfe57799c62a36125a5cb883a5458f00",
     "properties": "../../../properties.md",
     "protocol": "../../../docs/admission.md",
     "agent_rules": "../../../AGENTS.md",
@@ -1964,14 +2001,14 @@
       "incorrect result"
     ],
     "admission": "Documentation and integration do not establish implementation compliance. Source-specific evidence remains tied to its original revision; requalify after dependency changes.",
-    "latest_integration": "evidence/2026-10-16-upstream-wasm-integration/README.md",
+    "latest_integration": "evidence/2026-10-17-stroke-upstream-integration/README.md",
     "implementation_ownership": {
       "primary": [
         "hyperbrep",
         "hyperbrep-io",
         "their tests, benchmarks and documentation"
       ],
-      "surrounding_crates": "Concurrent upstream development in another thread. Change only for a reproduced BREP regression or blocker whose repair is necessary to preserve the BREP contract.",
+      "surrounding_crates": "Concurrent upstream development in another thread. Changes needed to implement BREP features or preserve their correctness, evidence, supported behavior or resources are allowed in the owning crate, with affected consumer qualification. Do not pursue unrelated breakage already owned by that thread.",
       "updates": "Occasionally fetch and merge at coherent checkpoints; keep source fixed during checks/measurements, preserve both histories, and requalify affected BREP consumers.",
       "parked_scalar_investigation": "96c308f87af6f3491828ada3e9b8e92cec858cf1; unfinished, not admitted, not restored over upstream corrections."
     }

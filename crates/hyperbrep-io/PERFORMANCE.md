@@ -347,3 +347,19 @@ All 175 preceding main benchmark cases retain their exact receipts across 18 pre
 The new completed workflow has median 2850.531 ms per call, 19204391 allocation requests and 1213465037 requested bytes. It includes exact checks, STEP materialization/reimport, source maps, cold native replay, repeated Booleans and empty recovery. The prior unsupported result is not a successful-work comparison.
 
 The unchanged geometric contracts retain their inputs and receipts. Consumer cost also includes additional source-map provenance and the extended graph/formula oracle; this is not a pure-kernel optimization claim. Every adverse timing, allocation and size observation remains in the report. Shared-host timings, allocator requests, process RSS and harness sizes do not prove aggregate speedups or retained-heap/package bounds. See the [admission record](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md), [main costs](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/benchmark-summary.json) and [dependency costs](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/dependency-costs-v1/summary.json).
+
+
+## Public normalized-region extrusion (2026-10-17)
+
+Three fresh benchmark processes each execute one warmup and three measured iterations of all four new complete stroke workflows, with exact checks and STEP/native materialization inside timing. Three further processes execute both multi-component workflows; 24 alternating old-path processes retain every success and unsupported failure. Old successful-process timing observations: Butt-reverse-false ratio 1.019337; Butt-reverse-true ratio 1.029781. All latency, allocator requests, process RSS, artifact checksums and executable sizes remain. These are absolute new-capability costs and short shared-host preservation observations, not a general speedup, retained-heap bound or package-size claim. Private construction and existing callers are unchanged; historical broad benchmark campaigns are not reattributed to this source.
+
+| Completed stroke workflow | Median ms per call | Allocation requests per call | Requested bytes per call |
+| --- | ---: | ---: | ---: |
+| `Butt-reverse-false` | 13.323994 | 26,919.667 | 4,797,360.333 |
+| `Butt-reverse-true` | 13.304208 | 26,941.667 | 4,800,831.333 |
+| `Round-reverse-false` | 35.024829 | 94,662.333 | 10,763,923.667 |
+| `Round-reverse-true` | 35.053538 | 94,351.333 | 10,763,410.667 |
+
+This exposes the existing native component constructor through a strict model-owning API. It does not add general rational-path area, a new planar arrangement or broader Boolean/analytic closure. A local strict construction does not certify an earlier approximate source intent; complete source-qualification delivery remains open. Solver budgets do not bound total work, expression growth, retained heap or cancellation. Source-path native/WASM consumers and optional OCCT reads do not establish package/MSRV, actual C/Python/JavaScript bindings, formal proofs, coverage, runtime fuzz/ASan/lexicase, release or the full pre-push matrix. All 28 work packages remain open or in progress. No push is included.
+
+See the [source-bound admission record](../hyperbrep/docs/evidence/2026-10-17-region-extrusion/README.md) for complete samples and reproduction.
