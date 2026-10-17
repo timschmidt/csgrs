@@ -703,12 +703,25 @@ fn assemble_surface_cells(
                 max_radial_degree.max(compact_len(edge_end - edge_start, "surface radial degree")?);
         }
         let uses = &edge_uses[edge_start..edge_end];
+        // A bundled sheet can end at an edge without bounding any volume:
+        // opposite copies of one flat triangle are a closed PWN source. Uses
+        // are sorted by facet, so matching endpoints prove one geometric ray.
+        // Admit its cyclic zero-angle strata only when the exact aggregate
+        // transition cancels in every operand. An open or cross-operand sheet
+        // must still fail the ordinary radial-topology checks.
+        let transition_start = uses[0].facet as usize * operand_count;
+        let cancelled_bundle = uses.len() > 1
+            && uses[0].facet == uses[uses.len() - 1].facet
+            && _transitions[transition_start..transition_start + operand_count]
+                .iter()
+                .all(|&delta| delta == 0);
         if let [first, second] = uses {
             assemble_two_sheet_edge(
                 decisions,
                 &surface.points,
                 &pending,
                 edge,
+                cancelled_bundle,
                 first,
                 second,
                 &contributions,
@@ -729,6 +742,7 @@ fn assemble_surface_cells(
                 &surface.points,
                 &pending,
                 edge,
+                cancelled_bundle,
                 uses,
                 &mut radial,
                 &mut layer_boundaries,
@@ -1011,6 +1025,7 @@ fn assemble_two_sheet_edge(
     points: &[Point3],
     facets: &[PendingFacet],
     edge: [u32; 2],
+    cancelled_bundle: bool,
     first: &EdgeUse,
     second: &EdgeUse,
     contributions: &[FacetContribution],
@@ -1024,6 +1039,7 @@ fn assemble_two_sheet_edge(
         radially_separated_face_pair_keys,
     )?;
     if !retained_separation
+        && !cancelled_bundle
         && same_radial_ray(decisions, points, edge, first.opposite, second.opposite)?
     {
         return Err(HypermeshError::SurfaceArrangementFailed {
@@ -1291,6 +1307,7 @@ fn assemble_radial_ring(
     points: &[Point3],
     facets: &[PendingFacet],
     edge: [u32; 2],
+    cancelled_bundle: bool,
     uses: &[EdgeUse],
     radial: &mut Vec<RadialUse>,
     layer_boundaries: &mut Vec<SheetLayerBoundary>,
@@ -1383,7 +1400,7 @@ fn assemble_radial_ring(
             distinct_rays += 1;
         }
     }
-    if distinct_rays < 2 {
+    if distinct_rays < 2 && !cancelled_bundle {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "surface radial edge has fewer than two geometric rays",
         });
@@ -6090,6 +6107,59 @@ mod tests {
     }
 
     #[test]
+    fn one_ray_requires_cancellation_in_each_operand() {
+        for copies in [1, 2] {
+            for cross_operand in [false, true] {
+                let mut polygons = Vec::new();
+                for copy in 0..copies {
+                    let mut first =
+                        triangle([p(0, 0, 0), p(4, 0, 0), p(0, 4, 0)], 0, copy * 2, [0, 1, 2]);
+                    first.delta_w = vec![1, 0];
+                    let mut second = if cross_operand {
+                        triangle(
+                            [p(0, 4, 0), p(4, 0, 0), p(0, 0, 0)],
+                            1,
+                            copy * 2 + 1,
+                            [2, 1, 0],
+                        )
+                    } else {
+                        triangle(
+                            [p(0, 0, 0), p(4, 0, 0), p(0, 4, 0)],
+                            0,
+                            copy * 2 + 1,
+                            [0, 1, 2],
+                        )
+                    };
+                    second.delta_w = if cross_operand {
+                        vec![0, 1]
+                    } else {
+                        vec![1, 0]
+                    };
+                    polygons.extend([first, second]);
+                }
+                for policy in [
+                    hyperlimit::PredicatePolicy::STRICT,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                ] {
+                    let context = MeshContext::new(policy);
+                    let decisions = DecisionContext::new(&context);
+                    assert_eq!(
+                        arrange_surface(&decisions, &polygons).err().unwrap(),
+                        HypermeshError::SurfaceArrangementFailed {
+                            reason: if copies == 1 {
+                                "two-facet radial edge has one geometric ray"
+                            } else {
+                                "surface radial edge has fewer than two geometric rays"
+                            },
+                        }
+                    );
+                    assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+                }
+            }
+        }
+    }
+
+    #[test]
     fn open_surface_is_rejected_by_exact_radial_topology() {
         let polygons = vec![triangle(
             [p(0, 0, 0), p(4, 0, 0), p(0, 4, 0)],
@@ -6758,6 +6828,7 @@ mod tests {
                                     points,
                                     &facets,
                                     [0, 1],
+                                    false,
                                     &uses,
                                     &mut Vec::new(),
                                     &mut Vec::new(),

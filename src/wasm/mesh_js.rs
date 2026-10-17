@@ -242,8 +242,10 @@ impl MeshJs {
             .unchecked_into()
     }
 
-    /// Strict containment: canonical empty geometry returns false. Malformed
-    /// closed-solid input throws GeometryError with code invalid_input, even
+    /// Strict interior of the regularized nonzero-winding solid. Internal
+    /// source faces follow represented-set membership; its boundary is excluded.
+    /// Canonical empty geometry returns false. Malformed closed-solid input
+    /// throws GeometryError with code invalid_input, even
     /// when the point is outside its bounds or on a source triangle.
     #[wasm_bindgen(js_name = containsPoint)]
     pub fn contains_point(&self, point: &Point3Js) -> Result<bool, JsValue> {

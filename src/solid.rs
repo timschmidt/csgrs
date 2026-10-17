@@ -2080,8 +2080,10 @@ pub fn distribute_arc_with_context(
 ///
 /// Canonical empty geometry returns `false`; every other input must be a valid
 /// closed-PWN mesh. Malformed input fails before bounds or boundary shortcuts.
-/// Points on source triangles are excluded by the native strict containment
-/// query. This convenience entry point selects the strict predicate policy.
+/// This is strict interior of the regularized nonzero-winding solid: internal
+/// source faces follow the represented set, and the external set boundary is
+/// excluded. This convenience entry point selects the strict predicate policy.
+/// See [`TriangleMesh::contains_point`] for the native resource contract.
 pub fn contains_point(
     mesh: &TriangleMesh,
     point: &Point3,

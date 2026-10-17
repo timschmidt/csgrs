@@ -3,7 +3,7 @@
 use crate::context::DecisionContext;
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::predicate::classify_real;
-use crate::{Classification, Point3, Vector3};
+use crate::{Classification, Point3, Real, TriangleMesh, Vector3};
 
 /// Winding number vector: one integer per input mesh.
 pub type WindingNumberVector = Vec<i32>;
@@ -199,6 +199,83 @@ pub(crate) fn ray_triangle_relation(
         Ok(RayFacetRelation::Ahead { frontward })
     } else {
         Ok(RayFacetRelation::Miss)
+    }
+}
+
+/// Winding of a validated closed PWN source away from its triangles.
+///
+/// Reuses exact oriented crossings without deduplicating multiplicity. A
+/// complete direction supplies its own certainty; abandoned proof attempts
+/// cannot qualify that independent completed proof. The finite direction count
+/// is not a total-work, heap-byte or scalar-growth bound.
+pub(crate) fn mesh_winding_number_decision(
+    decisions: &DecisionContext,
+    source: &TriangleMesh,
+    point: &Point3,
+    mut check_cancelled: impl FnMut() -> HypermeshResult<()>,
+) -> HypermeshResult<i32> {
+    // Each face-parallel or edge-hit condition excludes at most two parameters
+    // on (1,t,t²): at most 4 constraints per source triangle. The caller excludes
+    // source triangles from the query point. Coplanar points outside a triangle
+    // cannot create a forward hit on it; parallel rays are retried.
+    let candidates = source
+        .triangles
+        .len()
+        .checked_mul(8)
+        .and_then(|n| n.checked_add(1))
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "mesh winding rays",
+        })?;
+    let mut unknown = false;
+    'directions: for parameter in 0..candidates {
+        check_cancelled()?;
+        let t =
+            Real::from(
+                u64::try_from(parameter).map_err(|_| HypermeshError::CapacityOverflow {
+                    operation: "mesh winding ray parameter",
+                })?,
+            );
+        let direction = Vector3::from_xyz(Real::one(), t.clone(), &t * &t);
+        let local = decisions.isolated();
+        let mut winding = 0_i32;
+        for triangle in source.triangles.iter() {
+            check_cancelled()?;
+            match ray_triangle_relation(
+                &local,
+                source.triangle_points(*triangle)?,
+                point,
+                &direction,
+            ) {
+                Ok(RayFacetRelation::Miss) => {}
+                Ok(RayFacetRelation::Ahead { frontward }) => {
+                    winding = winding
+                        .checked_add(if frontward { 1 } else { -1 })
+                        .ok_or(HypermeshError::WindingOverflow)?;
+                }
+                Ok(RayFacetRelation::Degenerate) => continue 'directions,
+                Ok(RayFacetRelation::Origin { .. }) => {
+                    return Err(HypermeshError::SurfaceArrangementFailed {
+                        reason: "mesh winding query lies on a source triangle",
+                    });
+                }
+                Err(HypermeshError::PredicateUndecided { .. }) => {
+                    unknown = true;
+                    continue 'directions;
+                }
+                Err(error) => return Err(error),
+            }
+        }
+        decisions.absorb(local.certainty());
+        return Ok(winding);
+    }
+    if unknown {
+        Err(HypermeshError::PredicateUndecided {
+            predicate: "mesh point winding",
+        })
+    } else {
+        Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "mesh winding rays could not avoid source edges and parallel faces",
+        })
     }
 }
 
