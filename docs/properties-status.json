@@ -17604,6 +17604,25 @@
     "full_plan_complete": false,
     "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
     "original_worktree_integration_pending": true
+  },
+  "circle_support_native_binding_qualification": {
+    "status": "actual C, C++, Python and Go consumer tests passed; cache admission remains open",
+    "contract": "docs/evidence/2026-10-17-circle-support-bindings-cargo/contract-v1.md",
+    "qualification": "docs/evidence/2026-10-17-circle-support-bindings-cargo/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-circle-support-bindings-cargo/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-circle-support-bindings-cargo/artifact-expectations-v1.json.gz",
+    "actual_consumers_passed": {
+      "C": 9,
+      "C++": 9,
+      "Python": 9,
+      "Go_tests": 6
+    },
+    "ffi_tests_passed": 10,
+    "go_setup_failure_preserved": true,
+    "cache_index_admitted": false,
+    "full_plan_complete": false,
+    "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
+    "original_worktree_integration_pending": true
   }
 },
   "status_meanings": {
