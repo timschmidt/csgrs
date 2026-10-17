@@ -1,0 +1,251 @@
+{
+  "complete": true,
+  "command_failures": [],
+  "all_instrumented_witnesses_identical": true,
+  "read_only_inputs_unchanged": true,
+  "measurements": [
+    {
+      "mode": "rational",
+      "count": 1,
+      "variant": "baseline",
+      "allocation_calls": 786,
+      "peak_heap_human_readable": "374.00K",
+      "process_end_retention_human_readable": "4.62K",
+      "largest_massif_snapshot_heap_bytes": 4616,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline-allocations.zst",
+        "sha256": "8a5ffe47c9ee25c623c482a51f259c2bdb661694b65b7417ef57520b0f5c80ad",
+        "bytes": 32125
+      },
+      "massif_sha256": "2d5ef17547775e5d9cf181f4d838ed3d3007d5cdb50b0cb32c0c6fa16de9afca"
+    },
+    {
+      "mode": "rational",
+      "count": 1,
+      "variant": "candidate",
+      "allocation_calls": 787,
+      "peak_heap_human_readable": "374.00K",
+      "process_end_retention_human_readable": "4.62K",
+      "largest_massif_snapshot_heap_bytes": 4616,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-allocations.zst",
+        "sha256": "c63fb7b0e709fb786999192008b64682faff56d6a55e370cd6fae8cfcde72f69",
+        "bytes": 32217
+      },
+      "massif_sha256": "40a7ba4cf5cf96fb61221f189d4f4641f8ca9288155d66c85d85d20325ccd9da"
+    },
+    {
+      "mode": "rational",
+      "count": 512,
+      "variant": "baseline",
+      "allocation_calls": 817906,
+      "peak_heap_human_readable": "2.56M",
+      "process_end_retention_human_readable": "8.26K",
+      "largest_massif_snapshot_heap_bytes": 2564368,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline-allocations.zst",
+        "sha256": "9042fb1da0143494e8efbfb6c7b587139afc7055cb8a89efc09446e7e2578d6e",
+        "bytes": 45510
+      },
+      "massif_sha256": "b169a3dff5d7c0f84259c9aa18118c2aa2e454eebba866529438f235593e8c5a"
+    },
+    {
+      "mode": "rational",
+      "count": 512,
+      "variant": "candidate",
+      "allocation_calls": 40149,
+      "peak_heap_human_readable": "2.47M",
+      "process_end_retention_human_readable": "7.38K",
+      "largest_massif_snapshot_heap_bytes": 2374205,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate-allocations.zst",
+        "sha256": "10bef203494741f937d23c495c70b69ef18f3c5594986e88983fe44278a7c092",
+        "bytes": 34228
+      },
+      "massif_sha256": "ec36a57e3c05cabce3f1d6ac0ec05d2989edcd8b560fa00bbd0bcd4f5aed229a"
+    },
+    {
+      "mode": "rational",
+      "count": 2048,
+      "variant": "baseline",
+      "allocation_calls": 12706548,
+      "peak_heap_human_readable": "9.96M",
+      "process_end_retention_human_readable": "8.26K",
+      "largest_massif_snapshot_heap_bytes": 9963307,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline-allocations.zst",
+        "sha256": "572925a0d3be59dc727712eebd77e9a206e8a75577969348871b3566e9e250bd",
+        "bytes": 112569
+      },
+      "massif_sha256": "c7238d5e1d158c698b90a844a80ab7ce039050db1d92bfe2dcb9189265097711"
+    },
+    {
+      "mode": "rational",
+      "count": 2048,
+      "variant": "candidate",
+      "allocation_calls": 158425,
+      "peak_heap_human_readable": "9.59M",
+      "process_end_retention_human_readable": "7.38K",
+      "largest_massif_snapshot_heap_bytes": 9590125,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate-allocations.zst",
+        "sha256": "8821927ccac3d2e54aca3f5e02c2e0f5d9ca0dccc5375feedd348e5f9272a2eb",
+        "bytes": 34626
+      },
+      "massif_sha256": "95efdbc5edc75250de258bd3167f100b5c90b9cf230442830bd3ea2d77cd9107"
+    },
+    {
+      "mode": "symbolic",
+      "count": 128,
+      "variant": "baseline",
+      "allocation_calls": 476069,
+      "peak_heap_human_readable": "814.85K",
+      "process_end_retention_human_readable": "7.44K",
+      "largest_massif_snapshot_heap_bytes": 813611,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline-allocations.zst",
+        "sha256": "76f0c1c2b7625499a0c486825466d40be9c7e608c32f5f6d8b7708209978e5c8",
+        "bytes": 51804
+      },
+      "massif_sha256": "c45e55c70beba903e854f60fde3527ba8480ae387c3fad6e28558715a1e238fb"
+    },
+    {
+      "mode": "symbolic",
+      "count": 128,
+      "variant": "candidate",
+      "allocation_calls": 476075,
+      "peak_heap_human_readable": "815.88K",
+      "process_end_retention_human_readable": "7.44K",
+      "largest_massif_snapshot_heap_bytes": 814960,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate-allocations.zst",
+        "sha256": "0965d326283e85c4875592e92ef76bc6e5db540f82fe60f08616fa1d5d08e9ea",
+        "bytes": 51223
+      },
+      "massif_sha256": "f1d08be35b1e84037177a2be6da49e7c3d047a46869771367d762e574a716066"
+    },
+    {
+      "mode": "mixed",
+      "count": 128,
+      "variant": "baseline",
+      "allocation_calls": 606821,
+      "peak_heap_human_readable": "846.34K",
+      "process_end_retention_human_readable": "9.26K",
+      "largest_massif_snapshot_heap_bytes": 845114,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline-allocations.zst",
+        "sha256": "b228f4e00b803c53d731efc70bf38c3b1c136fb7a34c76541079f12b374323ce",
+        "bytes": 57138
+      },
+      "massif_sha256": "3493ab1bb7f45f4e72e6b5f8c7d633d720290b61d47c058ceef888bf7afad643"
+    },
+    {
+      "mode": "mixed",
+      "count": 128,
+      "variant": "candidate",
+      "allocation_calls": 595114,
+      "peak_heap_human_readable": "854.16K",
+      "process_end_retention_human_readable": "9.26K",
+      "largest_massif_snapshot_heap_bytes": 852386,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate-allocations.zst",
+        "sha256": "924ee0dca30ac487010295f2f8a9e54d419a1cedbf051a871341c30e84505c92",
+        "bytes": 57116
+      },
+      "massif_sha256": "b9de4e85e14a2ca17af76684e2e89ab64cbb807d71123858a7c7835413181951"
+    },
+    {
+      "mode": "superrange",
+      "count": 128,
+      "variant": "baseline",
+      "allocation_calls": 110967,
+      "peak_heap_human_readable": "855.19K",
+      "process_end_retention_human_readable": "7.26K",
+      "largest_massif_snapshot_heap_bytes": 846121,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline-allocations.zst",
+        "sha256": "7a755bc3b3a5120b1a226d4d09704252b16aaca3ce176c3337c6395a0e2d7fc5",
+        "bytes": 36744
+      },
+      "massif_sha256": "a2337e5d53c735704ee71e3e7f6db2f85d7cd2c97c4ee434ef8fb260303af22e"
+    },
+    {
+      "mode": "superrange",
+      "count": 128,
+      "variant": "candidate",
+      "allocation_calls": 14950,
+      "peak_heap_human_readable": "869.51K",
+      "process_end_retention_human_readable": "6.97K",
+      "largest_massif_snapshot_heap_bytes": 362440,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate-allocations.zst",
+        "sha256": "ee47ffb557b6ebedae4e0287bfafb654429d464f3670dbfc8f1abf23d5b8602c",
+        "bytes": 34898
+      },
+      "massif_sha256": "8282fca2ca44f177e4367f4d9dd051028e7c3719b1628cffe74241e7d55ea4bc"
+    },
+    {
+      "mode": "subrange",
+      "count": 128,
+      "variant": "baseline",
+      "allocation_calls": 375941,
+      "peak_heap_human_readable": "2.10M",
+      "process_end_retention_human_readable": "18.52K",
+      "largest_massif_snapshot_heap_bytes": 2089531,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline-allocations.zst",
+        "sha256": "44c1ed070b2ef42a9efc0b9b112befea44c4cea7ad94faef72a2eaba1fcff79e",
+        "bytes": 133303
+      },
+      "massif_sha256": "1f34d034fb1d61573627295812d334f1b3b1743954dc4d205079404397d04dcf"
+    },
+    {
+      "mode": "subrange",
+      "count": 128,
+      "variant": "candidate",
+      "allocation_calls": 87816,
+      "peak_heap_human_readable": "2.06M",
+      "process_end_retention_human_readable": "17.61K",
+      "largest_massif_snapshot_heap_bytes": 1928360,
+      "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+      "trace": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate-allocations.zst",
+        "sha256": "5b1f812cb5aa2ee94b9f30adde8ab9cb0b549ad71328e83aff103ef3e53e424f",
+        "bytes": 49289
+      },
+      "massif_sha256": "c38806a6a4b3dfbc4755df43019690dac98391c01e7a5752522897cb2a6a8c91"
+    }
+  ],
+  "binary_sizes": {
+    "baseline": {
+      "file_bytes": 46920752,
+      "text_bytes": 33423928,
+      "data_bytes": 1303736,
+      "bss_bytes": 4528
+    },
+    "candidate": {
+      "file_bytes": 46936224,
+      "text_bytes": 33436648,
+      "data_bytes": 1303608,
+      "bss_bytes": 4240
+    }
+  },
+  "instrumented_latencies_used": false,
+  "isolated_cache_heap_bytes_measured": false,
+  "allocation_preflight_only": true,
+  "full_native_qualification_pending_after_quota_failure": true,
+  "native_runtime_admitted": false
+}

@@ -1,0 +1,18 @@
+{
+  "complete": true,
+  "command_failures": [],
+  "binaries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests",
+      "sha256": "ff27d5b18513fea44720bea88d67f9b794ae8897f464932cb16369209fffa79c",
+      "bytes": 46920752
+    },
+    "candidate": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests",
+      "sha256": "9e7baf3a6c280e089294f15f36912952062efeb6384c0f0110b6c49c0bca5946",
+      "bytes": 46936224
+    }
+  },
+  "source_and_read_only_dependencies_unchanged": true,
+  "native_runtime_admitted": false
+}

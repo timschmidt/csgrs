@@ -1,0 +1,13 @@
+    Finished `release` profile [optimized] target(s) in 0.14s
+     Running unittests src/lib.rs (/tmp/csgrs-circle-support-qualification-v2/release/deps/hyperdrc-f2524bbb15bdb74d)
+error: test failed, to rerun pass `-p hyperdrc --lib`
+     Running unittests src/main.rs (/tmp/csgrs-circle-support-qualification-v2/release/deps/hyperdrc-5da1690b41025398)
+     Running tests/artifact_numeric_keys.rs (/tmp/csgrs-circle-support-qualification-v2/release/deps/artifact_numeric_keys-03d9b7a570505404)
+     Running tests/diagnostic_formatting.rs (/tmp/csgrs-circle-support-qualification-v2/release/deps/diagnostic_formatting-e5ef4baeabfbc955)
+     Running tests/kicad_pad_sources.rs (/tmp/csgrs-circle-support-qualification-v2/release/deps/kicad_pad_sources-e4732b4399bed56a)
+     Running tests/kicad_rule_export.rs (/tmp/csgrs-circle-support-qualification-v2/release/deps/kicad_rule_export-c09b25b29b958a07)
+     Running tests/kicad_track_failures.rs (/tmp/csgrs-circle-support-qualification-v2/release/deps/kicad_track_failures-b846f6af7dd90fbe)
+     Running tests/readme.rs (/tmp/csgrs-circle-support-qualification-v2/release/deps/readme-990ac56b4fb5e9a5)
+   Doc-tests hyperdrc
+error: 1 target failed:
+    `-p hyperdrc --lib`

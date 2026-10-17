@@ -1,0 +1,989 @@
+reading file "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline-allocations.zst" - please wait, this might take some time...
+Debuggee command was: /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests curve_intersection::circle_support_cost_probe::support_lookup_cost --exact --ignored --nocapture --test-threads=1
+finished reading file, now analyzing data:
+
+MOST CALLS TO ALLOCATION FUNCTIONS
+16256 calls to allocation functions with 0B peak consumption from
+  _RNvXs_NtNtCs6uBFykrzWiZ_10num_bigint7biguint11subtractionNtB6_7BigUintINtNtNtCsgxBkk5gSRhY_4core3ops5arith9SubAssignRBT_E10sub_assign
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXNtNtCs6uBFykrzWiZ_10num_bigint7biguint11subtractionNtB4_7BigUintINtNtNtCsgxBkk5gSRhY_4core3ops5arith3SubRBR_E3sub
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs1g_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational19add_sub_wide_dyadic
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs1n_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational12subtract_ref
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1X_NtNtCsb4b5m7gcAkc_9hyperreal4real10arithmeticRNtB6_4RealNtNtNtCsgxBkk5gSRhY_4core3ops5arith3Sub3subCs8Q4JTK0heob_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs_NtCs8Q4JTK0heob_10hypercurve5pointNtB4_6Point2NtNtCsgxBkk5gSRhY_4core3cmp9PartialEq2eq
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs6_NtCs8Q4JTK0heob_10hypercurve18curve_intersectionNtB5_27CurveIntersectionBatchCache25circular_support_relation
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+16256 calls to allocation functions with 0B peak consumption from
+  _RNvMs1g_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational19add_sub_wide_dyadic
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs1n_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational12subtract_ref
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1X_NtNtCsb4b5m7gcAkc_9hyperreal4real10arithmeticRNtB6_4RealNtNtNtCsgxBkk5gSRhY_4core3ops5arith3Sub3subCs8Q4JTK0heob_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs_NtCs8Q4JTK0heob_10hypercurve5pointNtB4_6Point2NtNtCsgxBkk5gSRhY_4core3cmp9PartialEq2eq
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs6_NtCs8Q4JTK0heob_10hypercurve18curve_intersectionNtB5_27CurveIntersectionBatchCache25circular_support_relation
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+16256 calls to allocation functions with 0B peak consumption from
+  _RNvMs1g_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational19add_sub_wide_dyadic
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs1n_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational12subtract_ref
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1X_NtNtCsb4b5m7gcAkc_9hyperreal4real10arithmeticRNtB6_4RealNtNtNtCsgxBkk5gSRhY_4core3ops5arith3Sub3subCs8Q4JTK0heob_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs_NtCs8Q4JTK0heob_10hypercurve5pointNtB4_6Point2NtNtCsgxBkk5gSRhY_4core3cmp9PartialEq2eq
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs6_NtCs8Q4JTK0heob_10hypercurve18curve_intersectionNtB5_27CurveIntersectionBatchCache25circular_support_relation
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+15750 calls to allocation functions with 0B peak consumption from
+  _RNvMs5_NtCs6i54tJFfzR_5alloc7raw_vecNtB5_11RawVecInner11finish_growCs6uBFykrzWiZ_10num_bigint.llvm.11816380966498294327
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs4_NtCs6i54tJFfzR_5alloc7raw_vecINtB5_6RawVecyE8grow_oneCs6uBFykrzWiZ_10num_bigint
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMsu_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB5_8Rational23from_reduced_word_parts
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs1g_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational19add_sub_wide_dyadic
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs1n_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational12subtract_ref
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1X_NtNtCsb4b5m7gcAkc_9hyperreal4real10arithmeticRNtB6_4RealNtNtNtCsgxBkk5gSRhY_4core3ops5arith3Sub3subCs8Q4JTK0heob_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs_NtCs8Q4JTK0heob_10hypercurve5pointNtB4_6Point2NtNtCsgxBkk5gSRhY_4core3cmp9PartialEq2eq
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs6_NtCs8Q4JTK0heob_10hypercurve18curve_intersectionNtB5_27CurveIntersectionBatchCache25circular_support_relation
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+15750 calls to allocation functions with 0B peak consumption from
+  _RNvMs5_NtCs6i54tJFfzR_5alloc7raw_vecNtB5_11RawVecInner11finish_growCs6uBFykrzWiZ_10num_bigint.llvm.11816380966498294327
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs4_NtCs6i54tJFfzR_5alloc7raw_vecINtB5_6RawVecyE8grow_oneCs6uBFykrzWiZ_10num_bigint
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMsu_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB5_8Rational23from_reduced_word_parts
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs1g_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational19add_sub_wide_dyadic
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs1n_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational12subtract_ref
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1X_NtNtCsb4b5m7gcAkc_9hyperreal4real10arithmeticRNtB6_4RealNtNtNtCsgxBkk5gSRhY_4core3ops5arith3Sub3subCs8Q4JTK0heob_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs_NtCs8Q4JTK0heob_10hypercurve5pointNtB4_6Point2NtNtCsgxBkk5gSRhY_4core3cmp9PartialEq2eq
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs6_NtCs8Q4JTK0heob_10hypercurve18curve_intersectionNtB5_27CurveIntersectionBatchCache25circular_support_relation
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+
+
+PEAK MEMORY CONSUMERS
+73.73K peak memory consumed over 1 calls from
+  _GLOBAL__sub_I_eh_alloc.cc
+    in /lib64/libstdc++.so.6
+  call_init::call_init
+    at /usr/src/debug/glibc-2.42-16.fc43.x86_64/elf/dl-init.c:74
+    in /lib64/ld-linux-x86-64.so.2
+  call_init
+    at /usr/src/debug/glibc-2.42-16.fc43.x86_64/elf/dl-init.c:26
+  _dl_init
+    at /usr/src/debug/glibc-2.42-16.fc43.x86_64/elf/dl-init.c:121
+    in /lib64/ld-linux-x86-64.so.2
+  _dl_start_user
+    in /lib64/ld-linux-x86-64.so.2
+
+72.70K peak memory consumed over 128 calls from
+  _RNvMs6_NtCs8Q4JTK0heob_10hypercurve5curveNtB5_6Curve23new.llvm.2978517410797386750
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe6circle
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvXs0_NtNtNtCsgxBkk5gSRhY_4core4iter8adapters3mapINtB6_3MapINtNtNtBc_3ops5range5RangejENCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost0ENtNtNtBa_6traits8iterator8Iterator4folduNCINvNvB37_8for_each4callTNtNtB1x_5curve6Curve2B4b_bNtNtNtCsb4b5m7gcAkc_9hyperreal4real10arithmetic4RealB4B_ENCINvMsj_NtCs6i54tJFfzR_5alloc3vecINtB5F_3VecB4a_E14extend_trustedBN_E0E0EB1x_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs_NtNtCs6i54tJFfzR_5alloc3vec21spec_from_iter_nestedINtB6_3VecTNtNtCs8Q4JTK0heob_10hypercurve5curve6Curve2B13_bNtNtNtCsb4b5m7gcAkc_9hyperreal4real10arithmetic4RealB1P_EEINtB4_18SpecFromIterNestedB12_INtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters3map3MapINtNtNtB3o_3ops5range5RangejENCNvNtNtB17_18curve_intersection25circle_support_cost_probes_19support_lookup_cost0EE9from_iterB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+72.70K peak memory consumed over 128 calls from
+  _RNvMs6_NtCs8Q4JTK0heob_10hypercurve5curveNtB5_6Curve23new.llvm.2978517410797386750
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe6circle
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvXs0_NtNtNtCsgxBkk5gSRhY_4core4iter8adapters3mapINtB6_3MapINtNtNtBc_3ops5range5RangejENCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost0ENtNtNtBa_6traits8iterator8Iterator4folduNCINvNvB37_8for_each4callTNtNtB1x_5curve6Curve2B4b_bNtNtNtCsb4b5m7gcAkc_9hyperreal4real10arithmetic4RealB4B_ENCINvMsj_NtCs6i54tJFfzR_5alloc3vecINtB5F_3VecB4a_E14extend_trustedBN_E0E0EB1x_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs_NtNtCs6i54tJFfzR_5alloc3vec21spec_from_iter_nestedINtB6_3VecTNtNtCs8Q4JTK0heob_10hypercurve5curve6Curve2B13_bNtNtNtCsb4b5m7gcAkc_9hyperreal4real10arithmetic4RealB1P_EEINtB4_18SpecFromIterNestedB12_INtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters3map3MapINtNtNtB3o_3ops5range5RangejENCNvNtNtB17_18curve_intersection25circle_support_cost_probes_19support_lookup_cost0EE9from_iterB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+51.33K peak memory consumed over 256 calls from
+  _RNvMs5_NtCs6i54tJFfzR_5alloc7raw_vecNtB5_11RawVecInner11finish_growCs8Q4JTK0heob_10hypercurve.llvm.15148075627918476588
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNvMs2_NtCs6i54tJFfzR_5alloc7raw_vecINtB8_11RawVecInnerpE7reserve21do_reserve_and_handleNtNtBa_5alloc6GlobalECs8Q4JTK0heob_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsZ_NtCs6i54tJFfzR_5alloc6stringNtB5_6StringNtNtCsgxBkk5gSRhY_4core3fmt5Write9write_str
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+50.93K peak memory consumed over 256 calls from
+  _RNvMs5_NtCs6i54tJFfzR_5alloc7raw_vecNtB5_11RawVecInner11finish_growCs8Q4JTK0heob_10hypercurve.llvm.15148075627918476588
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNvMs2_NtCs6i54tJFfzR_5alloc7raw_vecINtB8_11RawVecInnerpE7reserve21do_reserve_and_handleNtNtBa_5alloc6GlobalECs8Q4JTK0heob_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsZ_NtCs6i54tJFfzR_5alloc6stringNtB5_6StringNtNtCsgxBkk5gSRhY_4core3fmt5Write9write_str
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+
+
+MOST TEMPORARY ALLOCATIONS
+16256 temporary allocations of 16256 allocations in total (100.00%) from
+  _RNvMs1g_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational19add_sub_wide_dyadic
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs1n_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational12subtract_ref
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1X_NtNtCsb4b5m7gcAkc_9hyperreal4real10arithmeticRNtB6_4RealNtNtNtCsgxBkk5gSRhY_4core3ops5arith3Sub3subCs8Q4JTK0heob_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs_NtCs8Q4JTK0heob_10hypercurve5pointNtB4_6Point2NtNtCsgxBkk5gSRhY_4core3cmp9PartialEq2eq
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvMs6_NtCs8Q4JTK0heob_10hypercurve18curve_intersectionNtB5_27CurveIntersectionBatchCache25circular_support_relation
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+256 temporary allocations of 256 allocations in total (100.00%) from
+  _RNvMsh_NtCs6uBFykrzWiZ_10num_bigint7biguintNtB5_7BigUint10normalized.llvm.9731246787466031591
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs6uBFykrzWiZ_10num_bigint7biguint7convert11to_radix_le
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs6_NtCs6uBFykrzWiZ_10num_bigint7biguintNtB5_7BigUintNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+256 temporary allocations of 256 allocations in total (100.00%) from
+  _RNvNtNtCs6uBFykrzWiZ_10num_bigint7biguint7convert11to_radix_le
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs6_NtCs6uBFykrzWiZ_10num_bigint7biguintNtB5_7BigUintNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+256 temporary allocations of 256 allocations in total (100.00%) from
+  _RNvNtNtCs6uBFykrzWiZ_10num_bigint7biguint7convert11to_radix_le
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs6_NtCs6uBFykrzWiZ_10num_bigint7biguintNtB5_7BigUintNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_00B9_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+256 temporary allocations of 256 allocations in total (100.00%) from
+  _RNvNtNtCs6uBFykrzWiZ_10num_bigint7biguint7convert11to_radix_le
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs6_NtCs6uBFykrzWiZ_10num_bigint7biguintNtB5_7BigUintNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_00B9_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0B7_.llvm.4470083825563946287
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtCs8Q4JTK0heob_10hypercurve6policy14evaluate_underuNCNvNtNtB4_18curve_intersection25circle_support_cost_probes_19support_lookup_costs2_0EB4_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYNCNvNtNtCs8Q4JTK0heob_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvYFEINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtB9_3ops8function6FnOnceuE9call_onceCs965H7XVcgUb_4test
+    at library/core/src/ops/function.rs:250
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:724
+  _RNCNvCs965H7XVcgUb_4test19run_test_in_process0B3_
+    at library/test/src/lib.rs:747
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtNtB9_3ops8function6FnOnceuE9call_onceB1d_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtB11_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1Z_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwindINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEINtNtNtBP_5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EEB2O_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNvCs965H7XVcgUb_4test19run_test_in_process0EINtNtBN_6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEEB1L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNvCs965H7XVcgUb_4test19run_test_in_process
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:747
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/test/src/lib.rs:668
+  _RNCNvCs965H7XVcgUb_4test8run_tests_0B3_
+    at library/test/src/lib.rs:698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/backtrace.rs:166
+  _RNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00B14_
+    at library/std/src/thread/lifecycle.rs:70
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvXsl_NtNtCsgxBkk5gSRhY_4core5panic11unwind_safeINtB5_16AssertUnwindSafeNCNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EINtNtNtB9_3ops8function6FnOnceuE9call_onceB2e_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panic/unwind_safe.rs:275
+  _RINvNvNtCs9k3SxhrAWiO_3std9panicking12catch_unwind7do_callINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB6_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2L_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576
+  _RINvNtCs9k3SxhrAWiO_3std9panicking12catch_unwinduINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EEB2C_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544
+  _RINvNtCs9k3SxhrAWiO_3std5panic12catch_unwindINtNtNtCsgxBkk5gSRhY_4core5panic11unwind_safe16AssertUnwindSafeNCNCINvNtNtB4_6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_00EuEB2x_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359
+  _RNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0B12_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/thread/lifecycle.rs:68
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250
+  _RNvXst_NtCs6i54tJFfzR_5alloc5boxedINtB5_3BoxDINtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuEp6OutputuNtNtBO_6marker4SendEL_EIBI_uE9call_onceCs9k3SxhrAWiO_3std
+    at library/alloc/src/boxed.rs:2319
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/sys/thread/unix.rs:123
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+
+
+total runtime: 0.12s.
+calls to allocation functions: 110967 (948435/s)
+temporary memory allocations: 19129 (163495/s)
+peak heap memory consumption: 855.19K
+peak RSS (including heaptrack overhead): 14.09M
+total memory leaked: 7.26K

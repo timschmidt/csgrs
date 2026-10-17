@@ -1,0 +1,700 @@
+[
+  {
+    "name": "rational-1-baseline-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "1",
+      "CIRCLE_CACHE_COST_MODE": "rational"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.1211269199848175,
+    "stdout_sha256": "c5ca177bce2eebb3ef0e5d679402b79facc17f8725de488f917380ecc382c135",
+    "stderr_sha256": "6b8d6ff8abcaf431e9f71a0720c470b53c600a8801a669088e6ba102b2f6770c",
+    "resources_sha256": "5de4d8af752e9e01cc98077b097d019f7240aa7c012419928dcefe7b23da8445"
+  },
+  {
+    "name": "rational-1-baseline-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.056084117852151394,
+    "stdout_sha256": "efbbaa81c938f0e04069ae991cbd597006451cb4326b902407a15ea02ab59ea1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fd83c45860f5004becf1f970f873470160f9c10dd24fd7791b11d355379c9c7e"
+  },
+  {
+    "name": "rational-1-candidate-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "1",
+      "CIRCLE_CACHE_COST_MODE": "rational"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.11668388592079282,
+    "stdout_sha256": "e4db90c2454b4488c2cc90428b91f46d37e6bb00c2ee0324dcfba91ab6f71766",
+    "stderr_sha256": "6faf06673ae02a1e39ada09d8585e28efe7f43a83896b85f90699b818140d75e",
+    "resources_sha256": "9521f4f4e047998adcc3cf4564b72c0faff916eef4ed96ff9974822ffa78f81b"
+  },
+  {
+    "name": "rational-1-candidate-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.057294164784252644,
+    "stdout_sha256": "3a378d10b2442ecca6263732d49368178eee0f6b4160e4c4f85f45db2d2d1a01",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b589de724166f5a274ac59077829f53944e50fe6947bb10b7e94a8b9155de19d"
+  },
+  {
+    "name": "rational-512-baseline-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "512",
+      "CIRCLE_CACHE_COST_MODE": "rational"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.3422277541831136,
+    "stdout_sha256": "b8cf4fc7ec55e585557202a67f077cd4eee10119a0d2a37bab78f4f4b9e8bfbf",
+    "stderr_sha256": "007e14d2d3b553141b5cd1f51dbb0fe54c3f63889eeb0d2bb9ac6b5e13f63ee8",
+    "resources_sha256": "8b5bdbf4969e20bb45c468e169ff39e5033554dbe4ecec9f3339b27af373dceb"
+  },
+  {
+    "name": "rational-512-baseline-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.13780672382563353,
+    "stdout_sha256": "cacd4840ad8f187845f9826dec47e1cad1b6db34a331ce3fb510f1d5db1e423a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a16eb769a672b0d86dc1857fd91b3dd6dc40aa948b0841b53e074ba819446d4f"
+  },
+  {
+    "name": "rational-512-candidate-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "512",
+      "CIRCLE_CACHE_COST_MODE": "rational"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.1382150868885219,
+    "stdout_sha256": "038df5bc3a004bc6ed6e7a130bfc770656885a2a10cb1c0469ce6ef4b52b99c5",
+    "stderr_sha256": "058e4d343d90efa32248f4e9bb5d56d5a64e56ce753984beafe475c94bdf36b4",
+    "resources_sha256": "90d77dea82cfa6ab9ec9777b826c68daafcd30cff6b4939819c5883f51515d6f"
+  },
+  {
+    "name": "rational-512-candidate-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.06311063515022397,
+    "stdout_sha256": "b5d217265e7eb1b134e22e550c5e87ca08e9bba12c59bf8d57815e4dce194324",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "1f8326aec2602987a577350e33e844abdb171c5a8de4b6a68098b6a97297f981"
+  },
+  {
+    "name": "rational-2048-baseline-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "2048",
+      "CIRCLE_CACHE_COST_MODE": "rational"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 3.424020220991224,
+    "stdout_sha256": "dee6967c08e6643f247176b53d9840669c901b6e5d326468582270536b5621ed",
+    "stderr_sha256": "d90d0c271db706052943f3cf6169ddcd5c6fdfa36f372b5ebe6606ba09c56bba",
+    "resources_sha256": "fb071e1cf629ffed151aabe8caf5dc133608b9672a69504795cd8e6806717778"
+  },
+  {
+    "name": "rational-2048-baseline-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 1.2270250520668924,
+    "stdout_sha256": "eb1ae45c0304508e1d335be25a2f9a4c028efaa306f8af24a077bd3f45fffb7b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3ede278ef869dd345c3363af6967d3fe79b58b6062a6edf1c65ebf5798c69eb9"
+  },
+  {
+    "name": "rational-2048-candidate-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "2048",
+      "CIRCLE_CACHE_COST_MODE": "rational"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.19396876683458686,
+    "stdout_sha256": "bfe8c0d463b0e77ffb48635b519677e1408b4aa302c48a076bb394f259409586",
+    "stderr_sha256": "ca6ad0c84a5903c43ff8875df7c31e64c5cdfef92412e2bce6bb549c7329d2d6",
+    "resources_sha256": "d08b60ef5512435705acb11b7e3e6bbb86d4506e55dd512fc43a083431efb1a8"
+  },
+  {
+    "name": "rational-2048-candidate-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.08339520217850804,
+    "stdout_sha256": "a55dbeb84ea9184397bff4fbb0a5389cd2b3daa86699366bffaf6c381e28d1e7",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c896c4139c0f73502697fe055d7161a6b8e537d187f04e3f0f36785e455df5f0"
+  },
+  {
+    "name": "symbolic-128-baseline-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "128",
+      "CIRCLE_CACHE_COST_MODE": "symbolic"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.2562823072075844,
+    "stdout_sha256": "b20a4314f8908f84142d2de05a9fd0df6ed93b84356b03dd562480e6122b157c",
+    "stderr_sha256": "7f399895a3e3064f51cf08201321b7533378008e884a8251f748b3944f6e9594",
+    "resources_sha256": "91531b10b09cfeb6ba76d4045f9ae7d418d9137bbb4672857f97ca6c83f96612"
+  },
+  {
+    "name": "symbolic-128-baseline-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.10984361497685313,
+    "stdout_sha256": "9808dd672b20ec9aba6257ed6298cb7d5447431cb559432807df160c3668fc67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "08258dc797b53e9d483c523084e463380cf79814ce35d987c998fefe0506ba51"
+  },
+  {
+    "name": "symbolic-128-candidate-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "128",
+      "CIRCLE_CACHE_COST_MODE": "symbolic"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.26895643724128604,
+    "stdout_sha256": "7eed2f95cbe6a16ce093e451f68a3273d20858ab07ba6e1d1c0f1106ffac3333",
+    "stderr_sha256": "84401de9731cd031689740bb24ab41719a8b6a2acbb45c3fd56a3c5b47a5ec09",
+    "resources_sha256": "bf424a4c83aea3dcf8c73b9b4254c2a1be4c4ac719b57824b8bbc67638b013fd"
+  },
+  {
+    "name": "symbolic-128-candidate-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.11301405820995569,
+    "stdout_sha256": "153aed2ef148d1df9ff26a06aaafa477fab2e5ba087b97a107b16c3ea8ca113c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "137e811637a8d3aea622e20c3d6a3dc1fcceb469fb1d16a3b9932816d030faea"
+  },
+  {
+    "name": "mixed-128-baseline-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "128",
+      "CIRCLE_CACHE_COST_MODE": "mixed"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.3033141070045531,
+    "stdout_sha256": "89058bcc16239c9ca1f9d8b3eea5e38e2324ae8ce21ced42eddc11cab5ec5055",
+    "stderr_sha256": "994a9228feeb122e36f5a7d5e033483426a5be3aad27525d1c2d9ecd69b44a23",
+    "resources_sha256": "4fb64e01a6ad2904b30a3d7cdb37326228561ff000fd745a69c407e079517ca4"
+  },
+  {
+    "name": "mixed-128-baseline-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.13106583803892136,
+    "stdout_sha256": "943730c29197b157a62975a085cb61369e3153663d049da19ecb545f182aadb9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "220eae1f63aed98e609713260c7031b1be9e794d524f776af192fc206936dbe4"
+  },
+  {
+    "name": "mixed-128-candidate-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "128",
+      "CIRCLE_CACHE_COST_MODE": "mixed"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.30265442188829184,
+    "stdout_sha256": "a425ec1819b807469b8a776ac94269b4a2727934fc7696b066befe948cd561b3",
+    "stderr_sha256": "33b686e007eb2d76c5e4196d887fdafb1e50cfab35dd723ce8b60c0e715c181c",
+    "resources_sha256": "68f02387cb8694e07251fe7f75a954e75c2a1da71e9052ea3d4514b6dc3bda19"
+  },
+  {
+    "name": "mixed-128-candidate-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.12686279695481062,
+    "stdout_sha256": "da3e6df161cf1e8590b05ab957155125cc10c4e64933c455c6f732b79b422528",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d41f04816f2fa763e39f5c890895d0be358ac4af8a017fbfb8bc5cd78a0aa3a9"
+  },
+  {
+    "name": "superrange-128-baseline-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "128",
+      "CIRCLE_CACHE_COST_MODE": "superrange"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.15432547079399228,
+    "stdout_sha256": "cf72aaf0ad533bbab0e8b97ab59c0c2b2b408c730d19181d1ff5b2e737b92f32",
+    "stderr_sha256": "a98a11554527358529c726b011df11b5b5d1fe05fc4d5a3b55d91be8e5d99ee2",
+    "resources_sha256": "a1ec1ee1032780b6faa1e74ea26bff9ad4cdfe2600dfda0239c42d0d60d04351"
+  },
+  {
+    "name": "superrange-128-baseline-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.06761393556371331,
+    "stdout_sha256": "08a87b9a584e449bc7e8baa7f825adfb2c0d43b8646268b5b872cb8704360cdb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "94e3c31facf59a0015e8d751e39536a88d0b04ded4d3a289bc623a508fa4e8db"
+  },
+  {
+    "name": "superrange-128-candidate-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "128",
+      "CIRCLE_CACHE_COST_MODE": "superrange"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.12957827979698777,
+    "stdout_sha256": "042f2baa750c63142e5b6eb5c974efe2082fa4c9391a47e68a36c5cd68540ca1",
+    "stderr_sha256": "302e6416a99279e6ecfd515cb8b1632618fd87cd30998c968814262211334fc2",
+    "resources_sha256": "96dfee7faf218f8343b7a639217e63c3bd79cf93b715f70c10ef18b55a0c34a7"
+  },
+  {
+    "name": "superrange-128-candidate-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.06350586796179414,
+    "stdout_sha256": "0c6b1c930b536cbde212a9a8c7365156a5ccbb0666962b2576393281113cb479",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "89fcaa289089efec69370ada04babd650fc499b2bfb10813a76afa82b920d9cc"
+  },
+  {
+    "name": "subrange-128-baseline-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "128",
+      "CIRCLE_CACHE_COST_MODE": "subrange"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.23852938693016768,
+    "stdout_sha256": "1e69f1c472c2002a4918f3eea8cb3516a78ad2ff91c3859909e4f94f7f218df3",
+    "stderr_sha256": "26e61bd8aeb2ac3b471766c65cf677dc51774f22c702df11a9de054774a90121",
+    "resources_sha256": "fe5524f16d1c0f28a32a787ff49191b2a08ad92740af7e8a199f7945de8fd2ff"
+  },
+  {
+    "name": "subrange-128-baseline-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.10604745708405972,
+    "stdout_sha256": "9756edf7369a23bc9e4b1d5572069f49794b3a8bc0037854f8187bf0dae64110",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4cb1027ad4c1eac8f5db90dcdcf6881870977b05a3cc66acdc913bb6bd751486"
+  },
+  {
+    "name": "subrange-128-candidate-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "128",
+      "CIRCLE_CACHE_COST_MODE": "subrange"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.15515491273254156,
+    "stdout_sha256": "7f3e9b223e9f7673c3d84dd4d85e96da6987f90ecd0ab1771bad2d7a7bb65dc3",
+    "stderr_sha256": "755593aa34e90ea29d129bd55671aa52fa408d7b77bf4472c113540930f9e2ab",
+    "resources_sha256": "bfb2ecf88b284014ac1147ece49c0f5d22c2c8e34414db0c9f1fc793bf1a6e78"
+  },
+  {
+    "name": "subrange-128-candidate-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "-M",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate.massif",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.07195029826834798,
+    "stdout_sha256": "43e4978fc8f923798a7d852bb0f3f3c09ff7b329c10df724ae8c9d4659a8fc05",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d36a27c561c40c738dc9d097c1a96f94c0b7eb075a2a1774b7df1564aae0ca11"
+  },
+  {
+    "name": "baseline-size",
+    "command": [
+      "size",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.0053853304125368595,
+    "stdout_sha256": "fd62858dcd3d8a5c118f111f7f9785ee9740440083fde292ab78a9383555bc69",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2d91c188b2b8357501073285fcac3d8d39fcaf57afa732233a77d91b28198c78"
+  },
+  {
+    "name": "candidate-size",
+    "command": [
+      "size",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.0043222238309681416,
+    "stdout_sha256": "4cc75afa553860bfadbae2b13e793bc2931502b4acbb0e2168b34a7123a6eedc",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c907a3737abe3745d2e52bad215a9f016853ba922ff3a8f66866be69f88e356d"
+  }
+]

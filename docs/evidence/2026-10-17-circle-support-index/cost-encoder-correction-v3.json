@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "failed_attempt_preserved": "cost-preflight-v2",
+  "failure": "Baseline probe encoder assumed subtracting pi exposed a rational carrier; strict coordinate and both circle equations had passed before encoding failed.",
+  "correction": "Encode the known rational residual only after the unchanged strict coordinate, two-circle and independent 3-4-5 assertions prove that exact coordinate. No kernel or semantic assertions changed.",
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/prepare_cost_v3.py": "3bb4092183b7991d47cf0078218534ce81883f81f7e66b8328c9f2c3353d5d03",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost_probe_v2.rs": "04ce3b74953d72df53acade30c75fe4a8c7b17a67b49d3738c0286a00a9d91d9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost_probe_v3.rs": "a84ebe58dcf774744aae32cddd3a429584772fdf69d472baa981cdf248971bd8",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/commands.json": "0e8f85d3942867a29153527cfcbf4600476d0c5ea2d10b3e23cab783d244d580"
+  },
+  "kernel_failure_claimed": false,
+  "performance_claimed": false
+}

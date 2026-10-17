@@ -1,0 +1,15 @@
+{
+  "complete": true,
+  "base_commit": "da8b64c1948abc26ad06490784165b15143f5def",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v1",
+  "source_inputs": 2837,
+  "source_hashes_sha256": "0496d40153ec52aa00ff0aef7e9e0a3daf45f7a6c5f34c43cec88cac78208d56",
+  "changes_from_instrumented_baseline": {
+    "crates/hypercurve/src/curve_intersection.rs": "208f5c34e4e183e6107b4389cfa2e98966dfc1874c535f4bcda2003dd4748551"
+  },
+  "semantic_and_cost_probe_source_unchanged": true,
+  "main_sources_modified": false,
+  "runner_sha256": "dc458cbf4f5edf90e57b8752031b0b768ed7d54481edbd5d657cc6f71ddc76fc",
+  "native_runtime_admitted": false,
+  "scope": "Same ordered relation computation and retention. Only candidate lookup and owned indexing change; symbolic first-match order is preserved."
+}

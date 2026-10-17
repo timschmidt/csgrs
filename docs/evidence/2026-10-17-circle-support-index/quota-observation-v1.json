@@ -1,0 +1,14 @@
+{
+  "command": [
+    "quota",
+    "-s"
+  ],
+  "exit_code": 0,
+  "stdout": "Disk quotas for user tim (uid 1000): \n     Filesystem   space   quota   limit   grace   files   quota   limit   grace\n          tmpfs  45590M  51490M  51490M            119k       0       0        \n          tmpfs  51490M  51490M  51490M            161k       0       0        \n",
+  "stderr": "",
+  "observed_failure": "Per-user /tmp hard quota reached 51,490 MiB while df reported roughly 13 GiB filesystem free; repository filesystem had roughly 4.4 GiB free.",
+  "sandbox_failure": "Default sandbox mount setup also failed with Quota exceeded while registering /tmp/.git; subsequent evidence reads used approved host execution.",
+  "orchestrator_hold_attempt": "Guarded process lookup found no running qualification orchestrator and failed before sending a signal. The runner had already finished its failed tail. No process was stopped.",
+  "user_input_pending": "Increase quota or provide a build directory with at least 6 GiB; preserve existing csgrs-* physical artifacts.",
+  "evidence_loss_detected_in_this_work": false
+}

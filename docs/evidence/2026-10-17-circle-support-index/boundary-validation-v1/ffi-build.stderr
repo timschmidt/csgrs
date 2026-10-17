@@ -1,0 +1,22 @@
+   Compiling num-traits v0.2.19
+   Compiling syn v3.0.6
+   Compiling num-integer v0.1.46
+   Compiling num-bigint v0.4.6
+   Compiling num-iter v0.1.45
+   Compiling num-complex v0.4.6
+   Compiling thiserror v2.0.21
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperreal)
+   Compiling thiserror-impl v2.0.21
+   Compiling syn v2.0.117
+error: could not compile `syn` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+error: could not compile `hyperreal` (lib)
+
+Caused by:
+  Disk quota exceeded (os error 122)
+
+Caused by:
+  failed to parse process output: `/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name hyperreal --edition=2024 crates/hyperreal/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C opt-level=3 -C embed-bitcode=no --warn=unexpected_cfgs --check-cfg 'cfg(verus_keep_ghost)' --cfg 'feature="cached-f64-approx"' --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cached-f32-approx", "cached-f64-approx", "default", "dispatch-trace", "serde", "simple"))' -C metadata=bb737b9fa61bc792 -C extra-filename=-bd1ab828184ac69a --out-dir /tmp/csgrs-circle-support-boundaries-v1/release/deps -C strip=debuginfo -L dependency=/tmp/csgrs-circle-support-boundaries-v1/release/deps --extern num=/tmp/csgrs-circle-support-boundaries-v1/release/deps/libnum-dbc9a5d22d09e40c.rmeta` (exit status: 101)

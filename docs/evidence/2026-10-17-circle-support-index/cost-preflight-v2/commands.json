@@ -1,0 +1,67 @@
+[
+  {
+    "name": "baseline-contracts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/baseline-tests",
+      "curve_intersection::circle_support_cache_tests::",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.008674165233969688,
+    "loadavg_after": [
+      5.63916015625,
+      4.54150390625,
+      3.13671875
+    ],
+    "stdout_sha256": "52e50c1b051362a6424991bf838832c58c9dac8fb765e59f8ff22750c466ec55",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6976b9a9ccc5e36196ad525588961894d63d0e5955737641c7e677dfa94b0c0b"
+  },
+  {
+    "name": "candidate-contracts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/candidate-tests",
+      "curve_intersection::circle_support_cache_tests::",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.007950624451041222,
+    "loadavg_after": [
+      5.63916015625,
+      4.54150390625,
+      3.13671875
+    ],
+    "stdout_sha256": "52e50c1b051362a6424991bf838832c58c9dac8fb765e59f8ff22750c466ec55",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4ac664cab80e0de972c7e8500967a0b53f0aaeb5f5f03a1f77874dcd92c00214"
+  },
+  {
+    "name": "mixed-512-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/baseline-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "512",
+      "CIRCLE_CACHE_COST_MODE": "mixed"
+    },
+    "exit_code": 101,
+    "elapsed_seconds": 0.012909113895148039,
+    "loadavg_after": [
+      5.63916015625,
+      4.54150390625,
+      3.13671875
+    ],
+    "stdout_sha256": "708f798b66e159be8186f479784bd5d12993fc11208dff60483062c256a5060c",
+    "stderr_sha256": "73339feedd4dbd8e8f82983816edc7264695add1d52ce5001237516312be3a3d",
+    "resources_sha256": "c72c837166d60cc3a25bfb84c9ebb8be5c59b5791ba04be28da9daf68091528d"
+  }
+]

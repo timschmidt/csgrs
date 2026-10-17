@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "command_failures": [],
+  "sources_unchanged": true,
+  "cargo_target_closed": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "cost_is_preflight_only": true,
+  "main_sources_modified": false
+}

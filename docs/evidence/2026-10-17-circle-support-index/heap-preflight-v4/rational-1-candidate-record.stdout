@@ -1,0 +1,16 @@
+heaptrack output will be written to "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-allocations.zst"
+starting application, this might take some time...
+
+running 1 test
+test curve_intersection::circle_support_cost_probe::support_lookup_cost ... CIRCLE_CACHE_SAMPLE {"mode":"rational","count":1,"phase":"cold","seconds":0.000429341,"entries":1,"max_rational_component_bits":5}
+CIRCLE_CACHE_ROWS [["0", "3", "4", "3", "-4"]]
+CIRCLE_CACHE_SAMPLE {"mode":"rational","count":1,"phase":"warm","seconds":0.000006849,"entries":1,"max_rational_component_bits":5}
+CIRCLE_CACHE_ROWS [["0", "3", "4", "3", "-4"]]
+CIRCLE_CACHE_CERTAINTY Certified
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1742 filtered out; finished in 0.00s
+
+Heaptrack finished! Now run the following to investigate the data:
+
+  heaptrack --analyze "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-allocations.zst"

@@ -1,0 +1,21 @@
+{
+  "complete": true,
+  "base_commit": "da8b64c1948abc26ad06490784165b15143f5def",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-source-v1",
+  "source_inputs": 2837,
+  "source_hashes_sha256": "5fe1d6e2e4cdc46f82c66493deff12ce42067b82d328efc85245fc4684967264",
+  "main_input_hashes_sha256": "a10515dfc04b6a0c99c8a516e6186798c6965eea4b26578ca339ebe770e6173a",
+  "changes": {
+    "crates/hypercurve/src/curve_intersection.rs": "5df1430448423f986e67fcd1e1c1c41caf77ad438791a759aca8d968141c4f50",
+    "crates/hypercurve/src/circle_support_cache_tests.rs": "a95c3b73c00c486bc63de4e7711aef3fd2790ab7a3e1c5899b6ddd57755b783f",
+    "crates/hypercurve/src/circle_support_cost_probe.rs": "60c4054788ae01cceea1c9a75666e99a8b38cfbd58d5c232361d20186d8ba140"
+  },
+  "production_implementation_unchanged": true,
+  "main_sources_modified": false,
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/prepare_baseline_v1.py": "4d518107453bbd616e3a9fd8bd0129977d999515c3bbc9aa30b1f3cd94eba66d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/contract-v1.md": "5c75dfd8800b4d826fa113456f80d6ea91ce77513a283f9bc51c77688411f8e7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cache_contracts_v1.rs": "988ecdef27d3bc379ac77caef0dd171ac7a4ceeadf7cb70f6f049b4980944c57",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost_probe_v1.rs": "55a502191d4fecd10259db76979ec8b7316767e772c575dfed01f6249e337728"
+  }
+}

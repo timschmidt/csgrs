@@ -1,0 +1,19 @@
+{
+  "complete": true,
+  "command_failures": [],
+  "traces": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/baseline-allocations.zst",
+      "sha256": "b75d31c57f13743b8329e8353f16c620dadb6e763bb88825bbc4380b70cca3c6",
+      "bytes": 26764
+    },
+    "candidate": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/candidate-allocations.zst",
+      "sha256": "2392141b27f7e71705577ef6385389194234d072ce7ebb35e7baa22df026c096",
+      "bytes": 16571
+    }
+  },
+  "read_only_inputs_unchanged": true,
+  "native_runtime_admitted": false,
+  "allocation_preflight_only": true
+}

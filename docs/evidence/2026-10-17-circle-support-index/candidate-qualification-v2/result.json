@@ -1,0 +1,23 @@
+{
+  "complete": true,
+  "command_failures": [
+    "native-tests",
+    "curve-all-build",
+    "curve-all",
+    "root-all-build",
+    "root-all",
+    "root-minimal",
+    "circuit-build",
+    "circuit-all",
+    "docs",
+    "native-cli"
+  ],
+  "sources_unchanged": true,
+  "cargo_target_closed": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "main_sources_modified": false,
+  "original_workload_gates_unchanged": true,
+  "full_pre_push_matrix_executed": false,
+  "published_package_pipeline_executed": false
+}

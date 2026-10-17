@@ -1,0 +1,49 @@
+#-----------
+snapshot=0
+#-----------
+time=0.024
+mem_heap_B=272048
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 272048 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 34 places, all below massif's threshold (1)
+#-----------
+snapshot=1
+#-----------
+time=0.073
+mem_heap_B=300384
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=2
+#-----------
+time=0.084
+mem_heap_B=362440
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 362440 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 34 places, all below massif's threshold (1)
+#-----------
+snapshot=3
+#-----------
+time=0.092
+mem_heap_B=6968
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=4
+#-----------
+time=0.093
+mem_heap_B=6968
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 6968 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 48 places, all below massif's threshold (1)
+desc: heaptrack
+cmd: /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests curve_intersection::circle_support_cost_probe::support_lookup_cost --exact --ignored --nocapture --test-threads=1
+time_unit: s

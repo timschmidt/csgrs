@@ -1,0 +1,17 @@
+{
+  "complete": true,
+  "failed_attempts_preserved": [
+    "cost-preflight-v2",
+    "cost-preflight-v3"
+  ],
+  "failure": "The same structural-rational assumption also failed for a certified symbolic y coordinate in the baseline.",
+  "correction": "A strict sign proof selects positive or negative 4*scale, and an additional strict equality must prove that encoding equals the actual y. The original coordinate, circle-equation and 3-4-5 assertions remain unchanged.",
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/prepare_cost_v4.py": "c163fcf043f36d8f8ea90133b9549cea4d0560e8f3b72c53a3276fe7eddd7780",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost_probe_v3.rs": "a84ebe58dcf774744aae32cddd3a429584772fdf69d472baa981cdf248971bd8",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost_probe_v4.rs": "5d0878e77598a7de0759c7aaa57152230c88eb9db2e87952f0f4fe785af2e359",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/commands.json": "e636496aabfb684de4888b16506fb30c104aae74a059abf7eebd8dcd0cf033fd"
+  },
+  "kernel_failure_claimed": false,
+  "performance_claimed": false
+}

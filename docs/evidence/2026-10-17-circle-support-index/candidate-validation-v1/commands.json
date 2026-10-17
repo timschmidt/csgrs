@@ -1,0 +1,150 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--no-default-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 203.08616737136617,
+    "stdout_sha256": "e774a4b7cc3ba3350c22b10d30835aaf68029954e6bc3fd70f6d3158d41b4f51",
+    "stderr_sha256": "ba574ba8e81c181204400a38ca16be6b745297ca1f09065c0d321dd31029077f",
+    "resources_sha256": "cb47d7aaa790d7173636aedd2702b66b62b73494628be58f6e744778a57d055e"
+  },
+  {
+    "name": "contracts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests",
+      "curve_intersection::circle_support_cache_tests::",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.2004930628463626,
+    "stdout_sha256": "52e50c1b051362a6424991bf838832c58c9dac8fb765e59f8ff22750c466ec55",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a7a4cb2c92dd9f558d675b50a1d283c58944a2aa0ea5e29283e9e125457c4a5a"
+  },
+  {
+    "name": "existing-cache",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests",
+      "curve_intersection::native_dispatch_tests::batch_cache_reuses_one_circle_support_relation_across_spans",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.2007379769347608,
+    "stdout_sha256": "55732c976542f442e41832da5841a95a24518776853a0623d42d5e06c10d875b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "488e94b4732ec60c25744032f08a827049c9978dc9033f291583078cca071804"
+  },
+  {
+    "name": "cost-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "1"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.20155863976106048,
+    "stdout_sha256": "4f80e423683beced4d94ee762467c5db796be70931a0de138eacb0c5df99e77e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "984864ffc1f3c42938cb22c8cd0bb94ab261698ec4cb972daa3a6b0a9a6e1a6f"
+  },
+  {
+    "name": "cost-16",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "16"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.20303941797465086,
+    "stdout_sha256": "ad7cb8d1539d9315c89227c4aeb1f7f5fed2e92910c2fc407b450c99b23b9400",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "56d461f8b6ae0957c4bad342e08d693b82d321204027a4f4675cd99010eb7a46"
+  },
+  {
+    "name": "cost-128",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "128"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.2068922547623515,
+    "stdout_sha256": "a787cb1a92ee89e2ee685ff0e1114f2c0e2115cbc7747775583da85fe46e4c55",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "dd700d284ccd3d425bdce075440449f39983467818dfb038621f83bd74f80272"
+  },
+  {
+    "name": "cost-512",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "512"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.20282426290214062,
+    "stdout_sha256": "81be467695c5ee564a3c472b645b20be6ba2a6d6c1c47f334580ce037d99514d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "77e50b7182404790390508833da9174bb3d79028451d65ad35247f7d51dea02c"
+  },
+  {
+    "name": "cost-2048",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "CIRCLE_CACHE_COST_N": "2048"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.21975982142612338,
+    "stdout_sha256": "a43bb4de4eb45d352cc82d2795a34fcf00ecfda785dcd18a9df4f285b0f8c1c8",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f0b47fdd364d55544898e5d1049a4c84333bd6219cc0364c2263370ccb0d4a26"
+  }
+]

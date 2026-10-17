@@ -1,0 +1,645 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 10.583246891852468,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "1c6f0f7a51801e921dc409e550160ec1f5dadc1abad983a8aadfb215e21377c4"
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "-p",
+      "csgrs",
+      "-p",
+      "hyperdrc",
+      "-p",
+      "hypercircuit",
+      "--release",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 146.48244510730729,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "8bdb3382e3fd07c7dc33789c55e31c12d0dbdbc4f5c556e2feed0e39dcdc6e79",
+    "resources_sha256": "c987cd61b96800180f46fc10f398f48620855ba91da4e0069f5a687d6c2671aa"
+  },
+  {
+    "name": "native-build",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 376.0934623009525,
+    "binaries": {
+      "/tmp/csgrs-circle-support-qualification-v2/release/deps/kicad_track_failures-b846f6af7dd90fbe": {
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/5159160c5ab9cce2572c1ba00927bcd7f603b10af4aec1b09a952d4ae18ac727/kicad_track_failures-b846f6af7dd90fbe",
+        "sha256": "5159160c5ab9cce2572c1ba00927bcd7f603b10af4aec1b09a952d4ae18ac727",
+        "bytes": 20543664,
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "kicad_track_failures",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/kicad_track_failures.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/tmp/csgrs-circle-support-qualification-v2/release/hyperdrc": {
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/d1a4b3d5960743ed599abc7b6c4c0bfcbee3a8e78101d55a7eaff75c13237e06/hyperdrc",
+        "sha256": "d1a4b3d5960743ed599abc7b6c4c0bfcbee3a8e78101d55a7eaff75c13237e06",
+        "bytes": 42936544,
+        "target": {
+          "kind": [
+            "bin"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hyperdrc",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/src/main.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": false
+        }
+      },
+      "/tmp/csgrs-circle-support-qualification-v2/release/deps/kicad_rule_export-c09b25b29b958a07": {
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/6baad32e8bb74146b055115a9bdc63671b78acca9a2aa88db235068631fa8134/kicad_rule_export-c09b25b29b958a07",
+        "sha256": "6baad32e8bb74146b055115a9bdc63671b78acca9a2aa88db235068631fa8134",
+        "bytes": 43581760,
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "kicad_rule_export",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/kicad_rule_export.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/tmp/csgrs-circle-support-qualification-v2/release/deps/diagnostic_formatting-e5ef4baeabfbc955": {
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/1fc9389a42a87317b8473de1db8e74f29662c737b67731f9f1d6f075bfe3d19d/diagnostic_formatting-e5ef4baeabfbc955",
+        "sha256": "1fc9389a42a87317b8473de1db8e74f29662c737b67731f9f1d6f075bfe3d19d",
+        "bytes": 20076968,
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "diagnostic_formatting",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/diagnostic_formatting.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/tmp/csgrs-circle-support-qualification-v2/release/deps/hyperdrc-5da1690b41025398": {
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af/hyperdrc-5da1690b41025398",
+        "sha256": "c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af",
+        "bytes": 1079400,
+        "target": {
+          "kind": [
+            "bin"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hyperdrc",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/src/main.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/tmp/csgrs-circle-support-qualification-v2/release/deps/kicad_pad_sources-e4732b4399bed56a": {
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/fd2d0683239dd5203148d373df6d06dcb4fb11c3eae759f5222fbf823a365086/kicad_pad_sources-e4732b4399bed56a",
+        "sha256": "fd2d0683239dd5203148d373df6d06dcb4fb11c3eae759f5222fbf823a365086",
+        "bytes": 20810280,
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "kicad_pad_sources",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/kicad_pad_sources.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/tmp/csgrs-circle-support-qualification-v2/release/deps/artifact_numeric_keys-03d9b7a570505404": {
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/9058e50a5c5c541ea2447f1949aeb71b1d73edc82b8ae7bbb9587b0ef8cdc727/artifact_numeric_keys-03d9b7a570505404",
+        "sha256": "9058e50a5c5c541ea2447f1949aeb71b1d73edc82b8ae7bbb9587b0ef8cdc727",
+        "bytes": 6799136,
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "artifact_numeric_keys",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/artifact_numeric_keys.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/tmp/csgrs-circle-support-qualification-v2/release/deps/readme-990ac56b4fb5e9a5": {
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/87afe91b185172eaa34cb976ea0a10c8742a8c82d8ae9987ce5e0d2952b1a6ab/readme-990ac56b4fb5e9a5",
+        "sha256": "87afe91b185172eaa34cb976ea0a10c8742a8c82d8ae9987ce5e0d2952b1a6ab",
+        "bytes": 1117544,
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "readme",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/readme.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/tmp/csgrs-circle-support-qualification-v2/release/examples/basic": {
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/8942e10d59d76bb90cea196bc2fb73b88b6f576fd7a44f00599f57ead8432ef6/basic",
+        "sha256": "8942e10d59d76bb90cea196bc2fb73b88b6f576fd7a44f00599f57ead8432ef6",
+        "bytes": 4200904,
+        "target": {
+          "kind": [
+            "example"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "basic",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/examples/basic.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": false
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": false
+        }
+      },
+      "/tmp/csgrs-circle-support-qualification-v2/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e/hyperdrc-f2524bbb15bdb74d",
+        "sha256": "7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e",
+        "bytes": 54268976,
+        "target": {
+          "kind": [
+            "lib"
+          ],
+          "crate_types": [
+            "lib"
+          ],
+          "name": "hyperdrc",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/src/lib.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": true,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "8a440a8b2a74e16601be6f91de4462ce7c5f2bb023c5881da66b519ce7530667",
+    "stderr_sha256": "84ac28b78e6ab9460075db18c114701684a3d8ded1d25968de67e53a3c6b656b",
+    "resources_sha256": "ad66a59533b15725bb3efd6b358cab228e60b91b246b47333250af6559b8aa55"
+  },
+  {
+    "name": "full-board",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 55.453144954983145,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "05630ddad2b0f0b188544833295018c010205986bf4e1af0c27caf1c8734bc8c",
+    "stderr_sha256": "2e23521fa22c91e82b952b89c8e962bf4ce68eb9b8ec43601ce75893726082a1",
+    "resources_sha256": "dd7ce13ca44675f1b61f04fcd417738640d9d3cfbb39f5731e963aca4fd4a401"
+  },
+  {
+    "name": "copper-neck",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 44.386282353661954,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "477125dabb978f2ae5523e81a285e2e3cced82a667a94a75e26506f9689bcd88",
+    "stderr_sha256": "d00200bcf9f1d5c8429ae0db5ef5282bcf1569480f63b8ce3e10a049c598cfe9",
+    "resources_sha256": "5f33b6ed6ed37ef38fc9459065941049e3d1e426881a0ec5f250439c7d914dc6"
+  },
+  {
+    "name": "gerber",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.4622797588817775,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "f45f8e6ff686f6c78b92d2e4f1d2d683ffbf9bbd4801044070e17f3dd5955053",
+    "stderr_sha256": "a850308ef3785230a133c7bd026c6e383dd2bd657f1a5f886422a4c0db902939",
+    "resources_sha256": "4e321b4a3decd03a846eccbe39e18cd9bc4eb11e9da5967cf541bfc52e5aa0c3"
+  },
+  {
+    "name": "native-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1",
+      "--skip",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--skip",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--skip",
+      "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 256.6587720462121,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e0d36f6bbedf3d0451a26393a9c3f70ad372c5d4aa2ead2d9f952cf2bf3e083f",
+    "stderr_sha256": "9b7c54bf733b28c251209ef2d819e454997546b44b99b77ce6e47c27db7f4d59",
+    "resources_sha256": "44dd515ade59a4c9af950d3484d11a54bf8094972825a922588551354acac03c"
+  },
+  {
+    "name": "curve-all-build",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-features",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.4433872657828033,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "2caa19e879ae8d1ce6ea694dddace3e15a6495b56f3659f94b21d510e7b53a56",
+    "stderr_sha256": "cc9465825d864e7cd0a1dc76c92e54553defde9fdb29d2fb069e4fb0a03ed25a",
+    "resources_sha256": "c9b3cc1b2c4b74ee972f37175f58b299b75f8b88f8300f10e7a8e23b9701cdb7"
+  },
+  {
+    "name": "curve-all",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.3664371916092932,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "cc9465825d864e7cd0a1dc76c92e54553defde9fdb29d2fb069e4fb0a03ed25a",
+    "resources_sha256": "1cc83474fa495984df2199738fe93a3b2d97a0b3087548c47d38933d7e3cc912"
+  },
+  {
+    "name": "root-all-build",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "csgrs",
+      "--release",
+      "--all-features",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.9277599467895925,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "d86a3fe5a2a74418b3d04b1da421fd592db5470e6a5fea056cf5939381b90b17",
+    "stderr_sha256": "15b623c8a7d2e9e73fe094af64521916f6c71ab1b3141a7836da268b46c527cc",
+    "resources_sha256": "dbc17b71d795d1363426c589cf2c30f4058af5e301a25cd5663e8c776048b6ee"
+  },
+  {
+    "name": "root-all",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "csgrs",
+      "--release",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.8568979636766016,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "ab5a7641fc01b07e427f5b1dec1dbf0c0fdb015be1eec60d2abb21fb15ca302c",
+    "resources_sha256": "0f08aa5dcd38d8c982129903b2e496ad302a7a015155eab7058f779e25780f95"
+  },
+  {
+    "name": "root-minimal",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "csgrs",
+      "--release",
+      "--no-default-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.7374684466049075,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "eb465c0398d5f3f0aee6cf7a33c380db71bc188b4567916f240b56006ce62751",
+    "resources_sha256": "31e5fb1d9bdcf77a352235bab5781636312aeb76d88109909cab513b12e1328a"
+  },
+  {
+    "name": "circuit-build",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--release",
+      "--all-features",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.4564649281091988,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "6d02dd6f0a4dce2921cc66ca109879f247b28f5d69c936fc9582d2457f49493e",
+    "stderr_sha256": "d8890d62b26d54f0b6ec6e1efadc8a881c6e81256f2b581255ce7272f416ea05",
+    "resources_sha256": "64dbbadfc1d798178f28e918d4bf75c77ed76ef739925d01e480c7f4b9745aca"
+  },
+  {
+    "name": "circuit-all",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--release",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.4085562378168106,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "d8890d62b26d54f0b6ec6e1efadc8a881c6e81256f2b581255ce7272f416ea05",
+    "resources_sha256": "8ad5444b6782030a7b1ebd51610f14d23b21dc083ede1a599ee6a7e55105e0af"
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "-p",
+      "csgrs",
+      "-p",
+      "hyperdrc",
+      "-p",
+      "hypercircuit",
+      "--release",
+      "--all-features",
+      "--no-deps"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.41520480206236243,
+    "binaries": {},
+    "rustdocflags": "-D warnings",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e39cca1648e68269180774dc66612a940d5bd8a605baf8e30ffce46b486b00cf",
+    "resources_sha256": "b678f4d2aa352d0f2635843c14155d8d9593a7b1ac253ed19a1635ced06bc9d9"
+  },
+  {
+    "name": "native-cli",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--message-format=json"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.35559943597763777,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "0d7f4f8ab357fbd1918cd96f6bd5738eefbea2daad3b94b96b8674612980fb6b",
+    "stderr_sha256": "ac852a8a4a7331622af7e97d50d2d5ac015752a70dc61163f0e92b42495fd06c",
+    "resources_sha256": "c2d6e621e7c51a4ca8feb57ee8b742e39209316449547595f7f5943e57fef42d"
+  }
+]

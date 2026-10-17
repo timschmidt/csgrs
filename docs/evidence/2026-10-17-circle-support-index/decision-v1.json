@@ -1,0 +1,128 @@
+{
+  "status": "unadmitted: exact circle-support index passes focused semantics and original workload gates; full qualification interrupted by storage quota",
+  "progress_classification": "progress",
+  "main_parent_commit": "da8b64c1948abc26ad06490784165b15143f5def",
+  "owning_layer": "Hypercurve temporary native intersection batch",
+  "prototype_source": "candidate-source-v2",
+  "prototype_sha256": {
+    "crates/hypercurve/src/curve_intersection.rs": "2b6729bbef6ae8ac1ec95341c0311a299fde90e1a4dd207bb92bc43fc1ac472e",
+    "crates/hypercurve/src/circle_support_cache_tests.rs": "a95c3b73c00c486bc63de4e7711aef3fd2790ab7a3e1c5899b6ddd57755b783f",
+    "crates/hypercurve/README.md": "7587b7b82534a4a14502092dffc76f7189afff4f5db73d9e929976b0dff36bbe"
+  },
+  "implementation_sha256": {},
+  "source_changes_applied": false,
+  "focused_semantic_tests_per_variant": 7,
+  "existing_batch_reuse_test_per_variant": 1,
+  "scalar_numeric_hash_contract_passed": true,
+  "passed_qualification_commands": [
+    "format",
+    "clippy",
+    "native-build",
+    "full-board",
+    "copper-neck",
+    "gerber"
+  ],
+  "original_workload_gates": {
+    "full-board": {
+      "exit_code": 0,
+      "whole_supervised_command_seconds": 55.453144954983145
+    },
+    "copper-neck": {
+      "exit_code": 0,
+      "whole_supervised_command_seconds": 44.386282353661954
+    },
+    "gerber": {
+      "exit_code": 0,
+      "whole_supervised_command_seconds": 0.4622797588817775
+    }
+  },
+  "native_test_passed": 1648,
+  "native_test_failed": 5,
+  "native_failure_names": [
+    "conversion::tests::convert_executes_successful_kicad_cli_converter_and_returns_output_paths",
+    "conversion::tests::convert_reports_directory_creation_failure",
+    "conversion::tests::converter_provenance_hashes_inputs_and_manifests_outputs",
+    "parquet_report::tests::writes_readable_parquet_report",
+    "sqlite_report::tests::writes_queryable_sqlite_report"
+  ],
+  "native_failure_diagnosis": "Four failures explicitly report quota exhaustion; SQLite reports disk I/O error during the same incident. Reproduce all five after storage recovery; no passing result is inferred.",
+  "uncompleted_qualification_commands": [
+    "native-tests",
+    "curve-all-build",
+    "curve-all",
+    "root-all-build",
+    "root-all",
+    "root-minimal",
+    "circuit-build",
+    "circuit-all",
+    "docs",
+    "native-cli"
+  ],
+  "boundary_commands": [
+    {
+      "name": "format",
+      "exit_code": 0,
+      "elapsed_seconds": 10.690377660095692
+    },
+    {
+      "name": "scalar-value-hash",
+      "exit_code": 0,
+      "elapsed_seconds": 77.72042485512793
+    },
+    {
+      "name": "ffi-build",
+      "exit_code": 101,
+      "elapsed_seconds": 15.753663568757474
+    },
+    {
+      "name": "ffi-tests",
+      "exit_code": 101,
+      "elapsed_seconds": 4.14311558008194
+    },
+    {
+      "name": "ffi-clippy",
+      "exit_code": 101,
+      "elapsed_seconds": 0.48641584999859333
+    }
+  ],
+  "diagnostics": {
+    "v1_integer_preflight": "preflight-comparison-v1/result.json",
+    "v4_expanded_exact_preflight": "cost-preflight-v4/result.json",
+    "repeated_fallback_controls": "cost-fallback-v5/result.json",
+    "whole_process_allocation_and_size_preflight": "heap-preflight-v4/result.json"
+  },
+  "expanded_preflight_process_samples": 24,
+  "repeated_fallback_process_samples": 56,
+  "instrumented_resource_observations": 14,
+  "all_expanded_ordered_exact_rows_equal": true,
+  "all_expanded_receipts_certified": true,
+  "discarded_probe_assumptions": [
+    "v2 assumed subtracting pi exposed a rational scalar carrier",
+    "v3 made the same structural assumption for y; v4 adds strict sign and exact equality proofs before value encoding"
+  ],
+  "prepared_but_unexecuted": [
+    "Full matched timing under a completely qualified candidate",
+    "Native full-project report byte comparison",
+    "Actual C/C++/Python consumers",
+    "Actual JavaScript/TypeScript consumers",
+    "WASM Clippy"
+  ],
+  "limitations": [
+    "No production patch admitted; no full native or boundary pass claimed.",
+    "Cost observations are focused diagnostics, not end-to-end speedup or final optimization acceptance.",
+    "Mixed and superrange heap peaks increase slightly; symbolic allocation count increases by six; all adverse rows retained.",
+    "No new total-work, heap-byte, expression-growth or cancellation bound.",
+    "Exact-track E36 integration remains rejected and the original 35-file disposition remains intact.",
+    "Inherited artifact audit still has 27,093 missing paths; no whole-history or zero-loss claim.",
+    "Full pre-push, published-package, MSRV, formal-proof, coverage and directed-campaign targets remain open."
+  ],
+  "next": [
+    "After storage recovery, use fresh targets for remaining full Hypercurve, CSGRS, HyperDRC, Hypercircuit and boundary qualification; do not reopen completed targets.",
+    "Reproduce the five native file-output failures without quota exhaustion, preserving the original assertions.",
+    "Complete full-project byte comparisons and matched cost measurements, then decide whether to apply the three-file candidate.",
+    "If retained, reevaluate exact KiCad ingress independently against its unchanged workloads; preserve all broader properties targets."
+  ],
+  "native_runtime_admitted": false,
+  "full_archived_integration_admitted": false,
+  "full_plan_complete": false
+}

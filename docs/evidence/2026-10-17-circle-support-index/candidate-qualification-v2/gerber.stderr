@@ -1,0 +1,58 @@
+    Finished `release` profile [optimized] target(s) in 0.14s
+     Running unittests src/lib.rs (/tmp/csgrs-circle-support-qualification-v2/release/deps/hyperdrc-f2524bbb15bdb74d)
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.014s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (0.000s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.000s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check layer-sanity
+hyperdrc: finished check layer-sanity (0 finding(s), 0.000s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.000s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+hyperdrc: finished emit report (0.000s)
+hyperdrc: finished run (0 active finding(s), 0 waived, 0.015s)

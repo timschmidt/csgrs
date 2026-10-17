@@ -1,0 +1,439 @@
+reading file "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/baseline-allocations.zst" - please wait, this might take some time...
+Debuggee command was: /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests curve_intersection::circle_support_cost_probe::support_lookup_cost --exact --ignored --nocapture --test-threads=1
+finished reading file, now analyzing data:
+
+MOST CALLS TO ALLOCATION FUNCTIONS
+257557 calls to allocation functions with 105.56K peak consumption from
+  _RNvMsu_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB5_8Rational23from_reduced_word_parts
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs1g_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational13add_sub_words
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs1n_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational12subtract_ref
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs1X_NtNtCsb4b5m7gcAkc_9hyperreal4real10arithmeticRNtB6_4RealNtNtNtCsgxBkk5gSRhY_4core3ops5arith3Sub3subCs4AT27MZdCSj_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs_NtCs4AT27MZdCSj_10hypercurve5pointNtB4_6Point2NtNtCsgxBkk5gSRhY_4core3cmp9PartialEq2eq
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs6_NtCs4AT27MZdCSj_10hypercurve18curve_intersectionNtB5_27CurveIntersectionBatchCache25circular_support_relation
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+257557 calls to allocation functions with 32.48K peak consumption from
+  _RNvMs5_NtCs6i54tJFfzR_5alloc7raw_vecNtB5_11RawVecInner11finish_growCs6uBFykrzWiZ_10num_bigint.llvm.11816380966498294327
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs4_NtCs6i54tJFfzR_5alloc7raw_vecINtB5_6RawVecyE8grow_oneCs6uBFykrzWiZ_10num_bigint
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMsu_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB5_8Rational23from_reduced_word_parts
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs1g_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational13add_sub_words
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs1n_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational12subtract_ref
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs1X_NtNtCsb4b5m7gcAkc_9hyperreal4real10arithmeticRNtB6_4RealNtNtNtCsgxBkk5gSRhY_4core3ops5arith3Sub3subCs4AT27MZdCSj_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs_NtCs4AT27MZdCSj_10hypercurve5pointNtB4_6Point2NtNtCsgxBkk5gSRhY_4core3cmp9PartialEq2eq
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs6_NtCs4AT27MZdCSj_10hypercurve18curve_intersectionNtB5_27CurveIntersectionBatchCache25circular_support_relation
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+257557 calls to allocation functions with 32.48K peak consumption from
+  _RNvMs5_NtCs6i54tJFfzR_5alloc7raw_vecNtB5_11RawVecInner11finish_growCs6uBFykrzWiZ_10num_bigint.llvm.11816380966498294327
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs4_NtCs6i54tJFfzR_5alloc7raw_vecINtB5_6RawVecyE8grow_oneCs6uBFykrzWiZ_10num_bigint
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMsu_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB5_8Rational23from_reduced_word_parts
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs1g_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational13add_sub_words
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs1n_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational12subtract_ref
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs1X_NtNtCsb4b5m7gcAkc_9hyperreal4real10arithmeticRNtB6_4RealNtNtNtCsgxBkk5gSRhY_4core3ops5arith3Sub3subCs4AT27MZdCSj_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs_NtCs4AT27MZdCSj_10hypercurve5pointNtB4_6Point2NtNtCsgxBkk5gSRhY_4core3cmp9PartialEq2eq
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs6_NtCs4AT27MZdCSj_10hypercurve18curve_intersectionNtB5_27CurveIntersectionBatchCache25circular_support_relation
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+1024 calls to allocation functions with 0B peak consumption from
+  _RNvNtNtCs6uBFykrzWiZ_10num_bigint7biguint7convert11to_radix_le
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs6_NtCs6uBFykrzWiZ_10num_bigint7biguintNtB5_7BigUintNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+1024 calls to allocation functions with 0B peak consumption from
+  _RNvMs5_NtCs6i54tJFfzR_5alloc7raw_vecNtB5_11RawVecInner11finish_growCsb4b5m7gcAkc_9hyperreal.llvm.571215559542864123
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNvMs2_NtCs6i54tJFfzR_5alloc7raw_vecINtB8_11RawVecInnerpE7reserve21do_reserve_and_handleNtNtBa_5alloc6GlobalECsb4b5m7gcAkc_9hyperreal
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXsZ_NtCs6i54tJFfzR_5alloc6stringNtB5_6StringNtNtCsgxBkk5gSRhY_4core3fmt5Write9write_str
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs6_NtCs6uBFykrzWiZ_10num_bigint7biguintNtB5_7BigUintNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+
+
+PEAK MEMORY CONSUMERS
+290.82K peak memory consumed over 512 calls from
+  _RNvMs6_NtCs4AT27MZdCSj_10hypercurve5curveNtB5_6Curve23new.llvm.8418226349791842401
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe6circle
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs_NtNtCs6i54tJFfzR_5alloc3vec21spec_from_iter_nestedINtB6_3VecTNtNtCs4AT27MZdCSj_10hypercurve5curve6Curve2B13_EEINtB4_18SpecFromIterNestedB12_INtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters3map3MapINtNtNtB2t_3ops5range5RangejENCNvNtNtB17_18curve_intersection25circle_support_cost_probes_19support_lookup_cost0EE9from_iterB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+290.82K peak memory consumed over 512 calls from
+  _RNvMs6_NtCs4AT27MZdCSj_10hypercurve5curveNtB5_6Curve23new.llvm.8418226349791842401
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe6circle
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs_NtNtCs6i54tJFfzR_5alloc3vec21spec_from_iter_nestedINtB6_3VecTNtNtCs4AT27MZdCSj_10hypercurve5curve6Curve2B13_EEINtB4_18SpecFromIterNestedB12_INtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters3map3MapINtNtNtB2t_3ops5range5RangejENCNvNtNtB17_18curve_intersection25circle_support_cost_probes_19support_lookup_cost0EE9from_iterB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+176.13K peak memory consumed over 512 calls from
+  _RNvMs2_NtCs4AT27MZdCSj_10hypercurve7segmentNtB5_12CircularArc215try_from_center
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe6circle
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs_NtNtCs6i54tJFfzR_5alloc3vec21spec_from_iter_nestedINtB6_3VecTNtNtCs4AT27MZdCSj_10hypercurve5curve6Curve2B13_EEINtB4_18SpecFromIterNestedB12_INtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters3map3MapINtNtNtB2t_3ops5range5RangejENCNvNtNtB17_18curve_intersection25circle_support_cost_probes_19support_lookup_cost0EE9from_iterB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+176.13K peak memory consumed over 512 calls from
+  _RNvMs2_NtCs4AT27MZdCSj_10hypercurve7segmentNtB5_12CircularArc215try_from_center
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe6circle
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs_NtNtCs6i54tJFfzR_5alloc3vec21spec_from_iter_nestedINtB6_3VecTNtNtCs4AT27MZdCSj_10hypercurve5curve6Curve2B13_EEINtB4_18SpecFromIterNestedB12_INtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters3map3MapINtNtNtB2t_3ops5range5RangejENCNvNtNtB17_18curve_intersection25circle_support_cost_probes_19support_lookup_cost0EE9from_iterB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+105.56K peak memory consumed over 257557 calls from
+  _RNvMsu_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB5_8Rational23from_reduced_word_parts
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs1g_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational13add_sub_words
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs1n_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8Rational12subtract_ref
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs1X_NtNtCsb4b5m7gcAkc_9hyperreal4real10arithmeticRNtB6_4RealNtNtNtCsgxBkk5gSRhY_4core3ops5arith3Sub3subCs4AT27MZdCSj_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs_NtCs4AT27MZdCSj_10hypercurve5pointNtB4_6Point2NtNtCsgxBkk5gSRhY_4core3cmp9PartialEq2eq
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs6_NtCs4AT27MZdCSj_10hypercurve18curve_intersectionNtB5_27CurveIntersectionBatchCache25circular_support_relation
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+
+
+MOST TEMPORARY ALLOCATIONS
+1024 temporary allocations of 1024 allocations in total (100.00%) from
+  _RNvNtNtCs6uBFykrzWiZ_10num_bigint7biguint7convert11to_radix_le
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs6_NtCs6uBFykrzWiZ_10num_bigint7biguintNtB5_7BigUintNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+1024 temporary allocations of 1024 allocations in total (100.00%) from
+  _RNvNtNtCs6uBFykrzWiZ_10num_bigint7biguint7convert11to_radix_le
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs6_NtCs6uBFykrzWiZ_10num_bigint7biguintNtB5_7BigUintNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+1024 temporary allocations of 1024 allocations in total (100.00%) from
+  _RNvNtNtCs6uBFykrzWiZ_10num_bigint7biguint7convert11to_radix_le
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs6_NtCs6uBFykrzWiZ_10num_bigint7biguintNtB5_7BigUintNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+1024 temporary allocations of 1024 allocations in total (100.00%) from
+  _RNvNtNtCs6uBFykrzWiZ_10num_bigint7biguint7convert11to_radix_le
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs6_NtCs6uBFykrzWiZ_10num_bigint7biguintNtB5_7BigUintNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXs1d_NtNtCsb4b5m7gcAkc_9hyperreal8rational10arithmeticNtB6_8RationalNtNtCsgxBkk5gSRhY_4core3fmt7Display3fmt
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probes_19support_lookup_cost
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvYNCNvNtNtCs4AT27MZdCSj_10hypercurve18curve_intersection25circle_support_cost_probe19support_lookup_cost0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_onceBa_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvCs965H7XVcgUb_4test28___rust_begin_short_backtraceINtNtCsgxBkk5gSRhY_4core6result6ResultuNtNtCs6i54tJFfzR_5alloc6string6StringEFEBQ_EB2_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCNvCs965H7XVcgUb_4test8run_test0B3_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceNCNvCs965H7XVcgUb_4test8run_tests_0uEB1b_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNSNvYNCINvNtNtCs9k3SxhrAWiO_3std6thread9lifecycle15spawn_uncheckedNCNvCs965H7XVcgUb_4test8run_tests_0uEs_0INtNtNtCsgxBkk5gSRhY_4core3ops8function6FnOnceuE9call_once6vtableB17_
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNvMs0_NtNtNtCs9k3SxhrAWiO_3std3sys6thread4unixNtB7_6Thread3new12thread_start
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  start_thread
+    in /lib64/libc.so.6
+  __clone3
+    in /lib64/libc.so.6
+
+17 temporary allocations of 24 allocations in total (70.83%) from
+  _RNvXs4_NtCs6i54tJFfzR_5alloc6stringNtB5_6StringNtNtCsgxBkk5gSRhY_4core5clone5Clone5clone
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvXsH_CscTVapOwMHhT_7getoptsNtB5_8OptGroupNtNtCsgxBkk5gSRhY_4core5clone5Clone5clone
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvMs3_CscTVapOwMHhT_7getoptsNtB5_8OptGroup13long_to_short
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtCs965H7XVcgUb_4test3cli10parse_opts
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvCs965H7XVcgUb_4test16test_main_static
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RINvNtNtCs9k3SxhrAWiO_3std3sys9backtrace28___rust_begin_short_backtraceFEuuECs4AT27MZdCSj_10hypercurve
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNCINvNtCs9k3SxhrAWiO_3std2rt10lang_startuE0Cs4AT27MZdCSj_10hypercurve.llvm.16821001290814974698
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  _RNvNtCs9k3SxhrAWiO_3std2rt19lang_start_internal
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+  main
+    in /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests
+
+
+
+total runtime: 0.25s.
+calls to allocation functions: 811282 (3206648/s)
+temporary memory allocations: 4156 (16426/s)
+peak heap memory consumption: 2.72M
+peak RSS (including heaptrack overhead): 17.42M
+total memory leaked: 8.20K

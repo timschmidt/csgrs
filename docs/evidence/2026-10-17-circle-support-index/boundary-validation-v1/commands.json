@@ -1,0 +1,117 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 10.690377660095692,
+    "binaries": {},
+    "rustdocflags": null,
+    "environment_overrides": {},
+    "address_space_bytes": 8589934592,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "54232f745ada104fb659e259292da01efd48b9e83ab9b704bd38a65cb92f1327"
+  },
+  {
+    "name": "scalar-value-hash",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--release",
+      "unreduced_arithmetic_preserves_canonical_queries_and_hashes",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 77.72042485512793,
+    "binaries": {},
+    "rustdocflags": null,
+    "environment_overrides": {},
+    "address_space_bytes": 8589934592,
+    "stdout_sha256": "b849b07a5561ea2150e9910372d1d1f56c430324936920349fd20ca2e1b4a810",
+    "stderr_sha256": "e6bda11ba60c57602a5436121a03a95f43f7a55b819fdc976d561ccf6328c7e6",
+    "resources_sha256": "350d80eca8839698646a64ba77a36fb17afdb99a55746a2f2ddd5b39a721bf84"
+  },
+  {
+    "name": "ffi-build",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "-p",
+      "csgrs-ffi",
+      "--release",
+      "--message-format=json"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 15.753663568757474,
+    "binaries": {},
+    "rustdocflags": null,
+    "environment_overrides": {},
+    "address_space_bytes": 8589934592,
+    "stdout_sha256": "4dd4504ce0191c37fcee17dd39892ddb6c8235d2c3eb075b0020d62d8653d84d",
+    "stderr_sha256": "be093bc5b7d0d8e596c013e11573e9bfac64af08563960ebf5f81280afe49472",
+    "resources_sha256": "6e9bda1a84c0ebaebeb3c3bd256860f91861e2ed887fedc9158d93475db374d7"
+  },
+  {
+    "name": "ffi-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "csgrs-ffi",
+      "--release",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 4.14311558008194,
+    "binaries": {},
+    "rustdocflags": null,
+    "environment_overrides": {},
+    "address_space_bytes": 8589934592,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f90836a7497327fce9b84c93d83e959af16f2dfa4a7417fe833bec525799be2d",
+    "resources_sha256": "67110217788a29e294a123f365aaebab9d50ca39d28a58ebc2fcd061179ab76b"
+  },
+  {
+    "name": "ffi-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "-p",
+      "csgrs-ffi",
+      "--release",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.48641584999859333,
+    "binaries": {},
+    "rustdocflags": null,
+    "environment_overrides": {},
+    "address_space_bytes": 8589934592,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "da392fbc3ef74c0b08a2cc8d56dfb0cfc504f2bf3caac80e049c0729b867d9ea",
+    "resources_sha256": "fd3c8d6e5d23ff45059f2d9d186883920cb8ee91b3966e55b28d0ea38849c417"
+  }
+]

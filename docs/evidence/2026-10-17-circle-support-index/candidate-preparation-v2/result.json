@@ -1,0 +1,22 @@
+{
+  "complete": true,
+  "base_commit": "da8b64c1948abc26ad06490784165b15143f5def",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2",
+  "source_inputs": 2836,
+  "source_hashes_sha256": "2c390b71d51cda88c4a43927dd484790ce6db63c9ed94371b5da10033520f71c",
+  "runner_sha256": "502a12450f54bc24827b1e1a6024d4017ed2beb975f2702827bd51661fbd85aa",
+  "main_sources_modified": false,
+  "removed_diagnostic_test_only": "crates/hypercurve/src/circle_support_cost_probe.rs",
+  "production_implementation_and_semantic_test_bytes_unchanged_from_v1": true,
+  "changes_from_v1": {
+    "crates/hypercurve/README.md": {
+      "before": "905fc28d5bbb2eab7ef5f355937f44cccebe01ab9af02971a04ea06f765d50b4",
+      "after": "7587b7b82534a4a14502092dffc76f7189afff4f5db73d9e929976b0dff36bbe"
+    },
+    "crates/hypercurve/src/curve_intersection.rs": {
+      "before": "208f5c34e4e183e6107b4389cfa2e98966dfc1874c535f4bcda2003dd4748551",
+      "after": "2b6729bbef6ae8ac1ec95341c0311a299fde90e1a4dd207bb92bc43fc1ac472e"
+    }
+  },
+  "native_runtime_admitted": false
+}

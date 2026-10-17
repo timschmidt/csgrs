@@ -1,0 +1,2576 @@
+{
+  "all_sessions_terminal": {
+    "boundaries": "assertion after failed builds, exit 1; command logs retained and target closed",
+    "cost_builds": "all three direct-rustc builders completed successfully",
+    "expanded_preflight_fallback_and_heap": "all completed successfully",
+    "failed_encoders": "v2 and v3 preflights terminated at recorded baseline failures",
+    "qualification": "normal runner completion, exit 101; full result retained"
+  },
+  "complete": true,
+  "format_exit_code": 0,
+  "physical_artifacts_not_duplicated_in_git": [
+    {
+      "bytes": 40641072,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests",
+      "sha256": "c24d4083306ebdfa9afb4e4667243af53fd87e508be602c6ccb10094d36844bf"
+    },
+    {
+      "bytes": 20076968,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/1fc9389a42a87317b8473de1db8e74f29662c737b67731f9f1d6f075bfe3d19d/diagnostic_formatting-e5ef4baeabfbc955",
+      "sha256": "1fc9389a42a87317b8473de1db8e74f29662c737b67731f9f1d6f075bfe3d19d"
+    },
+    {
+      "bytes": 20543664,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/5159160c5ab9cce2572c1ba00927bcd7f603b10af4aec1b09a952d4ae18ac727/kicad_track_failures-b846f6af7dd90fbe",
+      "sha256": "5159160c5ab9cce2572c1ba00927bcd7f603b10af4aec1b09a952d4ae18ac727"
+    },
+    {
+      "bytes": 43581760,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/6baad32e8bb74146b055115a9bdc63671b78acca9a2aa88db235068631fa8134/kicad_rule_export-c09b25b29b958a07",
+      "sha256": "6baad32e8bb74146b055115a9bdc63671b78acca9a2aa88db235068631fa8134"
+    },
+    {
+      "bytes": 54268976,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e/hyperdrc-f2524bbb15bdb74d",
+      "sha256": "7eb0bc978ce9a3597381f981af6265df6894351598b75c75a165ccc648a7b66e"
+    },
+    {
+      "bytes": 1117544,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/87afe91b185172eaa34cb976ea0a10c8742a8c82d8ae9987ce5e0d2952b1a6ab/readme-990ac56b4fb5e9a5",
+      "sha256": "87afe91b185172eaa34cb976ea0a10c8742a8c82d8ae9987ce5e0d2952b1a6ab"
+    },
+    {
+      "bytes": 4200904,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/8942e10d59d76bb90cea196bc2fb73b88b6f576fd7a44f00599f57ead8432ef6/basic",
+      "sha256": "8942e10d59d76bb90cea196bc2fb73b88b6f576fd7a44f00599f57ead8432ef6"
+    },
+    {
+      "bytes": 6799136,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/9058e50a5c5c541ea2447f1949aeb71b1d73edc82b8ae7bbb9587b0ef8cdc727/artifact_numeric_keys-03d9b7a570505404",
+      "sha256": "9058e50a5c5c541ea2447f1949aeb71b1d73edc82b8ae7bbb9587b0ef8cdc727"
+    },
+    {
+      "bytes": 1079400,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af/hyperdrc-5da1690b41025398",
+      "sha256": "c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af"
+    },
+    {
+      "bytes": 42936544,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/d1a4b3d5960743ed599abc7b6c4c0bfcbee3a8e78101d55a7eaff75c13237e06/hyperdrc",
+      "sha256": "d1a4b3d5960743ed599abc7b6c4c0bfcbee3a8e78101d55a7eaff75c13237e06"
+    },
+    {
+      "bytes": 20810280,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/fd2d0683239dd5203148d373df6d06dcb4fb11c3eae759f5222fbf823a365086/kicad_pad_sources-e4732b4399bed56a",
+      "sha256": "fd2d0683239dd5203148d373df6d06dcb4fb11c3eae759f5222fbf823a365086"
+    },
+    {
+      "bytes": 40649744,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests",
+      "sha256": "75fe536ecc89881e63424938273c202f1dff152951913adfc635f9f39aa8a9ca"
+    },
+    {
+      "bytes": 46724472,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/baseline-tests",
+      "sha256": "de7c77baebe4b4029d61c7596205bb4be590b53e415e0fee22871bef23943be3"
+    },
+    {
+      "bytes": 46944112,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/candidate-tests",
+      "sha256": "84c87af16a20d197364c681a5fe26aab53051f8aa3f11429aa15f4c8ae4bf5eb"
+    },
+    {
+      "bytes": 46725224,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v3/baseline-tests",
+      "sha256": "7c4e27a8ec758c66a624e77d50370d9295e97fac7b85c51717a1c6c7ac00fb68"
+    },
+    {
+      "bytes": 46943664,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v3/candidate-tests",
+      "sha256": "696580347e9669283a73a54b355f7957c08491133a45bfbbd895a6d02e1a110f"
+    },
+    {
+      "bytes": 46920752,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests",
+      "sha256": "ff27d5b18513fea44720bea88d67f9b794ae8897f464932cb16369209fffa79c"
+    },
+    {
+      "bytes": 46936224,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests",
+      "sha256": "9e7baf3a6c280e089294f15f36912952062efeb6384c0f0110b6c49c0bca5946"
+    }
+  ],
+  "proposal_source_only": true,
+  "retained_files": {
+    "assess_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/assess_v1.py",
+      "sha256": "16e7248f6192fcf8c204be452aef37ade69be1348166f492eb3aced934af5c78"
+    },
+    "baseline-preparation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-preparation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-preparation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-preparation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-preparation-v1/main-input-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-preparation-v1/main-input-hashes.json.gz",
+      "sha256": "a10515dfc04b6a0c99c8a516e6186798c6965eea4b26578ca339ebe770e6173a"
+    },
+    "baseline-preparation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-preparation-v1/result.json",
+      "sha256": "cc4f132cf2157b01119d67502fba280d967cbfa823e0cf2cd02b9098ec19b36c"
+    },
+    "baseline-preparation-v1/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-preparation-v1/source-hashes.json.gz",
+      "sha256": "5fe1d6e2e4cdc46f82c66493deff12ce42067b82d328efc85245fc4684967264"
+    },
+    "baseline-validation-v1/binary.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/binary.json",
+      "sha256": "a2348502a48dfdac87696a383dd0074aa53a5221eb448aaa379146c8b2e839fb"
+    },
+    "baseline-validation-v1/build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/build.resources",
+      "sha256": "65465a466010bb40d858df54438a4bda2acedd219b7c5be4cf891c4ca8905ecd"
+    },
+    "baseline-validation-v1/build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/build.stderr",
+      "sha256": "1b3d70b5133a3f453269820e1549655d0f2dc69cc5d63f53354b1ee1e02764fe"
+    },
+    "baseline-validation-v1/build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/build.stdout",
+      "sha256": "c404efcea8f79b8e4614edd6a8968e19501a9aa25f1750cbc593ffdf6ab3f6a8"
+    },
+    "baseline-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/commands.json",
+      "sha256": "cada957f914cd770b9a06de4bc028e66b7bc53d15835cfbad3cdebfc6b6cab8e"
+    },
+    "baseline-validation-v1/contracts.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/contracts.resources",
+      "sha256": "92189422d447c953479ebbe5d18296bceebb2c5bcff8fe8583a2740c707bb239"
+    },
+    "baseline-validation-v1/contracts.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/contracts.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-validation-v1/contracts.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/contracts.stdout",
+      "sha256": "52e50c1b051362a6424991bf838832c58c9dac8fb765e59f8ff22750c466ec55"
+    },
+    "baseline-validation-v1/cost-1.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-1.resources",
+      "sha256": "2076cfcf95b8f5b181451f9a842deb00b39a1dad4d6b4ae2fb7648e4926f1f91"
+    },
+    "baseline-validation-v1/cost-1.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-validation-v1/cost-1.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-1.stdout",
+      "sha256": "08bc3dea7c6000e34bd78cdb35b472c2c3cb18c4ad293141448db56b28891263"
+    },
+    "baseline-validation-v1/cost-128.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-128.resources",
+      "sha256": "7d0eb6524429985bbbec8a0783d1c0c93830d495628ffe35ccc18eee58311018"
+    },
+    "baseline-validation-v1/cost-128.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-128.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-validation-v1/cost-128.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-128.stdout",
+      "sha256": "e613b8339a89e402de20edad6e038438b5a745ad2e179c5049af84ba69157c7b"
+    },
+    "baseline-validation-v1/cost-16.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-16.resources",
+      "sha256": "4c9131f1db4aa62e617a124cbef8410ae9f3bb03ab9a894a7c2091c7148a070d"
+    },
+    "baseline-validation-v1/cost-16.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-16.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-validation-v1/cost-16.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-16.stdout",
+      "sha256": "f3b2bba6ee06303c4cabe087c962ee8a94a6db14fb004de8411102098c7359f5"
+    },
+    "baseline-validation-v1/cost-2048.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-2048.resources",
+      "sha256": "e0c0a71cacd487d5ce3d1424e49bb6d489986602dfedcd7905b34c63069233dd"
+    },
+    "baseline-validation-v1/cost-2048.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-2048.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-validation-v1/cost-2048.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-2048.stdout",
+      "sha256": "160c3544200ca0366b9b42d7dae9d80a614a6f9d207ec74472a49ab2d9adf933"
+    },
+    "baseline-validation-v1/cost-512.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-512.resources",
+      "sha256": "132ed301e9fbc27eae04cb323e21cce1fd2d389bf44cec58e3bf3ff2c897d429"
+    },
+    "baseline-validation-v1/cost-512.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-512.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-validation-v1/cost-512.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/cost-512.stdout",
+      "sha256": "23fc6f0b9b9045e3e3ddec64c6ff20351234039ba38effcc510524d0a63fb343"
+    },
+    "baseline-validation-v1/existing-cache.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/existing-cache.resources",
+      "sha256": "e772b9c764241902b6159a8ffe49c2d96211f208247e1e897349eab4d1c0cd60"
+    },
+    "baseline-validation-v1/existing-cache.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/existing-cache.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-validation-v1/existing-cache.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/existing-cache.stdout",
+      "sha256": "55732c976542f442e41832da5841a95a24518776853a0623d42d5e06c10d875b"
+    },
+    "baseline-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/protocol.json",
+      "sha256": "d6f5fd375ccf2cf8ab22e51a099d17e5651a930a62dfdf209f33252cc052754e"
+    },
+    "baseline-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/result.json",
+      "sha256": "2bdf415f3aa4440c3e52046e244d91abaa8dd237bc8db229acb471a02808e388"
+    },
+    "baseline_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline_v1.py",
+      "sha256": "689b5684389b8607a0c0ea316430d941466b13c31a4ee0118fec634cd88d26c5"
+    },
+    "boundaries_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundaries_v1.py",
+      "sha256": "5b8b2ee32757d0407f9395ebb683582c4228c9c99bdcb6aa9277ae550543d1f6"
+    },
+    "boundary-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/commands.json",
+      "sha256": "6213527b89bb9e777010184d3827d3a7c0759425486370cf1c92543104e395d6"
+    },
+    "boundary-validation-v1/ffi-build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/ffi-build.resources",
+      "sha256": "6e9bda1a84c0ebaebeb3c3bd256860f91861e2ed887fedc9158d93475db374d7"
+    },
+    "boundary-validation-v1/ffi-build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/ffi-build.stderr",
+      "sha256": "be093bc5b7d0d8e596c013e11573e9bfac64af08563960ebf5f81280afe49472"
+    },
+    "boundary-validation-v1/ffi-build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/ffi-build.stdout",
+      "sha256": "4dd4504ce0191c37fcee17dd39892ddb6c8235d2c3eb075b0020d62d8653d84d"
+    },
+    "boundary-validation-v1/ffi-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/ffi-clippy.resources",
+      "sha256": "fd3c8d6e5d23ff45059f2d9d186883920cb8ee91b3966e55b28d0ea38849c417"
+    },
+    "boundary-validation-v1/ffi-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/ffi-clippy.stderr",
+      "sha256": "da392fbc3ef74c0b08a2cc8d56dfb0cfc504f2bf3caac80e049c0729b867d9ea"
+    },
+    "boundary-validation-v1/ffi-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/ffi-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "boundary-validation-v1/ffi-tests.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/ffi-tests.resources",
+      "sha256": "67110217788a29e294a123f365aaebab9d50ca39d28a58ebc2fcd061179ab76b"
+    },
+    "boundary-validation-v1/ffi-tests.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/ffi-tests.stderr",
+      "sha256": "f90836a7497327fce9b84c93d83e959af16f2dfa4a7417fe833bec525799be2d"
+    },
+    "boundary-validation-v1/ffi-tests.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/ffi-tests.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "boundary-validation-v1/format.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/format.resources",
+      "sha256": "54232f745ada104fb659e259292da01efd48b9e83ab9b704bd38a65cb92f1327"
+    },
+    "boundary-validation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "boundary-validation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "boundary-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/protocol.json",
+      "sha256": "1bd857ba87ba20dc88d4acdfdfd7bd2542ad747a5d6d9dde597fdefed161c8ed"
+    },
+    "boundary-validation-v1/scalar-value-hash.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/scalar-value-hash.resources",
+      "sha256": "350d80eca8839698646a64ba77a36fb17afdb99a55746a2f2ddd5b39a721bf84"
+    },
+    "boundary-validation-v1/scalar-value-hash.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/scalar-value-hash.stderr",
+      "sha256": "e6bda11ba60c57602a5436121a03a95f43f7a55b819fdc976d561ccf6328c7e6"
+    },
+    "boundary-validation-v1/scalar-value-hash.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/scalar-value-hash.stdout",
+      "sha256": "b849b07a5561ea2150e9910372d1d1f56c430324936920349fd20ca2e1b4a810"
+    },
+    "boundary-validation-v1/tools.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/boundary-validation-v1/tools.json",
+      "sha256": "5c2a42f35342a7da2366a25f190c92ad86f8d6edef7e2553bc90e737cc7b9c24"
+    },
+    "build_cost_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/build_cost_v2.py",
+      "sha256": "9a587747cece13ff22aff79b50305d14fe34ac980e41fcea4313af3bd729dfec"
+    },
+    "build_cost_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/build_cost_v3.py",
+      "sha256": "3d40d0982f127dcee8a56fd7611edd0fe183a90976c60cec2b1d8a34f1dcd988"
+    },
+    "build_cost_v4.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/build_cost_v4.py",
+      "sha256": "93cb4ab8bdc6f66d8872b36a4b71ba385076230b3d19300d1335384a2cfa82e3"
+    },
+    "cache_contracts_v1.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cache_contracts_v1.rs",
+      "sha256": "988ecdef27d3bc379ac77caef0dd171ac7a4ceeadf7cb70f6f049b4980944c57"
+    },
+    "candidate-preparation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-preparation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-preparation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-preparation-v1/result.json",
+      "sha256": "bbbdcea8e3d0d78177fe2c6561a00fd45a865802948f871510a522e496d5b245"
+    },
+    "candidate-preparation-v1/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-preparation-v1/source-hashes.json.gz",
+      "sha256": "0496d40153ec52aa00ff0aef7e9e0a3daf45f7a6c5f34c43cec88cac78208d56"
+    },
+    "candidate-preparation-v2/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-preparation-v2/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v2/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-preparation-v2/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-preparation-v2/result.json",
+      "sha256": "22e836b2710cffffa4b69dc1ccf456285b026b984688dd02589b5557a9bd3904"
+    },
+    "candidate-preparation-v2/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-preparation-v2/source-hashes.json.gz",
+      "sha256": "2c390b71d51cda88c4a43927dd484790ce6db63c9ed94371b5da10033520f71c"
+    },
+    "candidate-qualification-v2/circuit-all.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/circuit-all.resources",
+      "sha256": "8ad5444b6782030a7b1ebd51610f14d23b21dc083ede1a599ee6a7e55105e0af"
+    },
+    "candidate-qualification-v2/circuit-all.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/circuit-all.stderr",
+      "sha256": "d8890d62b26d54f0b6ec6e1efadc8a881c6e81256f2b581255ce7272f416ea05"
+    },
+    "candidate-qualification-v2/circuit-all.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/circuit-all.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-qualification-v2/circuit-build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/circuit-build.resources",
+      "sha256": "64dbbadfc1d798178f28e918d4bf75c77ed76ef739925d01e480c7f4b9745aca"
+    },
+    "candidate-qualification-v2/circuit-build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/circuit-build.stderr",
+      "sha256": "d8890d62b26d54f0b6ec6e1efadc8a881c6e81256f2b581255ce7272f416ea05"
+    },
+    "candidate-qualification-v2/circuit-build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/circuit-build.stdout",
+      "sha256": "6d02dd6f0a4dce2921cc66ca109879f247b28f5d69c936fc9582d2457f49493e"
+    },
+    "candidate-qualification-v2/clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/clippy.resources",
+      "sha256": "c987cd61b96800180f46fc10f398f48620855ba91da4e0069f5a687d6c2671aa"
+    },
+    "candidate-qualification-v2/clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/clippy.stderr",
+      "sha256": "8bdb3382e3fd07c7dc33789c55e31c12d0dbdbc4f5c556e2feed0e39dcdc6e79"
+    },
+    "candidate-qualification-v2/clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-qualification-v2/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/commands.json",
+      "sha256": "bc66a2733aa1bb49d40463f4b86b725a5ab33ba0e7675223a8b4a3acd3864efc"
+    },
+    "candidate-qualification-v2/copper-neck.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/copper-neck.resources",
+      "sha256": "5f33b6ed6ed37ef38fc9459065941049e3d1e426881a0ec5f250439c7d914dc6"
+    },
+    "candidate-qualification-v2/copper-neck.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/copper-neck.stderr",
+      "sha256": "d00200bcf9f1d5c8429ae0db5ef5282bcf1569480f63b8ce3e10a049c598cfe9"
+    },
+    "candidate-qualification-v2/copper-neck.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/copper-neck.stdout",
+      "sha256": "477125dabb978f2ae5523e81a285e2e3cced82a667a94a75e26506f9689bcd88"
+    },
+    "candidate-qualification-v2/curve-all-build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/curve-all-build.resources",
+      "sha256": "c9b3cc1b2c4b74ee972f37175f58b299b75f8b88f8300f10e7a8e23b9701cdb7"
+    },
+    "candidate-qualification-v2/curve-all-build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/curve-all-build.stderr",
+      "sha256": "cc9465825d864e7cd0a1dc76c92e54553defde9fdb29d2fb069e4fb0a03ed25a"
+    },
+    "candidate-qualification-v2/curve-all-build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/curve-all-build.stdout",
+      "sha256": "2caa19e879ae8d1ce6ea694dddace3e15a6495b56f3659f94b21d510e7b53a56"
+    },
+    "candidate-qualification-v2/curve-all.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/curve-all.resources",
+      "sha256": "1cc83474fa495984df2199738fe93a3b2d97a0b3087548c47d38933d7e3cc912"
+    },
+    "candidate-qualification-v2/curve-all.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/curve-all.stderr",
+      "sha256": "cc9465825d864e7cd0a1dc76c92e54553defde9fdb29d2fb069e4fb0a03ed25a"
+    },
+    "candidate-qualification-v2/curve-all.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/curve-all.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-qualification-v2/docs.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/docs.resources",
+      "sha256": "b678f4d2aa352d0f2635843c14155d8d9593a7b1ac253ed19a1635ced06bc9d9"
+    },
+    "candidate-qualification-v2/docs.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/docs.stderr",
+      "sha256": "e39cca1648e68269180774dc66612a940d5bd8a605baf8e30ffce46b486b00cf"
+    },
+    "candidate-qualification-v2/docs.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/docs.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-qualification-v2/format.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/format.resources",
+      "sha256": "1c6f0f7a51801e921dc409e550160ec1f5dadc1abad983a8aadfb215e21377c4"
+    },
+    "candidate-qualification-v2/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-qualification-v2/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-qualification-v2/full-board.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/full-board.resources",
+      "sha256": "dd7ce13ca44675f1b61f04fcd417738640d9d3cfbb39f5731e963aca4fd4a401"
+    },
+    "candidate-qualification-v2/full-board.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/full-board.stderr",
+      "sha256": "2e23521fa22c91e82b952b89c8e962bf4ce68eb9b8ec43601ce75893726082a1"
+    },
+    "candidate-qualification-v2/full-board.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/full-board.stdout",
+      "sha256": "05630ddad2b0f0b188544833295018c010205986bf4e1af0c27caf1c8734bc8c"
+    },
+    "candidate-qualification-v2/gerber.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/gerber.resources",
+      "sha256": "4e321b4a3decd03a846eccbe39e18cd9bc4eb11e9da5967cf541bfc52e5aa0c3"
+    },
+    "candidate-qualification-v2/gerber.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/gerber.stderr",
+      "sha256": "a850308ef3785230a133c7bd026c6e383dd2bd657f1a5f886422a4c0db902939"
+    },
+    "candidate-qualification-v2/gerber.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/gerber.stdout",
+      "sha256": "f45f8e6ff686f6c78b92d2e4f1d2d683ffbf9bbd4801044070e17f3dd5955053"
+    },
+    "candidate-qualification-v2/native-build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/native-build.resources",
+      "sha256": "ad66a59533b15725bb3efd6b358cab228e60b91b246b47333250af6559b8aa55"
+    },
+    "candidate-qualification-v2/native-build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/native-build.stderr",
+      "sha256": "84ac28b78e6ab9460075db18c114701684a3d8ded1d25968de67e53a3c6b656b"
+    },
+    "candidate-qualification-v2/native-build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/native-build.stdout",
+      "sha256": "8a440a8b2a74e16601be6f91de4462ce7c5f2bb023c5881da66b519ce7530667"
+    },
+    "candidate-qualification-v2/native-cli.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/native-cli.resources",
+      "sha256": "c2d6e621e7c51a4ca8feb57ee8b742e39209316449547595f7f5943e57fef42d"
+    },
+    "candidate-qualification-v2/native-cli.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/native-cli.stderr",
+      "sha256": "ac852a8a4a7331622af7e97d50d2d5ac015752a70dc61163f0e92b42495fd06c"
+    },
+    "candidate-qualification-v2/native-cli.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/native-cli.stdout",
+      "sha256": "0d7f4f8ab357fbd1918cd96f6bd5738eefbea2daad3b94b96b8674612980fb6b"
+    },
+    "candidate-qualification-v2/native-tests.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/native-tests.resources",
+      "sha256": "44dd515ade59a4c9af950d3484d11a54bf8094972825a922588551354acac03c"
+    },
+    "candidate-qualification-v2/native-tests.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/native-tests.stderr",
+      "sha256": "9b7c54bf733b28c251209ef2d819e454997546b44b99b77ce6e47c27db7f4d59"
+    },
+    "candidate-qualification-v2/native-tests.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/native-tests.stdout",
+      "sha256": "e0d36f6bbedf3d0451a26393a9c3f70ad372c5d4aa2ead2d9f952cf2bf3e083f"
+    },
+    "candidate-qualification-v2/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/protocol.json",
+      "sha256": "4c22d11798455ebab2c6f0f9c7a829a4021011332b50b724253382aa0aa7f8ab"
+    },
+    "candidate-qualification-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/result.json",
+      "sha256": "68b707605cf22044d4576630323d89073b5f3150ea43378d6df4ddb8b24cef37"
+    },
+    "candidate-qualification-v2/root-all-build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/root-all-build.resources",
+      "sha256": "dbc17b71d795d1363426c589cf2c30f4058af5e301a25cd5663e8c776048b6ee"
+    },
+    "candidate-qualification-v2/root-all-build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/root-all-build.stderr",
+      "sha256": "15b623c8a7d2e9e73fe094af64521916f6c71ab1b3141a7836da268b46c527cc"
+    },
+    "candidate-qualification-v2/root-all-build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/root-all-build.stdout",
+      "sha256": "d86a3fe5a2a74418b3d04b1da421fd592db5470e6a5fea056cf5939381b90b17"
+    },
+    "candidate-qualification-v2/root-all.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/root-all.resources",
+      "sha256": "0f08aa5dcd38d8c982129903b2e496ad302a7a015155eab7058f779e25780f95"
+    },
+    "candidate-qualification-v2/root-all.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/root-all.stderr",
+      "sha256": "ab5a7641fc01b07e427f5b1dec1dbf0c0fdb015be1eec60d2abb21fb15ca302c"
+    },
+    "candidate-qualification-v2/root-all.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/root-all.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-qualification-v2/root-minimal.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/root-minimal.resources",
+      "sha256": "31e5fb1d9bdcf77a352235bab5781636312aeb76d88109909cab513b12e1328a"
+    },
+    "candidate-qualification-v2/root-minimal.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/root-minimal.stderr",
+      "sha256": "eb465c0398d5f3f0aee6cf7a33c380db71bc188b4567916f240b56006ce62751"
+    },
+    "candidate-qualification-v2/root-minimal.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/root-minimal.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/binary.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/binary.json",
+      "sha256": "06cfb204de2c7ce7a6a126e3d39fde47c94ef3a6373570e252113ded554432eb"
+    },
+    "candidate-validation-v1/build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/build.resources",
+      "sha256": "cb47d7aaa790d7173636aedd2702b66b62b73494628be58f6e744778a57d055e"
+    },
+    "candidate-validation-v1/build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/build.stderr",
+      "sha256": "ba574ba8e81c181204400a38ca16be6b745297ca1f09065c0d321dd31029077f"
+    },
+    "candidate-validation-v1/build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/build.stdout",
+      "sha256": "e774a4b7cc3ba3350c22b10d30835aaf68029954e6bc3fd70f6d3158d41b4f51"
+    },
+    "candidate-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/commands.json",
+      "sha256": "f9fc81888d1b02a5ea08e620404c8cd02e4f77c07c376f74e3234d406f3c5d6d"
+    },
+    "candidate-validation-v1/contracts.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/contracts.resources",
+      "sha256": "a7a4cb2c92dd9f558d675b50a1d283c58944a2aa0ea5e29283e9e125457c4a5a"
+    },
+    "candidate-validation-v1/contracts.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/contracts.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/contracts.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/contracts.stdout",
+      "sha256": "52e50c1b051362a6424991bf838832c58c9dac8fb765e59f8ff22750c466ec55"
+    },
+    "candidate-validation-v1/cost-1.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-1.resources",
+      "sha256": "984864ffc1f3c42938cb22c8cd0bb94ab261698ec4cb972daa3a6b0a9a6e1a6f"
+    },
+    "candidate-validation-v1/cost-1.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/cost-1.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-1.stdout",
+      "sha256": "4f80e423683beced4d94ee762467c5db796be70931a0de138eacb0c5df99e77e"
+    },
+    "candidate-validation-v1/cost-128.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-128.resources",
+      "sha256": "dd700d284ccd3d425bdce075440449f39983467818dfb038621f83bd74f80272"
+    },
+    "candidate-validation-v1/cost-128.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-128.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/cost-128.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-128.stdout",
+      "sha256": "a787cb1a92ee89e2ee685ff0e1114f2c0e2115cbc7747775583da85fe46e4c55"
+    },
+    "candidate-validation-v1/cost-16.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-16.resources",
+      "sha256": "56d461f8b6ae0957c4bad342e08d693b82d321204027a4f4675cd99010eb7a46"
+    },
+    "candidate-validation-v1/cost-16.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-16.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/cost-16.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-16.stdout",
+      "sha256": "ad7cb8d1539d9315c89227c4aeb1f7f5fed2e92910c2fc407b450c99b23b9400"
+    },
+    "candidate-validation-v1/cost-2048.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-2048.resources",
+      "sha256": "f0b47fdd364d55544898e5d1049a4c84333bd6219cc0364c2263370ccb0d4a26"
+    },
+    "candidate-validation-v1/cost-2048.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-2048.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/cost-2048.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-2048.stdout",
+      "sha256": "a43bb4de4eb45d352cc82d2795a34fcf00ecfda785dcd18a9df4f285b0f8c1c8"
+    },
+    "candidate-validation-v1/cost-512.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-512.resources",
+      "sha256": "77e50b7182404790390508833da9174bb3d79028451d65ad35247f7d51dea02c"
+    },
+    "candidate-validation-v1/cost-512.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-512.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/cost-512.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/cost-512.stdout",
+      "sha256": "81be467695c5ee564a3c472b645b20be6ba2a6d6c1c47f334580ce037d99514d"
+    },
+    "candidate-validation-v1/existing-cache.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/existing-cache.resources",
+      "sha256": "488e94b4732ec60c25744032f08a827049c9978dc9033f291583078cca071804"
+    },
+    "candidate-validation-v1/existing-cache.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/existing-cache.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/existing-cache.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/existing-cache.stdout",
+      "sha256": "55732c976542f442e41832da5841a95a24518776853a0623d42d5e06c10d875b"
+    },
+    "candidate-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/protocol.json",
+      "sha256": "6d63b7555759c62d88b4f3f2f83b98157911b9ee884c7f824c71e1418858916a"
+    },
+    "candidate-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/result.json",
+      "sha256": "2bdf415f3aa4440c3e52046e244d91abaa8dd237bc8db229acb471a02808e388"
+    },
+    "candidate_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate_v1.py",
+      "sha256": "c35ed7ce0fe27208675161c9a258264e49ecad650530e388b92c5798e82d9d0c"
+    },
+    "checkpoint_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/checkpoint_v1.py",
+      "sha256": "2fc485657f75585df2b2f3847f7378d2d1b4fcaef414b0141d6c83484936f29b"
+    },
+    "compare_preflight_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/compare_preflight_v1.py",
+      "sha256": "ccaed01b15fc6a783bdf5649bbc40e124c4158195d8e1e1878805bb0f85ac476"
+    },
+    "contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/contract-v1.md",
+      "sha256": "5c75dfd8800b4d826fa113456f80d6ea91ce77513a283f9bc51c77688411f8e7"
+    },
+    "cost-build-v2/baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/baseline.resources",
+      "sha256": "48e016401fd4ea999b79091ae4651a8f2b11487377f62d448ebe47b858de241c"
+    },
+    "cost-build-v2/baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v2/baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/baseline.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v2/candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/candidate.resources",
+      "sha256": "ce3c5baadd4378f33d8164dd2e84e7473bc294f4ad70bb583c54ffb2b781b8a6"
+    },
+    "cost-build-v2/candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v2/candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/candidate.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v2/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/commands.json",
+      "sha256": "340c416e0b4544675f282832ebfdec9ac672f8c035fdaa78c465e36c883cb3f6"
+    },
+    "cost-build-v2/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/protocol.json",
+      "sha256": "1c652c68c26ebef2d90b6075575c4771e6856c81dd830efa180fa484f4b2c8c9"
+    },
+    "cost-build-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v2/result.json",
+      "sha256": "7a22263159984a749ebe600066fda6b44b929305a30783513bde1d03416ceeac"
+    },
+    "cost-build-v3/baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v3/baseline.resources",
+      "sha256": "91ba067be188249d92d06cf4f918ab359c5812771c7f4da30b161106702d1167"
+    },
+    "cost-build-v3/baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v3/baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v3/baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v3/baseline.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v3/candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v3/candidate.resources",
+      "sha256": "253a919c8c6ba49e363cc0c1ac18b2307a9f06b60406058091f336ec8a8fa915"
+    },
+    "cost-build-v3/candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v3/candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v3/candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v3/candidate.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v3/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v3/commands.json",
+      "sha256": "28db15970955f274731856e06617832689c5fab73e2c9091e91faf1059c91526"
+    },
+    "cost-build-v3/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v3/protocol.json",
+      "sha256": "4d1f90488081807236ceda7da4f37e89b054c26e1c24000ad2f18eb7397a0a3f"
+    },
+    "cost-build-v3/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v3/result.json",
+      "sha256": "77005de9fa044865782f3742e5b7b0b0290249185810e5a65ecc9a71c8c91973"
+    },
+    "cost-build-v4/baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline.resources",
+      "sha256": "e2b6ea8d93e2b2f35c64ed740b647c1cab92947605eb6eeebd90cd228d747ba6"
+    },
+    "cost-build-v4/baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v4/baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v4/candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate.resources",
+      "sha256": "2dfb53bf8d99a6d84166bcd7602b78f3f136c48af27bc9dac1fa6a3ffe50b217"
+    },
+    "cost-build-v4/candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v4/candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-build-v4/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/commands.json",
+      "sha256": "c0a31dcd7f246a74a484ed33ab390473da0e33a23307d709ec7025db77324b84"
+    },
+    "cost-build-v4/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/protocol.json",
+      "sha256": "84e74973144d77b208fa2694ce3b2d607fc593165bc48a96be2ff4658150b340"
+    },
+    "cost-build-v4/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/result.json",
+      "sha256": "5dd90963edad36548c7c9ef1b9ebff69590dde19f7d5bc77997011f27bfc5dca"
+    },
+    "cost-encoder-correction-v3.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-encoder-correction-v3.json",
+      "sha256": "b2f96275b6b318dccc24311245fe91a031a49e5a958830f9ec86e4f43de1cfd5"
+    },
+    "cost-encoder-correction-v4.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-encoder-correction-v4.json",
+      "sha256": "65d20f3f6fae377ad2eb277bf3195eb426edeeb02c153016bd85a043a284d969"
+    },
+    "cost-fallback-v5/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/commands.json",
+      "sha256": "6083841ca59bf1f3beae31a203cf7ab5834efd4912d63df7f4741b1c99436756"
+    },
+    "cost-fallback-v5/mixed-128-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-0-baseline.resources",
+      "sha256": "bc04050ebd3d790631446c013bd16756f9197a8b0f263a379c5209b1e9e4f6ca"
+    },
+    "cost-fallback-v5/mixed-128-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-0-baseline.stdout",
+      "sha256": "816152ac57c3855b0b91dad21e314ebf96ba88b86c79723de562c67d800c213d"
+    },
+    "cost-fallback-v5/mixed-128-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-0-candidate.resources",
+      "sha256": "2264c8c809abddf1bda7c131d4a8d91805320c632f6b00ca490a07c7cbfcb363"
+    },
+    "cost-fallback-v5/mixed-128-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-0-candidate.stdout",
+      "sha256": "6133c26403154ff14edb849be5f5083357201f4e28529e751d0efe7c7a5fdabb"
+    },
+    "cost-fallback-v5/mixed-128-1-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-1-baseline.resources",
+      "sha256": "6e4ddfda3a0b8724b156945aae0be898fe9caa2161d7341b3401f1f4e2043e7a"
+    },
+    "cost-fallback-v5/mixed-128-1-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-1-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-1-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-1-baseline.stdout",
+      "sha256": "455000be774dcc52dbee8801bfd06ddb86fe320cbc183efc99b297258727b9a8"
+    },
+    "cost-fallback-v5/mixed-128-1-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-1-candidate.resources",
+      "sha256": "0c88274f9d8518a6fd2c9e5a8bb1e41992167125ee6b8c66ba5107b98228f366"
+    },
+    "cost-fallback-v5/mixed-128-1-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-1-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-1-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-1-candidate.stdout",
+      "sha256": "ac5431dfe871bd2a1f77d988fc3727c8ae8f4c16b6aa33c795a974d509aa089b"
+    },
+    "cost-fallback-v5/mixed-128-2-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-2-baseline.resources",
+      "sha256": "e48ae791f64b01e9c487045b16b7c00c30b81295fb4ff7c2a601fb55ac7a311d"
+    },
+    "cost-fallback-v5/mixed-128-2-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-2-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-2-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-2-baseline.stdout",
+      "sha256": "906217a20d087c76bb76216e72be83516aca0480d71c9a2b954703e0e764a15d"
+    },
+    "cost-fallback-v5/mixed-128-2-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-2-candidate.resources",
+      "sha256": "2ff982ad44d0eef91542bc5224ffea3dfbabd63e5d9845f91f9c4367d49b72b8"
+    },
+    "cost-fallback-v5/mixed-128-2-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-2-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-2-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-2-candidate.stdout",
+      "sha256": "ac24df8a221ab51bb9096f71b2390254f65edb1fe766005220f697ea3421672a"
+    },
+    "cost-fallback-v5/mixed-128-3-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-3-baseline.resources",
+      "sha256": "082ef9bc69db6019dd0433abec2901964ebd33ebbe69a063ef51ec74313e0c06"
+    },
+    "cost-fallback-v5/mixed-128-3-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-3-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-3-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-3-baseline.stdout",
+      "sha256": "d5f4deabc5af9a10a33a75d3a43625e8ffc822e4b08cabd09957acb055ef2d81"
+    },
+    "cost-fallback-v5/mixed-128-3-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-3-candidate.resources",
+      "sha256": "55fe23ba88360d918118c08c1598bf52dca0e414a88f03a06c960ff20f181615"
+    },
+    "cost-fallback-v5/mixed-128-3-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-3-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-3-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-3-candidate.stdout",
+      "sha256": "537af644285d8a5df122776068287c979d79c432a3b1b7e3725d30aa085ca2ea"
+    },
+    "cost-fallback-v5/mixed-128-4-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-4-baseline.resources",
+      "sha256": "053669c2c1c58e6759fbf65219c7c957d6378cc99925b8de9963654e2f5f4c6d"
+    },
+    "cost-fallback-v5/mixed-128-4-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-4-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-4-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-4-baseline.stdout",
+      "sha256": "9b64ac1ce8dff14f368b31fd3a74cf02e296df483f9e86a23b3ae8b2d0e2a142"
+    },
+    "cost-fallback-v5/mixed-128-4-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-4-candidate.resources",
+      "sha256": "3cd2ae033c7655ddf9994e6a1651e063ae97f4b4cf4796cee0ab9e8319091d87"
+    },
+    "cost-fallback-v5/mixed-128-4-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-4-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-4-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-4-candidate.stdout",
+      "sha256": "3f0282e7a5e2a28662b76eaf70aa303d7111c89c848d3a90840b954e2144727d"
+    },
+    "cost-fallback-v5/mixed-128-5-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-5-baseline.resources",
+      "sha256": "72f2eef5fa71efb459c1d9a82780db80f128d5ad751f2ecb8fe03d7ca5e75852"
+    },
+    "cost-fallback-v5/mixed-128-5-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-5-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-5-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-5-baseline.stdout",
+      "sha256": "aa282df5277609201da5f3781f77c5e9ccb8cfe5dec542a88eca2505e2a7f88d"
+    },
+    "cost-fallback-v5/mixed-128-5-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-5-candidate.resources",
+      "sha256": "4f5f4ec6c9f22f40b6f3b93852799dbcc033f96f2b92d8d2dc9934f551a1b64e"
+    },
+    "cost-fallback-v5/mixed-128-5-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-5-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-5-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-5-candidate.stdout",
+      "sha256": "06ca070170857e08b4dbd64b20bf578e8bc1a19f261437db1b0261760acb215d"
+    },
+    "cost-fallback-v5/mixed-128-6-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-6-baseline.resources",
+      "sha256": "cabb24fa1195e386c0c0598a9e197729904711361e5711bd7cef582925a7739b"
+    },
+    "cost-fallback-v5/mixed-128-6-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-6-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-6-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-6-baseline.stdout",
+      "sha256": "59417fb2fd32c5b9373592dee26cb5b55248cde4bddfcb25b6a38fd7767e88ec"
+    },
+    "cost-fallback-v5/mixed-128-6-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-6-candidate.resources",
+      "sha256": "b638bf3ecdfcc605b7b4ee5fa3a3fa9aa52c3933b0a102c4611dee223d907ed9"
+    },
+    "cost-fallback-v5/mixed-128-6-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-6-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-128-6-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-128-6-candidate.stdout",
+      "sha256": "8592dced70dc86add388597c2ce50226a17acf81ac5b7d543cd2b1615759237f"
+    },
+    "cost-fallback-v5/mixed-512-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-0-baseline.resources",
+      "sha256": "f7ba5797288e8e52ae1322577646fd953c60dce90956d16a2880d122d3bad142"
+    },
+    "cost-fallback-v5/mixed-512-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-0-baseline.stdout",
+      "sha256": "6341a4ff800b827d98a308784b32b3bc9daa99d16f8e2985786e746fd9ea6bd1"
+    },
+    "cost-fallback-v5/mixed-512-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-0-candidate.resources",
+      "sha256": "66ca900114845e4de3c81fc7b00d7be61b17a6f138840ac7ee357873543aaf94"
+    },
+    "cost-fallback-v5/mixed-512-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-0-candidate.stdout",
+      "sha256": "43469336bf3d40b98a35c135454f7edfad37f91516dd7101cd97edd78bd660d3"
+    },
+    "cost-fallback-v5/mixed-512-1-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-1-baseline.resources",
+      "sha256": "6def729a56299dcaa4e1d9d117a5a1e1660c42f8e96c910b80afbcac959e29b3"
+    },
+    "cost-fallback-v5/mixed-512-1-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-1-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-1-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-1-baseline.stdout",
+      "sha256": "cbb7c3404993c151e83ce191686692229e6032b2dc95767d3481daa4201b5d14"
+    },
+    "cost-fallback-v5/mixed-512-1-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-1-candidate.resources",
+      "sha256": "dd14dccd3e14443a253ff0477c5d1ef466a21cab0895b44bec6e0813cf8b6453"
+    },
+    "cost-fallback-v5/mixed-512-1-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-1-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-1-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-1-candidate.stdout",
+      "sha256": "1d76df966fdfe9d3addb623d25e0b8dcac7cd458c8ee19be29251bea7a1e2c26"
+    },
+    "cost-fallback-v5/mixed-512-2-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-2-baseline.resources",
+      "sha256": "5ec6b44f380f0c9b2bd7320d7be8940e99e6cca9657294c84b6edbada33f2155"
+    },
+    "cost-fallback-v5/mixed-512-2-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-2-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-2-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-2-baseline.stdout",
+      "sha256": "0e0b9f1e26c8e78d8d10c0c9e747bab51a84f83db0c681604120d5a58b564c7e"
+    },
+    "cost-fallback-v5/mixed-512-2-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-2-candidate.resources",
+      "sha256": "52da838c41cb6a2dbb47de7e3a122580aef8bafdd315d9de61d6e0761046e2a5"
+    },
+    "cost-fallback-v5/mixed-512-2-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-2-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-2-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-2-candidate.stdout",
+      "sha256": "d31ebf6824f9630de336a08565f848a598f8c7eaa5f6065db25da0731164e60e"
+    },
+    "cost-fallback-v5/mixed-512-3-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-3-baseline.resources",
+      "sha256": "d7e55d9499d9414c995ca52269a70cf6399bc57f45e7de345366e9cf503230f1"
+    },
+    "cost-fallback-v5/mixed-512-3-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-3-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-3-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-3-baseline.stdout",
+      "sha256": "aa98f37a77db75157234e1418b23541e0259e3ba63e2c70e924655a38f66aeda"
+    },
+    "cost-fallback-v5/mixed-512-3-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-3-candidate.resources",
+      "sha256": "83ef20d9382681564e66d6439ea4d9b7a95c11e7be33b6d6312295f18696c4c7"
+    },
+    "cost-fallback-v5/mixed-512-3-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-3-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-3-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-3-candidate.stdout",
+      "sha256": "2068d3dca44f773dd59f36c386d70225d96a2e560e0243286281fd1a7ae42416"
+    },
+    "cost-fallback-v5/mixed-512-4-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-4-baseline.resources",
+      "sha256": "51fe4b52fe56fecfb6468e686be1cf151eb4aef779fa9485b69964e8cf6bda61"
+    },
+    "cost-fallback-v5/mixed-512-4-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-4-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-4-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-4-baseline.stdout",
+      "sha256": "699c94e64c0f4f13ef7f483c3d38d67e9534d7c107ccdcaa7481614d2c61af93"
+    },
+    "cost-fallback-v5/mixed-512-4-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-4-candidate.resources",
+      "sha256": "fbb5b3f86491c3d8f18215d9353c6f12577cb5a38703730f417bd1cb5b38a32a"
+    },
+    "cost-fallback-v5/mixed-512-4-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-4-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-4-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-4-candidate.stdout",
+      "sha256": "6d8e1d57fcc1728697e00e7a70c86d7271153ae1e3da96f3822cc37bc6a7eef1"
+    },
+    "cost-fallback-v5/mixed-512-5-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-5-baseline.resources",
+      "sha256": "c484f728313fc5c582b71acc71cfc02a10b1a3d3e1e3887e7a549395df7b40ac"
+    },
+    "cost-fallback-v5/mixed-512-5-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-5-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-5-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-5-baseline.stdout",
+      "sha256": "97975e69741616829553b94fde2c8c08985f55f0778b078514addb57a67ad301"
+    },
+    "cost-fallback-v5/mixed-512-5-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-5-candidate.resources",
+      "sha256": "d3e40de41839114443fd4d1ef4bfe70b3f07ecc1c61ba05f2e5afc13c3238027"
+    },
+    "cost-fallback-v5/mixed-512-5-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-5-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-5-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-5-candidate.stdout",
+      "sha256": "9b5335ac9b8fff44a99cfad957268b966b6200974b72108cf1388b899fc1ce91"
+    },
+    "cost-fallback-v5/mixed-512-6-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-6-baseline.resources",
+      "sha256": "a666219b003e81c0639a0268ad0ba74197233dd96d0328177e15bafc5145c4ce"
+    },
+    "cost-fallback-v5/mixed-512-6-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-6-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-6-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-6-baseline.stdout",
+      "sha256": "ba964a5d14a3adf1442d44f3ac1bd14480b86f2d6f5c47e55be360fdd6e0a03d"
+    },
+    "cost-fallback-v5/mixed-512-6-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-6-candidate.resources",
+      "sha256": "f471b5aba6372faeb167f1ed7c196c69b04b90201dc92ead21ff3e712efccd2f"
+    },
+    "cost-fallback-v5/mixed-512-6-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-6-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/mixed-512-6-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/mixed-512-6-candidate.stdout",
+      "sha256": "8c60c8102a155ea16f67c06f4ff4918bd3bec5bf98fd8952d26af01f33ebc7a8"
+    },
+    "cost-fallback-v5/observations.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/observations.json",
+      "sha256": "068d1790b1e253e17491d4ecd1d45c28b1270600b7415c697d32c675f8f490ac"
+    },
+    "cost-fallback-v5/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/protocol.json",
+      "sha256": "1f5e115f2b3cb385888c1f69c080dda3fb6f1dce5298d0d4a2680c2c8e08ace4"
+    },
+    "cost-fallback-v5/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/result.json",
+      "sha256": "68355dcfe991849305161cf452f5a8ae878a02d9e4c70cd6408f0482fa14e786"
+    },
+    "cost-fallback-v5/symbolic-128-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-0-baseline.resources",
+      "sha256": "caa116c437c116d13e404510caa48889a36d06a591e56bf7a95986359c39fc86"
+    },
+    "cost-fallback-v5/symbolic-128-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-0-baseline.stdout",
+      "sha256": "84c5ebb0e04b00cd444445048485de7bd3ce670b54d7480ac224e194e32ce4c0"
+    },
+    "cost-fallback-v5/symbolic-128-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-0-candidate.resources",
+      "sha256": "184f807e553f2c95290ea60a7db29631fcb045fe8e7e007c6023ea5f9c143c3a"
+    },
+    "cost-fallback-v5/symbolic-128-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-0-candidate.stdout",
+      "sha256": "3279d10ad3836e9d466de018689f084862ce221eddc13c7cb869d1efdf8158b7"
+    },
+    "cost-fallback-v5/symbolic-128-1-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-1-baseline.resources",
+      "sha256": "06b48bc8e93e842711f6351ef6f18af9f83b63226c6ddc2505f658bb4864ec2b"
+    },
+    "cost-fallback-v5/symbolic-128-1-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-1-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-1-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-1-baseline.stdout",
+      "sha256": "a33f01d844ddfec7b0b6a37d505e67b35e1acb64fa765649da44e8d4a2ac4290"
+    },
+    "cost-fallback-v5/symbolic-128-1-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-1-candidate.resources",
+      "sha256": "6461bf325b242205b6dd0d74f16cde4bd18b350af0c9d021fb720e15c72178fd"
+    },
+    "cost-fallback-v5/symbolic-128-1-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-1-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-1-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-1-candidate.stdout",
+      "sha256": "f358e607b97fb8f79f5d9fe427369e284300a869ef2cde91975a92fa4343be77"
+    },
+    "cost-fallback-v5/symbolic-128-2-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-2-baseline.resources",
+      "sha256": "60ff3142f63f314b84c123fc9a8edd88e8ef43cd2ab408e12cddac806b2ccc63"
+    },
+    "cost-fallback-v5/symbolic-128-2-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-2-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-2-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-2-baseline.stdout",
+      "sha256": "cb01bac2512c93148f1bb5218db39363cda954b3a3be79cd474d47b113d6726d"
+    },
+    "cost-fallback-v5/symbolic-128-2-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-2-candidate.resources",
+      "sha256": "893f0fe4878b442dd14f7a95960eb741ec00ff5915e1ee459ca8dd82c4a2f489"
+    },
+    "cost-fallback-v5/symbolic-128-2-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-2-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-2-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-2-candidate.stdout",
+      "sha256": "0703cd66c00469ee4ce1672089fc2fc84cbe0ba9c639fe217374312d6f66bf40"
+    },
+    "cost-fallback-v5/symbolic-128-3-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-3-baseline.resources",
+      "sha256": "1e27181dc958ff8945ca9d127e59fad6ffbc03cf7dd50b995ab660f46f69a2d5"
+    },
+    "cost-fallback-v5/symbolic-128-3-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-3-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-3-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-3-baseline.stdout",
+      "sha256": "b1fb1ed1ba6fa6281c9832a205d2e7f12903ec30c4f576e4aed07240072c82da"
+    },
+    "cost-fallback-v5/symbolic-128-3-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-3-candidate.resources",
+      "sha256": "384d1630fbcbfc496aa7396cc37c33f7cda6f37e58142d2060ad6e3232f7a1b3"
+    },
+    "cost-fallback-v5/symbolic-128-3-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-3-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-3-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-3-candidate.stdout",
+      "sha256": "5dde026db626553e0b1d525faa1e4decf356059277b774e58601c2772c4ea574"
+    },
+    "cost-fallback-v5/symbolic-128-4-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-4-baseline.resources",
+      "sha256": "e48df2df8c038016ce1e07dad41d44cd87e55c6dc932a4a71054c478cfc18924"
+    },
+    "cost-fallback-v5/symbolic-128-4-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-4-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-4-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-4-baseline.stdout",
+      "sha256": "56b3574b93479bbccedfc59adaa6a8d6aff5058edf4379d08a6f0788f24b7bca"
+    },
+    "cost-fallback-v5/symbolic-128-4-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-4-candidate.resources",
+      "sha256": "63becac35ed7364a4f548be5689bddaf10066c6b4bc599ca939001bb0b2e6f38"
+    },
+    "cost-fallback-v5/symbolic-128-4-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-4-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-4-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-4-candidate.stdout",
+      "sha256": "815439c4e8c38c230af50a1b0e4ba520ae257ac6d7cb8753e55a99d93a3d57b7"
+    },
+    "cost-fallback-v5/symbolic-128-5-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-5-baseline.resources",
+      "sha256": "c8519881c8aaa7dc082243becc608aade1f3a2f802070bbbdfb413940a382859"
+    },
+    "cost-fallback-v5/symbolic-128-5-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-5-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-5-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-5-baseline.stdout",
+      "sha256": "d92d89c05eb3ee39d0ef53dcced0a3fd79dc03a2bb51a21ae72a7f261dbb8d37"
+    },
+    "cost-fallback-v5/symbolic-128-5-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-5-candidate.resources",
+      "sha256": "dd415bd5d66031a318220891dab92c35890f99c48884410ecbee05180a8d4d81"
+    },
+    "cost-fallback-v5/symbolic-128-5-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-5-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-5-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-5-candidate.stdout",
+      "sha256": "15046b6b7b7c40176fad00888f1876552cea4e5e348e760ae3a6a4b4ba64ee22"
+    },
+    "cost-fallback-v5/symbolic-128-6-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-6-baseline.resources",
+      "sha256": "b4628938b326d09f9722c833a87af31d1518ef6a467b3681bfae050d51de451f"
+    },
+    "cost-fallback-v5/symbolic-128-6-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-6-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-6-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-6-baseline.stdout",
+      "sha256": "ecd39752ea982a6e8bd7dcf0064cb2df1d667222d77b2f236852148efb8321d0"
+    },
+    "cost-fallback-v5/symbolic-128-6-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-6-candidate.resources",
+      "sha256": "6b11103556eb7640e04cd791f7046cfd28e69c1f7754bcca6a7faa0cb3bd3853"
+    },
+    "cost-fallback-v5/symbolic-128-6-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-6-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-128-6-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-128-6-candidate.stdout",
+      "sha256": "12e2c028bdce25d115ba1b6e4d80833c13aa724a9ed2cc231693c661fe70efc9"
+    },
+    "cost-fallback-v5/symbolic-512-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-0-baseline.resources",
+      "sha256": "c96df54a4e8fcdfcbeecb48e636dfaf5c2b01925bb62fe44f2d3062369415e0f"
+    },
+    "cost-fallback-v5/symbolic-512-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-0-baseline.stdout",
+      "sha256": "5ab32a2e7dd5eb720dc4f57c0522897e2c167aa6abc89308a95b7660e920303e"
+    },
+    "cost-fallback-v5/symbolic-512-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-0-candidate.resources",
+      "sha256": "c1b2b89a4c23a476051fce586c788758f2eeb2a22010ab59ebe98ca8a218dacb"
+    },
+    "cost-fallback-v5/symbolic-512-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-0-candidate.stdout",
+      "sha256": "c29563cf9eee1f92f15db19f8b690f2c10d2fc1d662e766a5d0ec70ac190f9cc"
+    },
+    "cost-fallback-v5/symbolic-512-1-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-1-baseline.resources",
+      "sha256": "a474497e476a105a906a437743f60a8fbdaaa37199cc0e3be20d383e9a1b2adb"
+    },
+    "cost-fallback-v5/symbolic-512-1-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-1-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-1-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-1-baseline.stdout",
+      "sha256": "c0d002aa06a25fb165141c08011dd2f25b4e352b11370e8c1e01b2faa76da81c"
+    },
+    "cost-fallback-v5/symbolic-512-1-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-1-candidate.resources",
+      "sha256": "1d6c1008aa798f83c23561cd9275e080a7b55cb9b2afdc19fba2556d202979eb"
+    },
+    "cost-fallback-v5/symbolic-512-1-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-1-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-1-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-1-candidate.stdout",
+      "sha256": "61843cea23664492589564955c1259bc35800330a86e503a279f8e0883240db9"
+    },
+    "cost-fallback-v5/symbolic-512-2-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-2-baseline.resources",
+      "sha256": "3c233095cbf76b4a4bc44a26a359046318f44bfdd66479a3357197656dd6f209"
+    },
+    "cost-fallback-v5/symbolic-512-2-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-2-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-2-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-2-baseline.stdout",
+      "sha256": "89682c0b77e364c599aa88fe548db15d4806aa31a899bbd6fa54bfa4cbaaafb9"
+    },
+    "cost-fallback-v5/symbolic-512-2-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-2-candidate.resources",
+      "sha256": "5bdf821eb2e7b403b8176dc20b6482e9705af4ad371402cfd9ebb976dddda5fc"
+    },
+    "cost-fallback-v5/symbolic-512-2-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-2-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-2-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-2-candidate.stdout",
+      "sha256": "dfec7fe518f49c941af43b927bbf650aaba556f27f351407e3f3e9c75aa3c2cf"
+    },
+    "cost-fallback-v5/symbolic-512-3-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-3-baseline.resources",
+      "sha256": "301965fc2bc893b8fd675b42935bafbf762e09cef3f97eff3bc64e371c780f8c"
+    },
+    "cost-fallback-v5/symbolic-512-3-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-3-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-3-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-3-baseline.stdout",
+      "sha256": "cc5f769a4c66e3a1519b9149ddff4cf659ec7d0468eb3642266ddb22aa8dc0da"
+    },
+    "cost-fallback-v5/symbolic-512-3-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-3-candidate.resources",
+      "sha256": "9110c64fcbf8c625f11d1fcf622bfb4346c53f6d586d65ab41d2006216b57075"
+    },
+    "cost-fallback-v5/symbolic-512-3-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-3-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-3-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-3-candidate.stdout",
+      "sha256": "d8f95e6134ccf536f29c79e320a1615a108b9603beb1c4a641513c53e4102562"
+    },
+    "cost-fallback-v5/symbolic-512-4-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-4-baseline.resources",
+      "sha256": "01e1aef34e01b8777755345023d4711a530dcba056e4c2f133f3f813f0f733bc"
+    },
+    "cost-fallback-v5/symbolic-512-4-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-4-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-4-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-4-baseline.stdout",
+      "sha256": "871825afc5b77fa85bbfc0e6b4c9d14fca31e8cdcae55acbf62e3c42cc1e93d7"
+    },
+    "cost-fallback-v5/symbolic-512-4-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-4-candidate.resources",
+      "sha256": "a8c38cde59ba5cea97c1168b19a3f7d7616bcee73f05b77df4727bd28db29d5f"
+    },
+    "cost-fallback-v5/symbolic-512-4-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-4-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-4-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-4-candidate.stdout",
+      "sha256": "a3365f9266d7af1849111a397f7dfb2fe165462e398779a8993d9713301a722b"
+    },
+    "cost-fallback-v5/symbolic-512-5-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-5-baseline.resources",
+      "sha256": "effb4598268873e1bfe39968b0ecad6499846fe8439c7480f257f3826ad0c230"
+    },
+    "cost-fallback-v5/symbolic-512-5-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-5-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-5-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-5-baseline.stdout",
+      "sha256": "b669c6256ac183d0234c86c1ad726ea7f6c3ac67a0c3d758c25fa044e2b2769f"
+    },
+    "cost-fallback-v5/symbolic-512-5-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-5-candidate.resources",
+      "sha256": "65dc7bf37bdbe7604320e61061b136dda5437ffa9762014b34a2226c6a95c196"
+    },
+    "cost-fallback-v5/symbolic-512-5-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-5-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-5-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-5-candidate.stdout",
+      "sha256": "67e41534fee9af60fb067f98898d9a8083c3e576f6073adddd534dec26e57a12"
+    },
+    "cost-fallback-v5/symbolic-512-6-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-6-baseline.resources",
+      "sha256": "51f20301321c5b2d1bd74323d5848f5c34060ddd5367088ac82a01a913a77eca"
+    },
+    "cost-fallback-v5/symbolic-512-6-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-6-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-6-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-6-baseline.stdout",
+      "sha256": "cabad43506dc25fa4239fc84d73c9a70f8ed54f37bfb3b6b477ea9fe4b93d770"
+    },
+    "cost-fallback-v5/symbolic-512-6-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-6-candidate.resources",
+      "sha256": "a5b8dd8eb036f66745359a3dc1639fb8cbbff0271a4a13a0fd811c2bc9dc3093"
+    },
+    "cost-fallback-v5/symbolic-512-6-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-6-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-fallback-v5/symbolic-512-6-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-fallback-v5/symbolic-512-6-candidate.stdout",
+      "sha256": "ac184991afb195db7dd6c475fe4d68c65bf0754a57f3687981a23cb2b65f78a8"
+    },
+    "cost-preflight-v2/baseline-contracts.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/baseline-contracts.resources",
+      "sha256": "6976b9a9ccc5e36196ad525588961894d63d0e5955737641c7e677dfa94b0c0b"
+    },
+    "cost-preflight-v2/baseline-contracts.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/baseline-contracts.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/baseline-contracts.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/baseline-contracts.stdout",
+      "sha256": "52e50c1b051362a6424991bf838832c58c9dac8fb765e59f8ff22750c466ec55"
+    },
+    "cost-preflight-v2/candidate-contracts.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/candidate-contracts.resources",
+      "sha256": "4ac664cab80e0de972c7e8500967a0b53f0aaeb5f5f03a1f77874dcd92c00214"
+    },
+    "cost-preflight-v2/candidate-contracts.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/candidate-contracts.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-contracts.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/candidate-contracts.stdout",
+      "sha256": "52e50c1b051362a6424991bf838832c58c9dac8fb765e59f8ff22750c466ec55"
+    },
+    "cost-preflight-v2/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/commands.json",
+      "sha256": "0e8f85d3942867a29153527cfcbf4600476d0c5ea2d10b3e23cab783d244d580"
+    },
+    "cost-preflight-v2/mixed-512-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/mixed-512-0-baseline.resources",
+      "sha256": "c72c837166d60cc3a25bfb84c9ebb8be5c59b5791ba04be28da9daf68091528d"
+    },
+    "cost-preflight-v2/mixed-512-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/mixed-512-0-baseline.stderr",
+      "sha256": "73339feedd4dbd8e8f82983816edc7264695add1d52ce5001237516312be3a3d"
+    },
+    "cost-preflight-v2/mixed-512-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/mixed-512-0-baseline.stdout",
+      "sha256": "708f798b66e159be8186f479784bd5d12993fc11208dff60483062c256a5060c"
+    },
+    "cost-preflight-v2/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v2/protocol.json",
+      "sha256": "d0e04111952eb57fb643d950cc8e362b199b9d8c3340b0739b48669e8e7ec5f6"
+    },
+    "cost-preflight-v3/baseline-contracts.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/baseline-contracts.resources",
+      "sha256": "eec3ca56275168068f4c849032deb4fb1d5aff6f1a2f54a940b42f02ce10b35a"
+    },
+    "cost-preflight-v3/baseline-contracts.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/baseline-contracts.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-contracts.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/baseline-contracts.stdout",
+      "sha256": "52e50c1b051362a6424991bf838832c58c9dac8fb765e59f8ff22750c466ec55"
+    },
+    "cost-preflight-v3/candidate-contracts.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/candidate-contracts.resources",
+      "sha256": "bb5036f084fd0fe8feeb7db2b7049a0dcff4f35b9d6f4967036aca7a447aaf32"
+    },
+    "cost-preflight-v3/candidate-contracts.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/candidate-contracts.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/candidate-contracts.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/candidate-contracts.stdout",
+      "sha256": "52e50c1b051362a6424991bf838832c58c9dac8fb765e59f8ff22750c466ec55"
+    },
+    "cost-preflight-v3/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/commands.json",
+      "sha256": "e636496aabfb684de4888b16506fb30c104aae74a059abf7eebd8dcd0cf033fd"
+    },
+    "cost-preflight-v3/mixed-512-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/mixed-512-0-baseline.resources",
+      "sha256": "26be1731bf02bdd8d8aee75610d22a013d922714e366913ed14c95ef73138593"
+    },
+    "cost-preflight-v3/mixed-512-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/mixed-512-0-baseline.stderr",
+      "sha256": "9000e06403c15a0a6ed4d9d5e8afc56a7b16d07712b73eca00cf24a3195ad8db"
+    },
+    "cost-preflight-v3/mixed-512-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/mixed-512-0-baseline.stdout",
+      "sha256": "708f798b66e159be8186f479784bd5d12993fc11208dff60483062c256a5060c"
+    },
+    "cost-preflight-v3/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v3/protocol.json",
+      "sha256": "26f7472b5ae5913e290dce4f154baf41b79437161fdee6048f9f85c2479680cb"
+    },
+    "cost-preflight-v4/baseline-contracts.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/baseline-contracts.resources",
+      "sha256": "f4d1dba3ee984636d46b63c8c062a76d471e84320128561b41fb177bda7d1935"
+    },
+    "cost-preflight-v4/baseline-contracts.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/baseline-contracts.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/baseline-contracts.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/baseline-contracts.stdout",
+      "sha256": "52e50c1b051362a6424991bf838832c58c9dac8fb765e59f8ff22750c466ec55"
+    },
+    "cost-preflight-v4/candidate-contracts.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/candidate-contracts.resources",
+      "sha256": "d9e60a345aab68c9967b0d7e94e580ac1fefb9fdb485669c4f2a7868063e99c2"
+    },
+    "cost-preflight-v4/candidate-contracts.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/candidate-contracts.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/candidate-contracts.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/candidate-contracts.stdout",
+      "sha256": "52e50c1b051362a6424991bf838832c58c9dac8fb765e59f8ff22750c466ec55"
+    },
+    "cost-preflight-v4/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/commands.json",
+      "sha256": "213ea46e218f42b4fe8ee5754dbcd549125e0921749dd156cc56a7a3cdc057a8"
+    },
+    "cost-preflight-v4/mixed-128-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-128-0-baseline.resources",
+      "sha256": "bae4b180ee8a97f0edbef14ed06943ca5b7b35d0d9d6c92c0faf1b247d71af81"
+    },
+    "cost-preflight-v4/mixed-128-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-128-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/mixed-128-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-128-0-baseline.stdout",
+      "sha256": "decc6561975b009a12dd7ccb68e2f358e4844783a2b70e6e019814fb36c23455"
+    },
+    "cost-preflight-v4/mixed-128-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-128-0-candidate.resources",
+      "sha256": "29e3355606fa11be25b7c6b080c02d2229d905d799553d9a1cab30333d58ce27"
+    },
+    "cost-preflight-v4/mixed-128-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-128-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/mixed-128-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-128-0-candidate.stdout",
+      "sha256": "a49ae4f91a908ec39284a553eab658c36f7647c2c51eb7c61b1c3b2f6b05a303"
+    },
+    "cost-preflight-v4/mixed-512-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-512-0-baseline.resources",
+      "sha256": "a05b2617095f81183a3a99686d14de18da1dfa876685a14ee45afc9515c9e79e"
+    },
+    "cost-preflight-v4/mixed-512-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-512-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/mixed-512-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-512-0-baseline.stdout",
+      "sha256": "6a9c60e338387958e8a6ad3eca792a766188605263ac86c6f1fec92b9fd4659a"
+    },
+    "cost-preflight-v4/mixed-512-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-512-0-candidate.resources",
+      "sha256": "8ea2daee3a60803d17845d0631d7cbb6daca6abce07cf0c375ba1d6c641e7aad"
+    },
+    "cost-preflight-v4/mixed-512-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-512-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/mixed-512-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/mixed-512-0-candidate.stdout",
+      "sha256": "5e18cca1e1baff5a4663d8aa9bb7246c84432a25bcc6ef07032fb6b778d83e4e"
+    },
+    "cost-preflight-v4/observations.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/observations.json",
+      "sha256": "5d6235b57bb8434fbadabeec38daa9900333d1e054a52c74b19b6e51ab6ff44e"
+    },
+    "cost-preflight-v4/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/protocol.json",
+      "sha256": "ba7175617ed7aa44963dd9e0e79fd88ed42c2c620769fb1fcfbd6b3885562839"
+    },
+    "cost-preflight-v4/rational-1-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-1-0-baseline.resources",
+      "sha256": "9f79ba1ec7df8ce94cf23ebbe6f5c8daf97b015da7d8b966bffa8d30cf17916b"
+    },
+    "cost-preflight-v4/rational-1-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-1-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-1-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-1-0-baseline.stdout",
+      "sha256": "5a55ac164de8aa2b2ef06d090f3a281a22ee66580c56242c9fb1608ffbac3b02"
+    },
+    "cost-preflight-v4/rational-1-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-1-0-candidate.resources",
+      "sha256": "181f35ad943889d4964eb1eb18a17054e0e4b1248c64171d658eeb3664e36c4d"
+    },
+    "cost-preflight-v4/rational-1-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-1-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-1-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-1-0-candidate.stdout",
+      "sha256": "bd922966afc112e80185741901851f400d4e57c8e79878c74e897fcbe9b73f38"
+    },
+    "cost-preflight-v4/rational-128-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-128-0-baseline.resources",
+      "sha256": "6edb63c36f52be7c7a45b955752f7338b951ea6bc7a6dc02c341b529742028ac"
+    },
+    "cost-preflight-v4/rational-128-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-128-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-128-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-128-0-baseline.stdout",
+      "sha256": "5be0266eb16ce8ebd90aba9b197c82b309df398c674fe150fe68333a7a585c8f"
+    },
+    "cost-preflight-v4/rational-128-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-128-0-candidate.resources",
+      "sha256": "9c636b04a09326b1cf76663c745e56c335429b4f0a2aca9272e8df39daacfd2c"
+    },
+    "cost-preflight-v4/rational-128-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-128-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-128-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-128-0-candidate.stdout",
+      "sha256": "2c795dd9c71fba19917d7beff364f62c325dc429a16b1e6d95baeba6e0516138"
+    },
+    "cost-preflight-v4/rational-16-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-16-0-baseline.resources",
+      "sha256": "cf04c5d363083daee464feddf388366384d749c4e2599329e52ca22fa80c1dfb"
+    },
+    "cost-preflight-v4/rational-16-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-16-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-16-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-16-0-baseline.stdout",
+      "sha256": "da5804b88d181c0c06821b14945663a2f5ea2c9c48536c7adec4f08c27234cac"
+    },
+    "cost-preflight-v4/rational-16-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-16-0-candidate.resources",
+      "sha256": "d299a2c252aaa9042e45d1a34cf4de0ab77aa7893092fedc5172c2e6c9923e1f"
+    },
+    "cost-preflight-v4/rational-16-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-16-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-16-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-16-0-candidate.stdout",
+      "sha256": "6a28752ad437a43d20e910de972bdf2e42227afdb8851bac8030eba6d8db073e"
+    },
+    "cost-preflight-v4/rational-2048-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-2048-0-baseline.resources",
+      "sha256": "8f173a62eae1361283f4342b414c071ec29089c0e3ed9ce9f610cc4be46cb6a4"
+    },
+    "cost-preflight-v4/rational-2048-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-2048-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-2048-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-2048-0-baseline.stdout",
+      "sha256": "1e9775b1e9e7e38b3d0e8b3d446fbee27e9723cf0309d2991ecd28a90a696262"
+    },
+    "cost-preflight-v4/rational-2048-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-2048-0-candidate.resources",
+      "sha256": "98eb1924f12dba7f63b556f7a4dbd2b0f88275ff119d65cb5bf6d0f6323b4379"
+    },
+    "cost-preflight-v4/rational-2048-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-2048-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-2048-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-2048-0-candidate.stdout",
+      "sha256": "a62be7dabca607f74390310ccc209bacadc12934d4e153236c70b01ac715c58c"
+    },
+    "cost-preflight-v4/rational-512-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-512-0-baseline.resources",
+      "sha256": "9a5304b17fcb38275f31b21933f09fafce803ab0abeb51485fbd4666eb4340f6"
+    },
+    "cost-preflight-v4/rational-512-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-512-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-512-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-512-0-baseline.stdout",
+      "sha256": "7d300a8789892003e2f42864fc8c20085c55fd4ce02fbc427b7fa1d22b45adf5"
+    },
+    "cost-preflight-v4/rational-512-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-512-0-candidate.resources",
+      "sha256": "6dbbe2a2ce12855e4cbbe437126576f38bfb426e90155014c277c771db7c3fbe"
+    },
+    "cost-preflight-v4/rational-512-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-512-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-512-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-512-0-candidate.stdout",
+      "sha256": "5f9c0a5292adffc5211eb0c9697b2515f3fbfe85bc58ba275029398497b076a1"
+    },
+    "cost-preflight-v4/rational-8192-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-8192-0-baseline.resources",
+      "sha256": "f02d6b90eeeb349ee4f208e9249d6fc7675d286edad42dfdbc8e4bfcd623b387"
+    },
+    "cost-preflight-v4/rational-8192-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-8192-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-8192-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-8192-0-baseline.stdout",
+      "sha256": "244aedd28f36d87a49b68a1d465f5b809653b0aeaa56429e9e7042e4c4320b81"
+    },
+    "cost-preflight-v4/rational-8192-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-8192-0-candidate.resources",
+      "sha256": "5e83f5290c2dda46bf015377f77c675f95f579087d8bf6bff4248eaa4afed6ac"
+    },
+    "cost-preflight-v4/rational-8192-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-8192-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/rational-8192-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/rational-8192-0-candidate.stdout",
+      "sha256": "0f1abb36fccad32e5a5db5e7a894dac14d52ccab2cd386617e24ab32a51937f1"
+    },
+    "cost-preflight-v4/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/result.json",
+      "sha256": "5fc2ca5a1882ff2b447d6e57993c824a49231fffa71dbf6cd1d8bdecbedbdc2d"
+    },
+    "cost-preflight-v4/subrange-128-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/subrange-128-0-baseline.resources",
+      "sha256": "d419ed0c0c12b5a207856672c005e7348a364e58d72556f157a723724148035e"
+    },
+    "cost-preflight-v4/subrange-128-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/subrange-128-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/subrange-128-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/subrange-128-0-baseline.stdout",
+      "sha256": "52221098939a90a1e9ec52d5fde32cd5794a2a2b729d762d76a054faa83b8b01"
+    },
+    "cost-preflight-v4/subrange-128-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/subrange-128-0-candidate.resources",
+      "sha256": "4ad856db1b5275e9d55291f54b3c81f19c1ec303d24fbd6da66728a497d48acf"
+    },
+    "cost-preflight-v4/subrange-128-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/subrange-128-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/subrange-128-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/subrange-128-0-candidate.stdout",
+      "sha256": "c6c063a67bde8a890b790c73e212c52a521dc58ce9a3e2c60d34bc07bf6532a1"
+    },
+    "cost-preflight-v4/superrange-128-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/superrange-128-0-baseline.resources",
+      "sha256": "24cddf5246675de51d452a03f639b488d543b89d8b2363a96b4b4d2ad3ea0e2f"
+    },
+    "cost-preflight-v4/superrange-128-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/superrange-128-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/superrange-128-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/superrange-128-0-baseline.stdout",
+      "sha256": "657a6181639660099aaa7d34feda51be28e8d076b2e51b33f1c94a303bb68815"
+    },
+    "cost-preflight-v4/superrange-128-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/superrange-128-0-candidate.resources",
+      "sha256": "82434e669f94bc32c1c6819d3c520487198810b83e60b42c7abd1654452eed47"
+    },
+    "cost-preflight-v4/superrange-128-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/superrange-128-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/superrange-128-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/superrange-128-0-candidate.stdout",
+      "sha256": "ff63257c25bd3c808869578ae3bda20ec9dda17b223bb047b1135c77937d6376"
+    },
+    "cost-preflight-v4/symbolic-128-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-128-0-baseline.resources",
+      "sha256": "e8a08e0eb2233bd9f83a642317e3830856efb1a5ca1bdba3f458b4232aef9126"
+    },
+    "cost-preflight-v4/symbolic-128-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-128-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/symbolic-128-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-128-0-baseline.stdout",
+      "sha256": "ab90ee96d46fd94232d9a236ce044cad9262b35a305d0b404f999c582519a602"
+    },
+    "cost-preflight-v4/symbolic-128-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-128-0-candidate.resources",
+      "sha256": "79f9d01e83072bcc94815c87249e392f073309cc5fd8cb4e10e90584d4f861c1"
+    },
+    "cost-preflight-v4/symbolic-128-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-128-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/symbolic-128-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-128-0-candidate.stdout",
+      "sha256": "7c4579d3653c4aefb2c152f99135c051381c24a19f45a0cd7a151191f2f0f9b8"
+    },
+    "cost-preflight-v4/symbolic-512-0-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-512-0-baseline.resources",
+      "sha256": "755a2d29602beaa24a1c0af51d61a53a427f4fdeef045a43b7c1a2820ddca229"
+    },
+    "cost-preflight-v4/symbolic-512-0-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-512-0-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/symbolic-512-0-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-512-0-baseline.stdout",
+      "sha256": "5b15e0a53bdfdc4c36ee72ec640aaf3b0c368f88d8850c91ea1008a76d9702f5"
+    },
+    "cost-preflight-v4/symbolic-512-0-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-512-0-candidate.resources",
+      "sha256": "b68ec97da502a374eb6fb5c32a82d856ce0969c10dbf174064fc06ad00b94e96"
+    },
+    "cost-preflight-v4/symbolic-512-0-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-512-0-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v4/symbolic-512-0-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/symbolic-512-0-candidate.stdout",
+      "sha256": "735dcc68b7bc515a69e7b8b9ad75c0899630788c29c224420eeb42806a7771e6"
+    },
+    "cost_probe_v1.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost_probe_v1.rs",
+      "sha256": "55a502191d4fecd10259db76979ec8b7316767e772c575dfed01f6249e337728"
+    },
+    "cost_probe_v2.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost_probe_v2.rs",
+      "sha256": "04ce3b74953d72df53acade30c75fe4a8c7b17a67b49d3738c0286a00a9d91d9"
+    },
+    "cost_probe_v3.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost_probe_v3.rs",
+      "sha256": "a84ebe58dcf774744aae32cddd3a429584772fdf69d472baa981cdf248971bd8"
+    },
+    "cost_probe_v4.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost_probe_v4.rs",
+      "sha256": "5d0878e77598a7de0759c7aaa57152230c88eb9db2e87952f0f4fe785af2e359"
+    },
+    "decision-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/decision-v1.json",
+      "sha256": "00685409b6ac7fdf9ca4e8eddcae58db9f0ace77e580aef0a589814f7d750823"
+    },
+    "heap-preflight-v1/baseline-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/baseline-allocations.zst",
+      "sha256": "b75d31c57f13743b8329e8353f16c620dadb6e763bb88825bbc4380b70cca3c6"
+    },
+    "heap-preflight-v1/baseline-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/baseline-print.resources",
+      "sha256": "80e5521dc2def13b15d81d5d5aceacb5c7920b016389fc15652a768807674e51"
+    },
+    "heap-preflight-v1/baseline-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/baseline-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v1/baseline-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/baseline-print.stdout",
+      "sha256": "5d717ed0a1b04a19e967c8127bbe8d9b7ff7e8294c6ac0e272d8f3da247c2e7e"
+    },
+    "heap-preflight-v1/baseline-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/baseline-record.resources",
+      "sha256": "0da91d4cf95d4e1e28e1f021b9d9b6b23b2ce9ccaaf993378e7ab020315f4890"
+    },
+    "heap-preflight-v1/baseline-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/baseline-record.stderr",
+      "sha256": "b99d056369c9ba74f42b3ad324d2e94376ff0a315e0923ddef2a720ded64f469"
+    },
+    "heap-preflight-v1/baseline-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/baseline-record.stdout",
+      "sha256": "dff12650825f72d0a4ced457049f9df77e027f62fcae9d1a14e3e165156e56ae"
+    },
+    "heap-preflight-v1/candidate-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/candidate-allocations.zst",
+      "sha256": "2392141b27f7e71705577ef6385389194234d072ce7ebb35e7baa22df026c096"
+    },
+    "heap-preflight-v1/candidate-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/candidate-print.resources",
+      "sha256": "60fd90c54367a8881c14349ffb10a2f5bc253209c8ae35e4fb34baf9556e7734"
+    },
+    "heap-preflight-v1/candidate-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/candidate-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v1/candidate-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/candidate-print.stdout",
+      "sha256": "a61144a7888a68f5a75c071a66df41a73e7cc10245c590ced7ac3a4e2c4c7c93"
+    },
+    "heap-preflight-v1/candidate-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/candidate-record.resources",
+      "sha256": "cbde99de60da90a0b2f48d4464a9e0967e14ff6bd4be41a4d6f7c6ee46ed6e10"
+    },
+    "heap-preflight-v1/candidate-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/candidate-record.stderr",
+      "sha256": "8dc493b1d8bfbe4377c6375fc58131f18ed0bb65c4c5250d26a9fac468caf20c"
+    },
+    "heap-preflight-v1/candidate-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/candidate-record.stdout",
+      "sha256": "a2d48878d244f0ce138d54744ae64447bf150bcd1d0d92c71d24e7dc8cfb06c4"
+    },
+    "heap-preflight-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/commands.json",
+      "sha256": "10711234b94b70bbda8756a154a4550c1b07f103a9a617385d7efc62f199470d"
+    },
+    "heap-preflight-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/protocol.json",
+      "sha256": "3bdb7c55072c0b5922985166a027500c91f3ff2f9887e262042ebd2a45ca42d4"
+    },
+    "heap-preflight-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/result.json",
+      "sha256": "708d9068ac64df5789bd981d929c2b085153a73fa5a50e3e6a28bcece2be571f"
+    },
+    "heap-preflight-v4/baseline-size.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/baseline-size.resources",
+      "sha256": "2d91c188b2b8357501073285fcac3d8d39fcaf57afa732233a77d91b28198c78"
+    },
+    "heap-preflight-v4/baseline-size.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/baseline-size.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/baseline-size.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/baseline-size.stdout",
+      "sha256": "fd62858dcd3d8a5c118f111f7f9785ee9740440083fde292ab78a9383555bc69"
+    },
+    "heap-preflight-v4/candidate-size.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/candidate-size.resources",
+      "sha256": "c907a3737abe3745d2e52bad215a9f016853ba922ff3a8f66866be69f88e356d"
+    },
+    "heap-preflight-v4/candidate-size.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/candidate-size.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/candidate-size.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/candidate-size.stdout",
+      "sha256": "4cc75afa553860bfadbae2b13e793bc2931502b4acbb0e2168b34a7123a6eedc"
+    },
+    "heap-preflight-v4/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/commands.json",
+      "sha256": "267a258c57f6130b7d36323432be567e6176440abfb48052831aa82c94545857"
+    },
+    "heap-preflight-v4/measurements.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/measurements.json",
+      "sha256": "6d770938b1a44458143f2d6505f6d6861dc811d631690dfb131406367eb43000"
+    },
+    "heap-preflight-v4/mixed-128-baseline-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline-allocations.zst",
+      "sha256": "b228f4e00b803c53d731efc70bf38c3b1c136fb7a34c76541079f12b374323ce"
+    },
+    "heap-preflight-v4/mixed-128-baseline-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline-print.resources",
+      "sha256": "220eae1f63aed98e609713260c7031b1be9e794d524f776af192fc206936dbe4"
+    },
+    "heap-preflight-v4/mixed-128-baseline-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/mixed-128-baseline-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline-print.stdout",
+      "sha256": "943730c29197b157a62975a085cb61369e3153663d049da19ecb545f182aadb9"
+    },
+    "heap-preflight-v4/mixed-128-baseline-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline-record.resources",
+      "sha256": "4fb64e01a6ad2904b30a3d7cdb37326228561ff000fd745a69c407e079517ca4"
+    },
+    "heap-preflight-v4/mixed-128-baseline-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline-record.stderr",
+      "sha256": "994a9228feeb122e36f5a7d5e033483426a5be3aad27525d1c2d9ecd69b44a23"
+    },
+    "heap-preflight-v4/mixed-128-baseline-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline-record.stdout",
+      "sha256": "89058bcc16239c9ca1f9d8b3eea5e38e2324ae8ce21ced42eddc11cab5ec5055"
+    },
+    "heap-preflight-v4/mixed-128-baseline.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-baseline.massif",
+      "sha256": "3493ab1bb7f45f4e72e6b5f8c7d633d720290b61d47c058ceef888bf7afad643"
+    },
+    "heap-preflight-v4/mixed-128-candidate-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate-allocations.zst",
+      "sha256": "924ee0dca30ac487010295f2f8a9e54d419a1cedbf051a871341c30e84505c92"
+    },
+    "heap-preflight-v4/mixed-128-candidate-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate-print.resources",
+      "sha256": "d41f04816f2fa763e39f5c890895d0be358ac4af8a017fbfb8bc5cd78a0aa3a9"
+    },
+    "heap-preflight-v4/mixed-128-candidate-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/mixed-128-candidate-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate-print.stdout",
+      "sha256": "da3e6df161cf1e8590b05ab957155125cc10c4e64933c455c6f732b79b422528"
+    },
+    "heap-preflight-v4/mixed-128-candidate-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate-record.resources",
+      "sha256": "68f02387cb8694e07251fe7f75a954e75c2a1da71e9052ea3d4514b6dc3bda19"
+    },
+    "heap-preflight-v4/mixed-128-candidate-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate-record.stderr",
+      "sha256": "33b686e007eb2d76c5e4196d887fdafb1e50cfab35dd723ce8b60c0e715c181c"
+    },
+    "heap-preflight-v4/mixed-128-candidate-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate-record.stdout",
+      "sha256": "a425ec1819b807469b8a776ac94269b4a2727934fc7696b066befe948cd561b3"
+    },
+    "heap-preflight-v4/mixed-128-candidate.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/mixed-128-candidate.massif",
+      "sha256": "b9de4e85e14a2ca17af76684e2e89ab64cbb807d71123858a7c7835413181951"
+    },
+    "heap-preflight-v4/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/protocol.json",
+      "sha256": "ae869174347ef7ba13c9dc91d5e9f8879768f56d02c7146228f143575138bb54"
+    },
+    "heap-preflight-v4/rational-1-baseline-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline-allocations.zst",
+      "sha256": "8a5ffe47c9ee25c623c482a51f259c2bdb661694b65b7417ef57520b0f5c80ad"
+    },
+    "heap-preflight-v4/rational-1-baseline-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline-print.resources",
+      "sha256": "fd83c45860f5004becf1f970f873470160f9c10dd24fd7791b11d355379c9c7e"
+    },
+    "heap-preflight-v4/rational-1-baseline-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/rational-1-baseline-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline-print.stdout",
+      "sha256": "efbbaa81c938f0e04069ae991cbd597006451cb4326b902407a15ea02ab59ea1"
+    },
+    "heap-preflight-v4/rational-1-baseline-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline-record.resources",
+      "sha256": "5de4d8af752e9e01cc98077b097d019f7240aa7c012419928dcefe7b23da8445"
+    },
+    "heap-preflight-v4/rational-1-baseline-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline-record.stderr",
+      "sha256": "6b8d6ff8abcaf431e9f71a0720c470b53c600a8801a669088e6ba102b2f6770c"
+    },
+    "heap-preflight-v4/rational-1-baseline-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline-record.stdout",
+      "sha256": "c5ca177bce2eebb3ef0e5d679402b79facc17f8725de488f917380ecc382c135"
+    },
+    "heap-preflight-v4/rational-1-baseline.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-baseline.massif",
+      "sha256": "2d5ef17547775e5d9cf181f4d838ed3d3007d5cdb50b0cb32c0c6fa16de9afca"
+    },
+    "heap-preflight-v4/rational-1-candidate-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-allocations.zst",
+      "sha256": "c63fb7b0e709fb786999192008b64682faff56d6a55e370cd6fae8cfcde72f69"
+    },
+    "heap-preflight-v4/rational-1-candidate-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-print.resources",
+      "sha256": "b589de724166f5a274ac59077829f53944e50fe6947bb10b7e94a8b9155de19d"
+    },
+    "heap-preflight-v4/rational-1-candidate-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/rational-1-candidate-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-print.stdout",
+      "sha256": "3a378d10b2442ecca6263732d49368178eee0f6b4160e4c4f85f45db2d2d1a01"
+    },
+    "heap-preflight-v4/rational-1-candidate-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-record.resources",
+      "sha256": "9521f4f4e047998adcc3cf4564b72c0faff916eef4ed96ff9974822ffa78f81b"
+    },
+    "heap-preflight-v4/rational-1-candidate-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-record.stderr",
+      "sha256": "6faf06673ae02a1e39ada09d8585e28efe7f43a83896b85f90699b818140d75e"
+    },
+    "heap-preflight-v4/rational-1-candidate-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate-record.stdout",
+      "sha256": "e4db90c2454b4488c2cc90428b91f46d37e6bb00c2ee0324dcfba91ab6f71766"
+    },
+    "heap-preflight-v4/rational-1-candidate.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-1-candidate.massif",
+      "sha256": "40a7ba4cf5cf96fb61221f189d4f4641f8ca9288155d66c85d85d20325ccd9da"
+    },
+    "heap-preflight-v4/rational-2048-baseline-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline-allocations.zst",
+      "sha256": "572925a0d3be59dc727712eebd77e9a206e8a75577969348871b3566e9e250bd"
+    },
+    "heap-preflight-v4/rational-2048-baseline-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline-print.resources",
+      "sha256": "3ede278ef869dd345c3363af6967d3fe79b58b6062a6edf1c65ebf5798c69eb9"
+    },
+    "heap-preflight-v4/rational-2048-baseline-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/rational-2048-baseline-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline-print.stdout",
+      "sha256": "eb1ae45c0304508e1d335be25a2f9a4c028efaa306f8af24a077bd3f45fffb7b"
+    },
+    "heap-preflight-v4/rational-2048-baseline-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline-record.resources",
+      "sha256": "fb071e1cf629ffed151aabe8caf5dc133608b9672a69504795cd8e6806717778"
+    },
+    "heap-preflight-v4/rational-2048-baseline-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline-record.stderr",
+      "sha256": "d90d0c271db706052943f3cf6169ddcd5c6fdfa36f372b5ebe6606ba09c56bba"
+    },
+    "heap-preflight-v4/rational-2048-baseline-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline-record.stdout",
+      "sha256": "dee6967c08e6643f247176b53d9840669c901b6e5d326468582270536b5621ed"
+    },
+    "heap-preflight-v4/rational-2048-baseline.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-baseline.massif",
+      "sha256": "c7238d5e1d158c698b90a844a80ab7ce039050db1d92bfe2dcb9189265097711"
+    },
+    "heap-preflight-v4/rational-2048-candidate-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate-allocations.zst",
+      "sha256": "8821927ccac3d2e54aca3f5e02c2e0f5d9ca0dccc5375feedd348e5f9272a2eb"
+    },
+    "heap-preflight-v4/rational-2048-candidate-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate-print.resources",
+      "sha256": "c896c4139c0f73502697fe055d7161a6b8e537d187f04e3f0f36785e455df5f0"
+    },
+    "heap-preflight-v4/rational-2048-candidate-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/rational-2048-candidate-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate-print.stdout",
+      "sha256": "a55dbeb84ea9184397bff4fbb0a5389cd2b3daa86699366bffaf6c381e28d1e7"
+    },
+    "heap-preflight-v4/rational-2048-candidate-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate-record.resources",
+      "sha256": "d08b60ef5512435705acb11b7e3e6bbb86d4506e55dd512fc43a083431efb1a8"
+    },
+    "heap-preflight-v4/rational-2048-candidate-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate-record.stderr",
+      "sha256": "ca6ad0c84a5903c43ff8875df7c31e64c5cdfef92412e2bce6bb549c7329d2d6"
+    },
+    "heap-preflight-v4/rational-2048-candidate-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate-record.stdout",
+      "sha256": "bfe8c0d463b0e77ffb48635b519677e1408b4aa302c48a076bb394f259409586"
+    },
+    "heap-preflight-v4/rational-2048-candidate.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-2048-candidate.massif",
+      "sha256": "95efdbc5edc75250de258bd3167f100b5c90b9cf230442830bd3ea2d77cd9107"
+    },
+    "heap-preflight-v4/rational-512-baseline-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline-allocations.zst",
+      "sha256": "9042fb1da0143494e8efbfb6c7b587139afc7055cb8a89efc09446e7e2578d6e"
+    },
+    "heap-preflight-v4/rational-512-baseline-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline-print.resources",
+      "sha256": "a16eb769a672b0d86dc1857fd91b3dd6dc40aa948b0841b53e074ba819446d4f"
+    },
+    "heap-preflight-v4/rational-512-baseline-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/rational-512-baseline-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline-print.stdout",
+      "sha256": "cacd4840ad8f187845f9826dec47e1cad1b6db34a331ce3fb510f1d5db1e423a"
+    },
+    "heap-preflight-v4/rational-512-baseline-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline-record.resources",
+      "sha256": "8b5bdbf4969e20bb45c468e169ff39e5033554dbe4ecec9f3339b27af373dceb"
+    },
+    "heap-preflight-v4/rational-512-baseline-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline-record.stderr",
+      "sha256": "007e14d2d3b553141b5cd1f51dbb0fe54c3f63889eeb0d2bb9ac6b5e13f63ee8"
+    },
+    "heap-preflight-v4/rational-512-baseline-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline-record.stdout",
+      "sha256": "b8cf4fc7ec55e585557202a67f077cd4eee10119a0d2a37bab78f4f4b9e8bfbf"
+    },
+    "heap-preflight-v4/rational-512-baseline.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-baseline.massif",
+      "sha256": "b169a3dff5d7c0f84259c9aa18118c2aa2e454eebba866529438f235593e8c5a"
+    },
+    "heap-preflight-v4/rational-512-candidate-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate-allocations.zst",
+      "sha256": "10bef203494741f937d23c495c70b69ef18f3c5594986e88983fe44278a7c092"
+    },
+    "heap-preflight-v4/rational-512-candidate-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate-print.resources",
+      "sha256": "1f8326aec2602987a577350e33e844abdb171c5a8de4b6a68098b6a97297f981"
+    },
+    "heap-preflight-v4/rational-512-candidate-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/rational-512-candidate-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate-print.stdout",
+      "sha256": "b5d217265e7eb1b134e22e550c5e87ca08e9bba12c59bf8d57815e4dce194324"
+    },
+    "heap-preflight-v4/rational-512-candidate-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate-record.resources",
+      "sha256": "90d77dea82cfa6ab9ec9777b826c68daafcd30cff6b4939819c5883f51515d6f"
+    },
+    "heap-preflight-v4/rational-512-candidate-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate-record.stderr",
+      "sha256": "058e4d343d90efa32248f4e9bb5d56d5a64e56ce753984beafe475c94bdf36b4"
+    },
+    "heap-preflight-v4/rational-512-candidate-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate-record.stdout",
+      "sha256": "038df5bc3a004bc6ed6e7a130bfc770656885a2a10cb1c0469ce6ef4b52b99c5"
+    },
+    "heap-preflight-v4/rational-512-candidate.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/rational-512-candidate.massif",
+      "sha256": "ec36a57e3c05cabce3f1d6ac0ec05d2989edcd8b560fa00bbd0bcd4f5aed229a"
+    },
+    "heap-preflight-v4/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/result.json",
+      "sha256": "2fa8490116ba139bbb948ccf00de8d4f5fc84174589a1b92fe343d558c7beb6d"
+    },
+    "heap-preflight-v4/subrange-128-baseline-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline-allocations.zst",
+      "sha256": "44c1ed070b2ef42a9efc0b9b112befea44c4cea7ad94faef72a2eaba1fcff79e"
+    },
+    "heap-preflight-v4/subrange-128-baseline-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline-print.resources",
+      "sha256": "4cb1027ad4c1eac8f5db90dcdcf6881870977b05a3cc66acdc913bb6bd751486"
+    },
+    "heap-preflight-v4/subrange-128-baseline-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/subrange-128-baseline-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline-print.stdout",
+      "sha256": "9756edf7369a23bc9e4b1d5572069f49794b3a8bc0037854f8187bf0dae64110"
+    },
+    "heap-preflight-v4/subrange-128-baseline-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline-record.resources",
+      "sha256": "fe5524f16d1c0f28a32a787ff49191b2a08ad92740af7e8a199f7945de8fd2ff"
+    },
+    "heap-preflight-v4/subrange-128-baseline-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline-record.stderr",
+      "sha256": "26e61bd8aeb2ac3b471766c65cf677dc51774f22c702df11a9de054774a90121"
+    },
+    "heap-preflight-v4/subrange-128-baseline-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline-record.stdout",
+      "sha256": "1e69f1c472c2002a4918f3eea8cb3516a78ad2ff91c3859909e4f94f7f218df3"
+    },
+    "heap-preflight-v4/subrange-128-baseline.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-baseline.massif",
+      "sha256": "1f34d034fb1d61573627295812d334f1b3b1743954dc4d205079404397d04dcf"
+    },
+    "heap-preflight-v4/subrange-128-candidate-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate-allocations.zst",
+      "sha256": "5b1f812cb5aa2ee94b9f30adde8ab9cb0b549ad71328e83aff103ef3e53e424f"
+    },
+    "heap-preflight-v4/subrange-128-candidate-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate-print.resources",
+      "sha256": "d36a27c561c40c738dc9d097c1a96f94c0b7eb075a2a1774b7df1564aae0ca11"
+    },
+    "heap-preflight-v4/subrange-128-candidate-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/subrange-128-candidate-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate-print.stdout",
+      "sha256": "43e4978fc8f923798a7d852bb0f3f3c09ff7b329c10df724ae8c9d4659a8fc05"
+    },
+    "heap-preflight-v4/subrange-128-candidate-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate-record.resources",
+      "sha256": "bfb2ecf88b284014ac1147ece49c0f5d22c2c8e34414db0c9f1fc793bf1a6e78"
+    },
+    "heap-preflight-v4/subrange-128-candidate-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate-record.stderr",
+      "sha256": "755593aa34e90ea29d129bd55671aa52fa408d7b77bf4472c113540930f9e2ab"
+    },
+    "heap-preflight-v4/subrange-128-candidate-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate-record.stdout",
+      "sha256": "7f3e9b223e9f7673c3d84dd4d85e96da6987f90ecd0ab1771bad2d7a7bb65dc3"
+    },
+    "heap-preflight-v4/subrange-128-candidate.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/subrange-128-candidate.massif",
+      "sha256": "c38806a6a4b3dfbc4755df43019690dac98391c01e7a5752522897cb2a6a8c91"
+    },
+    "heap-preflight-v4/superrange-128-baseline-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline-allocations.zst",
+      "sha256": "7a755bc3b3a5120b1a226d4d09704252b16aaca3ce176c3337c6395a0e2d7fc5"
+    },
+    "heap-preflight-v4/superrange-128-baseline-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline-print.resources",
+      "sha256": "94e3c31facf59a0015e8d751e39536a88d0b04ded4d3a289bc623a508fa4e8db"
+    },
+    "heap-preflight-v4/superrange-128-baseline-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/superrange-128-baseline-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline-print.stdout",
+      "sha256": "08a87b9a584e449bc7e8baa7f825adfb2c0d43b8646268b5b872cb8704360cdb"
+    },
+    "heap-preflight-v4/superrange-128-baseline-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline-record.resources",
+      "sha256": "a1ec1ee1032780b6faa1e74ea26bff9ad4cdfe2600dfda0239c42d0d60d04351"
+    },
+    "heap-preflight-v4/superrange-128-baseline-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline-record.stderr",
+      "sha256": "a98a11554527358529c726b011df11b5b5d1fe05fc4d5a3b55d91be8e5d99ee2"
+    },
+    "heap-preflight-v4/superrange-128-baseline-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline-record.stdout",
+      "sha256": "cf72aaf0ad533bbab0e8b97ab59c0c2b2b408c730d19181d1ff5b2e737b92f32"
+    },
+    "heap-preflight-v4/superrange-128-baseline.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-baseline.massif",
+      "sha256": "a2337e5d53c735704ee71e3e7f6db2f85d7cd2c97c4ee434ef8fb260303af22e"
+    },
+    "heap-preflight-v4/superrange-128-candidate-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate-allocations.zst",
+      "sha256": "ee47ffb557b6ebedae4e0287bfafb654429d464f3670dbfc8f1abf23d5b8602c"
+    },
+    "heap-preflight-v4/superrange-128-candidate-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate-print.resources",
+      "sha256": "89fcaa289089efec69370ada04babd650fc499b2bfb10813a76afa82b920d9cc"
+    },
+    "heap-preflight-v4/superrange-128-candidate-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/superrange-128-candidate-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate-print.stdout",
+      "sha256": "0c6b1c930b536cbde212a9a8c7365156a5ccbb0666962b2576393281113cb479"
+    },
+    "heap-preflight-v4/superrange-128-candidate-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate-record.resources",
+      "sha256": "96dfee7faf218f8343b7a639217e63c3bd79cf93b715f70c10ef18b55a0c34a7"
+    },
+    "heap-preflight-v4/superrange-128-candidate-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate-record.stderr",
+      "sha256": "302e6416a99279e6ecfd515cb8b1632618fd87cd30998c968814262211334fc2"
+    },
+    "heap-preflight-v4/superrange-128-candidate-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate-record.stdout",
+      "sha256": "042f2baa750c63142e5b6eb5c974efe2082fa4c9391a47e68a36c5cd68540ca1"
+    },
+    "heap-preflight-v4/superrange-128-candidate.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/superrange-128-candidate.massif",
+      "sha256": "8282fca2ca44f177e4367f4d9dd051028e7c3719b1628cffe74241e7d55ea4bc"
+    },
+    "heap-preflight-v4/symbolic-128-baseline-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline-allocations.zst",
+      "sha256": "76f0c1c2b7625499a0c486825466d40be9c7e608c32f5f6d8b7708209978e5c8"
+    },
+    "heap-preflight-v4/symbolic-128-baseline-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline-print.resources",
+      "sha256": "08258dc797b53e9d483c523084e463380cf79814ce35d987c998fefe0506ba51"
+    },
+    "heap-preflight-v4/symbolic-128-baseline-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/symbolic-128-baseline-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline-print.stdout",
+      "sha256": "9808dd672b20ec9aba6257ed6298cb7d5447431cb559432807df160c3668fc67"
+    },
+    "heap-preflight-v4/symbolic-128-baseline-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline-record.resources",
+      "sha256": "91531b10b09cfeb6ba76d4045f9ae7d418d9137bbb4672857f97ca6c83f96612"
+    },
+    "heap-preflight-v4/symbolic-128-baseline-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline-record.stderr",
+      "sha256": "7f399895a3e3064f51cf08201321b7533378008e884a8251f748b3944f6e9594"
+    },
+    "heap-preflight-v4/symbolic-128-baseline-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline-record.stdout",
+      "sha256": "b20a4314f8908f84142d2de05a9fd0df6ed93b84356b03dd562480e6122b157c"
+    },
+    "heap-preflight-v4/symbolic-128-baseline.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-baseline.massif",
+      "sha256": "c45e55c70beba903e854f60fde3527ba8480ae387c3fad6e28558715a1e238fb"
+    },
+    "heap-preflight-v4/symbolic-128-candidate-allocations.zst": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate-allocations.zst",
+      "sha256": "0965d326283e85c4875592e92ef76bc6e5db540f82fe60f08616fa1d5d08e9ea"
+    },
+    "heap-preflight-v4/symbolic-128-candidate-print.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate-print.resources",
+      "sha256": "137e811637a8d3aea622e20c3d6a3dc1fcceb469fb1d16a3b9932816d030faea"
+    },
+    "heap-preflight-v4/symbolic-128-candidate-print.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate-print.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "heap-preflight-v4/symbolic-128-candidate-print.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate-print.stdout",
+      "sha256": "153aed2ef148d1df9ff26a06aaafa477fab2e5ba087b97a107b16c3ea8ca113c"
+    },
+    "heap-preflight-v4/symbolic-128-candidate-record.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate-record.resources",
+      "sha256": "bf424a4c83aea3dcf8c73b9b4254c2a1be4c4ac719b57824b8bbc67638b013fd"
+    },
+    "heap-preflight-v4/symbolic-128-candidate-record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate-record.stderr",
+      "sha256": "84401de9731cd031689740bb24ab41719a8b6a2acbb45c3fd56a3c5b47a5ec09"
+    },
+    "heap-preflight-v4/symbolic-128-candidate-record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate-record.stdout",
+      "sha256": "7eed2f95cbe6a16ce093e451f68a3273d20858ab07ba6e1d1c0f1106ffac3333"
+    },
+    "heap-preflight-v4/symbolic-128-candidate.massif": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v4/symbolic-128-candidate.massif",
+      "sha256": "f1d08be35b1e84037177a2be6da49e7c3d047a46869771367d762e574a716066"
+    },
+    "heap_cost_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap_cost_v3.py",
+      "sha256": "e2bf759aea73787e79606eab2e52bec86221a028407d25144a8d86afcaa08647"
+    },
+    "heap_cost_v4.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap_cost_v4.py",
+      "sha256": "ca5041e36af0e46868bebabff44ed3806425531ebf4535f89f76c3e71502db41"
+    },
+    "heap_preflight_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap_preflight_v1.py",
+      "sha256": "5cb2530ea7d91af47c9ca4530d569c5ba8f6e9286722940216a7db654c36676f"
+    },
+    "heap_preflight_v4.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap_preflight_v4.py",
+      "sha256": "352a023a3722e4018d3f90027df7bfad0fea90e66ec29cb7b9b111626a2f3b97"
+    },
+    "measure_cost_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/measure_cost_v2.py",
+      "sha256": "9e48c1ba408163db67bf47dde79f894c98f67eecac0b572287d9cc7904a81e59"
+    },
+    "measure_cost_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/measure_cost_v3.py",
+      "sha256": "6ac9675263b36d65c9c1b99b3e2b0b2453120c6a9e345df373bbadd3de1376f0"
+    },
+    "measure_cost_v4.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/measure_cost_v4.py",
+      "sha256": "3f59e04ec94c9f9196ea63aefe2f36450adf70fac37f05ac3c03c685b053b7a9"
+    },
+    "measure_fallback_v5.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/measure_fallback_v5.py",
+      "sha256": "205ab1d35ce10de0bd2124b553dc36a2b34cc0cce52d29034988d460b149b357"
+    },
+    "preflight-comparison-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/preflight-comparison-v1/result.json",
+      "sha256": "1800aa415928a8d470c4909c0328b5b3ac8fa45276ee64a754de3d54765cb875"
+    },
+    "prepare_baseline_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/prepare_baseline_v1.py",
+      "sha256": "4d518107453bbd616e3a9fd8bd0129977d999515c3bbc9aa30b1f3cd94eba66d"
+    },
+    "prepare_boundaries_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/prepare_boundaries_v1.py",
+      "sha256": "e3aa99e12ff15ca9ae7abcdc933ec271d986b9e624e2cda7ccf4e44cd9422988"
+    },
+    "prepare_candidate_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/prepare_candidate_v1.py",
+      "sha256": "dc458cbf4f5edf90e57b8752031b0b768ed7d54481edbd5d657cc6f71ddc76fc"
+    },
+    "prepare_cost_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/prepare_cost_v3.py",
+      "sha256": "3bb4092183b7991d47cf0078218534ce81883f81f7e66b8328c9f2c3353d5d03"
+    },
+    "prepare_cost_v4.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/prepare_cost_v4.py",
+      "sha256": "c163fcf043f36d8f8ea90133b9549cea4d0560e8f3b72c53a3276fe7eddd7780"
+    },
+    "prepare_qualification_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/prepare_qualification_v2.py",
+      "sha256": "502a12450f54bc24827b1e1a6024d4017ed2beb975f2702827bd51661fbd85aa"
+    },
+    "progress-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/progress-v1.md",
+      "sha256": "d0917e3d76e186d441e2e182e7e94ff0a4ea3748f77ecda2dfac29295aa3b08f"
+    },
+    "project_reports_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/project_reports_v1.py",
+      "sha256": "7d294e2db6c1d9c0ad62b7a45ab42ede84c46370a638d634d453fd4a38951dd2"
+    },
+    "qualify_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/qualify_v2.py",
+      "sha256": "324f3606305f04fdbf88eae753a283d07388a5d963a32dcc61f0165365f221ce"
+    },
+    "quota-observation-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/quota-observation-v1.json",
+      "sha256": "feb81a1ba4cd882ef81039d49d83966d0d659bc1dc25fbb5d38fa2c884e002aa"
+    }
+  },
+  "runner_sha256": "2fc485657f75585df2b2f3847f7378d2d1b4fcaef414b0141d6c83484936f29b",
+  "source_changes_applied": false
+}

@@ -1,0 +1,6 @@
+    Checking num-traits v0.2.19
+error: failed to write `/tmp/csgrs-circle-support-boundaries-v1/release/.fingerprint/num-traits-06031290052a7571/invoked.timestamp`
+
+Caused by:
+  Disk quota exceeded (os error 122)
+warning: build failed, waiting for other jobs to finish...

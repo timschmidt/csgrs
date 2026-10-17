@@ -1,0 +1,16 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap_preflight_v1.py": "5cb2530ea7d91af47c9ca4530d569c5ba8f6e9286722940216a7db654c36676f",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests": "c24d4083306ebdfa9afb4e4667243af53fd87e508be602c6ccb10094d36844bf",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests": "75fe536ecc89881e63424938273c202f1dff152951913adfc635f9f39aa8a9ca",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/preflight-comparison-v1/result.json": "1800aa415928a8d470c4909c0328b5b3ac8fa45276ee64a754de3d54765cb875",
+    "/usr/bin/heaptrack": "06e04745c7ba96e22ee384c33fc54dbccac2848b3840eae3bb194d8c3d6c5f1c",
+    "/usr/bin/heaptrack_print": "4faef7780583936570656684c3bf8733e092cb4c8ecb3dc1e4a337c957fa2291"
+  },
+  "count": 512,
+  "heaptrack_version": "heaptrack 1.5.0\n",
+  "print_version": "heaptrack_print 1.5.0\n",
+  "external_timeout_seconds": 1800,
+  "address_space_bytes": 8589934592,
+  "scope": "Allocation preflight of the entire identical test process, including input construction, cold and warm lookups, exact witness assertions, ordered output materialization/printing and cleanup. Instrumented latency is not a performance sample. This does not isolate live cache bytes or establish an internal memory bound."
+}

@@ -1,0 +1,51 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap_preflight_v4.py": "352a023a3722e4018d3f90027df7bfad0fea90e66ec29cb7b9b111626a2f3b97",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-preflight-v4/result.json": "5fc2ca5a1882ff2b447d6e57993c824a49231fffa71dbf6cd1d8bdecbedbdc2d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/baseline-tests": "ff27d5b18513fea44720bea88d67f9b794ae8897f464932cb16369209fffa79c",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/cost-build-v4/candidate-tests": "9e7baf3a6c280e089294f15f36912952062efeb6384c0f0110b6c49c0bca5946",
+    "/usr/bin/heaptrack": "06e04745c7ba96e22ee384c33fc54dbccac2848b3840eae3bb194d8c3d6c5f1c",
+    "/usr/bin/heaptrack_print": "4faef7780583936570656684c3bf8733e092cb4c8ecb3dc1e4a337c957fa2291",
+    "/usr/bin/size": "aba3e6a47f09bf0f736ee6646118a6f32ea517cd8f830437c57ba0e0bc964e6a",
+    "/usr/lib64/heaptrack/libheaptrack_inject.so": "83393cb998a61c8611ccecadc75b0c2e1bcf1419d4d5529f9600635d92434af0",
+    "/usr/lib64/heaptrack/libheaptrack_preload.so": "72126df9bbe7fcc25021886ee217dab60c762c637c46b6ab5c016f3103591e74",
+    "/usr/lib64/heaptrack/libexec/heaptrack_interpret": "bac9ca2b2985d97927aa92fb954e4df2acaf3290cd2a953d7a7a30da3dbaac3c",
+    "/usr/lib64/heaptrack/libexec/heaptrack_env": "edc2a1601276dfe5b60c66c5d40c0acb3676cdeda0bd014510b0a8c0565ca050"
+  },
+  "cases": [
+    [
+      "rational",
+      1
+    ],
+    [
+      "rational",
+      512
+    ],
+    [
+      "rational",
+      2048
+    ],
+    [
+      "symbolic",
+      128
+    ],
+    [
+      "mixed",
+      128
+    ],
+    [
+      "superrange",
+      128
+    ],
+    [
+      "subrange",
+      128
+    ]
+  ],
+  "heaptrack_version": "heaptrack 1.5.0\n",
+  "print_version": "heaptrack_print 1.5.0\n",
+  "external_timeout_seconds": 1800,
+  "address_space_bytes": 8589934592,
+  "scope": "One whole-process allocation observation for each variant/case, including input construction, both phases, exact oracles, complete witness encoding, printing and cleanup. Instrumented time is excluded from latency evidence. Cache-owned heap bytes are not isolated and no internal memory bound is established. Process-end retention includes runtime and scalar state; it is not automatically a cache leak.",
+  "size_scope": "Matched diagnostic test executables with identical source-path remapping and dependencies; not a package size claim."
+}

@@ -1,0 +1,99 @@
+{
+  "complete": true,
+  "rows": [
+    {
+      "count": 1,
+      "phase": "cold",
+      "baseline_seconds": 5.6056e-05,
+      "candidate_seconds": 0.000101713,
+      "candidate_over_baseline": 1.8144890823462252,
+      "ordered_exact_rows_equal": true,
+      "rows_sha256": "867c3c67aee58bf0889c330ae428d9565ee82c08de25737295ca715d0c27dae5"
+    },
+    {
+      "count": 1,
+      "phase": "warm",
+      "baseline_seconds": 4.739e-06,
+      "candidate_seconds": 2.06e-06,
+      "candidate_over_baseline": 0.4346908630512767,
+      "ordered_exact_rows_equal": true,
+      "rows_sha256": "867c3c67aee58bf0889c330ae428d9565ee82c08de25737295ca715d0c27dae5"
+    },
+    {
+      "count": 16,
+      "phase": "cold",
+      "baseline_seconds": 0.000138131,
+      "candidate_seconds": 0.000121662,
+      "candidate_over_baseline": 0.8807725999232613,
+      "ordered_exact_rows_equal": true,
+      "rows_sha256": "948691ec7e7f0c707bfbfe78c86ef6fbc71bf83903b983d7bfc56f53e5351f9b"
+    },
+    {
+      "count": 16,
+      "phase": "warm",
+      "baseline_seconds": 2.2648e-05,
+      "candidate_seconds": 1.7678e-05,
+      "candidate_over_baseline": 0.7805545743553514,
+      "ordered_exact_rows_equal": true,
+      "rows_sha256": "948691ec7e7f0c707bfbfe78c86ef6fbc71bf83903b983d7bfc56f53e5351f9b"
+    },
+    {
+      "count": 128,
+      "phase": "cold",
+      "baseline_seconds": 0.001378915,
+      "candidate_seconds": 0.000548313,
+      "candidate_over_baseline": 0.39764089882262504,
+      "ordered_exact_rows_equal": true,
+      "rows_sha256": "7aa37bc97dcadd52ac28dfc6ffbbf958ec599fe05492d8f954b81c1f0bc60621"
+    },
+    {
+      "count": 128,
+      "phase": "warm",
+      "baseline_seconds": 0.000700562,
+      "candidate_seconds": 0.000120102,
+      "candidate_over_baseline": 0.17143664657803306,
+      "ordered_exact_rows_equal": true,
+      "rows_sha256": "7aa37bc97dcadd52ac28dfc6ffbbf958ec599fe05492d8f954b81c1f0bc60621"
+    },
+    {
+      "count": 512,
+      "phase": "cold",
+      "baseline_seconds": 0.010877342,
+      "candidate_seconds": 0.001665365,
+      "candidate_over_baseline": 0.15310403957143207,
+      "ordered_exact_rows_equal": true,
+      "rows_sha256": "1a1dcc26f3fd5ca54223553273fa578ababde3178f751e1df7905ea802e603c5"
+    },
+    {
+      "count": 512,
+      "phase": "warm",
+      "baseline_seconds": 0.009224897,
+      "candidate_seconds": 0.000400082,
+      "candidate_over_baseline": 0.04336980673063342,
+      "ordered_exact_rows_equal": true,
+      "rows_sha256": "1a1dcc26f3fd5ca54223553273fa578ababde3178f751e1df7905ea802e603c5"
+    },
+    {
+      "count": 2048,
+      "phase": "cold",
+      "baseline_seconds": 0.159996219,
+      "candidate_seconds": 0.006508244,
+      "candidate_over_baseline": 0.04067748625984718,
+      "ordered_exact_rows_equal": true,
+      "rows_sha256": "a930ca7f2e19671445c2bc60a16bc61341b5f22f13b19d7c99f6906197098b26"
+    },
+    {
+      "count": 2048,
+      "phase": "warm",
+      "baseline_seconds": 0.158927063,
+      "candidate_seconds": 0.001736891,
+      "candidate_over_baseline": 0.01092885608790241,
+      "ordered_exact_rows_equal": true,
+      "rows_sha256": "a930ca7f2e19671445c2bc60a16bc61341b5f22f13b19d7c99f6906197098b26"
+    }
+  ],
+  "all_ordered_exact_rows_equal": true,
+  "runner_sha256": "ccaed01b15fc6a783bdf5649bbc40e124c4158195d8e1e1878805bb0f85ac476",
+  "native_runtime_admitted": false,
+  "scope": "One diagnostic sample per phase/count. Tiny rows are timer-scale; no final latency/allocation/size or full-workload admission claim."
+}

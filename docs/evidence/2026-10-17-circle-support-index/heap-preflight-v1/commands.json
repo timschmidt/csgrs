@@ -1,0 +1,84 @@
+[
+  {
+    "name": "baseline-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/baseline-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/baseline-validation-v1/hypercurve-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2917719059623778,
+    "stdout_sha256": "dff12650825f72d0a4ced457049f9df77e027f62fcae9d1a14e3e165156e56ae",
+    "stderr_sha256": "b99d056369c9ba74f42b3ad324d2e94376ff0a315e0923ddef2a720ded64f469",
+    "resources_sha256": "0da91d4cf95d4e1e28e1f021b9d9b6b23b2ce9ccaaf993378e7ab020315f4890"
+  },
+  {
+    "name": "baseline-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/baseline-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1354851871728897,
+    "stdout_sha256": "5d717ed0a1b04a19e967c8127bbe8d9b7ff7e8294c6ac0e272d8f3da247c2e7e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "80e5521dc2def13b15d81d5d5aceacb5c7920b016389fc15652a768807674e51"
+  },
+  {
+    "name": "candidate-record",
+    "command": [
+      "heaptrack",
+      "--record-only",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/candidate-allocations",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests",
+      "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.09942693309858441,
+    "stdout_sha256": "a2d48878d244f0ce138d54744ae64447bf150bcd1d0d92c71d24e7dc8cfb06c4",
+    "stderr_sha256": "8dc493b1d8bfbe4377c6375fc58131f18ed0bb65c4c5250d26a9fac468caf20c",
+    "resources_sha256": "cbde99de60da90a0b2f48d4464a9e0967e14ff6bd4be41a4d6f7c6ee46ed6e10"
+  },
+  {
+    "name": "candidate-print",
+    "command": [
+      "heaptrack_print",
+      "-f",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/heap-preflight-v1/candidate-allocations.zst",
+      "-m",
+      "0",
+      "-n",
+      "5",
+      "-s",
+      "2",
+      "--disable-builtin-suppressions",
+      "--disable-embedded-suppressions"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05855734879150987,
+    "stdout_sha256": "a61144a7888a68f5a75c071a66df41a73e7cc10245c590ced7ac3a4e2c4c7c93",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "60fd90c54367a8881c14349ffb10a2f5bc253209c8ae35e4fb34baf9556e7734"
+  }
+]

@@ -1,0 +1,4 @@
+error: failed to write `/tmp/csgrs-circle-support-qualification-v2/.rustdoc_fingerprint.json`
+
+Caused by:
+  Disk quota exceeded (os error 122)

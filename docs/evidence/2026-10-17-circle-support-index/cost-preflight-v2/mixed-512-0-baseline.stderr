@@ -1,0 +1,4 @@
+
+thread 'curve_intersection::circle_support_cost_probe::support_lookup_cost' (1861892) panicked at /csgrs-circle-support-cost-v2/crates/hypercurve/src/circle_support_cost_probe.rs:76:45:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
