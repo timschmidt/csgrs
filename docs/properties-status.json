@@ -17177,6 +17177,171 @@
     "checkpoint": "docs/evidence/2026-10-17-circle-support-small-hit/checkpoint-v1.json",
     "artifact_expectations": "docs/evidence/2026-10-17-circle-support-small-hit/artifact-expectations-v1.json.gz",
     "raw_evidence_archive": "docs/evidence/2026-10-17-circle-support-small-hit/raw-evidence-v1.tar.xz"
+  },
+  "circle_support_reuse_index": {
+    "complete": true,
+    "main_parent_commit": "be2a0c37bfe57799c62a36125a5cb883a5458f00",
+    "status": "unadmitted: deferred indexing removes cold activation regression; whole-library and downstream qualification remain incomplete",
+    "retention_decision": "unadmitted",
+    "cache_index_admitted": false,
+    "source_changes_applied": false,
+    "implementation_sha256": {},
+    "proposal_sha256": {
+      "crates/hypercurve/src/curve_intersection.rs": "356af6f3c04694c03dfb7b901296e1b7862772050c3e75480f4cfdce05733416",
+      "crates/hypercurve/src/circle_support_cache_tests.rs": "4d7b2fdcee72fc064361de4bc91fb5ce8eac342188ca02f830a543a283c3184c",
+      "crates/hypercurve/README.md": "4ae86e2a437d009d40a3929bbd9aa47c1b0f50eb0ec338cd93c888b7756b6cfe"
+    },
+    "library_results": {
+      "corpus-v1": {
+        "completed": false,
+        "reported_individual_passes": 517,
+        "failure_markers": 0,
+        "exit_code": -15,
+        "elapsed_seconds": 190.1694928240031,
+        "external_stop_reason": "repository_free_bytes-reserve",
+        "terminal_test_summary": null,
+        "source_mirror_unchanged": true,
+        "property_persistence_warnings": false
+      },
+      "all-feature-library-v1": {
+        "completed": false,
+        "reported_individual_passes": 411,
+        "failure_markers": 0,
+        "exit_code": -15,
+        "elapsed_seconds": 110.08969101402909,
+        "external_stop_reason": "repository_free_bytes-reserve",
+        "terminal_test_summary": null,
+        "source_mirror_unchanged": true,
+        "property_persistence_warnings": false
+      }
+    },
+    "full_library_qualification_complete": false,
+    "focused_tests_per_variant": 9,
+    "candidate_strict_direct_clippy_configurations": [
+      "no-feature",
+      "all-feature metadata in fresh root"
+    ],
+    "matched_small_processes": 140,
+    "matched_support_processes": 210,
+    "aggregate_shared_processes": 336,
+    "aggregate_shared_comparisons": [
+      {
+        "bits": 64,
+        "baseline_seconds": [
+          0.003997054,
+          0.003945588,
+          0.003817796,
+          0.003875165,
+          0.003771682,
+          0.003971417,
+          0.003850965
+        ],
+        "candidate_seconds": [
+          0.004049052,
+          0.004108438,
+          0.004166774,
+          0.004246206,
+          0.00423035,
+          0.004094381,
+          0.00406006
+        ],
+        "baseline_median_seconds": 0.003875165,
+        "candidate_median_seconds": 0.004108438,
+        "candidate_over_baseline_median": 1.06019692064725,
+        "positive_paired_differences": 7,
+        "candidate_range_above_baseline": true,
+        "predeclared_rejection_criterion_met": false
+      },
+      {
+        "bits": 65536,
+        "baseline_seconds": [
+          0.003798479,
+          0.003621699,
+          0.003862674,
+          0.003733073,
+          0.003974045,
+          0.003760519,
+          0.003662196
+        ],
+        "candidate_seconds": [
+          0.003865406,
+          0.003997125,
+          0.0038663120000000002,
+          0.004092418,
+          0.003994425,
+          0.00393399,
+          0.00406278
+        ],
+        "baseline_median_seconds": 0.003760519,
+        "candidate_median_seconds": 0.003994425,
+        "candidate_over_baseline_median": 1.0622004569050176,
+        "positive_paired_differences": 7,
+        "candidate_range_above_baseline": false,
+        "predeclared_rejection_criterion_met": false
+      },
+      {
+        "bits": 1048576,
+        "baseline_seconds": [
+          0.003454403,
+          0.003652209,
+          0.003790498,
+          0.003633279,
+          0.003480451,
+          0.003592033,
+          0.00336901
+        ],
+        "candidate_seconds": [
+          0.003559166,
+          0.003796128,
+          0.003913881,
+          0.003732972,
+          0.003640471,
+          0.003451942,
+          0.003701635
+        ],
+        "baseline_median_seconds": 0.003592033,
+        "candidate_median_seconds": 0.003701635,
+        "candidate_over_baseline_median": 1.03051252591499,
+        "positive_paired_differences": 6,
+        "candidate_range_above_baseline": false,
+        "predeclared_rejection_criterion_met": false
+      }
+    ],
+    "decisive_rejection_cases": [],
+    "earlier_unqualified_grouped_processes": 336,
+    "earlier_grouped_issue": "Proposal rustfmt overlapped; whole comparison preserved but unqualified for performance.",
+    "allocation_observations": 20,
+    "diagnostic_binary_sizes": {
+      "baseline": {
+        "file_bytes": 46953248,
+        "text_bytes": 33448132,
+        "data_bytes": 1305808,
+        "bss_bytes": 2840
+      },
+      "candidate": {
+        "file_bytes": 46978184,
+        "text_bytes": 33461520,
+        "data_bytes": 1305328,
+        "bss_bytes": 2216
+      }
+    },
+    "native_disposition_preserved": true,
+    "pending_native_paths_remaining": 0,
+    "full_archived_integration_admitted": false,
+    "native_runtime_admitted": false,
+    "full_plan_complete": false,
+    "next": [
+      "Finish whole-library and affected downstream qualification using adequate fresh storage; preserve every failed run and adverse cost.",
+      "Keep original native workload/report and real binding gates before any production retention.",
+      "Correct the reproduced stale text-migration sentence in a separate documentation change.",
+      "Continue ordinary strict completion, provenance, resource contracts, user-path validation and every property/target."
+    ],
+    "contract": "docs/evidence/2026-10-17-circle-support-reuse-index/contract-v1.md",
+    "decision": "docs/evidence/2026-10-17-circle-support-reuse-index/decision-v1.json",
+    "progress": "docs/evidence/2026-10-17-circle-support-reuse-index/progress-v1.md",
+    "checkpoint": "docs/evidence/2026-10-17-circle-support-reuse-index/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-circle-support-reuse-index/artifact-expectations-v1.json.gz",
+    "raw_evidence_archive": "docs/evidence/2026-10-17-circle-support-reuse-index/raw-evidence-v1.tar.xz"
   }
 },
   "status_meanings": {
