@@ -1,0 +1,538 @@
+% Working manuscript. No journal/conference submission is implied.
+% Build twice with pdflatex -no-shell-escape -halt-on-error
+% -interaction=nonstopmode -output-directory=NEW_OUTPUT hyper-stack.tex,
+% from the directory containing this file and results.tex.
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\hypersetup{hidelinks,pdftitle={Exact Geometry as a Compositional Contract},
+pdfauthor={Hyper stack project working manuscript}}
+\urlstyle{same}
+\setlength{\emergencystretch}{1em}
+\newtheorem{proposition}{Proposition}
+\newcommand{\reg}{\operatorname{reg}}
+\newcommand{\cl}{\operatorname{cl}}
+\newcommand{\intr}{\operatorname{int}}
+\newcommand{\den}[1]{[\![#1]\!]}
+\title{Exact Geometry as a Compositional Contract:\\
+Design and Admission in the Hyper Stack}
+\author{Working manuscript for the Hyper stack project\\
+\small Authorship and publication venue remain to be assigned}
+\date{17 October 2026\\\small Implementation snapshot: \texttt{7ed43501755f}}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A reliable geometric result must remain usable by the next supported operation.
+Exact arithmetic alone does not ensure this: a result can lose its source
+meaning, certainty, topology, or resource feasibility at a later boundary.
+This manuscript describes a compositional acceptance contract for the Hyper
+stack, a Rust system spanning exact-aware scalars, predicates, curves, meshes
+and a modeling interface. We distinguish numerical evidence, topological
+validity and fidelity to an intended source; formulate elementary set identities
+and evidence-reuse obligations; and relate those obligations to inspected public
+types. A retrospective case study recomputes 476 recorded process observations
+for a proposed circle-support cache, including unfavorable measurements.
+Warm-query improvements coexist with cold-query and representation-dependent
+costs. Later library-suite successes do not establish downstream admission.
+A rejected native integration and a failed external package resolution further
+illustrate why acceptance must name the completed workload. The contribution is
+a documented design and bounded empirical case study, not a proof of the entire
+implementation, a universal performance claim, or a completed release.
+\end{abstract}
+
+\section{Introduction}
+Geometric software is used as a sequence of operations: construct a profile,
+transform it, subtract another body, inspect the result, and exchange it with a
+different tool. A successful intermediate answer has practical value only if
+that sequence can continue with the promised meaning. An empty Boolean result
+is useful geometry. A failed predicate, malformed operand or exhausted budget
+is useful diagnostic information. Confusing these outcomes breaks composition
+even if every arithmetic operation that actually ran was exact.
+
+The Hyper stack separates scalar arithmetic, geometric predicates, curve
+operations, mesh topology and modeling vocabulary. Its governing preference is
+exactness, completeness, performance, memory, binary size, then source size,
+within a declared domain and resource contract \cite{contract}. This ordering
+rules out counting a faster error as a faster completed operation. It also
+requires deliberate migrations when a change alters the represented geometry
+or deterministic output contract.
+
+This paper develops three connected points. First, semantic and evidentiary
+closure are separate obligations: a downstream consumer needs both a usable
+representation and enough information to interpret its claims. Second, cache
+behavior and resource policies belong in that contract. A retained proof may
+improve a later answer, whereas an exhausted attempt is not a permanent
+mathematical verdict. Third, evidence for a local optimization must be kept
+separate from evidence for a complete modeling workload or a shipped package.
+
+The presentation combines a proposed acceptance framework, selected observations
+of current source, elementary mathematical arguments and historical experiments.
+These categories are identified explicitly. The manuscript is a working draft:
+independent review, broader experiments and publication preparation remain open.
+No new geometry benchmark was run while preparing it.
+
+\section{Related work and positioning}
+Adaptive exact predicates establish a classical route from numerical arithmetic
+to reliable geometric branching. Shewchuk develops adaptive arithmetic and
+robust orientation and incircle predicates, doing additional work when a
+decision requires it \cite{shewchuk}. The relevant lesson here is that a
+sufficiently justified sign can control a combinatorial decision; it does not
+alone establish all invariants of the surrounding modeling pipeline.
+
+Pion and Fabri describe generic lazy exact geometric computation, retaining
+dependency structure and delaying exact evaluation until needed
+\cite{pionfabri}. Hyper's use of retained structure and reusable evidence
+belongs to this broad tradition. This paper does not claim that lazy exact
+evaluation or expression sharing is new. Its focus is the obligation to carry
+the meaning and scope of evidence through API and distribution boundaries.
+
+Zhou and colleagues construct mesh arrangements and assign winding vectors to
+cells, allowing different solid operations to select results from the
+arrangement \cite{zhou}. This is an important precedent for separating exact
+intersection work, arrangement topology and output selection. Their input
+definitions and validation results should not be transferred automatically to
+another implementation. The Hyper acceptance specification names its own closed
+piecewise-constant-winding input restrictions and typed rejection cases.
+
+The case study below evaluates one internal candidate against its recorded
+baseline. It is not a cross-library comparison with these systems. A broader
+comparison harness exists in the repository, but its complete claims and
+measurements are outside the verification scope of this manuscript.
+
+\section{What a geometric result promises}
+\subsection{Representation and denotation}
+Let $r$ be a representation and $\den{r}$ its denoted set under a documented
+interpretation. Different triangulations can denote the same set. Conversely,
+identical serialized floating-point coordinates do not establish fidelity to
+an earlier symbolic construction whose coordinates were quantized.
+
+For regularized solid operations, write
+\[
+  \reg(X)=\cl(\intr(X)).
+\]
+For regular closed sets $A$ and $B$, define regularized union, intersection and
+difference by applying $\reg$ to the corresponding ordinary set operation.
+The representation domain must also state dimensionality, admissible boundary
+structure and orientation or winding conventions. This mathematical domain
+is distinct from the subset currently supported by a particular kernel.
+
+\begin{proposition}[Empty-result composition]
+For regular closed $A$, regularized union with the empty set returns $A$;
+intersection with the empty set returns the empty set; difference from the
+empty set returns $A$; and both empty-minus-$A$ and $A$-minus-$A$ are empty.
+\end{proposition}
+\begin{proof}
+Use the ordinary identities for union, intersection and difference. Regularizing
+$A$ returns $A$ by the definition of regular closed, and regularizing the empty
+set returns the empty set.
+\end{proof}
+
+This elementary proof gives an implementation oracle only after valid operands
+and representation equality are specified. A shortcut must not return a
+successful identity result before detecting an invalid index, unsupported
+representation or retained construction failure in the other operand. Tests
+must also consume the result: accumulation beginning at empty and subtraction
+chains ending at empty exercise a different failure mode from one isolated
+Boolean call.
+
+\begin{proposition}[Affine compatibility]
+Let $T:\mathbb R^n\to\mathbb R^n$ be an invertible affine transformation.
+Then $T$ commutes with each of the regularized operations above.
+\end{proposition}
+\begin{proof}
+A bijection commutes with ordinary union, intersection and difference. An
+invertible affine map is a homeomorphism, so it commutes with closure and
+interior. Therefore $T(\reg(X))=\reg(T(X))$; combine these facts.
+\end{proof}
+
+The proposition does not prove that a software transform accepts every such
+map. An executable test must name supported coordinate representations and
+transform policies. Orientation-reversing maps also require the implementation
+to maintain its winding conventions. Singular projections are excluded from
+the proposition.
+
+For a finite family of axis-aligned rational boxes, an independent equality
+oracle can partition space by all exact coordinate planes, compare membership
+of every open cell, and take the closure of the selected full-dimensional
+cells. This exploits that representation's finite combinatorial structure.
+Generic point sampling, triangle counts and checksums are weaker observations;
+they cannot establish arbitrary set equality by themselves.
+
+\subsection{Three independent contracts}
+Every construction or conversion should answer three questions:
+\begin{center}
+\begin{tabular}{p{0.22\linewidth}p{0.69\linewidth}}
+\toprule
+Numerical evidence & Were the decisions justified under the selected policy?\\
+Topology & Does the output satisfy the representation's required topology?\\
+Source fidelity & What relation holds between the output and the intended source?\\
+\bottomrule
+\end{tabular}
+\end{center}
+A certified orientation does not prove manifoldness. A closed triangle mesh does
+not prove that it equals an analytic sphere. Certification of values sampled
+from a field does not prove a claim about the entire continuous field. Such
+implications require additional hypotheses and evidence.
+
+A simple exact arithmetic example shows the distinction at an input boundary.
+The decimal rational $1/10$ differs from the exact rational represented by the
+nearest binary64 value usually written \texttt{0.1}:
+\[
+ \frac{3602879701896397}{36028797018963968}-\frac{1}{10}
+ =\frac{1}{180143985094819840}.
+\]
+Exact downstream predicates can establish facts about either rational.
+They do not make the two source interpretations equal. Similarly, a valid
+reimported quantized mesh supports claims about that mesh; it does not
+retroactively certify preservation of the original exact geometry.
+
+\subsection{Success and explicit non-success}
+The acceptance contract distinguishes successful empty geometry, invalid input,
+unsupported representation, unresolved predicates, exhausted resources and
+unbounded output. These categories are a semantic vocabulary, not a claim that
+one universal error enum already spans the stack. Kernel and public-modeling
+adapters must preserve their distinctions.
+
+In particular, an exterior-containing solid expression cannot be faithfully
+returned as an ordinary finite boundary mesh merely because a finite subset
+can be materialized. A partial diagnostic or preview may be useful, but it
+requires a separate, explicitly provisional contract.
+
+\section{Evidence and composition}
+\subsection{Claims have subjects and scopes}
+It is useful to model a claim as a tuple containing its subject, proposition,
+input interpretation, dependencies and proof scope. A sign about an exact
+rational coordinate and a statement about a designer's analytic surface are
+different claims. Replacing the carrier or discarding an outcome wrapper does
+not bridge that difference.
+
+Current Hyperlimit source provides \texttt{PredicateOutcome<T>} with
+\texttt{Decided} and \texttt{Unknown} variants. A decided result contains a
+value, certainty and escalation stage; an unknown result contains the needed
+capability and stopping stage \cite{implementation}.
+The certainty vocabulary distinguishes exact information, conservative filtered
+information and a policy-authorized approximate terminal. The strict policy
+does not accept that terminal. Selecting the approximate policy alone does not
+show that the terminal was consumed.
+
+At the modeling layer, \texttt{GeometryOutcome<T>} pairs a value with aggregate
+operation-local predicate certainty. Its \texttt{map} and \texttt{try\_map}
+methods preserve that field, and \texttt{into\_value} discards the wrapper.
+The accumulator starts certified and records an approximate terminal when
+observed. These source observations establish the local API behavior; they
+do not establish a persistent end-to-end provenance system for every model.
+
+A required chain is therefore
+\[
+ \text{construction}\to\text{transform}\to\text{Boolean}\to
+ \text{export}\to\text{import}\to\text{validation}.
+\]
+If approximate construction affected the original claim, a later strict call
+must not be described as certifying that original intent solely because its
+own consumed predicates were certified. An upgrade needs a new proof of the
+relevant claim. Coverage of this entire chain remains an explicit open
+obligation in the acceptance documents.
+
+\subsection{Monotone reuse of available proofs}
+For a fixed claim, let $E$ be available admissible evidence. A computation can
+return a definite fact justified by $E$, or report that $E$ is insufficient.
+If $E\subseteq E'$ and both are consistent and applicable to the same subject,
+an earlier justified fact must not be contradicted by the additional evidence.
+An unknown answer may become certified.
+
+This is a semantic requirement, not a demand for identical cold and warm traces.
+A sign established with more refinement may remain reusable in a later
+zero-refinement request. Eviction can remove access to a proof; disagreement
+between definite facts is still forbidden. Mutation changes the subject unless
+identity and invalidation rules preserve the relevant proposition. Approximate
+evidence must not become admissible to a strict request through cache reuse.
+
+A cache contract consequently specifies key equivalence, object lifetime,
+policy admissibility, precision, proof scope, retention units and reset rules.
+Testing should cover cold, warm, evicted, disabled, mutated and concurrent states
+where applicable, including strict--approximate--strict and low--high--low
+precision sequences. A failed attempt that exhausted its budget is an account
+of work performed, not proof that the mathematical question is undecidable.
+
+\section{Architecture and resource boundaries}
+Hyperreal exposes exact rationals, symbolic structure and lazy computable
+refinement. Hyperlimit owns geometric predicate decisions and their evidence.
+Hypercurve owns curve topology and retained curve carriers; Hypermesh owns mesh
+topology; CSGRS supplies modeling vocabulary and bridges documented restrictions
+\cite{contract,implementation}. These are layer responsibilities. Their presence
+does not imply that every representation or operation is supported.
+
+The inspected curve policy uses synchronous thread-local observation for
+approximate terminals and saves and restores nested observations.
+Its \texttt{Provisional<T>} exposes certainty and makes unverified value access
+explicit. Transferring such a scope to a parallel or asynchronous implementation
+would require an explicit transport of observation state; thread-local storage
+alone cannot supply that behavior.
+
+The modeling cache has caller-visible entry limits, FIFO eviction and
+synchronous thread-local scopes. Its documentation explicitly states that an
+entry limit is not a byte bound. Disabling the cache releases retained entries;
+kernel and scalar caches are separate. These details matter because a single
+entry can retain a large mesh or expression graph.
+
+A resource contract should distinguish at least precision, total work, retained
+memory and cancellation. A fixed 512-bit terminal says nothing by itself about
+expression depth, integer coefficient growth, number of subdivisions or total
+allocation. Similarly, a fixed cache capacity does not bound the size of its
+keys or retained evidence. Where internal bounds do not exist, experiments
+need external containment and must not report that containment as a proved
+algorithmic bound.
+
+The order of implementation follows ownership. Scalar identities belong in
+scalar machinery; predicate certification belongs in the predicate layer;
+topology belongs in the relevant kernel; modeling composition belongs in the
+public modeling layer; quantization belongs at the format boundary. This
+division avoids making each application reconstruct evidence discarded below it.
+
+\section{Retrospective empirical case study}
+\subsection{Question, candidate and method}
+The evaluated candidate concerns operation-local reuse of circle-support
+relations. The baseline uses ordered equality lookup. The candidate preserves
+that lookup until a supported retained pair is reused with at least 32
+relations, then activates an exact-rational index. It retains earlier unkeyed
+witness priority and fallback behavior for symbolic or very large keys.
+Distinct cold queries still scan linearly. The proposal is not in production.
+
+The original experiment records a Ryzen 7 5800X3D machine with 8 cores and
+16 hardware threads, rustc 1.98.1, an x86-64 Linux target and optimized direct
+test-harness builds. The small-batch experiment uses no crate features.
+Its schedule has seven repetitions, shuffled pair counts and alternating
+variant order, with recorded seed 20261017 \cite{e46}. The candidate and baseline
+retain the same focused tests, probe definitions and input construction.
+Nine focused contracts per variant preceded the recorded cost runs.
+
+Each small-batch phase executes at least 65,536 queries. Cold timing includes
+creation and destruction of the batch cache; warm timing uses a prepared cache
+and includes deferred activation on its first hit. Input/reference construction,
+printing and process startup are outside phase timers. Cold does not mean every
+process or scalar cache is reset. The measured calls produce complete ordered
+rows and are checked against independent rational circle constructions in the
+original harness. The small-batch timer includes those oracle checks,
+coordinate-row materialization and row comparisons; it does not isolate lookup
+latency. The shared-coefficient timer includes lookup, relation checks and
+row-vector materialization, with its construction oracle outside the timer.
+
+For this manuscript, the 140 small-batch process outputs and 336 clean grouped
+shared-coefficient outputs were read from the retained archive. Each selected
+member was verified against its recorded hash. The tables were recalculated
+from raw phase durations and checked against the retained summaries. Group
+totals were also compared with exact decimal addition at the recorded
+nanosecond resolution. This is a reanalysis of historical observations, not
+independent execution of the geometry implementation.
+
+\subsection{Results and negative evidence}
+Table~\ref{tab:small} shows the complete ten-size small-batch sweep.
+Activation at 32 pairs is associated with reduced warm medians at larger
+tested batch sizes. There is no universal benefit: at four pairs the warm
+median is higher, and cold medians change in both directions.
+
+Table~\ref{tab:shared} retains all three shared-coefficient controls. Each
+group sums eight separate 20,000-query phases; it is not a single contiguous
+timer. The original rejection rule required more than 10\% median overhead,
+seven positive paired differences and a separately higher candidate range.
+No grouped row meets all three conditions, but all three median changes are
+adverse. A threshold not being crossed is not evidence of zero overhead.
+The tables provide descriptive statistics, not confidence intervals or a
+generalization to other machines.
+
+\input{results.tex}
+
+The broader retained experiment also includes a fifteen-case support matrix,
+heap observations and test-harness sizes. Those results remain available in
+the original record rather than being credited as newly revalidated here.
+In particular, its allocation reductions coexist with increased peak heap for
+some indexed batches. Allocation count and peak retained memory are different
+costs and must not be substituted for each other.
+
+The first grouped experiment overlapped proposal formatting. Its 336 process
+observations remain archived but are unqualified for performance, regardless
+of favorable medians. The table uses the separate complete repeat recorded
+after those local checks had ended. These controls reduce a known interference
+source; they do not prove that the host was isolated from all external activity.
+
+Two initial whole-library attempts stopped at the unchanged repository-space
+guard and had no terminal success summary. They remain incomplete attempts.
+Later executions verified the preserved binaries, dependencies and source
+identity and ran both full library test executables in fresh output roots
+\cite{e51}. Their terminal summaries appear in Table~\ref{tab:suites}.
+The earlier failures were not overwritten, and overlapping feature-suite counts
+are not an exhaustive-coverage metric.
+
+The later library passes do not qualify the full Cargo target/feature matrix,
+examples, integration and documentation tests, original native/report gates,
+bindings or the external distribution. Accordingly the cache candidate remains
+unadmitted. A successful local measurement is evidence for a specific decision
+about a specific workload, not an automatic instruction to retain a change.
+
+\section{Two wider acceptance boundaries}
+\subsection{A native integration that was rejected}
+An earlier 35-file native bundle improved several exactness and failure-handling
+regressions, yet failed the original full-board and copper-neck resource gates.
+The record rejects the bundle as a complete integration and preserves its source
+and failures \cite{native}. Smaller improvements were subsequently considered
+separately. Rejection does not prove the restored implementation's unfulfilled
+mathematical claims.
+
+The compared representations also denoted different geometry. Those observations
+therefore cannot establish a performance-only speedup. This example explains why
+both the output contract and the resource contract must be named before timing:
+one cannot repair a cost comparison by silently changing which set is computed.
+
+\subsection{A workspace is not a distribution}
+A retained release audit created an external consumer with fresh Cargo state and
+without workspace paths or patches. In that dated audit, resolving the documented
+\texttt{csgrs 0.23.0} package failed; the registry response did not contain the
+requested version \cite{release}. The quickstart was subsequently corrected
+to identify the unreleased source-checkout path. This observation is about the
+recorded registry state, not a live claim about future availability.
+
+A coherent user path must install the documented distribution, construct,
+transform and compose a model, inspect certainty, validate its required topology,
+export, reimport and check the format-specific contract. Package membership,
+license texts, minimum compiler, feature combinations and real binding consumers
+are parts of that path. A local build or a package file list establishes only its
+own narrower claim.
+
+\section{Threats to validity and remaining work}
+The mathematical propositions concern sets and homeomorphisms, not verified
+connections to every executable entry point. The production descriptions were
+checked against selected source declarations; they are not an exhaustive audit.
+The scalar verification documentation retains open obligations for connecting
+models, implementations, dependencies, cache behavior and termination
+\cite{verification}. The whole stack is not claimed to be formally verified.
+
+The measurements use one machine, historical schedules and focused workloads.
+They lack multi-machine replication and a statistical model for environmental
+variation. The shared-coefficient aggregate combines separate short phases, so
+its interpretation is limited. Microbenchmark improvements do not predict a
+complete native pipeline. The corpus must retain failures and all previously
+certified behavior as capability expands.
+
+Artifact hashes check byte identity, not truth. A retained archive can faithfully
+preserve an erroneous program or an inadequate oracle. Independent mathematical
+expectations, topology checks and representation-aware generators are needed
+alongside deterministic replay. The broader historical audit also reports
+27,093 missing physical artifact paths. This manuscript verifies its selected
+inputs and does not claim complete historical preservation.
+
+Open engineering obligations include ordinary strict-mode completion across
+supported symbolic representations, end-to-end provenance, comprehensive typed
+failure propagation, resource exhaustion and cancellation, actual C/C++, Python
+and JavaScript consumers, measured coverage and implementation-connected formal
+proofs. Motion-machine and continuous-field fidelity contracts remain separate
+requirements. None is discharged by a manuscript, ledger, local test count or
+successful PDF render.
+
+For publication, the draft still needs assigned authorship, a venue-specific
+scope and format, independent technical review, a distributable reproducibility
+bundle and broader replication. This work provides a concrete manuscript and
+traceable case study on which that preparation can proceed.
+
+\section{Conclusion}
+Exact geometric software needs a contract for the next operation as well as the
+current one. Meaning, representation, evidence and resource feasibility are
+distinct parts of that contract. The inspected APIs make several local
+distinctions explicit, while the full end-to-end obligations remain open.
+
+The retrospective cache case shows why retaining complete outcomes, unfavorable
+measurements and interrupted runs matters. Warm-query gains can coexist with
+other costs; library-suite success can coexist with missing downstream
+qualification. Admission should therefore ask whether a change enables more
+trustworthy completed work, or reduces the cost of the same completed contract.
+
+\appendix
+\section{Artifact map and reproduction}
+The implementation snapshot is commit \texttt{7ed43501755fd64a01f54c3078d12229cbc0129d}.
+Numerical observations predate this manuscript and identify their own revisions,
+binaries, dependencies, flags, schedules and policies in the records below.
+The manuscript preparation record pins the selected current source and evidence
+files and records its exact table calculation and rendering commands.
+
+The LaTeX source and generated \texttt{results.tex} form the manuscript source.
+Build them from the same directory, directing output to a fresh directory:
+\begin{verbatim}
+pdflatex -no-shell-escape -halt-on-error \
+  -interaction=nonstopmode \
+  -output-directory=NEW_OUTPUT hyper-stack.tex
+\end{verbatim}
+Run a second pass in that still-open build directory to resolve references.
+This reproduces document content; byte-identical PDF metadata is not promised.
+Inspect the final log for undefined citations, overfull boxes and missing
+characters. Rendering is not a geometry-validation command.
+
+To reproduce the experiment tables, use the recorded analysis helper with the
+original E46 and E51 archives and their member hash indexes. It recomputes the
+small-batch medians and grouped totals from original process output, verifies the
+two library terminal summaries, and emits \texttt{results.tex}. Running the
+underlying experiments requires their original dependencies and resource
+contracts; do not replace full fixtures, loosen gates or reuse closed output
+roots to obtain an apparently successful rerun.
+
+\begin{thebibliography}{10}
+\small\setlength{\itemsep}{2pt}
+\bibitem{shewchuk}
+Jonathan Richard Shewchuk.
+Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates.
+\emph{Discrete \& Computational Geometry}, 18:305--363, 1997.
+\url{https://www.cs.cmu.edu/~quake/robust.html}.
+
+\bibitem{pionfabri}
+Sylvain Pion and Andreas Fabri.
+A Generic Lazy Evaluation Scheme for Exact Geometric Computations.
+arXiv:cs/0608063, 2006.
+\url{https://arxiv.org/abs/cs/0608063}.
+
+\bibitem{zhou}
+Qingnan Zhou, Eitan Grinspun, Denis Zorin and Alec Jacobson.
+Mesh Arrangements for Solid Geometry.
+\emph{ACM Transactions on Graphics}, 35(4), 2016.
+\url{https://www.cs.columbia.edu/cg/mesh-arrangements/}.
+
+\bibitem{contract}
+Hyper stack repository. Acceptance properties and admission protocol.
+\path{properties.md}; \path{docs/admission.md}.
+Inspected at the manuscript implementation snapshot.
+
+\bibitem{implementation}
+Hyper stack repository. Scalar, predicate, curve-policy and modeling source.
+\path{crates/hyperreal/README.md};
+\path{crates/hyperlimit/src/predicate.rs};
+\path{crates/hypercurve/src/policy.rs};
+\path{src/context.rs}; \path{src/solid/cache.rs}.
+Selected declarations inspected at the manuscript snapshot.
+
+\bibitem{e46}
+Hyper stack repository. Deferred circle-support index experiment, 17 October 2026.
+\path{docs/evidence/2026-10-17-circle-support-reuse-index/}.
+See \texttt{progress-v1.md}, \texttt{decision-v1.json}, raw archive and member index.
+
+\bibitem{e51}
+Hyper stack repository. Preserved candidate library qualification, 17 October 2026.
+\path{docs/evidence/2026-10-17-circle-support-reuse-full-library/}.
+See protocol, qualification, raw archive and member index.
+
+\bibitem{native}
+Hyper stack repository. Disposition of 35 pending native edits, 16 October 2026.
+\path{docs/evidence/2026-10-16-native-change-disposition/progress-v1.md}.
+
+\bibitem{release}
+Hyper stack repository. External consumer resolution audit, 17 October 2026.
+\path{docs/evidence/2026-10-17-release-consumer-audit/}.
+This is a dated registry observation.
+
+\bibitem{verification}
+Hyperreal repository. Formal verification boundary and remaining obligations.
+\path{crates/hyperreal/verification/README.md}.
+Inspected documentation does not substitute for a new verifier execution.
+\end{thebibliography}
+\end{document}

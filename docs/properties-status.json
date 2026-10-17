@@ -17508,6 +17508,25 @@
     "release_qualification_complete": false,
     "cache_index_admitted": false,
     "full_plan_complete": false
+  },
+  "scientific_manuscript": {
+    "status": "working scientific manuscript retained; publication preparation remains open",
+    "base_revision": "7ed43501755fd64a01f54c3078d12229cbc0129d",
+    "source": "docs/paper/hyper-stack.tex",
+    "contract": "docs/evidence/2026-10-17-scientific-manuscript/contract-v1.md",
+    "qualification": "docs/evidence/2026-10-17-scientific-manuscript/final-review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-scientific-manuscript/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-scientific-manuscript/artifact-expectations-v1.json.gz",
+    "render_complete": true,
+    "pages": 9,
+    "recomputed_process_observations": 476,
+    "visual_review_complete_for_declared_pages": true,
+    "publication_ready": false,
+    "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
+    "original_worktree_integration_pending": true,
+    "rust_sources_changed": false,
+    "cache_index_admitted": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
