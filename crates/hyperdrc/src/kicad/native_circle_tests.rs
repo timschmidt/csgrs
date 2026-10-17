@@ -26,7 +26,8 @@ fn parse_via(source: &str) -> (Vec<CopperFeature>, Vec<DrillFeature>) {
     let root = sexp::parse(source).unwrap();
     let mut copper = vec![];
     let mut drills = vec![];
-    parse_tracks_and_vias(&root, &HashMap::new(), &[], &mut copper, &mut drills);
+    parse_tracks_and_vias(&root, &HashMap::new(), &[], &mut copper, &mut drills)
+        .expect("valid via source loads");
     (copper, drills)
 }
 

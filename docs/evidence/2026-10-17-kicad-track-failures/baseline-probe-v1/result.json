@@ -1,0 +1,172 @@
+{
+  "complete": true,
+  "invalid_source_observations": 96,
+  "invalid_source_categories": {
+    "missing_feature": 81,
+    "successful_geometry": 15,
+    "retained_failure": 0
+  },
+  "original_complete_regression_file_unchanged": true,
+  "original_regressions_exit_code": 101,
+  "public_tests_exit_code": 101,
+  "original_regressions": {
+    "passed": 4,
+    "failed": 22
+  },
+  "original_regression_scope": "Each test stops at its first failed assertion; no credit for unexecuted later assertions.",
+  "budget_escape": {
+    "all_copper": {
+      "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+      "operation": "report-projection",
+      "source": "KiCad segment",
+      "status": "error"
+    },
+    "copper_count": 1,
+    "copper_layers": {
+      "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+      "operation": "report-projection",
+      "source": "KiCad segment",
+      "status": "error"
+    },
+    "features": [
+      {
+        "area": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "region-area",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "bounds_present": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "region-bounds",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "classify_origin": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "point-classification",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "difference_empty_left": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "profile-difference",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "empty": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "region-emptiness",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "empty_union": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "profile-union",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "intersection_with_empty": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "profile-intersection",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "kind": "Segment",
+        "layer": "F.Cu",
+        "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+        "native_handoff": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "native-handoff",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "net": "signal",
+        "offset_zero": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "profile-offset",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "report_components": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "report-projection",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "union_with_empty": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "profile-union",
+          "source": "KiCad segment",
+          "status": "error"
+        }
+      }
+    ]
+  },
+  "recovery": {
+    "all_copper": {
+      "status": "ok",
+      "value": "()"
+    },
+    "copper_count": 1,
+    "copper_layers": {
+      "status": "ok",
+      "value": "1"
+    },
+    "features": [
+      {
+        "area": {
+          "status": "ok",
+          "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+        },
+        "bounds_present": {
+          "status": "ok",
+          "value": "true"
+        },
+        "classify_origin": {
+          "status": "ok",
+          "value": "Outside"
+        },
+        "difference_empty_left": {
+          "status": "ok",
+          "value": "()"
+        },
+        "empty": {
+          "status": "ok",
+          "value": "false"
+        },
+        "empty_union": {
+          "status": "ok",
+          "value": "()"
+        },
+        "intersection_with_empty": {
+          "status": "ok",
+          "value": "()"
+        },
+        "kind": "Segment",
+        "layer": "F.Cu",
+        "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+        "native_handoff": {
+          "status": "ok",
+          "value": "()"
+        },
+        "net": "signal",
+        "offset_zero": {
+          "status": "ok",
+          "value": "()"
+        },
+        "report_components": {
+          "status": "ok",
+          "value": "1"
+        },
+        "union_with_empty": {
+          "status": "ok",
+          "value": "()"
+        }
+      }
+    ]
+  },
+  "read_only_libraries_unchanged": true,
+  "baseline_sources_unchanged": true,
+  "main_sources_modified": false
+}

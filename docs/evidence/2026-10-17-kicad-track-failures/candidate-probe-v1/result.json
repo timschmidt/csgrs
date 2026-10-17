@@ -1,0 +1,142 @@
+{
+  "complete": true,
+  "invalid_source_observations": 96,
+  "invalid_source_categories": {
+    "MissingField": 12,
+    "InvalidArity": 24,
+    "InvalidNumber": 45,
+    "DuplicateField": 9,
+    "NegativeWidth": 6
+  },
+  "all_invalid_sources_rejected_typed": true,
+  "unchanged_controls": [
+    {
+      "name": "valid_control",
+      "policy": "strict",
+      "legacy_observation_identical": true
+    },
+    {
+      "name": "valid_control",
+      "policy": "approximate",
+      "legacy_observation_identical": true
+    },
+    {
+      "name": "valid_control",
+      "policy": "strict_after",
+      "legacy_observation_identical": true
+    },
+    {
+      "name": "zero_width",
+      "policy": "strict",
+      "legacy_observation_identical": true
+    },
+    {
+      "name": "zero_width",
+      "policy": "approximate",
+      "legacy_observation_identical": true
+    },
+    {
+      "name": "zero_width",
+      "policy": "strict_after",
+      "legacy_observation_identical": true
+    },
+    {
+      "name": "zero_width_superrange",
+      "policy": "strict",
+      "legacy_observation_identical": true
+    },
+    {
+      "name": "zero_width_superrange",
+      "policy": "approximate",
+      "legacy_observation_identical": true
+    },
+    {
+      "name": "zero_width_superrange",
+      "policy": "strict_after",
+      "legacy_observation_identical": true
+    }
+  ],
+  "original_complete_regression_file_unchanged": true,
+  "original_regressions_exit_code": 101,
+  "public_tests_exit_code": 0,
+  "original_regressions": {
+    "passed": 5,
+    "failed": 21
+  },
+  "original_regression_scope": "Each test stops at its first failed assertion; no credit for unexecuted later assertions. Failed-region versus load-error carrier is an explicit migration.",
+  "budget_escape": {
+    "diagnostic": "failed to load tracks from /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-probe-v1/fixtures/denied.kicad_pcb: KiCad segment 1: RootRefinement budget exhausted: 0 of 0 units used; 1 more requested: RootRefinement budget exhausted: 0 of 0 units used; 1 more requested",
+    "failure": "BudgetExceeded(BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 })",
+    "segment_index": 0,
+    "status": "error"
+  },
+  "recovery": {
+    "board": {
+      "all_copper": {
+        "status": "ok",
+        "value": "()"
+      },
+      "copper_count": 1,
+      "copper_layers": {
+        "status": "ok",
+        "value": "1"
+      },
+      "features": [
+        {
+          "area": {
+            "status": "ok",
+            "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+          },
+          "bounds_present": {
+            "status": "ok",
+            "value": "true"
+          },
+          "classify_origin": {
+            "status": "ok",
+            "value": "Outside"
+          },
+          "difference_empty_left": {
+            "status": "ok",
+            "value": "()"
+          },
+          "empty": {
+            "status": "ok",
+            "value": "false"
+          },
+          "empty_union": {
+            "status": "ok",
+            "value": "()"
+          },
+          "intersection_with_empty": {
+            "status": "ok",
+            "value": "()"
+          },
+          "kind": "Segment",
+          "layer": "F.Cu",
+          "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+          "native_handoff": {
+            "status": "ok",
+            "value": "()"
+          },
+          "net": "signal",
+          "offset_zero": {
+            "status": "ok",
+            "value": "()"
+          },
+          "report_components": {
+            "status": "ok",
+            "value": "1"
+          },
+          "union_with_empty": {
+            "status": "ok",
+            "value": "()"
+          }
+        }
+      ]
+    },
+    "status": "ok"
+  },
+  "read_only_libraries_unchanged": true,
+  "candidate_sources_unchanged": true,
+  "main_sources_modified": false
+}

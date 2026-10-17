@@ -1,0 +1,3699 @@
+{
+  "exhausted_scope_escaped_board": {
+    "all_copper": {
+      "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+      "operation": "report-projection",
+      "source": "KiCad segment",
+      "status": "error"
+    },
+    "copper_count": 1,
+    "copper_layers": {
+      "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+      "operation": "report-projection",
+      "source": "KiCad segment",
+      "status": "error"
+    },
+    "features": [
+      {
+        "area": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "region-area",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "bounds_present": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "region-bounds",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "classify_origin": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "point-classification",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "difference_empty_left": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "profile-difference",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "empty": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "region-emptiness",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "empty_union": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "profile-union",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "intersection_with_empty": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "profile-intersection",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "kind": "Segment",
+        "layer": "F.Cu",
+        "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+        "native_handoff": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "native-handoff",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "net": "signal",
+        "offset_zero": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "profile-offset",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "report_components": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "report-projection",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "union_with_empty": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: work budget exhausted: BudgetExceeded { kind: RootRefinement, limit: 0, used: 0, requested: 1 }",
+          "operation": "profile-union",
+          "source": "KiCad segment",
+          "status": "error"
+        }
+      }
+    ]
+  },
+  "observations": [
+    {
+      "ambient_policy": "strict",
+      "expected": "valid_control",
+      "fields": "(start 10 20) (end 12 20) (width 2)",
+      "name": "valid_control",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "valid_control",
+      "fields": "(start 10 20) (end 12 20) (width 2)",
+      "name": "valid_control",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "valid_control",
+      "fields": "(start 10 20) (end 12 20) (width 2)",
+      "name": "valid_control",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "empty",
+      "fields": "(start 10 20) (end 12 20) (width 0)",
+      "name": "zero_width",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "empty",
+      "fields": "(start 10 20) (end 12 20) (width 0)",
+      "name": "zero_width",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "empty",
+      "fields": "(start 10 20) (end 12 20) (width 0)",
+      "name": "zero_width",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": " (end 12 20) (width 2)",
+      "name": "start_missing",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": " (end 12 20) (width 2)",
+      "name": "start_missing",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": " (end 12 20) (width 2)",
+      "name": "start_missing",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start) (end 12 20) (width 2)",
+      "name": "start_empty",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start) (end 12 20) (width 2)",
+      "name": "start_empty",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start) (end 12 20) (width 2)",
+      "name": "start_empty",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start bad 20) (end 12 20) (width 2)",
+      "name": "start_bad",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start bad 20) (end 12 20) (width 2)",
+      "name": "start_bad",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start bad 20) (end 12 20) (width 2)",
+      "name": "start_bad",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20 30) (end 12 20) (width 2)",
+      "name": "start_extra",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20 30) (end 12 20) (width 2)",
+      "name": "start_extra",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20 30) (end 12 20) (width 2)",
+      "name": "start_extra",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (start 10 20) (end 12 20) (width 2)",
+      "name": "start_duplicate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (start 10 20) (end 12 20) (width 2)",
+      "name": "start_duplicate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (start 10 20) (end 12 20) (width 2)",
+      "name": "start_duplicate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start (value 10) 20) (end 12 20) (width 2)",
+      "name": "start_nested",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start (value 10) 20) (end 12 20) (width 2)",
+      "name": "start_nested",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start (value 10) 20) (end 12 20) (width 2)",
+      "name": "start_nested",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start NaN 20) (end 12 20) (width 2)",
+      "name": "start_nan",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start NaN 20) (end 12 20) (width 2)",
+      "name": "start_nan",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start NaN 20) (end 12 20) (width 2)",
+      "name": "start_nan",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start inf 20) (end 12 20) (width 2)",
+      "name": "start_infinity",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start inf 20) (end 12 20) (width 2)",
+      "name": "start_infinity",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start inf 20) (end 12 20) (width 2)",
+      "name": "start_infinity",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10) (end 12 20) (width 2)",
+      "name": "start_short",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10) (end 12 20) (width 2)",
+      "name": "start_short",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10) (end 12 20) (width 2)",
+      "name": "start_short",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 bad) (end 12 20) (width 2)",
+      "name": "start_bad_y",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 bad) (end 12 20) (width 2)",
+      "name": "start_bad_y",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 bad) (end 12 20) (width 2)",
+      "name": "start_bad_y",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20)  (width 2)",
+      "name": "end_missing",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20)  (width 2)",
+      "name": "end_missing",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20)  (width 2)",
+      "name": "end_missing",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end) (width 2)",
+      "name": "end_empty",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end) (width 2)",
+      "name": "end_empty",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end) (width 2)",
+      "name": "end_empty",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end bad 20) (width 2)",
+      "name": "end_bad",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end bad 20) (width 2)",
+      "name": "end_bad",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end bad 20) (width 2)",
+      "name": "end_bad",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 10 20 30) (width 2)",
+      "name": "end_extra",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 10 20 30) (width 2)",
+      "name": "end_extra",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 10 20 30) (width 2)",
+      "name": "end_extra",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (end 12 20) (width 2)",
+      "name": "end_duplicate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (end 12 20) (width 2)",
+      "name": "end_duplicate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (end 12 20) (width 2)",
+      "name": "end_duplicate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end (value 10) 20) (width 2)",
+      "name": "end_nested",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end (value 10) 20) (width 2)",
+      "name": "end_nested",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end (value 10) 20) (width 2)",
+      "name": "end_nested",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end NaN 20) (width 2)",
+      "name": "end_nan",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end NaN 20) (width 2)",
+      "name": "end_nan",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end NaN 20) (width 2)",
+      "name": "end_nan",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end inf 20) (width 2)",
+      "name": "end_infinity",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end inf 20) (width 2)",
+      "name": "end_infinity",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end inf 20) (width 2)",
+      "name": "end_infinity",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 10) (width 2)",
+      "name": "end_short",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 10) (width 2)",
+      "name": "end_short",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 10) (width 2)",
+      "name": "end_short",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 10 bad) (width 2)",
+      "name": "end_bad_y",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 10 bad) (width 2)",
+      "name": "end_bad_y",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 10 bad) (width 2)",
+      "name": "end_bad_y",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) ",
+      "name": "width_missing",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) ",
+      "name": "width_missing",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) ",
+      "name": "width_missing",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width)",
+      "name": "width_empty",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width)",
+      "name": "width_empty",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width)",
+      "name": "width_empty",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width bad)",
+      "name": "width_bad",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width bad)",
+      "name": "width_bad",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width bad)",
+      "name": "width_bad",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width 2 3)",
+      "name": "width_extra",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width 2 3)",
+      "name": "width_extra",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width 2 3)",
+      "name": "width_extra",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width 2) (width 2)",
+      "name": "width_duplicate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width 2) (width 2)",
+      "name": "width_duplicate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width 2) (width 2)",
+      "name": "width_duplicate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "status": "ok",
+          "value": "1"
+        },
+        "features": [
+          {
+            "area": {
+              "status": "ok",
+              "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+            },
+            "bounds_present": {
+              "status": "ok",
+              "value": "true"
+            },
+            "classify_origin": {
+              "status": "ok",
+              "value": "Outside"
+            },
+            "difference_empty_left": {
+              "status": "ok",
+              "value": "()"
+            },
+            "empty": {
+              "status": "ok",
+              "value": "false"
+            },
+            "empty_union": {
+              "status": "ok",
+              "value": "()"
+            },
+            "intersection_with_empty": {
+              "status": "ok",
+              "value": "()"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "status": "ok",
+              "value": "()"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "status": "ok",
+              "value": "()"
+            },
+            "report_components": {
+              "status": "ok",
+              "value": "1"
+            },
+            "union_with_empty": {
+              "status": "ok",
+              "value": "()"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width (value 10))",
+      "name": "width_nested",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width (value 10))",
+      "name": "width_nested",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width (value 10))",
+      "name": "width_nested",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width NaN)",
+      "name": "width_nan",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width NaN)",
+      "name": "width_nan",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width NaN)",
+      "name": "width_nan",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width inf)",
+      "name": "width_infinity",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width inf)",
+      "name": "width_infinity",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width inf)",
+      "name": "width_infinity",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width -1)",
+      "name": "width_negative",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width -1)",
+      "name": "width_negative",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width -1)",
+      "name": "width_negative",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width -1e-400)",
+      "name": "width_negative_subrange",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width -1e-400)",
+      "name": "width_negative_subrange",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (end 12 20) (width -1e-400)",
+      "name": "width_negative_subrange",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (width 0)",
+      "name": "zero_width_missing_end",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (width 0)",
+      "name": "zero_width_missing_end",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start 10 20) (width 0)",
+      "name": "zero_width_missing_end",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "invalid_input",
+      "fields": "(start bad 20) (end 12 20) (width 0)",
+      "name": "zero_width_invalid_start",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "invalid_input",
+      "fields": "(start bad 20) (end 12 20) (width 0)",
+      "name": "zero_width_invalid_start",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "invalid_input",
+      "fields": "(start bad 20) (end 12 20) (width 0)",
+      "name": "zero_width_invalid_start",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 3 4) (end 3 4) (width 2)",
+      "name": "coincident_positive",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 3 4) (end 3 4) (width 2)",
+      "name": "coincident_positive",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 3 4) (end 3 4) (width 2)",
+      "name": "coincident_positive",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 0 0) (end 2 0) (width 1e-400)",
+      "name": "positive_width_underflow",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 0 0) (end 2 0) (width 1e-400)",
+      "name": "positive_width_underflow",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 0 0) (end 2 0) (width 1e-400)",
+      "name": "positive_width_underflow",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 0 0) (end 1e-200 0) (width 1e-200)",
+      "name": "positive_length_underflow",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 0 0) (end 1e-200 0) (width 1e-200)",
+      "name": "positive_length_underflow",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 0 0) (end 1e-200 0) (width 1e-200)",
+      "name": "positive_length_underflow",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 1e400 0) (end 1e400 2) (width 2)",
+      "name": "superrange_coordinate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 1e400 0) (end 1e400 2) (width 2)",
+      "name": "superrange_coordinate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 1e400 0) (end 1e400 2) (width 2)",
+      "name": "superrange_coordinate",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start -1e308 0) (end 1e308 0) (width 2)",
+      "name": "endpoint_difference_overflow",
+      "observation": {
+        "all_copper": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+          "operation": "report-projection",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+          "operation": "report-projection",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "features": [
+          {
+            "area": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "region-area",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "bounds_present": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "region-bounds",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "classify_origin": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "point-classification",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "difference_empty_left": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-difference",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "empty": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "region-emptiness",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "empty_union": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-union",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "intersection_with_empty": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-intersection",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "native-handoff",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-offset",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "report_components": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "report-projection",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "union_with_empty": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-union",
+              "source": "KiCad segment",
+              "status": "error"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start -1e308 0) (end 1e308 0) (width 2)",
+      "name": "endpoint_difference_overflow",
+      "observation": {
+        "all_copper": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+          "operation": "report-projection",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+          "operation": "report-projection",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "features": [
+          {
+            "area": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "region-area",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "bounds_present": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "region-bounds",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "classify_origin": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "point-classification",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "difference_empty_left": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-difference",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "empty": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "region-emptiness",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "empty_union": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-union",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "intersection_with_empty": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-intersection",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "native-handoff",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-offset",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "report_components": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "report-projection",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "union_with_empty": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-union",
+              "source": "KiCad segment",
+              "status": "error"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start -1e308 0) (end 1e308 0) (width 2)",
+      "name": "endpoint_difference_overflow",
+      "observation": {
+        "all_copper": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+          "operation": "report-projection",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "copper_count": 1,
+        "copper_layers": {
+          "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+          "operation": "report-projection",
+          "source": "KiCad segment",
+          "status": "error"
+        },
+        "features": [
+          {
+            "area": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "region-area",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "bounds_present": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "region-bounds",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "classify_origin": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "point-classification",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "difference_empty_left": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-difference",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "empty": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "region-emptiness",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "empty_union": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-union",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "intersection_with_empty": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-intersection",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "kind": "Segment",
+            "layer": "F.Cu",
+            "location_debug": "[Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+            "native_handoff": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "native-handoff",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "net": "signal",
+            "offset_zero": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-offset",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "report_components": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "report-projection",
+              "source": "KiCad segment",
+              "status": "error"
+            },
+            "union_with_empty": {
+              "detail": "input exact-region construction failed: profile-aggregation for KiCad segment could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour has fewer than three vertices",
+              "operation": "profile-union",
+              "source": "KiCad segment",
+              "status": "error"
+            }
+          }
+        ]
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 0 0) (end 2 0) (width 1e400)",
+      "name": "width_overflow",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 0 0) (end 2 0) (width 1e400)",
+      "name": "width_overflow",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 0 0) (end 2 0) (width 1e400)",
+      "name": "width_overflow",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 1e20 0) (end 100000000000000000001 0) (width 1)",
+      "name": "finite_translation_collapse",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 1e20 0) (end 100000000000000000001 0) (width 1)",
+      "name": "finite_translation_collapse",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "unresolved_nonempty_fidelity_case",
+      "fields": "(start 1e20 0) (end 100000000000000000001 0) (width 1)",
+      "name": "finite_translation_collapse",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict",
+      "expected": "empty",
+      "fields": "(start 1e400 0) (end 1e400 2) (width 0)",
+      "name": "zero_width_superrange",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "approximate",
+      "expected": "empty",
+      "fields": "(start 1e400 0) (end 1e400 2) (width 0)",
+      "name": "zero_width_superrange",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    },
+    {
+      "ambient_policy": "strict_after",
+      "expected": "empty",
+      "fields": "(start 1e400 0) (end 1e400 2) (width 0)",
+      "name": "zero_width_superrange",
+      "observation": {
+        "all_copper": {
+          "status": "ok",
+          "value": "()"
+        },
+        "copper_count": 0,
+        "copper_layers": {
+          "status": "ok",
+          "value": "0"
+        },
+        "features": []
+      },
+      "outer_receipt": "Certified"
+    }
+  ],
+  "recovery": {
+    "all_copper": {
+      "status": "ok",
+      "value": "()"
+    },
+    "copper_count": 1,
+    "copper_layers": {
+      "status": "ok",
+      "value": "1"
+    },
+    "features": [
+      {
+        "area": {
+          "status": "ok",
+          "value": "Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }"
+        },
+        "bounds_present": {
+          "status": "ok",
+          "value": "true"
+        },
+        "classify_origin": {
+          "status": "ok",
+          "value": "Outside"
+        },
+        "difference_empty_left": {
+          "status": "ok",
+          "value": "()"
+        },
+        "empty": {
+          "status": "ok",
+          "value": "false"
+        },
+        "empty_union": {
+          "status": "ok",
+          "value": "()"
+        },
+        "intersection_with_empty": {
+          "status": "ok",
+          "value": "()"
+        },
+        "kind": "Segment",
+        "layer": "F.Cu",
+        "location_debug": "[Real { rational: Rational { sign: Plus, numerator: 11, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 20, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]",
+        "native_handoff": {
+          "status": "ok",
+          "value": "()"
+        },
+        "net": "signal",
+        "offset_zero": {
+          "status": "ok",
+          "value": "()"
+        },
+        "report_components": {
+          "status": "ok",
+          "value": "1"
+        },
+        "union_with_empty": {
+          "status": "ok",
+          "value": "()"
+        }
+      }
+    ]
+  }
+}

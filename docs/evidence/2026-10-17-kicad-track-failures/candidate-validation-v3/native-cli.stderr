@@ -1,0 +1,13 @@
+   Compiling getrandom v0.3.4
+   Compiling rustix v1.1.4
+   Compiling ahash v0.8.12
+   Compiling arrow-array v57.3.1
+   Compiling xattr v1.6.1
+   Compiling arrow-select v57.3.1
+   Compiling arrow-ord v57.3.1
+   Compiling arrow-cast v57.3.1
+   Compiling arrow-ipc v57.3.1
+   Compiling parquet v57.3.1
+   Compiling tar v0.4.46
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-source-v3/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 1m 46s

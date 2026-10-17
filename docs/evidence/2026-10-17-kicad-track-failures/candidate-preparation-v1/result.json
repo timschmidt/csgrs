@@ -1,0 +1,21 @@
+{
+  "complete": true,
+  "base_commit": "ac14e99174318291a548749395552ab982a7d097",
+  "source_inputs": 2832,
+  "source_hashes_sha256": "c7d7d2566a83d9b750451d269f6403366de490591037f3b23dc254a86a285ac4",
+  "changes": {
+    "crates/hyperdrc/src/kicad.rs": "2f111669509c20831f01a688871ac7bd260a73b372d4cc058aab6d9733f5b4cb",
+    "crates/hyperdrc/src/kicad/tracks.rs": "622de9c824c5982237b1218fb026d3cc2f52127a5b0b492756fe1ace00d5794e",
+    "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+    "crates/hyperdrc/README.md": "323e9fb223d3e1ea40f6b90c5194f4dc026ca0bdef377c9368ba5c88992bc4f0",
+    "crates/hyperdrc/tests/kicad_track_failures.rs": "2038fdc4db6e618f924f3a8b956caf8ef419c6220bf657975d9575df6a91c230"
+  },
+  "runner_sha256": "9e48b0c165e9d1d52088cc94083e8abee54402dcf2308f0d7c1bca9e1bf8b614",
+  "draft_sha256": "8a0571c8d4b7d19fb6bf8fdf323b3fab6bcb1b3744f62e631a844dbcfb7bd990",
+  "contracts_sha256": {
+    "contract-v1.md": "2f189edfa7846b952f65144bb3bfd7e8aff74b24d7045898cc2dd265059ee821",
+    "contract-v2.md": "1ae8429c59914b794d666e103e8902f705bf891b074338414d7f809335f049bf"
+  },
+  "reproduction_sha256": "11d5d26fe4a25a86d1b77a811c6d6b7012a2989729598052ba66db0bf7745ecd",
+  "main_sources_modified": false
+}

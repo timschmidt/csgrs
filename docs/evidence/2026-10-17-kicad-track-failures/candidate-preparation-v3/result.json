@@ -1,0 +1,22 @@
+{
+  "complete": true,
+  "base_commit": "ac14e99174318291a548749395552ab982a7d097",
+  "source_inputs": 2832,
+  "source_hashes_sha256": "d00a8e522e9433e22d9e9fb44a2995dd5a2753cfbd49a463dc0e09dfef5c40be",
+  "changes": {
+    "crates/hyperdrc/src/kicad.rs": "06db86ae66b0aa90928cf96221a4f314f6c8ee8f36b0030e8b33bf1530be8b1c",
+    "crates/hyperdrc/src/kicad/tracks.rs": "f0c5707d08c29362d263bd3244601557e58cccc38fe8783bdf465496da817430",
+    "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+    "crates/hyperdrc/README.md": "61b0a4bd38f044500fd235acf8ced620ee829b4ad19c2b4817b92936da416693",
+    "crates/hyperdrc/tests/kicad_track_failures.rs": "ad3a266e19ab3e3256eb6aef76751efe05cda45fcd885f81313ccaaebc377279",
+    "crates/hyperdrc/src/kicad/native_circle_tests.rs": "029db861520d3dfdc1f83858bd14a167bb20d2e0e83b30828b55e258e7699a89"
+  },
+  "runner_sha256": "4307a01d49f4a608d291c7e2ac8b000245e480569aa0b150d62e3a6eb4ab65bc",
+  "delta_from_v2": {
+    "crates/hyperdrc/src/kicad.rs": "06db86ae66b0aa90928cf96221a4f314f6c8ee8f36b0030e8b33bf1530be8b1c"
+  },
+  "production_code_unchanged_from_v2": true,
+  "correction": "Add explicit imports required by the migrated internal tests. No fixture, assertion, policy, runtime behavior, or original workload gate changes.",
+  "preserved_failed_attempt": "candidate-validation-v2",
+  "main_sources_modified": false
+}

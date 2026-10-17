@@ -1,0 +1,100 @@
+
+thread 'end_bad' (138971) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end bad 20) (width 2)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'end_bad_y' (138972) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 10 bad) (width 2)
+
+thread 'end_duplicate' (138973) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 12 20) (end 12 20) (width 2)
+
+thread 'end_empty' (138974) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end) (width 2)
+
+thread 'end_extra' (138975) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 10 20 30) (width 2)
+
+thread 'end_infinity' (138976) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end inf 20) (width 2)
+
+thread 'end_missing' (138977) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20)  (width 2)
+
+thread 'end_nan' (138978) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end NaN 20) (width 2)
+
+thread 'end_nested' (138979) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end (value 10) 20) (width 2)
+
+thread 'end_short' (138980) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 10) (width 2)
+
+thread 'exhausted_source_load_cannot_escape_as_a_board_and_later_load_recovers' (138981) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:155:5:
+assertion failed: escaped.unwrap().is_err()
+
+thread 'start_bad' (138982) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start bad 20) (end 12 20) (width 2)
+
+thread 'start_bad_y' (138983) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 bad) (end 12 20) (width 2)
+
+thread 'start_duplicate' (138984) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (start 10 20) (end 12 20) (width 2)
+
+thread 'start_empty' (138985) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start) (end 12 20) (width 2)
+
+thread 'start_extra' (138986) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20 30) (end 12 20) (width 2)
+
+thread 'start_infinity' (138987) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start inf 20) (end 12 20) (width 2)
+
+thread 'start_missing' (138988) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board:  (end 12 20) (width 2)
+
+thread 'start_nan' (138989) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start NaN 20) (end 12 20) (width 2)
+
+thread 'start_nested' (138990) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start (value 10) 20) (end 12 20) (width 2)
+
+thread 'start_short' (138991) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10) (end 12 20) (width 2)
+
+thread 'width_bad' (138994) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 12 20) (width bad)
+
+thread 'width_duplicate' (138995) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 12 20) (width 2) (width 2)
+
+thread 'width_empty' (138996) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 12 20) (width)
+
+thread 'width_extra' (138997) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 12 20) (width 2 3)
+
+thread 'width_infinity' (138998) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 12 20) (width inf)
+
+thread 'width_missing' (138999) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 12 20) 
+
+thread 'width_nan' (139000) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 12 20) (width NaN)
+
+thread 'width_negative' (139001) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 12 20) (width -1)
+
+thread 'width_negative_subrange' (139002) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 12 20) (width -1e-400)
+
+thread 'width_nested' (139003) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (end 12 20) (width (value 10))
+
+thread 'zero_width_invalid_start' (139004) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start bad 20) (end 12 20) (width 0)
+
+thread 'zero_width_missing_end' (139005) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs:31:9:
+invalid source published a board: (start 10 20) (width 0)

@@ -1,0 +1,28 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-source-v1/crates/hyperdrc)
+warning: unused `Result` that must be used
+  --> crates/hyperdrc/src/kicad/native_circle_tests.rs:29:5
+   |
+29 |     parse_tracks_and_vias(&root, &HashMap::new(), &[], &mut copper, &mut drills);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: this `Result` may be an `Err` variant, which should be handled
+   = note: `#[warn(unused_must_use)]` (part of `#[warn(unused)]`) on by default
+help: use `let _ = ...` to ignore the resulting value
+   |
+29 |     let _ = parse_tracks_and_vias(&root, &HashMap::new(), &[], &mut copper, &mut drills);
+   |     +++++++
+
+warning: `hyperdrc` (lib test) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 1m 03s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d)
+error: test failed, to rerun pass `-p hyperdrc --lib`
+     Running unittests src/main.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/hyperdrc-5da1690b41025398)
+     Running tests/artifact_numeric_keys.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/artifact_numeric_keys-03d9b7a570505404)
+     Running tests/diagnostic_formatting.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/diagnostic_formatting-e5ef4baeabfbc955)
+     Running tests/kicad_pad_sources.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/kicad_pad_sources-e4732b4399bed56a)
+     Running tests/kicad_rule_export.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/kicad_rule_export-c09b25b29b958a07)
+     Running tests/kicad_track_failures.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/kicad_track_failures-b846f6af7dd90fbe)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/readme-990ac56b4fb5e9a5)
+   Doc-tests hyperdrc
+error: 1 target failed:
+    `-p hyperdrc --lib`

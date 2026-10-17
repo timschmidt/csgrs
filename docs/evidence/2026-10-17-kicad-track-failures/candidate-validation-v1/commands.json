@@ -1,0 +1,291 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 10.594886505044997,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d89397289fc740759c494a10869a8c1eaed31b9538cfb92be1232411138452dc"
+  },
+  {
+    "name": "track-failures",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--test",
+      "kicad_track_failures",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 292.1326107750647,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/kicad_track_failures-b846f6af7dd90fbe": {
+        "sha256": "309979d0121be8849da50857d4dd753595fc954b69da22ce29134882c22c659f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/309979d0121be8849da50857d4dd753595fc954b69da22ce29134882c22c659f/kicad_track_failures-b846f6af7dd90fbe",
+        "bytes": 20428224
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "901d01e431cb7dc8ef3f1bc4c21912d584077ffed5b5f55661c574e8fa1fd3b6",
+    "stderr_sha256": "44f9ebd7794246cdc0a116f14729cdf1c2fc16c5744da99f6ed8f9dc1939f277",
+    "resources_sha256": "c3cb85efb0bc70779ece2d461113d7f232d9df90ad614910bcc99b3968c28730"
+  },
+  {
+    "name": "native-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1",
+      "--skip",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--skip",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--skip",
+      "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 295.24486766802147,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/readme-990ac56b4fb5e9a5": {
+        "sha256": "32020cb2e9b4d431ac903bf13c45b05daf108b2ef54129dabd36a6cae7c6c375",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/32020cb2e9b4d431ac903bf13c45b05daf108b2ef54129dabd36a6cae7c6c375/readme-990ac56b4fb5e9a5",
+        "bytes": 1117352
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/kicad_rule_export-c09b25b29b958a07": {
+        "sha256": "e510b3366f35b5d6092d8b88a5b1f9be3ec8f255358dc443bebeacb60d936314",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/e510b3366f35b5d6092d8b88a5b1f9be3ec8f255358dc443bebeacb60d936314/kicad_rule_export-c09b25b29b958a07",
+        "bytes": 43494256
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/hyperdrc-5da1690b41025398": {
+        "sha256": "c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af/hyperdrc-5da1690b41025398",
+        "bytes": 1079400
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/kicad_pad_sources-e4732b4399bed56a": {
+        "sha256": "df508ec0291c02b1b4c50fbd3e867d95b7d55667b50459f3aff8fa8c56c29561",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/df508ec0291c02b1b4c50fbd3e867d95b7d55667b50459f3aff8fa8c56c29561/kicad_pad_sources-e4732b4399bed56a",
+        "bytes": 20782096
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "1826bfe8124af1fd04351cdd64c05f9f90008653b67f028124ae80418542c0b8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/1826bfe8124af1fd04351cdd64c05f9f90008653b67f028124ae80418542c0b8/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54244016
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/artifact_numeric_keys-03d9b7a570505404": {
+        "sha256": "27a564bf6d794e612a68721538adfe92903ed0b2ec7836387c944563f6a98fb7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/27a564bf6d794e612a68721538adfe92903ed0b2ec7836387c944563f6a98fb7/artifact_numeric_keys-03d9b7a570505404",
+        "bytes": 6727576
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/diagnostic_formatting-e5ef4baeabfbc955": {
+        "sha256": "7c2b2d3d7577aeae040d1f24382911420bce2087ee9cc3e38ff294028fb3f417",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/7c2b2d3d7577aeae040d1f24382911420bce2087ee9cc3e38ff294028fb3f417/diagnostic_formatting-e5ef4baeabfbc955",
+        "bytes": 20053296
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/kicad_track_failures-b846f6af7dd90fbe": {
+        "sha256": "309979d0121be8849da50857d4dd753595fc954b69da22ce29134882c22c659f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/309979d0121be8849da50857d4dd753595fc954b69da22ce29134882c22c659f/kicad_track_failures-b846f6af7dd90fbe",
+        "bytes": 20428224
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "efff50e83ae340e38693085e2aa0363848abef5781ab906b838aa7a205db1da6",
+    "stderr_sha256": "cb9438b9bace458cf420bb1a3a5132fa8f009a590b399c5d52dfe272d79d4e9d",
+    "resources_sha256": "c6c0a1fc5c3f57c57f09056773ca88838a31e6bd8d2cab807e851c54b8245e43"
+  },
+  {
+    "name": "full-board",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 39.646092294715345,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "1826bfe8124af1fd04351cdd64c05f9f90008653b67f028124ae80418542c0b8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/1826bfe8124af1fd04351cdd64c05f9f90008653b67f028124ae80418542c0b8/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54244016
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "de4728a4d6983fb4b034be49c4986716188de3c66d3179a26c954a72256652b6",
+    "stderr_sha256": "3a9d055099f51eaeabefdfc173499fc2f6a64b39eef3f44d14d2d3dc1091da21",
+    "resources_sha256": "563b56c69aa41c74b7b75cf673ed741260cee6c512351ca7d885ef05f20fad54"
+  },
+  {
+    "name": "copper-neck",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 36.22684178641066,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "1826bfe8124af1fd04351cdd64c05f9f90008653b67f028124ae80418542c0b8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/1826bfe8124af1fd04351cdd64c05f9f90008653b67f028124ae80418542c0b8/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54244016
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "f84cbd4d363b4fa417c17bf7a6c81f93ec6a768c37cdf32651ac9bf379ed3756",
+    "stderr_sha256": "8dbd6370751a0127c2c47b7f5da8458663991d9b78b78cab75b72ec5700c9b25",
+    "resources_sha256": "ebd25bb693d028360a97b478ecaa5bf5f6781e04e1a4f38ab8bbb5a2d5b7ae0c"
+  },
+  {
+    "name": "gerber",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.5240997266955674,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d": {
+        "sha256": "1826bfe8124af1fd04351cdd64c05f9f90008653b67f028124ae80418542c0b8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-executables-v1/1826bfe8124af1fd04351cdd64c05f9f90008653b67f028124ae80418542c0b8/hyperdrc-f2524bbb15bdb74d",
+        "bytes": 54244016
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "ad0094e8779893e9957c9115899cb57707257bffc489462178c9d16167ff7b2b",
+    "stderr_sha256": "aba1bb020f55d03a7b7f9c39066a8f02040f64e0ec43d973c6efe95c33a4ff88",
+    "resources_sha256": "ccef76fdc2049ac6ba182ee05bcf96d59a882bb9a5ac8faf3a2dd3c6e1c6852a"
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 36.05413108272478,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "811bd6b18c4cc3b52355b38b0b53eebf1ceb14057b8f5c7d2edafb14e4333584",
+    "resources_sha256": "8522929aba123417b802c6f8f55eb764e268a2437d3ef6255a6f81e31af8bffb"
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 23.662371358834207,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": "-D warnings",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "a52d65f36737100bfe9cdbda00693942e9e95f578734ee38709ea5409181972c",
+    "resources_sha256": "a3c05056b146376e744344e4082720c09f7e7b27d43c85ae1cfb497d3553db7c"
+  },
+  {
+    "name": "native-cli",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 105.60416281595826,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "414ea6e21f81ddc69f2bb9e9d528dd9a88391f0d8682d13b6cb060df68dcc18d",
+    "stderr_sha256": "1899a3c6b2d4bbd8e88c72b70128fef3808936aab20901821f0af94137b74a54",
+    "resources_sha256": "c02ea5c9f3afc13e8f3e83b7f61439b0243786ae2ece35d50000a7155fa7d288"
+  }
+]

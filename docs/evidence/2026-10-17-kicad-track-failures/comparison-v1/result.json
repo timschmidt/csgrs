@@ -1,0 +1,3948 @@
+{
+  "complete": true,
+  "commands": 76,
+  "paired_summary": [
+    {
+      "fixture": "ordinary64",
+      "phase": "fresh_process_load",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 1.0416997752692254,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.0841374810526196,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3509720,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3805019,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0056741475392035,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3342881,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3361849,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 1.044875416163638,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3487210,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3643700,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 1.0277404364757439,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3245587,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3335621,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.0416997752692254,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3311073,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3449144,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "ordinary64",
+      "phase": "repeat_after_projection_and_drop",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 1.0534216168032666,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.209819809920311,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2429823,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2939648,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0758659735262113,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2783659,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2994844,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.88100413948143,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2775710,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2445412,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 1.0209467914374355,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2375877,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2425644,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.0534216168032666,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2398486,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2526617,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "cparti",
+      "phase": "fresh_process_load",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 0.9905786954860645,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 0.9720123755830613,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1581242993,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1536987758,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 0.981694538065874,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1577766740,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1548884991,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.9944930485860344,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1567936114,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1559301566,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.9905786954860645,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1574664313,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1559828921,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.0000715158162303,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1553810134,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1553921256,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "cparti",
+      "phase": "repeat_after_projection_and_drop",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 0.9985528805344177,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 0.96914204128559,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1534460281,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1487109969,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0040469894521984,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1486870196,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1492887544,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.9987607536412784,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1520021412,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1518137731,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.997785323671506,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1518271522,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1514909042,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 0.9985528805344177,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1505514957,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1503336297,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "hvp109a",
+      "phase": "fresh_process_load",
+      "matched_completed_contract": false,
+      "changed_workload_added_disks": 5,
+      "median_elapsed_ratio": 0.999121201375065,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.02195779986105,
+          "allocation_calls_delta": 11776,
+          "allocated_bytes_delta": 1079053,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146052560,
+            "allocation_calls": 12445443,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 948771331,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131613,
+            "allocation_calls": 12457219,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 969604262,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 0.9936833640984685,
+          "allocation_calls_delta": 11776,
+          "allocated_bytes_delta": 1079053,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84765,
+          "baseline": {
+            "allocated_bytes": 1146052432,
+            "allocation_calls": 12445442,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 952177408,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131485,
+            "allocation_calls": 12457218,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 946162850,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357058,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.9801848634921609,
+          "allocation_calls_delta": 11777,
+          "allocated_bytes_delta": 1079181,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146052432,
+            "allocation_calls": 12445442,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 951840831,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131613,
+            "allocation_calls": 12457219,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 932979975,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.999121201375065,
+          "allocation_calls_delta": 11779,
+          "allocated_bytes_delta": 1079437,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84893,
+          "baseline": {
+            "allocated_bytes": 1146052304,
+            "allocation_calls": 12445441,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 941481901,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272229,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131741,
+            "allocation_calls": 12457220,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 940654528,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.002912196814795,
+          "allocation_calls_delta": 11777,
+          "allocated_bytes_delta": 1079181,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146052432,
+            "allocation_calls": 12445442,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 951048015,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131613,
+            "allocation_calls": 12457219,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 953817654,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "hvp109a",
+      "phase": "repeat_after_projection_and_drop",
+      "matched_completed_contract": false,
+      "changed_workload_added_disks": 5,
+      "median_elapsed_ratio": 1.0063069253906873,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.0127250598755617,
+          "allocation_calls_delta": 11777,
+          "allocated_bytes_delta": 1079181,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84893,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 916490776,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123461,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130461,
+            "allocation_calls": 12457408,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 928153176,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 0.9749632664476527,
+          "allocation_calls_delta": 11778,
+          "allocated_bytes_delta": 1079309,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 917815535,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123525,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130589,
+            "allocation_calls": 12457409,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 894836432,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 1.0063069253906873,
+          "allocation_calls_delta": 11778,
+          "allocated_bytes_delta": 1079309,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84893,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 896064667,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123461,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130589,
+            "allocation_calls": 12457409,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 901716080,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.9869734413499117,
+          "allocation_calls_delta": 11778,
+          "allocated_bytes_delta": 1079309,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 908342665,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123525,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130589,
+            "allocation_calls": 12457409,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 896510086,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.007957804483248,
+          "allocation_calls_delta": 11776,
+          "allocated_bytes_delta": 1079053,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146051408,
+            "allocation_calls": 12445632,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 899196382,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123525,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130461,
+            "allocation_calls": 12457408,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 906352011,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        }
+      ]
+    }
+  ],
+  "all_samples": {
+    "load-00-ordinary64-baseline": [
+      {
+        "allocated_bytes": 3276509,
+        "allocation_calls": 32311,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 3509720,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 515571,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 433835
+      },
+      {
+        "allocated_bytes": 3228093,
+        "allocation_calls": 31571,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 2429823,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 471131,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 389395
+      }
+    ],
+    "load-00-ordinary64-candidate": [
+      {
+        "allocated_bytes": 3276509,
+        "allocation_calls": 32311,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 3805019,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 515584,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 433835
+      },
+      {
+        "allocated_bytes": 3228093,
+        "allocation_calls": 31571,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 2939648,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 471144,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 389395
+      }
+    ],
+    "load-00-cparti-baseline": [
+      {
+        "allocated_bytes": 1703124980,
+        "allocation_calls": 18844149,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1581242993,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200416833,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 132124625
+      },
+      {
+        "allocated_bytes": 1703424604,
+        "allocation_calls": 18848172,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1534460281,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200423697,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 132130417
+      }
+    ],
+    "load-00-cparti-candidate": [
+      {
+        "allocated_bytes": 1703658548,
+        "allocation_calls": 18853677,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1536987758,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200416833,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 132124625
+      },
+      {
+        "allocated_bytes": 1703958172,
+        "allocation_calls": 18857700,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1487109969,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200423697,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 132130417
+      }
+    ],
+    "load-00-hvp109a-baseline": [
+      {
+        "allocated_bytes": 1146052560,
+        "allocation_calls": 12445443,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 948771331,
+        "loaded_copper": 3535,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82272293,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 43253726
+      },
+      {
+        "allocated_bytes": 1146051280,
+        "allocation_calls": 12445631,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 916490776,
+        "loaded_copper": 3535,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82123461,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 43104958
+      }
+    ],
+    "load-00-hvp109a-candidate": [
+      {
+        "allocated_bytes": 1147131613,
+        "allocation_calls": 12457219,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 969604262,
+        "loaded_copper": 3540,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82357122,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 43338555
+      },
+      {
+        "allocated_bytes": 1147130461,
+        "allocation_calls": 12457408,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 928153176,
+        "loaded_copper": 3540,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82208354,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 43189787
+      }
+    ],
+    "load-01-ordinary64-candidate": [
+      {
+        "allocated_bytes": 3276509,
+        "allocation_calls": 32311,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 3361849,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 515584,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 433835
+      },
+      {
+        "allocated_bytes": 3228093,
+        "allocation_calls": 31571,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 2994844,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 471144,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 389395
+      }
+    ],
+    "load-01-ordinary64-baseline": [
+      {
+        "allocated_bytes": 3276509,
+        "allocation_calls": 32311,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 3342881,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 515571,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 433835
+      },
+      {
+        "allocated_bytes": 3228093,
+        "allocation_calls": 31571,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 2783659,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 471131,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 389395
+      }
+    ],
+    "load-01-cparti-candidate": [
+      {
+        "allocated_bytes": 1703658548,
+        "allocation_calls": 18853677,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1548884991,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200416833,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 132124625
+      },
+      {
+        "allocated_bytes": 1703958172,
+        "allocation_calls": 18857700,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1492887544,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200423697,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 132130417
+      }
+    ],
+    "load-01-cparti-baseline": [
+      {
+        "allocated_bytes": 1703124980,
+        "allocation_calls": 18844149,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1577766740,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200416833,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 132124625
+      },
+      {
+        "allocated_bytes": 1703424604,
+        "allocation_calls": 18848172,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1486870196,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200423697,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 132130417
+      }
+    ],
+    "load-01-hvp109a-candidate": [
+      {
+        "allocated_bytes": 1147131485,
+        "allocation_calls": 12457218,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 946162850,
+        "loaded_copper": 3540,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82357058,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 43338555
+      },
+      {
+        "allocated_bytes": 1147130589,
+        "allocation_calls": 12457409,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 894836432,
+        "loaded_copper": 3540,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82208354,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 43189787
+      }
+    ],
+    "load-01-hvp109a-baseline": [
+      {
+        "allocated_bytes": 1146052432,
+        "allocation_calls": 12445442,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 952177408,
+        "loaded_copper": 3535,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82272293,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 43253726
+      },
+      {
+        "allocated_bytes": 1146051280,
+        "allocation_calls": 12445631,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 917815535,
+        "loaded_copper": 3535,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82123525,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 43104958
+      }
+    ],
+    "load-02-ordinary64-baseline": [
+      {
+        "allocated_bytes": 3276509,
+        "allocation_calls": 32311,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 3487210,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 515571,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 433835
+      },
+      {
+        "allocated_bytes": 3228093,
+        "allocation_calls": 31571,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 2775710,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 471131,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 389395
+      }
+    ],
+    "load-02-ordinary64-candidate": [
+      {
+        "allocated_bytes": 3276509,
+        "allocation_calls": 32311,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 3643700,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 515584,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 433835
+      },
+      {
+        "allocated_bytes": 3228093,
+        "allocation_calls": 31571,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 2445412,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 471144,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 389395
+      }
+    ],
+    "load-02-cparti-baseline": [
+      {
+        "allocated_bytes": 1703124980,
+        "allocation_calls": 18844149,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1567936114,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200416833,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 132124625
+      },
+      {
+        "allocated_bytes": 1703424604,
+        "allocation_calls": 18848172,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1520021412,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200423697,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 132130417
+      }
+    ],
+    "load-02-cparti-candidate": [
+      {
+        "allocated_bytes": 1703658548,
+        "allocation_calls": 18853677,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1559301566,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200416833,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 132124625
+      },
+      {
+        "allocated_bytes": 1703958172,
+        "allocation_calls": 18857700,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1518137731,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200423697,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 132130417
+      }
+    ],
+    "load-02-hvp109a-baseline": [
+      {
+        "allocated_bytes": 1146052432,
+        "allocation_calls": 12445442,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 951840831,
+        "loaded_copper": 3535,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82272293,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 43253726
+      },
+      {
+        "allocated_bytes": 1146051280,
+        "allocation_calls": 12445631,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 896064667,
+        "loaded_copper": 3535,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82123461,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 43104958
+      }
+    ],
+    "load-02-hvp109a-candidate": [
+      {
+        "allocated_bytes": 1147131613,
+        "allocation_calls": 12457219,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 932979975,
+        "loaded_copper": 3540,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82357122,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 43338555
+      },
+      {
+        "allocated_bytes": 1147130589,
+        "allocation_calls": 12457409,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 901716080,
+        "loaded_copper": 3540,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82208354,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 43189787
+      }
+    ],
+    "load-03-ordinary64-candidate": [
+      {
+        "allocated_bytes": 3276509,
+        "allocation_calls": 32311,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 3335621,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 515584,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 433835
+      },
+      {
+        "allocated_bytes": 3228093,
+        "allocation_calls": 31571,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 2425644,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 471144,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 389395
+      }
+    ],
+    "load-03-ordinary64-baseline": [
+      {
+        "allocated_bytes": 3276509,
+        "allocation_calls": 32311,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 3245587,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 515571,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 433835
+      },
+      {
+        "allocated_bytes": 3228093,
+        "allocation_calls": 31571,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 2375877,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 471131,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 389395
+      }
+    ],
+    "load-03-cparti-candidate": [
+      {
+        "allocated_bytes": 1703658548,
+        "allocation_calls": 18853677,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1559828921,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200416833,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 132124625
+      },
+      {
+        "allocated_bytes": 1703958172,
+        "allocation_calls": 18857700,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1514909042,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200423697,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 132130417
+      }
+    ],
+    "load-03-cparti-baseline": [
+      {
+        "allocated_bytes": 1703124980,
+        "allocation_calls": 18844149,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1574664313,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200416833,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 132124625
+      },
+      {
+        "allocated_bytes": 1703424604,
+        "allocation_calls": 18848172,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1518271522,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200423697,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 132130417
+      }
+    ],
+    "load-03-hvp109a-candidate": [
+      {
+        "allocated_bytes": 1147131741,
+        "allocation_calls": 12457220,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 940654528,
+        "loaded_copper": 3540,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82357122,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 43338555
+      },
+      {
+        "allocated_bytes": 1147130589,
+        "allocation_calls": 12457409,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 896510086,
+        "loaded_copper": 3540,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82208354,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 43189787
+      }
+    ],
+    "load-03-hvp109a-baseline": [
+      {
+        "allocated_bytes": 1146052304,
+        "allocation_calls": 12445441,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 941481901,
+        "loaded_copper": 3535,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82272229,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 43253726
+      },
+      {
+        "allocated_bytes": 1146051280,
+        "allocation_calls": 12445631,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 908342665,
+        "loaded_copper": 3535,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82123525,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 43104958
+      }
+    ],
+    "load-04-ordinary64-baseline": [
+      {
+        "allocated_bytes": 3276509,
+        "allocation_calls": 32311,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 3311073,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 515571,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 433835
+      },
+      {
+        "allocated_bytes": 3228093,
+        "allocation_calls": 31571,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 2398486,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 471131,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 389395
+      }
+    ],
+    "load-04-ordinary64-candidate": [
+      {
+        "allocated_bytes": 3276509,
+        "allocation_calls": 32311,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 3449144,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 515584,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 433835
+      },
+      {
+        "allocated_bytes": 3228093,
+        "allocation_calls": 31571,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 2526617,
+        "loaded_copper": 64,
+        "loaded_drills": 0,
+        "peak_extra_requested_bytes": 471144,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 389395
+      }
+    ],
+    "load-04-cparti-baseline": [
+      {
+        "allocated_bytes": 1703124980,
+        "allocation_calls": 18844149,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1553810134,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200416833,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 132124625
+      },
+      {
+        "allocated_bytes": 1703424604,
+        "allocation_calls": 18848172,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1505514957,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200423697,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 132130417
+      }
+    ],
+    "load-04-cparti-candidate": [
+      {
+        "allocated_bytes": 1703658548,
+        "allocation_calls": 18853677,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1553921256,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200416833,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 132124625
+      },
+      {
+        "allocated_bytes": 1703958172,
+        "allocation_calls": 18857700,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 1503336297,
+        "loaded_copper": 10829,
+        "loaded_drills": 1283,
+        "peak_extra_requested_bytes": 200423697,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 132130417
+      }
+    ],
+    "load-04-hvp109a-baseline": [
+      {
+        "allocated_bytes": 1146052432,
+        "allocation_calls": 12445442,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 951048015,
+        "loaded_copper": 3535,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82272293,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 43253726
+      },
+      {
+        "allocated_bytes": 1146051408,
+        "allocation_calls": 12445632,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 899196382,
+        "loaded_copper": 3535,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82123525,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 43104958
+      }
+    ],
+    "load-04-hvp109a-candidate": [
+      {
+        "allocated_bytes": 1147131613,
+        "allocation_calls": 12457219,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 953817654,
+        "loaded_copper": 3540,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82357122,
+        "phase": "fresh_process_load",
+        "retained_requested_bytes_delta": 43338555
+      },
+      {
+        "allocated_bytes": 1147130461,
+        "allocation_calls": 12457408,
+        "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+        "copper_projection_errors": 0,
+        "elapsed_ns": 906352011,
+        "loaded_copper": 3540,
+        "loaded_drills": 649,
+        "peak_extra_requested_bytes": 82208354,
+        "phase": "repeat_after_projection_and_drop",
+        "retained_requested_bytes_delta": 43189787
+      }
+    ]
+  },
+  "all_previously_materialized_features_identical": true,
+  "geometry_snapshot_sha256": {
+    "load-00-ordinary64-baseline": "fc937676449bebd3c3e3531f4fddcb0d5fbcac56a6248095c37fa965da4a3ca9",
+    "load-00-ordinary64-candidate": "fc937676449bebd3c3e3531f4fddcb0d5fbcac56a6248095c37fa965da4a3ca9",
+    "load-00-cparti-baseline": "805106d14500712e1bf4b9fcb08fe505bb780754d6c7b91779bb38b10e383f33",
+    "load-00-cparti-candidate": "805106d14500712e1bf4b9fcb08fe505bb780754d6c7b91779bb38b10e383f33",
+    "load-00-hvp109a-baseline": "36360b43735eabf44a1b76d042dfaffc8707ab3b226881b6e97014505375209a",
+    "load-00-hvp109a-candidate": "9c763f44a2f99aa9fe1506d8904c8f842b527e9933320b03c90eb66bb28b6a0c",
+    "load-01-ordinary64-candidate": "fc937676449bebd3c3e3531f4fddcb0d5fbcac56a6248095c37fa965da4a3ca9",
+    "load-01-ordinary64-baseline": "fc937676449bebd3c3e3531f4fddcb0d5fbcac56a6248095c37fa965da4a3ca9",
+    "load-01-cparti-candidate": "805106d14500712e1bf4b9fcb08fe505bb780754d6c7b91779bb38b10e383f33",
+    "load-01-cparti-baseline": "805106d14500712e1bf4b9fcb08fe505bb780754d6c7b91779bb38b10e383f33",
+    "load-01-hvp109a-candidate": "9c763f44a2f99aa9fe1506d8904c8f842b527e9933320b03c90eb66bb28b6a0c",
+    "load-01-hvp109a-baseline": "36360b43735eabf44a1b76d042dfaffc8707ab3b226881b6e97014505375209a",
+    "load-02-ordinary64-baseline": "fc937676449bebd3c3e3531f4fddcb0d5fbcac56a6248095c37fa965da4a3ca9",
+    "load-02-ordinary64-candidate": "fc937676449bebd3c3e3531f4fddcb0d5fbcac56a6248095c37fa965da4a3ca9",
+    "load-02-cparti-baseline": "805106d14500712e1bf4b9fcb08fe505bb780754d6c7b91779bb38b10e383f33",
+    "load-02-cparti-candidate": "805106d14500712e1bf4b9fcb08fe505bb780754d6c7b91779bb38b10e383f33",
+    "load-02-hvp109a-baseline": "36360b43735eabf44a1b76d042dfaffc8707ab3b226881b6e97014505375209a",
+    "load-02-hvp109a-candidate": "9c763f44a2f99aa9fe1506d8904c8f842b527e9933320b03c90eb66bb28b6a0c",
+    "load-03-ordinary64-candidate": "fc937676449bebd3c3e3531f4fddcb0d5fbcac56a6248095c37fa965da4a3ca9",
+    "load-03-ordinary64-baseline": "fc937676449bebd3c3e3531f4fddcb0d5fbcac56a6248095c37fa965da4a3ca9",
+    "load-03-cparti-candidate": "805106d14500712e1bf4b9fcb08fe505bb780754d6c7b91779bb38b10e383f33",
+    "load-03-cparti-baseline": "805106d14500712e1bf4b9fcb08fe505bb780754d6c7b91779bb38b10e383f33",
+    "load-03-hvp109a-candidate": "9c763f44a2f99aa9fe1506d8904c8f842b527e9933320b03c90eb66bb28b6a0c",
+    "load-03-hvp109a-baseline": "36360b43735eabf44a1b76d042dfaffc8707ab3b226881b6e97014505375209a",
+    "load-04-ordinary64-baseline": "fc937676449bebd3c3e3531f4fddcb0d5fbcac56a6248095c37fa965da4a3ca9",
+    "load-04-ordinary64-candidate": "fc937676449bebd3c3e3531f4fddcb0d5fbcac56a6248095c37fa965da4a3ca9",
+    "load-04-cparti-baseline": "805106d14500712e1bf4b9fcb08fe505bb780754d6c7b91779bb38b10e383f33",
+    "load-04-cparti-candidate": "805106d14500712e1bf4b9fcb08fe505bb780754d6c7b91779bb38b10e383f33",
+    "load-04-hvp109a-baseline": "36360b43735eabf44a1b76d042dfaffc8707ab3b226881b6e97014505375209a",
+    "load-04-hvp109a-candidate": "9c763f44a2f99aa9fe1506d8904c8f842b527e9933320b03c90eb66bb28b6a0c"
+  },
+  "geometry_additions": {
+    "ordinary64": [],
+    "cparti": [],
+    "hvp109a": [
+      {
+        "board_feature_index": 1330,
+        "source": {
+          "source_segment_index": 479,
+          "positive_segment_index": 479,
+          "center": [
+            "1482309/10000",
+            "562731/5000"
+          ],
+          "width": "127/500",
+          "radius": "127/1000",
+          "original_source_record": [
+            "segment",
+            [
+              "start",
+              "148.2309",
+              "112.5462"
+            ],
+            [
+              "end",
+              "148.2309",
+              "112.5462"
+            ],
+            [
+              "width",
+              "0.254"
+            ],
+            [
+              "layer",
+              "\"F.Cu\""
+            ],
+            [
+              "net",
+              "\"nOC\""
+            ],
+            [
+              "uuid",
+              "\"4711e59a-d1f7-497b-bf3d-e9f4a43bc039\""
+            ]
+          ]
+        },
+        "feature": {
+          "geometry": {
+            "rings": [
+              [
+                [
+                  [
+                    4639423896120158113,
+                    4637620151692838096
+                  ],
+                  [
+                    4639423861346498539,
+                    4637621264449944470
+                  ],
+                  [
+                    4639423758630457950,
+                    4637622351528040696
+                  ],
+                  [
+                    4639423592605159641,
+                    4637623389186155130
+                  ],
+                  [
+                    4639423370424245727,
+                    4637624357260137185
+                  ],
+                  [
+                    4639423101028475679,
+                    4637625240279605677
+                  ],
+                  [
+                    4639422794319136263,
+                    4637626027964954631
+                  ],
+                  [
+                    4639422460367059695,
+                    4637626715135573723
+                  ],
+                  [
+                    4639422108754056000,
+                    4637627301157246547
+                  ],
+                  [
+                    4639421748098581390,
+                    4637627789102888667
+                  ],
+                  [
+                    4639421385774509078,
+                    4637628184798915007
+                  ],
+                  [
+                    4639420678861174310,
+                    4637628731050128237
+                  ],
+                  [
+                    4639420020857370347,
+                    4637629009436352991
+                  ],
+                  [
+                    4639419427704902831,
+                    4637629088523348659
+                  ],
+                  [
+                    4639418871326349644,
+                    4637629018976029511
+                  ],
+                  [
+                    4639418327787301531,
+                    4637628813543948334
+                  ],
+                  [
+                    4639417808958244314,
+                    4637628481493351715
+                  ],
+                  [
+                    4639417324921253287,
+                    4637628037131523887
+                  ],
+                  [
+                    4639416883411519041,
+                    4637627498339983790
+                  ],
+                  [
+                    4639416489568844564,
+                    4637626884921304959
+                  ],
+                  [
+                    4639416145983535018,
+                    4637626217017151823
+                  ],
+                  [
+                    4639415852972698606,
+                    4637625513791144434
+                  ],
+                  [
+                    4639415608999877546,
+                    4637624792480195214
+                  ],
+                  [
+                    4639415411151864376,
+                    4637624067832050590
+                  ],
+                  [
+                    4639415138026257761,
+                    4637622654005381054
+                  ],
+                  [
+                    4639414998833145384,
+                    4637621337997773127
+                  ],
+                  [
+                    4639414959289647550,
+                    4637620151692838096
+                  ],
+                  [
+                    4639414994063307124,
+                    4637619038935731722
+                  ],
+                  [
+                    4639415096779347712,
+                    4637617951857635496
+                  ],
+                  [
+                    4639415262804646022,
+                    4637616914199521062
+                  ],
+                  [
+                    4639415484985559936,
+                    4637615946125539007
+                  ],
+                  [
+                    4639415754381329984,
+                    4637615063106070516
+                  ],
+                  [
+                    4639416061090669400,
+                    4637614275420721561
+                  ],
+                  [
+                    4639416395042745968,
+                    4637613588250102469
+                  ],
+                  [
+                    4639416746655749662,
+                    4637613002228429645
+                  ],
+                  [
+                    4639417107311224273,
+                    4637612514282787526
+                  ],
+                  [
+                    4639417469635296584,
+                    4637612118586761185
+                  ],
+                  [
+                    4639418176548631352,
+                    4637611572335547955
+                  ],
+                  [
+                    4639418834552435316,
+                    4637611293949323201
+                  ],
+                  [
+                    4639419427704902831,
+                    4637611214862327533
+                  ],
+                  [
+                    4639419984083456018,
+                    4637611284409646681
+                  ],
+                  [
+                    4639420527622504131,
+                    4637611489841727858
+                  ],
+                  [
+                    4639421046451561348,
+                    4637611821892324477
+                  ],
+                  [
+                    4639421530488552376,
+                    4637612266254152305
+                  ],
+                  [
+                    4639421971998286622,
+                    4637612805045692402
+                  ],
+                  [
+                    4639422365840961099,
+                    4637613418464371233
+                  ],
+                  [
+                    4639422709426270645,
+                    4637614086368524369
+                  ],
+                  [
+                    4639423002437107057,
+                    4637614789594531758
+                  ],
+                  [
+                    4639423246409928117,
+                    4637615510905480979
+                  ],
+                  [
+                    4639423444257941287,
+                    4637616235553625602
+                  ],
+                  [
+                    4639423717383547902,
+                    4637617649380295138
+                  ],
+                  [
+                    4639423856576660279,
+                    4637618965387903066
+                  ],
+                  [
+                    4639423896120158113,
+                    4637620151692838096
+                  ]
+                ]
+              ]
+            ],
+            "status": "ok"
+          },
+          "kind": "Segment",
+          "layer": "F.Cu",
+          "location": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  10000
+                ],
+                "numerator": [
+                  1482309
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5000
+                ],
+                "numerator": [
+                  562731
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "net": "nOC"
+        }
+      },
+      {
+        "board_feature_index": 1363,
+        "source": {
+          "source_segment_index": 512,
+          "positive_segment_index": 512,
+          "center": [
+            "1514567/10000",
+            "286001/2500"
+          ],
+          "width": "127/625",
+          "radius": "127/1250",
+          "original_source_record": [
+            "segment",
+            [
+              "start",
+              "151.4567",
+              "114.4004"
+            ],
+            [
+              "end",
+              "151.4567",
+              "114.4004"
+            ],
+            [
+              "width",
+              "0.2032"
+            ],
+            [
+              "layer",
+              "\"B.Cu\""
+            ],
+            [
+              "net",
+              "\"PWM_BL\""
+            ],
+            [
+              "uuid",
+              "\"772e4c13-b488-47d2-b405-df7fdf5f7445\""
+            ]
+          ]
+        },
+        "feature": {
+          "geometry": {
+            "rings": [
+              [
+                [
+                  [
+                    4639536500184591211,
+                    4637750629418292321
+                  ],
+                  [
+                    4639536472365663552,
+                    4637751519623977420
+                  ],
+                  [
+                    4639536390192831081,
+                    4637752389286454401
+                  ],
+                  [
+                    4639536257372592433,
+                    4637753219412945948
+                  ],
+                  [
+                    4639536079627861302,
+                    4637753993872131592
+                  ],
+                  [
+                    4639535864111245263,
+                    4637754700287706385
+                  ],
+                  [
+                    4639535618743773731,
+                    4637755330435985548
+                  ],
+                  [
+                    4639535351582112476,
+                    4637755880172480822
+                  ],
+                  [
+                    4639535070291709521,
+                    4637756348989819081
+                  ],
+                  [
+                    4639534491908071983,
+                    4637757055903153849
+                  ],
+                  [
+                    4639533926377404169,
+                    4637757492904124433
+                  ],
+                  [
+                    4639533399974360998,
+                    4637757715613104236
+                  ],
+                  [
+                    4639532925452386986,
+                    4637757778882700771
+                  ],
+                  [
+                    4639532480349544436,
+                    4637757723244845453
+                  ],
+                  [
+                    4639532045518305945,
+                    4637757558899180511
+                  ],
+                  [
+                    4639531630455060172,
+                    4637757293258703216
+                  ],
+                  [
+                    4639531243225467350,
+                    4637756937769240954
+                  ],
+                  [
+                    4639530890017679953,
+                    4637756506736008876
+                  ],
+                  [
+                    4639530574943540372,
+                    4637756016001065811
+                  ],
+                  [
+                    4639530300075292735,
+                    4637755481677743302
+                  ],
+                  [
+                    4639530065666623605,
+                    4637754919096937391
+                  ],
+                  [
+                    4639529712209956221,
+                    4637753762329662316
+                  ],
+                  [
+                    4639529493709470929,
+                    4637752631268326687
+                  ],
+                  [
+                    4639529382354981028,
+                    4637751578462240345
+                  ],
+                  [
+                    4639529350720182760,
+                    4637750629418292321
+                  ],
+                  [
+                    4639529378539110420,
+                    4637749739212607222
+                  ],
+                  [
+                    4639529460711942890,
+                    4637748869550130241
+                  ],
+                  [
+                    4639529593532181538,
+                    4637748039423638693
+                  ],
+                  [
+                    4639529771276912669,
+                    4637747264964453050
+                  ],
+                  [
+                    4639529986793528708,
+                    4637746558548878256
+                  ],
+                  [
+                    4639530232161000240,
+                    4637745928400599093
+                  ],
+                  [
+                    4639530499322661495,
+                    4637745378664103819
+                  ],
+                  [
+                    4639530780613064450,
+                    4637744909846765560
+                  ],
+                  [
+                    4639531358996701988,
+                    4637744202933430792
+                  ],
+                  [
+                    4639531924527369802,
+                    4637743765932460208
+                  ],
+                  [
+                    4639532450930412973,
+                    4637743543223480405
+                  ],
+                  [
+                    4639532925452386986,
+                    4637743479953883870
+                  ],
+                  [
+                    4639533370555229535,
+                    4637743535591739189
+                  ],
+                  [
+                    4639533805386468026,
+                    4637743699937404130
+                  ],
+                  [
+                    4639534220449713799,
+                    4637743965577881425
+                  ],
+                  [
+                    4639534607679306621,
+                    4637744321067343688
+                  ],
+                  [
+                    4639534960887094018,
+                    4637744752100575765
+                  ],
+                  [
+                    4639535275961233599,
+                    4637745242835518830
+                  ],
+                  [
+                    4639535550829481236,
+                    4637745777158841339
+                  ],
+                  [
+                    4639535785238150366,
+                    4637746339739647250
+                  ],
+                  [
+                    4639536138694817750,
+                    4637747496506922325
+                  ],
+                  [
+                    4639536357195303042,
+                    4637748627568257954
+                  ],
+                  [
+                    4639536468549792943,
+                    4637749680374344296
+                  ],
+                  [
+                    4639536500184591211,
+                    4637750629418292321
+                  ]
+                ]
+              ]
+            ],
+            "status": "ok"
+          },
+          "kind": "Segment",
+          "layer": "B.Cu",
+          "location": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  10000
+                ],
+                "numerator": [
+                  1514567
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  2500
+                ],
+                "numerator": [
+                  286001
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "net": "PWM_BL"
+        }
+      },
+      {
+        "board_feature_index": 1392,
+        "source": {
+          "source_segment_index": 541,
+          "positive_segment_index": 541,
+          "center": [
+            "1444209/10000",
+            "47656/625"
+          ],
+          "width": "127/125",
+          "radius": "127/250",
+          "original_source_record": [
+            "segment",
+            [
+              "start",
+              "144.4209",
+              "76.2496"
+            ],
+            [
+              "end",
+              "144.4209",
+              "76.2496"
+            ],
+            [
+              "width",
+              "1.016"
+            ],
+            [
+              "layer",
+              "\"F.Cu\""
+            ],
+            [
+              "net",
+              "\"NetC80_1\""
+            ],
+            [
+              "uuid",
+              "\"37e8bfc2-36a8-4cc2-8cf4-f9e54ee11c9f\""
+            ]
+          ]
+        },
+        "feature": {
+          "geometry": {
+            "rings": [
+              [
+                [
+                  [
+                    4639303248908265508,
+                    4635066005532919097
+                  ],
+                  [
+                    4639303214032829369,
+                    4635068237560831979
+                  ],
+                  [
+                    4639303109813627211,
+                    4635070456561344592
+                  ],
+                  [
+                    4639302937460154782,
+                    4635072649759281258
+                  ],
+                  [
+                    4639302698949464858,
+                    4635074804873729498
+                  ],
+                  [
+                    4639302396970180612,
+                    4635076910340405771
+                  ],
+                  [
+                    4639302034848271620,
+                    4635078955506187234
+                  ],
+                  [
+                    4639301616458330680,
+                    4635080930789466096
+                  ],
+                  [
+                    4639301146124615964,
+                    4635082827802115451
+                  ],
+                  [
+                    4639300628516332999,
+                    4635084639431105828
+                  ],
+                  [
+                    4639300068541535770,
+                    4635086359879989419
+                  ],
+                  [
+                    4639299471243665410,
+                    4635087984672410578
+                  ],
+                  [
+                    4639298841704178107,
+                    4635089510621385236
+                  ],
+                  [
+                    4639298184954011408,
+                    4635090935769246972
+                  ],
+                  [
+                    4639297505895871835,
+                    4635092259303861604
+                  ],
+                  [
+                    4639296809238562140,
+                    4635093481456986802
+                  ],
+                  [
+                    4639296099443857057,
+                    4635094603390552900
+                  ],
+                  [
+                    4639295380685820564,
+                    4635095627076241238
+                  ],
+                  [
+                    4639294656821958616,
+                    4635096555173121379
+                  ],
+                  [
+                    4639293931375227780,
+                    4635097390907361971
+                  ],
+                  [
+                    4639293207525669369,
+                    4635098137957226740
+                  ],
+                  [
+                    4639291775629838154,
+                    4635099382342889583
+                  ],
+                  [
+                    4639290379872330297,
+                    4635100322962079660
+                  ],
+                  [
+                    4639289034090794588,
+                    4635100995852847514
+                  ],
+                  [
+                    4639287747857114442,
+                    4635101436506978675
+                  ],
+                  [
+                    4639286527187975473,
+                    4635101678536204506
+                  ],
+                  [
+                    4639285375247244381,
+                    4635101752854961350
+                  ],
+                  [
+                    4639284259233287940,
+                    4635101683104089073
+                  ],
+                  [
+                    4639283149733031634,
+                    4635101474665684757
+                  ],
+                  [
+                    4639282053134063301,
+                    4635101129958739898
+                  ],
+                  [
+                    4639280975576839181,
+                    4635100652937360050
+                  ],
+                  [
+                    4639279922843501044,
+                    4635100048978791557
+                  ],
+                  [
+                    4639278900260610313,
+                    4635099324734973575
+                  ],
+                  [
+                    4639277912618970882,
+                    4635098487955091694
+                  ],
+                  [
+                    4639276964112646204,
+                    4635097547287662262
+                  ],
+                  [
+                    4639276058298151016,
+                    4635096512071096332
+                  ],
+                  [
+                    4639275198073709220,
+                    4635095392121501875
+                  ],
+                  [
+                    4639274385677498641,
+                    4635094197525761153
+                  ],
+                  [
+                    4639273622703011312,
+                    4635092938446786548
+                  ],
+                  [
+                    4639272910129080444,
+                    4635091624946453151
+                  ],
+                  [
+                    4639272248361773128,
+                    4635090266830174003
+                  ],
+                  [
+                    4639271637285210529,
+                    4635088873515554614
+                  ],
+                  [
+                    4639271076318427480,
+                    4635087453926144449
+                  ],
+                  [
+                    4639270564475583311,
+                    4635086016410071463
+                  ],
+                  [
+                    4639270100427143241,
+                    4635084568682347567
+                  ],
+                  [
+                    4639269682560022945,
+                    4635083117788885894
+                  ],
+                  [
+                    4639269309035090560,
+                    4635081670089769073
+                  ],
+                  [
+                    4639268686842259138,
+                    4635078806298106641
+                  ],
+                  [
+                    4639268216532664100,
+                    4635076014783090928
+                  ],
+                  [
+                    4639267880087280173,
+                    4635073323220019511
+                  ],
+                  [
+                    4639267659760214592,
+                    4635070750752659219
+                  ],
+                  [
+                    4639267538745601677,
+                    4635068309414381280
+                  ],
+                  [
+                    4639267501586223255,
+                    4635066005532919097
+                  ],
+                  [
+                    4639267536461659394,
+                    4635063773505006215
+                  ],
+                  [
+                    4639267640680861551,
+                    4635061554504493602
+                  ],
+                  [
+                    4639267813034333981,
+                    4635059361306556936
+                  ],
+                  [
+                    4639268051545023905,
+                    4635057206192108696
+                  ],
+                  [
+                    4639268353524308151,
+                    4635055100725432423
+                  ],
+                  [
+                    4639268715646217143,
+                    4635053055559650960
+                  ],
+                  [
+                    4639269134036158083,
+                    4635051080276372098
+                  ],
+                  [
+                    4639269604369872799,
+                    4635049183263722742
+                  ],
+                  [
+                    4639270121978155764,
+                    4635047371634732366
+                  ],
+                  [
+                    4639270681952952993,
+                    4635045651185848775
+                  ],
+                  [
+                    4639271279250823353,
+                    4635044026393427615
+                  ],
+                  [
+                    4639271908790310656,
+                    4635042500444452958
+                  ],
+                  [
+                    4639272565540477354,
+                    4635041075296591222
+                  ],
+                  [
+                    4639273244598616928,
+                    4635039751761976590
+                  ],
+                  [
+                    4639273941255926623,
+                    4635038529608851392
+                  ],
+                  [
+                    4639274651050631705,
+                    4635037407675285294
+                  ],
+                  [
+                    4639275369808668199,
+                    4635036383989596956
+                  ],
+                  [
+                    4639276093672530146,
+                    4635035455892716815
+                  ],
+                  [
+                    4639276819119260983,
+                    4635034620158476223
+                  ],
+                  [
+                    4639277542968819393,
+                    4635033873108611454
+                  ],
+                  [
+                    4639278974864650609,
+                    4635032628722948611
+                  ],
+                  [
+                    4639280370622158466,
+                    4635031688103758534
+                  ],
+                  [
+                    4639281716403694174,
+                    4635031015212990680
+                  ],
+                  [
+                    4639283002637374320,
+                    4635030574558859518
+                  ],
+                  [
+                    4639284223306513290,
+                    4635030332529633688
+                  ],
+                  [
+                    4639285375247244381,
+                    4635030258210876844
+                  ],
+                  [
+                    4639286491261200822,
+                    4635030327961749121
+                  ],
+                  [
+                    4639287600761457129,
+                    4635030536400153437
+                  ],
+                  [
+                    4639288697360425462,
+                    4635030881107098296
+                  ],
+                  [
+                    4639289774917649582,
+                    4635031358128478144
+                  ],
+                  [
+                    4639290827650987718,
+                    4635031962087046636
+                  ],
+                  [
+                    4639291850233878450,
+                    4635032686330864619
+                  ],
+                  [
+                    4639292837875517881,
+                    4635033523110746500
+                  ],
+                  [
+                    4639293786381842559,
+                    4635034463778175932
+                  ],
+                  [
+                    4639294692196337747,
+                    4635035498994741862
+                  ],
+                  [
+                    4639295552420779542,
+                    4635036618944336319
+                  ],
+                  [
+                    4639296364816990122,
+                    4635037813540077040
+                  ],
+                  [
+                    4639297127791477451,
+                    4635039072619051646
+                  ],
+                  [
+                    4639297840365408319,
+                    4635040386119385043
+                  ],
+                  [
+                    4639298502132715635,
+                    4635041744235664191
+                  ],
+                  [
+                    4639299113209278234,
+                    4635043137550283580
+                  ],
+                  [
+                    4639299674176061283,
+                    4635044557139693745
+                  ],
+                  [
+                    4639300186018905452,
+                    4635045994655766731
+                  ],
+                  [
+                    4639300650067345522,
+                    4635047442383490627
+                  ],
+                  [
+                    4639301067934465818,
+                    4635048893276952300
+                  ],
+                  [
+                    4639301441459398203,
+                    4635050340976069121
+                  ],
+                  [
+                    4639302063652229624,
+                    4635053204767731553
+                  ],
+                  [
+                    4639302533961824663,
+                    4635055996282747266
+                  ],
+                  [
+                    4639302870407208590,
+                    4635058687845818683
+                  ],
+                  [
+                    4639303090734274171,
+                    4635061260313178975
+                  ],
+                  [
+                    4639303211748887086,
+                    4635063701651456914
+                  ],
+                  [
+                    4639303248908265508,
+                    4635066005532919097
+                  ]
+                ]
+              ]
+            ],
+            "status": "ok"
+          },
+          "kind": "Segment",
+          "layer": "F.Cu",
+          "location": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  10000
+                ],
+                "numerator": [
+                  1444209
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  625
+                ],
+                "numerator": [
+                  47656
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "net": "NetC80_1"
+        }
+      },
+      {
+        "board_feature_index": 1604,
+        "source": {
+          "source_segment_index": 753,
+          "positive_segment_index": 753,
+          "center": [
+            "1512789/10000",
+            "165289/1250"
+          ],
+          "width": "127/500",
+          "radius": "127/1000",
+          "original_source_record": [
+            "segment",
+            [
+              "start",
+              "151.2789",
+              "132.2312"
+            ],
+            [
+              "end",
+              "151.2789",
+              "132.2312"
+            ],
+            [
+              "width",
+              "0.254"
+            ],
+            [
+              "layer",
+              "\"F.Cu\""
+            ],
+            [
+              "net",
+              "\"VB\""
+            ],
+            [
+              "uuid",
+              "\"dd87b587-d145-4285-af79-349c75093cf1\""
+            ]
+          ]
+        },
+        "feature": {
+          "geometry": {
+            "rings": [
+              [
+                [
+                  [
+                    4639531138086284873,
+                    4638856488306793146
+                  ],
+                  [
+                    4639531103312625299,
+                    4638857044685346333
+                  ],
+                  [
+                    4639531000596584710,
+                    4638857588224394446
+                  ],
+                  [
+                    4639530834571286401,
+                    4638858107053451663
+                  ],
+                  [
+                    4639530612390372487,
+                    4638858591090442690
+                  ],
+                  [
+                    4639530342994602438,
+                    4638859032600176936
+                  ],
+                  [
+                    4639530036285263023,
+                    4638859426442851413
+                  ],
+                  [
+                    4639529702333186455,
+                    4638859770028160959
+                  ],
+                  [
+                    4639529350720182760,
+                    4638860063038997371
+                  ],
+                  [
+                    4639528990064708150,
+                    4638860307011818431
+                  ],
+                  [
+                    4639528627740635838,
+                    4638860504859831601
+                  ],
+                  [
+                    4639527920827301070,
+                    4638860777985438216
+                  ],
+                  [
+                    4639527262823497107,
+                    4638860917178550593
+                  ],
+                  [
+                    4639526669671029591,
+                    4638860956722048428
+                  ],
+                  [
+                    4639526113292476404,
+                    4638860921948388853
+                  ],
+                  [
+                    4639525569753428291,
+                    4638860819232348265
+                  ],
+                  [
+                    4639525050924371074,
+                    4638860653207049956
+                  ],
+                  [
+                    4639524566887380047,
+                    4638860431026136042
+                  ],
+                  [
+                    4639524125377645801,
+                    4638860161630365993
+                  ],
+                  [
+                    4639523731534971324,
+                    4638859854921026577
+                  ],
+                  [
+                    4639523387949661778,
+                    4638859520968950009
+                  ],
+                  [
+                    4639523094938825366,
+                    4638859169355946315
+                  ],
+                  [
+                    4639522850966004306,
+                    4638858808700471705
+                  ],
+                  [
+                    4639522653117991136,
+                    4638858446376399393
+                  ],
+                  [
+                    4639522379992384521,
+                    4638857739463064625
+                  ],
+                  [
+                    4639522240799272144,
+                    4638857081459260661
+                  ],
+                  [
+                    4639522201255774310,
+                    4638856488306793146
+                  ],
+                  [
+                    4639522236029433884,
+                    4638855931928239959
+                  ],
+                  [
+                    4639522338745474472,
+                    4638855388389191846
+                  ],
+                  [
+                    4639522504770772782,
+                    4638854869560134629
+                  ],
+                  [
+                    4639522726951686696,
+                    4638854385523143602
+                  ],
+                  [
+                    4639522996347456744,
+                    4638853944013409356
+                  ],
+                  [
+                    4639523303056796160,
+                    4638853550170734879
+                  ],
+                  [
+                    4639523637008872728,
+                    4638853206585425333
+                  ],
+                  [
+                    4639523988621876422,
+                    4638852913574588921
+                  ],
+                  [
+                    4639524349277351033,
+                    4638852669601767861
+                  ],
+                  [
+                    4639524711601423344,
+                    4638852471753754691
+                  ],
+                  [
+                    4639525418514758112,
+                    4638852198628148076
+                  ],
+                  [
+                    4639526076518562076,
+                    4638852059435035699
+                  ],
+                  [
+                    4639526669671029591,
+                    4638852019891537864
+                  ],
+                  [
+                    4639527226049582778,
+                    4638852054665197438
+                  ],
+                  [
+                    4639527769588630891,
+                    4638852157381238027
+                  ],
+                  [
+                    4639528288417688108,
+                    4638852323406536336
+                  ],
+                  [
+                    4639528772454679136,
+                    4638852545587450250
+                  ],
+                  [
+                    4639529213964413382,
+                    4638852814983220299
+                  ],
+                  [
+                    4639529607807087859,
+                    4638853121692559715
+                  ],
+                  [
+                    4639529951392397405,
+                    4638853455644636283
+                  ],
+                  [
+                    4639530244403233817,
+                    4638853807257639977
+                  ],
+                  [
+                    4639530488376054876,
+                    4638854167913114587
+                  ],
+                  [
+                    4639530686224068047,
+                    4638854530237186899
+                  ],
+                  [
+                    4639530959349674662,
+                    4638855237150521667
+                  ],
+                  [
+                    4639531098542787039,
+                    4638855895154325631
+                  ],
+                  [
+                    4639531138086284873,
+                    4638856488306793146
+                  ]
+                ]
+              ]
+            ],
+            "status": "ok"
+          },
+          "kind": "Segment",
+          "layer": "F.Cu",
+          "location": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  10000
+                ],
+                "numerator": [
+                  1512789
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1250
+                ],
+                "numerator": [
+                  165289
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "net": "VB"
+        }
+      },
+      {
+        "board_feature_index": 1810,
+        "source": {
+          "source_segment_index": 959,
+          "positive_segment_index": 959,
+          "center": [
+            "1499327/10000",
+            "590163/5000"
+          ],
+          "width": "127/500",
+          "radius": "127/1000",
+          "original_source_record": [
+            "segment",
+            [
+              "start",
+              "149.9327",
+              "118.0326"
+            ],
+            [
+              "end",
+              "149.9327",
+              "118.0326"
+            ],
+            [
+              "width",
+              "0.254"
+            ],
+            [
+              "layer",
+              "\"In1.Cu\""
+            ],
+            [
+              "net",
+              "\"3V3\""
+            ],
+            [
+              "uuid",
+              "\"3d7d2e90-1b1d-41e4-9c8d-8a19088c58dc\""
+            ]
+          ]
+        },
+        "feature": {
+          "geometry": {
+            "rings": [
+              [
+                [
+                  [
+                    4639483772884578887,
+                    4638006222770894432
+                  ],
+                  [
+                    4639483738110919313,
+                    4638007335528000805
+                  ],
+                  [
+                    4639483635394878725,
+                    4638008422606097032
+                  ],
+                  [
+                    4639483469369580415,
+                    4638009460264211466
+                  ],
+                  [
+                    4639483247188666501,
+                    4638010428338193520
+                  ],
+                  [
+                    4639482977792896453,
+                    4638011311357662012
+                  ],
+                  [
+                    4639482671083557037,
+                    4638012099043010967
+                  ],
+                  [
+                    4639482337131480469,
+                    4638012786213630059
+                  ],
+                  [
+                    4639481985518476775,
+                    4638013372235302883
+                  ],
+                  [
+                    4639481624863002164,
+                    4638013860180945002
+                  ],
+                  [
+                    4639481262538929853,
+                    4638014255876971343
+                  ],
+                  [
+                    4639480555625595084,
+                    4638014802128184573
+                  ],
+                  [
+                    4639479897621791121,
+                    4638015080514409326
+                  ],
+                  [
+                    4639479304469323606,
+                    4638015159601404995
+                  ],
+                  [
+                    4639478748090770419,
+                    4638015090054085847
+                  ],
+                  [
+                    4639478204551722306,
+                    4638014884622004670
+                  ],
+                  [
+                    4639477685722665088,
+                    4638014552571408051
+                  ],
+                  [
+                    4639477201685674061,
+                    4638014108209580223
+                  ],
+                  [
+                    4639476760175939815,
+                    4638013569418040126
+                  ],
+                  [
+                    4639476366333265338,
+                    4638012955999361295
+                  ],
+                  [
+                    4639476022747955792,
+                    4638012288095208158
+                  ],
+                  [
+                    4639475729737119380,
+                    4638011584869200770
+                  ],
+                  [
+                    4639475485764298320,
+                    4638010863558251549
+                  ],
+                  [
+                    4639475287916285150,
+                    4638010138910106926
+                  ],
+                  [
+                    4639475014790678535,
+                    4638008725083437390
+                  ],
+                  [
+                    4639474875597566158,
+                    4638007409075829462
+                  ],
+                  [
+                    4639474836054068324,
+                    4638006222770894432
+                  ],
+                  [
+                    4639474870827727898,
+                    4638005110013788058
+                  ],
+                  [
+                    4639474973543768486,
+                    4638004022935691832
+                  ],
+                  [
+                    4639475139569066796,
+                    4638002985277577398
+                  ],
+                  [
+                    4639475361749980710,
+                    4638002017203595343
+                  ],
+                  [
+                    4639475631145750758,
+                    4638001134184126851
+                  ],
+                  [
+                    4639475937855090174,
+                    4638000346498777897
+                  ],
+                  [
+                    4639476271807166742,
+                    4637999659328158805
+                  ],
+                  [
+                    4639476623420170437,
+                    4637999073306485981
+                  ],
+                  [
+                    4639476984075645047,
+                    4637998585360843861
+                  ],
+                  [
+                    4639477346399717359,
+                    4637998189664817521
+                  ],
+                  [
+                    4639478053313052127,
+                    4637997643413604291
+                  ],
+                  [
+                    4639478711316856090,
+                    4637997365027379537
+                  ],
+                  [
+                    4639479304469323606,
+                    4637997285940383869
+                  ],
+                  [
+                    4639479860847876792,
+                    4637997355487703017
+                  ],
+                  [
+                    4639480404386924906,
+                    4637997560919784194
+                  ],
+                  [
+                    4639480923215982123,
+                    4637997892970380812
+                  ],
+                  [
+                    4639481407252973150,
+                    4637998337332208641
+                  ],
+                  [
+                    4639481848762707396,
+                    4637998876123748737
+                  ],
+                  [
+                    4639482242605381873,
+                    4637999489542427569
+                  ],
+                  [
+                    4639482586190691419,
+                    4638000157446580705
+                  ],
+                  [
+                    4639482879201527831,
+                    4638000860672588094
+                  ],
+                  [
+                    4639483123174348891,
+                    4638001581983537314
+                  ],
+                  [
+                    4639483321022362061,
+                    4638002306631681938
+                  ],
+                  [
+                    4639483594147968676,
+                    4638003720458351474
+                  ],
+                  [
+                    4639483733341081053,
+                    4638005036465959401
+                  ],
+                  [
+                    4639483772884578887,
+                    4638006222770894432
+                  ]
+                ]
+              ]
+            ],
+            "status": "ok"
+          },
+          "kind": "Segment",
+          "layer": "In1.Cu",
+          "location": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  10000
+                ],
+                "numerator": [
+                  1499327
+                ],
+                "sign": 1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  5000
+                ],
+                "numerator": [
+                  590163
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "net": "3V3"
+        }
+      }
+    ]
+  },
+  "independent_full_board_disk_checks": [
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(0)",
+      "source_segment_index": 479
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(0)",
+      "source_segment_index": 512
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(0)",
+      "source_segment_index": 541
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(0)",
+      "source_segment_index": 753
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(0)",
+      "source_segment_index": 959
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(1)",
+      "source_segment_index": 479
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(1)",
+      "source_segment_index": 512
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(1)",
+      "source_segment_index": 541
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(1)",
+      "source_segment_index": 753
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(1)",
+      "source_segment_index": 959
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(0)",
+      "source_segment_index": 479
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(0)",
+      "source_segment_index": 512
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(0)",
+      "source_segment_index": 541
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(0)",
+      "source_segment_index": 753
+    },
+    {
+      "certified_disk_area_and_membership": true,
+      "native_bounds_preserved": true,
+      "policy": "PredicatePolicy(0)",
+      "source_segment_index": 959
+    }
+  ],
+  "raw_report_differences": {
+    "ordinary64": [
+      {
+        "path": "$.coverage.checks[0].check_version",
+        "baseline": 20,
+        "candidate": 21
+      }
+    ],
+    "cparti": [
+      {
+        "path": "$.coverage.checks[0].check_version",
+        "baseline": 20,
+        "candidate": 21
+      }
+    ],
+    "hvp109a": [
+      {
+        "path": "$.coverage.checks[0].check_version",
+        "baseline": 20,
+        "candidate": 21
+      }
+    ],
+    "cparti-smoke": [
+      {
+        "path": "$.coverage.checks[0].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[1].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[2].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[3].check_version",
+        "baseline": 20,
+        "candidate": 21
+      }
+    ],
+    "hvp109a-smoke": [
+      {
+        "path": "$.coverage.checks[0].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[1].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[2].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[3].check_version",
+        "baseline": 20,
+        "candidate": 21
+      }
+    ]
+  },
+  "unexpected_report_differences": [],
+  "malformed_cli": [
+    {
+      "name": "start_missing",
+      "source_sha256": "b0b726f6c1021ad7041b4bd12d40adfdda1bb0b79ebb85816ebec07bcb33d4d8",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_missing.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "start_empty",
+      "source_sha256": "c970ca39eb0085dc7cbb5b7d8c6a4e810afd9c80090fdd618044d76b40e0d33f",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_empty.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "start_bad",
+      "source_sha256": "8144282ab0b342156645c7ae366feb417d518ddd626c0854907984af65930b68",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_bad.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "start_extra",
+      "source_sha256": "09c612122af3d9d987058ad2f509a4cb8a8930f57aa65d02425a47fc1dd3a109",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_extra.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "start_duplicate",
+      "source_sha256": "b9860137497dceca39bfb02cf4081d9cad8514c3f5ebd0202418d8912367125b",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_duplicate.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "start_nested",
+      "source_sha256": "7df577c6d279da64856f39702ca70077e18dd55ca2c3434b4cce9552a2c3a15c",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_nested.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "start_nan",
+      "source_sha256": "99f46331dd7843e81e4e7a5692d0062776c9b7a5c8faac9713ca985f49da4e96",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_nan.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "start_infinity",
+      "source_sha256": "324adec2c469302197083069c9d4d4d3a619b745610bf2dd65b3e19547151fd9",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_infinity.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "start_short",
+      "source_sha256": "51475a41cd701fcc20992b0abb4aac229915430914ee6f281534e6c992b62e85",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_short.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "start_bad_y",
+      "source_sha256": "cb072389a102771f54e0b554ea43963ca366818c90c0111620d5f012b6931f22",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_bad_y.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "end_missing",
+      "source_sha256": "daee95c02a5702b836cc5830a72ce60c1f41210a5f1722133af342646ebbf3ff",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_missing.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "end_empty",
+      "source_sha256": "64124c27f7280cdc1eac335b16f993fa8fa3115a4cc15781ef9bef66889ddb38",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_empty.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "end_bad",
+      "source_sha256": "1015a1c9aeec77a69e443787f9973ab6954b03282f8d1a034bf9c29a3273ceb6",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_bad.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "end_extra",
+      "source_sha256": "f8d817e858f3b51fe3509c7a86bc5070d7db0f19dbda4fac44a4b3ac0ad852dc",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_extra.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "end_duplicate",
+      "source_sha256": "6c85771e8cf449225456b5f5d60d4200f489b697851d27ee819ab594aa5d3ba1",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_duplicate.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "end_nested",
+      "source_sha256": "dd570fcdba9681e3e086d464c97507c6d3fb39d461bf2363bc5b06c45f092501",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_nested.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "end_nan",
+      "source_sha256": "16b256117dfe6bb61b42f46a849704e4583e95d8e01d64bcaed8110a14506ef8",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_nan.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "end_infinity",
+      "source_sha256": "98fea1b5c60682cc3d3c54c7fcb1d7e40ec6e45b2f1e1051f8de4b47f2cfdf8c",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_infinity.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "end_short",
+      "source_sha256": "75b384b16bb3b7908bdc8c68a364297275fb49ff2950af643fd18f4147a9969d",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_short.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "end_bad_y",
+      "source_sha256": "8144d6878c888494b286d2e7b78ec8d0eee21ddd9f1811fd22566bbfeb508927",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_bad_y.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "width_missing",
+      "source_sha256": "c76490062f4da392d847522e7c4469f286a1d1f7e954db36657e3257a11db99f",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_missing.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "width_empty",
+      "source_sha256": "9056d60607902bc4d831eb02cee9643a54f6ab53ac4d6ae789565fee131ccbaf",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_empty.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "width_bad",
+      "source_sha256": "ce7abf1e43e0bfcf38cd7ce8aa1c2241be8b36f26658e935f4cf1b7290150fb1",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_bad.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "width_extra",
+      "source_sha256": "3a66cf00c301487313d23ca8b1be0402bbd647920baf9c8135e0a461008606e6",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_extra.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "width_duplicate",
+      "source_sha256": "701a619db6e4072867d329473b8c4e918aa2adb6cd533dada9f7e1e5a188907f",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_duplicate.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "width_nested",
+      "source_sha256": "993feda80d1aceb71b518779011d1a1ea9534e856456886929e5a78343de04d3",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_nested.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "width_nan",
+      "source_sha256": "2fed42b433ffef0c033c2cc6a7662fbd291c419af535e5e9eaf4f68b4e7ed517",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_nan.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "width_infinity",
+      "source_sha256": "68d9671ba04dff2ded33022b1eade709a3eeeac27c078587dde35c4ee398c8ae",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_infinity.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "width_negative",
+      "source_sha256": "46a6ff1ddf4ab4f1bc68b6baff80f95b11bfbc24b22684d64e27e30fe2112a01",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_negative.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "width_negative_subrange",
+      "source_sha256": "414f44cd3726fe692d363dcbe9cb65ec891bef6498ee70f1d5b671fbcfbe62f3",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_negative_subrange.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "zero_width_missing_end",
+      "source_sha256": "30d039327ac5c22a3e51716eecf9d805e2996dce4c626c34c67897a7bdab4dae",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-zero_width_missing_end.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    },
+    {
+      "name": "zero_width_invalid_start",
+      "source_sha256": "a30e0eda67508f34459f89378d6dd2d36e25cbdff59703b2ad1105432a3e5232",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-zero_width_invalid_start.kicad_pcb",
+      "exit_code": 1,
+      "empty_stdout": true,
+      "diagnostic_survives": true
+    }
+  ],
+  "sizes": {
+    "baseline": {
+      "cli_bytes": 42804424,
+      "cli_sha256": "82287af7fda0c1b194cb384c598f6ec65d69284f663670fcf1c4d1412fae2b7e",
+      "probe_bytes": 23607544,
+      "probe_sha256": "db1a1f735ca65683e632e7109fd0b54fffec7f9300abfdaac23bf2bbd74d4ce7"
+    },
+    "candidate": {
+      "cli_bytes": 42929064,
+      "cli_sha256": "eced4ad941993f73ab8987e6e6991008c9dbe629255cb25dafdb1fc8662a14a5",
+      "probe_bytes": 23652872,
+      "probe_sha256": "893271cb318759afbaca157421533425ee11677d364923f853911c85e6e4cc69"
+    }
+  },
+  "source_and_read_only_artifacts_unchanged": true,
+  "general_exact_source_stroke_fidelity_claimed": false,
+  "performance_improvement_claimed": false
+}

@@ -1,0 +1,9 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/source-disks-v1/ordinary64.kicad_pcb",
+  "source_sha256": "d9fc777b80a9804ab32ce7bc448650d951bbd7fb47be0893267f0882f5868a3b",
+  "segments": 64,
+  "zero_width": 0,
+  "positive_segments": 64,
+  "disks": [],
+  "independent_arithmetic": "Python fractions.Fraction directly from source tokens, no binary64 conversion"
+}

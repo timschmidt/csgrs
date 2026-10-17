@@ -1,0 +1,77 @@
+
+running 35 tests
+test end_bad ... FAILED
+test end_bad_y ... FAILED
+test end_duplicate ... FAILED
+test end_empty ... FAILED
+test end_extra ... FAILED
+test end_infinity ... FAILED
+test end_missing ... FAILED
+test end_nan ... FAILED
+test end_nested ... FAILED
+test end_short ... FAILED
+test exhausted_source_load_cannot_escape_as_a_board_and_later_load_recovers ... FAILED
+test start_bad ... FAILED
+test start_bad_y ... FAILED
+test start_duplicate ... FAILED
+test start_empty ... FAILED
+test start_extra ... FAILED
+test start_infinity ... FAILED
+test start_missing ... FAILED
+test start_nan ... FAILED
+test start_nested ... FAILED
+test start_short ... FAILED
+test valid_source_controls_preserve_metadata_and_known_membership ... ok
+test validated_zero_width_is_empty_even_when_coordinates_exceed_binary64 ... ok
+test width_bad ... FAILED
+test width_duplicate ... FAILED
+test width_empty ... FAILED
+test width_extra ... FAILED
+test width_infinity ... FAILED
+test width_missing ... FAILED
+test width_nan ... FAILED
+test width_negative ... FAILED
+test width_negative_subrange ... FAILED
+test width_nested ... FAILED
+test zero_width_invalid_start ... FAILED
+test zero_width_missing_end ... FAILED
+
+failures:
+
+failures:
+    end_bad
+    end_bad_y
+    end_duplicate
+    end_empty
+    end_extra
+    end_infinity
+    end_missing
+    end_nan
+    end_nested
+    end_short
+    exhausted_source_load_cannot_escape_as_a_board_and_later_load_recovers
+    start_bad
+    start_bad_y
+    start_duplicate
+    start_empty
+    start_extra
+    start_infinity
+    start_missing
+    start_nan
+    start_nested
+    start_short
+    width_bad
+    width_duplicate
+    width_empty
+    width_extra
+    width_infinity
+    width_missing
+    width_nan
+    width_negative
+    width_negative_subrange
+    width_nested
+    zero_width_invalid_start
+    zero_width_missing_end
+
+test result: FAILED. 2 passed; 33 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

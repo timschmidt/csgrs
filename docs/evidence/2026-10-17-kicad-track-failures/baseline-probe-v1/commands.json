@@ -1,0 +1,135 @@
+[
+  {
+    "name": "probe-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libanyhow-af4f35109210643f.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/reproduce.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-probe-v1/probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6990164499729872,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "74c27d542a2150fcbea1fcefca37a60a39b54ff330c35ad98d7dfcb857488ba7"
+  },
+  {
+    "name": "probe",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-probe-v1/probe",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-probe-v1/fixtures"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.013681021053344011,
+    "stdout_sha256": "0b156b55dc8c25df3d845a10f64d83be00e67e8140bd53a4616fe71348ab8e9b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7c01f851c9d349a0a25371a893189beee8bcda027b9ce764b7c567cddb23c46c"
+  },
+  {
+    "name": "public-tests-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libanyhow-af4f35109210643f.rlib",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/public_tests.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-probe-v1/public-tests"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.5290039721876383,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "307ab9721f3cdb7afa71abcb7d3a47f97e50edf7fa3d1d208355c1b49392e355"
+  },
+  {
+    "name": "public-tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-probe-v1/public-tests",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.011822439264506102,
+    "stdout_sha256": "54667e00d27a0611b37c1c9bb75cf658c87f3e1487fc002022bf6510016143d7",
+    "stderr_sha256": "3a2c39092ed92f85cd9bc42fd9f3bd312904f4f7ba551f7a404cbd9bdb08e7fb",
+    "resources_sha256": "3c617f234a237293cbb0d049163aaa802f40673b6f6af58dafb427bf82b8dc1d"
+  },
+  {
+    "name": "original-regressions-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libanyhow-af4f35109210643f.rlib",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/prototype-v1/original_native_linear_strokes.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-probe-v1/original-regressions"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6636286783032119,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "53d8568c6afb1d9f52560dc48204cfd603f27cbbcb125e8bd6580e593ca51ad5"
+  },
+  {
+    "name": "original-regressions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-probe-v1/original-regressions",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.010641110129654408,
+    "stdout_sha256": "d1ed21bdc73f8b2d9a745091f0c34beb7dbce16e1c04652bc3e4c66de5bb3c02",
+    "stderr_sha256": "d625f21efdf0ae34cf053dd1f0733b44476080ef1715239605f4cb90772d3f2a",
+    "resources_sha256": "f013eb45ecd2d372a94bd8e8226c7c1d379e982b06ba805d17ee98adda060df4"
+  }
+]

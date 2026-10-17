@@ -1,0 +1,26 @@
+[
+  {
+    "allocated_bytes": 1147131485,
+    "allocation_calls": 12457218,
+    "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+    "copper_projection_errors": 0,
+    "elapsed_ns": 946162850,
+    "loaded_copper": 3540,
+    "loaded_drills": 649,
+    "peak_extra_requested_bytes": 82357058,
+    "phase": "fresh_process_load",
+    "retained_requested_bytes_delta": 43338555
+  },
+  {
+    "allocated_bytes": 1147130589,
+    "allocation_calls": 12457409,
+    "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+    "copper_projection_errors": 0,
+    "elapsed_ns": 894836432,
+    "loaded_copper": 3540,
+    "loaded_drills": 649,
+    "peak_extra_requested_bytes": 82208354,
+    "phase": "repeat_after_projection_and_drop",
+    "retained_requested_bytes_delta": 43189787
+  }
+]

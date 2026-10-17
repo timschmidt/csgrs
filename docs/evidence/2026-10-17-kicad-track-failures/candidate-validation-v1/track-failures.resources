@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s cargo test --locked --release -p hyperdrc --all-features --test kicad_track_failures -- --test-threads=1"
+	User time (seconds): 543.31
+	System time (seconds): 21.39
+	Percent of CPU this job got: 193%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:51.75
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2008316
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 5047
+	Minor (reclaiming a frame) page faults: 8169777
+	Voluntary context switches: 47238
+	Involuntary context switches: 23568
+	Swaps: 0
+	File system inputs: 980304
+	File system outputs: 2170976
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

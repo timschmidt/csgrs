@@ -218,6 +218,32 @@ JSON, JSON Lines, GeoJSON, SARIF, GitHub annotations, HTML, JUnit, SQLite,
 Arrow IPC, and Parquet. Review companions include SVG, Gerber, Excellon, DXF,
 PDF, KiCad markers/rules, IPC-D-356, GenCAD, and IPC-2581 projections.
 
+### Straight-track load failures
+
+The KiCad loader now rejects malformed straight-track `start`, `end`, and
+`width` fields instead of dropping, defaulting, or truncating them. Each field
+must occur once with two endpoint coordinates or one width. Negative widths
+fail using the exact source value, including values below binary64 range.
+Validated zero width retains the existing empty-set behavior.
+
+`load_kicad_pcb` keeps its `anyhow::Result<BoardModel>` signature. A caller can
+downcast the error to `kicad::TrackLoadError` and inspect its zero-based segment
+index and `TrackLoadFailure`: invalid fields, an undecided width sign, shared
+budget exhaustion, unsupported finite geometry, or native geometry failure.
+No partial board is returned. The CLI reports the source path and diagnosis
+with exit status 1, including with `--allow-findings`.
+
+This is a failure-contract migration; readiness implementation version 21
+invalidates version-20 check evidence. Coincident exact endpoints now produce
+a native disk with radius width/2; these tracks were previously omitted, so
+their geometry and resulting findings intentionally change. Previously
+materialized finite track bodies retain their geometry and metadata. Those
+bodies still come from the legacy finite rectangular adapter: exact round
+caps, exact coordinate fidelity, and extreme source ranges remain open work. Rejecting a positive-width track that collapses
+in this adapter makes failure visible; it does not complete that geometry.
+Other KiCad object families retain their existing contracts. Shared refinement
+budgets do not bound source parsing, total work, heap bytes, or cancellation.
+
 ## Useful API
 
 The generated Rust documentation contains full signatures. These groups cover

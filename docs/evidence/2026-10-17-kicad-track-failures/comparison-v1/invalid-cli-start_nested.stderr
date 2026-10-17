@@ -1,0 +1,24 @@
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: failed load KiCad boards after 0.000s
+hyperdrc: failed run after 0.000s
+Error: failed to load tracks from /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_nested.kicad_pcb
+
+Caused by:
+    KiCad segment 1: invalid numeric value 1 in start

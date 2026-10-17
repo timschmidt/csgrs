@@ -1,0 +1,28 @@
+{
+  "complete": true,
+  "base_commit": "ac14e99174318291a548749395552ab982a7d097",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-source-v1",
+  "source_inputs": 2830,
+  "runner_sha256": "6945645245d6b47734f0ed0236858de16d7a63163f32e0e40193a1a89112917c",
+  "source_hashes_sha256": "4035984c0d02a551950c39965ef90e01429348c041920f80780f4a0cca96e454",
+  "fixtures": [
+    {
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "sha256": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+      "entry": "CPArti FPGA dev board.kicad_pcb",
+      "entry_bytes": 8177693,
+      "entry_sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a",
+      "snapshot_archive": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-source-v1/crates/hyperdrc/docs/CPArti FPGA dev board.zip"
+    },
+    {
+      "archive": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/docs/HVP109A.zip",
+      "sha256": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a",
+      "entry": "HVP109A.kicad_pcb",
+      "entry_bytes": 5611517,
+      "entry_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6",
+      "snapshot_archive": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-source-v1/crates/hyperdrc/docs/HVP109A.zip"
+    }
+  ],
+  "full_original_archives_preserved": true,
+  "main_sources_modified": false
+}

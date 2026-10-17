@@ -1,0 +1,6 @@
+{
+  "cases": 42,
+  "invalid_input_cases": 32,
+  "original_complete_regressions_sha256": "84f86db87c666e019b54bad7bff57cbbb290fe23960cc891966134cddd0a7b74",
+  "case_meaning": "Invalid source requires retained failure. The separate nonempty fidelity cases remain unresolved unless independently proven; an error is not a successful geometric repair."
+}

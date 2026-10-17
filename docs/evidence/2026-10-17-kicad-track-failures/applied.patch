@@ -1,0 +1,1065 @@
+diff --git a/crates/hyperdrc/README.md b/crates/hyperdrc/README.md
+index 17295a545..d6d269aee 100644
+--- a/crates/hyperdrc/README.md
++++ b/crates/hyperdrc/README.md
+@@ -218,6 +218,32 @@ JSON, JSON Lines, GeoJSON, SARIF, GitHub annotations, HTML, JUnit, SQLite,
+ Arrow IPC, and Parquet. Review companions include SVG, Gerber, Excellon, DXF,
+ PDF, KiCad markers/rules, IPC-D-356, GenCAD, and IPC-2581 projections.
+ 
++### Straight-track load failures
++
++The KiCad loader now rejects malformed straight-track `start`, `end`, and
++`width` fields instead of dropping, defaulting, or truncating them. Each field
++must occur once with two endpoint coordinates or one width. Negative widths
++fail using the exact source value, including values below binary64 range.
++Validated zero width retains the existing empty-set behavior.
++
++`load_kicad_pcb` keeps its `anyhow::Result<BoardModel>` signature. A caller can
++downcast the error to `kicad::TrackLoadError` and inspect its zero-based segment
++index and `TrackLoadFailure`: invalid fields, an undecided width sign, shared
++budget exhaustion, unsupported finite geometry, or native geometry failure.
++No partial board is returned. The CLI reports the source path and diagnosis
++with exit status 1, including with `--allow-findings`.
++
++This is a failure-contract migration; readiness implementation version 21
++invalidates version-20 check evidence. Coincident exact endpoints now produce
++a native disk with radius width/2; these tracks were previously omitted, so
++their geometry and resulting findings intentionally change. Previously
++materialized finite track bodies retain their geometry and metadata. Those
++bodies still come from the legacy finite rectangular adapter: exact round
++caps, exact coordinate fidelity, and extreme source ranges remain open work. Rejecting a positive-width track that collapses
++in this adapter makes failure visible; it does not complete that geometry.
++Other KiCad object families retain their existing contracts. Shared refinement
++budgets do not bound source parsing, total work, heap bytes, or cancellation.
++
+ ## Useful API
+ 
+ The generated Rust documentation contains full signatures. These groups cover
+diff --git a/crates/hyperdrc/src/kicad.rs b/crates/hyperdrc/src/kicad.rs
+index d35d9e944..076fdfc6b 100644
+--- a/crates/hyperdrc/src/kicad.rs
++++ b/crates/hyperdrc/src/kicad.rs
+@@ -16,6 +16,9 @@ mod graphics;
+ mod model;
+ mod pads;
+ mod text;
++mod tracks;
++
++pub use tracks::{TrackLoadError, TrackLoadFailure};
+ 
+ use custom_pad::custom_pad_polygons;
+ use footprint_graphics::parse_footprint_graphics;
+@@ -29,13 +32,26 @@ use anyhow::{Context, Result};
+ use hyperreal::Real;
+ 
+ use crate::geometry::{
+-    Polygon, SourceGridFacts, SourceScalar, SourceUnit, line_polygon, polygon_from_points,
+-    polygons_to_profile,
++    Polygon, SourceGridFacts, SourceScalar, SourceUnit, polygon_from_points, polygons_to_profile,
+ };
+ use crate::sexp::{self, Sexp};
+ use crate::{LayerMetadata, Scalar};
+ 
+-/// Run or compute `load_kicad_pcb`.
++/// Load a KiCad board, preserving exact source locations and native PCB regions.
++///
++/// # Errors
++///
++/// Straight tracks require one `start` and `end` pair and one nonnegative
++/// `width`. Malformed fields, unresolved signs, exhausted shared work budgets,
++/// and failed positive-width construction return a [`TrackLoadError`] through
++/// the error chain before a board is published. Callers can downcast through
++/// the path context. Validated zero-width tracks denote the empty set.
++///
++/// Coincident exact endpoints produce a native disk with radius `width / 2`.
++/// Other straight-track bodies still use the legacy finite rectangular adapter;
++/// their success does not certify round caps or exact source-stroke fidelity.
++/// Other KiCad object families retain their existing validation contracts.
++/// No total source-size, parsing-work, memory, or cancellation bound is added.
+ pub fn load_kicad_pcb(path: &Path) -> Result<BoardModel> {
+     let text = std::fs::read_to_string(path)
+         .with_context(|| format!("failed to read {}", path.display()))?;
+@@ -60,7 +76,8 @@ pub fn load_kicad_pcb(path: &Path) -> Result<BoardModel> {
+         &declared_copper_layers,
+         &mut copper,
+         &mut drills,
+-    );
++    )
++    .with_context(|| format!("failed to load tracks from {}", path.display()))?;
+     parse_zones(&root, &nets, &mut copper);
+     parse_graphics(&root, &mut edge_polygons, &mut panel_polygons);
+ 
+@@ -221,42 +238,8 @@ fn parse_tracks_and_vias(
+     declared_copper_layers: &[String],
+     copper: &mut Vec<CopperFeature>,
+     drills: &mut Vec<DrillFeature>,
+-) {
+-    for segment in root.named_children("segment") {
+-        let Some(start_source) = xy_from_child_source(segment, "start") else {
+-            continue;
+-        };
+-        let Some(end_source) = xy_from_child_source(segment, "end") else {
+-            continue;
+-        };
+-        let start = start_source.approximate;
+-        let end = end_source.approximate;
+-        let width = segment
+-            .named_child("width")
+-            .and_then(|width| width.f64_at(1))
+-            .unwrap_or(0.0);
+-        let Some(polygon) = line_polygon(start, end, width) else {
+-            continue;
+-        };
+-        let layer = segment
+-            .named_child("layer")
+-            .and_then(|layer| layer.atom_at(1))
+-            .unwrap_or("unknown")
+-            .to_string();
+-
+-        copper.push(CopperFeature {
+-            layer,
+-            net: net_name(segment, nets),
+-            kind: CopperKind::Segment,
+-            region: polygons_to_profile(
+-                vec![polygon],
+-                Some(LayerMetadata {
+-                    name: "KiCad segment".to_string(),
+-                }),
+-            ),
+-            location: midpoint_scalar(&start_source.exact, &end_source.exact),
+-        });
+-    }
++) -> Result<(), TrackLoadError> {
++    tracks::parse_segments(root, nets, copper)?;
+ 
+     for via in root.named_children("via") {
+         let Some(location_source) = xy_from_child_source(via, "at") else {
+@@ -310,6 +293,7 @@ fn parse_tracks_and_vias(
+             plated: true,
+         });
+     }
++    Ok(())
+ }
+ 
+ fn drill_diameter_scalar(drill: &Sexp) -> Option<Scalar> {
+@@ -560,14 +544,18 @@ fn midpoint_scalar(start: &[Scalar; 2], end: &[Scalar; 2]) -> [Scalar; 2] {
+ 
+ #[cfg(test)]
+ mod tests {
++    use std::collections::HashMap;
+     use std::fs;
+ 
+     use crate::PcbRegionExt;
+     use crate::Scalar;
+     use crate::geometry::{SourceGridFacts, SourceUnit};
+-    use crate::sexp;
++    use crate::sexp::{self, Sexp};
+ 
+-    use super::{CopperKind, load_kicad_pcb, xy_from_child_source};
++    use super::{
++        CopperKind, TrackLoadError, TrackLoadFailure, load_kicad_pcb, parse_footprints,
++        parse_tracks_and_vias, parse_zones, xy_from_child_source,
++    };
+ 
+     #[test]
+     fn parses_basic_kicad_board_features() {
+@@ -1575,7 +1563,7 @@ mod tests {
+     }
+ 
+     #[test]
+-    fn degenerate_and_non_copper_geometry_is_ignored_without_fallback_shapes() {
++    fn coincident_track_keeps_its_disk_without_non_copper_fallback_shapes() {
+         let path = std::env::temp_dir().join("hyperdrc-degenerate-geometry.kicad_pcb");
+         fs::write(
+             &path,
+@@ -1598,9 +1586,28 @@ mod tests {
+         )
+         .unwrap();
+ 
++        // Keep the complete original fixture. Its positive-width coincident
++        // track is the disk centered at (1, 1) with radius 1/10.
+         let board = load_kicad_pcb(&path).unwrap();
+-
+-        assert!(board.copper.is_empty());
++        assert_eq!(board.copper.len(), 1);
++        let disk = &board.copper[0];
++        assert_eq!(disk.kind, CopperKind::Segment);
++        assert_eq!(disk.location, [Scalar::one(), Scalar::one()]);
++        assert_eq!(
++            crate::scalar::compare(
++                &disk.region.try_area().unwrap(),
++                &(Scalar::pi() / Scalar::from(100)).unwrap()
++            ),
++            Some(std::cmp::Ordering::Equal)
++        );
++        assert_eq!(
++            disk.region.classify_xy(Scalar::one(), Scalar::one()),
++            Ok(hypercurve::RegionPointLocation::Inside)
++        );
++        assert_eq!(
++            disk.region.classify_xy(Scalar::from(2), Scalar::one()),
++            Ok(hypercurve::RegionPointLocation::Outside)
++        );
+         assert!(board.panel_features.is_none());
+         let _ = fs::remove_file(path);
+     }
+@@ -1668,7 +1675,7 @@ mod tests {
+     }
+ 
+     #[test]
+-    fn incomplete_objects_retain_failed_pad_geometry_without_panicking() {
++    fn incomplete_track_rejects_load_while_pad_failure_remains_guarded() {
+         let path = std::env::temp_dir().join("hyperdrc-incomplete.kicad_pcb");
+         fs::write(
+             &path,
+@@ -1682,15 +1689,35 @@ mod tests {
+         )
+         .unwrap();
+ 
+-        let board = load_kicad_pcb(&path).unwrap();
++        // Keep the complete original fixture and require the missing track
++        // endpoint to stop loading before a partial board can be published.
++        let error = load_kicad_pcb(&path).unwrap_err();
++        let track = error.downcast_ref::<TrackLoadError>().unwrap();
++        assert_eq!(track.segment_index, 0);
++        assert_eq!(
++            track.failure,
++            TrackLoadFailure::MissingField { field: "end" }
++        );
+ 
+-        assert_eq!(board.copper.len(), 1);
+-        assert_eq!(board.copper[0].kind, CopperKind::Pad);
+-        assert!(board.copper[0].region.try_area().is_err());
+-        let findings = crate::checks::layer::layer_sanity("F.Cu", &board.copper[0].region, None);
++        // Exercise the same malformed pad directly, retaining its independent
++        // failure and downstream layer-sanity assertions from the original test.
++        let root = sexp::parse(&fs::read_to_string(&path).unwrap()).unwrap();
++        let mut copper = Vec::new();
++        let mut drills = Vec::new();
++        parse_footprints(&root, &HashMap::new(), &[], &mut copper, &mut drills);
++        for via in root.named_children("via") {
++            let via_source = Sexp::List(vec![Sexp::Atom("kicad_pcb".into()), via.clone()]);
++            parse_tracks_and_vias(&via_source, &HashMap::new(), &[], &mut copper, &mut drills)
++                .expect("unchanged via-only source contract");
++        }
++        parse_zones(&root, &HashMap::new(), &mut copper);
++        assert_eq!(copper.len(), 1);
++        assert_eq!(copper[0].kind, CopperKind::Pad);
++        assert!(copper[0].region.try_area().is_err());
++        let findings = crate::checks::layer::layer_sanity("F.Cu", &copper[0].region, None);
+         assert_eq!(findings.len(), 1);
+         assert_eq!(findings[0].check, "geometry-uncertainty");
+-        assert!(board.drills.is_empty());
++        assert!(drills.is_empty());
+         let _ = fs::remove_file(path);
+     }
+ }
+diff --git a/crates/hyperdrc/src/kicad/native_circle_tests.rs b/crates/hyperdrc/src/kicad/native_circle_tests.rs
+index d1d312ef3..828614fed 100644
+--- a/crates/hyperdrc/src/kicad/native_circle_tests.rs
++++ b/crates/hyperdrc/src/kicad/native_circle_tests.rs
+@@ -26,7 +26,8 @@ fn parse_via(source: &str) -> (Vec<CopperFeature>, Vec<DrillFeature>) {
+     let root = sexp::parse(source).unwrap();
+     let mut copper = vec![];
+     let mut drills = vec![];
+-    parse_tracks_and_vias(&root, &HashMap::new(), &[], &mut copper, &mut drills);
++    parse_tracks_and_vias(&root, &HashMap::new(), &[], &mut copper, &mut drills)
++        .expect("valid via source loads");
+     (copper, drills)
+ }
+ 
+diff --git a/crates/hyperdrc/src/readiness.rs b/crates/hyperdrc/src/readiness.rs
+index e441e6b9d..92fe9d351 100644
+--- a/crates/hyperdrc/src/readiness.rs
++++ b/crates/hyperdrc/src/readiness.rs
+@@ -12,7 +12,7 @@ use crate::{Check, Violation};
+ pub const CHECK_REGISTRY_VERSION: u32 = 1;
+ 
+ /// Version of shared check execution and geometry-uncertainty reporting semantics.
+-pub const CHECK_IMPLEMENTATION_VERSION: u32 = 20;
++pub const CHECK_IMPLEMENTATION_VERSION: u32 = 21;
+ 
+ /// Opinionated default check plan used by both CLI and native callers.
+ pub fn default_checks() -> &'static [Check] {
+diff --git a/crates/hyperdrc/src/kicad/tracks.rs b/crates/hyperdrc/src/kicad/tracks.rs
+new file mode 100644
+index 000000000..55270c38e
+--- /dev/null
++++ b/crates/hyperdrc/src/kicad/tracks.rs
+@@ -0,0 +1,254 @@
++//! Checked source fields at the legacy finite straight-track boundary.
++
++use std::cmp::Ordering;
++use std::collections::HashMap;
++use std::fmt;
++
++use hyperlimit::{PredicatePolicy, compare_reals};
++use hypersolve::work_budget::{self, BudgetExceeded};
++
++use super::{CopperFeature, CopperKind, midpoint_scalar, net_name};
++use crate::geometry::{SourceScalar, SourceUnit, line_polygon, polygons_to_profile};
++use crate::sexp::Sexp;
++use crate::{LayerMetadata, PcbGeometryUncertainty, PcbRegion, Scalar};
++
++/// A straight track prevented the loader from publishing a complete board.
++///
++/// [`super::load_kicad_pcb`] retains this type inside its `anyhow::Error`, so
++/// callers can use `downcast_ref::<TrackLoadError>()` through path context.
++#[derive(Clone, Debug, Eq, PartialEq)]
++pub struct TrackLoadError {
++    /// Zero-based index among the board's `segment` records.
++    pub segment_index: usize,
++    /// Source, representation, predicate, or resource failure.
++    pub failure: TrackLoadFailure,
++}
++
++/// Why a straight track could not be loaded.
++#[derive(Clone, Debug, Eq, PartialEq)]
++pub enum TrackLoadFailure {
++    /// A required source field is absent.
++    MissingField {
++        /// KiCad field name.
++        field: &'static str,
++    },
++    /// A required source field occurs more than once.
++    DuplicateField {
++        /// KiCad field name.
++        field: &'static str,
++    },
++    /// A source field has the wrong number of values.
++    InvalidArity {
++        /// KiCad field name.
++        field: &'static str,
++        /// Required number of values, excluding the field name.
++        expected: usize,
++        /// Observed number of values, excluding the field name.
++        actual: usize,
++    },
++    /// A source value is not a supported exact numeric atom.
++    InvalidNumber {
++        /// KiCad field name.
++        field: &'static str,
++        /// Zero-based position among the field's values.
++        value_index: usize,
++    },
++    /// The exact source width is negative.
++    NegativeWidth,
++    /// The exact width's sign could not be established under STRICT.
++    UndecidedWidth,
++    /// A shared work budget denied an operation.
++    BudgetExceeded(BudgetExceeded),
++    /// Valid source values cannot form nonempty geometry in the finite adapter.
++    UnsupportedGeometry {
++        /// Failed adapter requirement; this is not a source syntax error.
++        detail: &'static str,
++    },
++    /// Native construction did not produce usable geometry.
++    Geometry(PcbGeometryUncertainty),
++}
++
++impl fmt::Display for TrackLoadError {
++    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
++        write!(f, "KiCad segment {}: ", self.segment_index + 1)?;
++        match &self.failure {
++            TrackLoadFailure::MissingField { field } => write!(f, "missing {field}"),
++            TrackLoadFailure::DuplicateField { field } => write!(f, "duplicate {field}"),
++            TrackLoadFailure::InvalidArity {
++                field,
++                expected,
++                actual,
++            } => {
++                write!(f, "{field} requires {expected} values, found {actual}")
++            }
++            TrackLoadFailure::InvalidNumber { field, value_index } => {
++                write!(f, "invalid numeric value {} in {field}", value_index + 1)
++            }
++            TrackLoadFailure::NegativeWidth => write!(f, "width must not be negative"),
++            TrackLoadFailure::UndecidedWidth => write!(f, "width sign is undecided under STRICT"),
++            TrackLoadFailure::BudgetExceeded(error) => write!(f, "{error}"),
++            TrackLoadFailure::UnsupportedGeometry { detail } => {
++                write!(f, "unsupported finite track geometry: {detail}")
++            }
++            TrackLoadFailure::Geometry(error) => write!(f, "{error}"),
++        }
++    }
++}
++
++impl std::error::Error for TrackLoadError {
++    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
++        match &self.failure {
++            TrackLoadFailure::BudgetExceeded(error) => Some(error),
++            TrackLoadFailure::Geometry(error) => Some(error),
++            _ => None,
++        }
++    }
++}
++
++fn check_budget() -> Result<(), TrackLoadFailure> {
++    match work_budget::exhaustion() {
++        Some(error) => Err(TrackLoadFailure::BudgetExceeded(error)),
++        None => Ok(()),
++    }
++}
++
++fn field<'a>(
++    segment: &'a Sexp,
++    name: &'static str,
++    expected: usize,
++) -> Result<&'a Sexp, TrackLoadFailure> {
++    let mut fields = segment.named_children(name);
++    let value = fields
++        .next()
++        .ok_or(TrackLoadFailure::MissingField { field: name })?;
++    if fields.next().is_some() {
++        return Err(TrackLoadFailure::DuplicateField { field: name });
++    }
++    let actual = value.children().len() - 1;
++    if actual != expected {
++        return Err(TrackLoadFailure::InvalidArity {
++            field: name,
++            expected,
++            actual,
++        });
++    }
++    Ok(value)
++}
++
++fn number(
++    field: &Sexp,
++    name: &'static str,
++    index: usize,
++) -> Result<SourceScalar, TrackLoadFailure> {
++    field
++        .atom_at(index + 1)
++        .and_then(|token| SourceScalar::parse(SourceUnit::KiCadMillimeter, token))
++        .ok_or(TrackLoadFailure::InvalidNumber {
++            field: name,
++            value_index: index,
++        })
++}
++
++fn finite_point(source: &[SourceScalar; 2]) -> Result<[f64; 2], TrackLoadFailure> {
++    let point = [
++        source[0].to_f64_compatibility(),
++        source[1].to_f64_compatibility(),
++    ];
++    check_budget()?;
++    match point {
++        [Some(x), Some(y)] if x.is_finite() && y.is_finite() => Ok([x, y]),
++        _ => Err(TrackLoadFailure::UnsupportedGeometry {
++            detail: "endpoint is outside the finite adapter range",
++        }),
++    }
++}
++
++fn parse_segment(
++    segment: &Sexp,
++    nets: &HashMap<i32, String>,
++) -> Result<Option<CopperFeature>, TrackLoadFailure> {
++    check_budget()?;
++    let start = field(segment, "start", 2)?;
++    let start = [number(start, "start", 0)?, number(start, "start", 1)?];
++    let end = field(segment, "end", 2)?;
++    let end = [number(end, "end", 0)?, number(end, "end", 1)?];
++    let width_field = field(segment, "width", 1)?;
++    let width = number(width_field, "width", 0)?;
++    let sign = compare_reals(&width.value, &Scalar::zero(), PredicatePolicy::STRICT).value();
++    check_budget()?;
++    match sign {
++        Some(Ordering::Less) => return Err(TrackLoadFailure::NegativeWidth),
++        // All required exact fields have been checked. No finite projection is
++        // needed to establish the regularized empty set of a zero-width track.
++        Some(Ordering::Equal) => return Ok(None),
++        Some(Ordering::Greater) => {}
++        None => return Err(TrackLoadFailure::UndecidedWidth),
++    }
++    let metadata = Some(LayerMetadata {
++        name: "KiCad segment".to_string(),
++    });
++    // SourceScalar parses rationals. Equality here certifies source coincidence;
++    // endpoints that merely round to the same binary64 pair are not a disk.
++    let region = if start[0].value == end[0].value && start[1].value == end[1].value {
++        let center = [start[0].value.clone(), start[1].value.clone()];
++        let native = crate::geometry::circle_region(&center, &crate::scalar::half(&width.value));
++        check_budget()?;
++        PcbRegion::new(native.map_err(TrackLoadFailure::Geometry)?, metadata)
++    } else {
++        let start_finite = finite_point(&start)?;
++        let end_finite = finite_point(&end)?;
++        // Preserve the existing width conversion for admitted ordinary tracks.
++        // Its round-cap and coordinate-fidelity limitations remain explicit.
++        let width = width_field
++            .f64_at(1)
++            .filter(|width| width.is_finite() && *width > 0.0)
++            .ok_or(TrackLoadFailure::UnsupportedGeometry {
++                detail: "positive width is outside the finite adapter range",
++            })?;
++        let polygon = line_polygon(start_finite, end_finite, width);
++        check_budget()?;
++        let polygon = polygon.ok_or(TrackLoadFailure::UnsupportedGeometry {
++            detail: "positive-width track collapsed in the finite adapter",
++        })?;
++        polygons_to_profile(vec![polygon], metadata)
++    };
++    let empty = region.try_is_empty();
++    check_budget()?;
++    if empty.map_err(TrackLoadFailure::Geometry)? {
++        return Err(TrackLoadFailure::UnsupportedGeometry {
++            detail: "positive-width track produced empty geometry",
++        });
++    }
++    let location = midpoint_scalar(
++        &start.map(|value| value.value),
++        &end.map(|value| value.value),
++    );
++    check_budget()?;
++    Ok(Some(CopperFeature {
++        layer: segment
++            .named_child("layer")
++            .and_then(|layer| layer.atom_at(1))
++            .unwrap_or("unknown")
++            .to_string(),
++        net: net_name(segment, nets),
++        kind: CopperKind::Segment,
++        region,
++        location,
++    }))
++}
++
++pub(super) fn parse_segments(
++    root: &Sexp,
++    nets: &HashMap<i32, String>,
++    copper: &mut Vec<CopperFeature>,
++) -> Result<(), TrackLoadError> {
++    for (segment_index, segment) in root.named_children("segment").enumerate() {
++        if let Some(feature) = parse_segment(segment, nets).map_err(|failure| TrackLoadError {
++            segment_index,
++            failure,
++        })? {
++            copper.push(feature);
++        }
++    }
++    Ok(())
++}
+diff --git a/crates/hyperdrc/tests/kicad_track_failures.rs b/crates/hyperdrc/tests/kicad_track_failures.rs
+new file mode 100644
+index 000000000..8acb99524
+--- /dev/null
++++ b/crates/hyperdrc/tests/kicad_track_failures.rs
+@@ -0,0 +1,516 @@
++//! Malformed track source cannot be published as a successful board.
++use hypercurve::RegionPointLocation;
++use hyperdrc::Scalar;
++use hyperdrc::kicad::{BoardModel, TrackLoadError, TrackLoadFailure, load_kicad_pcb};
++use std::sync::atomic::{AtomicU64, Ordering};
++
++fn board(fields: &str) -> anyhow::Result<BoardModel> {
++    static NEXT: AtomicU64 = AtomicU64::new(0);
++    let path = std::env::temp_dir().join(format!(
++        "hyperdrc-track-failure-{}-{}.kicad_pcb",
++        std::process::id(),
++        NEXT.fetch_add(1, Ordering::Relaxed)
++    ));
++    std::fs::write(
++        &path,
++        format!("(kicad_pcb (net 1 signal) (segment (layer F.Cu) (net 1) {fields}))"),
++    )
++    .unwrap();
++    let result = load_kicad_pcb(&path);
++    std::fs::remove_file(path).unwrap();
++    result
++}
++
++fn invalid_source(fields: &str, expected: TrackLoadFailure) {
++    for policy in [
++        hyperlimit::PredicatePolicy::STRICT,
++        hyperlimit::PredicatePolicy::APPROXIMATE_512,
++        hyperlimit::PredicatePolicy::STRICT,
++    ] {
++        let result = hypercurve::evaluate_under(policy, || board(fields)).into_unverified();
++        let error = result.expect_err("invalid source must not publish a board");
++        let track = error
++            .downcast_ref::<TrackLoadError>()
++            .expect("typed track source error");
++        assert_eq!(track.segment_index, 0);
++        assert_eq!(track.failure, expected, "{fields}");
++        assert!(format!("{error:#}").contains("failed to load tracks from"));
++    }
++}
++
++macro_rules! malformed {
++    ($name:ident, $fields:literal, $failure:expr) => {
++        #[test]
++        fn $name() {
++            invalid_source($fields, $failure);
++        }
++    };
++}
++malformed!(
++    start_missing,
++    " (end 12 20) (width 2)",
++    TrackLoadFailure::MissingField { field: "start" }
++);
++malformed!(
++    start_empty,
++    "(start) (end 12 20) (width 2)",
++    TrackLoadFailure::InvalidArity {
++        field: "start",
++        expected: 2,
++        actual: 0
++    }
++);
++malformed!(
++    start_bad,
++    "(start bad 20) (end 12 20) (width 2)",
++    TrackLoadFailure::InvalidNumber {
++        field: "start",
++        value_index: 0
++    }
++);
++malformed!(
++    start_extra,
++    "(start 10 20 30) (end 12 20) (width 2)",
++    TrackLoadFailure::InvalidArity {
++        field: "start",
++        expected: 2,
++        actual: 3
++    }
++);
++malformed!(
++    start_duplicate,
++    "(start 10 20) (start 10 20) (end 12 20) (width 2)",
++    TrackLoadFailure::DuplicateField { field: "start" }
++);
++malformed!(
++    start_nested,
++    "(start (value 10) 20) (end 12 20) (width 2)",
++    TrackLoadFailure::InvalidNumber {
++        field: "start",
++        value_index: 0
++    }
++);
++malformed!(
++    start_nan,
++    "(start NaN 20) (end 12 20) (width 2)",
++    TrackLoadFailure::InvalidNumber {
++        field: "start",
++        value_index: 0
++    }
++);
++malformed!(
++    start_infinity,
++    "(start inf 20) (end 12 20) (width 2)",
++    TrackLoadFailure::InvalidNumber {
++        field: "start",
++        value_index: 0
++    }
++);
++malformed!(
++    start_short,
++    "(start 10) (end 12 20) (width 2)",
++    TrackLoadFailure::InvalidArity {
++        field: "start",
++        expected: 2,
++        actual: 1
++    }
++);
++malformed!(
++    start_bad_y,
++    "(start 10 bad) (end 12 20) (width 2)",
++    TrackLoadFailure::InvalidNumber {
++        field: "start",
++        value_index: 1
++    }
++);
++malformed!(
++    end_missing,
++    "(start 10 20)  (width 2)",
++    TrackLoadFailure::MissingField { field: "end" }
++);
++malformed!(
++    end_empty,
++    "(start 10 20) (end) (width 2)",
++    TrackLoadFailure::InvalidArity {
++        field: "end",
++        expected: 2,
++        actual: 0
++    }
++);
++malformed!(
++    end_bad,
++    "(start 10 20) (end bad 20) (width 2)",
++    TrackLoadFailure::InvalidNumber {
++        field: "end",
++        value_index: 0
++    }
++);
++malformed!(
++    end_extra,
++    "(start 10 20) (end 10 20 30) (width 2)",
++    TrackLoadFailure::InvalidArity {
++        field: "end",
++        expected: 2,
++        actual: 3
++    }
++);
++malformed!(
++    end_duplicate,
++    "(start 10 20) (end 12 20) (end 12 20) (width 2)",
++    TrackLoadFailure::DuplicateField { field: "end" }
++);
++malformed!(
++    end_nested,
++    "(start 10 20) (end (value 10) 20) (width 2)",
++    TrackLoadFailure::InvalidNumber {
++        field: "end",
++        value_index: 0
++    }
++);
++malformed!(
++    end_nan,
++    "(start 10 20) (end NaN 20) (width 2)",
++    TrackLoadFailure::InvalidNumber {
++        field: "end",
++        value_index: 0
++    }
++);
++malformed!(
++    end_infinity,
++    "(start 10 20) (end inf 20) (width 2)",
++    TrackLoadFailure::InvalidNumber {
++        field: "end",
++        value_index: 0
++    }
++);
++malformed!(
++    end_short,
++    "(start 10 20) (end 10) (width 2)",
++    TrackLoadFailure::InvalidArity {
++        field: "end",
++        expected: 2,
++        actual: 1
++    }
++);
++malformed!(
++    end_bad_y,
++    "(start 10 20) (end 10 bad) (width 2)",
++    TrackLoadFailure::InvalidNumber {
++        field: "end",
++        value_index: 1
++    }
++);
++malformed!(
++    width_missing,
++    "(start 10 20) (end 12 20) ",
++    TrackLoadFailure::MissingField { field: "width" }
++);
++malformed!(
++    width_empty,
++    "(start 10 20) (end 12 20) (width)",
++    TrackLoadFailure::InvalidArity {
++        field: "width",
++        expected: 1,
++        actual: 0
++    }
++);
++malformed!(
++    width_bad,
++    "(start 10 20) (end 12 20) (width bad)",
++    TrackLoadFailure::InvalidNumber {
++        field: "width",
++        value_index: 0
++    }
++);
++malformed!(
++    width_extra,
++    "(start 10 20) (end 12 20) (width 2 3)",
++    TrackLoadFailure::InvalidArity {
++        field: "width",
++        expected: 1,
++        actual: 2
++    }
++);
++malformed!(
++    width_duplicate,
++    "(start 10 20) (end 12 20) (width 2) (width 2)",
++    TrackLoadFailure::DuplicateField { field: "width" }
++);
++malformed!(
++    width_nested,
++    "(start 10 20) (end 12 20) (width (value 10))",
++    TrackLoadFailure::InvalidNumber {
++        field: "width",
++        value_index: 0
++    }
++);
++malformed!(
++    width_nan,
++    "(start 10 20) (end 12 20) (width NaN)",
++    TrackLoadFailure::InvalidNumber {
++        field: "width",
++        value_index: 0
++    }
++);
++malformed!(
++    width_infinity,
++    "(start 10 20) (end 12 20) (width inf)",
++    TrackLoadFailure::InvalidNumber {
++        field: "width",
++        value_index: 0
++    }
++);
++malformed!(
++    width_negative,
++    "(start 10 20) (end 12 20) (width -1)",
++    TrackLoadFailure::NegativeWidth
++);
++malformed!(
++    width_negative_subrange,
++    "(start 10 20) (end 12 20) (width -1e-400)",
++    TrackLoadFailure::NegativeWidth
++);
++malformed!(
++    zero_width_missing_end,
++    "(start 10 20) (width 0)",
++    TrackLoadFailure::MissingField { field: "end" }
++);
++malformed!(
++    zero_width_invalid_start,
++    "(start bad 20) (end 12 20) (width 0)",
++    TrackLoadFailure::InvalidNumber {
++        field: "start",
++        value_index: 0
++    }
++);
++
++#[test]
++fn valid_source_controls_preserve_metadata_and_known_membership() {
++    let model = board("(start 10 20) (end 12 20) (width 2)").unwrap();
++    assert_eq!(model.copper.len(), 1);
++    let feature = &model.copper[0];
++    assert_eq!(feature.layer, "F.Cu");
++    assert_eq!(feature.net.as_deref(), Some("signal"));
++    assert_eq!(feature.location, [Scalar::from(11), Scalar::from(20)]);
++    // Both the finite legacy body and the intended round stroke contain this
++    // central point and exclude this distant point. This is not full fidelity.
++    for region in [
++        feature.region.clone(),
++        model.all_copper().unwrap(),
++        model.copper_layers(&[]).unwrap().pop().unwrap().1,
++    ] {
++        assert_eq!(
++            region.classify_xy(11.into(), 20.into()),
++            Ok(RegionPointLocation::Inside)
++        );
++        assert_eq!(
++            region.classify_xy(1000.into(), 1000.into()),
++            Ok(RegionPointLocation::Outside)
++        );
++        assert!(region.try_into_native().is_ok());
++    }
++}
++
++#[test]
++fn validated_zero_width_is_empty_even_when_coordinates_exceed_binary64() {
++    for fields in [
++        "(start 10 20) (end 12 20) (width 0)",
++        "(start 1e400 0) (end 1e400 2) (width 0)",
++    ] {
++        let model = board(fields).unwrap();
++        assert!(model.copper.is_empty());
++        assert_eq!(model.all_copper().unwrap().try_is_empty(), Ok(true));
++    }
++}
++
++fn deny_refinement() {
++    let polynomial = hypercurve::BezierParameterPolynomial::try_new_power_basis(
++        [-36, 1368, -11034, 31728, -38280, 16620]
++            .into_iter()
++            .map(Scalar::from)
++            .collect(),
++    )
++    .unwrap();
++    assert!(matches!(polynomial.isolate_unit_interval_roots(),
++        Err(hypercurve::ExactCurveError::Blocked(blocker))
++        if blocker.reason()==hypercurve::UncertaintyReason::BudgetExhausted));
++}
++
++#[test]
++fn exhausted_source_load_cannot_escape_as_a_board_and_later_load_recovers() {
++    let mut escaped = None;
++    let denied = hypercurve::evaluate_with_budget(
++        hyperlimit::PredicatePolicy::STRICT,
++        hypercurve::WorkBudget::ZERO,
++        || {
++            deny_refinement();
++            escaped = Some(board("(start 10 20) (end 12 20) (width 2)"));
++        },
++    );
++    assert!(denied.result.is_err());
++    let error = escaped
++        .unwrap()
++        .expect_err("exhausted load cannot escape as a board");
++    let track = error
++        .downcast_ref::<TrackLoadError>()
++        .expect("typed budget failure survives scope exit");
++    let TrackLoadFailure::BudgetExceeded(budget) = track.failure else {
++        panic!("{track:?}")
++    };
++    assert_eq!(budget.limit, 0);
++    assert_eq!(budget.used, 0);
++    assert_eq!(budget.requested, 1);
++    assert!(std::error::Error::source(track).is_some());
++    let retried = board("(start 10 20) (end 12 20) (width 2)").unwrap();
++    assert_eq!(
++        retried.copper[0].region.classify_xy(11.into(), 20.into()),
++        Ok(RegionPointLocation::Inside)
++    );
++}
++
++#[test]
++fn positive_source_that_the_finite_adapter_cannot_construct_is_an_error() {
++    for fields in [
++        "(start 0 0) (end 2 0) (width 1e-400)",
++        "(start 0 0) (end 1e-200 0) (width 2)",
++        "(start 1e400 0) (end 1e400 2) (width 2)",
++        "(start -1e308 0) (end 1e308 0) (width 2)",
++        "(start 0 0) (end 2 0) (width 1e400)",
++        "(start 100000000000000000000 0) (end 100000000000000000001 0) (width 2)",
++    ] {
++        for policy in [
++            hyperlimit::PredicatePolicy::STRICT,
++            hyperlimit::PredicatePolicy::APPROXIMATE_512,
++            hyperlimit::PredicatePolicy::STRICT,
++        ] {
++            let result = hypercurve::evaluate_under(policy, || board(fields)).into_unverified();
++            let error = result.expect_err("positive source must not disappear as empty geometry");
++            let track = error
++                .downcast_ref::<TrackLoadError>()
++                .expect("typed adapter failure");
++            assert!(
++                matches!(
++                    track.failure,
++                    TrackLoadFailure::UnsupportedGeometry { .. } | TrackLoadFailure::Geometry(_)
++                ),
++                "{track:?}"
++            );
++        }
++    }
++}
++
++#[test]
++fn second_segment_failure_does_not_publish_the_valid_prefix() {
++    let error = board("(start 10 20) (end 12 20) (width 2)) (segment (start 0 0) (end 2 0)")
++        .expect_err("valid prefix must not escape as a complete board");
++    let track = error.downcast_ref::<TrackLoadError>().unwrap();
++    assert_eq!(track.segment_index, 1);
++    assert_eq!(
++        track.failure,
++        TrackLoadFailure::MissingField { field: "width" }
++    );
++}
++
++#[test]
++fn cli_preserves_source_diagnostic_and_cannot_allow_a_failed_load() {
++    let path = std::env::temp_dir().join(format!(
++        "hyperdrc-track-cli-{}.kicad_pcb",
++        std::process::id()
++    ));
++    std::fs::write(
++        &path,
++        "(kicad_pcb (segment (start 10 20) (end 12 20) (width 2)) (segment (start 0 0) (end 2 0)))",
++    )
++    .unwrap();
++    let result = std::process::Command::new(env!("CARGO_BIN_EXE_hyperdrc"))
++        .args(["--kicad-pcb"])
++        .arg(&path)
++        .args([
++            "--check",
++            "copper-net-intent",
++            "--format",
++            "json",
++            "--allow-findings",
++        ])
++        .output()
++        .unwrap();
++    std::fs::remove_file(&path).unwrap();
++    assert_eq!(result.status.code(), Some(1));
++    assert!(
++        result.stdout.is_empty(),
++        "no success report for a partial board"
++    );
++    let diagnostic = String::from_utf8(result.stderr).unwrap();
++    assert!(diagnostic.contains(&path.display().to_string()));
++    assert!(
++        diagnostic.contains("KiCad segment 2: missing width"),
++        "{diagnostic}"
++    );
++}
++
++#[test]
++fn coincident_tracks_are_exact_disks_including_decimal_source_precision() {
++    for (fields, center, radius) in [
++        ("(start 1 2) (end 1 2) (width 2)", ["1", "2"], "1"),
++        ("(start 3.0000 4.00) (end 3 4) (width 2)", ["3", "4"], "1"),
++        (
++            "(start 9007199254740992.1 -0.00000000000000000000001) (end 9007199254740992.1 -0.00000000000000000000001) (width 0.20000000000000000000004)",
++            ["9007199254740992.1", "-0.00000000000000000000001"],
++            "0.10000000000000000000002",
++        ),
++    ] {
++        let center = center.map(|value| value.parse::<Scalar>().unwrap());
++        let radius = radius.parse::<Scalar>().unwrap();
++        let expected_area = Scalar::pi() * &radius * &radius;
++        for policy in [
++            hyperlimit::PredicatePolicy::STRICT,
++            hyperlimit::PredicatePolicy::APPROXIMATE_512,
++            hyperlimit::PredicatePolicy::STRICT,
++        ] {
++            let outcome = hypercurve::evaluate_under(policy, || {
++                let model = board(fields).unwrap();
++                assert_eq!(model.copper.len(), 1);
++                let feature = &model.copper[0];
++                assert_eq!(feature.location, center);
++                assert_eq!(feature.layer, "F.Cu");
++                assert_eq!(feature.net.as_deref(), Some("signal"));
++                let region = &feature.region;
++                assert_eq!(
++                    hyperlimit::compare_reals(
++                        &region.try_area().unwrap(),
++                        &expected_area,
++                        hyperlimit::PredicatePolicy::STRICT
++                    )
++                    .value(),
++                    Some(std::cmp::Ordering::Equal)
++                );
++                assert_eq!(
++                    region.classify_xy(center[0].clone(), center[1].clone()),
++                    Ok(RegionPointLocation::Inside)
++                );
++                assert_eq!(
++                    region.classify_xy(&center[0] + &radius, center[1].clone()),
++                    Ok(RegionPointLocation::Boundary)
++                );
++                assert_eq!(
++                    region.classify_xy(&center[0] + &radius * Scalar::from(2), center[1].clone()),
++                    Ok(RegionPointLocation::Outside)
++                );
++                let native = region.clone().try_into_native().unwrap();
++                let bounds = native.bounds().unwrap().unwrap();
++                assert_eq!(bounds.min_x(), &(&center[0] - &radius));
++                assert_eq!(bounds.max_x(), &(&center[0] + &radius));
++                assert_eq!(
++                    hyperlimit::compare_reals(
++                        &native.filled_area().unwrap().unwrap(),
++                        &expected_area,
++                        hyperlimit::PredicatePolicy::STRICT
++                    )
++                    .value(),
++                    Some(std::cmp::Ordering::Equal)
++                );
++            });
++            assert!(outcome.certified().is_some());
++        }
++    }
++}

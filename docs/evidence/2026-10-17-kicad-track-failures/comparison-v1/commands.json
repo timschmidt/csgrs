@@ -1,0 +1,1279 @@
+[
+  {
+    "name": "baseline-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/load_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.7921815137378871,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "733a758310f20d833a9078e1b3a986f0c5421502ff212aa3634f4c05882bf365"
+  },
+  {
+    "name": "candidate-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/load_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.5276651210151613,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "35804dce42eb752d80c24cb85f19581cad86749b3408779c1cd580fc284157e6"
+  },
+  {
+    "name": "disk-corpus-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/disk_corpus_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/disk-corpus"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.5483716600574553,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0ad30ed1c1a8922e3ad1d3789bda487db7a15874be2284f1289eca9441dca739"
+  },
+  {
+    "name": "disk-corpus",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/disk-corpus",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/source-disks-v1/hvp109a.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 2.6037320350296795,
+    "stdout_sha256": "4a8ad92032baf7ce01cf4e0caaf60d8018c6348eb7c579bbdc79a91bc6644be5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f8367f876d368fdd933dcddecea2babd17ea3cc53ea76bfdcdc8eeb855970372"
+  },
+  {
+    "name": "load-00-ordinary64-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-00-ordinary64-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.012776283547282219,
+    "stdout_sha256": "e6882b80cb53c4158f1b141daae7d495207590f820c91ebaaeda82baa608065a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8d74f7c3e8089adc6367f12a3bfc13e2a3f2954f34f08d1c85c37e95f4e25161"
+  },
+  {
+    "name": "load-00-ordinary64-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-00-ordinary64-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.013031155802309513,
+    "stdout_sha256": "709cbc8f146c2db6caa21473dc5bbbd05693a94f02e287c6dd972f52537ecaab",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f699266683013cbb77697f1e40eee220f7c9c0fa8ba5c0579304a2d9e2587126"
+  },
+  {
+    "name": "load-00-cparti-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-00-cparti-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.471182527020574,
+    "stdout_sha256": "b95ec8942c8be42e2a3acaf0b032bb79c9f6235093c306055f6e38b407bfc567",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "98d638c9ac0118960ac2991ade8c4069bf7982cf86ae8cf9f0ffe0d2b7f5ce01"
+  },
+  {
+    "name": "load-00-cparti-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-00-cparti-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.464470577891916,
+    "stdout_sha256": "df005c41fbf04e7c828069753414cc3c95c3a3c762d84c582696425f4639232f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9ab5f6b9a8fe21e8ce2d811e008beb4ce3693ce43841a64e4dec6b971f6bcf1b"
+  },
+  {
+    "name": "load-00-hvp109a-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-00-hvp109a-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 4.6908895703963935,
+    "stdout_sha256": "88c0dfa40fe7583a19a59d83538e823495855e5a02a90fbb7da94f6da512263b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "608ed2b5bb76caff775251379189aa1c550bfbb6862f23c394f91c7e55c25ffe"
+  },
+  {
+    "name": "load-00-hvp109a-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-00-hvp109a-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 4.788572749122977,
+    "stdout_sha256": "ea192de7d01398330bc449a59a9e580d8f1a2d03176b86cca4921daca0c6389b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b0b947240e2598774366386ddce997d36496d3e33349657d054ae300ff3335a9"
+  },
+  {
+    "name": "load-01-ordinary64-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-01-ordinary64-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.018465792760252953,
+    "stdout_sha256": "a42ad3ac047c6a07e9e49c3de1de8665905ede400386658d427fa0ce1b19eca0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c2ce0bc2b04bca12d2878d98d29da0220c97b813be5328271b5f87767b4597bc"
+  },
+  {
+    "name": "load-01-ordinary64-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-01-ordinary64-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01529513020068407,
+    "stdout_sha256": "d412c8260756fd0f892f054927d99f4a46c848b00c82ec0c3c4b4298999f3a6f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "10592b8fb10d662e3fb30ca64bf55e2a8e1bde3ab52f0d9e966b49da4d9e52e1"
+  },
+  {
+    "name": "load-01-cparti-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-01-cparti-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.32243485096842,
+    "stdout_sha256": "987446e7a51f5eccc71bacb63a267038c9a45715fdd6ad3fbd217eb8ae43d9a5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "e35759f21844fb5fc7d524d59c77271be4c2a7e0a53d3d7e724ee02eb11bd140"
+  },
+  {
+    "name": "load-01-cparti-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-01-cparti-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.399662923067808,
+    "stdout_sha256": "9002579a134f6f1eea446c1fe4d7303dcee7a1e2b2d876dff18fe3dc9d493f51",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "827def8b106a871aab1294ec7b5b6af996a12125156b0ba6c608a777d18283cf"
+  },
+  {
+    "name": "load-01-hvp109a-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-01-hvp109a-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 4.604542363900691,
+    "stdout_sha256": "9e3346c6651dd3ec6fa41285113d9b728eded269ddf3a01f452d014916809ce6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "44b148927cc7d9e697b7bd10725d27eed0d857c2ef42803491566e64553724c3"
+  },
+  {
+    "name": "load-01-hvp109a-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-01-hvp109a-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 4.709659211803228,
+    "stdout_sha256": "08385ed3633a30089ae5c1edda1146e685002bc860c823cd99d3b9c5d2103915",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "1d5522300d369ba5032efd3786c25d411ef07862c9e3aa6588e2e28f307d171d"
+  },
+  {
+    "name": "load-02-ordinary64-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-02-ordinary64-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.018650311045348644,
+    "stdout_sha256": "a813fc7895c2ffe7d485452b6427e70d83d15351ee30bd570fd828a3d472a8d9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "91dec5fc19ce28e06ad5bcc714d5b09bb3bc13b8f4dc250f16b45398fb5460d4"
+  },
+  {
+    "name": "load-02-ordinary64-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-02-ordinary64-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.015702512115240097,
+    "stdout_sha256": "b6100e75e640250d159e7ba75b684a58bd719d3c2385ca72241b4e931b9636e3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "481f56d33bd265c6a2e041fcff02097e8182275fdb96d488bfb32c84d31e1aa7"
+  },
+  {
+    "name": "load-02-cparti-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-02-cparti-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.433837309014052,
+    "stdout_sha256": "a24416b4a4dcb53319a3f03d23323ef87dcf368bf404d04cade3df60ea2fb505",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5530bcd358c10e996de2beb0a3924f2db3094b541657d19fa8494712bb9bd15c"
+  },
+  {
+    "name": "load-02-cparti-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-02-cparti-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.330405564978719,
+    "stdout_sha256": "fdb5cc55cdf19be1b412c1339ba0b9d65bd6ac843a7af52807b259a7a861addb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d12ceed9a868c083f44b635ccdccf38912691d85e603348fb54e187e66e769c5"
+  },
+  {
+    "name": "load-02-hvp109a-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-02-hvp109a-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 4.653908116742969,
+    "stdout_sha256": "f4ff0f1c8dff66e17e18f6137c386068d5f9890dce233392527f5add41860c3f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fe984659eceb1614bce6141e1833fdacc5f27063fd2d4fec9537d630ac5abdce"
+  },
+  {
+    "name": "load-02-hvp109a-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-02-hvp109a-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 4.60223599197343,
+    "stdout_sha256": "969133d61133c8048adbdabd495989522c1161caeac773146f1a00991031918f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "17e9489e768206907711fd329cb8dae0df3b425b1ee8378f884ae165f99d413c"
+  },
+  {
+    "name": "load-03-ordinary64-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-03-ordinary64-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.017860834952443838,
+    "stdout_sha256": "c8aa7d43e8a88a751fedb1375cce41b1547dd5ccb804f9929be2c3be4fbe06b6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ec660246554f463f5d20dd4f975f934c417420b20665732304c63842a764f89e"
+  },
+  {
+    "name": "load-03-ordinary64-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-03-ordinary64-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.022809135261923075,
+    "stdout_sha256": "77bbd28a151a93a2aaafa2d05e857817d23ae208c5f6ee5dd3b7957bb5028d46",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "455c775fe62813e644c5f971cc3313847e34e7fa9d06d796a0d68279fb7b32ed"
+  },
+  {
+    "name": "load-03-cparti-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-03-cparti-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.401959815062582,
+    "stdout_sha256": "29bf86cb5d04d4cdcaa436908d68622956c2000f1b212f4d4a64391f1aad213d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "19075afd1b059b6c88677e689054e3dd39e8f25e2930ec379ee576deca9b86f8"
+  },
+  {
+    "name": "load-03-cparti-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-03-cparti-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.4912389209494,
+    "stdout_sha256": "6c0c643fd094a40f84656935049f8f288ac1287518cf93f6e0c4299dbb9f19fe",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "078812c2d0981844e369dd99357b451f7d326b023605bd81e632576cf25dece5"
+  },
+  {
+    "name": "load-03-hvp109a-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-03-hvp109a-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 4.624649204313755,
+    "stdout_sha256": "e4b66bb8b11b609e3b9c8482f9e10e74cf4061831f603c948940e2d0de87ad11",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a2c9b8563368fd8496f7c3339d137bf0dc1b41797cc96a56d7881e89cd22d802"
+  },
+  {
+    "name": "load-03-hvp109a-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-03-hvp109a-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 4.68155361013487,
+    "stdout_sha256": "04d5f92fb7053b23a6e7ed9fc3ee96a7c45d05cae31b9686f82ddc676e82e1d2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b658a696f6af61e7c59d7a7b615db2825882e731173ddde537f22d54ebdb6ca9"
+  },
+  {
+    "name": "load-04-ordinary64-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-04-ordinary64-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01777218095958233,
+    "stdout_sha256": "52d809ac33526c35dd25f4235da0e0283c24f790c013afb5adf3beac2791155b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "036d22da76213758d3e00d390d234d87ec114ca132f26035a43ee6610cda966c"
+  },
+  {
+    "name": "load-04-ordinary64-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-04-ordinary64-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.015248153824359179,
+    "stdout_sha256": "f79b6e25e7e77b1220969401419846a286555e5ce01c4ca4cc865276e974c4eb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ee862a84e9d9c9d66edb2850039979245856f5e8e32e6fb79d76fe8827f71304"
+  },
+  {
+    "name": "load-04-cparti-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-04-cparti-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.325760402716696,
+    "stdout_sha256": "40819a0ba3355d24e5214f17253602ef53644e376e8d0da049aec28c4a94fa78",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d29f033730e40c5cd0c97a58580579d3701a413a666f1c17a59a3cc4c4d82a37"
+  },
+  {
+    "name": "load-04-cparti-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-04-cparti-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.359534487128258,
+    "stdout_sha256": "dca964b855c116c7182b5ce215ca0f5eaf7f32bb367b34f72d232758e3e5d625",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "57429b80fd017af9999b4502973e5ba586a9619c666457024cd883ce4a270b1e"
+  },
+  {
+    "name": "load-04-hvp109a-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/baseline-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-04-hvp109a-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 4.654379635117948,
+    "stdout_sha256": "704fc4aa858569b2bc98cf08f8b89b263af8c263f73f3ca35de9884726e09a53",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f6548743575ecf247182bc7776402bd187eb934eb61eaff00d7c0e4f01c2a4c8"
+  },
+  {
+    "name": "load-04-hvp109a-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/candidate-load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/load-04-hvp109a-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 4.656653598882258,
+    "stdout_sha256": "4dd1f0029f013e1334e5ae050465f203abf86c177bbe68a6a675da2db091c60b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "04dd294ed6c5708dfbedce190920023aec099a52c8df2e61a14356dbcdca1c11"
+  },
+  {
+    "name": "report-ordinary64-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.04015091620385647,
+    "stdout_sha256": "43b38b0c863023de64c56bec6a4d0f652aeb16813e4d56d53f7ea269b27c245f",
+    "stderr_sha256": "50cee3e1f94ffb2e303292218bec7c5f060b27e8a15b57c69ec7def9829f1459",
+    "resources_sha256": "a4f64467afd83afc0d3dda459b13382f5e072ec8f277ee7f360c8b8f5ecd4680"
+  },
+  {
+    "name": "report-ordinary64-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.02490495191887021,
+    "stdout_sha256": "c0655a847640f66c1b355802f4f3b3ad978f31b22358a3b8bf0a572641f013ab",
+    "stderr_sha256": "281d7b29284ac759e3530126c38e448057639a720d63869c572c2d902b5b3372",
+    "resources_sha256": "116e2ef3a83fe399d4d551a8375de39fb5b5817c62e7816c7225fba0e9d6f5bf"
+  },
+  {
+    "name": "report-cparti-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.646713659632951,
+    "stdout_sha256": "1c68ba917190e96aa5636098d0005df212de75dd4898d124214215a8a3d2ec00",
+    "stderr_sha256": "8339773924d010b2a4b7475e5fea0552f325e9615fb8e751c3bdeffc2c280d7d",
+    "resources_sha256": "42772a1cb429b09f2462b9be06e514d215fbd61d48bea85f7dded7c37f8666be"
+  },
+  {
+    "name": "report-cparti-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.652433827985078,
+    "stdout_sha256": "2903d37caefcfaf04a7f3e95487cccc01c46119fd52135cdfd0da2a1e78d60ca",
+    "stderr_sha256": "f3fbd74486dfa4c0328b114cb95a9aa4bab0b74ce09c0b8324c0f9a441cdfc12",
+    "resources_sha256": "c721ed01237d192ac351a655a1d4758ade48fda28df42a6afdb4bcf70425c965"
+  },
+  {
+    "name": "report-hvp109a-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.9311685091815889,
+    "stdout_sha256": "a9c11dd5494cdf1b1c6d5824fc1654bec271b1cb13cf9ed5c1856ceea3f0aafb",
+    "stderr_sha256": "bb90182828808862b324b9d27625d7ea1aca04db911534e3b57698ac8f2d09be",
+    "resources_sha256": "7b520a26fc44d2fa90440dc6c25deecbfea6fa7b1f5f754582f116bb97126d09"
+  },
+  {
+    "name": "report-hvp109a-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.9360388540662825,
+    "stdout_sha256": "96d789f57a4492cb572c031f4b1daa6633db9906132766f8773518811003d095",
+    "stderr_sha256": "a3e44ca8f6c89ad2dc4300df37be98a52bea041e625132c05baea06cc58ce291",
+    "resources_sha256": "4a44d3d88479c135f70f7b5f3ad01736b4a58eb0c14db82c4e6551f6ea71dce3"
+  },
+  {
+    "name": "report-smoke-cparti-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "--check",
+      "layer-sanity",
+      "--check",
+      "board-outline-sanity",
+      "--check",
+      "min-copper-neck",
+      "--check",
+      "drill-spacing",
+      "--min-width",
+      "0.0762",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 36.36388248298317,
+    "stdout_sha256": "c5098573b9eb8d797512f24b0e3e4c6839ec05927c2452c147f87234982077ad",
+    "stderr_sha256": "cc5e30a4d06b89a9fd591b3aa63622942516858c118de79f8e924cf1f6b2ba67",
+    "resources_sha256": "a0bc272d2cc30c57398398ec80cdb898ad531bd1ca1aee63bbbb29268ffde1b5"
+  },
+  {
+    "name": "report-smoke-cparti-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/cparti.kicad_pcb",
+      "--check",
+      "layer-sanity",
+      "--check",
+      "board-outline-sanity",
+      "--check",
+      "min-copper-neck",
+      "--check",
+      "drill-spacing",
+      "--min-width",
+      "0.0762",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 36.706513667013496,
+    "stdout_sha256": "e51f2b326b42050752377d1fb1c05cfec58e29ed712d0e9a620731211ab88555",
+    "stderr_sha256": "970fdcc675fdcf8abd0164d9c5a10ba9c25a4e369243f6b8d7b13a27b65d95af",
+    "resources_sha256": "1d1636453ed5fc014f1bf9672f7a0a1c53e31a96311c3424abbcdeb15b81f014"
+  },
+  {
+    "name": "report-smoke-hvp109a-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-target-v1/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "--check",
+      "layer-sanity",
+      "--check",
+      "board-outline-sanity",
+      "--check",
+      "min-copper-neck",
+      "--check",
+      "drill-spacing",
+      "--min-width",
+      "0.0762",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 16.40472060488537,
+    "stdout_sha256": "2da10b9c9b770c0c73cb363caf749ef9ef833599f4d452d65c25dbc21055f27f",
+    "stderr_sha256": "27954b58914ebcec88d45b45d4bea6a058dd4d6bb2f2e7cf8ba9b68a3233dc1f",
+    "resources_sha256": "b4cd719d179b72b15c18491ef6668dd47f76aec00a246df4d7b467da62e94820"
+  },
+  {
+    "name": "report-smoke-hvp109a-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb",
+      "--check",
+      "layer-sanity",
+      "--check",
+      "board-outline-sanity",
+      "--check",
+      "min-copper-neck",
+      "--check",
+      "drill-spacing",
+      "--min-width",
+      "0.0762",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 16.445424711797386,
+    "stdout_sha256": "18a0a66857458ca8376cc01e1d5d4420184a12540b57b155bc5f71213e09f348",
+    "stderr_sha256": "c611fc8e9e91d8a1175483b3367c6b5e49a000acc187cde587552acbee154eec",
+    "resources_sha256": "72f89a2155c6009ccdf202a9ecb22a3e9b911a1ade88cc0e993a9faf5a281118"
+  },
+  {
+    "name": "invalid-cli-start_missing",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_missing.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.01190246269106865,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "a628f288b8b22ce7bcc214640d1201ec438d830ba9ced241ed7d36a2225b4c96",
+    "resources_sha256": "0e52296a724d955866df9a9a08b4bd3244dda9b3123769ad7519a41208b275a7"
+  },
+  {
+    "name": "invalid-cli-start_empty",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_empty.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008845783304423094,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "5f3e6dbace6e34c29b20854725af8415ac7af483545346304e4ebaef2ea618ce",
+    "resources_sha256": "1751a89dedb8333f07a804f77f952afeb0721c029c4a53840efe554720748b00"
+  },
+  {
+    "name": "invalid-cli-start_bad",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_bad.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008572021033614874,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e9678654d3e279cb9b9fc65a2b73401afcfbfe468e71d0e728d11e63aae278c0",
+    "resources_sha256": "b5c508dde4ba39fab4274b18d4d80c41a74767da3a3fa074de480d70dddc4cb3"
+  },
+  {
+    "name": "invalid-cli-start_extra",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_extra.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008888419717550278,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f17cac0ca4d00a04e4756fd88be94bf37ff9211d56faf8548edace88c10da703",
+    "resources_sha256": "aa532975049e490ab235b3800070c3ae8783da23482f9a85bd7844df82cd772a"
+  },
+  {
+    "name": "invalid-cli-start_duplicate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_duplicate.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008861301932483912,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f8d70da8be42e89031db3cbb23554025aec29a1378c55d9071706d5a90d5eeaa",
+    "resources_sha256": "254a688996fc3270ddd17682021eb451bce131398c18018bd24d9cf1b40ee111"
+  },
+  {
+    "name": "invalid-cli-start_nested",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_nested.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008531183935701847,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "80d957dbe753c7e18bb4209a446c5403e1a6abaef64d7fc7523f48aa7d2c0e74",
+    "resources_sha256": "226046846715e7e80ea9548f44d01e7a16587b5b2b01a768b3a579ea78572aa2"
+  },
+  {
+    "name": "invalid-cli-start_nan",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_nan.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008482938166707754,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "8af110639a5e4eb87024caa183d6f471574ade7dde8bdea1f31c4e24e0ae2ca5",
+    "resources_sha256": "74ce76488ab0d4bcd7283226076f977437d1c0562d919bc88cadea8a3f4adc1a"
+  },
+  {
+    "name": "invalid-cli-start_infinity",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_infinity.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008559032808989286,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "b7212d7003b97bf41d2f71cfaaae4f5fa8a66d9dadba6254baef3dad2a3bad15",
+    "resources_sha256": "03cf3292853f734918d2b051846af4477b19bc9c3f83771c4b1285c9e67dfd69"
+  },
+  {
+    "name": "invalid-cli-start_short",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_short.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.00847617769613862,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "c59906fe47dc542e46b3000a2a3f07ba9d5009f6626080e2ab68a87c6b1d2315",
+    "resources_sha256": "b4d25ae2d897bc079ca11f733997a373df76ff3e0c450f3a54084ad4bfb69159"
+  },
+  {
+    "name": "invalid-cli-start_bad_y",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-start_bad_y.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008444131352007389,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "79e93cbeb39f456e37f94c2b7661c2999e459c862c2a8f929f5b87553ed18cb7",
+    "resources_sha256": "f5ed23ecff03e7176be79f1f9ac8b7f2e8dffa3530207aea5ab035bcd4793561"
+  },
+  {
+    "name": "invalid-cli-end_missing",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_missing.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008574151899665594,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "2e16e79320ea7edef09a9e5c14a7dc400f37004e84a039f5abfbe1ffa44ddc30",
+    "resources_sha256": "24ced4a76fe9b2a4959cf9a22e35a9c779bde09872ee3b77877422b8669a3787"
+  },
+  {
+    "name": "invalid-cli-end_empty",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_empty.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008594779763370752,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "803615c73fad5201ac63c1e973aed2be0c8781361b572bd0110b51be145639d9",
+    "resources_sha256": "d54bcc0730b3a7baefd36a19d650198f423495104afb51e72a5938955941f3c5"
+  },
+  {
+    "name": "invalid-cli-end_bad",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_bad.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008388903923332691,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "72ce047dbbbb1aa3966bbc4b0846ef43c5998e2f36f7b363b0b1221dff62f116",
+    "resources_sha256": "a16d67fc533066b47d6cb7255acf58c488dc6429295abe9d59a004ef0488ac17"
+  },
+  {
+    "name": "invalid-cli-end_extra",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_extra.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008801606018096209,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "ec46d86f7f8f759cdb179718d147cd579199df91bf74bd43eb7759003566fbce",
+    "resources_sha256": "5f8954bcc77a7a6003e995beb6fc8f0311a428ec3c185d62bc46afdd9cf0d00a"
+  },
+  {
+    "name": "invalid-cli-end_duplicate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_duplicate.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008926957845687866,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "20271b9426431551078dc56586d1fba481c1db1a32d40ed11e33fa476c67e253",
+    "resources_sha256": "ac9af4609a83cbdb42c20ef5adc94415a9b6c2f8e23b188e092d2da01396cd01"
+  },
+  {
+    "name": "invalid-cli-end_nested",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_nested.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008491228334605694,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "70780cfe51b870d5316d8d2b5703c1c01779ea52ab9928ceb9a0f41d9c57c071",
+    "resources_sha256": "b7e39ead6754471ebe1caacc9695b3a7a9ba2a9145298a8d2fead9bc7930a4a8"
+  },
+  {
+    "name": "invalid-cli-end_nan",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_nan.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008683114778250456,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e73f483558a6f56930e4591d6b5dbed4e0b424e7b3ace3a98b2aa5fe194c9ab1",
+    "resources_sha256": "c0bf514e04c9b80cfabdd04753a4842f2c4665f0fea4ba1345b1a842d9c7740d"
+  },
+  {
+    "name": "invalid-cli-end_infinity",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_infinity.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008344296831637621,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "38e9171da4521cb6eb8bfa791ca73c67a099b16751564fae63bd80806ea8850a",
+    "resources_sha256": "2ab01e704246877b45d840f78d516d4fb939d3891ada30fc5e8dcffa2174a181"
+  },
+  {
+    "name": "invalid-cli-end_short",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_short.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008472329005599022,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "fd81dea7f3e84854d255883e9e86bc0045f6bbd123ca07b1b6c8190b5c310234",
+    "resources_sha256": "5fad39fc4b2c122689a87fe060b004b8de0bdc9af4629c8979c41cc08d8e1482"
+  },
+  {
+    "name": "invalid-cli-end_bad_y",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-end_bad_y.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008281470742076635,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "fae252ee55c3c3f5bc2a99d8f3ed42adda4fe4a8ea1fba3d30168c09049a241b",
+    "resources_sha256": "de84fbdfec29c364db7921fd35e8adf7f5c84ebfcf540730704189baaf6743f3"
+  },
+  {
+    "name": "invalid-cli-width_missing",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_missing.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008702332619577646,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "561bc62bd028811fb3394829d20084622854f640db252021776fcbe2d9278514",
+    "resources_sha256": "f858f32b99e529c8c0192b3dd54d94b14a4c2f8d5e5bd3775b4f5987888f3fa4"
+  },
+  {
+    "name": "invalid-cli-width_empty",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_empty.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008593440055847168,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "c95017c57a813b0b61c304d1e61d0cc190192db9bf371bac5da93cac2a789000",
+    "resources_sha256": "398799247c453e4b0e96372bd931a8f4602108aca069878767dd2f8e11c98f4e"
+  },
+  {
+    "name": "invalid-cli-width_bad",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_bad.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008856362197548151,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "16af996aae50bb99089ee350acd1b611ff60069e2e1c67d0aa106c73428a6fab",
+    "resources_sha256": "b8f231553d6103fc51a9fa1dfd5da886a0ecae845b05e97dc6bb08b74c343dad"
+  },
+  {
+    "name": "invalid-cli-width_extra",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_extra.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008607089053839445,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "fa34413c9f8aaa6ef3ef26777ef6d4a670332cf30f40697646992a081523074b",
+    "resources_sha256": "4d8bb407730fddaaddfe169814e898dfcec8438cd9fd336a3d0ee6591e3a2a9f"
+  },
+  {
+    "name": "invalid-cli-width_duplicate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_duplicate.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008511315565556288,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e48540e2766f127ae80d3069626e17a06f6eea5e82d3f0e6d7481d5fd82233e7",
+    "resources_sha256": "159dc95cc97e87fcb7ee054590594464392e8d9e0dd77e23220f9e93eed2492e"
+  },
+  {
+    "name": "invalid-cli-width_nested",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_nested.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.009102985262870789,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "b968c89c5cf97fae6f97c8ba16df4da05a060d3c6ad0ab330d6f10b2210268d1",
+    "resources_sha256": "6ee25aa16b671a70de17c020d89a3ad7f044be6e5446cacaa836f97a16b6a6c4"
+  },
+  {
+    "name": "invalid-cli-width_nan",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_nan.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008656197227537632,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "558e95f0c888651968d5f3a9156d36c938943ff7d193cf8aaa1ecd5f715b84fd",
+    "resources_sha256": "12e3a8a56c7648a4bf7eb7b5cbea885224b3e51656b2827a49f04ba4c370fcf6"
+  },
+  {
+    "name": "invalid-cli-width_infinity",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_infinity.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.00852568494156003,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "83122f7257d058a37f54ee46b089132f777180dc2eca20e15df6ce9cf1cd6780",
+    "resources_sha256": "b2202087f3ab6bb9771e353d41ac172b3e8d11486c56248875e1bbc4d6069319"
+  },
+  {
+    "name": "invalid-cli-width_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_negative.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.00883337389677763,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "613403f9b188b5d39480d464c9a6067d38010a9f96e0abb75bbf01165020c5ce",
+    "resources_sha256": "4e9aa13755b5963b89bcde61004fbaf058cc01865257e7acdf4f6e63025f2f06"
+  },
+  {
+    "name": "invalid-cli-width_negative_subrange",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-width_negative_subrange.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008336598053574562,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "6d34bf595c2c70a25b3bf71c6d243a28411f152a38c4ccf59bb2e7c61e7f5347",
+    "resources_sha256": "1092774e55d90b9a11e6051e5490b606fa3bc5194dffceae2fbd60b7059ea039"
+  },
+  {
+    "name": "invalid-cli-zero_width_missing_end",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-zero_width_missing_end.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.008474907837808132,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f5bdd74f40483516e68a6e667d51360cf935f8766673a868809dcc91b4b60c24",
+    "resources_sha256": "670a58ff2c82a76f91fdd532d8ad06953e57f57105277f2dd126254a09874565"
+  },
+  {
+    "name": "invalid-cli-zero_width_invalid_start",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v3/release/hyperdrc",
+      "--kicad-pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/invalid-zero_width_invalid_start.kicad_pcb",
+      "--check",
+      "copper-net-intent",
+      "--format",
+      "json",
+      "--allow-findings"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.00838851509615779,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "c0ca1128eaf7f405624adae7962b9728bd07ebb1917b4fa0a3f75cd1d71dcd61",
+    "resources_sha256": "7624161fa10875972a2f8f25b93d0b2a042fd436d6275ed5baad7e968101f051"
+  }
+]

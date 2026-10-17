@@ -1,0 +1,205 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/source-disks-v1/hvp109a.kicad_pcb",
+  "source_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6",
+  "segments": 1449,
+  "zero_width": 0,
+  "positive_segments": 1449,
+  "disks": [
+    {
+      "source_segment_index": 479,
+      "positive_segment_index": 479,
+      "center": [
+        "1482309/10000",
+        "562731/5000"
+      ],
+      "width": "127/500",
+      "radius": "127/1000",
+      "original_source_record": [
+        "segment",
+        [
+          "start",
+          "148.2309",
+          "112.5462"
+        ],
+        [
+          "end",
+          "148.2309",
+          "112.5462"
+        ],
+        [
+          "width",
+          "0.254"
+        ],
+        [
+          "layer",
+          "\"F.Cu\""
+        ],
+        [
+          "net",
+          "\"nOC\""
+        ],
+        [
+          "uuid",
+          "\"4711e59a-d1f7-497b-bf3d-e9f4a43bc039\""
+        ]
+      ]
+    },
+    {
+      "source_segment_index": 512,
+      "positive_segment_index": 512,
+      "center": [
+        "1514567/10000",
+        "286001/2500"
+      ],
+      "width": "127/625",
+      "radius": "127/1250",
+      "original_source_record": [
+        "segment",
+        [
+          "start",
+          "151.4567",
+          "114.4004"
+        ],
+        [
+          "end",
+          "151.4567",
+          "114.4004"
+        ],
+        [
+          "width",
+          "0.2032"
+        ],
+        [
+          "layer",
+          "\"B.Cu\""
+        ],
+        [
+          "net",
+          "\"PWM_BL\""
+        ],
+        [
+          "uuid",
+          "\"772e4c13-b488-47d2-b405-df7fdf5f7445\""
+        ]
+      ]
+    },
+    {
+      "source_segment_index": 541,
+      "positive_segment_index": 541,
+      "center": [
+        "1444209/10000",
+        "47656/625"
+      ],
+      "width": "127/125",
+      "radius": "127/250",
+      "original_source_record": [
+        "segment",
+        [
+          "start",
+          "144.4209",
+          "76.2496"
+        ],
+        [
+          "end",
+          "144.4209",
+          "76.2496"
+        ],
+        [
+          "width",
+          "1.016"
+        ],
+        [
+          "layer",
+          "\"F.Cu\""
+        ],
+        [
+          "net",
+          "\"NetC80_1\""
+        ],
+        [
+          "uuid",
+          "\"37e8bfc2-36a8-4cc2-8cf4-f9e54ee11c9f\""
+        ]
+      ]
+    },
+    {
+      "source_segment_index": 753,
+      "positive_segment_index": 753,
+      "center": [
+        "1512789/10000",
+        "165289/1250"
+      ],
+      "width": "127/500",
+      "radius": "127/1000",
+      "original_source_record": [
+        "segment",
+        [
+          "start",
+          "151.2789",
+          "132.2312"
+        ],
+        [
+          "end",
+          "151.2789",
+          "132.2312"
+        ],
+        [
+          "width",
+          "0.254"
+        ],
+        [
+          "layer",
+          "\"F.Cu\""
+        ],
+        [
+          "net",
+          "\"VB\""
+        ],
+        [
+          "uuid",
+          "\"dd87b587-d145-4285-af79-349c75093cf1\""
+        ]
+      ]
+    },
+    {
+      "source_segment_index": 959,
+      "positive_segment_index": 959,
+      "center": [
+        "1499327/10000",
+        "590163/5000"
+      ],
+      "width": "127/500",
+      "radius": "127/1000",
+      "original_source_record": [
+        "segment",
+        [
+          "start",
+          "149.9327",
+          "118.0326"
+        ],
+        [
+          "end",
+          "149.9327",
+          "118.0326"
+        ],
+        [
+          "width",
+          "0.254"
+        ],
+        [
+          "layer",
+          "\"In1.Cu\""
+        ],
+        [
+          "net",
+          "\"3V3\""
+        ],
+        [
+          "uuid",
+          "\"3d7d2e90-1b1d-41e4-9c8d-8a19088c58dc\""
+        ]
+      ]
+    }
+  ],
+  "independent_arithmetic": "Python fractions.Fraction directly from source tokens, no binary64 conversion"
+}

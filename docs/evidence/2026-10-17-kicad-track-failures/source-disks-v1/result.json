@@ -1,0 +1,31 @@
+{
+  "complete": true,
+  "runner_sha256": "c0e00408a02100f1390d2a9ea0f65d387b93ef05b42df5f2470b2fe13a5701fb",
+  "archive_pins": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-source-v1/crates/hyperdrc/docs/CPArti FPGA dev board.zip": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/baseline-source-v1/crates/hyperdrc/docs/HVP109A.zip": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a"
+  },
+  "fixtures": {
+    "ordinary64": {
+      "segments": 64,
+      "zero_width": 0,
+      "positive_segments": 64,
+      "disks": 0,
+      "manifest_sha256": "6ceefe7b725be97aef1a7f1069929990c1fb1b6920f868f0084658d81736153d"
+    },
+    "cparti": {
+      "segments": 6487,
+      "zero_width": 0,
+      "positive_segments": 6487,
+      "disks": 0,
+      "manifest_sha256": "21ad8cdb5455ebf0d7746eac4fef0908d1078f6910cf7f4241627e3a11c9ce7c"
+    },
+    "hvp109a": {
+      "segments": 1449,
+      "zero_width": 0,
+      "positive_segments": 1449,
+      "disks": 5,
+      "manifest_sha256": "fe7d4547b397902b4242e45565664be4da01c4e59d8b05bb09769e06712cb4e4"
+    }
+  }
+}

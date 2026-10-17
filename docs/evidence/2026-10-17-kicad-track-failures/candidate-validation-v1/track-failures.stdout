@@ -1,0 +1,43 @@
+
+running 38 tests
+test cli_preserves_source_diagnostic_and_cannot_allow_a_failed_load ... ok
+test end_bad ... ok
+test end_bad_y ... ok
+test end_duplicate ... ok
+test end_empty ... ok
+test end_extra ... ok
+test end_infinity ... ok
+test end_missing ... ok
+test end_nan ... ok
+test end_nested ... ok
+test end_short ... ok
+test exhausted_source_load_cannot_escape_as_a_board_and_later_load_recovers ... ok
+test positive_source_that_the_finite_adapter_cannot_construct_is_an_error ... ok
+test second_segment_failure_does_not_publish_the_valid_prefix ... ok
+test start_bad ... ok
+test start_bad_y ... ok
+test start_duplicate ... ok
+test start_empty ... ok
+test start_extra ... ok
+test start_infinity ... ok
+test start_missing ... ok
+test start_nan ... ok
+test start_nested ... ok
+test start_short ... ok
+test valid_source_controls_preserve_metadata_and_known_membership ... ok
+test validated_zero_width_is_empty_even_when_coordinates_exceed_binary64 ... ok
+test width_bad ... ok
+test width_duplicate ... ok
+test width_empty ... ok
+test width_extra ... ok
+test width_infinity ... ok
+test width_missing ... ok
+test width_nan ... ok
+test width_negative ... ok
+test width_negative_subrange ... ok
+test width_nested ... ok
+test zero_width_invalid_start ... ok
+test zero_width_missing_end ... ok
+
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

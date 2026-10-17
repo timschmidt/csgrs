@@ -1,0 +1,92 @@
+[
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(0)",
+    "source_segment_index": 479
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(0)",
+    "source_segment_index": 512
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(0)",
+    "source_segment_index": 541
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(0)",
+    "source_segment_index": 753
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(0)",
+    "source_segment_index": 959
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(1)",
+    "source_segment_index": 479
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(1)",
+    "source_segment_index": 512
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(1)",
+    "source_segment_index": 541
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(1)",
+    "source_segment_index": 753
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(1)",
+    "source_segment_index": 959
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(0)",
+    "source_segment_index": 479
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(0)",
+    "source_segment_index": 512
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(0)",
+    "source_segment_index": 541
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(0)",
+    "source_segment_index": 753
+  },
+  {
+    "certified_disk_area_and_membership": true,
+    "native_bounds_preserved": true,
+    "policy": "PredicatePolicy(0)",
+    "source_segment_index": 959
+  }
+]

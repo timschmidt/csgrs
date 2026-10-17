@@ -1,0 +1,2604 @@
+{
+  "status": "kept: typed track-load failures and exact coincident disks preserve full-board completion",
+  "main_parent_commit": "ac14e99174318291a548749395552ab982a7d097",
+  "implementation_sha256": {
+    "crates/hyperdrc/src/kicad.rs": "06db86ae66b0aa90928cf96221a4f314f6c8ee8f36b0030e8b33bf1530be8b1c",
+    "crates/hyperdrc/src/kicad/tracks.rs": "f0c5707d08c29362d263bd3244601557e58cccc38fe8783bdf465496da817430",
+    "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+    "crates/hyperdrc/README.md": "61b0a4bd38f044500fd235acf8ced620ee829b4ad19c2b4817b92936da416693",
+    "crates/hyperdrc/tests/kicad_track_failures.rs": "ad3a266e19ab3e3256eb6aef76751efe05cda45fcd885f81313ccaaebc377279",
+    "crates/hyperdrc/src/kicad/native_circle_tests.rs": "029db861520d3dfdc1f83858bd14a167bb20d2e0e83b30828b55e258e7699a89"
+  },
+  "owning_layer": "Hyperdrc KiCad source adapter; existing geometry::circle_region owns disk construction",
+  "properties": [
+    "P1",
+    "P6",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P25",
+    "P26",
+    "P30",
+    "P35",
+    "P36",
+    "P37",
+    "P39"
+  ],
+  "contracts": [
+    "contract-v2.md",
+    "contract-v3.md",
+    "contract-v4.md",
+    "cost-contract-v2.md"
+  ],
+  "validation": {
+    "baseline-validation-v1": [
+      {
+        "name": "native-tests",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--no-fail-fast",
+          "--",
+          "--test-threads=1",
+          "--skip",
+          "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "--skip",
+          "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "--skip",
+          "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 574.8997817798518,
+        "passed": 1614,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "879.28",
+          "system_seconds": "26.21",
+          "maximum_rss_kib": "2011472"
+        }
+      },
+      {
+        "name": "full-board",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--lib",
+          "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 56.47811098024249,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "54.67",
+          "system_seconds": "0.93",
+          "maximum_rss_kib": "891748"
+        }
+      },
+      {
+        "name": "copper-neck",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--lib",
+          "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 45.74938820628449,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "44.42",
+          "system_seconds": "0.84",
+          "maximum_rss_kib": "897752"
+        }
+      },
+      {
+        "name": "gerber",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--lib",
+          "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.5234497832134366,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "0.18",
+          "system_seconds": "0.08",
+          "maximum_rss_kib": "81512"
+        }
+      },
+      {
+        "name": "native-cli",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--message-format=json"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 110.65625502960756,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "209.74",
+          "system_seconds": "4.83",
+          "maximum_rss_kib": "1149448"
+        }
+      }
+    ],
+    "candidate-validation-v3": [
+      {
+        "name": "format",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 10.505406491924077,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "9.95",
+          "system_seconds": "0.29",
+          "maximum_rss_kib": "325248"
+        }
+      },
+      {
+        "name": "track-failures",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--test",
+          "kicad_track_failures",
+          "--",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 287.2583986171521,
+        "passed": 39,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "535.45",
+          "system_seconds": "20.90",
+          "maximum_rss_kib": "2009812"
+        }
+      },
+      {
+        "name": "native-tests",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--no-fail-fast",
+          "--",
+          "--test-threads=1",
+          "--skip",
+          "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "--skip",
+          "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "--skip",
+          "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 291.0260963649489,
+        "passed": 1653,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "333.34",
+          "system_seconds": "5.46",
+          "maximum_rss_kib": "1861288"
+        }
+      },
+      {
+        "name": "full-board",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--lib",
+          "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 55.02015762263909,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "53.62",
+          "system_seconds": "0.82",
+          "maximum_rss_kib": "892116"
+        }
+      },
+      {
+        "name": "copper-neck",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--lib",
+          "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 45.351653054822236,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "43.90",
+          "system_seconds": "0.90",
+          "maximum_rss_kib": "897200"
+        }
+      },
+      {
+        "name": "gerber",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--lib",
+          "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.5239582140929997,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "0.17",
+          "system_seconds": "0.08",
+          "maximum_rss_kib": "80488"
+        }
+      },
+      {
+        "name": "clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 36.14785558683798,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "56.86",
+          "system_seconds": "8.33",
+          "maximum_rss_kib": "1356784"
+        }
+      },
+      {
+        "name": "docs",
+        "command": [
+          "cargo",
+          "doc",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--no-deps"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 23.249150725081563,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "29.56",
+          "system_seconds": "3.17",
+          "maximum_rss_kib": "1367204"
+        }
+      },
+      {
+        "name": "native-cli",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--all-features",
+          "--message-format=json"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 106.6757627632469,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "warnings": [],
+        "process_resources_including_any_build": {
+          "user_seconds": "204.29",
+          "system_seconds": "4.39",
+          "maximum_rss_kib": "1143688"
+        }
+      }
+    ]
+  },
+  "new_public_tests": 39,
+  "full_native_suite_passed": 1653,
+  "separate_original_workload_gates_passed": 3,
+  "invalid_source_baseline": {
+    "missing_feature": 81,
+    "successful_geometry": 15,
+    "retained_failure": 0
+  },
+  "typed_invalid_source_candidate": {
+    "MissingField": 12,
+    "InvalidArity": 24,
+    "InvalidNumber": 45,
+    "DuplicateField": 9,
+    "NegativeWidth": 6
+  },
+  "actual_invalid_cli_cases_passed": 32,
+  "original_native_regressions": {
+    "baseline": {
+      "passed": 4,
+      "failed": 22
+    },
+    "candidate": {
+      "passed": 5,
+      "failed": 21
+    },
+    "newly_completed": [
+      "coincident_track_endpoints_keep_the_width_disk"
+    ],
+    "previous_passes_preserved": true
+  },
+  "independent_full_board_disk_observations": 15,
+  "new_hvp109a_disks": 5,
+  "all_previously_materialized_features_identical": true,
+  "comparison": "comparison-v1/result.json",
+  "all_cost_rows": [
+    {
+      "fixture": "ordinary64",
+      "phase": "fresh_process_load",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 1.0416997752692254,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.0841374810526196,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3509720,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3805019,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0056741475392035,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3342881,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3361849,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 1.044875416163638,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3487210,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3643700,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 1.0277404364757439,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3245587,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3335621,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.0416997752692254,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3311073,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3449144,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "ordinary64",
+      "phase": "repeat_after_projection_and_drop",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 1.0534216168032666,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.209819809920311,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2429823,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2939648,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0758659735262113,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2783659,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2994844,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.88100413948143,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2775710,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2445412,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 1.0209467914374355,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2375877,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2425644,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.0534216168032666,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2398486,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2526617,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "cparti",
+      "phase": "fresh_process_load",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 0.9905786954860645,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 0.9720123755830613,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1581242993,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1536987758,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 0.981694538065874,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1577766740,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1548884991,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.9944930485860344,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1567936114,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1559301566,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.9905786954860645,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1574664313,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1559828921,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.0000715158162303,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1553810134,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1553921256,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "cparti",
+      "phase": "repeat_after_projection_and_drop",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 0.9985528805344177,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 0.96914204128559,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1534460281,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1487109969,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0040469894521984,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1486870196,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1492887544,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.9987607536412784,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1520021412,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1518137731,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.997785323671506,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1518271522,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1514909042,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 0.9985528805344177,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1505514957,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1503336297,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "hvp109a",
+      "phase": "fresh_process_load",
+      "matched_completed_contract": false,
+      "changed_workload_added_disks": 5,
+      "median_elapsed_ratio": 0.999121201375065,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.02195779986105,
+          "allocation_calls_delta": 11776,
+          "allocated_bytes_delta": 1079053,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146052560,
+            "allocation_calls": 12445443,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 948771331,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131613,
+            "allocation_calls": 12457219,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 969604262,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 0.9936833640984685,
+          "allocation_calls_delta": 11776,
+          "allocated_bytes_delta": 1079053,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84765,
+          "baseline": {
+            "allocated_bytes": 1146052432,
+            "allocation_calls": 12445442,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 952177408,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131485,
+            "allocation_calls": 12457218,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 946162850,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357058,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.9801848634921609,
+          "allocation_calls_delta": 11777,
+          "allocated_bytes_delta": 1079181,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146052432,
+            "allocation_calls": 12445442,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 951840831,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131613,
+            "allocation_calls": 12457219,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 932979975,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.999121201375065,
+          "allocation_calls_delta": 11779,
+          "allocated_bytes_delta": 1079437,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84893,
+          "baseline": {
+            "allocated_bytes": 1146052304,
+            "allocation_calls": 12445441,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 941481901,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272229,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131741,
+            "allocation_calls": 12457220,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 940654528,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.002912196814795,
+          "allocation_calls_delta": 11777,
+          "allocated_bytes_delta": 1079181,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146052432,
+            "allocation_calls": 12445442,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 951048015,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131613,
+            "allocation_calls": 12457219,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 953817654,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "hvp109a",
+      "phase": "repeat_after_projection_and_drop",
+      "matched_completed_contract": false,
+      "changed_workload_added_disks": 5,
+      "median_elapsed_ratio": 1.0063069253906873,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.0127250598755617,
+          "allocation_calls_delta": 11777,
+          "allocated_bytes_delta": 1079181,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84893,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 916490776,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123461,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130461,
+            "allocation_calls": 12457408,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 928153176,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 0.9749632664476527,
+          "allocation_calls_delta": 11778,
+          "allocated_bytes_delta": 1079309,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 917815535,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123525,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130589,
+            "allocation_calls": 12457409,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 894836432,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 1.0063069253906873,
+          "allocation_calls_delta": 11778,
+          "allocated_bytes_delta": 1079309,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84893,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 896064667,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123461,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130589,
+            "allocation_calls": 12457409,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 901716080,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.9869734413499117,
+          "allocation_calls_delta": 11778,
+          "allocated_bytes_delta": 1079309,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 908342665,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123525,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130589,
+            "allocation_calls": 12457409,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 896510086,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.007957804483248,
+          "allocation_calls_delta": 11776,
+          "allocated_bytes_delta": 1079053,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146051408,
+            "allocation_calls": 12445632,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 899196382,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123525,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130461,
+            "allocation_calls": 12457408,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 906352011,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        }
+      ]
+    }
+  ],
+  "adverse_cost_rows": [
+    {
+      "fixture": "ordinary64",
+      "phase": "fresh_process_load",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 1.0416997752692254,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.0841374810526196,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3509720,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3805019,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0056741475392035,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3342881,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3361849,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 1.044875416163638,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3487210,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3643700,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 1.0277404364757439,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3245587,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3335621,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.0416997752692254,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3311073,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515571,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          },
+          "candidate": {
+            "allocated_bytes": 3276509,
+            "allocation_calls": 32311,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 3449144,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 515584,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 433835
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "ordinary64",
+      "phase": "repeat_after_projection_and_drop",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 1.0534216168032666,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.209819809920311,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2429823,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2939648,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0758659735262113,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2783659,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2994844,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.88100413948143,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2775710,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2445412,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 1.0209467914374355,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2375877,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2425644,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.0534216168032666,
+          "allocation_calls_delta": 0,
+          "allocated_bytes_delta": 0,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 13,
+          "baseline": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2398486,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471131,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          },
+          "candidate": {
+            "allocated_bytes": 3228093,
+            "allocation_calls": 31571,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 2526617,
+            "loaded_copper": 64,
+            "loaded_drills": 0,
+            "peak_extra_requested_bytes": 471144,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 389395
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "cparti",
+      "phase": "fresh_process_load",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 0.9905786954860645,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 0.9720123755830613,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1581242993,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1536987758,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 0.981694538065874,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1577766740,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1548884991,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.9944930485860344,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1567936114,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1559301566,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.9905786954860645,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1574664313,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1559828921,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.0000715158162303,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703124980,
+            "allocation_calls": 18844149,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1553810134,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          },
+          "candidate": {
+            "allocated_bytes": 1703658548,
+            "allocation_calls": 18853677,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1553921256,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200416833,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 132124625
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "cparti",
+      "phase": "repeat_after_projection_and_drop",
+      "matched_completed_contract": true,
+      "changed_workload_added_disks": 0,
+      "median_elapsed_ratio": 0.9985528805344177,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 0.96914204128559,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1534460281,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1487109969,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 1.0040469894521984,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1486870196,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1492887544,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.9987607536412784,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1520021412,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1518137731,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.997785323671506,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1518271522,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1514909042,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 0.9985528805344177,
+          "allocation_calls_delta": 9528,
+          "allocated_bytes_delta": 533568,
+          "retained_requested_bytes_delta_delta": 0,
+          "peak_extra_requested_bytes_delta": 0,
+          "baseline": {
+            "allocated_bytes": 1703424604,
+            "allocation_calls": 18848172,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1505514957,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          },
+          "candidate": {
+            "allocated_bytes": 1703958172,
+            "allocation_calls": 18857700,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 1503336297,
+            "loaded_copper": 10829,
+            "loaded_drills": 1283,
+            "peak_extra_requested_bytes": 200423697,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 132130417
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "hvp109a",
+      "phase": "fresh_process_load",
+      "matched_completed_contract": false,
+      "changed_workload_added_disks": 5,
+      "median_elapsed_ratio": 0.999121201375065,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.02195779986105,
+          "allocation_calls_delta": 11776,
+          "allocated_bytes_delta": 1079053,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146052560,
+            "allocation_calls": 12445443,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 948771331,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131613,
+            "allocation_calls": 12457219,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 969604262,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 0.9936833640984685,
+          "allocation_calls_delta": 11776,
+          "allocated_bytes_delta": 1079053,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84765,
+          "baseline": {
+            "allocated_bytes": 1146052432,
+            "allocation_calls": 12445442,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 952177408,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131485,
+            "allocation_calls": 12457218,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 946162850,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357058,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 0.9801848634921609,
+          "allocation_calls_delta": 11777,
+          "allocated_bytes_delta": 1079181,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146052432,
+            "allocation_calls": 12445442,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 951840831,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131613,
+            "allocation_calls": 12457219,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 932979975,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.999121201375065,
+          "allocation_calls_delta": 11779,
+          "allocated_bytes_delta": 1079437,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84893,
+          "baseline": {
+            "allocated_bytes": 1146052304,
+            "allocation_calls": 12445441,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 941481901,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272229,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131741,
+            "allocation_calls": 12457220,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 940654528,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.002912196814795,
+          "allocation_calls_delta": 11777,
+          "allocated_bytes_delta": 1079181,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146052432,
+            "allocation_calls": 12445442,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 951048015,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82272293,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43253726
+          },
+          "candidate": {
+            "allocated_bytes": 1147131613,
+            "allocation_calls": 12457219,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 953817654,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82357122,
+            "phase": "fresh_process_load",
+            "retained_requested_bytes_delta": 43338555
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "hvp109a",
+      "phase": "repeat_after_projection_and_drop",
+      "matched_completed_contract": false,
+      "changed_workload_added_disks": 5,
+      "median_elapsed_ratio": 1.0063069253906873,
+      "all_pairs": [
+        {
+          "pair": 0,
+          "elapsed_ratio": 1.0127250598755617,
+          "allocation_calls_delta": 11777,
+          "allocated_bytes_delta": 1079181,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84893,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 916490776,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123461,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130461,
+            "allocation_calls": 12457408,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 928153176,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 1,
+          "elapsed_ratio": 0.9749632664476527,
+          "allocation_calls_delta": 11778,
+          "allocated_bytes_delta": 1079309,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 917815535,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123525,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130589,
+            "allocation_calls": 12457409,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 894836432,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 2,
+          "elapsed_ratio": 1.0063069253906873,
+          "allocation_calls_delta": 11778,
+          "allocated_bytes_delta": 1079309,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84893,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 896064667,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123461,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130589,
+            "allocation_calls": 12457409,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 901716080,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 3,
+          "elapsed_ratio": 0.9869734413499117,
+          "allocation_calls_delta": 11778,
+          "allocated_bytes_delta": 1079309,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146051280,
+            "allocation_calls": 12445631,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 908342665,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123525,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130589,
+            "allocation_calls": 12457409,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 896510086,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        },
+        {
+          "pair": 4,
+          "elapsed_ratio": 1.007957804483248,
+          "allocation_calls_delta": 11776,
+          "allocated_bytes_delta": 1079053,
+          "retained_requested_bytes_delta_delta": 84829,
+          "peak_extra_requested_bytes_delta": 84829,
+          "baseline": {
+            "allocated_bytes": 1146051408,
+            "allocation_calls": 12445632,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 899196382,
+            "loaded_copper": 3535,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82123525,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43104958
+          },
+          "candidate": {
+            "allocated_bytes": 1147130461,
+            "allocation_calls": 12457408,
+            "completion": "legacy_board_loaded; exact-stroke fidelity not established",
+            "copper_projection_errors": 0,
+            "elapsed_ns": 906352011,
+            "loaded_copper": 3540,
+            "loaded_drills": 649,
+            "peak_extra_requested_bytes": 82208354,
+            "phase": "repeat_after_projection_and_drop",
+            "retained_requested_bytes_delta": 43189787
+          }
+        }
+      ]
+    }
+  ],
+  "artifact_size_delta_bytes": {
+    "cli_bytes": 124640,
+    "probe_bytes": 45328
+  },
+  "retention_rationale": "Retain for explicit malformed-source failure and exact coincident-disk completion, above performance, memory and size in the governing ladder. The unchanged ordinary64 instrumented samples show slower median loading; the unchanged CPArti samples require more allocation calls and bytes. All adverse observations and artifact growth are retained. Previously materialized output is preserved and both original full-board resource gates pass. The additional HVP109A geometry changes the completed workload. No speedup or lower-resource claim is made.",
+  "raw_report_differences": {
+    "ordinary64": [
+      {
+        "path": "$.coverage.checks[0].check_version",
+        "baseline": 20,
+        "candidate": 21
+      }
+    ],
+    "cparti": [
+      {
+        "path": "$.coverage.checks[0].check_version",
+        "baseline": 20,
+        "candidate": 21
+      }
+    ],
+    "hvp109a": [
+      {
+        "path": "$.coverage.checks[0].check_version",
+        "baseline": 20,
+        "candidate": 21
+      }
+    ],
+    "cparti-smoke": [
+      {
+        "path": "$.coverage.checks[0].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[1].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[2].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[3].check_version",
+        "baseline": 20,
+        "candidate": 21
+      }
+    ],
+    "hvp109a-smoke": [
+      {
+        "path": "$.coverage.checks[0].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[1].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[2].check_version",
+        "baseline": 20,
+        "candidate": 21
+      },
+      {
+        "path": "$.coverage.checks[3].check_version",
+        "baseline": 20,
+        "candidate": 21
+      }
+    ]
+  },
+  "intentional_migration": {
+    "source_failure": "Required start/end/width fields are validated exactly; missing, malformed, duplicated, extra-valued or negative widths return a typed TrackLoadError through the existing anyhow Result instead of omitted/defaulted/truncated geometry. Shared exhaustion is preserved as BudgetExceeded. No partial board is published.",
+    "coincident_tracks": "Exact rational endpoint equality selects the existing native circle constructor with radius width/2. Five formerly omitted HVP109A tracks now form certified disks; finite coincidence of distinct source endpoints remains an explicit failure.",
+    "other_positive_track_failures": "Valid positive source that the legacy finite adapter cannot construct is an explicit unsupported/native-geometry failure; it is not counted as certified geometric completion.",
+    "version": "Readiness CHECK_IMPLEMENTATION_VERSION 20 to 21. All raw selected CLI report differences are recorded and confined to this field on the measured corpus.",
+    "legacy_tests": "Two complete original fixtures are byte-identical. One now requires the exact disk; the incomplete fixture requires typed MissingField(end) and separately preserves its pad/via/zone checks. Their original failed expectations remain in candidate v1.",
+    "archived_carrier": "The unchanged 26-test native-stroke file expects failed regions for some malformed/budget cases; the new public contract returns a load error instead. Its complete result and first failures remain visible."
+  },
+  "preserved_failed_attempts": {
+    "candidate-v1": [
+      "two silent-omission expectations",
+      "HVP109A load rejection in both original board gates",
+      "ignored Result in via test"
+    ],
+    "candidate-v2": [
+      "missing imports prevented unit/workload compilation; 39 public tests and docs passed"
+    ]
+  },
+  "track_load_failures_admitted": true,
+  "general_exact_stroke_fidelity_claimed": false,
+  "performance_improvement_claimed": false,
+  "published_package_pipeline_executed": false,
+  "full_plan_complete": false,
+  "native_disposition_preserved": true,
+  "independently_reimplemented_archived_path": "crates/hyperdrc/src/kicad/tracks.rs",
+  "limitations": [
+    "Noncoincident tracks still use the legacy finite rectangular adapter. General round caps, exact source-coordinate fidelity and extreme noncoincident strokes remain open; local predicate certainty does not certify that source fidelity.",
+    "The new typed failure boundary covers straight-track start/end/width and their construction. Other object families, layer/net validation, the full error taxonomy, end-to-end provenance, and structured machine-readable CLI errors remain open.",
+    "Input parsing, exact coefficient growth, total work, heap bytes and cancellation have no new internal bound. Shared work-budget checks preserve existing denial, but do not bound parsing. Runs use external time/address-space limits; allocator requests and process RSS do not measure expression depth or prove a heap-byte bound.",
+    "HVP109A loads now include five additional disks. Their costs are retained as changed-workload observations, not a same-contract speed comparison. Instrumented matched samples for unchanged inputs do not establish uninstrumented production latency or a universal performance claim.",
+    "The archived native-stroke tests stop at their first failed assertion; no credit is claimed for later unexecuted checks. Their remaining failures and the rejected 35-file integration remain preserved.",
+    "The published-package user path, minimum compiler, complete pre-push/CI matrix, all-property audit and measured coverage remain incomplete. No push was performed; KiCad loading has no affected C/JS/WASM binding consumer in this patch.",
+    "The inherited physical artifact audit remains failed/incomplete with 27093 missing paths. Fresh paths are audited independently without a whole-history or zero-loss claim.",
+    "prepare_candidate_v2.py printed only its two test-path variables in the short terminal summary; its result.json correctly records all five changed paths and the complete source hashes. The inaccurate short summary is preserved, not used as a source inventory."
+  ],
+  "next": [
+    "Continue ordinary strict native-stroke completion and exact source fidelity using the preserved original regressions and unchanged workload gates; do not restore the rejected integration wholesale.",
+    "Extend visible failures and provenance through the remaining modeling/format boundaries, then complete clean external distribution, release/workflow validation and the remaining properties."
+  ]
+}

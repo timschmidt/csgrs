@@ -16,6 +16,9 @@ mod graphics;
 mod model;
 mod pads;
 mod text;
+mod tracks;
+
+pub use tracks::{TrackLoadError, TrackLoadFailure};
 
 use custom_pad::custom_pad_polygons;
 use footprint_graphics::parse_footprint_graphics;
@@ -29,13 +32,26 @@ use anyhow::{Context, Result};
 use hyperreal::Real;
 
 use crate::geometry::{
-    Polygon, SourceGridFacts, SourceScalar, SourceUnit, line_polygon, polygon_from_points,
-    polygons_to_profile,
+    Polygon, SourceGridFacts, SourceScalar, SourceUnit, polygon_from_points, polygons_to_profile,
 };
 use crate::sexp::{self, Sexp};
 use crate::{LayerMetadata, Scalar};
 
-/// Run or compute `load_kicad_pcb`.
+/// Load a KiCad board, preserving exact source locations and native PCB regions.
+///
+/// # Errors
+///
+/// Straight tracks require one `start` and `end` pair and one nonnegative
+/// `width`. Malformed fields, unresolved signs, exhausted shared work budgets,
+/// and failed positive-width construction return a [`TrackLoadError`] through
+/// the error chain before a board is published. Callers can downcast through
+/// the path context. Validated zero-width tracks denote the empty set.
+///
+/// Coincident exact endpoints produce a native disk with radius `width / 2`.
+/// Other straight-track bodies still use the legacy finite rectangular adapter;
+/// their success does not certify round caps or exact source-stroke fidelity.
+/// Other KiCad object families retain their existing validation contracts.
+/// No total source-size, parsing-work, memory, or cancellation bound is added.
 pub fn load_kicad_pcb(path: &Path) -> Result<BoardModel> {
     let text = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read {}", path.display()))?;
@@ -60,7 +76,8 @@ pub fn load_kicad_pcb(path: &Path) -> Result<BoardModel> {
         &declared_copper_layers,
         &mut copper,
         &mut drills,
-    );
+    )
+    .with_context(|| format!("failed to load tracks from {}", path.display()))?;
     parse_zones(&root, &nets, &mut copper);
     parse_graphics(&root, &mut edge_polygons, &mut panel_polygons);
 
@@ -221,42 +238,8 @@ fn parse_tracks_and_vias(
     declared_copper_layers: &[String],
     copper: &mut Vec<CopperFeature>,
     drills: &mut Vec<DrillFeature>,
-) {
-    for segment in root.named_children("segment") {
-        let Some(start_source) = xy_from_child_source(segment, "start") else {
-            continue;
-        };
-        let Some(end_source) = xy_from_child_source(segment, "end") else {
-            continue;
-        };
-        let start = start_source.approximate;
-        let end = end_source.approximate;
-        let width = segment
-            .named_child("width")
-            .and_then(|width| width.f64_at(1))
-            .unwrap_or(0.0);
-        let Some(polygon) = line_polygon(start, end, width) else {
-            continue;
-        };
-        let layer = segment
-            .named_child("layer")
-            .and_then(|layer| layer.atom_at(1))
-            .unwrap_or("unknown")
-            .to_string();
-
-        copper.push(CopperFeature {
-            layer,
-            net: net_name(segment, nets),
-            kind: CopperKind::Segment,
-            region: polygons_to_profile(
-                vec![polygon],
-                Some(LayerMetadata {
-                    name: "KiCad segment".to_string(),
-                }),
-            ),
-            location: midpoint_scalar(&start_source.exact, &end_source.exact),
-        });
-    }
+) -> Result<(), TrackLoadError> {
+    tracks::parse_segments(root, nets, copper)?;
 
     for via in root.named_children("via") {
         let Some(location_source) = xy_from_child_source(via, "at") else {
@@ -310,6 +293,7 @@ fn parse_tracks_and_vias(
             plated: true,
         });
     }
+    Ok(())
 }
 
 fn drill_diameter_scalar(drill: &Sexp) -> Option<Scalar> {
@@ -560,14 +544,18 @@ fn midpoint_scalar(start: &[Scalar; 2], end: &[Scalar; 2]) -> [Scalar; 2] {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
     use std::fs;
 
     use crate::PcbRegionExt;
     use crate::Scalar;
     use crate::geometry::{SourceGridFacts, SourceUnit};
-    use crate::sexp;
+    use crate::sexp::{self, Sexp};
 
-    use super::{CopperKind, load_kicad_pcb, xy_from_child_source};
+    use super::{
+        CopperKind, TrackLoadError, TrackLoadFailure, load_kicad_pcb, parse_footprints,
+        parse_tracks_and_vias, parse_zones, xy_from_child_source,
+    };
 
     #[test]
     fn parses_basic_kicad_board_features() {
@@ -1575,7 +1563,7 @@ mod tests {
     }
 
     #[test]
-    fn degenerate_and_non_copper_geometry_is_ignored_without_fallback_shapes() {
+    fn coincident_track_keeps_its_disk_without_non_copper_fallback_shapes() {
         let path = std::env::temp_dir().join("hyperdrc-degenerate-geometry.kicad_pcb");
         fs::write(
             &path,
@@ -1598,9 +1586,28 @@ mod tests {
         )
         .unwrap();
 
+        // Keep the complete original fixture. Its positive-width coincident
+        // track is the disk centered at (1, 1) with radius 1/10.
         let board = load_kicad_pcb(&path).unwrap();
-
-        assert!(board.copper.is_empty());
+        assert_eq!(board.copper.len(), 1);
+        let disk = &board.copper[0];
+        assert_eq!(disk.kind, CopperKind::Segment);
+        assert_eq!(disk.location, [Scalar::one(), Scalar::one()]);
+        assert_eq!(
+            crate::scalar::compare(
+                &disk.region.try_area().unwrap(),
+                &(Scalar::pi() / Scalar::from(100)).unwrap()
+            ),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            disk.region.classify_xy(Scalar::one(), Scalar::one()),
+            Ok(hypercurve::RegionPointLocation::Inside)
+        );
+        assert_eq!(
+            disk.region.classify_xy(Scalar::from(2), Scalar::one()),
+            Ok(hypercurve::RegionPointLocation::Outside)
+        );
         assert!(board.panel_features.is_none());
         let _ = fs::remove_file(path);
     }
@@ -1668,7 +1675,7 @@ mod tests {
     }
 
     #[test]
-    fn incomplete_objects_retain_failed_pad_geometry_without_panicking() {
+    fn incomplete_track_rejects_load_while_pad_failure_remains_guarded() {
         let path = std::env::temp_dir().join("hyperdrc-incomplete.kicad_pcb");
         fs::write(
             &path,
@@ -1682,15 +1689,35 @@ mod tests {
         )
         .unwrap();
 
-        let board = load_kicad_pcb(&path).unwrap();
+        // Keep the complete original fixture and require the missing track
+        // endpoint to stop loading before a partial board can be published.
+        let error = load_kicad_pcb(&path).unwrap_err();
+        let track = error.downcast_ref::<TrackLoadError>().unwrap();
+        assert_eq!(track.segment_index, 0);
+        assert_eq!(
+            track.failure,
+            TrackLoadFailure::MissingField { field: "end" }
+        );
 
-        assert_eq!(board.copper.len(), 1);
-        assert_eq!(board.copper[0].kind, CopperKind::Pad);
-        assert!(board.copper[0].region.try_area().is_err());
-        let findings = crate::checks::layer::layer_sanity("F.Cu", &board.copper[0].region, None);
+        // Exercise the same malformed pad directly, retaining its independent
+        // failure and downstream layer-sanity assertions from the original test.
+        let root = sexp::parse(&fs::read_to_string(&path).unwrap()).unwrap();
+        let mut copper = Vec::new();
+        let mut drills = Vec::new();
+        parse_footprints(&root, &HashMap::new(), &[], &mut copper, &mut drills);
+        for via in root.named_children("via") {
+            let via_source = Sexp::List(vec![Sexp::Atom("kicad_pcb".into()), via.clone()]);
+            parse_tracks_and_vias(&via_source, &HashMap::new(), &[], &mut copper, &mut drills)
+                .expect("unchanged via-only source contract");
+        }
+        parse_zones(&root, &HashMap::new(), &mut copper);
+        assert_eq!(copper.len(), 1);
+        assert_eq!(copper[0].kind, CopperKind::Pad);
+        assert!(copper[0].region.try_area().is_err());
+        let findings = crate::checks::layer::layer_sanity("F.Cu", &copper[0].region, None);
         assert_eq!(findings.len(), 1);
         assert_eq!(findings[0].check, "geometry-uncertainty");
-        assert!(board.drills.is_empty());
+        assert!(drills.is_empty());
         let _ = fs::remove_file(path);
     }
 }

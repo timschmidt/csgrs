@@ -1,0 +1,15 @@
+{
+  "complete": true,
+  "commands": 9,
+  "unexpected_exits": [
+    "native-tests",
+    "full-board",
+    "copper-neck",
+    "gerber",
+    "clippy"
+  ],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false
+}

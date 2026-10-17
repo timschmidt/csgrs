@@ -1,0 +1,1 @@
+(kicad_pcb (net 1 signal) (segment (layer F.Cu) (net 1) (start 1e20 0) (end 100000000000000000001 0) (width 1)))

@@ -1,0 +1,24 @@
+warning: unused `Result` that must be used
+  --> crates/hyperdrc/src/kicad/native_circle_tests.rs:29:5
+   |
+29 |     parse_tracks_and_vias(&root, &HashMap::new(), &[], &mut copper, &mut drills);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: this `Result` may be an `Err` variant, which should be handled
+   = note: `#[warn(unused_must_use)]` (part of `#[warn(unused)]`) on by default
+help: use `let _ = ...` to ignore the resulting value
+   |
+29 |     let _ = parse_tracks_and_vias(&root, &HashMap::new(), &[], &mut copper, &mut drills);
+   |     +++++++
+
+warning: `hyperdrc` (lib test) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 0.15s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v1/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+thread 'zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers' (149535) panicked at crates/hyperdrc/src/checks/layer.rs:6013:45:
+complex project KiCad fixture should parse: failed to load tracks from /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-scratch-v1/hyperdrc-complex-project-fixture-149534-HVP109A.kicad_pcb
+
+Caused by:
+    KiCad segment 480: unsupported finite track geometry: positive-width track collapsed in the finite adapter
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+error: test failed, to rerun pass `-p hyperdrc --lib`

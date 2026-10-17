@@ -1,0 +1,2885 @@
+{
+  "files": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb"
+  ],
+  "inputs": [
+    {
+      "adapter": "ki-cad",
+      "role": "ki-cad-board",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/hvp109a.kicad_pcb"
+    }
+  ],
+  "coverage": {
+    "registry_version": 1,
+    "checks": [
+      {
+        "check": "copper-net-intent",
+        "check_version": 20,
+        "status": "failed",
+        "finding_count": 158,
+        "normalized_input_digests": [],
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      }
+    ]
+  },
+  "violation_count": 158,
+  "waived_count": 0,
+  "summary": {
+    "errors": 0,
+    "warnings": 158,
+    "waived": 0,
+    "checks": [
+      {
+        "check": "copper-net-intent",
+        "count": 158
+      }
+    ]
+  },
+  "violations": [
+    {
+      "id": "93070407686a413b",
+      "evidence_id": "sha256:c3e3a1b8c9799ad06a51290dce00ebbe7c6149e64e408477f31d34d597f53427",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          171.5481,
+          127.2274
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "abf5138f26c5845d",
+      "evidence_id": "sha256:676eda5bed37b3c3a933a729742ec583ffa59c1b547741b215c68850de6f15fc",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          150.00606,
+          114.08862
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "3a8e590b79b516e4",
+      "evidence_id": "sha256:dd9e40858bd28e1d91f325b506e7a69568e0e6fee991b1d1632b5b6e0f1abfc5",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          150.00606,
+          113.58862
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "6006ecf8dce8bb21",
+      "evidence_id": "sha256:df6dbf5583dff2d137e0747c5f6b0a1973620b1d21ce26d4cb51c8a9618143a4",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          147.70606,
+          113.58862
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "a29db149dcf31ea2",
+      "evidence_id": "sha256:2db7945f0b4e90a5b6d6d10d41b32444283cf7e0f89abb9e11aa1bc4a06e5e02",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.40632,
+          95.34634
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "1bf89c58d1b5e587",
+      "evidence_id": "sha256:b97821b03cb4b81bcfe0cfa0ca9b5430b97ec28e8e84f522ce895750d7ef8f2a",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          163.81432,
+          95.02134
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "fbeb52b11b091a94",
+      "evidence_id": "sha256:5f54df49e5fb1994d0c1d1c81ad62429d53d94a0345d062496ab8c98db9d4da8",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          168.00632,
+          93.49634
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "8bab0d749b9eae30",
+      "evidence_id": "sha256:20f153c93a62152c949c833c114d41b6c05d2d8645311f808db75ddc9ec91ca5",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          163.81432,
+          90.87134
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "685f9a28fa45bbe2",
+      "evidence_id": "sha256:32b1eb91e37566ade7450e394ba37e3748eb82cb7378380cb576473f92ef5a98",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.40632,
+          90.54634
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "023c38b68e449aaa",
+      "evidence_id": "sha256:d77697f112cbce3a985b994c4aea90e0298672465f100ed3fdd5228bcc2f505a",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.23132,
+          94.87134
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "9537a4a0ea7b7f58",
+      "evidence_id": "sha256:2ff51255836eab8a6b983323aebf554a1716178ac52a58863c4567cd5e47fd60",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.78132,
+          95.04634
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "d1db7797646619b8",
+      "evidence_id": "sha256:02c39935b87e61625fb500651e99086ee2c1418b0952934c683466f185d9602f",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          150.0737,
+          106.0866
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "4135b961a52c910f",
+      "evidence_id": "sha256:2b7146f392df88543f621d30b54fa1e492b81a5f69959175f70c3135f15ad6a8",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          150.0737,
+          105.5866
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "960bccd1bd9b0b72",
+      "evidence_id": "sha256:c3eec301db3f169fec1efbfaca5d5250adf204b0344a08cb0d3b14d1550e1ec8",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          147.7737,
+          105.5866
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "00236ca912a4b909",
+      "evidence_id": "sha256:652928b038aa0be52a4eaefff4c4005170130284d581ca99bd9519cac1a89fc0",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          127.84238,
+          99.2874
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "3c80fed9c01be038",
+      "evidence_id": "sha256:bac9c4ebd2020b91a413f2ab94c254a1a48bc4971c1f1e72a78062fa141e1fa1",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          171.9545,
+          111.835
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "de618960a4ade981",
+      "evidence_id": "sha256:69e8fa03be67b5e76f7242a03428c50b4223e99e56809f1ae62cfd89d8187a9b",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          125.18865,
+          113.877
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "540782d224271630",
+      "evidence_id": "sha256:90961a3fa36f341799269e57c9ba6964d806ba93108efba3e5ff5dc079ee3c46",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.53332,
+          130.49993
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "42c9500b2823a1f8",
+      "evidence_id": "sha256:de6547237f31b602031354a293da30ea0c4d90a6441b4caf5e3692b53b0dc163",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          163.94132,
+          130.17493
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "304e8375a833cb56",
+      "evidence_id": "sha256:47264727884958f909f0f5350169645c774514d72386132465a114d57f09ef4b",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          168.13332,
+          128.64993
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "4037c154fbaadab8",
+      "evidence_id": "sha256:8d14c5353de2c2d749231cc3c783c6038aa74a8c658ea2cd78650558c1e6b3c5",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          163.94132,
+          126.02493
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "65914bcbfb8c3f60",
+      "evidence_id": "sha256:b85a9b6aa22ce3e225b8a564536fa4cbc29ed59fecf1eaba3a363d3c8ecfb99e",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.53332,
+          125.69993
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "4a92f3e7b79ae965",
+      "evidence_id": "sha256:bd89e007abddf257862c85d3b1b8bd9fa4add265d44ffa93ace049f7fab0f9a8",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.35832,
+          130.02493
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "3c9a2996b511d99d",
+      "evidence_id": "sha256:b149b8067e362725943a1aed09d88c5f99fa9d90c6f26a22c53d4f482648a305",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.90832,
+          130.19993
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "96000a1c7aca9db4",
+      "evidence_id": "sha256:481ba98a7d1718edcdd1a055da24368299043c295807ce30833600b824ab91b8",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          118.1475,
+          108.6672
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "c6c572baecef1c8f",
+      "evidence_id": "sha256:046b817022b9bdcd685cdbc37c3c58f96cdded03dc64d4eda2485074f70e7c43",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.45712,
+          113.25334
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "b7c306ca9a05e8dc",
+      "evidence_id": "sha256:395926a410c4de879782ed077835bdc40d2adafd450acc555fdf4dfa406ce9ea",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          163.86512,
+          112.92834
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "a7768388b8db417c",
+      "evidence_id": "sha256:216ea659574ad5879615f9ba6508d84185659378992580532032d84758203280",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          168.05712,
+          111.40334
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "b64a1d3d43c3469c",
+      "evidence_id": "sha256:0c0cdf2b1dbb49e15701bacfd67f7d52333ac0618c96e25cba0140494233c1d5",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          163.86512,
+          108.77834
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "6eeb4478ac11a376",
+      "evidence_id": "sha256:db641ea78a32f42edccc6041f19da1d04089b1499f5d1c2a4058a19c9029088a",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.45712,
+          108.45334
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "f93927425de197c9",
+      "evidence_id": "sha256:292031386cc2c28e61d01d2384b3ad6f539224485cf34f09ce43947694551e04",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.28212,
+          112.77834
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "d92b80ac38c2eebb",
+      "evidence_id": "sha256:ca23661c4a19f773d7b9fe176b9a409dd90696209a4b8d430c1623a135649ff2",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.83212,
+          112.95334
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "d6da96bf1004732a",
+      "evidence_id": "sha256:f097c6a4655d7a9491801f1ca85d1b8fbe3d6ed0fbc95acf4f53b51df7ad4568",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          136.4245,
+          75.5536
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "2f11533a40ceb8fa",
+      "evidence_id": "sha256:e2d41073c798947129dad86a77f68f498bb60fc495fb38e1dd9e28defd7cd991",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          147.4943,
+          136.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "7c7c3db0c9cc2fe4",
+      "evidence_id": "sha256:338143cc52498b8a3ee6ca1c994985ac7cd7832794caeff356974ee3827b1b1a",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          147.4943,
+          136.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "88956747b28200de",
+      "evidence_id": "sha256:9369de4727dd82dccfb653bd43ff22acc861bba713391ca3f4298d963c092919",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          147.4943,
+          136.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "b90e832cdab76356",
+      "evidence_id": "sha256:133d6ff06ce6e9b6fa612e008d5446611b16cc252cefa977cab19b55f800fcf4",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          147.4943,
+          136.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "f3a5db657646ddb4",
+      "evidence_id": "sha256:e5f0772b80a14f3c87e6834b35834973927ca16e215bd963b2520e59ea8e4af9",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          175.4943,
+          136.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "5430af7ee796c7b2",
+      "evidence_id": "sha256:0a09b0c2c3c387566b4b831d268877923b3a631409156c1a3df7f8cbfeb87084",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          175.4943,
+          136.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "0a11d42a80d1eb36",
+      "evidence_id": "sha256:7513a86a9acf625ae3a80d9419cdff81022bf6e05bffa815cd7cde651ee020ef",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          175.4943,
+          136.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "406c40f44800df01",
+      "evidence_id": "sha256:9040be7dd79a616194d35d4efba617272774aa3c2d17d5fbac25f315be76fa70",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          175.4943,
+          136.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "86ca3bf69a3f7df8",
+      "evidence_id": "sha256:c3913c315b67d2f59eb533d59e7e734b66a6e951b74d984edddfcb6da4a9edff",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          147.4943,
+          93.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "2127d230478c7dbb",
+      "evidence_id": "sha256:fd0b32e8008a9216c9d45cff806142aa4bd0b1a826fee7be4ecc7d4e74f28c63",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          147.4943,
+          93.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "a77fcb25b56217d9",
+      "evidence_id": "sha256:a877400df0230940707366744567bd8a38994a1020fcefd50a4ff967c926d840",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          147.4943,
+          93.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "20af312f49431438",
+      "evidence_id": "sha256:43b49ae392715a904e9773d69934ed77a62901a386d570a7e9046b51993f908b",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          147.4943,
+          93.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "fa7733539e2ed0ea",
+      "evidence_id": "sha256:374a0956fbb31554bf038e1f7705fde854232f169b07a41f70798b8e9de2487e",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          175.4943,
+          93.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "c5f4520ed18355dc",
+      "evidence_id": "sha256:787f3b9419091aa673f32eb454b21565c50d93423abd4f4112a0cd6695227662",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          175.4943,
+          93.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "b783b5815d597b55",
+      "evidence_id": "sha256:924d4ecb83f6fd1862d8ee87d89e474afe357921dfc7a6e9d27c37650123526c",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          175.4943,
+          93.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "30d27786014a55de",
+      "evidence_id": "sha256:9f6204be8006b0efe594579279a9aea7670343018318c06ec6dd45dbf86de7e1",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          175.4943,
+          93.092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "faa7b5b8f7ae0a10",
+      "evidence_id": "sha256:7a8a9f32f5b871859edb5030c8989a9521f89fc2f12e626a4ee2c5e8dd706d72",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          119.7829,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "4c62b6ea9ac84988",
+      "evidence_id": "sha256:f250b383d2837c5862cab16c285d30cbf81cb0b939d168b17ee0409b3900b7aa",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          119.7829,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "23801686d950657e",
+      "evidence_id": "sha256:7b1f2eed7fac42320ca569a74271f9613b5eee5058d5d078decde9f6626712e9",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          119.7829,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "fd14157fc72d26bb",
+      "evidence_id": "sha256:3e183d03eaa82b0b0f7621af5b6086b6d74e0a0d800b50113c0143d8cd06c273",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          119.7829,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "7cbb9c718e984ae2",
+      "evidence_id": "sha256:c28a96dcfece91236daf81dc457fe848519dfbdfaa7117e286782941c25e8957",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          122.3229,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "fddfa53d97ee6dad",
+      "evidence_id": "sha256:a3d41a15971004222c618db53f58b38a6aa516533b019dbeb9590b7cd5c86326",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          122.3229,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "09be6a856b9e507f",
+      "evidence_id": "sha256:52d1c8fbbd390b90b66aa41ab017c74fa237362e2b78904eabfc33b0b0ef46c1",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          122.3229,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "3c739cb6c8732e5c",
+      "evidence_id": "sha256:dd950d725880bf5efea708f800e8a98846b9d9b8846907ecc6e9e8322a163015",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          122.3229,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "eeb762f22f1b6d58",
+      "evidence_id": "sha256:ecd7d2bc3d1d9a3cf6e71794e1977f2513d91fa74b7bb31ddc1a54eb2d283a0a",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          124.8629,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "00116a1f4484e6cc",
+      "evidence_id": "sha256:8bb8a7381895ad4927a8f610b218c00e299348bd01b1e27b61c40868f5c4e100",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          124.8629,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "ea14e7a5f19da93c",
+      "evidence_id": "sha256:c7f7a29e6af9186c70b370b1348bbcecdcb4db6c7c413a53940165c2d498f589",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          124.8629,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "708f75732769fac2",
+      "evidence_id": "sha256:d37d525d41c25735945c04ac84f548a7fecbdf879e9e40e34993fbe225bb1525",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          124.8629,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "079e7b1eca920d0b",
+      "evidence_id": "sha256:ee910e1bc8f3973ab55df27b16936a6001228d0a05ca3bf8ab439496f41cfef4",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          127.4029,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "456002c0200383a6",
+      "evidence_id": "sha256:51214eb48b7d9dbc1f0ccd2c96bcde4330de3e4c1341938e6b26de934cbc22c7",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          127.4029,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "c2daadd8e20aed9f",
+      "evidence_id": "sha256:ca14564bab9b2f5dfaebf05881734487aaa2c9d060680f66db44240cae6bd91b",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          127.4029,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "5cb1a12af167ee2a",
+      "evidence_id": "sha256:974bcb45243413e1599e92712bdc53eee208508964816a22294b67a2458a02b8",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          127.4029,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "de76c67d1496678f",
+      "evidence_id": "sha256:f4ad11bdf924553b6416038c1324b2febf2e61f7b8b8428590ec39f3fe988ebe",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          129.9429,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "ffe3409d8e1221c8",
+      "evidence_id": "sha256:5186b61f8b19244e1d85872b284aef3e08222dd6f7a7db90f4f87ec5d9a45714",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          129.9429,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "713017c8721e3a4a",
+      "evidence_id": "sha256:8d65813b4e17f74ed1175d49d7a623c16db4b2f2ca468401b1c3ac8df9531845",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          129.9429,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "c48efa7b4bdf37a5",
+      "evidence_id": "sha256:c25cab00b98ec9befe7a931fa0743f6c3daddaeda4f775c6f324ccfbf1beb1ae",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          129.9429,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "a03cb5c08878acfd",
+      "evidence_id": "sha256:41029e2dde91710d926c7e9e70f519382887ac996c3522a1072dd2d7f9a9c1e9",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "72ba05c74c8e578b",
+      "evidence_id": "sha256:fe577125223ebb31f0c0723025d901be94c55920abeb9481455491119e77ab59",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "2e7079d82b0ae2ec",
+      "evidence_id": "sha256:a654f9cd87762ca432144f7a18c473f234d61130383655a1f0078098108c593d",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "148578d142606186",
+      "evidence_id": "sha256:1c6dd243aca4dd4f6d3e8996f73be49225e55652dd683a5a65b82fc23cf5e470",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "a23bdefd4851f3d5",
+      "evidence_id": "sha256:708571af3a56498b0e8ae261be3a62de43ea5ac2121dd697be0a1d51110f41ed",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "ffd218423ba5bad4",
+      "evidence_id": "sha256:aa029384c2fa468d9add5c5e56e7192593357816ae6ed3f3f5c1a16a0ad18f09",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "71f1c7f7923a09e1",
+      "evidence_id": "sha256:d51bbe76641ab88c179f22d0b4b7446bf5b110b2e38b18a534611f5ca6ab410d",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "16d84b89d9827b40",
+      "evidence_id": "sha256:61340e0b2802c4c29df08f77f11573cc971aac157dba07a0939c635c0d0ad922",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "a5462caa481852b9",
+      "evidence_id": "sha256:cc5c34db6a830349bb16f783158a7c3d7ce20f7ad5adedc6fcb6703721576d12",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "902b53083be0f8af",
+      "evidence_id": "sha256:79de408d32f1b56b980aa90b45c9c9fc8db6f214e032bc1180c2d8e5a579139d",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "cbb82b237c0ff879",
+      "evidence_id": "sha256:118c206694e5a2d870574b050faa05a8b4adb0fb2d776fd427470dcb5f188593",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "92a0538755969957",
+      "evidence_id": "sha256:dfe36021ab68c787b5709342dbb0ba54428420c505ac08105e8928608b0be547",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "4d4feb0a5c215044",
+      "evidence_id": "sha256:d987c7d54952a960dba04f9efc2e8c42a77013597d4a107fbdbaa9a64fdd7700",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "f8c6df2546a8c9c9",
+      "evidence_id": "sha256:a27f50241ec156368216ab6fd859959f1305e65ec75ffad2492ac9e31059e65e",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "b7251c84e9f678b4",
+      "evidence_id": "sha256:d17ada55d50d355b42534b2be79d41646256afb15b10feb696a17f71e6696b82",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "d3894c8086605b01",
+      "evidence_id": "sha256:a311c20b19c0b5a14744e3389bbc805ea949cfab8e68164a72825705680007b1",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "02e90ab5f0efd60b",
+      "evidence_id": "sha256:6cd99b7aca1bb0497ccddbef904855cbf4358640fe21799fdf37055f1c1d6d61",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "f61eb2c2f93f0b68",
+      "evidence_id": "sha256:1e1794e4d54e2d2541a3196b99daa26fa1bf192f894d87686a1b425f89b20261",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "3866647dc16fe7dd",
+      "evidence_id": "sha256:4d88b7e9fd99982d63def324d40a8544d1e5031163d04cf0b06407a9a87c9328",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "728e36a5c27e0e23",
+      "evidence_id": "sha256:f8c1630d56524b07d85460e1b17a97babf51c51e89b903194a03157c7f616869",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "773cd33e3666c583",
+      "evidence_id": "sha256:da09f0c8459b4e1e4c7bdd9862ac5c9f273b18cbefc3b3c4e34cb8a5e4766c06",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "df3717aec36cf9ce",
+      "evidence_id": "sha256:53b7c7744801f54ed54a39a5f3797f30ac7e7fa3167fd588ce6661cc6947c732",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "c08edf7b8577dd71",
+      "evidence_id": "sha256:969b54ae8232e198e33f806b0ed87a18049427450fd1ac81cfda55dbd32938f6",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "67c437fe6658d246",
+      "evidence_id": "sha256:23ba29cae24979518b009692e46fc13680fcee72c4c961689d03803e6b7fb01a",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          88.2892
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "0d2cee0503be860b",
+      "evidence_id": "sha256:52e7acfb26ccb5e65ae2369b2e711b5366c63b828c7efc81a4c1cfb17172e4a9",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          140.1029,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "dc6b7a3e089db19d",
+      "evidence_id": "sha256:95e4bf29d307d837d497f2f1c0e3142314b2fed08f22302faaacaf38cf9352f8",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          140.1029,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "f13a3a9b5476d3d7",
+      "evidence_id": "sha256:c708366e3df6ef9c92c937ef8df8056c76dd83ecddca43f0afa2e43e68f4ada4",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          140.1029,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "9f1916499e9c7784",
+      "evidence_id": "sha256:50b28d82281b32ff88c874985ee55c3b6e45160a2b9afed442d621f9ff6ca7c6",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          140.1029,
+          90.8292
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "9067e8d0ee21dbcc",
+      "evidence_id": "sha256:ea4f02a58e7adbfa4b9b02be2c49bbb0f2928df66a3f700885f93a43e4fa1280",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          119.7829,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "195e546a55d0a581",
+      "evidence_id": "sha256:208bf86099149daf637aeb361bba93a874624f407bcfd3a1ff44cc30a6ac93d5",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          119.7829,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "2fbdae78c8647d58",
+      "evidence_id": "sha256:c905234a42f5ea906c66abdde812b7a9c298478f57ef8da7d840d6fe4513bf84",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          119.7829,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "9e0bc9b9c2ce2f56",
+      "evidence_id": "sha256:2e2db7053f6b1e0067ac9d6ee47fe9f73761446628700121e6ec0be7e32c6773",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          119.7829,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "a597da3f71ecdb0a",
+      "evidence_id": "sha256:3455b1ae1d77c31659680a9babb5ad61906c6459d74bdfd9aef5c76f479dfabb",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          122.3229,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "7bdaa6284c688013",
+      "evidence_id": "sha256:8770cc0a29ea0cfe1c3b098e48e0a025715674c397a248b2c48358fa63e5b9cb",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          122.3229,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "2b809555dfbb384a",
+      "evidence_id": "sha256:37400deaaf6976092a210176c12290ea9399d48114069277a6073a4bcc281d3e",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          122.3229,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "a31f7b08c0dc9f82",
+      "evidence_id": "sha256:11d1d069a4063c92d7d702a8a4b07e65defaa7dbbe6d57c3d339dcd26a301ec1",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          122.3229,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "207793f2c202ecee",
+      "evidence_id": "sha256:9c1ff8545cd7701a4e62a5f9431d02377c75a8e8a1d41647b4b52376c483d12e",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          124.8629,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "c0101cb26b719e98",
+      "evidence_id": "sha256:30c18102679ee530b2299c35e4c93d1e549fbed2a7494074922d9e3867d91916",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          124.8629,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "13fb28b3bf1902cd",
+      "evidence_id": "sha256:eaa2a25268e2fb6aa88ce4ed3050a5595ef4fff40e830ef29ed5e5d8a2306c04",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          124.8629,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "3604290b17aa7642",
+      "evidence_id": "sha256:a919294f3455722bd002b188c019ade51832dcb1ccfe5376dc1662fa6582b560",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          124.8629,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "2124d2440c3f35dd",
+      "evidence_id": "sha256:4627a58305f35d3217d6e676c82c42f3ed990491337e9a7845fdf6266bb591e5",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          127.4029,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "2aff85d0b0ce3ea8",
+      "evidence_id": "sha256:02efea6b61ba05a8af50027fd8c6dec64605f44ec7512792d29fe70fd3be829f",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          127.4029,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "bb04c87f03094fe1",
+      "evidence_id": "sha256:dc0a57e49309586cfe163c8f880abe6e4654bb3a8149696a8bb0b5fe46bd090c",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          127.4029,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "67b1cc40fb09bf8f",
+      "evidence_id": "sha256:7b8a12e007d82cd5b59ce5b3afacbf3ae26303aa0ef49fbb1e4b8aad5c93c68d",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          127.4029,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "76f5c6e2a88da321",
+      "evidence_id": "sha256:d36b5432167ce079d5e594324a2318affec84142e0f6dec519044549c8828977",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          129.9429,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "9ecae335cfff99d7",
+      "evidence_id": "sha256:a90884d08c7f2bedf0d82a5c8404621e85582f0592aa83d533cf0751c1bb9ea8",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          129.9429,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "469bbc6fee14725c",
+      "evidence_id": "sha256:eefbf3c04643b3ee512cef622cd6c651a62f56c9654e36cf7902366989ad3bf3",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          129.9429,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "821e355fad293d71",
+      "evidence_id": "sha256:40a3922850b33c7256018428bcc0eb84a1baab7b69b9cc71cbed0235f6ed97e9",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          129.9429,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "47f19d1a53fd1fcc",
+      "evidence_id": "sha256:ef3b425fcf8dd5dcc330149debffe17dfc00c774f840db9fd3507c6a0b697d23",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "c3a9bb786040177f",
+      "evidence_id": "sha256:b56bab82242ee3d82c30902021c127b8b46ca4c277083032fe76d7009ae3a11e",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "288d0b9c8abe6880",
+      "evidence_id": "sha256:9c443ffe7ad07ab87894e16e320fcc71691df0bb76f181adae519a4822f21462",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "a1acc9841e3cda24",
+      "evidence_id": "sha256:3097597ed014755d6dc384b8c29461d8c02e5d2a4ac24b3be78793723ce12087",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          132.4829,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "2dfbbe9bc9e8d077",
+      "evidence_id": "sha256:21759c8a0869827db71f995c40e2d2301f51524f9244736e15e35dd5048fc499",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "51dbe9b058b0b3ac",
+      "evidence_id": "sha256:d428345d076722d3ee61d83282a079ff53071ed875a612b36f9739dc04fb2a2c",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "16c644466b28476d",
+      "evidence_id": "sha256:0ad3582daa310fa62d17c9795808d657bccced88993fff492493233c1ab0e4c2",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "c3c4a751531d75c2",
+      "evidence_id": "sha256:d16d3be7b480327b0ce420e78ff388f50b8079e8839fa8f2fd595e4599814c52",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          135.0229,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "3d012f7c815433ae",
+      "evidence_id": "sha256:b9bb8657846ef0b08fb1cfa23efdacfa7d94aaf2cc3d644eb1f4eaa7c2394db3",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "cf718e104c67af58",
+      "evidence_id": "sha256:029c1eb76375b050de3ad88d3794372e8d7edbb939e5221021f0e1b7b4f12716",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "f22a0abf3412d537",
+      "evidence_id": "sha256:762d7bc026bccb77229462e7d2ec4331cf63fb075c5f73bd577251b3c0b88796",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "398e6e40e5ab1717",
+      "evidence_id": "sha256:8b05bd9c790cc661917b73be36151c50fbf87970c689ac578a47e90d695fedfb",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          137.5629,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "a0e167427d6e32de",
+      "evidence_id": "sha256:adec19f752d7a1d3a228f622f0069d4edb3ee3c74e996c8713ac047115d29097",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          140.1029,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "021917e947c9c4a6",
+      "evidence_id": "sha256:ab73004538732eaa35a887a4794e53cb3f7c419ccb6bb0fcb6d9d2ec0b4fe2d2",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          140.1029,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "4a9171b9ecfef6eb",
+      "evidence_id": "sha256:a61f9f5302b369122bf70475abc0714790baa9dec324328a41fb019c7f9dbeb3",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          140.1029,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "800cdeffe0891ac7",
+      "evidence_id": "sha256:eeb2456a4c40cd5d54d220689a9f35985efea349d91f248902470c841b47099c",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          140.1029,
+          134.0092
+        ]
+      ],
+      "message": "parsed Pad copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "61f936fcda5d2e4f",
+      "evidence_id": "sha256:3a15b04cf8d0389e7af5dbe58d91c4aa6f044f1172c66561aa69dc02cc779950",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          172.23343,
+          109.25922
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "1a231c175fc882a6",
+      "evidence_id": "sha256:d2a299b7555db0b5c0fcb546d7cf37173d4d10f426c2d326d84a1c0d0776356b",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          118.0811,
+          129.4626
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "030229de01116329",
+      "evidence_id": "sha256:7ef43c6c6be6bcee6cfe952735c1100030368e5ffeccc2a82d2bdb742fc016d6",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          168.16722,
+          111.57424
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "384c89d5da937d01",
+      "evidence_id": "sha256:6c1cab732dd50f04b9fe6d4ca032747a72ee7b00f885917288418f1d3aa3d6d9",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          123.1865,
+          129.0308
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "10305f709607cd47",
+      "evidence_id": "sha256:bb004e906218a004523c61b002bc47017acd6c67151341bfb564529a9b4af792",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          183.1305,
+          77.545
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "93862639c0d5aeb4",
+      "evidence_id": "sha256:e25a15b4586b04de0f70593078c722946b41e18b55195ba07af14ccc25afcbe3",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          172.2847,
+          91.2864
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "17c7c1f68ab0abba",
+      "evidence_id": "sha256:e2bc9ec24bc2598722a8cc4af291b1c91641e8ba3290387beca57acf4c1aaccd",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          172.1323,
+          126.5416
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "186ffb5b69fedb4f",
+      "evidence_id": "sha256:2ea19c89afe114494022741eb95e0e0e3f88df1a9895300292a6161f6314b42e",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          182.3939,
+          113.0034
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "c1cbb1dab892c74c",
+      "evidence_id": "sha256:106da8daffc647c5d105ecb912988a0d902e08172ddd5278b62700fb8d56b54e",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "F.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          167.8905,
+          127.2274
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "75d7be3aefa3d1bf",
+      "evidence_id": "sha256:c72523e18f4ebe760a7a2de400c50f33a833f6c3c946a99ed529ca5cea0b4648",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          164.28472,
+          76.783
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "d5f84988f0b3d291",
+      "evidence_id": "sha256:29c5fccbc2a7dd3518852e1a9dc85f1b0e9b7f8469bc5a8b45bf1d97e387bb74",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          162.07861,
+          124.03033
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "111eaacc4487b733",
+      "evidence_id": "sha256:2dfb30424afa24d1432f1a560ecca2c3d70d0463055530c570145c4f209ceba6",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          162.2263,
+          89.0258
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "598757cb41aa196c",
+      "evidence_id": "sha256:2895dbcc21c443e511665c253e60f0f0ebf15353abf9936d94db55453f556cf5",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          182.3685,
+          70.4584
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "50f0e6abdbe9d29c",
+      "evidence_id": "sha256:34784e2c0b9876b843b9188c593b53cd8a96c7043c1ab1573ebd88c127b93d2e",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          157.3495,
+          135.8634
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "d3acb600f894ab48",
+      "evidence_id": "sha256:81a76ae3aa517bbb3614d03335fa88340da1755046d6e72c324f95eaa81724b3",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          163.97561,
+          112.597
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "663e4b5e9c59d7c8",
+      "evidence_id": "sha256:efe89af150b251e854c53d267738dc5cfc593c69017fa3168be5a24ba03f51f3",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          164.1313,
+          129.7166
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "69a0c16f82990fdd",
+      "evidence_id": "sha256:9375e011ddac2dc0befabf9eef15d7d8a2b2d1639711602ace8d8d69b3f59329",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          164.0043,
+          94.7154
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "2691ea1e978ba233",
+      "evidence_id": "sha256:2818c2d9a43d9801e55c95a3a653f9073a366ae250b65424229e387968de3073",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          161.89915,
+          107.06147
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "85cd1db2e3a00cbe",
+      "evidence_id": "sha256:a442d46430a5d41f0767ee98b1d688ea40171ebbebaff1b31415ce3b0160565d",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "B.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          134.6927,
+          73.7096
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "87c47787dd9a1d69",
+      "evidence_id": "sha256:ecb5bde6ad17e3459e6a3276b21ffc22b32627f4d0c5e16572069607af7e4fab",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          164.1313,
+          129.7039
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "49ac3da6f908b5fd",
+      "evidence_id": "sha256:4521e920e56b808a28e2018d5634778e6c04cd6798c3d45165c4bdf1f6c8ab6e",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          164.0551,
+          112.597
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "894dc32126ad5b1a",
+      "evidence_id": "sha256:f7a09696fcaa27af07306cfcdee0bc4ed1cbd76da3c259e41ccb74610fe60894",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In1.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          164.0551,
+          94.7154
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "e746c7379109c66f",
+      "evidence_id": "sha256:09585eb92daacfe01c99641dba23bc1868de8b8aa017bbeb8f022955038d0400",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          164.0424,
+          112.597
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "b40fe142b45fbaba",
+      "evidence_id": "sha256:7cedc026189bbab6ebc72d87d88db6530719eee488267bbc6ab3d0b73db9b127",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          164.0932,
+          129.7039
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    },
+    {
+      "id": "d0a7555f66c521d9",
+      "evidence_id": "sha256:39db0cbef3c725ca92e4c11c20b3fa3e7e905bbd069a2840b447bea094076973",
+      "check": "copper-net-intent",
+      "severity": "warning",
+      "layers": [
+        "In2.Cu"
+      ],
+      "total_area": -0.0,
+      "polygons": [],
+      "locations": [
+        [
+          164.0424,
+          94.69
+        ]
+      ],
+      "message": "parsed Zone copper has no net after KiCad parsing and IPC-D-356 annotation"
+    }
+  ]
+}

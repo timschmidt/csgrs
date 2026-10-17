@@ -1,0 +1,25 @@
+{
+  "complete": true,
+  "base_commit": "ac14e99174318291a548749395552ab982a7d097",
+  "source_inputs": 2832,
+  "source_hashes_sha256": "f232e605d6e88260dd7e3a62840e8283e9d913e40cdaa45faafbfcf3bfb3a38e",
+  "changes": {
+    "crates/hyperdrc/src/kicad.rs": "5141f0e447725ad9889d2bba1e32522d794f9e39b2fc4b89132a56d6a24cf27f",
+    "crates/hyperdrc/src/kicad/tracks.rs": "f0c5707d08c29362d263bd3244601557e58cccc38fe8783bdf465496da817430",
+    "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+    "crates/hyperdrc/README.md": "61b0a4bd38f044500fd235acf8ced620ee829b4ad19c2b4817b92936da416693",
+    "crates/hyperdrc/tests/kicad_track_failures.rs": "ad3a266e19ab3e3256eb6aef76751efe05cda45fcd885f81313ccaaebc377279",
+    "crates/hyperdrc/src/kicad/native_circle_tests.rs": "029db861520d3dfdc1f83858bd14a167bb20d2e0e83b30828b55e258e7699a89"
+  },
+  "runner_sha256": "fd06583faaf4ce539f10b419a3e5520af00be2cd53b9e0ee5746ced8fa929507",
+  "delta_from_v1": {
+    "crates/hyperdrc/README.md": "61b0a4bd38f044500fd235acf8ced620ee829b4ad19c2b4817b92936da416693",
+    "crates/hyperdrc/src/kicad.rs": "5141f0e447725ad9889d2bba1e32522d794f9e39b2fc4b89132a56d6a24cf27f",
+    "crates/hyperdrc/src/kicad/native_circle_tests.rs": "029db861520d3dfdc1f83858bd14a167bb20d2e0e83b30828b55e258e7699a89",
+    "crates/hyperdrc/src/kicad/tracks.rs": "f0c5707d08c29362d263bd3244601557e58cccc38fe8783bdf465496da817430",
+    "crates/hyperdrc/tests/kicad_track_failures.rs": "ad3a266e19ab3e3256eb6aef76751efe05cda45fcd885f81313ccaaebc377279"
+  },
+  "correction": "Use the existing native circle constructor for exact coincident endpoints, retaining full workload completion. Handle Result in the via test and explicitly migrate two silent-omission expectations without changing their complete source fixtures.",
+  "preserved_failed_attempt": "candidate-validation-v1",
+  "main_sources_modified": false
+}

@@ -1,0 +1,35 @@
+{
+  "files": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb"
+  ],
+  "inputs": [
+    {
+      "adapter": "ki-cad",
+      "role": "ki-cad-board",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/comparison-v1/inputs/ordinary64.kicad_pcb"
+    }
+  ],
+  "coverage": {
+    "registry_version": 1,
+    "checks": [
+      {
+        "check": "copper-net-intent",
+        "check_version": 20,
+        "status": "passed",
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      }
+    ]
+  },
+  "violation_count": 0,
+  "waived_count": 0,
+  "summary": {
+    "errors": 0,
+    "warnings": 0,
+    "waived": 0,
+    "checks": []
+  },
+  "violations": []
+}

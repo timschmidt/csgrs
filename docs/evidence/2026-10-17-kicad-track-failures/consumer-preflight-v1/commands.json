@@ -1,0 +1,85 @@
+[
+  {
+    "name": "load-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v2/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v2/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v2/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v2/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v2/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/load_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/consumer-preflight-v1/load"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.5593287069350481,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "1024f9a32ace425aaa18f4c2786ad187630f7ea85bc94a239cf792fefecaf461"
+  },
+  {
+    "name": "disk-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v2/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v2/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v2/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v2/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/candidate-target-v2/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/disk_corpus_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/consumer-preflight-v1/disk"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.5889544049277902,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3a8ab597aed362a99ae1b2935f499b9e55e135bb5c6a93d381c742657405c4c2"
+  },
+  {
+    "name": "ordinary-load",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/consumer-preflight-v1/load",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/source-disks-v1/ordinary64.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/consumer-preflight-v1/ordinary.geometry.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.011706676799803972,
+    "stdout_sha256": "5a14f0d0cdcb646863e5ab5222fc2dd1bd5dc71e3fd29b08589b02605d51be9c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "e172e3536f128f3a19a78b52bd521ae837c87caefc4e1d672d5bdc53f9d62ae4"
+  },
+  {
+    "name": "full-board-disk-oracle",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/consumer-preflight-v1/disk",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-track-failures/source-disks-v1/hvp109a.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 2.6543778679333627,
+    "stdout_sha256": "4a8ad92032baf7ce01cf4e0caaf60d8018c6348eb7c579bbdc79a91bc6644be5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a04e4d94f53311260db76fa258ae4ae49077b2144058f31a3e74cd417e55373f"
+  }
+]
