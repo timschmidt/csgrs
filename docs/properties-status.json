@@ -17414,6 +17414,62 @@
     "release_ready": false,
     "cache_index_admitted": false,
     "full_plan_complete": false
+  },
+  "circle_support_reuse_full_library": {
+    "status": "both preserved Hypercurve library binaries qualified; cache remains unadmitted",
+    "base_revision": "a531ea42affc217dd48fb7a95c1ab683d006d1eb",
+    "contract": "docs/evidence/2026-10-17-circle-support-reuse-full-library/contract-v1.md",
+    "qualification": "docs/evidence/2026-10-17-circle-support-reuse-full-library/qualification-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-circle-support-reuse-full-library/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-circle-support-reuse-full-library/artifact-expectations-v1.json.gz",
+    "modes": [
+      {
+        "mode": "no-feature",
+        "status": "passed",
+        "exit_code": 0,
+        "external_stop_reason": null,
+        "elapsed_seconds": 841.6848552678712,
+        "summaries": [
+          [
+            "ok",
+            "1743",
+            "0",
+            "4",
+            "0",
+            "0"
+          ]
+        ],
+        "source_mirror_unchanged": true,
+        "generated_mirror_files": {},
+        "property_persistence_warnings": false
+      },
+      {
+        "mode": "all-feature",
+        "status": "passed",
+        "exit_code": 0,
+        "external_stop_reason": null,
+        "elapsed_seconds": 882.3358016079292,
+        "summaries": [
+          [
+            "ok",
+            "1750",
+            "0",
+            "9",
+            "0",
+            "0"
+          ]
+        ],
+        "source_mirror_unchanged": true,
+        "generated_mirror_files": {},
+        "property_persistence_warnings": false
+      }
+    ],
+    "both_library_suites_passed": true,
+    "fresh_build_performed": false,
+    "full_cargo_matrix_qualified": false,
+    "downstream_native_binding_release_qualified": false,
+    "cache_index_admitted": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
