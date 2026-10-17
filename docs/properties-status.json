@@ -17470,6 +17470,44 @@
     "downstream_native_binding_release_qualified": false,
     "cache_index_admitted": false,
     "full_plan_complete": false
+  },
+  "package_license_texts": {
+    "status": "declared Apache license texts included in twelve package file lists; broader release remains open",
+    "base_revision": "d1b5adf86a335c019dc6b07d90ec9f936da70633",
+    "contract": "docs/evidence/2026-10-17-package-license-texts/contract-v1.md",
+    "qualification": "docs/evidence/2026-10-17-package-license-texts/qualification-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-package-license-texts/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-package-license-texts/artifact-expectations-v1.json.gz",
+    "crates": [
+      "hyperbrep",
+      "hypercircuit",
+      "hypercurve",
+      "hyperevolution",
+      "hyperlimit",
+      "hyperpack",
+      "hyperparts",
+      "hyperpath",
+      "hyperphysics",
+      "hypersdf",
+      "hypersolve",
+      "hypertri"
+    ],
+    "readmes_corrected": [
+      "hypercurve",
+      "hyperlimit",
+      "hyperphysics",
+      "hypersolve",
+      "hypertri"
+    ],
+    "license_assets_and_links_retained": true,
+    "manifest_license_expressions_changed": false,
+    "package_file_list_checks_passed": true,
+    "package_archives_built": false,
+    "dependency_provenance_or_legal_compliance_claimed": false,
+    "runtime_tests_rerun": false,
+    "release_qualification_complete": false,
+    "cache_index_admitted": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {

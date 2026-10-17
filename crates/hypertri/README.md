@@ -364,9 +364,8 @@ dependencies.
 
 ## License and contributing
 
-Hypertri is available under either the MIT License or the Apache License 2.0,
-as declared in [`Cargo.toml`](Cargo.toml). The repository's [`LICENSE`](LICENSE)
-contains the MIT terms.
+Hypertri is available under either the [MIT License](LICENSE) or the
+[Apache License 2.0](LICENSE-APACHE), as declared in [`Cargo.toml`](Cargo.toml).
 
 Changes should preserve exact predicate decisions and validation coverage.
 Before submitting a change, run:

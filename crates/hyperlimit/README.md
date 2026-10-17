@@ -349,9 +349,8 @@ Hyperreal and on Hyperlattice's object carriers.
 
 ## License and contributing
 
-Hyperlimit is available under either the MIT License or the Apache License 2.0,
-as declared in [`Cargo.toml`](Cargo.toml). The repository's [`LICENSE`](LICENSE)
-contains the MIT terms.
+Hyperlimit is available under either the [MIT License](LICENSE) or the
+[Apache License 2.0](LICENSE-APACHE), as declared in [`Cargo.toml`](Cargo.toml).
 
 Changes should preserve explicit uncertainty and keep topology ownership out of
 the predicate layer. Before submitting a change, run:
