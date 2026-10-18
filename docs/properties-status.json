@@ -17846,6 +17846,27 @@
     "hypervoxel_deferred_by_user": true,
     "public_distribution_complete": false,
     "full_plan_complete": false
+  },
+  "point_equality_contract_strengthening": {
+    "status": "correct the Point2 fixture to permit stronger proofs and independently reject a distinct symbolic point; optimization proposals remain unadmitted",
+    "parent_revision": "7758062126b228695cb7a56aaaa205923ffc86c9",
+    "review": "docs/evidence/2026-10-18-point-equality-strengthening/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-point-equality-strengthening/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-point-equality-strengthening/artifact-expectations-v1.json.gz",
+    "test_source": "crates/hypercurve/tests/point_equality_contract.rs",
+    "existing_acceptance_tests_updated": 1,
+    "tests_per_implementation": 3,
+    "test_executions": 6,
+    "supersedes_third_test_contract_checkpoint": "E67",
+    "production_implementation_changed": false,
+    "candidate_optimization_admitted": false,
+    "experiment_targets_remain_open": true,
+    "disk_b_allowance_gib": 72,
+    "disk_b_baseline_reset": false,
+    "other_execution_limits_unchanged": true,
+    "hypervoxel_deferred_by_user": true,
+    "public_distribution_complete": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {

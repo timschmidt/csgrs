@@ -69,28 +69,41 @@ fn exact_construction_coordinates_match_the_affine_line_oracle() {
 }
 
 #[test]
-fn known_rational_coordinate_does_not_resolve_the_other_coordinate() {
+fn known_rational_coordinate_preserves_symbolic_coordinate_proofs() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
-    assert_eq!(unresolved_zero.zero_status(), ZeroKnowledge::Unknown);
+    let identity_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let epsilon: Real = "1e-400".parse().unwrap();
+    // The trigonometric identity is zero; adding this exact positive value
+    // gives a distinct point even while its structural proof is unresolved.
+    let distinct_symbolic = &identity_zero + epsilon;
     for rational_axis in 0..2 {
-        let make = |unknown: Real| {
+        let make = |symbolic: Real| {
             if rational_axis == 0 {
-                Point2::new(fraction(1, 3), unknown)
+                Point2::new(fraction(1, 3), symbolic)
             } else {
-                Point2::new(unknown, fraction(1, 3))
+                Point2::new(symbolic, fraction(1, 3))
             }
         };
-        let left = make(Real::zero());
-        let right = make(unresolved_zero.clone());
+        let origin = make(Real::zero());
+        let equal = make(identity_zero.clone());
+        let distinct = make(distinct_symbolic.clone());
         for precision in [-8, -128, -16, -96] {
-            for coordinate in [right.x(), right.y()] {
+            for coordinate in [equal.x(), equal.y(), distinct.x(), distinct.y()] {
                 coordinate.certified_rational_interval(precision).unwrap();
             }
-            // This conservative bool is not a proof that the mathematical points differ.
-            assert_ne!(left, right);
-            assert_ne!(right, left);
+            assert_ne!(identity_zero.zero_status(), ZeroKnowledge::NonZero);
+            assert_ne!(distinct_symbolic.zero_status(), ZeroKnowledge::Zero);
+            // A new exact-zero proof may strengthen an inconclusive comparison.
+            // Do not require Unknown or a particular failed proof history.
+            if identity_zero.zero_status() == ZeroKnowledge::Zero {
+                assert_eq!(origin, equal);
+                assert_eq!(equal, origin);
+            }
+            // Equality of the rational coordinate alone must not certify this
+            // independently distinct symbolic coordinate, on either axis.
+            assert_ne!(origin, distinct);
+            assert_ne!(distinct, origin);
         }
     }
 }
