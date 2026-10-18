@@ -17743,6 +17743,26 @@
     "full_plan_complete": false,
     "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
     "original_worktree_integration_pending": true
+  },
+  "resume_integration": {
+    "status": "committed history integrated; current availability gap recorded",
+    "checkpoint": "docs/evidence/2026-10-17-resume-integration/checkpoint-v1.json",
+    "review": "docs/evidence/2026-10-17-resume-integration/review-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-resume-integration/artifact-expectations-v1.json.gz",
+    "expectation_loader": "docs/evidence/2026-10-17-resume-integration/load_expectations_v2.py",
+    "active_repository": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "integrated_revision": "9abc309af48acad10369bfe9fb9a82d39cc9fceb",
+    "original_worktree_integration_pending": false,
+    "currently_unavailable_artifact_paths": 921794,
+    "newly_unavailable_paths": 894701,
+    "history_content_audit_complete": false,
+    "format_passed": true,
+    "readme_test_passes": 4,
+    "quickstart_passed": true,
+    "cache_index_admitted": false,
+    "exact_ingress_admitted": false,
+    "hypervoxel_deferred_by_user": true,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
