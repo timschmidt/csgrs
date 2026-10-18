@@ -17903,6 +17903,81 @@
     "hypervoxel_deferred_by_user": true,
     "public_distribution_complete": false,
     "full_plan_complete": false
+  },
+  "exact_track_after_scalar_facts": {
+    "status": "reject unchanged exact-track importer on current scalar facts: focused semantics pass, both original KiCad resource gates fail",
+    "parent_revision": "540074a8c05ccc676d7c70b8f0093f98804b81d9",
+    "review": "docs/evidence/2026-10-18-exact-track-profile/review-v1.json",
+    "profile": "docs/evidence/2026-10-18-exact-track-profile/profile-observations-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-exact-track-profile/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-exact-track-profile/artifact-expectations-v1.json.gz",
+    "baseline_stroke_failures": 10,
+    "baseline_aggregation_failures": 3,
+    "candidate_focused_tests_passed": 75,
+    "gates": {
+      "copper-neck": {
+        "assertion_diagnostic_lines": [
+          "complex project copper neck regression fixture took 129.559299287s"
+        ],
+        "exit_code": 101,
+        "process_elapsed_seconds": 366.02996888399866,
+        "summary": [
+          [
+            "FAILED",
+            "0",
+            "1",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      },
+      "full-board": {
+        "assertion_diagnostic_lines": [
+          "complex project KiCad smoke suite took 369.825772873s of worker time"
+        ],
+        "exit_code": 101,
+        "process_elapsed_seconds": 372.0458879170001,
+        "summary": [
+          [
+            "FAILED",
+            "0",
+            "1",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      },
+      "gerber": {
+        "assertion_diagnostic_lines": [],
+        "exit_code": 0,
+        "process_elapsed_seconds": 0.106661432000692,
+        "summary": [
+          [
+            "ok",
+            "1",
+            "0",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      }
+    },
+    "diagnostic_profile_only": true,
+    "source_changes_applied": false,
+    "exact_track_importer_admitted": false,
+    "cache_proposal_admitted": false,
+    "all_adverse_measurements_retained": true,
+    "general_speedup_claimed": false,
+    "disk_b_allowance_gib": 72,
+    "disk_b_baseline_reset": false,
+    "other_execution_limits_unchanged": true,
+    "hypervoxel_deferred_by_user": true,
+    "public_distribution_complete": false,
+    "full_plan_complete": false,
+    "next": "Reproduce repeated scalar sign/normal-form work in the recovered curve comparison and subdivision consumers, identify the earliest reusable construction proof, and evaluate one coherent repair against independent semantic expectations and the unchanged full native resource gates. No implementation is selected from sampling alone."
   }
 },
   "status_meanings": {
