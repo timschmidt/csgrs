@@ -67,13 +67,14 @@ Procedural analytic-parallel pcurves replay quadratic/cubic/homogeneous rational
 sources, signed distance, selected parameters and traversal. The spatial
 `PlanarImage` carrier retains that source in an injective affine plane frame.
 Its unit chart maps to represented directed source endpoints. Native scalar
-queries and inverse location reuse the planar owner; unavailable selected
-coordinate views are errors. See the
-[planar lift admission](evidence/2026-10-18-planar-curve-lift/README.md).
+queries and inverse location reuse the planar owner. Selected point queries
+retain that owner's evidence for exact affine comparisons, conservative bounds,
+transforms and native replay; absence of scalar coordinates is an unavailable
+view. See the [selected-image admission](evidence/2026-10-18-selected-planar-images/README.md).
 
 | Family | Evaluate / derivatives | Bounds | Parameter location | Reverse / split | Persistence |
 | --- | --- | --- | --- | --- | --- |
-| Planar image | Exact represented queries; owner-supported derivative orders (first order for analytic parallels) | Conservative lifted source bound | Plane membership plus exact source inverse query and chart filtering | Exact chart restriction / reversal | Exact for admitted pcurve sources |
+| Planar image | Represented or retained selected point; owner-supported represented-parameter derivatives (first order for analytic parallels) | Conservative lifted source or point bound | Plane membership plus exact source inverse query and chart filtering | Exact represented chart restriction / reversal; selected topology edge split | Exact for admitted pcurve sources and selected points/trims |
 | Finite line | Exact, arbitrary positive derivative order | Exact | Certified | Exact | Exact |
 | Circular arc | Exact angle semantics | Conservative exact | Certified, including seams | Exact | Exact |
 | Elliptic arc | Exact angle semantics | Conservative exact | Certified | Exact | Exact |
@@ -85,7 +86,7 @@ polynomials, rational quadratic/general Beziers, NURBS, analytic parallels and
 admitted source restrictions. Polynomial B-spline source archives remain typed
 unsupported; builders retain their existing exact NURBS promotion. New tags
 preserve polynomial families without changing prior encodings. Plane/curve and
-general carrier intersections, selected spatial evaluation, closed planar-image
+general carrier intersections, selected carrier chart endpoints, closed planar-image
 edges, general revolution certificates, and canonical ordering of unlike
 procedural sources remain typed frontiers. Extrusion inverse queries are exact
 when the retained source plane is transverse to the extrusion direction.
@@ -99,12 +100,12 @@ charts and deduplicate seam parameters. Partly constant NURBS preimages remain
 interval preimage.
 
 `Curve3::point_at(&Parameter)` returns `GeometricPoint3`, retaining selected
-images for lines, rational Béziers and finite NURBS. It supports strict
+images for lines, rational Béziers, finite NURBS and planar images. It supports strict
 coincidence/coordinate/linear-form comparisons, conservative enclosures and certified
 invertible affine transforms. NURBS selectors stay in their authored knot
-chart. Scalar parameters expose stored coordinates; selected conic angular
-evaluation and planar-image evaluation without a scalar parameter view return
-`UnsupportedSelectedEvaluation`.
+chart. Planar images retain the source point and evaluate their frame's affine
+forms through Hypercurve. Scalar parameters expose stored coordinates;
+selected conic angular evaluation returns `UnsupportedSelectedEvaluation`.
 
 Native coefficient derivatives/subdivision still require stored
 parameters/coordinates. Archive version 9 retains selected geometry graphs. Topology vertices and edge trims now retain selected
@@ -665,7 +666,7 @@ other nonplanar bounded faces and general curved regularization remain open.
 
 `EdgeRef::split` splits a canonical edge and every incident use at an exact
 interior `Parameter`. `ParameterRange` stores selected trim endpoints and
-vertices store `GeometricPoint3`. Line/rational Bézier/NURBS carriers can
+vertices store `GeometricPoint3`. Line/rational Bézier/NURBS/planar-image carriers can
 retain nonmaterialized selected cuts with affine pcurve correspondence;
 native angular conics still require represented parameters. Line and native circular pcurves are retained,
 forward/reversed uses remain ordered, typed IDs for the first half are stable,
@@ -674,6 +675,12 @@ torus solid certificates accept exact edge subdivisions rather than depending
 on primitive edge counts. Angular correspondences split circular pcurves
 directly in retained root sweep space; nested edits do not round-trip through
 rational-Bézier parameters or accumulate equivalent expression trees.
+
+Selected parallel-cap splits retain the complete planar source and parameter
+mapping, replay without scalar endpoint reconstruction, and continue through
+supported same-profile slab cuts and reunion. The [selected-image admission](evidence/2026-10-18-selected-planar-images/README.md)
+records the finite domain and its independent set checks. Constructing a new
+planar-image carrier with selected chart endpoints remains unsupported.
 
 Selected source restrictions preserve their parameter charts through repeated
 splits and affine transforms, including reflection. Validation checks actual

@@ -54,7 +54,7 @@ pub(super) fn planar_wire_six_volume(
 pub(super) fn coalesce_restrictions(input: Vec<Curve2>) -> Result<Vec<Curve2>, GeometryError> {
     if !input
         .iter()
-        .any(|curve| curve.source_restriction().is_some())
+        .any(|curve| curve.source_restriction().is_some() || curve.analytic_parallel().is_some())
     {
         return Ok(input);
     }
@@ -86,6 +86,45 @@ fn join_source_restrictions(
     first: &Curve2,
     second: &Curve2,
 ) -> Result<Option<Curve2>, GeometryError> {
+    if let (Some(first_view), Some(second_view)) =
+        (first.analytic_parallel(), second.analytic_parallel())
+    {
+        if first_view.parallel() != second_view.parallel()
+            || first_view.is_reversed() != second_view.is_reversed()
+            || first
+                .parameter_endpoints()
+                .1
+                .compare(second.parameter_endpoints().0)?
+                != std::cmp::Ordering::Equal
+        {
+            return Ok(None);
+        }
+        let (Some(start), Some(end)) = (
+            first.parameter_endpoints().0.as_bezier_parameter(),
+            second.parameter_endpoints().1.as_bezier_parameter(),
+        ) else {
+            return Ok(None);
+        };
+        let joined = match Curve2::try_analytic_parallel(
+            first_view.parallel().clone(),
+            hypercurve::BezierParameterRange2::try_new(start.clone(), end.clone())?,
+        ) {
+            Ok(joined) => joined,
+            // Adjacent regular pieces can meet at a cusp. Failure to prove
+            // their joined range leaves both original pieces in the proof.
+            Err(hypercurve::ExactCurveError::Blocked(blocker))
+                if blocker.reason() != hypercurve::UncertaintyReason::BudgetExhausted =>
+            {
+                return Ok(None);
+            }
+            Err(hypercurve::ExactCurveError::Invalid {
+                cause: hypercurve::CurveError::Topology(_),
+                ..
+            }) => return Ok(None),
+            Err(error) => return Err(error.into()),
+        };
+        return Ok(joined.has_certified_injective_image()?.then_some(joined));
+    }
     let (Some((source, first_range, reversed)), Some((other, second_range, other_reversed))) =
         (first.source_restriction(), second.source_restriction())
     else {
@@ -131,6 +170,75 @@ fn join_source_restrictions(
 mod tests {
     use super::*;
     use hypercurve::CurveParameterRange2;
+
+    #[test]
+    fn parallel_reassembly_preserves_direction_source_and_adjacency() {
+        let parallel = hypercurve::QuadraticBezier2::new(
+            CurvePoint2::from_values(0, 0),
+            CurvePoint2::from_values(2, 2),
+            CurvePoint2::from_values(4, 0),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        let curve = Curve2::try_analytic_parallel(
+            parallel,
+            hypercurve::BezierParameterRange2::try_new(
+                hypercurve::BezierParameter2::Exact(0.into()),
+                hypercurve::BezierParameter2::Exact(1.into()),
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        for curve in [curve.clone(), curve.reversed().unwrap()] {
+            let half = (Real::one() / Real::from(2)).unwrap();
+            let (a, b) = curve.split_at(half.into()).unwrap();
+            let joined = coalesce_restrictions(vec![a.clone(), b.clone()]).unwrap();
+            assert_eq!(joined.len(), 1);
+            assert_eq!(
+                joined[0].analytic_parallel().unwrap().parallel(),
+                curve.analytic_parallel().unwrap().parallel()
+            );
+            assert_eq!(joined[0].parameter_endpoints(), curve.parameter_endpoints());
+            assert_eq!(
+                coalesce_restrictions(vec![b.clone(), a.reversed().unwrap()])
+                    .unwrap()
+                    .len(),
+                2
+            );
+        }
+    }
+
+    #[test]
+    fn parallel_reassembly_keeps_an_interior_cusp_split() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let parallel = hypercurve::QuadraticBezier2::new(
+            CurvePoint2::from_values(0, 0),
+            CurvePoint2::new(half, 0.into()),
+            CurvePoint2::from_values(1, 1),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        let analysis = parallel
+            .singularity_analysis(&CurveParameterRange2::unit())
+            .unwrap();
+        let [cusp] = analysis.parallel_cusps() else {
+            panic!("one cusp")
+        };
+        let parts = [
+            (hypercurve::BezierParameter2::Exact(0.into()), cusp.clone()),
+            (cusp.clone(), hypercurve::BezierParameter2::Exact(1.into())),
+        ]
+        .into_iter()
+        .map(|(a, b)| {
+            Curve2::try_analytic_parallel(
+                parallel.clone(),
+                hypercurve::BezierParameterRange2::try_new(a, b).unwrap(),
+            )
+            .unwrap()
+        })
+        .collect();
+        assert_eq!(coalesce_restrictions(parts).unwrap().len(), 2);
+    }
 
     #[test]
     fn reassembly_does_not_hide_a_source_without_injectivity_evidence() {

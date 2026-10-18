@@ -133,7 +133,11 @@ new dependency is acyclic. Every inline planar source consumes a record and its
 source-specific metadata budget before scalar decoding. This is not a bound
 on scalar reconstruction or subsequent geometric validation. The
 [planar lift evidence](evidence/2026-10-18-planar-curve-lift/README.md)
-records the supported workflows, costs and remaining selected-view limits.
+records the original lift workflows and costs. The
+[selected-image admission](evidence/2026-10-18-selected-planar-images/README.md)
+adds spatial point images at selected roots and selected topology trims. They
+use the same source and parameter graph; no format version or trusted flag is
+added. New carrier chart endpoints still require represented scalar views.
 
 Other pcurves retain the existing native families or
 `SourceRange { source, range, reversed }`. The source indexes an authored
@@ -161,6 +165,12 @@ certifies the complete source image against the spatial curve and surface.
 Exact restriction transfers that agreement to the trim. It does not sample a
 selected point or trust a serialized image certificate.
 
+For a selected planar-image trim, the validator compares the complete retained
+planar source and frame under the inverse affine unit-chart map. Exact endpoint
+correspondence supplies the actual restriction. This proof subsumes endpoint
+sampling without requiring independent scalar coordinates. Source definitions,
+parameters, frames and pcurve agreement remain mandatory on cold replay.
+
 Consecutive, equally directed restrictions can reassemble an authored boundary
 image for region and area proofs. Their sources must agree structurally, their
 joining parameters must compare equal, and the source must have a complete
@@ -173,6 +183,13 @@ reassembly from hiding an internal self-contact during simplicity validation.
 The same helper serves boundary queries and validation. All original vertices,
 edges, uses, ranges and incidences remain in the published model. This is an
 exact boundary-image proof, not a topology repair or replay of an editing history.
+
+Procedural parallels use the same proof-view helper. Their supports, traversal
+and joining parameters must agree, and Hypercurve must certify an injective
+coordinate over the joined range with source regularity and no interior cusp.
+An inadmissible joined range keeps the original pieces; instrumented budget
+exhaustion remains typed. An exterior interval cannot borrow a unit-source
+injectivity certificate.
 
 For a planar spline image, the validator restricts the spatial curve to the
 mapped edge interval before comparing complete parameterizations. Native

@@ -558,10 +558,16 @@ pub fn planar_image_limits_and_typed_frontiers_recover() {
     )
     .unwrap();
     let selected_parameter = Pcurve::new(source.clone()).domain_end().unwrap();
-    assert!(matches!(
-        image.point_at(&selected_parameter),
-        Err(GeometryError::UnsupportedSelectedEvaluation)
-    ));
+    // Selected spatial evaluation is now a required exact success; the
+    // constructor's selected-domain frontier below is a separate capability.
+    let point = image.point_at(&selected_parameter).unwrap();
+    assert!(point.try_coordinates().is_none());
+    assert_eq!(
+        point
+            .compare_linear_form(&Vector3::z(), &Real::zero())
+            .unwrap(),
+        std::cmp::Ordering::Equal
+    );
     assert!(matches!(
         Curve3::planar_image(source, Point3::origin(), Vector3::x(), Vector3::y()),
         Err(GeometryError::UnrepresentableParameter)

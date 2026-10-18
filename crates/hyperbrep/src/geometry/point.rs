@@ -3,7 +3,7 @@
 use std::cmp::Ordering;
 use std::sync::{Arc, OnceLock};
 
-use hypercurve::{Axis2, Curve2, CurvePoint2, Point2, RationalBezier2};
+use hypercurve::{Axis2, Curve2, CurvePoint2, CurvePointAffineForm2, Point2, RationalBezier2};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
 use super::{Curve3, CurveGeometry3, affine_transform_orientation};
@@ -50,10 +50,22 @@ pub(super) struct CurveProjections3 {
     xz: OnceLock<Curve2>,
 }
 
-#[derive(Debug, Default)]
-struct PointProjections3 {
-    xy: OnceLock<CurvePoint2>,
-    xz: OnceLock<CurvePoint2>,
+#[derive(Debug)]
+enum PointProjections3 {
+    Native {
+        xy: OnceLock<CurvePoint2>,
+        xz: OnceLock<CurvePoint2>,
+    },
+    Planar(CurvePoint2),
+}
+
+impl Default for PointProjections3 {
+    fn default() -> Self {
+        Self::Native {
+            xy: OnceLock::new(),
+            xz: OnceLock::new(),
+        }
+    }
 }
 
 impl GeometricPoint3 {
@@ -141,6 +153,11 @@ impl GeometricPoint3 {
                     }
                 };
             }
+            if self.has_planar_source() || other.has_planar_source() {
+                return Ok(self
+                    .affine_coordinate(axis)?
+                    .compare(&other.affine_coordinate(axis)?)?);
+            }
             let projection_axis = if axis == Axis::X { Axis2::X } else { Axis2::Y };
             Ok(self
                 .projection(axis)?
@@ -150,8 +167,9 @@ impl GeometricPoint3 {
 
     /// Compares `direction · self` with `rhs` under strict predicates.
     ///
-    /// A selected image evaluates the linear form on its source controls and
-    /// reuses its retained parameter. This proves plane membership and sides
+    /// A selected image evaluates the linear form through its source controls
+    /// or retained planar frame and reuses its selected parameter. This proves
+    /// plane membership and sides
     /// without constructing independent scalar coordinates or using a bounding
     /// box as the point. Unresolved proof work returns a typed error.
     pub fn compare_linear_form(&self, direction: &Vector3, rhs: &Real) -> GeometryResult<Ordering> {
@@ -162,6 +180,17 @@ impl GeometricPoint3 {
                 crate::STRICT_PREDICATES,
             )),
             PointData3::CurveImage(image) => {
+                if let (CurveGeometry3::PlanarImage(frame), PointProjections3::Planar(point)) =
+                    (&image.curve.data.geometry, &image.projections)
+                {
+                    return Ok(point
+                        .affine_form(
+                            direction.dot(&frame.u),
+                            direction.dot(&frame.v),
+                            direction.dot(&Vector3::from(frame.origin.clone())),
+                        )
+                        .compare_to_real(rhs)?);
+                }
                 let curve = image.curve.planar_control_image(|point| {
                     Point2::new(direction.dot(&Vector3::from(point.clone())), Real::zero())
                 })?;
@@ -180,6 +209,18 @@ impl GeometricPoint3 {
         crate::context::strict(|| {
             if let Some(point) = self.try_coordinates() {
                 return Ok(Aabb::new(point.clone(), point.clone()));
+            }
+            if let PointData3::CurveImage(image) = &self.data
+                && let (CurveGeometry3::PlanarImage(frame), PointProjections3::Planar(point)) =
+                    (&image.curve.data.geometry, &image.projections)
+            {
+                let bounds = point.bounds()?;
+                return super::exact_point_bounds(&[
+                    frame.lift(&Point2::new(bounds.min_x().clone(), bounds.min_y().clone())),
+                    frame.lift(&Point2::new(bounds.min_x().clone(), bounds.max_y().clone())),
+                    frame.lift(&Point2::new(bounds.max_x().clone(), bounds.min_y().clone())),
+                    frame.lift(&Point2::new(bounds.max_x().clone(), bounds.max_y().clone())),
+                ]);
             }
             let xy = self.projection(Axis::X)?.bounds()?;
             let xz = self.projection(Axis::Z)?.bounds()?;
@@ -208,6 +249,34 @@ impl GeometricPoint3 {
         })
     }
 
+    fn has_planar_source(&self) -> bool {
+        matches!(&self.data, PointData3::CurveImage(image) if matches!(image.projections, PointProjections3::Planar(_)))
+    }
+
+    fn affine_coordinate(&self, axis: Axis) -> GeometryResult<CurvePointAffineForm2> {
+        if let PointData3::CurveImage(image) = &self.data
+            && let (CurveGeometry3::PlanarImage(frame), PointProjections3::Planar(point)) =
+                (&image.curve.data.geometry, &image.projections)
+        {
+            let index = match axis {
+                Axis::X => 0,
+                Axis::Y => 1,
+                Axis::Z => 2,
+            };
+            return Ok(point.affine_form(
+                frame.u[index].clone(),
+                frame.v[index].clone(),
+                coordinate(&frame.origin, axis).clone(),
+            ));
+        }
+        let (a, b) = if axis == Axis::X {
+            (Real::one(), Real::zero())
+        } else {
+            (Real::zero(), Real::one())
+        };
+        Ok(self.projection(axis)?.affine_form(a, b, Real::zero()))
+    }
+
     fn projection(&self, axis: Axis) -> GeometryResult<CurvePoint2> {
         match &self.data {
             PointData3::Authored(point) => Ok(Point2::new(
@@ -220,11 +289,10 @@ impl GeometricPoint3 {
             )
             .into()),
             PointData3::CurveImage(image) => {
-                let cache = if axis == Axis::Z {
-                    &image.projections.xz
-                } else {
-                    &image.projections.xy
+                let PointProjections3::Native { xy, xz } = &image.projections else {
+                    return Err(GeometryError::UnsupportedSelectedEvaluation);
                 };
+                let cache = if axis == Axis::Z { xz } else { xy };
                 crate::cache::get_or_try_init(cache, || {
                     Ok(image
                         .curve
@@ -255,9 +323,11 @@ impl Curve3 {
     /// Evaluates an exact point while retaining a selected parameter's evidence.
     ///
     /// Authored scalar parameters use the native evaluator and expose stored
-    /// coordinates. Lines, rational Béziers and finite NURBS also accept selected
-    /// algebraic parameters without materialization. Conics keep their exact
-    /// angular semantics and currently require a scalar parameter view.
+    /// coordinates. Lines, rational Béziers, finite NURBS and planar images also
+    /// accept selected algebraic parameters without materialization. A planar
+    /// image retains its source point and evaluates frame linear forms through
+    /// Hypercurve. Conics keep their exact angular semantics and currently
+    /// require a scalar parameter view.
     ///
     /// ```
     /// use hyperbrep::{Curve3, Parameter, Point3, Real};
@@ -283,17 +353,24 @@ impl Curve3 {
             }
             if matches!(
                 self.data.geometry,
-                CurveGeometry3::CircleArc(_)
-                    | CurveGeometry3::EllipseArc(_)
-                    | CurveGeometry3::PlanarImage(_)
+                CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_)
             ) {
                 return Err(GeometryError::UnsupportedSelectedEvaluation);
             }
+            let projections = if let CurveGeometry3::PlanarImage(image) = &self.data.geometry {
+                let mapped = parameter.affine_image(
+                    &(&image.source_end - &image.source_start),
+                    &image.source_start,
+                )?;
+                PointProjections3::Planar(image.source.point_at(&mapped.curve_parameter())?)
+            } else {
+                PointProjections3::default()
+            };
             Ok(GeometricPoint3 {
                 data: PointData3::CurveImage(Arc::new(CurvePointImage3 {
                     curve: self.clone(),
                     parameter: parameter.clone(),
-                    projections: PointProjections3::default(),
+                    projections,
                 })),
             })
         })
@@ -351,6 +428,47 @@ mod tests {
     use super::*;
 
     #[test]
+    fn selected_planar_points_keep_sources_alive_without_cycles() {
+        let native = Curve3::rational_bezier(
+            [-1, -1, -1, 1]
+                .map(|x| Point3::new(x.into(), 0.into(), 0.into()))
+                .to_vec(),
+            vec![Real::one(); 4],
+        )
+        .unwrap();
+        let crate::CurveParameterLocation::Parameters(parameters) =
+            native.parameters_of(&Point3::origin()).unwrap()
+        else {
+            panic!("selected root");
+        };
+        let source: Curve2 = hypercurve::CubicBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 1),
+            Point2::from_values(2, 1),
+            Point2::from_values(3, 0),
+        )
+        .into();
+        let curve =
+            Curve3::planar_image(source, Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
+        let weak = Arc::downgrade(&curve.data);
+        let point = curve.point_at(&parameters[0]).unwrap();
+        drop(curve);
+        assert!(weak.upgrade().is_some());
+        point.bounds().unwrap();
+        assert_eq!(
+            point
+                .compare_linear_form(&Vector3::z(), &Real::zero())
+                .unwrap(),
+            Ordering::Equal
+        );
+        let alias = point.clone();
+        drop(point);
+        assert!(weak.upgrade().is_some());
+        drop(alias);
+        assert!(weak.upgrade().is_none());
+    }
+
+    #[test]
     fn lazy_projected_points_keep_the_source_alive_without_an_ownership_cycle() {
         let curve = Curve3::rational_bezier(
             [-5, -7, -9, -11, -13, 145]
@@ -384,8 +502,11 @@ mod tests {
             selected.compare_coordinate(&origin, Axis::X).unwrap(),
             Ordering::Equal
         );
-        assert!(image.projections.xy.get().is_some());
-        assert!(image.projections.xz.get().is_none());
+        let PointProjections3::Native { xy, xz } = &image.projections else {
+            panic!("native projection required")
+        };
+        assert!(xy.get().is_some());
+        assert!(xz.get().is_none());
         let projections = image.curve.data.projections.get().unwrap();
         assert!(projections.xy.get().is_some());
         assert!(projections.xz.get().is_none());

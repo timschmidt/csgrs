@@ -30,10 +30,18 @@ No represented area or volume is required to certify that topology.
 The [planar lift admission](evidence/2026-10-18-planar-curve-lift/README.md)
 covers the original full nonlinear parallel cap, its quadratic closing spans,
 planar faces, path/region extrusion, holes/components, exact queries, edge
-splits, affine replay and repeated same-profile slab cuts/restoration. Selected
-source chart endpoints without scalar views and selected spatial evaluation
-remain typed frontiers. Complete source-history/intent receipts and general
-surface intersections remain separate work.
+splits, affine replay and repeated same-profile slab cuts/restoration. The
+[selected-image admission](evidence/2026-10-18-selected-planar-images/README.md)
+extends point queries and topology splits to retained selected roots. A point
+owns its original spatial source, parameter and planar point evidence. Frame
+linear forms delegate to Hypercurve's `CurvePointAffineForm2`; no independent
+coordinates or copied offset formulas are needed. Cold trim admission compares
+the complete source/frame/chart identity after exact endpoint correspondence.
+Injective adjacent source pieces may share a simpler proof image while their
+topology stays intact. Complete horizontal-prism certificates support subsequent
+slab operations without scalar vertex views. Newly authored source chart endpoints
+without scalar views, full source-history/intent receipts and general surface
+intersections remain separate work.
 
 HyperBREP is an exact, immutable boundary-representation kernel.
 `hyperreal::Real` is the sole authored coefficient scalar. Approximate numbers may

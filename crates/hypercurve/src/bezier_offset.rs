@@ -14,6 +14,7 @@
 //! identities. Hypercurve deliberately replaces their sampling/error heuristics
 //! with exact-scalar interval certification at the acceptance boundary.
 
+mod affine_form;
 mod algebraic_chord;
 mod approximation;
 mod bivariate_replay;
@@ -39,6 +40,7 @@ mod represented;
 mod selected_dense;
 mod selected_fiber;
 
+pub(crate) use affine_form::*;
 pub use approximation::*;
 pub(crate) use bivariate_replay::*;
 pub(crate) use cusp_overlap::overlap_parameter_is_in_range;

@@ -1282,88 +1282,6 @@ impl ArenaModel {
         if !certified_translation_family {
             return Ok(None);
         }
-        let mut vertex_ids = HashSet::new();
-        for face_id in &shell.faces {
-            let face = self.face(*face_id).expect("validated shell face");
-            for wire_id in face.boundary_wires() {
-                let wire = self.wire(*wire_id).expect("validated face wire");
-                for edge_use_id in &wire.edge_uses {
-                    let edge_use = self
-                        .edge_use(*edge_use_id)
-                        .expect("validated wire edge use");
-                    let edge = self.edge(edge_use.edge).expect("validated edge reference");
-                    vertex_ids.insert(edge.start);
-                    vertex_ids.insert(edge.end);
-                    if edge_use.direction == Direction::Forward {
-                        let start = self
-                            .vertex(edge.start)
-                            .expect("validated vertex")
-                            .represented_point()?;
-                        let end = self
-                            .vertex(edge.end)
-                            .expect("validated vertex")
-                            .represented_point()?;
-                        // Two endpoint levels alone also describe a skew prism.
-                        // A world-Z product requires its connecting edges to
-                        // retain x/y, in addition to the admitted shell proof.
-                        if !real_values_equal(&start.z, &end.z).map_err(build_error_geometry)?
-                            && (!real_values_equal(&start.x, &end.x)
-                                .map_err(build_error_geometry)?
-                                || !real_values_equal(&start.y, &end.y)
-                                    .map_err(build_error_geometry)?)
-                        {
-                            return Ok(None);
-                        }
-                    }
-                }
-            }
-        }
-        let Some(first_id) = vertex_ids.iter().next() else {
-            return Ok(None);
-        };
-        let first = self
-            .vertex(*first_id)
-            .expect("validated vertex")
-            .represented_point()?;
-        let mut z_min = first.z.clone();
-        let mut z_max = first.z.clone();
-        for vertex_id in &vertex_ids {
-            let z = &self
-                .vertex(*vertex_id)
-                .expect("validated vertex")
-                .represented_point()?
-                .z;
-            if decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
-                == std::cmp::Ordering::Less
-            {
-                z_min = z.clone();
-            }
-            if decided_model_order(compare_reals(z, &z_max, crate::STRICT_PREDICATES))?
-                == std::cmp::Ordering::Greater
-            {
-                z_max = z.clone();
-            }
-        }
-        if decided_model_order(compare_reals(&z_min, &z_max, crate::STRICT_PREDICATES))?
-            != std::cmp::Ordering::Less
-        {
-            return Ok(None);
-        }
-        for vertex_id in &vertex_ids {
-            let z = &self
-                .vertex(*vertex_id)
-                .expect("validated vertex")
-                .represented_point()?
-                .z;
-            let at_min = decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
-                == std::cmp::Ordering::Equal;
-            let at_max = decided_model_order(compare_reals(z, &z_max, crate::STRICT_PREDICATES))?
-                == std::cmp::Ordering::Equal;
-            if !at_min && !at_max {
-                return Ok(None);
-            }
-        }
-
         let prism = self
             .data
             .certified_prisms
@@ -1436,6 +1354,117 @@ impl ArenaModel {
             }
             Ok(None)
         };
+        let mut vertex_ids = HashSet::new();
+        for face_id in &shell.faces {
+            let face = self.face(*face_id).expect("validated shell face");
+            for wire_id in face.boundary_wires() {
+                let wire = self.wire(*wire_id).expect("validated face wire");
+                for edge_use_id in &wire.edge_uses {
+                    let edge_use = self
+                        .edge_use(*edge_use_id)
+                        .expect("validated wire edge use");
+                    let edge = self.edge(edge_use.edge).expect("validated edge reference");
+                    vertex_ids.insert(edge.start);
+                    vertex_ids.insert(edge.end);
+                    if edge_use.direction == Direction::Forward {
+                        let endpoints = [edge.start, edge.end]
+                            .map(|vertex| self.vertex(vertex).expect("validated vertex").point());
+                        if endpoints
+                            .iter()
+                            .any(|point| point.try_coordinates().is_none())
+                        {
+                            // The complete admitted prism, its horizontal frame
+                            // and vertical extrusion prove R x [z0,z1]. Selected
+                            // cap subdivisions need no independent vertex scalars.
+                            let (Some(prism), Some(region)) = (prism, certified_region()?) else {
+                                return Ok(None);
+                            };
+                            let z0 = prism.origin.z.clone();
+                            let z1 = &z0 + &prism.extrusion.0[2];
+                            let (z_min, z_max) = match decided_model_order(compare_reals(
+                                &z0,
+                                &z1,
+                                crate::STRICT_PREDICATES,
+                            ))? {
+                                std::cmp::Ordering::Less => (z0, z1),
+                                std::cmp::Ordering::Greater => (z1, z0),
+                                std::cmp::Ordering::Equal => return Ok(None),
+                            };
+                            return Ok(Some(CertifiedZPrismProfile {
+                                region,
+                                z_min,
+                                z_max,
+                            }));
+                        }
+                        let start = self
+                            .vertex(edge.start)
+                            .expect("validated vertex")
+                            .represented_point()?;
+                        let end = self
+                            .vertex(edge.end)
+                            .expect("validated vertex")
+                            .represented_point()?;
+                        // Two endpoint levels alone also describe a skew prism.
+                        // A world-Z product requires its connecting edges to
+                        // retain x/y, in addition to the admitted shell proof.
+                        if !real_values_equal(&start.z, &end.z).map_err(build_error_geometry)?
+                            && (!real_values_equal(&start.x, &end.x)
+                                .map_err(build_error_geometry)?
+                                || !real_values_equal(&start.y, &end.y)
+                                    .map_err(build_error_geometry)?)
+                        {
+                            return Ok(None);
+                        }
+                    }
+                }
+            }
+        }
+        let Some(first_id) = vertex_ids.iter().next() else {
+            return Ok(None);
+        };
+        let first = self
+            .vertex(*first_id)
+            .expect("validated vertex")
+            .represented_point()?;
+        let mut z_min = first.z.clone();
+        let mut z_max = first.z.clone();
+        for vertex_id in &vertex_ids {
+            let z = &self
+                .vertex(*vertex_id)
+                .expect("validated vertex")
+                .represented_point()?
+                .z;
+            if decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Less
+            {
+                z_min = z.clone();
+            }
+            if decided_model_order(compare_reals(z, &z_max, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Greater
+            {
+                z_max = z.clone();
+            }
+        }
+        if decided_model_order(compare_reals(&z_min, &z_max, crate::STRICT_PREDICATES))?
+            != std::cmp::Ordering::Less
+        {
+            return Ok(None);
+        }
+        for vertex_id in &vertex_ids {
+            let z = &self
+                .vertex(*vertex_id)
+                .expect("validated vertex")
+                .represented_point()?
+                .z;
+            let at_min = decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Equal;
+            let at_max = decided_model_order(compare_reals(z, &z_max, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Equal;
+            if !at_min && !at_max {
+                return Ok(None);
+            }
+        }
+
         if prism
             .is_some_and(|prism| matches!(prism.profile, CertifiedPrismProfile::CurveRegion { .. }))
             && let Some(region) = certified_region()?

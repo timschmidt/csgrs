@@ -116,6 +116,18 @@ impl ArenaModelBuilder {
             );
         }
         let inherited_image = edge_use.image_certificate;
+        let planar_image_proof = matches!(
+            (
+                curve.kind(),
+                surface.kind(),
+                &edge_use.parameter_correspondence
+            ),
+            (
+                Curve3Kind::PlanarImage,
+                SurfaceKind::Plane,
+                ParameterCorrespondence::Affine { .. },
+            )
+        );
         let complete_image_certificate_subsumes_endpoint_sampling = matches!(
             (
                 curve.kind(),
@@ -168,7 +180,10 @@ impl ArenaModelBuilder {
             if edge_parameter.compare(expected_edge_parameter)? != std::cmp::Ordering::Equal {
                 return Err(BuildError::ParameterCorrespondenceMismatch { endpoint });
             }
-            if inherited_image {
+            if inherited_image || planar_image_proof {
+                // A retained planar source can have selected endpoints with no
+                // scalar view. The mandatory whole-image proof below implies
+                // endpoint agreement after the exact chart check above.
                 continue;
             }
             let edge_point = curve.point_at(&edge_parameter)?;

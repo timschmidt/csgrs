@@ -7,6 +7,9 @@ use crate::{
 };
 use hypersolve::AlgebraicRootRepresentation;
 
+mod affine;
+pub use affine::CurvePointAffineForm2;
+
 /// An exact affine point with shared scalar or selected geometric evidence.
 ///
 /// A point need not have independent `Real` coordinates. Predicates reuse its

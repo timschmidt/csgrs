@@ -1142,3 +1142,12 @@ The [admission record](docs/evidence/2026-10-18-planar-curve-lift/README.md) add
 Three alternating pairs preserve all 40 preceding consumer groups in 30 processes, with original assertions, iterations and outcomes. Time ratios range 0.965088–1.121568; 1 of 40 groups exceed the 10% review marker and 20 increase allocation calls or requested bytes. Twelve new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
 All [cost rows](docs/evidence/2026-10-18-planar-curve-lift/costs.md) and [resource observations](docs/evidence/2026-10-18-planar-curve-lift/resource-review.json) are retained. Earlier selected-profile unequal-hole rejection and other adverse costs remain open; this is no general performance or bounded-resource claim.
+
+
+## Selected planar spatial images (2026-10-18)
+
+The [admission](docs/evidence/2026-10-18-selected-planar-images/README.md) extends exact selected point queries, trim replay and supported solid continuation. It is a capability extension.
+
+Three alternating pairs preserve 51 unchanged preceding consumer groups in 36 processes; one migrated control is recorded separately without a time ratio, with original assertions, iterations and outcomes. Time ratios range 0.768883–1.338501; 1 of 51 groups exceed the 10% review marker and 7 increase allocation calls or requested bytes. Fourteen new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
+
+[All raw costs](docs/evidence/2026-10-18-selected-planar-images/consumer-costs.json), [absolute new costs](docs/evidence/2026-10-18-selected-planar-images/new-costs.json) and [resource observations](docs/evidence/2026-10-18-selected-planar-images/resource-review.json) retain adverse results. The migrated mixed control has no matched ratio; earlier adverse obligations remain.

@@ -89,8 +89,11 @@ affine plane frame, with a unit spatial chart mapped to represented source
 endpoints. Nonlinear parallel caps now feed planar faces, region/path extrusion,
 native replay, edge splits, affine transforms and supported slab Booleans.
 Whole source/frame/map proofs validate edge images. Scalar queries reuse the
-planar evaluator; unavailable selected-coordinate views, general intersections,
-metrics and STEP encodings remain typed. See the
+planar evaluator. Selected spatial points retain their planar source and root;
+frame comparisons, bounds, transforms and native replay consume that evidence
+without independent coordinates. Selected edge splits preserve cold replay and
+supported slab Booleans. Selected endpoints of a newly authored spatial carrier,
+general intersections, metrics and STEP encodings remain typed. See the
 [planar lift admission](docs/evidence/2026-10-18-planar-curve-lift/README.md).
 
 ## Exactness contract
@@ -99,7 +102,8 @@ metrics and STEP encodings remain typed. See the
   use `Real`. Inverse curve queries return opaque `Parameter` values that can
   retain selected algebraic roots without a stored `Real` view.
 - `Curve3::point_at(&Parameter)` returns `GeometricPoint3`. Lines and rational
-  curves retain selected images for exact comparison, conservative bounds and
+  curves and retained planar lifts retain selected images for exact comparison,
+  conservative bounds and
   invertible affine transforms. `try_coordinates` borrows stored coordinates;
   an unavailable view does not make the point approximate. Vertices store these
   points, and `ParameterRange` retains selected edge trims. `EdgeRef::split`

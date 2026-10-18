@@ -55,8 +55,31 @@ impl ArenaModelBuilder {
         else {
             return Err(BuildError::EdgeUseSupportMismatch);
         };
-        let start = edge.domain.represented_start()?;
-        let end = edge.domain.represented_end()?;
+        let (Some(start), Some(end)) =
+            (edge.domain.start().try_real(), edge.domain.end().try_real())
+        else {
+            let Curve3ExactData::PlanarImage(actual) = curve.exact_data() else {
+                return Err(BuildError::EdgeUseSupportMismatch);
+            };
+            // Compare the complete definitions in the spatial unit chart,
+            // without evaluating beyond the pcurve's selected restriction.
+            // Its actual endpoints and their chart correspondence were
+            // checked by validate_edge_use_image. Restriction preserves this
+            // identity; no independent scalar endpoint is needed.
+            let expected = crate::geometry::PlanarCurve3 {
+                source: pcurve.curve().clone(),
+                origin,
+                u,
+                v,
+                source_start: ((Real::zero() - offset) / scale).map_err(GeometryError::Numeric)?,
+                source_end: ((Real::one() - offset) / scale).map_err(GeometryError::Numeric)?,
+            };
+            return if actual.parameterization_equals(&expected)? {
+                Ok(())
+            } else {
+                Err(BuildError::EdgeUseSupportMismatch)
+            };
+        };
         let expected = Curve3::from_planar_image(crate::geometry::PlanarCurve3 {
             source: pcurve.curve().clone(),
             origin,

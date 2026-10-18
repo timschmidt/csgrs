@@ -10,9 +10,14 @@ extrusion. Authored paths, planar faces, holes/components, edge splits,
 nonuniform reflected affine transforms and repeated supported slab operations
 consume the result. All seven original profile recipes now reach native cold
 replay; the nonlinear cap's unavailable metric remains a separate typed query.
-General selected spatial fields, unlike procedural-source ordering, arbitrary
-surface intersections and STEP encoding remain next dependencies. This finite
-workflow extension does not close any complete work package.
+The [selected planar-image increment](evidence/2026-10-18-selected-planar-images/README.md)
+adds retained spatial points at selected roots, correlated affine queries,
+selected edge splitting and cold replay, followed by the same supported solid
+operations. Hypercurve owns affine-form and range-injectivity proofs; BRep owns
+spatial frames, complete trim agreement and prism continuation. Newly authored
+selected carrier chart endpoints, broader selected surface fields, unlike
+procedural-source ordering, general intersections and STEP encodings remain
+next dependencies. Neither finite extension closes a complete work package.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,
@@ -115,8 +120,8 @@ does not relax whole-boundary validation or prove broader shell embedding.
 Future optimizations must retain the historical 192-case corpus, every later
 admitted complete consumer cohort, the current deterministic artifact corpus
 and supported continuation; historical failures and cost obligations stay
-visible. The selected-profile increment below identifies the latest artifact
-baseline. General CAD functionality and delivery remain
+visible. The selected planar-image increment at the start of this plan
+identifies the latest artifact baseline. General CAD functionality and delivery remain
 the project objective, with all work-package completion gates still open.
 
 The [retained-region diagnostic](evidence/2026-10-17-retained-region-extrusion/README.md)
@@ -133,7 +138,7 @@ and metre/mm units. Native geometry replay does not preserve the complete author
 graph, and STEP source hints cannot certify untrimmed carrier simplicity.
 Preserve all seven original profile recipes and exact negative controls; their
 later selected-profile extension is recorded below. General selected-parameter
-integration, nonlinear parallel extrusion, spline surfaces, arbitrary pcurves
+integration, broader procedural extrusion, spline surfaces, arbitrary pcurves
 and release delivery remain open.
 
 The [measurement admission increment](evidence/2026-10-18-measurement-admission/README.md)
@@ -2446,9 +2451,10 @@ work or postpone BREP work for a broader dashboard failure. Check upstream at
 coherent checkpoints and retain the evidence needed to merge these changes.
 The selected-profile increment keeps native image/root/integration proofs in
 Hypercurve and product-solid continuation in HyperBRep. Use its original seven
-profile recipes for the next frontier: six now complete native extrusion and
-replay, while the nonlinear parallel cap remains unsupported. General selected
-spatial carriers, exact integral availability and STEP encodability are separate
+profile recipes as permanent acceptance: all seven now complete native extrusion
+and replay, including the full nonlinear parallel cap. Selected planar spatial
+points and splits now continue through replay and supported slab Booleans.
+General selected carrier domains, exact integral availability and STEP encodability are separate
 obligations; none permits a lossy shortcut in authoritative geometry. Preserve
 all earlier cost receipts and adverse observations. Its finite 22-group cost
 comparison is not a rerun of the full 192-case catalogue required for future

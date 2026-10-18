@@ -13,6 +13,8 @@ impl Curve2 {
     /// spans must meet at exactly equal endpoints and share one strictly
     /// monotone coordinate with the same direction across every span. A source
     /// restriction can inherit injectivity of its complete authored source.
+    /// A procedural parallel reuses its source-axis and range-regularity proof,
+    /// including exclusion of interior cusps on the requested range.
     /// This is a sufficient proof, not a complete self-intersection test.
     ///
     /// `false` means no certificate was established, never that the curve
@@ -23,6 +25,11 @@ impl Curve2 {
             return source.has_certified_injective_image();
         }
         let policy = CurveContext::STRICT;
+        if let Some(view) = self.analytic_parallel() {
+            return Ok(view
+                .parallel()
+                .range_has_certified_injective_axis(view.range(), &policy));
+        }
         let Classification::Decided(spans) = self.rational_evaluators_with_policy(&policy)? else {
             return Ok(false);
         };
