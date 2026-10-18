@@ -153,7 +153,7 @@ mod tests {
         let angle = Scalar::e();
         let sin = angle.clone().sin();
         let cos = angle.cos();
-        let unknown = &sin * &sin + &cos * &cos - Scalar::one();
+        let unknown = crate::test_support::terminal_zero(&sin * &sin + &cos * &cos - Scalar::one());
         assert!(circle_region(&center, &unknown).is_err());
         hypercurve::CurvePreviewOptions::try_approximate_512(1.0, 1.0)
             .unwrap()

@@ -3445,10 +3445,62 @@ mod tests {
         assert_eq!(REGION_RING_CACHE.with_borrow(Vec::len), 0);
     }
 
-    fn terminally_unresolved_zero() -> Real {
+    fn certified_unit_circle_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
+    fn terminally_unresolved_zero() -> Real {
+        // Angle addition remains outside the bounded exact normal form. The
+        // unit-circle identity now has a proof and is tested separately below.
+        let zero = (Real::e() + Real::one()).sin()
+            - Real::e().sin() * Real::one().cos()
+            - Real::e().cos() * Real::one().sin();
+        assert!(matches!(
+            hyperlimit::compare_reals(
+                &zero,
+                &Real::zero(),
+                hyperlimit::PredicatePolicy::STRICT
+            ),
+            hyperlimit::PredicateOutcome::Unknown { .. }
+        ));
+        zero
+    }
+
+    #[test]
+    fn unit_circle_zero_is_certified_in_empty_profiles_and_sweep_deduplication() {
+        let zero = certified_unit_circle_zero();
+        assert_eq!(
+            zero.exact_rational_normal_form(),
+            Some(hyperreal::Rational::zero())
+        );
+        let profile = square(Real::from(2_u8)).unwrap();
+        let path = [
+            Point3::origin(),
+            Point3::new(zero.clone(), Real::zero(), Real::zero()),
+            Point3::new(Real::zero(), Real::zero(), Real::one()),
+        ];
+        for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
+            let empty = square_with_context(zero.clone(), &context).unwrap();
+            assert!(empty.value.is_empty());
+            assert_eq!(empty.certainty, crate::GeometryCertainty::Certified);
+            let swept = try_sweep(&profile, &path, &context).unwrap();
+            assert_eq!(swept.certainty, crate::GeometryCertainty::Certified);
+            assert_exact_solid_boundary(&swept.value, "certified duplicate sweep point");
+            let six_volume =
+                swept
+                    .value
+                    .triangles
+                    .iter()
+                    .fold(Real::zero(), |sum, triangle| {
+                        let a = swept.value.positions[triangle.v0].to_vector();
+                        let b = swept.value.positions[triangle.v1].to_vector();
+                        let c = swept.value.positions[triangle.v2].to_vector();
+                        sum + a.dot(&b.cross(&c))
+                    });
+            assert_eq!(six_volume, Real::from(24));
+        }
     }
 
     fn signed_volume(mesh: &TriangleMesh) -> f64 {

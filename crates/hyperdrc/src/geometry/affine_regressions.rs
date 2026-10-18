@@ -84,27 +84,32 @@ fn native_affine_policy_is_independent_of_enclosing_preview() {
     let polygon = rect_polygon([0.0, 0.0], [2.0, 4.0], 0.0);
     let sine = Scalar::e().sin();
     let cosine = Scalar::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Scalar::one();
-    let transform = || {
-        transform_exact_region(
-            &polygon,
-            zero.clone(),
-            Scalar::zero(),
-            Scalar::zero(),
-            Scalar::zero(),
-        )
-        .unwrap_err()
-        .to_string()
-    };
-    let strict = transform();
-    let preview = hypercurve::CurvePreviewOptions::try_approximate_512(1.0, 1.0)
-        .unwrap()
-        .evaluate(|| hypercurve::provisional(transform));
-    assert!(
-        preview.is_certified(),
-        "affine transform consumed a preview decision"
-    );
-    assert_eq!(preview.certified().unwrap(), strict);
+    let proved_zero = &sine * &sine + &cosine * &cosine - Scalar::one();
+    for zero in [
+        proved_zero.clone(),
+        crate::test_support::terminal_zero(proved_zero),
+    ] {
+        let transform = || {
+            transform_exact_region(
+                &polygon,
+                zero.clone(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+            )
+            .unwrap_err()
+            .to_string()
+        };
+        let strict = transform();
+        let preview = hypercurve::CurvePreviewOptions::try_approximate_512(1.0, 1.0)
+            .unwrap()
+            .evaluate(|| hypercurve::provisional(transform));
+        assert!(
+            preview.is_certified(),
+            "affine transform consumed a preview decision"
+        );
+        assert_eq!(preview.certified().unwrap(), strict);
+    }
 }
 
 #[test]

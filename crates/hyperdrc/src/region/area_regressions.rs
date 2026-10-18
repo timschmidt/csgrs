@@ -134,7 +134,8 @@ fn report_filter_cannot_erase_an_unavailable_area() {
 fn report_filter_cannot_treat_an_unknown_threshold_as_below_gate() {
     let sine = Scalar::e().sin();
     let cosine = Scalar::e().cos();
-    let unknown_zero = &sine * &sine + &cosine * &cosine - Scalar::one();
+    let unknown_zero =
+        crate::test_support::terminal_zero(&sine * &sine + &cosine * &cosine - Scalar::one());
     let shapes = crate::geometry::multipolygon_to_shapes_scalar(
         &MultiPolygon(vec![rect_polygon([0.0, 0.0], [1.0, 1.0], 0.0)]),
         &(Scalar::one() + unknown_zero),
@@ -312,7 +313,8 @@ fn required_aperture_measurements_do_not_skip_unavailable_integrals() {
 fn unknown_area_limits_stay_uncertain_inside_preview() {
     let sine = Scalar::e().sin();
     let cosine = Scalar::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Scalar::one();
+    let zero =
+        crate::test_support::terminal_zero(&sine * &sine + &cosine * &cosine - Scalar::one());
     let region = polygons_to_profile(vec![rect_polygon([0.0, 0.0], [1.0, 1.0], 0.0)], None);
     let query = || {
         uncertainty(&crate::checks::layer_sanity(

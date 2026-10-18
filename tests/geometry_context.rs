@@ -1,3 +1,6 @@
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{GeometryCertainty, GeometryContext, Real, TriangleMesh, solid};
 use hyperlattice::{Matrix4, Point3, Vector3};
 
@@ -7,7 +10,7 @@ const APPROXIMATE: GeometryContext = GeometryContext::APPROXIMATE_512;
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 fn uncertain_bounds() -> TriangleMesh {

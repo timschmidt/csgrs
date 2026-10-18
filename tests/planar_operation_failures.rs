@@ -1,5 +1,8 @@
 //! Planar modeling operations preserve matrix meaning and typed failure.
 #![cfg(feature = "curve")]
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{GeometryCertainty, GeometryContext, Real, curve, errors::ValidationError};
 use hypercurve::{BooleanOp, CurveRegion2, ExactCurveError};
 use hyperlattice::Matrix4;
@@ -28,7 +31,7 @@ impl<T, E: Into<ValidationError>> Attempt<T> for Result<T, E> {
 fn zero_unknown_to_bounded_predicates() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 fn half() -> Real {
     (Real::one() / Real::from(2)).unwrap()

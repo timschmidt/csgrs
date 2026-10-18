@@ -1,5 +1,8 @@
 #![cfg(all(feature = "curve", feature = "metaballs"))]
 //! Public planar metaball failures and independently derived sampled geometry.
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     Real, curve,
     errors::{ValidationError, ValidationErrorKind},
@@ -31,7 +34,7 @@ fn one_ball(radius: Real) -> [(Point2, Real); 1] {
 fn unknown_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 #[test]

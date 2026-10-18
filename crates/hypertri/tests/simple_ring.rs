@@ -1,5 +1,8 @@
 #![cfg(feature = "earcut")]
 
+#[path = "../src/test_uncertainty.rs"]
+mod test_uncertainty;
+
 use hypertri::{
     Error, Point2, PredicatePolicy, Real, Sign, TriangulationCertainty, TriangulationContext,
     triangulate_simple_ring,
@@ -126,7 +129,10 @@ fn invalid_boundaries_never_publish_a_partial_triangulation() {
 fn qualified_closure_cannot_be_reused_as_a_strict_proof() {
     let sin = Real::e().sin();
     let cos = Real::e().cos();
-    let left = &sin * &sin + &cos * &cos + Real::from(2);
+    let left = Real::from(3)
+        + test_uncertainty::terminal_zero(
+            (&sin * &sin + &cos * &cos + Real::from(2)) - Real::from(3),
+        );
     let ring = vec![
         Point2::new(left.clone(), Real::zero()),
         Point2::new(&left + Real::one(), Real::zero()),

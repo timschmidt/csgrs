@@ -1,5 +1,8 @@
 #![cfg(feature = "curve")]
 //! Sampling fidelity is separate from a certified topology decision.
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{GeometryCertainty, GeometryContext, Real, curve};
 use hypercurve::CurveRegion2;
 
@@ -224,7 +227,8 @@ fn dyadic_profile_pipeline_survives_the_obj_boundary_without_value_loss() {
 fn approximate_clamp_facts_remain_qualified_and_do_not_warm_strict_success() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let radius = &sine * &sine + &cosine * &cosine;
+    let radius = Real::one()
+        + uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     assert!(
         curve::rounded_rectangle_with_context(
             2.into(),

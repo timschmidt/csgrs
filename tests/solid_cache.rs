@@ -1,5 +1,8 @@
 //! Differential checks for grammar cache retention, identity, and certainty.
 
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use std::sync::Arc;
 
 use csgrs::{GeometryCertainty, GeometryContext, GeometryOutcome, Real, TriangleMesh, solid};
@@ -32,7 +35,7 @@ fn assert_outcome_eq(
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 #[test]

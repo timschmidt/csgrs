@@ -1,4 +1,7 @@
 //! Bounds preserve absence and uncertainty through the modeling boundary.
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 #[cfg(feature = "sdf")]
 use csgrs::errors::ValidationError;
 use csgrs::{
@@ -14,7 +17,7 @@ use std::error::Error;
 fn uncertain_points() -> TriangleMesh {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let zero = uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     TriangleMesh::new(
         vec![
             Point3::new(sine.clone(), 0.into(), sine.clone()),
@@ -179,7 +182,8 @@ fn all_tpms_families_compose_on_empty_and_zero_thickness() {
     let cube = solid::cube(Real::one()).unwrap();
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let unknown_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let unknown_zero =
+        uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     for sheet in [solid::gyroid, solid::schwarz_p, solid::schwarz_d] {
         let mesh = sheet(&empty, 4, 1.into(), 0.into()).unwrap();
         assert!(mesh.positions.is_empty() && mesh.triangles.is_empty());
@@ -237,7 +241,7 @@ fn tpms_invalid_parameters_are_not_successful_empty_models() {
 fn shared_sampled_field_path_retains_native_failure_and_recovers() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let zero = uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     let context = csgrs::GeometryContext::STRICT;
     let error = solid::sdf_with_context(
         |_| zero.clone(),

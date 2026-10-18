@@ -1,13 +1,16 @@
 //! Construction failure is distinct from a successfully represented empty set.
 #![cfg(feature = "curve")]
 
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{GeometryContext, Real, adapter::RawCurveRegion, curve};
 use std::error::Error;
 
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 #[test]

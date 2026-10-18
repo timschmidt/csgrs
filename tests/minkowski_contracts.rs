@@ -1,3 +1,6 @@
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     GeometryCertainty, GeometryContext, Real, TriangleMesh,
     errors::{ValidationError, ValidationErrorKind},
@@ -276,7 +279,7 @@ fn referenced_symbolic_coordinates_preserve_policy_and_receipts() {
     let mut positions = cube.positions.to_vec();
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    positions[0].x = &sine * &sine + &cosine * &cosine - r(1);
+    positions[0].x = uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - r(1));
     let source = TriangleMesh::new(positions, cube.triangles.to_vec());
     let first = solid::minkowski_sum(&source, &cube).unwrap_err();
     assert_eq!(first.kind(), ValidationErrorKind::Undecided);

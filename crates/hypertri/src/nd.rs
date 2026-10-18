@@ -2666,7 +2666,8 @@ mod tests {
     fn strict_geometric_report_retains_undecided_predicate_identity() {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
-        let opaque_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let opaque_zero =
+            crate::test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
         let tds = TriangulationDataStructureD {
             dimension: 2,
             vertices: vec![

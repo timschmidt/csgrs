@@ -6,7 +6,7 @@ use crate::{PcbRegion, Scalar};
 fn unknown_zero() -> Scalar {
     let sine = Scalar::e().sin();
     let cosine = Scalar::e().cos();
-    &sine * &sine + &cosine * &cosine - Scalar::one()
+    crate::test_support::terminal_zero(&sine * &sine + &cosine * &cosine - Scalar::one())
 }
 
 fn native_polygon(points: Vec<hypercurve::Point2>, report: Vec<[f64; 2]>) -> Polygon<f64> {

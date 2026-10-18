@@ -1,3 +1,6 @@
+#[path = "../src/test_uncertainty.rs"]
+mod test_uncertainty;
+
 use std::collections::BTreeMap;
 use std::num::NonZeroU32;
 
@@ -14,7 +17,7 @@ fn r(value: i32) -> Real {
 fn terminally_unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 fn standard_box_triangles() -> Vec<Triangle> {

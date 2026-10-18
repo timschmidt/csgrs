@@ -3,6 +3,9 @@
 //! Box expectations are derived from their exact boundary planes and volume,
 //! independently of the Boolean implementation and its triangle ordering.
 
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     GeometryCertainty, GeometryContext, Real, TriangleMesh,
     adapter::RawTriangleMesh,
@@ -229,7 +232,8 @@ fn empty_operand_does_not_erase_uncertainty_in_input_validation() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let unresolved_zero =
+        uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     let mut positions = cube.positions.to_vec();
     positions[1].x += unresolved_zero;
     let input = TriangleMesh::new(positions, cube.triangles.to_vec());

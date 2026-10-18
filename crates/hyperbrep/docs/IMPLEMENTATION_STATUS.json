@@ -2357,6 +2357,30 @@
       "validation": "Spatial ParameterRange domains, signed planar source charts, retained-origin translations and coordinate side correspondences construct exact solids from selected procedural profiles. Hypercurve owns scalar charts, correlated affine point parameters, checked point definitions and finite membership; BRep owns spatial frames, complete edge/surface images and topology. The original nonlinear parallel cap keeps every quadratic closing segment after planar clipping. Eleven shared BRep groups cover selected domains and projection, reversal, affine reflection/shear, authored axial and selected profile splits, holes/components and reversed contours, repeated slab cuts/reunion, both directed set identities, empty recovery, 1e-12 gaps, forged archives, policy reuse, zero-work exhaustion and recovery. One shared IO group preserves attributed UnsupportedCurve(PlanarImage), cold replay and native classification. Existing represented endpoint facts are reused rather than replaced by opaque spatial reevaluations. Archive version 10 stores source-chart coefficients, point definitions, affine-field recipes and retained translations; all API callers migrate directly with no compatibility reader. Twelve new debug checks and 691 all-feature / 683 minimal-feature release tests pass. Unchanged owner inputs retain their executed 365 integration, 165 retained-region, 58 parameter, 28 subdivision, four winding, 62 successor and five compatibility tests. Their original snapshots are distinguished from the newly executed BRep/IO checks. Warnings-denied affected Clippy/rustdoc, nine STEP examples, fuzz-target compilation and formatting pass. Source-path native consumers and 238 zero-import WASM groups pass. All 450 prior artifacts preserve their exact fields except the audited version header, source-chart schema and two explicit finite-source restrictions with identical coefficients and selected roots; 27 new native archives agree across two fresh processes. The 24 prism and 81 continuation outcomes, seven original complete profile recipes and original two-complete/two-unsupported path controls remain. Twenty prism OCCT reader observations were rerun. No additional STEP encoding capability is claimed.",
       "cost_evidence": "Three alternating pairs per cohort cover 79 preceding semantic-workflow groups in 48 processes, retaining their full assertions, iterations and outcomes. One capability-migrated control is recorded separately without time ratios. Time ratios range 0.950832\u20133.131993; 3 of 79 groups exceed the 10% review marker and 63 increase allocation calls or requested bytes. Twelve new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. Archive-version migration changes serialization work; these are the same complete semantic workflows, not identical encoded bytes. Candidate includes upstream dbe99e3cc and cannot isolate the feature effect. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.",
       "limits": "Finite selected-profile construction and supported continuation, not general CAD completion. Independent selected axial parameters, arbitrary recursive/projective point fields, broader selected surface images and standalone patch construction, general curved arrangements/intersections, metrics, procedural STEP encoding and full semantic authoring history remain open. Metadata admission and partial solver-work accounting do not bound total work, retained heap, coefficient growth or cancellation. Source-path native/WASM qualification does not establish installed distribution, MSRV, production bindings, coverage/formal targets or runtime fuzz/ASan/lexicase campaigns. All 28 work packages and full pre-push qualification remain open/in-progress; no push. Supporting Hypercurve changes stay in their owning layer. Unrelated concurrent-thread repairs are untouched. Final evidence includes upstream dbe99e3cc145e8ca58a53ade6e79fd46311972fb; costs cannot isolate the BRep feature from that integration."
+    },
+    {
+      "id": "prepush-fixture-maintenance-2026-10-18",
+      "work_packages": [
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P11",
+        "P18",
+        "P19",
+        "P25",
+        "P28",
+        "P30",
+        "P35",
+        "P36"
+      ],
+      "change": "Restore downstream uncertainty coverage after stronger scalar proofs, retaining the original exact cases and every outcome assertion.",
+      "evidence": "evidence/2026-10-18-prepush-fixtures/manifest.json",
+      "validation": "19 native curve tests; 59 reproduced root/native-WASM cases; 196 Hypertri tests; 17 reproduced mesh cases; 114 Hypersdf tests; 10 FFI tests; 87 DRC cases. Changed-test Clippy, minimal Hypertri Clippy, and all-target BRep/IO Clippy pass. Actual JS/TS consumers also pass at their recorded source epoch.",
+      "limits": "Full final pre-push qualification remains incomplete and blocked by reproduced upstream spelling and deprecated-API lint failures. Preliminary full diagnostics were explicitly interrupted for source correction, not counted as passing. No runtime algorithm, API, performance, resource, package, formal-proof, release or work-package completion claim."
     }
   ],
   "work_packages": [
@@ -2530,6 +2554,7 @@
     }
   ],
   "next_actions": [
+    "Retain evidence/2026-10-18-prepush-fixtures/manifest.json. Future proof extensions must keep newly certified original fixtures and independently unresolved controls. Complete the final pre-push matrix and resolve required failures before publishing unless the user explicitly authorizes an exception; focused checks do not waive AGENTS.md.",
     "Use evidence/2026-10-18-selected-procedural-profiles/manifest.json as the current finite baseline. Preserve all 238 WASM groups, 450 migrated prior artifacts and 27 new repeated archives, 24 prism/81 continuation outcomes, seven original full profiles and every adverse cost. Retain the rejected scalar-fact candidate and upstream-only reproduction; do not waive native facts or replace the schema audit with approximate geometry comparisons.",
     "Follow evidence/2026-10-18-selected-procedural-profiles/next-domains.md for retained selected surface/contact/branch graphs, general arrangements and shell proofs, modeling features, exchange and release/resource gates. Hypercurve/Hypersolve own root, chart and field authority; BRep owns spatial images and topology; IO owns encoding. Independent selected axial translations remain unsupported.",
     "Retain native plane/cylinder carriers and complete affine prism transport. The prism-admission cost increment removes redundant incidence/support work while retaining all original fixtures and receipts. Historical NURBS, butt-region and other cost observations remain; temporary generic extrusion allocation, repeated positive proof construction and inline optional axial-witness storage are separate unmeasured candidates. Preserve the remaining unencodable diagonal STEP vertex, rational-path measurement and source/resource/delivery blockers without approximation.",

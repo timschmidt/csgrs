@@ -1,4 +1,7 @@
 //! Scalar construction preserves mathematical values and failure causes.
+#[path = "support/uncertainty.rs"]
+mod test_uncertainty;
+
 use hyperlimit::{Plane3, Point3};
 use hyperreal::{Problem, Real};
 use hypersdf::{Sdf, SdfCoordinate, SdfEvaluationError, SdfExpr};
@@ -10,7 +13,7 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
 fn unknown_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 #[test]

@@ -1,4 +1,7 @@
 //! Transform failure is not a successfully constructed (possibly empty) model.
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     Real, TriangleMesh,
     adapter::{AdapterError, RawTriangleMesh},
@@ -148,7 +151,7 @@ fn a_vertex_at_infinity_is_a_typed_unbounded_result() {
 fn unknown_transform_is_not_invalid_input_or_empty_success() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let zero = uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     let cube = RawTriangleMesh::cube(Real::one()).unwrap();
     assert!(matches!(
         cube.scale(zero.clone(), Real::one(), Real::one()),

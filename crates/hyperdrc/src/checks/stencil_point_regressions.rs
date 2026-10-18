@@ -4,7 +4,8 @@ use crate::geometry::{circle_polygon, rect_polygon};
 fn unknown_zero() -> Scalar {
     let sine = Scalar::e().sin();
     let cosine = Scalar::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Scalar::one();
+    let zero =
+        crate::test_support::terminal_zero(&sine * &sine + &cosine * &cosine - Scalar::one());
     assert!(crate::scalar::compare(&zero, &Scalar::zero()).is_none());
     zero
 }

@@ -292,7 +292,10 @@ mod tests {
     fn predicate_evaluator_uses_central_terminal_equality_policy() {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
-        let left = &sine * &sine + &cosine * &cosine + Real::from(2);
+        let left = Real::from(3)
+            + crate::test_uncertainty::terminal_zero(
+                (&sine * &sine + &cosine * &cosine + Real::from(2)) - Real::from(3),
+            );
         let right = Real::from(3);
         assert_ne!(
             left, right,

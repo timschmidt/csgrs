@@ -41,7 +41,7 @@ fn board(drills: Vec<DrillFeature>) -> BoardModel {
 fn unknown_zero() -> Scalar {
     let sine = Scalar::e().sin();
     let cosine = Scalar::e().cos();
-    &sine * &sine + &cosine * &cosine - Scalar::one()
+    crate::test_support::terminal_zero(&sine * &sine + &cosine * &cosine - Scalar::one())
 }
 fn uncertain(findings: &[Violation]) {
     assert_eq!(findings.len(), 1, "{findings:?}");

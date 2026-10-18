@@ -1,5 +1,8 @@
 #![cfg(feature = "curve")]
 //! Exact line profiles keep their meaning across triangulation and extrusion.
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{GeometryCertainty, GeometryContext, Real, curve};
 use hypercurve::{Contour2, CurveRegion2};
 
@@ -70,7 +73,8 @@ fn extrusion_adapters_retain_native_failure_categories_and_sources() {
     let region = RawCurveRegion::from_native(profile(&Real::zero()));
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let unknown_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let unknown_zero =
+        uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     for error in [
         region.extrude(unknown_zero.clone(), &GeometryContext::STRICT),
         region.extrude_vector(

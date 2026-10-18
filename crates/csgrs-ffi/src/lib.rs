@@ -2274,6 +2274,21 @@ pub unsafe extern "C" fn csgrs_region_profiles_real_free(value: CsgrsRegionProfi
 mod tests {
     use super::*;
 
+    // Preserve the original exact proof and keep the ABI's undecided controls
+    // outside the admitted scalar normal form. The assertions below check the
+    // public strict error status and unchanged output handles.
+    fn terminal_zero(proved_zero: Real) -> Real {
+        assert_eq!(
+            proved_zero.exact_rational_normal_form(),
+            Some(hyperreal::Rational::zero())
+        );
+        let zero = (Real::e() + Real::one()).sin()
+            - Real::e().sin() * Real::one().cos()
+            - Real::e().cos() * Real::one().sin();
+        assert!(zero.exact_rational_normal_form().is_none());
+        zero
+    }
+
     #[test]
     fn bounds_absence_and_uncertainty_do_not_publish_real_values() {
         let null_point = CsgrsVec3Real {
@@ -2301,7 +2316,7 @@ mod tests {
         }
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
-        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let zero = terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
         let mesh = csgrs::TriangleMesh::new(
             vec![
                 hyperlattice::Point3::new(sine.clone(), 0.into(), sine.clone()),
@@ -2345,7 +2360,7 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let zero = CsgrsReal {
-            inner: &sine * &sine + &cosine * &cosine - Real::one(),
+            inner: terminal_zero(&sine * &sine + &cosine * &cosine - Real::one()),
         };
         let one = CsgrsReal { inner: Real::one() };
         let mut cube = ptr::null_mut();
@@ -2375,7 +2390,7 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let width = CsgrsReal {
-            inner: &sine * &sine + &cosine * &cosine - Real::one(),
+            inner: terminal_zero(&sine * &sine + &cosine * &cosine - Real::one()),
         };
         let mut mesh = ptr::null_mut();
         let status = unsafe { csgrs_triangle_mesh_real_cube(&width, &mut mesh) };
