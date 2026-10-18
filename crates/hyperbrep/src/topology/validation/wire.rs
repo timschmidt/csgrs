@@ -417,6 +417,18 @@ impl ArenaModelBuilder {
         &self,
         wire: WireId,
     ) -> Result<(), BuildError> {
+        if self.wire_ref(wire)?.edge_uses.iter().any(|usage| {
+            let edge = &self.edges[self.edge_uses[usage.index()].edge.index()];
+            self.curves[edge.curve.index()].kind() == Curve3Kind::PlanarImage
+        }) {
+            // A procedural support need not have an injective control hull.
+            // The planar owner proves the complete original loop, including
+            // individual-span injectivity, contacts and directed source charts.
+            self.build_wire_curve_path(wire)?
+                .simple_loop_orientation()
+                .map_err(GeometryError::from)?;
+            return Ok(());
+        }
         if let Some(simple) = self.axis_aligned_line_wire_is_simple(wire)? {
             return if simple {
                 Ok(())
@@ -940,12 +952,12 @@ impl ArenaModelBuilder {
             }
             let expected = [
                 (
-                    curves[0].parameter_domain().start(),
-                    curves[1].parameter_domain().end(),
+                    curves[0].parameter_endpoints().0,
+                    curves[1].parameter_endpoints().1,
                 ),
                 (
-                    curves[0].parameter_domain().end(),
-                    curves[1].parameter_domain().start(),
+                    curves[0].parameter_endpoints().1,
+                    curves[1].parameter_endpoints().0,
                 ),
             ];
             let mut matched = [false; 2];
@@ -1008,13 +1020,13 @@ impl ArenaModelBuilder {
                 }
                 let (expected_first, expected_second) = if second_index == first_index + 1 {
                     (
-                        curves[first_index].parameter_domain().end(),
-                        curves[second_index].parameter_domain().start(),
+                        curves[first_index].parameter_endpoints().1,
+                        curves[second_index].parameter_endpoints().0,
                     )
                 } else {
                     (
-                        curves[first_index].parameter_domain().start(),
-                        curves[second_index].parameter_domain().end(),
+                        curves[first_index].parameter_endpoints().0,
+                        curves[second_index].parameter_endpoints().1,
                     )
                 };
                 if relation.contacts().len() != 1 {

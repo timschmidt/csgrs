@@ -1133,3 +1133,12 @@ The [admission record](docs/evidence/2026-10-18-parallel-pcurve-replay/README.md
 Three alternating pairs preserve all 33 preceding consumer groups in 24 processes, with original assertions, iterations and outcomes. Time ratios range 0.979430–1.065905; 0 exceed the 10% review marker and 5 increase allocation calls or requested bytes. Seven new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
 [All cost rows](docs/evidence/2026-10-18-parallel-pcurve-replay/costs.md) and the [resource review](docs/evidence/2026-10-18-parallel-pcurve-replay/resource-review.json) retain timing, allocation, RSS, executable size and 25 exact archive observations. The previous selected-profile unequal-hole rejection cost and all earlier adverse obligations remain open. These finite samples do not bound arbitrary composition, retained heap, coefficient growth, total work or cancellation. Spatial parallel-cap extrusion and broader release gates remain open.
+
+
+## Retained planar curves and nonlinear cap extrusion (2026-10-18)
+
+The [admission record](docs/evidence/2026-10-18-planar-curve-lift/README.md) adds exact planar spatial images and the original full nonlinear parallel-cap extrusion, replay and supported solid continuation. This is a capability extension.
+
+Three alternating pairs preserve all 40 preceding consumer groups in 30 processes, with original assertions, iterations and outcomes. Time ratios range 0.965088–1.121568; 1 of 40 groups exceed the 10% review marker and 20 increase allocation calls or requested bytes. Twelve new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
+
+All [cost rows](docs/evidence/2026-10-18-planar-curve-lift/costs.md) and [resource observations](docs/evidence/2026-10-18-planar-curve-lift/resource-review.json) are retained. Earlier selected-profile unequal-hole rejection and other adverse costs remain open; this is no general performance or bounded-resource claim.

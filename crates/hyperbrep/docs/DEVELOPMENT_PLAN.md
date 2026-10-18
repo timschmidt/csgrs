@@ -3,12 +3,16 @@
 Status: implementation blueprint. Updated 2026-10-18 for upstream
 `540074a8c05ccc676d7c70b8f0093f98804b81d9` and concurrent development ownership.
 
-The [parallel pcurve replay increment](evidence/2026-10-18-parallel-pcurve-replay/README.md)
-advances WP02/WP07/WP13 with lossless procedural source/range serialization and
-strict reconstruction. Spatial lifting of the original nonlinear offset cap,
-complete edge/pcurve agreement, replayed solid validation and further solid
-operations remain the next dependencies. Pcurve-only completion does not close
-those work packages or the original seven-profile extrusion frontier.
+The [planar lift increment](evidence/2026-10-18-planar-curve-lift/README.md)
+advances WP02/WP07/WP08/WP13 with retained planar spatial curves, complete
+source/frame/chart agreement, native replay and original nonlinear parallel-cap
+extrusion. Authored paths, planar faces, holes/components, edge splits,
+nonuniform reflected affine transforms and repeated supported slab operations
+consume the result. All seven original profile recipes now reach native cold
+replay; the nonlinear cap's unavailable metric remains a separate typed query.
+General selected spatial fields, unlike procedural-source ordering, arbitrary
+surface intersections and STEP encoding remain next dependencies. This finite
+workflow extension does not close any complete work package.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,

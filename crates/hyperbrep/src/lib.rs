@@ -49,7 +49,7 @@ pub use geometry::{
     Axis, CircularArcGeometry, ConeBranch, ConeGeometry, ConicalRevolution, ConicalRevolutionChart,
     Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceIntersection,
     CurveSurfacePoint, CylinderGeometry, GeometricPoint3, IntersectionMultiplicity,
-    MaterializedSurfacePcurve, NurbsCurveGeometry, ParameterDomain, Pcurve,
+    MaterializedSurfacePcurve, NurbsCurveGeometry, ParameterDomain, Pcurve, PlanarCurveGeometry,
     RationalBezierCurveGeometry, Surface, SurfaceBounds, SurfaceDomain,
     SurfaceIntersectionComponents, SurfaceIntersectionCurve, SurfaceIntersectionLine,
     SurfaceIntersectionOperand, SurfaceIntersectionParameterRay, SurfaceIntersectionPcurve,

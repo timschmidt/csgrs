@@ -66,6 +66,9 @@ impl Rows {
 
 #[derive(Deserialize)]
 pub(super) enum Curve {
+    PlanarImage {
+        source: Box<Pcurve>,
+    },
     Line(IgnoredAny),
     EllipseArc(IgnoredAny),
     RationalBezier {
@@ -82,6 +85,10 @@ pub(super) enum Curve {
 impl Record for Curve {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::PlanarImage { source } => {
+                budget.record()?;
+                source.admit(budget)
+            }
             Self::Line(_) | Self::EllipseArc(_) => Ok(()),
             Self::RationalBezier {
                 control_points,
@@ -105,6 +112,8 @@ impl Record for Curve {
 
 #[derive(Deserialize)]
 pub(super) enum Pcurve {
+    QuadraticBezier(Count),
+    CubicBezier(Count),
     AnalyticParallel {
         source: ParallelSource,
     },
@@ -127,6 +136,14 @@ pub(super) enum Pcurve {
 impl Record for Pcurve {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::QuadraticBezier(count) => {
+                budget.degree(2)?;
+                budget.geometry(count.0)
+            }
+            Self::CubicBezier(count) => {
+                budget.degree(3)?;
+                budget.geometry(count.0)
+            }
             Self::AnalyticParallel { source } => {
                 budget.record()?;
                 source.admit(budget)

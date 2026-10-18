@@ -63,21 +63,33 @@ covered. See the [operation-scope contract](ARCHITECTURE.md#operation-scopes).
 
 ## Spatial curve carriers
 
-Procedural analytic-parallel **pcurves** now have exact native archive replay,
-including quadratic/cubic/homogeneous rational sources and Bezier selected
-parameter charts. Replayed definitions retain subdivision, reversal, supported
-planar similarities and region classification. They are not spatial curve
-carriers in the table below: spatial lifting, complete edge-image admission,
-offset-cap extrusion and STEP remain open. See the
-[parallel replay admission](evidence/2026-10-18-parallel-pcurve-replay/README.md).
+Procedural analytic-parallel pcurves replay quadratic/cubic/homogeneous rational
+sources, signed distance, selected parameters and traversal. The spatial
+`PlanarImage` carrier retains that source in an injective affine plane frame.
+Its unit chart maps to represented directed source endpoints. Native scalar
+queries and inverse location reuse the planar owner; unavailable selected
+coordinate views are errors. See the
+[planar lift admission](evidence/2026-10-18-planar-curve-lift/README.md).
 
 | Family | Evaluate / derivatives | Bounds | Parameter location | Reverse / split | Persistence |
 | --- | --- | --- | --- | --- | --- |
+| Planar image | Exact represented queries; owner-supported derivative orders (first order for analytic parallels) | Conservative lifted source bound | Plane membership plus exact source inverse query and chart filtering | Exact chart restriction / reversal | Exact for admitted pcurve sources |
 | Finite line | Exact, arbitrary positive derivative order | Exact | Certified | Exact | Exact |
 | Circular arc | Exact angle semantics | Conservative exact | Certified, including seams | Exact | Exact |
 | Elliptic arc | Exact angle semantics | Conservative exact | Certified | Exact | Exact |
 | Rational Bézier | Homogeneous exact | Positive-weight control hull | Certified algebraic decomposition | Exact | Exact |
 | Finite nonperiodic NURBS | Homogeneous de Boor / arbitrary derivatives | Positive-weight control hull | Certified Bézier-span decomposition | Exact knot insertion | Exact |
+
+Planar-image archive sources include lines, circular arcs, quadratic/cubic
+polynomials, rational quadratic/general Beziers, NURBS, analytic parallels and
+admitted source restrictions. Polynomial B-spline source archives remain typed
+unsupported; builders retain their existing exact NURBS promotion. New tags
+preserve polynomial families without changing prior encodings. Plane/curve and
+general carrier intersections, selected spatial evaluation, closed planar-image
+edges, general revolution certificates, and canonical ordering of unlike
+procedural sources remain typed frontiers. Extrusion inverse queries are exact
+when the retained source plane is transverse to the extrusion direction.
+No STEP family or general metric integration is added.
 
 `Curve3::parameters_of` returns `Parameter` values, including selected algebraic
 roots without a stored `Real` view. Rational Bézier queries certify all three
@@ -91,7 +103,8 @@ images for lines, rational Béziers and finite NURBS. It supports strict
 coincidence/coordinate/linear-form comparisons, conservative enclosures and certified
 invertible affine transforms. NURBS selectors stay in their authored knot
 chart. Scalar parameters expose stored coordinates; selected conic angular
-evaluation returns `UnsupportedSelectedEvaluation`.
+evaluation and planar-image evaluation without a scalar parameter view return
+`UnsupportedSelectedEvaluation`.
 
 Native coefficient derivatives/subdivision still require stored
 parameters/coordinates. Archive version 9 retains selected geometry graphs. Topology vertices and edge trims now retain selected
@@ -117,12 +130,12 @@ and [evidence](evidence/2026-10-15-closed-edges/README.md).
 
 | Family | Domain / evaluation / partials | Bounds | Supported topology image proof | Transform | Persistence |
 | --- | --- | --- | --- | --- | --- |
-| Plane | Exact | Unbounded | Line and native circular boundary | Affine | Exact |
+| Plane | Exact | Unbounded | Line, circular arc, rational Bezier/NURBS and retained planar-image agreement | Affine | Exact |
 | Cylinder | Periodic `u`, unbounded `v` | Unbounded | Axial line and constant-`v` circle | Certified similarity / reflection | Exact |
 | Sphere | Periodic longitude, closed latitude | Exact cube | Complete closed-surface face without seam/pole edges | Certified similarity / reflection | Exact |
 | Cone | Periodic `u`, lower-bounded `v` | Unbounded | Generator and constant-`v` circle away from apex | Certified similarity / reflection | Exact |
 | Ring torus | Periodic `u` and `v` | Exact cube | Both constant-parameter circle families | Certified similarity / reflection | Exact |
-| Linear extrusion | Profile domain × unbounded | Unbounded | Line/circle/ellipse/rational Bézier/NURBS profile and extrusion direction | Family-preserving | Exact |
+| Linear extrusion | Profile domain × unbounded | Unbounded | Line/circle/ellipse/rational Bézier/NURBS/planar-image profile and extrusion direction | Family-preserving | Exact |
 | Revolution | Periodic × profile domain | Conservative exact | Line/circle/ellipse/rational Bézier/NURBS meridians and latitude circles | Certified similarity / reflection | Exact |
 | Tensor rational Bézier | Closed × closed | Control hull | Exact iso-boundary rational Bézier curves and subintervals | Affine | Exact |
 | Tensor NURBS | Active closed domains | Control hull | Exact iso-boundary NURBS curves and subintervals | Affine | Exact |
@@ -186,7 +199,11 @@ retains its original region. Native geometry replay does not persist the full
 authoring boundary graph. The selected parabola difference/XOR and affine
 fixtures now have exact areas, native extrusion, edits and repeated slab
 composition; see the [selected-profile record](evidence/2026-10-18-selected-profile-extrusion/README.md).
-General selected-field integrals and nonlinear parallel extrusion
+The original nonlinear parallel cap now extrudes and replays with its full
+procedural arch and quadratic closing segments. Authored paths and planar faces
+share admission; holes/components, represented edge splits, nonuniform reflected
+affine maps, exact near-boundary queries, empty identities and repeated supported
+same-profile slab cuts consume the result. General selected-field integrals
 remain unsupported. The
 [spline exchange increment](evidence/2026-10-18-spline-exchange/README.md)
 adds exact clamped rational B-spline edge and linear-extrusion STEP exchange for

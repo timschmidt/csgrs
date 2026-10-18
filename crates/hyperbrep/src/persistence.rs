@@ -152,13 +152,13 @@ impl ImportedModel {
                 return Err(PersistenceError::UnsupportedVersion(self.data.version));
             }
             let mut builder = ArenaModelBuilder::new();
+            let graph = SelectionGraph::validate(self.data.selection)?;
             let curves = self
                 .data
                 .curves
                 .into_iter()
-                .map(curve3)
+                .map(|raw| curve3(raw, &graph))
                 .collect::<Result<Vec<_>, _>>()?;
-            let graph = SelectionGraph::validate(self.data.selection)?;
             for point in self.data.vertices {
                 builder.vertex(graph.point(point, &curves)?)?;
             }
@@ -169,7 +169,7 @@ impl ImportedModel {
                 builder.pcurve(Pcurve::new(pcurve(raw, &graph)?))?;
             }
             for surface in self.data.surfaces {
-                builder.surface(surface3(surface)?)?;
+                builder.surface(surface3(surface, &graph)?)?;
             }
             for edge in self.data.edges {
                 let [start, end] = edge.domain;
@@ -247,8 +247,8 @@ impl ArenaModel {
                 .collect::<Result<Vec<_>, PersistenceError>>()?;
             let mut curves = self
                 .curves()
-                .map(|(_, curve)| raw_curve3(curve.exact_data()))
-                .collect::<Vec<_>>();
+                .map(|(_, curve)| raw_curve3(curve.exact_data(), &mut graph))
+                .collect::<Result<Vec<_>, _>>()?;
             // Split analytic arcs may retain an exact endpoint-incidence proof
             // whose two independently serialized expressions do not replay as a
             // scalar equality. Publish the trusted curve evaluation as the
@@ -327,8 +327,8 @@ impl ArenaModel {
             }
             let mut surfaces = self
                 .surfaces()
-                .map(|(_, surface)| raw_surface(surface.exact_data()))
-                .collect::<Vec<_>>();
+                .map(|(_, surface)| raw_surface(surface.exact_data(), &mut graph))
+                .collect::<Result<Vec<_>, _>>()?;
             let edges = self
                 .edges()
                 .map(|(_, edge)| {
@@ -535,6 +535,7 @@ struct RawModelData {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawCurve3 {
+    PlanarImage(Box<RawPlanarCurve3>),
     Line(Box<RawLine3>),
     RationalBezier {
         control_points: Vec<[Real; 3]>,
@@ -547,6 +548,15 @@ enum RawCurve3 {
         knots: Vec<Real>,
     },
     EllipseArc(Box<RawEllipseArc3>),
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct RawPlanarCurve3 {
+    source: Box<RawPcurve>,
+    origin: [Real; 3],
+    u: [Real; 3],
+    v: [Real; 3],
+    source_range: [Real; 2],
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -570,6 +580,8 @@ struct RawEllipseArc3 {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawPcurve {
+    QuadraticBezier([[Real; 2]; 3]),
+    CubicBezier([[Real; 2]; 4]),
     AnalyticParallel(Box<RawParallelPcurve>),
     SourceRange {
         source: usize,
@@ -618,6 +630,8 @@ fn set_raw_pcurve_start(curve: &mut RawPcurve, start: [Real; 2]) {
         RawPcurve::RationalQuadraticBezier { control_points, .. } => {
             control_points[0] = start;
         }
+        RawPcurve::QuadraticBezier(points) => points[0] = start,
+        RawPcurve::CubicBezier(points) => points[0] = start,
         RawPcurve::Nurbs { .. }
         | RawPcurve::SourceRange { .. }
         | RawPcurve::AnalyticParallel(_) => {}
@@ -641,6 +655,8 @@ fn set_raw_pcurve_end(curve: &mut RawPcurve, end: [Real; 2]) {
         RawPcurve::RationalQuadraticBezier { control_points, .. } => {
             control_points[2] = end;
         }
+        RawPcurve::QuadraticBezier(points) => points[2] = end,
+        RawPcurve::CubicBezier(points) => points[3] = end,
         RawPcurve::Nurbs { .. }
         | RawPcurve::SourceRange { .. }
         | RawPcurve::AnalyticParallel(_) => {}
@@ -806,8 +822,18 @@ impl From<Orientation> for RawOrientation {
     }
 }
 
-fn raw_curve3(curve: Curve3ExactData) -> RawCurve3 {
-    match curve {
+fn raw_curve3(
+    curve: Curve3ExactData,
+    graph: &mut GraphEncoder,
+) -> Result<RawCurve3, PersistenceError> {
+    Ok(match curve {
+        Curve3ExactData::PlanarImage(image) => RawCurve3::PlanarImage(Box::new(RawPlanarCurve3 {
+            source: Box::new(graph.pcurve(&image.source)?),
+            origin: point_array(&image.origin),
+            u: vector_array(&image.u),
+            v: vector_array(&image.v),
+            source_range: [image.source_start, image.source_end],
+        })),
         Curve3ExactData::Line(data) => RawCurve3::Line(Box::new(RawLine3 {
             start: point_array(&data.start),
             end: point_array(&data.end),
@@ -855,11 +881,28 @@ fn raw_curve3(curve: Curve3ExactData) -> RawCurve3 {
                 direction,
             }))
         }
-    }
+    })
 }
 
-fn curve3(curve: RawCurve3) -> Result<Curve3, GeometryError> {
+fn curve3(curve: RawCurve3, graph: &SelectionGraph) -> Result<Curve3, PersistenceError> {
     let data = match curve {
+        RawCurve3::PlanarImage(image) => {
+            let RawPlanarCurve3 {
+                source,
+                origin,
+                u,
+                v,
+                source_range: [source_start, source_end],
+            } = *image;
+            Curve3ExactData::PlanarImage(Box::new(crate::geometry::PlanarCurve3 {
+                source: pcurve(*source, graph)?,
+                origin: point3(origin),
+                u: vector3(u),
+                v: vector3(v),
+                source_start,
+                source_end,
+            }))
+        }
         RawCurve3::Line(data) => Curve3ExactData::Line(Box::new(Line3ExactData {
             start: point3(data.start),
             end: point3(data.end),
@@ -909,11 +952,14 @@ fn curve3(curve: RawCurve3) -> Result<Curve3, GeometryError> {
             }))
         }
     };
-    Curve3::from_exact_data(data)
+    Ok(Curve3::from_exact_data(data)?)
 }
 
-fn raw_surface(surface: SurfaceExactData) -> RawSurface {
-    match surface {
+fn raw_surface(
+    surface: SurfaceExactData,
+    graph: &mut GraphEncoder,
+) -> Result<RawSurface, PersistenceError> {
+    Ok(match surface {
         SurfaceExactData::Plane { origin, u, v } => RawSurface::Plane {
             origin: point_array(&origin),
             u: vector_array(&u),
@@ -974,7 +1020,7 @@ fn raw_surface(surface: SurfaceExactData) -> RawSurface {
             minor_radius,
         },
         SurfaceExactData::Extrusion { profile, direction } => RawSurface::Extrusion {
-            profile: Box::new(raw_curve3(*profile)),
+            profile: Box::new(raw_curve3(*profile, graph)?),
             direction: vector_array(&direction),
         },
         SurfaceExactData::Revolution {
@@ -982,7 +1028,7 @@ fn raw_surface(surface: SurfaceExactData) -> RawSurface {
             axis_origin,
             axis,
         } => RawSurface::Revolution {
-            profile: Box::new(raw_curve3(*profile)),
+            profile: Box::new(raw_curve3(*profile, graph)?),
             axis_origin: point_array(&axis_origin),
             axis: vector_array(&axis),
         },
@@ -1014,10 +1060,10 @@ fn raw_surface(surface: SurfaceExactData) -> RawSurface {
             u_knots,
             v_knots,
         },
-    }
+    })
 }
 
-fn surface3(surface: RawSurface) -> Result<Surface, GeometryError> {
+fn surface3(surface: RawSurface, graph: &SelectionGraph) -> Result<Surface, PersistenceError> {
     let data = match surface {
         RawSurface::Plane { origin, u, v } => SurfaceExactData::Plane {
             origin: point3(origin),
@@ -1079,7 +1125,7 @@ fn surface3(surface: RawSurface) -> Result<Surface, GeometryError> {
             minor_radius,
         },
         RawSurface::Extrusion { profile, direction } => SurfaceExactData::Extrusion {
-            profile: Box::new(curve3(*profile)?.exact_data()),
+            profile: Box::new(curve3(*profile, graph)?.exact_data()),
             direction: vector3(direction),
         },
         RawSurface::Revolution {
@@ -1087,7 +1133,7 @@ fn surface3(surface: RawSurface) -> Result<Surface, GeometryError> {
             axis_origin,
             axis,
         } => SurfaceExactData::Revolution {
-            profile: Box::new(curve3(*profile)?.exact_data()),
+            profile: Box::new(curve3(*profile, graph)?.exact_data()),
             axis_origin: point3(axis_origin),
             axis: vector3(axis),
         },
@@ -1120,7 +1166,7 @@ fn surface3(surface: RawSurface) -> Result<Surface, GeometryError> {
             v_knots,
         },
     };
-    Surface::from_exact_data(data)
+    Ok(Surface::from_exact_data(data)?)
 }
 
 fn raw_vertex_coordinates(vertex: &RawVertex) -> Result<&[Real; 3], GeometryError> {
@@ -1198,6 +1244,14 @@ fn shell_id(index: usize) -> ShellId {
 
 fn pcurve(raw: RawPcurve, graph: &SelectionGraph) -> Result<Curve2, PersistenceError> {
     match raw {
+        RawPcurve::QuadraticBezier(points) => {
+            let [a, b, c] = points.map(curve_point2);
+            Ok(Curve2::from(hypercurve::QuadraticBezier2::new(a, b, c)))
+        }
+        RawPcurve::CubicBezier(points) => {
+            let [a, b, c, d] = points.map(curve_point2);
+            Ok(Curve2::from(hypercurve::CubicBezier2::new(a, b, c, d)))
+        }
         RawPcurve::AnalyticParallel(raw) => raw.into_curve(graph),
         RawPcurve::Line { start, end } => {
             let line = LineSeg2::try_new(curve_point2(start), curve_point2(end))
@@ -1307,6 +1361,12 @@ fn pcurve(raw: RawPcurve, graph: &SelectionGraph) -> Result<Curve2, PersistenceE
 
 fn raw_native_pcurve(curve: &Curve2) -> Result<RawPcurve, PersistenceError> {
     match curve.geometry() {
+        Some(CurveGeometry2::QuadraticBezier(curve)) => Ok(RawPcurve::QuadraticBezier(
+            curve.control_points().map(curve_point_array),
+        )),
+        Some(CurveGeometry2::CubicBezier(curve)) => Ok(RawPcurve::CubicBezier(
+            curve.control_points().map(curve_point_array),
+        )),
         Some(CurveGeometry2::Line(_)) => {
             let (start, end) = Pcurve::new(curve.clone())
                 .endpoints()

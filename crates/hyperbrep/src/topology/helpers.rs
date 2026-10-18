@@ -297,6 +297,10 @@ pub(super) fn rational_bezier_weights_proportional(
 
 pub(super) fn translated_curve(curve: &Curve3, offset: &Vector3) -> Result<Curve3, BuildError> {
     match curve.exact_data() {
+        Curve3ExactData::PlanarImage(mut image) => {
+            image.origin = image.origin + offset;
+            Ok(Curve3::from_planar_image(*image)?)
+        }
         Curve3ExactData::Line(data) => Ok(Curve3::line(data.start + offset, data.end + offset)?),
         Curve3ExactData::RationalBezier {
             control_points,
@@ -1497,6 +1501,9 @@ pub(super) fn curve_parameterizations_equal(
         return Ok(false);
     }
     match (actual.exact_data(), expected.exact_data()) {
+        (Curve3ExactData::PlanarImage(actual), Curve3ExactData::PlanarImage(expected)) => actual
+            .parameterization_equals(&expected)
+            .map_err(Into::into),
         (Curve3ExactData::Line(actual), Curve3ExactData::Line(expected)) => {
             Ok(points_equal(&actual.start, &expected.start)?
                 && points_equal(&actual.end, &expected.end)?)
@@ -2225,12 +2232,39 @@ pub(crate) fn compare_curve3_exact_data(
         Curve3ExactData::Nurbs { .. } => 2,
         Curve3ExactData::EllipseArc(data) if data.circle => 3,
         Curve3ExactData::EllipseArc(_) => 4,
+        Curve3ExactData::PlanarImage(_) => 5,
     };
     let family = rank(left).cmp(&rank(right));
     if family != std::cmp::Ordering::Equal {
         return Ok(family);
     }
     match (left, right) {
+        (Curve3ExactData::PlanarImage(left), Curve3ExactData::PlanarImage(right)) => {
+            let order = exact_point_order(&left.origin, &right.origin)?;
+            if order != std::cmp::Ordering::Equal {
+                return Ok(order);
+            }
+            for (a, b) in [(&left.u, &right.u), (&left.v, &right.v)] {
+                let order = compare_vector3(a, b)?;
+                if order != std::cmp::Ordering::Equal {
+                    return Ok(order);
+                }
+            }
+            for (a, b) in [
+                (&left.source_start, &right.source_start),
+                (&left.source_end, &right.source_end),
+            ] {
+                let order = decided_model_order(compare_reals(a, b, crate::STRICT_PREDICATES))?;
+                if order != std::cmp::Ordering::Equal {
+                    return Ok(order);
+                }
+            }
+            if left.source == right.source {
+                Ok(std::cmp::Ordering::Equal)
+            } else {
+                Err(GeometryError::UnsupportedIntersection)
+            }
+        }
         (Curve3ExactData::Line(left), Curve3ExactData::Line(right)) => {
             compare_point_pairs(&left.start, &left.end, &right.start, &right.end)
         }

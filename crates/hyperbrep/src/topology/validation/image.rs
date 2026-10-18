@@ -195,6 +195,14 @@ impl ArenaModelBuilder {
             &edge_use.parameter_correspondence,
         ) {
             (
+                Curve3Kind::PlanarImage,
+                _,
+                SurfaceKind::Plane,
+                ParameterCorrespondence::Affine { .. },
+            ) => {
+                self.validate_planar_curve_image(curve, edge, edge_use, pcurve, surface)?;
+            }
+            (
                 Curve3Kind::Line,
                 CurveFamily2::Line,
                 SurfaceKind::Plane,
@@ -279,7 +287,8 @@ impl ArenaModelBuilder {
                 Curve3Kind::CircleArc
                 | Curve3Kind::EllipseArc
                 | Curve3Kind::RationalBezier
-                | Curve3Kind::Nurbs,
+                | Curve3Kind::Nurbs
+                | Curve3Kind::PlanarImage,
                 CurveFamily2::Line,
                 SurfaceKind::Extrusion,
                 ParameterCorrespondence::Affine { .. },

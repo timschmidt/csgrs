@@ -39,6 +39,39 @@ fn profile_parameterizations_equal(actual: &Curve3, expected: &Curve3) -> Result
 }
 
 impl ArenaModelBuilder {
+    pub(in crate::topology) fn validate_planar_curve_image(
+        &self,
+        curve: &Curve3,
+        edge: &Edge,
+        edge_use: &EdgeUse,
+        pcurve: &Pcurve,
+        surface: &Surface,
+    ) -> Result<(), BuildError> {
+        let SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
+            return Err(BuildError::EdgeUseSupportMismatch);
+        };
+        let ParameterCorrespondence::Affine { scale, offset, .. } =
+            &edge_use.parameter_correspondence
+        else {
+            return Err(BuildError::EdgeUseSupportMismatch);
+        };
+        let start = edge.domain.represented_start()?;
+        let end = edge.domain.represented_end()?;
+        let expected = Curve3::from_planar_image(crate::geometry::PlanarCurve3 {
+            source: pcurve.curve().clone(),
+            origin,
+            u,
+            v,
+            source_start: ((start - offset) / scale).map_err(GeometryError::Numeric)?,
+            source_end: ((end - offset) / scale).map_err(GeometryError::Numeric)?,
+        })?;
+        if curve_parameterizations_equal(&curve.subcurve(start, end)?, &expected)? {
+            Ok(())
+        } else {
+            Err(BuildError::EdgeUseSupportMismatch)
+        }
+    }
+
     pub(in crate::topology) fn validate_planar_circle_image(
         &self,
         curve: &Curve3,

@@ -27,6 +27,7 @@ impl ArenaModelBuilder {
                             | Curve3Kind::EllipseArc
                             | Curve3Kind::RationalBezier
                             | Curve3Kind::Nurbs
+                            | Curve3Kind::PlanarImage
                     ) {
                         return Ok(false);
                     }

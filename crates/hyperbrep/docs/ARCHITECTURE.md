@@ -5,9 +5,35 @@ Procedural parallel pcurves borrow their source definition through Hypercurve's
 HyperBRep's [parallel archive records](../src/persistence/parallel.rs) own format
 mapping and pre-decode resource counts; Hypercurve rechecks regularity and
 selected ranges. No offset formula or proof flag is duplicated in BRep.
-This establishes pcurve replay, not a spatial carrier or whole-edge agreement.
-The [admission record](evidence/2026-10-18-parallel-pcurve-replay/README.md)
-retains those next dependencies separately.
+`Curve3::planar_image` now supplies the exact spatial lift. Its immutable
+source, injective plane frame and affine parameter chart are owned by
+[`geometry/planar_image.rs`](../src/geometry/planar_image.rs). For spatial
+parameter `s` in `[0,1]`, the source parameter is `a+(b-a)*s` and the point is
+`origin + u*x(t) + v*y(t)`. Reversal and subdivision change the chart; an affine
+spatial transform changes the frame. It does not re-offset a transformed curve.
+Queries delegate planar evaluation, derivative and incidence to Hypercurve.
+The frame cross product proves injectivity, and its four lifted source-bound
+corners give a conservative spatial bound even after restriction when those
+bounds are available. Retaining an arbitrary source is not a finite-loop
+certificate: source poles and other query failures remain typed, and face
+admission still requires the complete loop proof.
+
+Whole-edge admission compares complete definitions after an exactly proved
+plane-chart similarity. It also checks the explicit source-to-edge parameter
+map. Endpoint checks supplement this proof; matching endpoints cannot replace
+it. Translated extrusion profiles reuse the same identity proof. Retained
+procedural wires use Hypercurve's complete simple-loop arrangement proof,
+including intrinsic span injectivity and directed endpoint parameters.
+Cap pairing and transverse translation then use the existing prism validator.
+No represented area or volume is required to certify that topology.
+
+The [planar lift admission](evidence/2026-10-18-planar-curve-lift/README.md)
+covers the original full nonlinear parallel cap, its quadratic closing spans,
+planar faces, path/region extrusion, holes/components, exact queries, edge
+splits, affine replay and repeated same-profile slab cuts/restoration. Selected
+source chart endpoints without scalar views and selected spatial evaluation
+remain typed frontiers. Complete source-history/intent receipts and general
+surface intersections remain separate work.
 
 HyperBREP is an exact, immutable boundary-representation kernel.
 `hyperreal::Real` is the sole authored coefficient scalar. Approximate numbers may

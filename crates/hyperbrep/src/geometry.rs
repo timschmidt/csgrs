@@ -18,6 +18,7 @@ mod axial_lines;
 mod conical_revolution;
 mod location;
 mod periodic_charts;
+mod planar_image;
 mod planes;
 mod point;
 mod spline;
@@ -28,6 +29,8 @@ use location::{
     locate_ellipse_arc_parameters, locate_line_parameter, locate_nurbs_parameters,
     locate_rational_bezier_parameters,
 };
+pub use planar_image::PlanarCurveGeometry;
+pub(crate) use planar_image::{PlanarCurve3, represented_curve_point};
 use planes::intersect_planes;
 pub use point::{Axis, GeometricPoint3};
 pub use spline::{NurbsCurveGeometry, RationalBezierCurveGeometry};
@@ -111,6 +114,8 @@ impl ParameterDomain {
 /// Supported exact spatial curve family.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Curve3Kind {
+    /// Exact affine lift of a retained planar curve.
+    PlanarImage,
     /// Finite line segment.
     Line,
     /// Arbitrary-degree rational Bézier curve.
@@ -232,10 +237,7 @@ impl Pcurve {
 
     pub(crate) fn evaluate_real(&self, parameter: &Real) -> GeometryResult<Point2> {
         crate::context::strict(|| {
-            let point = self.curve.point_at(&parameter.clone().into())?;
-            let point = point
-                .coordinates()
-                .ok_or(GeometryError::UnsupportedPcurveContour)?;
+            let point = represented_curve_point(&self.curve, parameter)?;
             Ok(Point2::new(point.x().clone(), point.y().clone()))
         })
     }
@@ -363,6 +365,7 @@ struct Curve3Data {
 
 #[derive(Debug)]
 enum CurveGeometry3 {
+    PlanarImage(Box<PlanarCurve3>),
     Line(Line3),
     RationalBezier(RationalBezier3),
     Nurbs(NurbsCurve3),
@@ -372,6 +375,7 @@ enum CurveGeometry3 {
 
 #[derive(Clone, Debug)]
 pub(crate) enum Curve3ExactData {
+    PlanarImage(Box<PlanarCurve3>),
     Line(Box<Line3ExactData>),
     RationalBezier {
         control_points: Vec<Point3>,
@@ -685,6 +689,7 @@ impl Curve3 {
     /// Returns the curve family.
     pub fn kind(&self) -> Curve3Kind {
         match &self.data.geometry {
+            CurveGeometry3::PlanarImage(_) => Curve3Kind::PlanarImage,
             CurveGeometry3::Line(_) => Curve3Kind::Line,
             CurveGeometry3::RationalBezier(_) => Curve3Kind::RationalBezier,
             CurveGeometry3::Nurbs(_) => Curve3Kind::Nurbs,
@@ -770,7 +775,9 @@ impl Curve3 {
                 }
                 Ok(Some(Self::line(start.clone(), end.clone())?))
             }
-            CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => Ok(None),
+            CurveGeometry3::CircleArc(_)
+            | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
     }
 
@@ -788,6 +795,7 @@ impl Curve3 {
     pub fn bounds(&self) -> GeometryResult<Aabb> {
         crate::context::strict(|| {
             crate::cache::get_or_try_init(&self.data.bounds, || match &self.data.geometry {
+                CurveGeometry3::PlanarImage(image) => image.bounds(),
                 CurveGeometry3::Line(line) => {
                     exact_point_bounds(&[line.start.clone(), line.end.clone()])
                 }
@@ -840,7 +848,9 @@ impl Curve3 {
                 Some(curve.control_points.iter().collect::<Vec<_>>())
             }
             CurveGeometry3::Nurbs(curve) => Some(curve.control_points.iter().collect::<Vec<_>>()),
-            CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => None,
+            CurveGeometry3::CircleArc(_)
+            | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::PlanarImage(_) => None,
         };
         if let Some(controls) = controls {
             let mut separated = true;
@@ -905,6 +915,7 @@ impl Curve3 {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             match &self.data.geometry {
+                CurveGeometry3::PlanarImage(image) => image.point_at(parameter),
                 CurveGeometry3::Line(line) => {
                     if parameter == self.domain().start() {
                         return Ok(line.start.clone());
@@ -973,6 +984,7 @@ impl Curve3 {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             let vector = match &self.data.geometry {
+                CurveGeometry3::PlanarImage(image) => image.derivative_at(parameter, order)?,
                 CurveGeometry3::Line(line) => {
                     if order == 1 {
                         &line.end - &line.start
@@ -1024,7 +1036,8 @@ impl Curve3 {
             CurveGeometry3::RationalBezier(_)
             | CurveGeometry3::Nurbs(_)
             | CurveGeometry3::CircleArc(_)
-            | CurveGeometry3::EllipseArc(_) => None,
+            | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::PlanarImage(_) => None,
         }
     }
 
@@ -1062,12 +1075,15 @@ impl Curve3 {
                         + arc.x.cross(&arc.y) * (&arc.x_radius * &arc.y_radius * angle),
                 ))
             }
-            CurveGeometry3::RationalBezier(_) | CurveGeometry3::Nurbs(_) => Ok(None),
+            CurveGeometry3::RationalBezier(_)
+            | CurveGeometry3::Nurbs(_)
+            | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
     }
 
     pub(crate) fn exact_data(&self) -> Curve3ExactData {
         match &self.data.geometry {
+            CurveGeometry3::PlanarImage(image) => Curve3ExactData::PlanarImage(image.clone()),
             CurveGeometry3::Line(line) => Curve3ExactData::Line(Box::new(Line3ExactData {
                 start: line.start.clone(),
                 end: line.end.clone(),
@@ -1101,6 +1117,7 @@ impl Curve3 {
 
     pub(crate) fn from_exact_data(data: Curve3ExactData) -> GeometryResult<Self> {
         match data {
+            Curve3ExactData::PlanarImage(image) => Self::from_planar_image(*image),
             Curve3ExactData::Line(data) => Self::line(data.start, data.end),
             Curve3ExactData::RationalBezier {
                 control_points,
@@ -1165,6 +1182,7 @@ impl Curve3 {
     /// Returns the same geometric image with reversed parameter direction.
     pub fn reversed(&self) -> GeometryResult<Self> {
         crate::context::strict(|| match &self.data.geometry {
+            CurveGeometry3::PlanarImage(image) => image.restricted(&Real::one(), &Real::zero()),
             CurveGeometry3::Line(line) => Self::line(line.end.clone(), line.start.clone()),
             CurveGeometry3::RationalBezier(curve) => {
                 let mut points = curve.control_points.clone();
@@ -1206,6 +1224,10 @@ impl Curve3 {
         crate::context::strict(|| {
             require_interior_parameter(self.domain(), parameter)?;
             match &self.data.geometry {
+                CurveGeometry3::PlanarImage(image) => Ok((
+                    image.restricted(&Real::zero(), parameter)?,
+                    image.restricted(parameter, &Real::one())?,
+                )),
                 CurveGeometry3::Line(line) => {
                     let split = line.start.lerp(&line.end, parameter);
                     Ok((
@@ -1250,7 +1272,7 @@ impl Curve3 {
 
     /// Returns the exact image over a strictly ordered source-parameter range.
     ///
-    /// Line and rational-Bézier results use their conventional local unit
+    /// Line, rational-Bézier and planar-image results use their local unit
     /// domain. NURBS and named conic results retain the selected source
     /// interval because their native knot or angle parameterization is
     /// authoritative.
@@ -1284,6 +1306,7 @@ impl Curve3 {
                 return Ok(self.clone());
             }
             match &self.data.geometry {
+                CurveGeometry3::PlanarImage(image) => image.restricted(start, end),
                 CurveGeometry3::Line(_) => {
                     Self::line(self.evaluate_real(start)?, self.evaluate_real(end)?)
                 }
@@ -1352,6 +1375,7 @@ impl Curve3 {
     /// remain an explicit unsupported result, never an incomplete finite set.
     pub fn parameters_of(&self, point: &Point3) -> GeometryResult<CurveParameterLocation> {
         crate::context::strict(|| match &self.data.geometry {
+            CurveGeometry3::PlanarImage(image) => image.parameters_of(point),
             CurveGeometry3::Line(line) => locate_line_parameter(self, line, point),
             CurveGeometry3::RationalBezier(curve) => {
                 locate_rational_bezier_parameters(self, curve, point)
@@ -1373,6 +1397,7 @@ impl Curve3 {
     ) -> GeometryResult<Self> {
         let transform = metric.matrix();
         match &self.data.geometry {
+            CurveGeometry3::PlanarImage(image) => image.transformed(transform),
             CurveGeometry3::Line(line) => Self::line(
                 transform_point(transform, &line.start)?,
                 transform_point(transform, &line.end)?,
@@ -4233,6 +4258,12 @@ impl Surface {
         let rotate_vector =
             |vector: &Vector3| rotate_vector_about_axis(vector, &surface.axis, angle);
         match surface.profile.exact_data() {
+            Curve3ExactData::PlanarImage(mut image) => {
+                image.origin = rotate_point(&image.origin);
+                image.u = rotate_vector(&image.u);
+                image.v = rotate_vector(&image.v);
+                Curve3::from_planar_image(*image)
+            }
             Curve3ExactData::Line(line) => {
                 Curve3::line(rotate_point(&line.start), rotate_point(&line.end))
             }
@@ -5516,7 +5547,7 @@ pub(crate) fn project_curve_to_plane_frame(
                 start, end, center, clockwise,
             )?)))
         }
-        Curve3ExactData::EllipseArc(_) => Ok(None),
+        Curve3ExactData::EllipseArc(_) | Curve3ExactData::PlanarImage(_) => Ok(None),
     }
 }
 
@@ -5701,7 +5732,9 @@ fn linear_section_pcurve_carriers(
             }
             Ok(Some(carriers))
         }
-        CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => Ok(None),
+        CurveGeometry3::CircleArc(_)
+        | CurveGeometry3::EllipseArc(_)
+        | CurveGeometry3::PlanarImage(_) => Ok(None),
     }
 }
 
@@ -6834,7 +6867,7 @@ fn project_revolution_meridian(
         Curve3ExactData::Line(line) => vec![line.start, line.end],
         Curve3ExactData::RationalBezier { control_points, .. }
         | Curve3ExactData::Nurbs { control_points, .. } => control_points,
-        Curve3ExactData::EllipseArc(_) => {
+        Curve3ExactData::EllipseArc(_) | Curve3ExactData::PlanarImage(_) => {
             return Err(GeometryError::UnsupportedIntersection);
         }
     };
@@ -7447,7 +7480,9 @@ fn curve_is_strictly_on_one_plane_side(
             }
             Ok(true)
         }
-        CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => Ok(false),
+        CurveGeometry3::CircleArc(_)
+        | CurveGeometry3::EllipseArc(_)
+        | CurveGeometry3::PlanarImage(_) => Ok(false),
     }
 }
 
@@ -10014,7 +10049,10 @@ fn split_ellipse_arc(
     let wrap = |geometry| match kind {
         Curve3Kind::CircleArc => CurveGeometry3::CircleArc(geometry),
         Curve3Kind::EllipseArc => CurveGeometry3::EllipseArc(geometry),
-        Curve3Kind::Line | Curve3Kind::RationalBezier | Curve3Kind::Nurbs => {
+        Curve3Kind::Line
+        | Curve3Kind::RationalBezier
+        | Curve3Kind::Nurbs
+        | Curve3Kind::PlanarImage => {
             unreachable!("ellipse split kind")
         }
     };

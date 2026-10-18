@@ -17,7 +17,7 @@ The caller passes `ArchiveLimits` explicitly. Its defaults and units are:
 | `input_bytes` | 16 MiB | All UTF-8 bytes, including whitespace and ignored fields |
 | `nesting_depth` | 1,024 | Simultaneously open JSON objects and arrays |
 | `tokens` | 1,000,000 | Opening containers, quoted strings (including keys), and primitive lexemes |
-| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve sources, inline extrusion/revolution profiles and analytic-parallel sources |
+| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve sources, inline extrusion/revolution profiles, planar-image sources and analytic-parallel sources |
 | `degree` | 256 | Each declared NURBS axis degree, inferred Bezier axis degree, or selected-root polynomial storage degree |
 | `geometry_elements` | 1,000,000 | Aggregate controls (including polynomial parallel sources), weights, knots, root coefficients, and tensor row headers |
 | `topology_references` | 1,000,000 | Aggregate wire edge uses, face inner wires, shell faces and solid void shells |
@@ -40,8 +40,9 @@ or absent versions are invalid JSON-model envelopes.
 A control point counts once, not once per coordinate. Every tensor row also
 counts, including an empty row. Bezier degrees are control counts minus one
 (saturating at zero); tensor degrees use row count and maximum row width.
-Rational quadratic pcurves have degree two. Root degree is coefficient count
-minus one without trimming trailing zeros. Fixed-size analytic coordinates,
+Polynomial quadratic/cubic pcurves retain their fixed degree and charge each
+control, including malformed arrays. Rational quadratic pcurves have degree two.
+Root degree is coefficient count minus one without trimming trailing zeros. Fixed-size analytic coordinates,
 chart-image coefficients and fixed record references are bounded by record
 counts instead of variable-size counters. Unknown fields consume syntax limits,
 not schema counters. Full decoding and geometry validation remain responsible
@@ -92,7 +93,8 @@ maps, split/reflection and forged-record rejection are covered in the
 The encoder interns root and chart records by their exact serialized contents.
 An identity chart references its root directly. This also handles inverse
 NURBS chart transports that retain identity evidence in memory. IDs follow
-first appearance while traversing vertices, pcurves and edges; hash-map
+first appearance while traversing vertices (including detached sources), model
+curves, pcurves, surfaces and edges; hash-map
 iteration never determines output order. This is deterministic representation
 ordering, not a canonical form for all mathematically equivalent polynomials.
 Refinement caches, scalar reconstruction caches, addresses and trusted flags
@@ -113,10 +115,25 @@ controls are charged before scalar decoding, including in detached pcurve source
 This adds a family tag to version 9 without changing existing family encodings.
 It preserves the current procedural geometry and selectors, not a complete
 authoring-history or source-intent receipt. A saved unattached pcurve does not
-establish a valid face or solid. Spatial parallel lifting, full edge/pcurve
-agreement and offset-profile extrusion remain open. The
-[parallel replay evidence](evidence/2026-10-18-parallel-pcurve-replay/README.md)
-records the precise supported workflows and limits.
+establish a valid face or solid.
+
+The `PlanarImage { source, origin, u, v, source_range }` spatial record now
+retains a pcurve source and an injective affine frame. Its spatial domain is
+`[0,1]`; the two represented source parameters define the complete affine chart.
+Loading validates the frame, nonzero chart span, endpoint membership, and source
+constructor. Model admission then rechecks the full edge image and topology.
+A forged interior with correct endpoints is rejected. Native `QuadraticBezier`
+and `CubicBezier` pcurve tags preserve polynomial definitions used by lifts.
+These are additional version-9 family tags; prior encodable bytes are unchanged.
+
+Load order is selected roots/charts, authored pcurve sources, detached spatial
+point sources, model spatial curves, then point images and topology. Pcurve
+sources cannot refer to spatial sources or other pcurve restrictions, so the
+new dependency is acyclic. Every inline planar source consumes a record and its
+source-specific metadata budget before scalar decoding. This is not a bound
+on scalar reconstruction or subsequent geometric validation. The
+[planar lift evidence](evidence/2026-10-18-planar-curve-lift/README.md)
+records the supported workflows, costs and remaining selected-view limits.
 
 Other pcurves retain the existing native families or
 `SourceRange { source, range, reversed }`. The source indexes an authored

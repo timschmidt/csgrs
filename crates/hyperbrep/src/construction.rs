@@ -2124,11 +2124,17 @@ fn add_persistent_curve_region(
     let points_2d = curves
         .iter()
         .map(|curve| {
-            curve
-                .start()
-                .coordinates()
-                .cloned()
-                .ok_or(GeometryError::UnsupportedPcurveContour)
+            if let Some(point) = curve.start().coordinates() {
+                return Ok(point.clone());
+            }
+            crate::geometry::represented_curve_point(
+                curve,
+                curve
+                    .parameter_endpoints()
+                    .0
+                    .scalar()
+                    .ok_or(GeometryError::UnrepresentableParameter)?,
+            )
         })
         .collect::<Result<Vec<_>, _>>()?;
     let mut points = Vec::with_capacity(points_2d.len() * 2);
@@ -3771,6 +3777,10 @@ fn persistent_planar_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, Constructi
     for curve in curves {
         let image = persistent_curve_image(curve)?;
         let curve = image.as_ref();
+        if curve.analytic_parallel().is_some() {
+            persistent.push(curve.clone());
+            continue;
+        }
         match curve.geometry() {
             None => return Err(ConstructionError::UnsupportedPlanarProfile),
             Some(CurveGeometry2::Line(_))
@@ -3818,6 +3828,10 @@ fn persistent_extrusion_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, Constru
     for curve in curves {
         let image = persistent_curve_image(curve)?;
         let curve = image.as_ref();
+        if curve.analytic_parallel().is_some() {
+            persistent.push(curve.clone());
+            continue;
+        }
         match curve.geometry() {
             None => return Err(ConstructionError::UnsupportedPlanarProfile),
             Some(CurveGeometry2::Line(_))
@@ -3851,7 +3865,8 @@ fn persistent_extrusion_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, Constru
     Ok(persistent)
 }
 
-/// Borrows native definitions or consumes Hypercurve's complete image proof.
+/// Borrows native definitions, consumes Hypercurve's complete native image
+/// proof, or retains a procedural parallel for exact plane lifting.
 /// Region extrusion retains its original component as the source authority.
 /// Native image parameters belong to the new spatial carrier; this conversion
 /// alone does not persist an authoring history or a source parameter map.
@@ -3866,7 +3881,14 @@ fn persistent_curve_image(
         Err(hypercurve::ExactCurveError::Blocked(blocker))
             if blocker.reason() == hypercurve::UncertaintyReason::Unsupported =>
         {
-            Err(ConstructionError::UnsupportedPlanarProfile)
+            // Prefer the existing native complete image when it is available.
+            // Otherwise retain the procedural definition for an exact plane
+            // lift; this does not turn a failed predicate into a certificate.
+            if curve.analytic_parallel().is_some() {
+                Ok(std::borrow::Cow::Borrowed(curve))
+            } else {
+                Err(ConstructionError::UnsupportedPlanarProfile)
+            }
         }
         Err(error) => Err(GeometryError::from(error).into()),
     }
@@ -3874,6 +3896,14 @@ fn persistent_curve_image(
 
 fn spatial_extrusion_curve(curve: &Curve2, z: &Real) -> Result<Curve3, ConstructionError> {
     let lift = |point: &CurvePoint2| Point3::new(point.x().clone(), point.y().clone(), z.clone());
+    if curve.analytic_parallel().is_some() {
+        return Ok(Curve3::planar_image(
+            curve.clone(),
+            Point3::new(Real::zero(), Real::zero(), z.clone()),
+            Vector3::x(),
+            Vector3::y(),
+        )?);
+    }
     match curve.geometry() {
         None => Err(ConstructionError::UnsupportedPlanarProfile),
         Some(CurveGeometry2::Line(line)) => Ok(Curve3::line(lift(line.start()), lift(line.end()))?),
@@ -3916,6 +3946,15 @@ fn planar_curve_correspondence(
     curve: &Curve2,
     direction: Direction,
 ) -> Result<ParameterCorrespondence, ConstructionError> {
+    if curve.analytic_parallel().is_some() {
+        // Reversal changes the retained traversal, not the procedural source
+        // chart. Both cap directions use this same complete affine map.
+        let (a, b) = curve.parameter_endpoints();
+        let a = a.scalar().ok_or(GeometryError::UnrepresentableParameter)?;
+        let b = b.scalar().ok_or(GeometryError::UnrepresentableParameter)?;
+        let scale = (Real::one() / (b - a)).map_err(GeometryError::Numeric)?;
+        return Ok(ParameterCorrespondence::affine(scale.clone(), -a * scale)?);
+    }
     if matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_))) {
         return Ok(ParameterCorrespondence::angular_sweep());
     }
@@ -3938,6 +3977,12 @@ fn planar_curve_correspondence(
 }
 
 fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, ConstructionError> {
+    if curve.analytic_parallel().is_some() {
+        let crate::geometry::SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
+            return Err(ConstructionError::UnsupportedPlanarProfile);
+        };
+        return Ok(Curve3::planar_image(curve.clone(), origin, u, v)?);
+    }
     let lift =
         |point: &CurvePoint2| surface.point_at(&Point2::new(point.x().clone(), point.y().clone()));
     match curve.geometry() {
@@ -3991,18 +4036,22 @@ fn add_planar_path_wire(
     let points = curves
         .iter()
         .map(|curve| {
-            surface.point_at(&Point2::new(
-                (curve.start())
-                    .coordinates()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?
-                    .x()
-                    .clone(),
-                (curve.start())
-                    .coordinates()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?
-                    .y()
-                    .clone(),
-            ))
+            let start = curve.start();
+            let represented;
+            let point = if let Some(point) = start.coordinates() {
+                point
+            } else {
+                represented = crate::geometry::represented_curve_point(
+                    curve,
+                    curve
+                        .parameter_endpoints()
+                        .0
+                        .scalar()
+                        .ok_or(GeometryError::UnrepresentableParameter)?,
+                )?;
+                &represented
+            };
+            surface.point_at(&Point2::new(point.x().clone(), point.y().clone()))
         })
         .collect::<Result<Vec<_>, _>>()?;
     let vertices = points
@@ -4020,13 +4069,9 @@ fn add_planar_path_wire(
             curve,
             (domain).into(),
         )?;
+        let correspondence = planar_curve_correspondence(&pcurve, Direction::Forward)?;
         let pcurve = builder.pcurve(Pcurve::new(pcurve))?;
-        uses.push(builder.edge_use(
-            edge,
-            Direction::Forward,
-            pcurve,
-            ParameterCorrespondence::identity(),
-        )?);
+        uses.push(builder.edge_use(edge, Direction::Forward, pcurve, correspondence)?);
     }
     Ok(builder.wire(uses)?)
 }
@@ -4035,6 +4080,18 @@ fn validate_simple_curve_path(
     profile: &CurvePath2,
     unsupported: ConstructionError,
 ) -> Result<(), ConstructionError> {
+    if profile
+        .curves()
+        .iter()
+        .any(|curve| curve.analytic_parallel().is_some())
+    {
+        // Hypercurve owns regularity, intrinsic span injectivity and all
+        // inter-span contacts for retained procedural loops.
+        profile
+            .simple_loop_orientation()
+            .map_err(GeometryError::from)?;
+        return Ok(());
+    }
     let fragments = profile
         .native_bezier_fragments()
         .map_err(GeometryError::from)?;

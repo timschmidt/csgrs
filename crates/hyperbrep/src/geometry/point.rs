@@ -283,7 +283,9 @@ impl Curve3 {
             }
             if matches!(
                 self.data.geometry,
-                CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_)
+                CurveGeometry3::CircleArc(_)
+                    | CurveGeometry3::EllipseArc(_)
+                    | CurveGeometry3::PlanarImage(_)
             ) {
                 return Err(GeometryError::UnsupportedSelectedEvaluation);
             }
@@ -335,7 +337,9 @@ impl Curve3 {
                 curve.weights.clone(),
                 curve.knots.clone(),
             )?,
-            CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => {
+            CurveGeometry3::CircleArc(_)
+            | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::PlanarImage(_) => {
                 return Err(GeometryError::UnsupportedSelectedEvaluation);
             }
         })

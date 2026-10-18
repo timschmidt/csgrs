@@ -2191,6 +2191,47 @@
       "validation": "Exact analytic-parallel pcurves now archive polynomial or homogeneous rational source controls, signed distance, selected-root/chart references, finite range and traversal. Strict replay rechecks the complete source/range through Hypercurve; selected subdivisions, cusp endpoints and zero-weight controls retain their definitions. Seven acceptance groups cover independent exact values, reversal, selected splitting, planar path/region reuse, reflection, near-boundary offsets, forged definitions, metadata limits and exhausted-work recovery. BRep/IO release suites pass 639/631 tests with all/minimal features; new debug acceptance passes 7. Affected Hypercurve tests pass 351 integration, 165 retained-boundary, 4 winding and 62 successor tests. Warning-denied affected all-target Clippy/rustdoc, nine STEP examples, fuzz-target compilation and formatting pass. External source-path native consumers pass; actual zero-import WASM passes 7+11+7+9+14+138=186 groups. All 337 prior artifacts remain byte-identical, including eight typed encoding diagnostics; 25 new native pcurve archives agree across two fresh processes. All 24 prism and 81 continuation outcomes remain. The original seven-profile diagnostic still has six native completions and one unsupported nonlinear parallel cap. The earlier two complete/two unsupported path controls remain. Twenty prism OCCT reader observations were rerun; earlier quintic observations apply only to identical bytes.",
       "cost_evidence": "Three alternating pairs preserve all 33 preceding consumer groups in 24 processes, with original assertions, iterations and outcomes. Time ratios range 0.979430\u20131.065905; 0 exceed the 10% review marker and 5 increase allocation calls or requested bytes. Seven new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.",
       "limits": "This admits unattached pcurve models and supported planar continuation, not spatial offset edges, complete edge/pcurve correspondence or parallel-cap extrusion. Full authoring history, general selected fields, arbitrary shell intersections, broader metrics and exact STEP encoding of irrational Cartesian vertices remain open. Local strict replay does not certify an earlier approximate source intent. No operation-wide work, coefficient-growth, retained-heap or cancellation bound is added. Source-path consumers do not establish registry installation, MSRV or production bindings. Coverage/formal verification, runtime fuzz/ASan/lexicase campaigns, full pre-push qualification and all 28 work packages remain open/in-progress. No push. Supporting-crate work remains with its owner; unrelated concurrent-thread breakage is untouched. Qualification is pinned to upstream 540074a8c and unchanged source."
+    },
+    {
+      "id": "planar-curve-lift-2026-10-18",
+      "work_packages": [
+        "WP02",
+        "WP07",
+        "WP08",
+        "WP13"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P11",
+        "P12",
+        "P14",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Retain planar Curve2 sources in injective affine spatial frames and explicit unit charts; validate complete edge images and directed procedural loops; preserve native source graphs and polynomial definitions; admit the original nonlinear parallel cap through supported solid continuations.",
+      "evidence": "evidence/2026-10-18-planar-curve-lift/manifest.json",
+      "validation": "The unchanged original nonlinear parallel cap now extrudes and cold-replays through retained planar spatial curves. Whole source/frame/chart proofs admit edge images; Hypercurve supplies exact evaluation, inverse parameters and complete simple-loop winding. Eleven core acceptance groups cover independent values/derivatives, nonunit/reversed charts, conservative bounds, inverse queries, path/region extrusion, planar faces, holes/components, split edges, reflected nonuniform affine transforms, repeated same-profile slab cuts/restoration, near-boundary classification, forged interiors, metadata limits and typed failures/recovery. BRep/IO release suites pass 650/642 tests with all/minimal features; new debug acceptance passes 11. Affected Hypercurve tests pass 351 integration, 165 retained-boundary, 4 winding and 62 successor tests. Warnings-denied affected all-target Clippy/rustdoc, nine STEP examples, fuzz-target compilation and formatting pass. External source-path native consumers pass; actual zero-import WASM passes 12+7+11+7+9+14+138=198 groups. All 362 preceding artifacts remain byte-identical, including eight typed encoding diagnostics; 48 new native archives agree across two fresh processes. All 24 prism and 81 continuation outcomes remain. All seven original full profile recipes now complete native cold replay; the nonlinear cap volume remains explicitly unsupported. Earlier two-complete/two-unsupported path controls remain. Twenty prism OCCT observations were rerun; prior quintic observations apply only to identical bytes. A separate native pole review confirms that storing a source definition is not a finite-loop certificate: interior poles retain typed query and face-admission blockers across replay, followed by finite-source recovery.",
+      "cost_evidence": "Three alternating pairs preserve all 40 preceding consumer groups in 30 processes, with original assertions, iterations and outcomes. Time ratios range 0.965088\u20131.121568; 1 of 40 groups exceed the 10% review marker and 20 increase allocation calls or requested bytes. Twelve new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.",
+      "limits": "This is finite planar lifting and procedural cap continuation, not complete general CAD. General selected spatial evaluation/domain views, unlike procedural-source equivalence/ordering, arbitrary surface intersections, general metrics, full source history and wider STEP representation remain open. Polynomial B-spline planar-source archives remain unsupported; existing builder NURBS promotion is retained. Local strict replay does not certify earlier approximate source intent. No operation-wide work, coefficient-growth, retained-heap or cancellation bound is added. Source-path consumers do not establish registry installation, MSRV or production bindings. Coverage/formal verification, runtime fuzz/ASan/lexicase campaigns, full pre-push qualification and all 28 work packages remain open/in-progress. No push. Production changes are confined to BRep; unrelated concurrent-thread breakage is untouched. Qualification is pinned to upstream 540074a8c and unchanged source."
     }
   ],
   "work_packages": [
@@ -2364,8 +2405,8 @@
     }
   ],
   "next_actions": [
-    "Use evidence/2026-10-18-parallel-pcurve-replay/manifest.json as the current native-pcurve feature baseline, atop selected-profile extrusion and upstream equality integration. Preserve all 337 prior files, 25 new repeated archives, current native/WASM groups, 24 prism and 81 continuation outcomes, original diagnostic inputs and raw costs. The finite 33-group matched comparison does not rerun the historical 192-case catalogue required for future optimizations; earlier adverse obligations remain open.",
-    "Procedural parallel definitions, selected roots/charts and direct or analytic selected-fiber subdivisions now replay exactly as pcurves. Follow evidence/2026-10-18-parallel-pcurve-replay/next-domains.md for retained planar-to-spatial images, complete edge/pcurve agreement, acyclic replay and the unchanged full nonlinear parallel-cap extrusion. Keep the existing selected-profile successes, general selected fields, source-history and interchange limits separate. Missing metrics do not invalidate an otherwise proved exact boundary; irrational STEP Cartesian vertices stay typed NonRational.",
+    "Use evidence/2026-10-18-planar-curve-lift/manifest.json as the current planar-lift and original nonlinear-cap baseline. Preserve 362 prior files, 48 new repeated archives, all 198 WASM groups and native consumers, 24 prism and 81 continuation outcomes, seven original full profile completions and all raw costs. Forty matched groups do not replace the historical 192-case optimization catalogue or discharge earlier adverse obligations.",
+    "Follow evidence/2026-10-18-planar-curve-lift/next-domains.md for selected spatial images, whole procedural equivalence/ordering and exact intersection/trim closure. Keep the admitted source/frame/chart proof and shared Hypercurve owner; do not substitute display chords or independent root coordinates. Missing metrics do not invalidate the exact cap. Maintain STEP typed failures and full plan/release/resource work.",
     "Retain native plane/cylinder carriers and complete affine prism transport. The prism-admission cost increment removes redundant incidence/support work while retaining all original fixtures and receipts. Historical NURBS, butt-region and other cost observations remain; temporary generic extrusion allocation, repeated positive proof construction and inline optional axial-witness storage are separate unmeasured candidates. Preserve the remaining unencodable diagonal STEP vertex, rational-path measurement and source/resource/delivery blockers without approximation.",
     "Preserve the public normalized-region extrusion corpus: four butt/round stroke workflows, two multi-component STEP workflows, native holes/islands/empty/invalid-height/certainty/budget controls, exact artifacts and 119 WASM groups. General rational-path side measurement and source-qualification delivery require separate proofs and complete consumers; retain the original unsupported inputs.",
     "Use region-extrusion for the current public profile feature and stroke-upstream-integration for merged be2a0c37b ownership guidance. Preserve all 81 native diagnostic outcomes, 24 prism outcomes, 71 old STEP artifacts, six new complete exchanges and historical 176 main/196 dependency benchmark contracts. New source needs fresh applicable evidence; historical timings do not qualify later changes. Supporting crate changes needed for BREP features are authorized; unrelated repairs stay with their owner.",

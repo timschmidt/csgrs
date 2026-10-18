@@ -84,8 +84,14 @@ or geometric validation; see the [archive contract](docs/SELECTED_ARCHIVE.md).
 Native archives also retain procedural analytic-parallel pcurves: polynomial
 or homogeneous rational sources, signed distance, selected ranges and traversal.
 Replay rechecks source regularity and preserves subsequent planar subdivision
-and region queries. This does not yet admit spatial offset-profile extrusion;
-see the [parallel replay scope](docs/evidence/2026-10-18-parallel-pcurve-replay/README.md).
+and region queries. `Curve3::planar_image` retains a planar source in an injective
+affine plane frame, with a unit spatial chart mapped to represented source
+endpoints. Nonlinear parallel caps now feed planar faces, region/path extrusion,
+native replay, edge splits, affine transforms and supported slab Booleans.
+Whole source/frame/map proofs validate edge images. Scalar queries reuse the
+planar evaluator; unavailable selected-coordinate views, general intersections,
+metrics and STEP encodings remain typed. See the
+[planar lift admission](docs/evidence/2026-10-18-planar-curve-lift/README.md).
 
 ## Exactness contract
 

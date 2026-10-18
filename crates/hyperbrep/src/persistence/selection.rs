@@ -147,15 +147,16 @@ impl GraphEncoder {
         let (curve, parameter) = point
             .curve_source()
             .ok_or(GeometryError::UnrepresentablePoint)?;
-        let source = self
-            .point_sources
-            .entry(curve.identity_address())
-            .or_insert_with(|| {
-                let index = self.raw.point_sources.len();
-                self.raw.point_sources.push(raw_curve3(curve.exact_data()));
-                RawPointSource::Detached(index)
-            })
-            .clone();
+        let source = if let Some(source) = self.point_sources.get(&curve.identity_address()) {
+            source.clone()
+        } else {
+            let raw = raw_curve3(curve.exact_data(), self)?;
+            let source = RawPointSource::Detached(self.raw.point_sources.len());
+            self.raw.point_sources.push(raw);
+            self.point_sources
+                .insert(curve.identity_address(), source.clone());
+            source
+        };
         Ok(RawVertex::CurveImage {
             source,
             parameter: self.parameter(parameter)?,
@@ -247,11 +248,6 @@ impl SelectionGraph {
             graph.parameters.push(value);
             roots.push(is_root);
         }
-        graph.point_sources = raw
-            .point_sources
-            .into_iter()
-            .map(curve3)
-            .collect::<Result<_, _>>()?;
         for raw in raw.pcurve_sources {
             // Sources are authored geometry, never nested restrictions.
             if let RawPcurve::SourceRange { source, .. } = raw {
@@ -262,6 +258,14 @@ impl SelectionGraph {
             }
             graph.pcurve_sources.push(pcurve(raw, &graph)?);
         }
+        // Planar definitions depend only on the already validated parameter
+        // graph. Spatial point sources can then depend on those definitions;
+        // neither layer may refer back to the point-source graph.
+        graph.point_sources = raw
+            .point_sources
+            .into_iter()
+            .map(|raw| curve3(raw, &graph))
+            .collect::<Result<_, _>>()?;
         Ok(graph)
     }
 
