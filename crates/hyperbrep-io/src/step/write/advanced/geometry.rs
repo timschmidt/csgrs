@@ -10,7 +10,7 @@ use std::cmp::Ordering;
 #[path = "geometry_tests.rs"]
 mod tests;
 
-fn order(a: &Real, b: &Real, site: Site) -> Result<Ordering, WriteError> {
+pub(super) fn order(a: &Real, b: &Real, site: Site) -> Result<Ordering, WriteError> {
     match compare_reals(a, b, hyperbrep::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value, .. } => Ok(value),
         PredicateOutcome::Unknown { needed, stage } => Err(site.error(WriteErrorKind::Geometry(
@@ -21,7 +21,7 @@ fn order(a: &Real, b: &Real, site: Site) -> Result<Ordering, WriteError> {
 
 /// The scalar layer owns this value certificate. Materialization here selects
 /// an exact STEP encoding; it never substitutes a nearby rational.
-fn rational(value: &Real, out: &Output) -> Result<Real, WriteError> {
+pub(super) fn rational(value: &Real, out: &Output) -> Result<Real, WriteError> {
     let value = if value.exact_rational_ref().is_some() {
         value.clone()
     } else {
@@ -239,6 +239,35 @@ pub(super) fn surface(
             let (profile, direction) = source
                 .extrusion_profile_and_direction()
                 .expect("extrusion data");
+            if matches!(
+                profile.kind(),
+                Curve3Kind::RationalBezier | Curve3Kind::Nurbs
+            ) {
+                let curve = super::spline::curve(out, profile, scale)?;
+                let magnitude = length(&direction.norm(), scale, out)?;
+                let direction = self::direction(out, direction)?;
+                let vector = out.entity("VECTOR", |out| {
+                    out.put("'',")?;
+                    out.reference(direction)?;
+                    out.put(",")?;
+                    out.number(&magnitude)
+                })?;
+                let surface = out.entity("SURFACE_OF_LINEAR_EXTRUSION", |out| {
+                    out.put("'',")?;
+                    out.reference(curve)?;
+                    out.put(",")?;
+                    out.reference(vector)
+                })?;
+                return Ok((
+                    surface,
+                    WrittenSurfaceParameters {
+                        origin: Point2::origin(),
+                        u: Vector2::new([Real::one(), Real::zero()]),
+                        v: Vector2::new([Real::zero(), Real::one()]),
+                    },
+                    false,
+                ));
+            }
             if profile.kind() == Curve3Kind::Line {
                 let origin = profile
                     .start()

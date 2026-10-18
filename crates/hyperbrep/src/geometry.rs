@@ -20,6 +20,7 @@ mod location;
 mod periodic_charts;
 mod planes;
 mod point;
+mod spline;
 mod transform;
 pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
 pub use conical_revolution::{ConeBranch, ConicalRevolution, ConicalRevolutionChart};
@@ -29,6 +30,7 @@ use location::{
 };
 use planes::intersect_planes;
 pub use point::{Axis, GeometricPoint3};
+pub use spline::{NurbsCurveGeometry, RationalBezierCurveGeometry};
 pub(crate) use transform::TransformMetric;
 
 pub(crate) fn resolve_planar_classification<T>(
@@ -9823,6 +9825,20 @@ fn validate_clamped_knot_multiplicities(degree: usize, knots: &[Real]) -> Geomet
             != Ordering::Equal
         {
             return Err(GeometryError::UnclampedNurbs);
+        }
+    }
+    // An endpoint run must stop after degree + 1 entries. Checking only the
+    // interior runs misses extra knots attached to either clamped endpoint.
+    if endpoint_count < knots.len() - endpoint_count {
+        for (interior, endpoint) in [
+            (&knots[endpoint_count], &knots[0]),
+            (&knots[last - endpoint_count], &knots[last]),
+        ] {
+            if decided_order(compare_reals(interior, endpoint, crate::STRICT_PREDICATES))?
+                == Ordering::Equal
+            {
+                return Err(GeometryError::InvalidKnotMultiplicity);
+            }
         }
     }
     let mut run = 1_usize;

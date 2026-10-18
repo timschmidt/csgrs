@@ -16,6 +16,7 @@ pub(super) enum Support {
     Cylinder(Cylinder),
     Torus(torus::Torus),
     Cone(hyperbrep::ConicalRevolutionChart),
+    Extrusion(Surface),
 }
 
 impl FaceSurface {
@@ -25,7 +26,7 @@ impl FaceSurface {
 
     pub(super) fn angular_coordinates(&self) -> [bool; 2] {
         match self.support {
-            Support::Plane => [false, false],
+            Support::Plane | Support::Extrusion(_) => [false, false],
             Support::Cylinder(_) => [true, false],
             Support::Torus(_) => [true, true],
             Support::Cone(_) => [true, false],
@@ -46,6 +47,35 @@ impl Builder {
         let record = entity.components().next().expect("syntax component");
         if !entity.is_complex() && record.name() == "SURFACE_OF_REVOLUTION" {
             return self.conical_surface(resolver, id, scale, branch, site);
+        }
+        if !entity.is_complex() && record.name() == "SURFACE_OF_LINEAR_EXTRUSION" {
+            if let Some(surface) = self.by_surface.get(&(id, None)) {
+                return Ok(surface.clone());
+            }
+            let mut args = Args::new(record, site);
+            resolver.text(args.next()?, site)?;
+            let profile = resolver.spline3(args.reference()?, scale)?;
+            let direction = resolver.vector(args.reference()?, 3)? * scale;
+            args.finish()?;
+            let native = Surface::extrusion(profile, direction)
+                .map_err(|e| site.error(ErrorKind::Geometry(e)))?;
+            let key = self
+                .model
+                .surface(native.clone())
+                .map_err(|e| site.error(ErrorKind::Build(e)))?;
+            let surface = FaceSurface {
+                geometry: None,
+                key,
+                support: Support::Extrusion(native),
+                parameters: SourceSurfaceParameters {
+                    surface: id,
+                    origin: hyperbrep::Point2::origin(),
+                    u: hyperbrep::Vector2::x(),
+                    v: hyperbrep::Vector2::y(),
+                },
+            };
+            cache(&mut self.by_surface, (id, None), surface.clone(), site)?;
+            return Ok(surface);
         }
         if entity.is_complex()
             || !matches!(
@@ -126,6 +156,50 @@ impl Builder {
 }
 
 impl FaceSurface {
+    pub(super) fn spline_boundary_curve(
+        &self,
+        curve: &Curve3,
+        forward: bool,
+        site: Site,
+    ) -> Result<(Curve2, ParameterCorrespondence), Error> {
+        let plane = self
+            .geometry
+            .as_ref()
+            .filter(|_| self.is_plane())
+            .ok_or_else(|| site.error(ErrorKind::Unsupported("spline pcurve on this support")))?;
+        let directed = if forward {
+            curve.clone()
+        } else {
+            curve
+                .reversed()
+                .map_err(|e| site.error(ErrorKind::Geometry(e)))?
+        };
+        let materialized = plane
+            .surface
+            .planar_pcurve(&directed)
+            .map_err(|e| site.error(ErrorKind::Geometry(e)))?
+            .ok_or_else(|| site.invalid("spline is not contained in face plane"))?;
+        let (scale, offset) = materialized
+            .correspondence()
+            .affine_coefficients()
+            .ok_or_else(|| {
+                site.error(ErrorKind::Unsupported(
+                    "nonaffine spline pcurve correspondence",
+                ))
+            })?;
+        let (scale, offset) = if forward {
+            (scale.clone(), offset.clone())
+        } else {
+            (
+                -scale,
+                curve.domain().start() + curve.domain().end() - offset,
+            )
+        };
+        let correspondence = ParameterCorrespondence::affine(scale, offset)
+            .map_err(|e| site.error(ErrorKind::Build(e)))?;
+        Ok((materialized.curve().clone(), correspondence))
+    }
+
     pub(super) fn boundary_segment(
         &self,
         edge: &Edge,
@@ -136,7 +210,31 @@ impl FaceSurface {
         site: Site,
     ) -> Result<(Segment2, ParameterCorrespondence), Error> {
         let direction = if forward { Real::one() } else { -Real::one() };
-        let segment = if let Support::Cone(chart) = &self.support {
+        let segment = if let Support::Extrusion(surface) = &self.support {
+            let locate = |point: &Point3| {
+                let (u, v) = surface
+                    .extrusion_parameters_of(point)
+                    .map_err(|e| site.error(ErrorKind::Geometry(e)))?;
+                Ok(Point2::new(spline::unique_parameter(u, site)?, v))
+            };
+            let from = locate(from)?;
+            let to = locate(to)?;
+            if order(site, from.x(), to.x())? != Ordering::Equal
+                && order(site, from.y(), to.y())? != Ordering::Equal
+            {
+                return Err(site.error(ErrorKind::Unsupported(
+                    "nonisoparametric extrusion boundary",
+                )));
+            }
+            Segment2::Line(
+                LineSeg2::try_new(from, to)
+                    .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?,
+            )
+        } else if edge.spline.is_some() {
+            return Err(site.error(ErrorKind::Unsupported(
+                "spline boundary segment on this support",
+            )));
+        } else if let Support::Cone(chart) = &self.support {
             cone::boundary_segment(chart, edge, from, to, &direction, previous, site)?
         } else {
             let plane = self.geometry.as_ref().expect("elementary support frame");
@@ -200,6 +298,7 @@ impl FaceSurface {
                 .circle
                 .as_ref()
                 .map(|circle| circle.domain.clone())
+                .or_else(|| edge.spline.as_ref().map(|curve| curve.domain().clone()))
                 .unwrap_or_else(ParameterDomain::unit);
             ParameterCorrespondence::affine(
                 (domain.end() - domain.start()) * direction,

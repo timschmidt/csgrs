@@ -59,6 +59,30 @@ impl PlanePair {
 }
 
 impl Surface {
+    /// Constructs an exact pcurve after proving the entire spatial curve lies
+    /// on this plane. `None` means the curve is not wholly contained; unsupported
+    /// projection families and undecided predicates remain typed failures.
+    /// The returned map retains the spatial curve's parameter domain.
+    pub fn planar_pcurve(
+        &self,
+        curve: &Curve3,
+    ) -> GeometryResult<Option<MaterializedSurfacePcurve>> {
+        crate::context::strict(|| {
+            let SurfaceGeometry::Plane(plane) = &self.data.geometry else {
+                return Err(GeometryError::UnsupportedIntersection);
+            };
+            if !matches!(
+                self.intersect_curve(curve)?,
+                CurveSurfaceIntersection::Contained
+            ) {
+                return Ok(None);
+            }
+            SurfaceIntersectionPcurve::plane_projection(curve.clone(), plane)
+                .materialize()
+                .map(Some)
+        })
+    }
+
     /// Certifies native plane coincidence without constructing an unused line.
     /// Unsupported carriers and unresolved predicates remain typed failures.
     pub(crate) fn planes_coincident(&self, other: &Self) -> GeometryResult<bool> {

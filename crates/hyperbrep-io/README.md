@@ -13,12 +13,25 @@ HyperBRep and exact scalar arithmetic belongs to Hyperreal.
 The crate reads and writes bounded Part 21 syntax, imports an explicitly
 selected faceted or supported advanced representation into strictly validated
 native HyperBRep solids, and exports selected planar/cylindrical/conical/ring-torus solids with
-line/circle boundaries to STEP.
+line/circle and supported spline boundaries to STEP.
 Advanced import includes circular edges on planes, cylinders and ring tori and supplied
 planar/cylindrical/toroidal pcurves and conical LINE revolutions with supplied
-line pcurves. Coordinates
+line pcurves. Positive-weight clamped NURBS also import on planar caps and
+linear-extrusion walls, with independently validated isoparametric LINE pcurves. Coordinates
 and authored unit conversions remain exact. Whole-document/product traversal,
-other analytic/spline mappings, cavity shells and approximate export remain unfinished.
+other analytic/spline-surface mappings, cavity shells and approximate export remain unfinished.
+
+Rational Bezier and finite clamped NURBS curves export as exact rational
+B-splines with their authored weights and knots. Spline extrusion walls retain
+their generator and the complete extrusion vector; both surface parameters
+remain in the authored chart. Import requires uniquely located represented
+vertices, preserves directed source parameter maps, and validates complete
+edge/pcurve/surface images. The retained parabolic-profile workflow includes
+holes, disconnected components, reversal, affine profiles, cold replay and
+cuts/restoration after exchange. Selected-root trims without a stored scalar,
+ambiguous vertex preimages and other unsupported carriers fail explicitly.
+See the [spline mapping contract](docs/STEP_MAPPING.md#exact-splines-and-linear-extrusions)
+and [independent acceptance fixtures](tests/support/spline_exchange.rs).
 
 The syntax layer retains numeric lexemes without binary floating-point conversion, unknown
 entity records, complex instances, forward references, multiple DATA sections,
@@ -143,7 +156,7 @@ assert!(artifact.text().contains("FACETED_BREP"));
 
 Both writers reject `1/3`, irrational coordinates, unmaterialized selected points,
 unmapped families and cavity shells with typed source-addressable errors. They never
-rounds, fits, heals or drops unsupported geometry. `StepWriteOptions` makes units,
+round, fit, heal or drop unsupported geometry. `StepWriteOptions` makes units,
 metadata and allowances explicit; the caller supplies the timestamp. Exporting
 metres as inches can itself make a coordinate nonrepresentable. The
 [native export example](examples/faceted_step.rs) writes seven original

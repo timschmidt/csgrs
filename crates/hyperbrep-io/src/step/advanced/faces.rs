@@ -137,6 +137,7 @@ impl Builder {
         };
         let mut uses = Vec::new();
         let mut segments = Vec::new();
+        let mut curves: Option<Vec<Curve2>> = None;
         let mut previous_vertex = None;
         let mut previous_parameter = None;
         for (oriented, edge_id, forward) in ordered {
@@ -149,26 +150,52 @@ impl Builder {
             if previous_vertex.is_some_and(|id| id != from) {
                 return Err(site.invalid("edge loop has disconnected vertex identities"));
             }
-            let (segment, correspondence) = if let Some(prepared) = &mut torus_segments {
-                prepared
-                    .next()
-                    .expect("one prepared segment per ordered use")
-            } else {
-                surface.boundary_segment(
-                    &edge,
-                    &self.by_vertex[&from].point,
-                    &self.by_vertex[&to].point,
-                    forward,
-                    previous_parameter.as_ref(),
-                    site,
-                )?
-            };
+            let (curve, segment, correspondence) =
+                if let Some(spline) = edge.spline.as_ref().filter(|_| surface.is_plane()) {
+                    let (curve, correspondence) =
+                        surface.spline_boundary_curve(spline, forward, site)?;
+                    (curve, None, correspondence)
+                } else {
+                    let (segment, correspondence) = if let Some(prepared) = &mut torus_segments {
+                        prepared
+                            .next()
+                            .expect("one prepared segment per ordered use")
+                    } else {
+                        surface.boundary_segment(
+                            &edge,
+                            &self.by_vertex[&from].point,
+                            &self.by_vertex[&to].point,
+                            forward,
+                            previous_parameter.as_ref(),
+                            site,
+                        )?
+                    };
+                    let curve = segment_curve(&segment);
+                    (curve, Some(segment), correspondence)
+                };
             previous_vertex = Some(to);
-            previous_parameter = Some(segment.end().clone());
-            let curve = match &segment {
-                Segment2::Line(line) => Curve2::from(line.clone()),
-                Segment2::Arc(arc) => Curve2::from(arc.clone()),
-            };
+            previous_parameter = Some(
+                curve
+                    .end()
+                    .coordinates()
+                    .ok_or_else(|| {
+                        site.error(ErrorKind::Geometry(GeometryError::UnsupportedPcurveContour))
+                    })?
+                    .clone(),
+            );
+            if segment.is_none() && curves.is_none() {
+                let mut path = Vec::new();
+                for segment in segments.drain(..) {
+                    push(&mut path, segment_curve(&segment)).map_err(|kind| site.error(kind))?;
+                }
+                curves = Some(path);
+            }
+            if let Some(path) = &mut curves {
+                push(path, curve.clone()).map_err(|kind| site.error(kind))?;
+            } else {
+                push(&mut segments, segment.expect("native loop segment"))
+                    .map_err(|kind| site.error(kind))?;
+            }
             let pcurve = self
                 .model
                 .pcurve(Pcurve::new(curve))
@@ -198,18 +225,28 @@ impl Builder {
             )
             .map_err(|kind| site.error(kind))?;
             push(&mut uses, key).map_err(|kind| site.error(kind))?;
-            push(&mut segments, segment).map_err(|kind| site.error(kind))?;
         }
         let wire = self
             .model
             .wire(&uses)
             .map_err(|e| site.error(ErrorKind::Build(e)))?;
-        let contour =
-            Contour2::try_new(segments).map_err(|e| site.error(ErrorKind::Geometry(e.into())))?;
-        let area = contour
-            .signed_area()
-            .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?
-            .ok_or_else(|| site.error(ErrorKind::Unsupported("bound signed area")))?;
+        let area = if let Some(curves) = curves {
+            hypercurve::CurvePath2::try_new(curves)
+                .and_then(|path| path.boundary_loop()?.signed_area())
+                .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?
+        } else {
+            Contour2::try_new(segments)
+                .and_then(|contour| contour.signed_area())
+                .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?
+        }
+        .ok_or_else(|| site.error(ErrorKind::Unsupported("bound signed area")))?;
         Ok((wire, area))
+    }
+}
+
+fn segment_curve(segment: &Segment2) -> Curve2 {
+    match segment {
+        Segment2::Line(line) => line.clone().into(),
+        Segment2::Arc(arc) => arc.clone().into(),
     }
 }

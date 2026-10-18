@@ -1,6 +1,7 @@
 //! Explicit native topology over the selected exact analytic STEP carriers.
 mod cone;
 mod geometry;
+mod spline;
 mod types;
 
 use super::{
@@ -162,7 +163,13 @@ impl<'a> Body<'a> {
         };
         out.site = site;
         let curve = source.curve();
-        if !matches!(curve.kind(), Curve3Kind::Line | Curve3Kind::CircleArc) {
+        if !matches!(
+            curve.kind(),
+            Curve3Kind::Line
+                | Curve3Kind::CircleArc
+                | Curve3Kind::RationalBezier
+                | Curve3Kind::Nurbs
+        ) {
             return Err(site.error(WriteErrorKind::UnsupportedCurve(curve.kind())));
         }
         let start = self.vertex(out, source.start(), scale)?;
@@ -209,6 +216,19 @@ impl<'a> Body<'a> {
                     }
                 };
                 (id, angle(a), angle(b), circle.increasing_angle)
+            }
+            Curve3Kind::RationalBezier | Curve3Kind::Nurbs => {
+                let (a, b) = source.domain().try_real_endpoints().ok_or_else(|| {
+                    site.error(WriteErrorKind::Geometry(
+                        GeometryError::UnrepresentableParameter,
+                    ))
+                })?;
+                (
+                    spline::curve(out, &curve, scale)?,
+                    a.clone(),
+                    b.clone(),
+                    true,
+                )
             }
             _ => unreachable!("checked carrier"),
         };

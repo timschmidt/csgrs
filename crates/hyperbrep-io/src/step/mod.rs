@@ -68,6 +68,8 @@ pub struct ImportLimits {
     pub text_bytes: usize,
     /// Directed polygon segments or explicit edge uses admitted to native topology.
     pub edge_uses: usize,
+    /// Cumulative entries in expanded spline knot vectors, charged before allocation.
+    pub spline_knots: usize,
     /// Maximum numerator/denominator bit bound for resolved unit scales.
     /// Products are admitted using sums of operand bit lengths before multiplication.
     /// This conservative bound can reject a product whose factors would cancel.
@@ -81,6 +83,7 @@ impl Default for ImportLimits {
             scalars: 1_000_000,
             text_bytes: 4 * 1024 * 1024,
             edge_uses: 250_000,
+            spline_knots: 1_000_000,
             unit_scale_bits: 65_536,
         }
     }

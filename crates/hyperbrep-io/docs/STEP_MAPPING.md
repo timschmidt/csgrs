@@ -167,7 +167,7 @@ it never substitutes symbolic `pi/180`. Uncertainty metadata cannot make an
 off-carrier decimal vertex incident.
 
 Ellipses, analytic surfaces outside the torus/conical-revolution subsets described
-below, and spline exchange remain typed unsupported.
+below, and spline families outside the bounded domain described below remain typed unsupported.
 The planar line/supplied-pcurve mapping above is unchanged. Every selected body
 must finish admission before any result is
 published; all source entities remain interpreted or raw-retained. The exact
@@ -409,7 +409,7 @@ profiles encode as cylinders only after proving the direction parallel to the
 circle normal. The map retains native parameter offsets, reversed angular
 traversal and signed axial scaling. `WrittenAdvancedFace::orientation` records
 the emitted sense after any chart reversal; it can differ from the source
-face's sense while preserving the oriented physical face. Ellipse, spline and
+face's sense while preserving the oriented physical face. Ellipse and
 oblique circular extrusions retain `UnsupportedSurface` errors. No sampled
 recognition, fitting or decimal approximation is performed.
 
@@ -543,7 +543,7 @@ This finite extension does not close WP14a/b or the distribution gates.
 
 WP14a still requires further simple analytic entities, broad independent exporter fixtures, representation
 root selection, and more complete schema/resource admission. WP14b retains
-spline/trim/seam/void exchange, assembly/mapped representation traversal and
+general spline/trim/seam/void exchange beyond the admitted domains below, assembly/mapped representation traversal and
 explicit healing/export approximation. Header/text completeness, generic planar
 shell validation, coefficient/work bounds, fuzz/ASan/lexicase qualification,
 full workspace checks and release work are also open. A source syntax round trip
@@ -559,3 +559,55 @@ Four original fixture recipes (box, two bodies, through-hole and oblique
 tetrahedron) are read by OCCT and mapped natively with exact volume and incidence
 checks. The [qualification](../../hyperbrep/docs/evidence/2026-10-15-step-faceted/README.md)
 retains tests, runtime probes, fault controls, source hashes and cost observations.
+
+
+## Exact splines and linear extrusions
+
+`B_SPLINE_CURVE_WITH_KNOTS` imports as a native finite clamped NURBS. Simple
+instances have unit weights; complex instances may include
+`RATIONAL_B_SPLINE_CURVE`. Required and optional components have checked arities
+and no duplicate/unknown components. Degree, control count, positive weights,
+strictly increasing distinct knots and native clamped multiplicities are
+validated. Expanded knot entries are charged cumulatively to
+`ImportLimits::spline_knots` before allocation. Overflow or inconsistent counts
+fail before expansion. This allowance does not bound all native scalar work.
+
+A vertex is admitted only when native full 3D location produces one represented
+parameter. Multiple preimages, entire-domain preimages and unrepresented
+selected parameters remain explicit blockers. Edge sense must match the
+source parameter order. The native trim may be reversed while its source map
+retains the original directed interval; normalized native edge fraction maps
+affinely to that source interval. Neither source flags nor control polygons
+are topological evidence. LOGICAL closure is checked against exact endpoints;
+self-intersection/form/knot-type hints remain source metadata and are not
+published as native certificates. Native validation proves the selected trim.
+This is not full EXPRESS/AP conformance checking of the untrimmed carrier.
+
+Planar caps use HyperBRep's complete plane-incidence proof and exact native
+pcurve projection. `SURFACE_OF_LINEAR_EXTRUSION` uses a spline generator and a
+VECTOR. Both geometry and the vector convert by the length unit; the authored
+U and V parameters remain unchanged in `C(u) + vD`. The current inverse-chart
+domain requires a planar generator transverse to D, and the face boundaries
+must be admitted isoparametric images. Nonunit D, oblique D and finite nonunit
+U charts are not normalized away. Whole-edge native image validation follows
+point location; endpoint agreement alone never establishes an edge image.
+Supplied LINE pcurves on these walls use dimensionless U and V, and every
+alternate representation is validated before the body is published.
+
+Writing preserves exact borrowed rational Bezier/NURBS control points, weights
+and knots. A Bezier of degree p becomes a B-spline with endpoint multiplicities
+p+1 on [0,1]. Export emits unknown closure/self-intersection hints rather than
+claiming properties of untrimmed geometry. Complex instances share the normal
+entity/byte budgets. Exact finite-decimal preflight applies to every emitted
+coordinate, knot, weight and vector magnitude; no fitting, rounding or weight
+normalization bypasses a failure. Native pcurves use the native archive;
+complete authoring-history persistence remains separate open work.
+
+The independent parabolic-prism fixture uses U in [2,4] and a vector of
+magnitude 3. Variants cover rational reparameterization, interior knot insertion,
+reversed source traversal, a larger carrier with interior trims, and metre/mm
+units. The complete retained-profile test additionally covers holes,
+disconnected components, affine profiles, cold replay and repeated slab
+intersection/difference/restoration. General spline surfaces, arbitrary swept
+wall pcurves, ambiguous trims, general selected-root serialization and other
+STEP application-protocol constructs remain open.

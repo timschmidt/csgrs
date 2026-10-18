@@ -95,19 +95,20 @@ cost obligations stay visible. General CAD functionality and delivery remain
 the project objective, with all work-package completion gates still open.
 
 The [retained-region diagnostic](evidence/2026-10-17-retained-region-extrusion/README.md)
-preserves the seven original profile recipes. The subsequent
-[native boundary image increment](evidence/2026-10-18-native-boundary-images/README.md)
-resolves the uncut mixed parabola/retained-line workflow through construction,
-cold replay and exact cuts/restoration. Hypercurve owns the source-bound whole
-image view; BREP owns spatial topology and common-profile interval composition.
-Native image charts and native geometry archives must not be described as the
-original source chart or complete authoring history. Preserve the five remaining
-unsupported recipes, nonmonotone image controls and unequal-hole rejection.
-The [next STEP domain](evidence/2026-10-18-native-boundary-images/next-step-domain.md)
-starts from the reproduced rational Bezier edge blocker. Exact B-spline and
-linear-extrusion exchange needs native chart/image proof, format-owned numeric
-admission, independent authored import and complete continued modeling. General
-selected-parameter measurement and analytic parallel extrusion remain open.
+preserves the seven original profile recipes. The
+[native image increment](evidence/2026-10-18-native-boundary-images/README.md)
+resolved retained-chord construction, replay and common-profile continuation.
+The [exact spline exchange increment](evidence/2026-10-18-spline-exchange/README.md)
+now completes the original mixed profile through STEP, including holes,
+disconnected components, reversed and affine profiles and repeated cuts/restoration.
+HyperBRep owns native spline inspection, plane projection, extrusion point location
+and whole-image admission; IO owns exact entities, units, source charts and limits.
+Independent authored records cover weights, interior knots/trims, nonunit charts
+and metre/mm units. Native geometry replay does not preserve the complete authoring
+graph, and STEP source hints cannot certify untrimmed carrier simplicity.
+Preserve all five unsupported original profile recipes and exact negative controls.
+General selected-parameter integration, nonlinear parallel extrusion, spline
+surfaces, arbitrary pcurves and release delivery remain open.
 
 The retained diagonal STEP case also has a
 [schema and exact-coordinate feasibility review](evidence/2026-10-17-prism-admission-cost/future-step-research.md).

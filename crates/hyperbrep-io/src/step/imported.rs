@@ -43,6 +43,8 @@ pub struct SourceFace<'a> {
 /// Angular coordinates use the source context's plane-angle unit. Plane
 /// coordinates and cylinder V use its length unit. A revolved LINE's V is the
 /// original line parameter, including its magnitude, sign and shifted origin.
+/// Spline extrusions retain generator U and V multiplying the complete source
+/// extrusion vector; length conversion does not rescale these parameters.
 /// Periodic lifts are retained; this metadata neither clamps parameters nor
 /// asserts membership in the finite face.
 #[derive(Clone, Debug)]
@@ -118,7 +120,7 @@ pub(super) struct UseSource {
 /// Native lines use `[0,1]`; native circles use an increasing angular interval.
 #[derive(Clone, Debug)]
 pub struct SourceCurveParameters {
-    /// Source LINE, CIRCLE, PCURVE, SURFACE_CURVE or SEAM_CURVE ID.
+    /// Source LINE, CIRCLE, B-spline, PCURVE, SURFACE_CURVE or SEAM_CURVE ID.
     pub curve: u64,
     /// Parameter at the original EDGE_CURVE start vertex, in source units.
     pub start: Real,

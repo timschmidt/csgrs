@@ -147,6 +147,7 @@ impl Builder {
             start,
             end,
             circle: Some(circle),
+            spline: None,
         };
         Ok((
             edge,

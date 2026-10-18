@@ -20,7 +20,7 @@ pub struct WrittenAdvancedEdge<'a> {
     pub source: EdgeRef<'a>,
     /// Output EDGE_CURVE ID.
     pub entity: u64,
-    /// Output LINE or CIRCLE ID.
+    /// Output LINE, CIRCLE or rational B-spline ID.
     pub geometry: u64,
     /// Emitted curve parameter at the native edge's start vertex.
     pub parameter_start: Real,
@@ -38,6 +38,8 @@ pub struct WrittenAdvancedEdge<'a> {
 /// radians and V is in that length unit. Both torus coordinates are in radians.
 /// A conical surface of revolution uses radians and the emitted unit-line
 /// parameter; its exact longitude/slant offsets remain in this map.
+/// Spline extrusions retain the generator parameter and V multiplier of the
+/// full extrusion vector. Length conversion changes the vector, not V.
 /// This is encoding metadata, not a surface.
 #[derive(Clone, Debug)]
 pub struct WrittenSurfaceParameters {
@@ -63,7 +65,7 @@ pub struct WrittenAdvancedFace<'a> {
     /// Output ADVANCED_FACE ID.
     pub entity: u64,
     /// Output PLANE, CYLINDRICAL_SURFACE, TOROIDAL_SURFACE or conical
-    /// SURFACE_OF_REVOLUTION ID.
+    /// SURFACE_OF_REVOLUTION, or spline SURFACE_OF_LINEAR_EXTRUSION ID.
     pub surface: u64,
     /// Native-to-output surface parameter map.
     pub parameters: WrittenSurfaceParameters,

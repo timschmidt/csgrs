@@ -6,6 +6,7 @@ mod cone_tests;
 mod curves;
 mod faces;
 mod pcurves;
+mod spline;
 mod surfaces;
 mod torus;
 
@@ -69,6 +70,8 @@ struct Edge {
     start: u64,
     end: u64,
     circle: Option<circles::CircleEdge>,
+    /// Directed, trimmed native spline; never treated as a line from endpoints.
+    spline: Option<Curve3>,
 }
 #[derive(Clone)]
 struct FaceSurface {

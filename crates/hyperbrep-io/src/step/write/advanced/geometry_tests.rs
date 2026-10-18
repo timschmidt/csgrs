@@ -101,19 +101,9 @@ fn other_extrusions_remain_typed_and_leave_a_valid_retry_possible() {
         Real::pi(),
     )
     .unwrap();
-    let bezier = Curve3::rational_bezier(
-        vec![
-            Point3::origin(),
-            Point3::new(1.into(), 1.into(), 0.into()),
-            Point3::new(2.into(), 0.into(), 0.into()),
-        ],
-        vec![Real::one(); 3],
-    )
-    .unwrap();
     for source in [
         Surface::extrusion(circle(), Vector3::new([1.into(), 0.into(), 1.into()])).unwrap(),
         Surface::extrusion(ellipse, Vector3::z()).unwrap(),
-        Surface::extrusion(bezier, Vector3::z()).unwrap(),
     ] {
         let mut out = Output::new(Default::default());
         let error = surface(&mut out, &source, &Real::one()).unwrap_err();
@@ -124,5 +114,106 @@ fn other_extrusions_remain_typed_and_leave_a_valid_retry_possible() {
         assert!(out.text.is_empty());
         let good = Surface::extrusion(circle(), Vector3::z()).unwrap();
         surface(&mut out, &good, &Real::one()).unwrap();
+    }
+}
+
+#[test]
+fn original_bezier_extrusion_fixture_now_keeps_its_chart_and_complete_solid() {
+    use crate::step::{ImportLimits, StepFile, StepReadOptions, StepWriteOptions, write_advanced};
+    use hyperbrep::{ArchiveLimits, OperationContext, RawModel, SolidPointLocation, WorkBudget};
+    use hypercurve::{CurvePath2, LineSeg2, Point2 as ProfilePoint, QuadraticBezier2};
+
+    // Preserve the exact former rejection fixture as a positive regression.
+    let bezier = Curve3::rational_bezier(
+        vec![
+            Point3::origin(),
+            Point3::new(1.into(), 1.into(), 0.into()),
+            Point3::new(2.into(), 0.into(), 0.into()),
+        ],
+        vec![Real::one(); 3],
+    )
+    .unwrap();
+    let source = Surface::extrusion(bezier, Vector3::z()).unwrap();
+    for scale in [Real::one(), (Real::one() / Real::from(1000)).unwrap()] {
+        let mut out = Output::new(Default::default());
+        let (_, parameters, flips) = surface(&mut out, &source, &scale).unwrap();
+        assert!(!flips);
+        assert!(out.text.contains("B_SPLINE_CURVE(2,"));
+        assert!(out.text.contains("B_SPLINE_CURVE_WITH_KNOTS((3,3),(0.,1.)"));
+        assert!(out.text.contains("RATIONAL_B_SPLINE_CURVE((1.,1.,1.))"));
+        assert!(out.text.contains("SURFACE_OF_LINEAR_EXTRUSION"));
+        let uv = Point2::new((Real::one() / Real::from(4)).unwrap(), 2.into());
+        let mapped = parameters.map(&uv);
+        equal(&mapped.x, &uv.x);
+        equal(&mapped.y, &uv.y);
+    }
+
+    // x=2t, y=2t(1-t); area integral from x=0 to 2 is 2/3.
+    let path = CurvePath2::try_new(vec![
+        QuadraticBezier2::new(
+            ProfilePoint::from_values(0, 0),
+            ProfilePoint::from_values(1, 1),
+            ProfilePoint::from_values(2, 0),
+        )
+        .into(),
+        LineSeg2::try_new(
+            ProfilePoint::from_values(2, 0),
+            ProfilePoint::from_values(0, 0),
+        )
+        .unwrap()
+        .into(),
+    ])
+    .unwrap();
+    let bodies = hyperbrep::builder::extrude_path(&path, 0.into(), 1.into()).unwrap();
+    let expected = (Real::from(2) / Real::from(3)).unwrap();
+    equal(
+        &bodies.bodies().next().unwrap().volume().unwrap(),
+        &expected,
+    );
+    let context = OperationContext::strict(WorkBudget {
+        refinements: 100_000,
+        promotions: 10_000,
+    });
+    let output = write_advanced(
+        &[super::super::StepBody {
+            solid: bodies.bodies().next().unwrap(),
+            name: "original Bezier fixture",
+        }],
+        &StepWriteOptions::new("bezier.step", "2026-10-18T00:00:00"),
+        &context,
+    )
+    .result
+    .unwrap()
+    .unwrap();
+    let file = StepFile::read(output.text().as_bytes(), &StepReadOptions::default()).unwrap();
+    let imported = file
+        .import_representation(output.representation(), &ImportLimits::default(), &context)
+        .result
+        .unwrap()
+        .unwrap();
+    assert_eq!(imported.bodies().len(), 1);
+    let text = imported.bodies()[0].model().to_json().unwrap();
+    let replay = RawModel::from_json(&text, &ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(replay.to_json().unwrap(), text);
+    let solid = replay.solids().next().unwrap();
+    equal(&solid.volume().unwrap(), &expected);
+    for (numerator, location) in [
+        (1, SolidPointLocation::Inside),
+        (2, SolidPointLocation::Boundary),
+        (3, SolidPointLocation::Outside),
+    ] {
+        assert_eq!(
+            solid
+                .classify_point(&Point3::new(
+                    1.into(),
+                    (Real::from(numerator) / Real::from(4)).unwrap(),
+                    (Real::one() / Real::from(2)).unwrap(),
+                ))
+                .unwrap(),
+            location
+        );
     }
 }

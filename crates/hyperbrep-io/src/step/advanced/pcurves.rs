@@ -116,13 +116,18 @@ impl Builder {
                     });
                 }
                 let angular = surface.angular_coordinates();
-                let u_scale = if angular[0] {
+                let unit_parameter = Real::one();
+                let u_scale = if matches!(surface.support, surfaces::Support::Extrusion(_)) {
+                    &unit_parameter
+                } else if angular[0] {
                     self.angular_scale(site)?
                 } else {
                     scale
                 };
-                let unit_parameter = Real::one();
-                let v_scale = if matches!(surface.support, surfaces::Support::Cone(_)) {
+                let v_scale = if matches!(
+                    surface.support,
+                    surfaces::Support::Cone(_) | surfaces::Support::Extrusion(_)
+                ) {
                     &unit_parameter
                 } else if angular[1] {
                     self.angular_scale(site)?

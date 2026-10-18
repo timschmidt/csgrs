@@ -174,8 +174,15 @@ covers the mixed parabola/chord profile, reversal, affine maps, holes/components
 planar faces, cold replay and further native cuts/restoration. The live extrusion
 retains its original region. Native geometry replay does not persist the full
 authoring boundary graph. Selected-parameter integrals and general nonlinear
-parallel extrusion remain unsupported; STEP rejects this profile's rational
-Bezier edge before reaching any later surface requirements.
+parallel extrusion remain unsupported. The
+[spline exchange increment](evidence/2026-10-18-spline-exchange/README.md)
+adds exact clamped rational B-spline edge and linear-extrusion STEP exchange for
+the admitted profiles. Independent authored records retain weights, knots,
+interior trims, nonunit source charts and units. Imported solids validate, replay
+and continue through the same supported global-z cuts/restoration. Native point
+location supports oblique transverse charts; it does not alone admit general
+oblique solid modeling. Whole-edge proofs remain mandatory. General spline
+surfaces, arbitrary wall pcurves and ambiguous or unrepresented trims are open.
 
 Full cones remain absent until the apex singularity has a topological
 representation rather than degenerate tolerance sewing.

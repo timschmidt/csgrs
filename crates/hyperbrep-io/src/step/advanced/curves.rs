@@ -196,13 +196,15 @@ impl Builder {
         let entity = resolver.entity(geometry)?;
         let record = entity.components().next().expect("syntax component");
         let geometry_site = Site::entity(entity);
-        if entity.is_complex() {
+        if entity.is_complex() && !spline::is_spline(entity) {
             return Err(geometry_site.error(ErrorKind::Unsupported("complex edge geometry")));
         }
         let mut associations = [None, None];
         let mut count = 0;
         let seam = record.name() == "SEAM_CURVE";
-        let (spatial, master_index) = if matches!(record.name(), "SURFACE_CURVE" | "SEAM_CURVE") {
+        let (spatial, master_index) = if !entity.is_complex()
+            && matches!(record.name(), "SURFACE_CURVE" | "SEAM_CURVE")
+        {
             let mut args = Args::new(record, geometry_site);
             resolver.text(args.next()?, geometry_site)?;
             let spatial = args.reference()?;
@@ -248,6 +250,8 @@ impl Builder {
         let (edge, spatial_parameters) =
             if !spatial_entity.is_complex() && spatial_record.name() == "CIRCLE" {
                 self.circular_edge(resolver, spatial, start, end, same_sense, scale)?
+            } else if spline::is_spline(spatial_entity) {
+                self.spline_edge(resolver, spatial, start, end, same_sense, scale)?
             } else {
                 let line = resolver.line3(spatial, scale)?;
                 let parameters = line.parameters(&first.point, &second.point, site)?;
@@ -274,6 +278,7 @@ impl Builder {
                         start,
                         end,
                         circle: None,
+                        spline: None,
                     },
                     parameters,
                 )

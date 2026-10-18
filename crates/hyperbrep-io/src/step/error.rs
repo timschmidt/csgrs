@@ -11,6 +11,8 @@ pub enum Resource {
     DecodedTextBytes,
     /// Directed polygon segments or explicit edge uses admitted before construction.
     EdgeUses,
+    /// Entries in expanded spline knot vectors, including repeated decoding.
+    SplineKnots,
     /// Conservative numerator/denominator bit bound for a unit scale/product.
     UnitScaleBits,
 }

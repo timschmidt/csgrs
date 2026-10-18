@@ -138,6 +138,7 @@ pub(super) struct Resolver<'e, 'a, 'l> {
     scalars: usize,
     text_bytes: usize,
     edge_uses: usize,
+    spline_knots: usize,
     pub used: Vec<u64>,
     pub points: HashMap<u64, Point3>,
     pub units: HashMap<u64, super::Unit>,
@@ -151,6 +152,7 @@ impl<'e, 'a, 'l> Resolver<'e, 'a, 'l> {
             scalars: 0,
             text_bytes: 0,
             edge_uses: 0,
+            spline_knots: 0,
             used: Vec::new(),
             points: HashMap::new(),
             units: HashMap::new(),
@@ -212,6 +214,15 @@ impl<'e, 'a, 'l> Resolver<'e, 'a, 'l> {
             1,
             self.limits.edge_uses,
             Resource::EdgeUses,
+        )
+        .map_err(|kind| site.error(kind))
+    }
+    pub fn spline_knots(&mut self, count: usize, site: Site) -> Result<(), Error> {
+        charge(
+            &mut self.spline_knots,
+            count,
+            self.limits.spline_knots,
+            Resource::SplineKnots,
         )
         .map_err(|kind| site.error(kind))
     }

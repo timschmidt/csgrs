@@ -65,6 +65,13 @@ impl Output {
         self.put("#")?;
         self.put(&id.to_string())
     }
+    /// One complex entity instance; all components share one charged ID.
+    pub fn complex_entity(
+        &mut self,
+        components: impl FnOnce(&mut Self) -> Result<(), WriteError>,
+    ) -> Result<u64, WriteError> {
+        self.entity("", components)
+    }
     pub fn references(&mut self, ids: &[u64]) -> Result<(), WriteError> {
         self.put("(")?;
         for (index, id) in ids.iter().enumerate() {
