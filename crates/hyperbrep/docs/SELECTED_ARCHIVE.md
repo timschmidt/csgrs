@@ -17,9 +17,9 @@ The caller passes `ArchiveLimits` explicitly. Its defaults and units are:
 | `input_bytes` | 16 MiB | All UTF-8 bytes, including whitespace and ignored fields |
 | `nesting_depth` | 1,024 | Simultaneously open JSON objects and arrays |
 | `tokens` | 1,000,000 | Opening containers, quoted strings (including keys), and primitive lexemes |
-| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve sources, and inline extrusion/revolution profiles |
+| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve sources, inline extrusion/revolution profiles and analytic-parallel sources |
 | `degree` | 256 | Each declared NURBS axis degree, inferred Bezier axis degree, or selected-root polynomial storage degree |
-| `geometry_elements` | 1,000,000 | Aggregate variable controls, weights, knots, root coefficients, and tensor row headers |
+| `geometry_elements` | 1,000,000 | Aggregate controls (including polynomial parallel sources), weights, knots, root coefficients, and tensor row headers |
 | `topology_references` | 1,000,000 | Aggregate wire edge uses, face inner wires, shell faces and solid void shells |
 
 Byte admission runs first. A constant-storage iterative scan then counts depth
@@ -98,7 +98,27 @@ ordering, not a canonical form for all mathematically equivalent polynomials.
 Refinement caches, scalar reconstruction caches, addresses and trusted flags
 are excluded.
 
-Pcurves retain the existing native families or
+Pcurves also retain `AnalyticParallel { source, distance, range, reversed }`.
+The source is a polynomial quadratic/cubic control array or homogeneous rational
+Bezier controls, including zero-weight controls. Range endpoints reuse the
+selected-parameter graph and its flattened charts; traversal is separate from
+ascending parameter order. Direct parallels and their selected-fiber
+subdivisions use this definition. General non-Bezier selected parameter fields
+remain unsupported by this archive. Loading reconstructs the source and checks
+the complete range for poles, undefined normals and unsplit interior cusps.
+It accepts certified cusp endpoints and zero-distance stationary sources.
+No source regularity flag is serialized or trusted. Source records, degrees and
+controls are charged before scalar decoding, including in detached pcurve sources.
+
+This adds a family tag to version 9 without changing existing family encodings.
+It preserves the current procedural geometry and selectors, not a complete
+authoring-history or source-intent receipt. A saved unattached pcurve does not
+establish a valid face or solid. Spatial parallel lifting, full edge/pcurve
+agreement and offset-profile extrusion remain open. The
+[parallel replay evidence](evidence/2026-10-18-parallel-pcurve-replay/README.md)
+records the precise supported workflows and limits.
+
+Other pcurves retain the existing native families or
 `SourceRange { source, range, reversed }`. The source indexes an authored
 curve in `selection.pcurve_sources`. The range is ascending in that source's
 chart; traversal is independent. Sources cannot themselves be restrictions.

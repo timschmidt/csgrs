@@ -19,6 +19,8 @@ use crate::{
 mod admission;
 mod limits;
 pub use limits::{ArchiveLimitExceeded, ArchiveLimits, ArchiveResource};
+mod parallel;
+use parallel::{RawParallelPcurve, raw_parallel_source};
 mod selection;
 use selection::{GraphEncoder, RawParameter, RawSelectionGraph, RawVertex, SelectionGraph};
 
@@ -568,6 +570,7 @@ struct RawEllipseArc3 {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawPcurve {
+    AnalyticParallel(Box<RawParallelPcurve>),
     SourceRange {
         source: usize,
         range: [RawParameter; 2],
@@ -615,7 +618,9 @@ fn set_raw_pcurve_start(curve: &mut RawPcurve, start: [Real; 2]) {
         RawPcurve::RationalQuadraticBezier { control_points, .. } => {
             control_points[0] = start;
         }
-        RawPcurve::Nurbs { .. } | RawPcurve::SourceRange { .. } => {}
+        RawPcurve::Nurbs { .. }
+        | RawPcurve::SourceRange { .. }
+        | RawPcurve::AnalyticParallel(_) => {}
     }
 }
 
@@ -636,7 +641,9 @@ fn set_raw_pcurve_end(curve: &mut RawPcurve, end: [Real; 2]) {
         RawPcurve::RationalQuadraticBezier { control_points, .. } => {
             control_points[2] = end;
         }
-        RawPcurve::Nurbs { .. } | RawPcurve::SourceRange { .. } => {}
+        RawPcurve::Nurbs { .. }
+        | RawPcurve::SourceRange { .. }
+        | RawPcurve::AnalyticParallel(_) => {}
     }
 }
 
@@ -1191,6 +1198,7 @@ fn shell_id(index: usize) -> ShellId {
 
 fn pcurve(raw: RawPcurve, graph: &SelectionGraph) -> Result<Curve2, PersistenceError> {
     match raw {
+        RawPcurve::AnalyticParallel(raw) => raw.into_curve(graph),
         RawPcurve::Line { start, end } => {
             let line = LineSeg2::try_new(curve_point2(start), curve_point2(end))
                 .map_err(GeometryError::from)

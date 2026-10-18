@@ -163,6 +163,17 @@ impl GraphEncoder {
     }
 
     pub(super) fn pcurve(&mut self, curve: &Curve2) -> Result<RawPcurve, PersistenceError> {
+        if let Some(view) = curve.analytic_parallel() {
+            return Ok(RawPcurve::AnalyticParallel(Box::new(RawParallelPcurve {
+                source: raw_parallel_source(view.parallel().source()),
+                distance: view.parallel().distance().clone(),
+                range: [
+                    self.curve_parameter(view.range().start())?,
+                    self.curve_parameter(view.range().end())?,
+                ],
+                reversed: view.is_reversed(),
+            })));
+        }
         if let Some((source, range, reversed)) = curve.source_restriction() {
             let raw = raw_native_pcurve(source)?;
             let key = serde_json::to_string(&raw)
@@ -255,17 +266,24 @@ impl SelectionGraph {
     }
 
     pub(super) fn parameter(&self, raw: RawParameter) -> Result<Parameter, PersistenceError> {
+        self.bezier_parameter(raw).map(Parameter::from_bezier)
+    }
+
+    pub(super) fn bezier_parameter(
+        &self,
+        raw: RawParameter,
+    ) -> Result<BezierParameter2, PersistenceError> {
         match raw {
-            RawParameter::Scalar(value) => Ok(value.into()),
-            RawParameter::Selected(index) => self
-                .parameters
-                .get(index)
-                .cloned()
-                .map(Parameter::from_bezier)
-                .ok_or(PersistenceError::InvalidReference {
-                    kind: "selected parameter",
-                    index,
-                }),
+            RawParameter::Scalar(value) => Ok(BezierParameter2::Exact(value)),
+            RawParameter::Selected(index) => {
+                self.parameters
+                    .get(index)
+                    .cloned()
+                    .ok_or(PersistenceError::InvalidReference {
+                        kind: "selected parameter",
+                        index,
+                    })
+            }
         }
     }
 

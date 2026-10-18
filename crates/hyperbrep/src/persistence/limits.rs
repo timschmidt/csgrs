@@ -24,14 +24,16 @@ pub struct ArchiveLimits {
     /// string or a number/boolean/null lexeme counts once, regardless of length.
     pub tokens: usize,
     /// Total topology/geometry records, selected parameters and source records.
-    /// Inline extrusion/revolution profiles count as additional geometry records.
+    /// Inline extrusion/revolution profiles and analytic-parallel sources each
+    /// count as additional geometry records.
     pub records: usize,
     /// Largest authored spline/root degree (Bezier control count minus one).
     /// Tensor Bezier extents use row count and maximum row width. Trailing
     /// zero coefficients are not simplified to reduce the charged root degree.
     pub degree: usize,
     /// Total variable geometry-array entries: controls, weights, knots, root
-    /// coefficients, and tensor row headers. A control point counts once.
+    /// coefficients, analytic-parallel source controls, and tensor row headers.
+    /// A control point counts once, including polynomial parallel controls.
     /// Empty tensor rows still count; fixed analytic coordinate fields do not.
     pub geometry_elements: usize,
     /// Total entries in variable topology lists: wire uses, face inner wires,

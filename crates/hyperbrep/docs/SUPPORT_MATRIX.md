@@ -63,6 +63,14 @@ covered. See the [operation-scope contract](ARCHITECTURE.md#operation-scopes).
 
 ## Spatial curve carriers
 
+Procedural analytic-parallel **pcurves** now have exact native archive replay,
+including quadratic/cubic/homogeneous rational sources and Bezier selected
+parameter charts. Replayed definitions retain subdivision, reversal, supported
+planar similarities and region classification. They are not spatial curve
+carriers in the table below: spatial lifting, complete edge-image admission,
+offset-cap extrusion and STEP remain open. See the
+[parallel replay admission](evidence/2026-10-18-parallel-pcurve-replay/README.md).
+
 | Family | Evaluate / derivatives | Bounds | Parameter location | Reverse / split | Persistence |
 | --- | --- | --- | --- | --- | --- |
 | Finite line | Exact, arbitrary positive derivative order | Exact | Certified | Exact | Exact |

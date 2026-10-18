@@ -105,6 +105,9 @@ impl Record for Curve {
 
 #[derive(Deserialize)]
 pub(super) enum Pcurve {
+    AnalyticParallel {
+        source: ParallelSource,
+    },
     SourceRange(IgnoredAny),
     Line(IgnoredAny),
     CircularArc(IgnoredAny),
@@ -124,6 +127,10 @@ pub(super) enum Pcurve {
 impl Record for Pcurve {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::AnalyticParallel { source } => {
+                budget.record()?;
+                source.admit(budget)
+            }
             Self::SourceRange(_) | Self::Line(_) | Self::CircularArc(_) => Ok(()),
             Self::RationalBezier {
                 homogeneous_controls,
@@ -147,6 +154,29 @@ impl Record for Pcurve {
                 budget.geometry(homogeneous_controls.0 + knots.0)
             }
         }
+    }
+}
+
+#[derive(Deserialize)]
+pub(super) enum ParallelSource {
+    Quadratic(Count),
+    Cubic(Count),
+    Rational { homogeneous_controls: Count },
+}
+impl Record for ParallelSource {
+    fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
+        let (degree, count) = match self {
+            Self::Quadratic(count) => (2, count.0),
+            Self::Cubic(count) => (3, count.0),
+            Self::Rational {
+                homogeneous_controls,
+            } => (
+                homogeneous_controls.0.saturating_sub(1),
+                homogeneous_controls.0,
+            ),
+        };
+        budget.degree(degree)?;
+        budget.geometry(count)
     }
 }
 

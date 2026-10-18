@@ -9967,3 +9967,12 @@ Three alternating pairs preserve all 22 existing consumer groups in 18 processes
 The [adverse review](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/adverse-review.md) explains the retained rejection cost and the separate proof-search experiment required before any optimization.
 
 [Every cost row](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/costs.md) and the [resource review](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/resource-review.json) retain slower observations, allocation requests, process RSS, executable sizes and forty exact archive states. New completed workflows have absolute costs only. Prior rejected ideas and adverse cost obligations remain attached to their original revisions. Allocation requests, archive nesting and process RSS do not bound retained heap, coefficient growth, total work or cancellation. All distribution and broader work-package gates remain open.
+
+
+## Procedural parallel definitions for BRep replay (2026-10-18)
+
+The [admission record](../hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/README.md) adds exact native persistence of analytic parallels and supported planar continuation. This is a capability extension; it introduces no new geometry solver or optimization.
+
+Three alternating pairs preserve all 33 preceding consumer groups in 24 processes, with original assertions, iterations and outcomes. Time ratios range 0.979430–1.065905; 0 exceed the 10% review marker and 5 increase allocation calls or requested bytes. Seven new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
+
+[All cost rows](../hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/costs.md) and the [resource review](../hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/resource-review.json) retain timing, allocation, RSS, executable size and 25 exact archive observations. The previous selected-profile unequal-hole rejection cost and all earlier adverse obligations remain open. These finite samples do not bound arbitrary composition, retained heap, coefficient growth, total work or cancellation. Spatial parallel-cap extrusion and broader release gates remain open.

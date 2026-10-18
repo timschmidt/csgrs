@@ -1,5 +1,14 @@
 # HyperBREP Architecture
 
+Procedural parallel pcurves borrow their source definition through Hypercurve's
+`Curve2::analytic_parallel()` view, including analytic selected-fiber restrictions.
+HyperBRep's [parallel archive records](../src/persistence/parallel.rs) own format
+mapping and pre-decode resource counts; Hypercurve rechecks regularity and
+selected ranges. No offset formula or proof flag is duplicated in BRep.
+This establishes pcurve replay, not a spatial carrier or whole-edge agreement.
+The [admission record](evidence/2026-10-18-parallel-pcurve-replay/README.md)
+retains those next dependencies separately.
+
 HyperBREP is an exact, immutable boundary-representation kernel.
 `hyperreal::Real` is the sole authored coefficient scalar. Approximate numbers may
 eventually propose work at explicit adapter boundaries, but they never decide

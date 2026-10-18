@@ -29,6 +29,7 @@ This README describes crate version `0.3.1`.
 | `Curve2` | Shared exact curve carrier with borrowed operations |
 | `CurveNativeSegment2` | Proof of a complete oriented line/arc image, borrowing the original curve |
 | `CurveNativeImage2` | Complete native curve image, retaining its source and selected-root authority |
+| `CurveAnalyticParallel2` | Borrowed procedural parallel definition, including selected range and traversal |
 | `CurveString2`, `CurvePath2`, `Contour2` | Connected open strings, general paths, and closed line/arc contours |
 | `CurveRegion2` | Native mixed-family filled planar region |
 | `provisional`, `evaluate_under`, `Provisional<T>`, `CurvePreviewOptions`, `Classification<T>` | Explicitly qualified approximate evaluation, its certainty-carrying result, lossy preview adapter, and decided/uncertain result |
@@ -55,6 +56,12 @@ retained boundary measurements when the native area integral is available. Gener
 fields, multiple retained spans and nonlinear parallels can still return typed
 blockers. Simplicity, filled material and source qualification remain separate
 claims.
+
+`Curve2::analytic_parallel()` borrows the procedural source and distance,
+ascending parameter range, traversal and original curve. The view also covers
+analytic selected-fiber subdivisions. It preserves the current definition
+without fitting or rebuilding selected coordinates; it is not a certificate
+to trust on untrusted replay or a complete authoring-history receipt.
 
 Region and closed-path point queries accept `CurvePoint2`, preserving selected
 roots and generated contact evidence. Convert authored coordinates with

@@ -81,6 +81,12 @@ before exact-scalar deserialization. `RawModel::validate` then
 reconstructs geometry proofs. Input limits do not bound scalar reconstruction
 or geometric validation; see the [archive contract](docs/SELECTED_ARCHIVE.md).
 
+Native archives also retain procedural analytic-parallel pcurves: polynomial
+or homogeneous rational sources, signed distance, selected ranges and traversal.
+Replay rechecks source regularity and preserves subsequent planar subdivision
+and region queries. This does not yet admit spatial offset-profile extrusion;
+see the [parallel replay scope](docs/evidence/2026-10-18-parallel-pcurve-replay/README.md).
+
 ## Exactness contract
 
 - Authored coordinates, coefficients, domains, weights, knots, and transforms
