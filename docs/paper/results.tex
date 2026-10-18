@@ -1,0 +1,32 @@
+\begin{table}[htbp]\centering\small
+\caption{Complete small-batch sweep. Medians of seven processes per variant; seconds per phase. Each phase executes at least 65,536 queries. These are historical focused measurements, not downstream completion timings.}\label{tab:small}
+\begin{tabular}{r r r r r}\toprule
+Pairs & Baseline cold & Candidate cold & Baseline warm & Candidate warm\\\midrule
+1 & 0.096751 & 0.097080 & 0.049912 & 0.048823\\
+4 & 0.113293 & 0.113556 & 0.065195 & 0.066412\\
+8 & 0.132712 & 0.132918 & 0.077735 & 0.078304\\
+9 & 0.133840 & 0.134796 & 0.079012 & 0.080241\\
+16 & 0.173978 & 0.169416 & 0.100652 & 0.101091\\
+31 & 0.212763 & 0.207698 & 0.137803 & 0.135990\\
+32 & 0.213113 & 0.211257 & 0.138882 & 0.089373\\
+33 & 0.215525 & 0.213884 & 0.138184 & 0.089626\\
+64 & 0.290213 & 0.282574 & 0.212951 & 0.091073\\
+128 & 0.437721 & 0.431177 & 0.357725 & 0.092861\\
+\bottomrule\end{tabular}\end{table}
+
+\begin{table}[htbp]\centering\small
+\caption{Complete grouped shared-coefficient sweep. Each group sums eight independent 20,000-query phases. Seven groups per variant. No row meets the original three-part rejection rule; adverse measurements remain visible.}\label{tab:shared}
+\begin{tabular}{r r r r r}\toprule
+Shift bits & Baseline ms & Candidate ms & Change & Positive pairs\\\midrule
+64 & 3.875165 & 4.108438 & +6.0197\% & 7/7\\
+65536 & 3.760519 & 3.994425 & +6.2200\% & 7/7\\
+1048576 & 3.592033 & 3.701635 & +3.0513\% & 6/7\\
+\bottomrule\end{tabular}\end{table}
+
+\begin{table}[htbp]\centering\small
+\caption{Later complete executions of the two preserved candidate library binaries. Configurations overlap; counts must not be added as distinct coverage.}\label{tab:suites}
+\begin{tabular}{l r r r}\toprule
+Configuration & Passed & Failed & Existing ignored\\\midrule
+no-feature & 1743 & 0 & 4\\
+all-feature & 1750 & 0 & 9\\
+\bottomrule\end{tabular}\end{table}

@@ -11,7 +11,7 @@ routing, packing, voxel, and design-readiness crates.
 The crate does not try to be a complete computer algebra system. Its job is to
 preserve exact or refinement-ready structure until a caller can make a
 certified decision—or report that the available evidence is insufficient.
-Version `0.13.1` is the current crate release documented here.
+Version `0.13.1` describes the unreleased source in this checkout.
 
 ## Why exact-aware real arithmetic?
 
@@ -65,15 +65,13 @@ explain their representations in more depth.
 
 ## Quick start
 
-Create a project and add Hyperreal:
+From the repository root, run the checked-in example for this source version:
 
 ```sh
-cargo new exact-scalars
-cd exact-scalars
-cargo add hyperreal
+cargo run -p hyperreal --example readme_quickstart
 ```
 
-Replace `src/main.rs` with:
+The example is:
 
 <!-- quickstart:start -->
 ```rust
@@ -94,13 +92,7 @@ fn main() -> Result<(), Problem> {
 ```
 <!-- quickstart:end -->
 
-Run it:
-
-```sh
-cargo run
-```
-
-The same program is checked in as
+The program is checked in as
 [`examples/readme_quickstart.rs`](examples/readme_quickstart.rs), compiled by
 the test suite, and compared byte-for-byte with this README block.
 
@@ -205,7 +197,7 @@ as a general-purpose special-function library.
 
 | Task | API |
 | --- | --- |
-| Cheap object-independent facts | `definitely_zero`, `definitely_one`, `zero_or_one`, `zero_one_or_minus_one`, `immediate_sign`, `structural_facts`, `detailed_facts` |
+| Cheap object-independent facts | `definitely_zero`, `definitely_one`, `zero_or_one`, `zero_one_or_minus_one`, `immediate_equality`, `immediate_sign`, `structural_facts`, `detailed_facts` |
 | Recover exact content | `exact_rational`, `exact_rational_ref`, `is_exact_dyadic_rational`, `exact_set_facts` |
 | Check an opposite structural scale | `is_structural_negation_of` |
 | Check a function domain | `domain_facts`, `reciprocal_domain`, `sqrt_domain`, `log_domain`, `asin_acos_domain`, `acosh_domain`, `atanh_domain` |
@@ -214,6 +206,13 @@ as a general-purpose special-function library.
 | Enclose while retaining exact rational points | `certified_rational_interval` |
 | Reuse an existing enclosure without refinement | `cached_rational_interval` |
 | Enclose on a dyadic grid for interval arithmetic | `certified_dyadic_interval` |
+
+`immediate_equality` consumes already known rational structure. `Some(true)`
+proves equality and `Some(false)` proves inequality; `None` is inconclusive,
+including for rational pairs that require wider arithmetic. It does not
+construct a difference or arbitrary-width cross products. Symbolic inputs
+keep their existing proof paths. Borrowed digit comparisons still depend on
+input size, so this query does not supply a constant-time resource bound.
 
 Higher layers should first use retained facts, then request bounded refinement
 only at a decision boundary. An unresolved certificate is meaningful; it must
@@ -360,6 +359,11 @@ triangulations, meshes, boundary representations, and CSG grammar.
   feature matrix, fuzzing, and executable-line measurement.
 - [`benchmarks.md`](benchmarks.md) contains generated benchmark summaries.
 - Generate the complete API reference with `cargo doc --open`.
+
+The Cargo package includes the source, examples, tests, regression fixtures,
+and checkpoint summaries. Full validation replay bundles under
+`benchmarks/checkpoints/*.tar.gz` remain in the repository and are excluded
+from the package; use a repository checkout to replay those archived runs.
 
 ## References
 

@@ -184,7 +184,9 @@ impl PcbRegion {
 /// Checked finite report views over authoritative native geometry.
 ///
 /// Parser-owned profiles retain their authored decomposition and report sample
-/// count; they are not a claim that those authored profiles are disjoint.
+/// count, including deferred views of aggregated source owners; they are not a
+/// claim that those authored profiles are disjoint. Failed projections do not
+/// populate a successful aggregate view and can be retried in a fresh scope.
 /// Without such source evidence, material components are projected separately,
 /// retaining each native component as authority. Neither unavailable components
 /// nor failed report coordinates may be replaced by reconstructed report rings.
@@ -202,8 +204,16 @@ impl PcbRegionExt for PcbRegion {
         evaluate("report-projection", source, || {
             self.ensure_exact_geometry("report-projection")?;
             if self.finite_projection.get().is_none() {
-                let components = self.exact_component_regions()?;
-                let projected = finite_polygons(components, source)?;
+                let projected = if let Some(sources) = &self.finite_projection_sources {
+                    let mut polygons = Vec::new();
+                    for source in sources.iter() {
+                        polygons.extend(source.try_to_multipolygon()?.0);
+                    }
+                    MultiPolygon(polygons)
+                } else {
+                    let components = self.exact_component_regions()?;
+                    finite_polygons(components, source)?
+                };
                 let _ = self.finite_projection.set(projected);
             }
             Ok(self

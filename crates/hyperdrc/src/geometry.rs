@@ -30,6 +30,7 @@ pub use primitives::{
 };
 pub use rectangle::rect_polygon;
 pub(crate) use rectangle::rectangle_region;
+pub(crate) use region::regions_to_profile;
 pub use region::{empty_profile, polygon_to_profile, polygons_to_profile};
 pub use source_units::{
     ExactLiftKind, RuleGeometryProvenance, SourceGridFacts, SourceScalar, SourceUnit,

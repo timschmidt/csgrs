@@ -87,6 +87,11 @@ const NO_GMP_ANALOG: &[&str] = &[
     "has_integer_grid_schedule",
     "has_shared_denominator_schedule",
     "has_signed_unit_schedule",
+    // A partial, retained-structure equality proof: None is inconclusive even
+    // for some exact rational pairs. GMP's total rational equality and MPFR's
+    // rounded-value comparison do not expose this proof-search boundary.
+    // The nine-family Point2 consumer probe retains its costs and fallback.
+    "immediate_equality",
     "immediate_sign",
     "is_exact_dyadic_rational",
     "is_nonempty_exact_rational",

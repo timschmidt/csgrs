@@ -2076,6 +2076,36 @@
       "validation": "Exact degree-five positive rational Bezier and clamped NURBS prisms with absent represented integrals complete all planar construction front doors, strict validation, classification, supported affine transforms, split/cold replay, empty identities, repeated slab cuts/restoration and finite-decimal STEP exchange. Native all-zero Bernstein plane numerators establish complete containment at higher degree; bowed controls reject. The lower-layer simple-loop winding proof preserves authored spans and selected-root identity. Independently derived rational points and 1/10^12 offsets establish semantic expectations. All-feature/minimal native+IO release suites pass 625/617 tests; new debug 10, focused curve 96+4+62, warning-denied all-target Clippy/rustdoc, nine examples, fuzz-target compilation and formatting pass. Final ENOSPC attempts are retained; three affected commands pass with identical source and incremental compilation disabled. Source-path native consumers and actual zero-import WASM pass 7+9+14+138 groups. All 277 preceding artifacts remain byte-identical; 12 new artifacts agree across two fresh processes. OCCT independently reads eight new STEP files with valid one-solid topology and numerical volumes agreeing with independent Decimal quadrature. Original 24 prism and 81 continuation outcomes remain; seven retained-profile diagnostics stay at two native completions and five unsupported results, and the old round-path measurement failures remain explicit. The earlier cubic already succeeded and still has represented volume.",
       "cost_evidence": "All 192 original receipts and iterations remain across 22 corpora and 72 processes. 38 cases in seven affected corpora have three alternating pairs; 154 cases in fifteen corpora have one pair as preservation probes. Across all rows the median observed ratio is 0.999352, range 0.818567\u20131.236156; One row exceeds the 10% review marker; 10 rows increase allocation requests. The six preceding native and nine preceding spline groups have separate three-pair comparisons. Seven new complete groups have absolute costs from three processes, with no ratio against former failures. Every unfavorable observation remains. Shared-host observations and single pairs establish no general speedup or controlled-host timing admission. A fixed three-pair full-arc follow-up retains all twelve receipts; structural-fact replay then has ratio 0.983872, with the original 1.236156 single-pair observation retained separately. Neither campaign establishes a causal or significance claim.",
       "limits": "Only absent integrals (Ok(None)) are decoupled; available-integral errors still propagate. Fully deferred metrics, certified integration, general shells/intersections, retained non-native spatial carriers and broader STEP remain open. Source-path native/WASM and package membership are not registry/MSRV/binding delivery. Complete coverage, formal proof, fuzz/ASan/lexicase campaigns, internal total-work/heap/cancellation bounds, full pre-push validation and all 28 work packages remain open/in-progress. No push. Supporting-crate changes retain their ownership; unrelated concurrent-thread work is left alone. Fetched origin/main 540074a8c is pending a separate merge and requalification."
+    },
+    {
+      "id": "upstream-equality-integration-2026-10-18",
+      "work_packages": [
+        "WP00",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P3",
+        "P4",
+        "P6",
+        "P9",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Integrate upstream shared rational equality facts and Point2 consumption; preserve BRep production, both histories and source-bound downstream qualification.",
+      "evidence": "evidence/2026-10-18-equality-upstream-integration/manifest.json",
+      "validation": "Merged 18 upstream commits through 540074a8c, preserving both performance histories and all non-BRep ledger bytes. Hyperreal shares sufficient exact rational equality facts; Point2 consumes them and keeps its original symbolic/difference fallback. Native BRep and IO production source remains byte-identical to fbcc75e77. The merged source passes seven scalar equality tests, one new scalar doctest, three public point contracts, fourteen internal point tests, ten new debug groups, 625 all-feature and 617 minimal BRep/IO release tests, 96+4+62 affected curve tests, warning-denied all-target Clippy/rustdoc, nine examples, fuzz-target compilation and formatting. Source-path native consumers preserve the 7, 9 and 14 acceptance groups plus eight full original workflows; zero-import WASM preserves 7+9+14+138 groups. All earlier continuation controls remain. All 289 preceding artifacts remain byte-identical; the 78 recent artifacts also agree across two fresh processes. Original 24 prism and 81 continuation outcomes and seven retained-profile recipes remain unchanged; the latter retain two completions and five unsupported outcomes. The previous eight quintic OCCT observations are reused only for identical file bytes; the original twenty prism reader cases are rerun.",
+      "cost_evidence": "Three alternating pairs of each complete six-group native, nine-group spline and seven-group measurement consumer preserve every outcome, assertion and iteration count (22 groups; 18 processes). Observed time ratios range 0.773215\u20131.036326, with median 0.986173; 0 exceed the 10% review marker and 0 increase allocation requests. All slower and adverse rows remain. This is a finite downstream comparison on a shared host, not a rerun of the preceding 192-case catalogue, a general speedup, statistical significance or an internal resource bound.",
+      "limits": "BRep source-path qualification only. Upstream package/MSRV/binding records retain their own revision and domain; they do not qualify this BRep feature surface. Full distribution, MSRV, production binding, coverage/formal, fuzz/ASan/lexicase, operation-wide resource and pre-push gates remain open. No production BRep redesign, lower-layer regression repair or push. All 28 work packages remain open/in-progress; protected stashes remain untouched."
     }
   ],
   "work_packages": [

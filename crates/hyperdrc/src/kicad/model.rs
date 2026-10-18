@@ -5,8 +5,8 @@
 
 use std::collections::BTreeMap;
 
-use crate::geometry::{Polygon, empty_profile, polygons_to_profile};
-use crate::{LayerMetadata, PcbGeometryUncertainty, PcbRegion, PcbRegionExt, Scalar};
+use crate::geometry::regions_to_profile;
+use crate::{LayerMetadata, PcbGeometryUncertainty, PcbRegion, Scalar};
 
 #[derive(Clone, Debug)]
 /// Public data model for `BoardModel`.
@@ -127,7 +127,8 @@ impl DrillFeature {
 }
 
 impl BoardModel {
-    /// Build per-layer profiles, returning required geometry or projection failures.
+    /// Build exact per-layer profiles, retaining geometry failures.
+    /// Finite report projection is a separate, fallible operation.
     /// Layer names are returned in lexical order. Authored feature order within
     /// each layer is retained; selection order does not reorder the result.
     pub fn copper_layers(
@@ -135,7 +136,7 @@ impl BoardModel {
         selected_layers: &[String],
     ) -> Result<Vec<(String, PcbRegion)>, PcbGeometryUncertainty> {
         crate::operations::evaluate("copper-layers", Some(&self.source), || {
-            let mut by_layer: BTreeMap<String, Vec<Polygon<f64>>> = BTreeMap::new();
+            let mut by_layer: BTreeMap<String, Vec<&PcbRegion>> = BTreeMap::new();
 
             for feature in &self.copper {
                 if !selected_layers.is_empty() && !selected_layers.contains(&feature.layer) {
@@ -144,42 +145,38 @@ impl BoardModel {
                 by_layer
                     .entry(feature.layer.clone())
                     .or_default()
-                    .extend(feature.region.try_to_multipolygon()?.0);
+                    .push(&feature.region);
             }
 
             by_layer
                 .into_iter()
-                .map(|(layer, polygons)| {
-                    let region = polygons_to_profile(
-                        polygons,
+                .map(|(layer, regions)| {
+                    let region = regions_to_profile(
+                        &regions,
                         Some(LayerMetadata {
                             name: format!("KiCad {layer}"),
                         }),
-                    );
-                    region.ensure_exact_geometry("copper-layer")?;
+                    )?;
                     Ok((layer, region))
                 })
                 .collect()
         })
     }
 
-    /// Combine all copper into an exact-backed report profile, retaining failures.
+    /// Combine all copper natively, retaining failures without a report projection.
     pub fn all_copper(&self) -> Result<PcbRegion, PcbGeometryUncertainty> {
         crate::operations::evaluate("all-copper", Some(&self.source), || {
-            let mut polygons = Vec::new();
-            for feature in &self.copper {
-                polygons.extend(feature.region.try_to_multipolygon()?.0);
-            }
-            let metadata = Some(LayerMetadata {
-                name: "KiCad copper".to_string(),
-            });
-            let region = if polygons.is_empty() {
-                empty_profile(metadata)
-            } else {
-                polygons_to_profile(polygons, metadata)
-            };
-            region.ensure_exact_geometry("all-copper")?;
-            Ok(region)
+            let regions = self
+                .copper
+                .iter()
+                .map(|feature| &feature.region)
+                .collect::<Vec<_>>();
+            regions_to_profile(
+                &regions,
+                Some(LayerMetadata {
+                    name: "KiCad copper".to_string(),
+                }),
+            )
         })
     }
 }

@@ -6,7 +6,7 @@
 use hypercurve::CurveRegion2;
 
 use super::{MultiPolygon, Polygon};
-use crate::{LayerMetadata, PcbRegion};
+use crate::{LayerMetadata, PcbGeometryUncertainty, PcbRegion};
 
 /// Convert one exact-backed polygon into a native filled region with metadata.
 pub fn polygon_to_profile(polygon: Polygon<f64>, metadata: Option<LayerMetadata>) -> PcbRegion {
@@ -59,36 +59,60 @@ pub fn polygons_to_profile(
     }
 }
 
+/// Combine checked PCB owners without requiring a finite report projection.
+/// All selected sources are validated before empty or singleton identities.
+pub(crate) fn regions_to_profile(
+    regions: &[&PcbRegion],
+    metadata: Option<LayerMetadata>,
+) -> Result<PcbRegion, PcbGeometryUncertainty> {
+    let source = metadata.as_ref().map(|m| m.name.as_str());
+    let native = crate::operations::evaluate("profile-aggregation", source, || {
+        let regions = regions
+            .iter()
+            .map(|region| {
+                region.ensure_exact_geometry("profile-aggregation")?;
+                Ok(region.region.clone())
+            })
+            .collect::<Result<Vec<_>, PcbGeometryUncertainty>>()?;
+        aggregate_native_regions(&regions)
+            .map_err(|detail| crate::operations::failure("profile-aggregation", source, detail))
+    })?;
+    Ok(PcbRegion::new_aggregate(native, metadata, regions))
+}
+
 fn aggregate_exact_regions(
     polygons: &[Polygon<f64>],
 ) -> Result<std::sync::Arc<CurveRegion2>, String> {
-    // Validate every source before an empty, singleton or family fast path.
-    for polygon in polygons {
-        polygon
-            .try_exact_region()
-            .map_err(|error| error.to_string())?;
-    }
-    match polygons {
+    let regions = polygons
+        .iter()
+        .map(|polygon| {
+            polygon
+                .try_exact_region()
+                .map_err(|error| error.to_string())?;
+            Ok(polygon.shared_exact_region())
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+    aggregate_native_regions(&regions)
+}
+
+fn aggregate_native_regions(
+    regions: &[std::sync::Arc<CurveRegion2>],
+) -> Result<std::sync::Arc<CurveRegion2>, String> {
+    match regions {
         [] => return Ok(std::sync::Arc::new(CurveRegion2::empty())),
-        [polygon] => return Ok(polygon.shared_exact_region()),
+        [region] => return Ok(region.clone()),
         _ => {}
     }
     let mut material = Vec::new();
     let mut holes = Vec::new();
-    for polygon in polygons {
-        let Some(native) = polygon
-            .try_exact_region()
-            .map_err(|error| error.to_string())?
+    for region in regions {
+        let Some(native) = region
             .native_contours_fast_path()
             .map_err(|error| error.to_string())?
         else {
             // The line/arc adapter is only a bulk fast path. Other supported
             // carriers stay native and use the kernel's regularized union.
-            let regions = polygons
-                .iter()
-                .map(Polygon::shared_exact_region)
-                .collect::<Vec<_>>();
-            return union_native_regions(&regions).map_err(|error| error.to_string());
+            return union_native_regions(regions).map_err(|error| error.to_string());
         };
         material.extend(native.material_contours().iter().cloned());
         holes.extend(native.hole_contours().iter().cloned());

@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
-Status: implementation blueprint. Updated 2026-10-17 for upstream
-`7ed43501755fd64a01f54c3078d12229cbc0129d` and concurrent development ownership.
+Status: implementation blueprint. Updated 2026-10-18 for upstream
+`540074a8c05ccc676d7c70b8f0093f98804b81d9` and concurrent development ownership.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,
@@ -82,6 +82,18 @@ latest upstream intent, and update BREP callers directly. Requalify the affected
 native, feature, WASM and composition paths after integration. Keep a fixed
 revision throughout checks and matched measurements; refresh source-specific
 evidence before making claims on the merged code.
+
+The [equality integration](evidence/2026-10-18-equality-upstream-integration/README.md)
+keeps shared exact rational facts in Hyperreal and their consumption in
+Hypercurve. Reuse a sufficient fact and preserve the original proof fallback
+when it is inconclusive. A false point equality result is not, by itself, a
+certified geometric inequality for arbitrary symbolic coordinates. Future tests
+must permit stronger exact proofs after warming while rejecting contradictions;
+keep original inputs and evidence without requiring permanent Unknown outcomes.
+Requalify BRep continuations after dependency changes. Upstream package and
+binding evidence retains its own source/domain and does not qualify the current
+BRep distribution. Historical adverse costs and rejected scalar experiments
+remain recorded; unrelated work remains with the concurrent thread.
 
 The [prism admission cost increment](evidence/2026-10-17-prism-admission-cost/README.md)
 preserves the complete current domain and deterministic outputs while reducing

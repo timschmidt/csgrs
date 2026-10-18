@@ -1,5 +1,16 @@
 # HyperBREP Performance Contract
 
+## 2026-10-18: upstream equality integration
+
+Three alternating pairs of each complete six-group native, nine-group spline and seven-group measurement consumer preserve every outcome, assertion and iteration count (22 groups; 18 processes). Observed time ratios range 0.773215–1.036326, with median 0.986173; 0 exceed the 10% review marker and 0 increase allocation requests. All slower and adverse rows remain. This is a finite downstream comparison on a shared host, not a rerun of the preceding 192-case catalogue, a general speedup, statistical significance or an internal resource bound.
+
+The [integration record](docs/evidence/2026-10-18-equality-upstream-integration/README.md)
+and [complete observations](docs/evidence/2026-10-18-equality-upstream-integration/costs.md)
+retain every row, allocation request, RSS observation and executable/WASM size.
+BRep/IO production source is unchanged; the comparison measures the updated
+scalar/Point2 dependency path. Historical adverse costs remain open, including
+upstream direct Rational comparison. No release or pre-push completion claim.
+
 ## 2026-10-18: exact prism admission with optional measurements
 
 The [admission record](docs/evidence/2026-10-18-measurement-admission/README.md)

@@ -17,6 +17,9 @@ mod linear_combination;
 mod normal_reference;
 mod tests;
 
+#[cfg(test)]
+mod immediate_equality_tests;
+
 pub use arithmetic::*;
 pub use exact_set::{
     RealExactSetDenominatorKind, RealExactSetDyadicExponentClass, RealExactSetFacts,

@@ -31,9 +31,13 @@ impl fmt::Debug for Point2 {
 
 impl PartialEq for Point2 {
     fn eq(&self, other: &Self) -> bool {
+        fn coordinate_eq(left: &Real, right: &Real) -> bool {
+            left.immediate_equality(right)
+                .unwrap_or_else(|| (left - right).zero_status() == ZeroKnowledge::Zero)
+        }
+
         Arc::ptr_eq(&self.0, &other.0)
-            || ((self.x() - other.x()).zero_status() == ZeroKnowledge::Zero
-                && (self.y() - other.y()).zero_status() == ZeroKnowledge::Zero)
+            || (coordinate_eq(self.x(), other.x()) && coordinate_eq(self.y(), other.y()))
     }
 }
 

@@ -5878,6 +5878,9 @@ mod tests {
                     && &left.numerator * &right.denominator == &right.numerator * &left.denominator;
                 for _ in 0..2 {
                     assert_eq!(left == right, expected, "pair {i}, {j}");
+                    if let Some(equal) = left.immediate_equality(right) {
+                        assert_eq!(equal, expected, "immediate pair {i}, {j}");
+                    }
                     assert_eq!(
                         left.partial_cmp(right) == Some(Ordering::Equal),
                         expected,
