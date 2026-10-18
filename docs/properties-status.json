@@ -18068,20 +18068,87 @@
     "next": "Reproduce the separately observed exact-sign publication race at the shared scalar owner. Retain the native ingress and full-workload obligations; do not combine unadmitted caches or weaken original gates."
   },
   "exact_sign_publication": {
-    "status": "locally qualified correction; downstream and final integration admission pending",
-    "owner": "Hyperreal AtomicFacts publication for immutable Computable nodes",
-    "review": "docs/evidence/2026-10-18-sign-cache-local/review-v1.json",
-    "checkpoint": "docs/evidence/2026-10-18-sign-cache-local/checkpoint-v1.json",
+    "status": "kept: exact-sign publication preserves an existing certificate",
+    "owner": "Hyperreal AtomicFacts for immutable Computable nodes",
+    "parent_revision": "79a67b140eac2251584c7ec6fe0205761dab892e",
+    "review": "docs/evidence/2026-10-18-sign-cache-publication/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-sign-cache-publication/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-sign-cache-publication/artifact-expectations-v1.json.gz",
     "baseline_regressions_failed": 3,
+    "baseline_positive_control_passed": 1,
     "candidate_regressions_passed": 4,
-    "default_parent_tests": 934,
-    "all_feature_parent_tests": 1041,
+    "actual_main_packages": {
+      "csgrs": {
+        "doctests_passed": 1,
+        "parent_ignored": 0,
+        "parent_test_passed": 439,
+        "test_binaries": 48
+      },
+      "hypercircuit": {
+        "doctests_passed": 0,
+        "parent_ignored": 0,
+        "parent_test_passed": 348,
+        "test_binaries": 46
+      },
+      "hypercurve": {
+        "doctests_passed": 1,
+        "parent_ignored": 33,
+        "parent_test_passed": 2480,
+        "test_binaries": 53
+      },
+      "hyperdrc": {
+        "doctests_passed": 3,
+        "parent_ignored": 0,
+        "parent_test_passed": 1667,
+        "test_binaries": 10
+      },
+      "hyperlimit": {
+        "doctests_passed": 0,
+        "parent_ignored": 0,
+        "parent_test_passed": 365,
+        "test_binaries": 17
+      },
+      "hypermesh": {
+        "doctests_passed": 0,
+        "parent_ignored": 7,
+        "parent_test_passed": 250,
+        "test_binaries": 9
+      },
+      "hyperreal-all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_test_passed": 1041,
+        "test_binaries": 25
+      },
+      "hyperreal-default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_test_passed": 934,
+        "test_binaries": 24
+      }
+    },
     "debug_library_tests": 817,
+    "downstream_parent_tests": 5549,
+    "existing_downstream_ignored_tests": 40,
+    "original_native_gates_passed": true,
+    "all_twelve_report_bytes_and_parsed_values_equal": true,
     "allocation_rows_identical": true,
-    "source_changes_applied": false,
-    "runtime_admitted": false,
+    "general_speedup_claimed": false,
+    "actual_main_source_without_overlays_checked": true,
+    "compiler_floor_scope": "Rust 1.95 all-target checks with all features and no default features for Hyperreal, Hyperlimit and Hypercurve; no 1.95 runtime or Clippy claim.",
+    "source_changes_applied": true,
+    "runtime_admitted": true,
+    "runtime_admitted_scope": "Monotone exact-sign publication only",
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 12,
+    "cumulative_log_allowance_mib": 96,
+    "storage_baselines_reset": false,
+    "workload_time_and_memory_limits_unchanged": true,
+    "all_adverse_results_retained": true,
     "full_plan_complete": false,
-    "next": "Finish affected consumers, original native resource gates, complete report replay and compiler-floor checks; only then integrate, run final main checks and decide retention."
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Continue the properties plan with the retained cache invariant; evaluate strict native completion separately against its unchanged contracts."
   }
 },
   "status_meanings": {

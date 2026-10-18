@@ -604,11 +604,22 @@ impl AtomicFacts {
         Self::decode_exact_sign(self.0.load(std::sync::atomic::Ordering::Relaxed))
     }
 
+    /// Publish a sign proof without erasing a certificate from another traversal.
+    /// Exact proofs for this immutable node must agree; unresolved work cannot
+    /// invalidate them. Recheck this invariant after every failed CAS.
     #[cfg(not(verus_keep_ghost))]
     fn replace_exact_sign(&self, value: ExactSignCache) -> ExactSignCache {
         let encoded = Self::encode_exact_sign(value);
         let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
         loop {
+            let previous = Self::decode_exact_sign(current);
+            if let ExactSignCache::Valid(sign) = previous {
+                debug_assert!(
+                    !matches!(value, ExactSignCache::Valid(other) if other != sign),
+                    "inconsistent exact signs for an immutable expression",
+                );
+                return previous;
+            }
             let updated = (current & !Self::EXACT_SIGN_MASK) | encoded;
             match self.0.compare_exchange_weak(
                 current,
@@ -616,7 +627,7 @@ impl AtomicFacts {
                 std::sync::atomic::Ordering::Relaxed,
                 std::sync::atomic::Ordering::Relaxed,
             ) {
-                Ok(_) => return Self::decode_exact_sign(current),
+                Ok(_) => return previous,
                 Err(observed) => current = observed,
             }
         }
