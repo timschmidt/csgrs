@@ -18474,6 +18474,46 @@
     "public_distribution_complete": false,
     "hypervoxel_deferred_by_user": true,
     "next": "Validate mathematical domains and representation certificates at scalar ingress with honest typed uncertainty/resource behavior, preserving valid legacy schedules and the certified-success corpus, before reconsidering affine cancellation."
+  },
+  "lazy_scalar_ingress_investigation": {
+    "status": "Reject lazy reconstruction cache prototype; preserve evidence and restore all production and test sources to the parent revision.",
+    "parent_revision": "0fa83aea7aae9d57a578da0cf28299f12ca75409",
+    "review": "docs/evidence/2026-10-18-lazy-scalar-investigation/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-lazy-scalar-investigation/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-lazy-scalar-investigation/artifact-expectations-v1.json.gz",
+    "candidate_scalar_qualification": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1055
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 936
+      }
+    },
+    "candidate_debug_units_passed": 819,
+    "candidate_rejected": true,
+    "source_restored": true,
+    "new_runtime_admitted": false,
+    "explicit_subtraction_candidate_admitted": false,
+    "remaining_defects": [
+      "Valid lazy Pi sign queries panic despite successful interval construction.",
+      "Lazy symbolic owned exp/asinh substitute the outer rational scale for the represented symbolic value.",
+      "Forged named tags and graphs can give contradictory definite facts and intervals.",
+      "Undefined expression graphs may decode, panic on refinement, or be hidden by zero multiplication.",
+      "Automatic reciprocal equality remains Unknown in ten named-class materialized controls despite an available explicit rational normal form."
+    ],
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 32,
+    "all_adverse_results_retained": true,
+    "performance_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Repair owned folding using the existing Class certificate reconstruction. First reproduce directly consumed lazy values against independent mathematical bounds; preserve the separate lazy-query, cache, certificate/domain and automatic-equality obligations."
   }
 },
   "status_meanings": {
