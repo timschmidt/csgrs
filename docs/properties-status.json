@@ -18340,6 +18340,140 @@
     "public_distribution_complete": false,
     "hypervoxel_deferred_by_user": true,
     "next": "Repair typed validation at the owning scalar deserialization boundary, preserving valid representations and explicit resource/uncertainty contracts. Reproduce and qualify that repair before revisiting the affine candidate."
+  },
+  "required_opaque_scalar_payload": {
+    "status": "Retain typed rejection of a missing opaque Real payload and repair the reproduced circuit test feature declarations; the present-graph domain blocker remains open.",
+    "parent_revision": "7ce3ff7f000b59d8b497f42b3f9bd9c135fc71fe",
+    "review": "docs/evidence/2026-10-18-required-scalar-payload/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-required-scalar-payload/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-required-scalar-payload/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1049
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 934
+      }
+    },
+    "debug_units_passed": 817,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 365,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "consumer_feature_gate_matrix": {
+      "all": {
+        "features": [
+          "--all-features"
+        ],
+        "summaries": [
+          [
+            "ok",
+            "5",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "test_bodies_unchanged": true
+      },
+      "geometry": {
+        "features": [
+          "--features",
+          "interchange,geometry"
+        ],
+        "summaries": [
+          [
+            "ok",
+            "4",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "test_bodies_unchanged": true
+      }
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "all_targets": true,
+      "packages": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "runtime_tests_rerun": false,
+      "clippy_on_msrv_run": false
+    },
+    "new_failing_baseline_tests": 6,
+    "new_passing_scalar_tests": 8,
+    "downstream_svg_regression_passed": true,
+    "source_changes_applied": true,
+    "runtime_admitted": true,
+    "admitted_scope": "Required opaque payload at deserialization, plus consumer test declarations aligned with their existing feature gates.",
+    "remaining_present_graph_domain_blocker": true,
+    "explicit_subtraction_candidate_admitted": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 24,
+    "all_adverse_results_retained": true,
+    "performance_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Validate mathematical domains and representation certificates at scalar ingress with honest typed uncertainty/resource behavior, preserving valid legacy schedules and the certified-success corpus, before reconsidering affine cancellation."
   }
 },
   "status_meanings": {

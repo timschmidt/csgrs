@@ -305,9 +305,12 @@ operations. Run expressions with:
 cargo run --features simple -- "(sqrt (/ 49 64))"
 ```
 
-With `serde`, use `serde::to_json`, `from_json`, `to_bytes`, and `from_bytes`.
+With `serde`, use `Real::to_json`, `from_json`, `to_bytes`, and `from_bytes`.
 Serialization records expression structure, not transient caches or abort
-signals.
+signals. An opaque scalar without its required computable payload is rejected
+by Serde and returns `Problem::ParseError` through the convenience readers.
+Validation of mathematical domains inside present expression graphs remains
+incomplete.
 
 ## Guarantees and boundaries
 

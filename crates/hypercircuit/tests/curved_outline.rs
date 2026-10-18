@@ -4,11 +4,14 @@
 use hypercircuit::Design;
 use hypercircuit::{
     AdapterKind, BoardContour, BoardContourSegment, BoardId, BoardOutline, Circuit, CircuitId,
-    FabricationExportOptions, FabricationFileKind, FabricationPackage, KiCadExportOmission,
-    KiCadExportOptions, KiCadImportOptions, KiCadImportReport, MaterializationOptions,
-    MaterializationProjection, NegotiatedRoutePolicy, NegotiatedRouteStatus, PcbDesignRules,
-    PcbLayout, PcbStackup, PlacementSolvePolicy, Real, SemanticDocument, StackupLayer,
-    StackupLayerKind, TransientPolicy,
+    KiCadExportOmission, KiCadExportOptions, KiCadImportOptions, KiCadImportReport,
+    NegotiatedRoutePolicy, NegotiatedRouteStatus, PcbDesignRules, PcbLayout, PcbStackup,
+    PlacementSolvePolicy, Real, SemanticDocument, StackupLayer, StackupLayerKind, TransientPolicy,
+};
+#[cfg(feature = "geometry")]
+use hypercircuit::{
+    FabricationExportOptions, FabricationFileKind, FabricationPackage, MaterializationOptions,
+    MaterializationProjection,
 };
 use hypercurve::{Classification, RegionPointLocation};
 use hyperlattice::Point2;
@@ -69,6 +72,7 @@ fn cubic_cutout() -> BoardContour {
     ])
 }
 
+#[cfg(feature = "geometry")]
 fn cubic_exterior() -> BoardContour {
     BoardContour::from_segments(vec![
         LinePathSegment::new(p(0, 0), p(10, 0), hyperlimit::PredicatePolicy::STRICT)
