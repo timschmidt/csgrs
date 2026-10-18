@@ -3,7 +3,7 @@
   "base_revision": "0c5508b89",
   "scope": "All 39 properties, all 14 known open targets, and crate-specific future work remain in scope. Inventory and documentation alone do not prove implementation.",
   "current_work": {
-  "updated_on": "2026-10-17",
+  "updated_on": "2026-10-18",
   "existing_worktree_changes_in_scope": true,
   "accepted_cache_contract": "Warming may strengthen Unknown into Certified and reuse prior higher-precision proofs; it must never contradict or weaken an available certificate.",
   "main_scalar_api": {
@@ -18066,6 +18066,22 @@
     "public_distribution_complete": false,
     "full_plan_complete": false,
     "next": "Reproduce the separately observed exact-sign publication race at the shared scalar owner. Retain the native ingress and full-workload obligations; do not combine unadmitted caches or weaken original gates."
+  },
+  "exact_sign_publication": {
+    "status": "locally qualified correction; downstream and final integration admission pending",
+    "owner": "Hyperreal AtomicFacts publication for immutable Computable nodes",
+    "review": "docs/evidence/2026-10-18-sign-cache-local/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-sign-cache-local/checkpoint-v1.json",
+    "baseline_regressions_failed": 3,
+    "candidate_regressions_passed": 4,
+    "default_parent_tests": 934,
+    "all_feature_parent_tests": 1041,
+    "debug_library_tests": 817,
+    "allocation_rows_identical": true,
+    "source_changes_applied": false,
+    "runtime_admitted": false,
+    "full_plan_complete": false,
+    "next": "Finish affected consumers, original native resource gates, complete report replay and compiler-floor checks; only then integrate, run final main checks and decide retention."
   }
 },
   "status_meanings": {
