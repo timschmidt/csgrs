@@ -6013,7 +6013,7 @@ fn boolean(
                 Ok(result) => Ok(result),
                 Err(graph) => {
                     if matches!(optimized_error, BooleanError::IncompatibleExtrusionSlabs)
-                        && let Some(result) = same_profile_prism_interval_boolean(
+                        && let Some(result) = prism_interval_continuation(
                             first_model,
                             first_solid,
                             second_model,
@@ -6381,9 +6381,11 @@ fn z_prism_boolean(
 }
 
 /// For a proved common profile R, regularized set operations on R × I reduce
-/// to finite interval operations. This completes partial-slab reuse without
-/// claiming a shell intersection algorithm for unequal nonlinear profiles.
-fn same_profile_prism_interval_boolean(
+/// to finite interval operations. Disjoint planar material also proves that
+/// subtraction is the identity; two separate planar material components permit
+/// the existing solids to represent their union across different height ranges.
+/// These are complete product-set proofs, not general shell intersections.
+fn prism_interval_continuation(
     first_model: &ArenaModel,
     first_solid: SolidId,
     second_model: &ArenaModel,
@@ -6405,6 +6407,46 @@ fn same_profile_prism_interval_boolean(
         .map_err(GeometryError::from)?
         .is_empty()
     {
+        // Equal bounds, point contacts and nested holes do not determine
+        // material intersection. Consume the complete strict planar result.
+        if !first
+            .region
+            .boolean_region(&second.region, BooleanOp::Intersection)
+            .map_err(GeometryError::from)?
+            .is_empty()
+        {
+            return Ok(None);
+        }
+        if operation == BooleanOp::Difference {
+            return Ok(Some(ArenaBooleanResult::Solid {
+                model: first_model.clone(),
+                solid: first_solid,
+            }));
+        }
+        // An empty material intersection alone permits shared boundary faces.
+        // Those can join the volumes and need stitching. Require two separate
+        // material components of the exact planar union before keeping both
+        // original solids. Each operand must itself have one material component.
+        let components = |region: &CurveRegion2| {
+            region
+                .material_components()
+                .map(|components| components.len())
+                .map_err(GeometryError::from)
+        };
+        if components(&first.region)? == 1
+            && components(&second.region)? == 1
+            && components(
+                &first
+                    .region
+                    .boolean_region(&second.region, BooleanOp::Union)
+                    .map_err(GeometryError::from)?,
+            )? == 2
+        {
+            return Ok(Some(merge_owned_solids(vec![
+                (first_model.clone(), first_solid),
+                (second_model.clone(), second_solid),
+            ])?));
+        }
         return Ok(None);
     }
     let ranges = match operation {

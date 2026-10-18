@@ -3861,10 +3861,8 @@ fn persistent_curve_image(
     if curve.geometry().is_some() {
         return Ok(std::borrow::Cow::Borrowed(curve));
     }
-    match curve.native_segment() {
-        Ok(image) => Ok(std::borrow::Cow::Owned(curve2_from_segment(
-            image.segment(),
-        ))),
+    match curve.native_image() {
+        Ok(image) => Ok(std::borrow::Cow::Owned(Curve2::new(image.into_geometry()))),
         Err(hypercurve::ExactCurveError::Blocked(blocker))
             if blocker.reason() == hypercurve::UncertaintyReason::Unsupported =>
         {

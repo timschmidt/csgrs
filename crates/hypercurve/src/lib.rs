@@ -40,6 +40,7 @@ mod classify;
 mod contour;
 mod curve;
 mod curve_intersection;
+mod curve_native_image;
 mod curve_native_segment;
 mod curve_path_intersection;
 mod curve_point;
@@ -181,6 +182,7 @@ pub use curve_intersection::{
     CurveIntersectionResult2, CurveIntersectionTopology2, CurveLocation2, CurveOverlapOrientation2,
     CurveParameterSet2, CurvePointLocations2,
 };
+pub use curve_native_image::CurveNativeImage2;
 pub use curve_native_segment::CurveNativeSegment2;
 pub use curve_path_intersection::{
     CurvePathIntersectionBlocker2, CurvePathIntersectionContact2, CurvePathIntersectionOverlap2,

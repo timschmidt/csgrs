@@ -9956,3 +9956,14 @@ No endpoint patch is applied to main, and sampling for these binaries is closed.
 The original native gate and the wider property plan remain open. The next
 separate audit returns to the recorded alternate/scientific scalar-formatting
 stall, retaining its original unresolved-hypot input and precision contract.
+
+
+## Exact retained Bezier images for BRep (2026-10-18)
+
+The [admission record](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/README.md) extends exact completion through native subcurve images and supported product-solid continuation. This is a capability extension, not an optimization.
+
+Three alternating pairs preserve all 22 existing consumer groups in 18 processes, with original assertions, iterations and outcomes. Time ratios range 0.981471–1.224120; 1 exceed the 10% review marker and 3 increase allocation calls or requested bytes. Eleven new complete groups have absolute costs from three processes. All adverse observations remain. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or internal resource bound. The unequal_holes expected-rejection group rises from 2.696819 to 3.301229 ms (1.224120 ratio), with allocation calls 9123 to 11483; this adverse cost remains an explicit open obligation, not a speedup claim.
+
+The [adverse review](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/adverse-review.md) explains the retained rejection cost and the separate proof-search experiment required before any optimization.
+
+[Every cost row](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/costs.md) and the [resource review](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/resource-review.json) retain slower observations, allocation requests, process RSS, executable sizes and forty exact archive states. New completed workflows have absolute costs only. Prior rejected ideas and adverse cost obligations remain attached to their original revisions. Allocation requests, archive nesting and process RSS do not bound retained heap, coefficient growth, total work or cancellation. All distribution and broader work-package gates remain open.

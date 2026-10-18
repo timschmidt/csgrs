@@ -54,6 +54,17 @@ results through the same strict native solid kernels. See the
 General surface arrangements, full resource bounds and durable operation
 receipts remain open under the [development plan](docs/DEVELOPMENT_PLAN.md).
 
+Selected Bézier profile restrictions with proved exact native images can feed
+the planar-face and extrusion builders. Quadratic selected endpoints now permit
+the original parabola difference/XOR profiles, including reversed authoring,
+affine maps, holes, native replay and repeated supported slab cuts/restoration.
+Hypercurve owns the root, complete subcurve and area proofs; BREP retains
+whole-boundary validation. Different prism profiles require exact material
+intersection and component proofs before an interval continuation can retain
+their original solids. Irrational STEP Cartesian vertices remain explicit
+encoding errors. Native geometry replay preserves the represented set; complete
+authoring-history persistence and general retained spatial carriers remain open.
+
 `OperationContext::strict(WorkBudget { refinements, promotions })` runs a
 synchronous batch through `context.evaluate(|| ...)`. Nested BREP, Hypercurve
 and Hypersolve calls share the admitted solver work. The returned

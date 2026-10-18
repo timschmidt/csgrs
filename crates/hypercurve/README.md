@@ -28,6 +28,7 @@ This README describes crate version `0.3.1`.
 | `PolynomialSplineCurve2`, `NurbsCurve2` | Validated B-spline and NURBS curves |
 | `Curve2` | Shared exact curve carrier with borrowed operations |
 | `CurveNativeSegment2` | Proof of a complete oriented line/arc image, borrowing the original curve |
+| `CurveNativeImage2` | Complete native curve image, retaining its source and selected-root authority |
 | `CurveString2`, `CurvePath2`, `Contour2` | Connected open strings, general paths, and closed line/arc contours |
 | `CurveRegion2` | Native mixed-family filled planar region |
 | `provisional`, `evaluate_under`, `Provisional<T>`, `CurvePreviewOptions`, `Classification<T>` | Explicitly qualified approximate evaluation, its certainty-carrying result, lossy preview adapter, and decided/uncertain result |
@@ -44,6 +45,16 @@ may have a different parameter chart. A support fit alone does not prove a
 trim's traversal. Missing range, injectivity or representation proofs return
 typed blockers. This query neither samples geometry nor certifies an earlier
 approximate construction's fidelity.
+
+`Curve2::native_image()` also admits single retained Bézier spans whose endpoints
+have exact scalar views. Selected quadratic roots replay their defining
+polynomial and isolator without changing their original field or caches. Exact
+subcurve substitution preserves the complete nonlinear or nonmonotone curve;
+the returned geometry uses its own native chart. The same shared proof enables
+retained boundary measurements when the native area integral is available. General selected
+fields, multiple retained spans and nonlinear parallels can still return typed
+blockers. Simplicity, filled material and source qualification remain separate
+claims.
 
 Region and closed-path point queries accept `CurvePoint2`, preserving selected
 roots and generated contact evidence. Convert authored coordinates with

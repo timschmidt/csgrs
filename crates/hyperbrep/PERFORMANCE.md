@@ -1113,3 +1113,14 @@ Three fresh benchmark processes each execute one warmup and three measured itera
 This exposes the existing native component constructor through a strict model-owning API. It does not add general rational-path area, a new planar arrangement or broader Boolean/analytic closure. A local strict construction does not certify an earlier approximate source intent; complete source-qualification delivery remains open. Solver budgets do not bound total work, expression growth, retained heap or cancellation. Source-path native/WASM consumers and optional OCCT reads do not establish package/MSRV, actual C/Python/JavaScript bindings, formal proofs, coverage, runtime fuzz/ASan/lexicase, release or the full pre-push matrix. All 28 work packages remain open or in progress. No push is included.
 
 See the [source-bound admission record](docs/evidence/2026-10-17-region-extrusion/README.md) for complete samples and reproduction.
+
+
+## Selected-profile native extrusion (2026-10-18)
+
+The [admission record](docs/evidence/2026-10-18-selected-profile-extrusion/README.md) extends exact completion through native subcurve images and supported product-solid continuation. This is a capability extension, not an optimization.
+
+Three alternating pairs preserve all 22 existing consumer groups in 18 processes, with original assertions, iterations and outcomes. Time ratios range 0.981471–1.224120; 1 exceed the 10% review marker and 3 increase allocation calls or requested bytes. Eleven new complete groups have absolute costs from three processes. All adverse observations remain. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or internal resource bound. The unequal_holes expected-rejection group rises from 2.696819 to 3.301229 ms (1.224120 ratio), with allocation calls 9123 to 11483; this adverse cost remains an explicit open obligation, not a speedup claim.
+
+The [adverse review](docs/evidence/2026-10-18-selected-profile-extrusion/adverse-review.md) explains the retained rejection cost and the separate proof-search experiment required before any optimization.
+
+[Every cost row](docs/evidence/2026-10-18-selected-profile-extrusion/costs.md) and the [resource review](docs/evidence/2026-10-18-selected-profile-extrusion/resource-review.json) retain slower observations, allocation requests, process RSS, executable sizes and forty exact archive states. New completed workflows have absolute costs only. Prior rejected ideas and adverse cost obligations remain attached to their original revisions. Allocation requests, archive nesting and process RSS do not bound retained heap, coefficient growth, total work or cancellation. All distribution and broader work-package gates remain open.

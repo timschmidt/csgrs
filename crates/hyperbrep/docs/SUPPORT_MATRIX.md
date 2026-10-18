@@ -165,16 +165,21 @@ domain. General nonuniform analytic promotion remains open. See the
 | `nurbs_patch` | One trimmed exact tensor patch / open shell | Exact for a constant-weight affine Greville lattice under any validated trim, or the complete native-domain affine image under separable positive weights; general curved patches unsupported | N/A | N/A | Affine / exact |
 | `tensor_patch_shell` | Multiple exact rational Bézier/NURBS patches; projectively identical boundaries identity-stitched | Per-face exact for the same affine tensor families | N/A | N/A | Affine / exact |
 
-Retained path boundaries can use Hypercurve's source-bound `Curve2::native_segment`
-view when it proves the complete oriented line/arc image. Source ranges require
+Retained path boundaries use Hypercurve's source-bound `Curve2::native_image`
+view for complete oriented native geometry. Its line/arc path preserves the
+`native_segment` traversal proof; selected Bezier spans use exact subcurve
+substitution when their endpoints have proved scalar views. Source ranges require
 range and traversal evidence; source fitting or endpoint sampling is insufficient.
 BREP then validates the complete path and uses the native image's parameter chart.
 The [retained-profile evidence](evidence/2026-10-18-native-boundary-images/README.md)
 covers the mixed parabola/chord profile, reversal, affine maps, holes/components,
 planar faces, cold replay and further native cuts/restoration. The live extrusion
 retains its original region. Native geometry replay does not persist the full
-authoring boundary graph. Selected-parameter integrals and general nonlinear
-parallel extrusion remain unsupported. The
+authoring boundary graph. The selected parabola difference/XOR and affine
+fixtures now have exact areas, native extrusion, edits and repeated slab
+composition; see the [selected-profile record](evidence/2026-10-18-selected-profile-extrusion/README.md).
+General selected-field integrals and nonlinear parallel extrusion
+remain unsupported. The
 [spline exchange increment](evidence/2026-10-18-spline-exchange/README.md)
 adds exact clamped rational B-spline edge and linear-extrusion STEP exchange for
 the admitted profiles. Independent authored records retain weights, knots,
@@ -432,8 +437,13 @@ touching/overlapping finite z intervals or retains two disjoint solids; differen
 can leave zero, one or two finite products. Exact 1/10^12 residual layers remain
 distinct. This completes the retained mixed-profile cut/restoration workflow;
 matching outer contours or bounds cannot substitute for profile equality.
-Unequal-profile stepped shells and arbitrary oblique products remain outside
-this rule. See the [proof and continuation review](evidence/2026-10-18-native-boundary-images/review.md).
+For different profiles, an empty exact material intersection also proves that
+subtraction is unchanged. Union may retain both original solids only when each
+profile has one material component and the exact planar union has two; shared
+faces that connect material require stitching. General unequal-profile stepped
+shells and arbitrary oblique products remain outside this interval rule.
+See the [preceding proof and continuation review](evidence/2026-10-18-native-boundary-images/review.md)
+and the [selected-profile product proofs](evidence/2026-10-18-selected-profile-extrusion/proofs.md).
 
 Parallel and antiparallel analytic cylinders are reduced through a certified
 orthonormal cylinder-local frame, so the same exact line/arc region kernel is

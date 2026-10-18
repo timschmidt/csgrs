@@ -101,9 +101,11 @@ redundant proof work. Keep necessary topology checks before irrelevant support
 queries, and put shared exact geometric relations in the geometry owner.
 Construct full intersection geometry only when the consumer needs it. This
 does not relax whole-boundary validation or prove broader shell embedding.
-Future optimizations must retain the full current 192-case corpus, all 211
-final native/STEP artifacts and supported continuation; historical failures and
-cost obligations stay visible. General CAD functionality and delivery remain
+Future optimizations must retain the historical 192-case corpus, every later
+admitted complete consumer cohort, the current deterministic artifact corpus
+and supported continuation; historical failures and cost obligations stay
+visible. The selected-profile increment below identifies the latest artifact
+baseline. General CAD functionality and delivery remain
 the project objective, with all work-package completion gates still open.
 
 The [retained-region diagnostic](evidence/2026-10-17-retained-region-extrusion/README.md)
@@ -118,9 +120,10 @@ and whole-image admission; IO owns exact entities, units, source charts and limi
 Independent authored records cover weights, interior knots/trims, nonunit charts
 and metre/mm units. Native geometry replay does not preserve the complete authoring
 graph, and STEP source hints cannot certify untrimmed carrier simplicity.
-Preserve all five unsupported original profile recipes and exact negative controls.
-General selected-parameter integration, nonlinear parallel extrusion, spline
-surfaces, arbitrary pcurves and release delivery remain open.
+Preserve all seven original profile recipes and exact negative controls; their
+later selected-profile extension is recorded below. General selected-parameter
+integration, nonlinear parallel extrusion, spline surfaces, arbitrary pcurves
+and release delivery remain open.
 
 The [measurement admission increment](evidence/2026-10-18-measurement-admission/README.md)
 advances WP12 by separating absent represented integrals from native prism
@@ -132,6 +135,21 @@ measurement queries remain explicitly unsupported. Preserve this distinction
 in further builders and importers. Do not require coordinate materialization or
 an elementary integral merely to admit valid topology. Fully deferred metrics,
 certified integration and retained non-native spatial carriers are still open.
+
+The [selected-profile increment](evidence/2026-10-18-selected-profile-extrusion/README.md)
+adds `Curve2::native_image()` in Hypercurve. Complete exact subcurve substitution
+admits selected quadratic endpoints without replacing their source/root authority
+or using endpoint chords. The original difference/XOR and affine profiles now
+complete native extrusion, exact area/volume, splitting, cold replay and repeated
+supported slab composition. For unequal product profiles, BREP consumes exact
+planar intersection/component proofs before preserving original solids; shared
+faces and tiny positive overlaps remain distinct. The original nonlinear parallel
+cap remains unsupported, and irrational STEP vertices remain explicitly
+unencodable. Preserve the 289 preceding artifacts and the 40 new native archives
+plus eight typed encoding diagnostics. Follow the
+[next-domain obligations](evidence/2026-10-18-selected-profile-extrusion/next-domains.md)
+for retained spatial carriers, general selected fields, full authoring provenance
+and conforming interchange. This finite extension does not close those gates.
 
 The retained diagonal STEP case also has a
 [schema and exact-coordinate feasibility review](evidence/2026-10-17-prism-admission-cost/future-step-research.md).
@@ -2415,6 +2433,15 @@ its owning crate and qualify its affected consumers. The concurrent upstream
 thread continues to handle unrelated breakage; do not duplicate that repair
 work or postpone BREP work for a broader dashboard failure. Check upstream at
 coherent checkpoints and retain the evidence needed to merge these changes.
+The selected-profile increment keeps native image/root/integration proofs in
+Hypercurve and product-solid continuation in HyperBRep. Use its original seven
+profile recipes for the next frontier: six now complete native extrusion and
+replay, while the nonlinear parallel cap remains unsupported. General selected
+spatial carriers, exact integral availability and STEP encodability are separate
+obligations; none permits a lossy shortcut in authoritative geometry. Preserve
+all earlier cost receipts and adverse observations. Its finite 22-group cost
+comparison is not a rerun of the full 192-case catalogue required for future
+optimizations.
 The sector increment needed one reproduced scalar certificate, `acos(±1/2)`, after checking
 upstream. Prism continuation similarly needs rational reciprocal `atan` and a
 principal half-angle certificate for rational-hypotenuse arguments. Ring-torus

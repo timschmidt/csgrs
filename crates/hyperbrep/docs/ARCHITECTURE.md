@@ -1051,6 +1051,22 @@ original failures, exact expectations, composition, archive effects and cost.
 The source/work/heap/cancellation limits of the existing kernel still apply;
 this transform extension does not establish global resource admission.
 
+## Retained profile images
+
+Retained planar spline restrictions enter the existing extrusion representation
+through Hypercurve's `Curve2::native_image()`. The image borrows its proving
+source and uses exact subcurve substitution for represented selected endpoints;
+its native chart can differ from the source chart. BREP consumes the complete
+image and still validates the whole wire, cap and shell. Shared image/area
+proofs belong in Hypercurve, while spatial lifting and product-solid continuation
+belong in BREP. Empty exact planar material intersection proves product
+subtraction is unchanged; retaining two solids for union additionally requires
+two separate planar material components. This continuation follows existing
+optimized and graph paths. Native geometry replay and a complete persistent
+authoring graph remain separate contracts. The
+[selected-profile proof record](evidence/2026-10-18-selected-profile-extrusion/proofs.md)
+states the admitted domain and remaining limits.
+
 ## Seam-aligned analytic cuts
 
 Closed-set curve/region clipping retains positive-length boundary overlaps as

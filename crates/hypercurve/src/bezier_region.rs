@@ -28,6 +28,7 @@ mod point_location;
 mod retained_circular_tests;
 use corner_edit::*;
 pub(crate) use native_fragments::materialized_native_subcurve_segment;
+pub(crate) use native_fragments::represented_native_subcurve;
 pub(crate) use native_fragments::retained_native_fragment_segment;
 use offset_joins::*;
 pub(crate) use offset_spans::*;
@@ -1313,7 +1314,23 @@ impl CurveRegionBoundaryLoop2 {
             }
             let segment = match retained_native_fragment_segment(fragment, policy)? {
                 Classification::Decided(segment) => segment,
-                Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(_) => {
+                    match represented_native_subcurve(fragment, policy)? {
+                        Classification::Decided(Some(curve)) => match curve
+                            .signed_area_contribution_with_cache(policy, rational_quadratic_cache)?
+                        {
+                            Classification::Decided(Some(contribution)) => {
+                                total = &total + &contribution;
+                                continue;
+                            }
+                            other => return Ok(other),
+                        },
+                        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
             };
             let contribution = match segment {
                 Segment2::Line(line) => {
