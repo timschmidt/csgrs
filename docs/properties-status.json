@@ -18640,6 +18640,125 @@
     "public_distribution_complete": false,
     "hypervoxel_deferred_by_user": true,
     "next": "Restore consumable valid lazy-certificate queries without the rejected common-path cache costs, and validate forged certificates and undefined graph domains before reconsidering affine cancellation."
+  },
+  "lazy_certificate_proof_replay": {
+    "status": "Retain lazy borrowed certificate reconstruction and checked native sine/tangent proof replay.",
+    "parent_revision": "fb62da439e0fcb4e292032488a7596ec2107dd18",
+    "review": "docs/evidence/2026-10-18-lazy-proof-replay/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-lazy-proof-replay/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/lazy-proof-validation-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1062
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 934
+      }
+    },
+    "debug_units_passed": 817,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "all_targets": true,
+      "runtime_tests_rerun": false,
+      "clippy_on_msrv_run": false
+    },
+    "runtime_admitted": true,
+    "admitted_scope": "Lazy certificate queries and checked reduced-pi sine/tangent proof reuse through the tested compositions and interchange.",
+    "remaining_limitations": [
+      "Malformed named-certificate consistency and arbitrary undefined graph domains remain open.",
+      "The earlier automatic reciprocal equality workflow remains open; this acceptance uses the previously declared explicit exact normal-form workflow.",
+      "The rejected boxed cache remains rejected and explicit affine subtraction remains withheld.",
+      "Full native workloads, all bindings, distribution/release and the complete pre-push workflow matrix were not rerun.",
+      "Raw evidence depends on the recorded Disk B retention location; historical missing artifacts were not reaudited or recovered."
+    ],
+    "explicit_subtraction_candidate_admitted": false,
+    "lazy_cache_candidate_admitted": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 40,
+    "all_adverse_results_retained": true,
+    "general_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Validate named-certificate/graph consistency and undefined graph domains before reconsidering withheld affine cancellation; continue preserved strict workload and distribution acceptance."
   }
 },
   "status_meanings": {

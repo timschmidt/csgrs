@@ -1013,6 +1013,57 @@ impl Computable {
         }
     }
 
+    /// Sign of a retained nonzero q*pi with |q| < 1/2.
+    ///
+    /// Inspect at most 32 nodes, accepting one exact rational factor, binary
+    /// shifts and negations. Native rational magnitude metadata avoids building
+    /// a large shifted coefficient. This bounds graph inspection, not the size
+    /// of an input rational. Other forms and overflowing shifts stay unknown.
+    fn reduced_pi_multiple_sign(&self) -> Option<Sign> {
+        let mut remaining = 32_usize;
+        let mut node = self;
+        let mut factor = None;
+        let mut shift = 0_i32;
+        let mut negative = false;
+        loop {
+            remaining = remaining.checked_sub(1)?;
+            match &node.internal.approximation {
+                Approximation::Constant(SharedConstant::Pi) => {
+                    let factor = factor.unwrap_or_else(Rational::one);
+                    if factor.msd_exact_with_offset(shift)?.0 >= -1 {
+                        return None;
+                    }
+                    return Some(if negative {
+                        negate_sign(factor.sign())
+                    } else {
+                        factor.sign()
+                    });
+                }
+                Approximation::Negate(child) => {
+                    negative = !negative;
+                    node = child;
+                }
+                Approximation::Offset(child, offset) => {
+                    shift = shift.checked_add(*offset)?;
+                    node = child;
+                }
+                Approximation::Multiply(left, right) if factor.is_none() => {
+                    // Charge both leaf inspections, including the unsuccessful
+                    // one when the rational is on the right.
+                    remaining = remaining.checked_sub(2)?;
+                    if let Some(rational) = left.exact_rational() {
+                        factor = Some(rational);
+                        node = right;
+                    } else {
+                        factor = Some(right.exact_rational()?);
+                        node = left;
+                    }
+                }
+                _ => return None,
+            }
+        }
+    }
+
     fn exact_sign(&self) -> Option<Sign> {
         // `exact_sign` is stronger than "current approximation sign": it means
         // the expression shape or a separated cached approximation proves the
@@ -1098,6 +1149,12 @@ impl Computable {
                 }
                 Approximation::PrescaledSinRational(r) | Approximation::PrescaledTanRational(r) => {
                     Some(Some(r.sign()))
+                }
+                // Sine and tangent share the argument's sign on (-pi/2, pi/2).
+                // Recover the witness from the graph after lazy reconstruction
+                // or import; serialized class tags and cache hints are not proof.
+                Approximation::PrescaledSin(argument) | Approximation::PrescaledTan(argument) => {
+                    Some(argument.reduced_pi_multiple_sign())
                 }
                 Approximation::PrescaledCosRational(_)
                 | Approximation::SincSmall(_)

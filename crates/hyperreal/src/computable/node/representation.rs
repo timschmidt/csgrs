@@ -16,7 +16,7 @@ pub struct Computable {
 /// Keeping these in one allocation makes a `Computable` clone one pointer and
 /// one atomic reference-count update instead of two of each.
 #[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(transparent))]
 #[cfg(not(verus_keep_ghost))]
 pub(super) struct Node {
     #[cfg_attr(feature = "serde", serde(skip, default))]
@@ -24,6 +24,31 @@ pub(super) struct Node {
     approximation: Approximation,
     #[cfg_attr(feature = "serde", serde(skip, default))]
     cache: EvaluationCache,
+}
+
+#[cfg(all(feature = "serde", not(verus_keep_ghost)))]
+impl<'de> Deserialize<'de> for Node {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        // Preserve the transparent wire representation and default cache state.
+        // Replay this bounded proof from the expression itself so a subsequent
+        // bounded reducer can consume it without first warming a numeric cache.
+        let approximation = Approximation::deserialize(deserializer)?;
+        let facts = AtomicFacts::default();
+        if let Approximation::PrescaledSin(argument) | Approximation::PrescaledTan(argument) =
+            &approximation
+            && let Some(sign) = argument.reduced_pi_multiple_sign()
+        {
+            facts.replace_exact_sign(ExactSignCache::Valid(sign));
+        }
+        Ok(Self {
+            facts,
+            approximation,
+            cache: EvaluationCache::default(),
+        })
+    }
 }
 
 #[cfg(not(verus_keep_ghost))]

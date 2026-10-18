@@ -41,7 +41,7 @@ impl Real {
             // sign, so transfer the proof to its payload with that correction.
             compact
                 .computable_ref()
-                .retain_sign_of_scaled_tower_source(self.computable_ref(), compact.rational.sign());
+                .retain_sign_of_scaled_tower_source(&self.computable_ref(), compact.rational.sign());
         }
         compact *= Self::new(self.rational.clone());
         if let Some(signal) = self.abort_signal() {
@@ -57,7 +57,7 @@ impl Real {
         if self.rational.sign() == Sign::NoSign {
             return Computable::zero();
         }
-        let payload = self.computable_ref().clone();
+        let payload = self.computable_clone();
         if self.rational.is_one() {
             payload
         } else {

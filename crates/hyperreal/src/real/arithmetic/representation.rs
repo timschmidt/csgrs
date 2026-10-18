@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
@@ -172,10 +173,14 @@ impl Real {
         }
     }
 
-    fn computable_ref(&self) -> &Computable {
-        self.computable
-            .as_ref()
-            .expect("non-rational Real classes carry a computable payload")
+    fn computable_ref(&self) -> Cow<'_, Computable> {
+        // A named certificate may retain its recipe without a materialized
+        // payload. Borrow existing graphs so their proofs and signals survive;
+        // only reconstruct when the graph is absent.
+        match &self.computable {
+            Some(computable) => Cow::Borrowed(computable),
+            None => Cow::Owned(self.class.computable_certificate()),
+        }
     }
 
     pub(super) fn computable_clone(&self) -> Computable {

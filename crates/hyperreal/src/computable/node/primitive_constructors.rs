@@ -403,8 +403,10 @@ impl Computable {
             };
         }
         crate::trace_dispatch!("computable", "constructor", "prescaled-sin");
+        let sign = value.reduced_pi_multiple_sign()
+            .map_or(ExactSignCache::Invalid, ExactSignCache::Valid);
         Self {
-            internal: Arc::new(Node::new(Approximation::PrescaledSin(value), BoundCache::Invalid, ExactSignCache::Invalid)),
+            internal: Arc::new(Node::new(Approximation::PrescaledSin(value), BoundCache::Invalid, sign)),
             signal: None,
         }
     }
@@ -568,8 +570,10 @@ impl Computable {
         // Same reduced-argument contract as prescaled_sin; tangent additionally
         // relies on the public constructor to handle near-pole complements.
         crate::trace_dispatch!("computable", "constructor", "prescaled-tan");
+        let sign = value.reduced_pi_multiple_sign()
+            .map_or(ExactSignCache::Invalid, ExactSignCache::Valid);
         Self {
-            internal: Arc::new(Node::new(Approximation::PrescaledTan(value), BoundCache::Invalid, ExactSignCache::Invalid)),
+            internal: Arc::new(Node::new(Approximation::PrescaledTan(value), BoundCache::Invalid, sign)),
             signal: None,
         }
     }
