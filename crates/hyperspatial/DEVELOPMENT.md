@@ -8,8 +8,11 @@ Initial plan: 2026-10-18. Source baseline:
 Build a native coordinate transformation layer for the Hyper stack, beginning
 with Earth geodesy, map projections, and local frames. Extend the same evidence
 and reference-frame model to Earth orientation, celestial coordinates,
-observers, and ephemerides. Every stage below is planned; the initial crate
-contains only a library scaffold and documentation.
+observers, and ephemerides. Implementation is incremental; the full plan remains
+active. The initial native increment implements units, validated ellipsoids,
+geodetic-to-ECEF and anchored ENU/NED transforms with retained evidence.
+ECEF inversion and the remaining E1 acceptance work are open; E2–E4 and A1–A5
+remain planned. See the [E1 admission record](docs/admission/e1-native.md).
 
 Design constraints confirmed in this planning session: **production numerical
 scalars are `hyperreal::Real` or types backed by it**, and **external crates are
@@ -31,15 +34,16 @@ The workspace [properties](../../properties.md) and
 | [Hyperreal](../hyperreal/README.md) | Exact rational and decimal input, symbolic constants, computable reals, trig, `atan2`, `hypot3`, stable arithmetic, typed scalar failure | Reuse scalars and reducers. Add generally useful scalar identities here, with scalar acceptance evidence. |
 | [Hyperlattice](../hyperlattice/README.md) | `Point3`, `Vector3`, `Matrix3`, `Matrix4`, affine/projective transforms, checked inverses, batch operations | Reuse Cartesian carriers and linear algebra. Generic rotation/state algebra belongs at the earliest sufficient layer. |
 | [Hyperlimit](../hyperlimit/README.md) | Explicit policies, certified decisions, unresolved outcomes, evidence | Reuse domain and branch decisions; do not introduce geodetic epsilon predicates. |
-| Hyperspatial | No implemented domain API | Own ellipsoids, coordinate semantics, frame realizations, reference epochs, coordinate operations, model selection, and data-provider contracts. |
+| Hyperspatial | Native units, ellipsoids, forward geodetic and local Cartesian operations | Own coordinate semantics, frame realizations, reference epochs, coordinate operations, model selection, and data-provider contracts. |
 | Hypercurve, Hypermesh, CSGRS | Native curves, regions, meshes, topology and modeling composition | Consume explicit Cartesian results. Own geometry validity and adapters for nonlinear images; retain original sources and transformation evidence. |
 | Development oracles | PROJ, GeoRust, astronomy/time libraries | Test/benchmark comparisons and algorithm research only; adapters remain in development tooling. |
 
 `geo` is already a Hypercurve development dependency; `geographiclib-rs` is in
 the workspace lockfile through it. This does not expose native geodetic APIs.
 The existing point/matrix types do not carry geodetic units, datums, or epochs.
-The initial scaffold adds no dependencies; add them only with their first
-admitted consumer. The [ecosystem comparison](docs/ecosystem.md) records
+Native dependencies are Hyperreal, Hyperlattice and Hyperlimit. External test
+support is development-only; add dependencies with their first admitted consumer.
+The [ecosystem comparison](docs/ecosystem.md) records
 candidate references and development oracles. Do not expose external crate
 types or backend-selection features in the production API.
 
@@ -172,7 +176,8 @@ sources and comparison APIs are in [Earth and sky research](docs/astronomy.md).
 
 For each patch, identify the owning layer, concrete domain, relevant property,
 missing/failing regression and downstream consumers before modifying code.
-The following are required future fixtures, not tests supplied by this scaffold.
+The following matrix governs the complete stages. The E1 admission record names
+implemented tests; an entry in this matrix alone is not acceptance evidence.
 
 | Stage and owner | Property focus | Required acceptance cases |
 | --- | --- | --- |

@@ -10,8 +10,20 @@ repository = "https://github.com/timschmidt/csgrs"
 readme = "README.md"
 keywords = ["geodesy", "astronomy", "coordinates", "geometry", "transformations"]
 categories = ["science", "mathematics", "simulation"]
-# The initial package records the development contract; no transform API exists yet.
+# Unpublished while the development/admission plan is being implemented.
 publish = false
 
 [features]
 default = []
+
+[dependencies]
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+proptest = "1.7.0"
+
+[[bench]]
+name = "forward_local"
+harness = false

@@ -2868,6 +2868,12 @@ dependencies = [
 [[package]]
 name = "hyperspatial"
 version = "0.1.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
+ "proptest",
+]
 
 [[package]]
 name = "hypertri"
