@@ -17781,6 +17781,32 @@
     "hypervoxel_deferred_by_user": true,
     "full_plan_complete": false,
     "next": "flatten retained report sources; add a semantic allocation-growth regression; requalify the new source"
+  },
+  "native_aggregation_flat": {
+    "status": "kept: scoped native aggregation and flat authored report ownership",
+    "source_commit": "c59767b8c1bc705263bf9ce075ef9f5c7982c51f",
+    "checkpoint": "docs/evidence/2026-10-17-native-aggregation-flat/checkpoint-v1.json",
+    "review": "docs/evidence/2026-10-17-native-aggregation-flat/review-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-native-aggregation-flat/artifact-expectations-v1.json.gz",
+    "native_tests_passed": 1670,
+    "hypercircuit_tests_passed": {
+      "default": 105,
+      "all_features": 348
+    },
+    "main_integration_tests_passed": 53,
+    "compiler_floor": "1.95.0 affected packages all targets, all/minimal features",
+    "report_runs": 12,
+    "only_declared_readiness_version_migration": true,
+    "retained_report_requested_bytes_at_256_steps": 181072,
+    "negative_growth_control_failed_as_expected": true,
+    "source_changes_applied": true,
+    "cache_proposal_admitted": false,
+    "exact_kicad_ingress_admitted": false,
+    "archived_ingress_failures_unchanged": 3,
+    "hypervoxel_deferred_by_user": true,
+    "public_distribution_complete": false,
+    "general_speedup_claimed": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
