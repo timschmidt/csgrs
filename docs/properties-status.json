@@ -17977,7 +17977,21 @@
     "hypervoxel_deferred_by_user": true,
     "public_distribution_complete": false,
     "full_plan_complete": false,
-    "next": "Reproduce repeated scalar sign/normal-form work in the recovered curve comparison and subdivision consumers, identify the earliest reusable construction proof, and evaluate one coherent repair against independent semantic expectations and the unchanged full native resource gates. No implementation is selected from sampling alone."
+    "next": "Reproduce repeated scalar sign/normal-form work in the recovered curve comparison and subdivision consumers, identify the earliest reusable construction proof, and evaluate one coherent repair against independent semantic expectations and the unchanged full native resource gates. No implementation is selected from sampling alone.",
+    "profile_attribution_superseded_by": "docs/evidence/2026-10-18-profile-attribution-correction/correction-v1.json"
+  },
+  "profile_attribution_correction": {
+    "status": "corrected E70 subdivision attribution using exact recovered function names",
+    "evidence": "docs/evidence/2026-10-18-profile-attribution-correction/correction-v1.json",
+    "verification": "docs/evidence/2026-10-18-profile-attribution-correction/verification-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-profile-attribution-correction/checkpoint-v1.json",
+    "actual_subdivision_inclusive_percent": 1.8162239013065629,
+    "actual_subdivision_normal_form_overlap_percent": 0.0,
+    "support_bounds_inclusive_percent": 6.764926233254495,
+    "source_changes_applied": false,
+    "runtime_tests_rerun": false,
+    "runtime_admitted": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
