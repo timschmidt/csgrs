@@ -44,6 +44,9 @@ pub enum Problem {
     /// sometimes have enough structural information to reject definite zero,
     /// but not enough to certify non-zero without unbounded refinement.
     UnknownZero,
+    /// An imported symbolic certificate or its relationship to an expression
+    /// could not be proved. This is not evidence that the value is invalid.
+    UnknownCertificate,
 }
 
 use std::fmt;

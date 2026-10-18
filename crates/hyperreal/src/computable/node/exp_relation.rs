@@ -4,11 +4,29 @@
 struct ExpRelationForm<'a> {
     // None denotes ln(2), including binary offsets outside an exponential.
     terms: Vec<(Option<&'a Computable>, Rational)>,
+    logarithms: Vec<(PositiveLogAtom, Rational)>,
     constant: Rational,
     remaining: usize,
+    require_defined_arguments: bool,
+}
+
+#[derive(PartialEq)]
+enum PositiveLogAtom {
+    Pi,
+    Rational(Rational),
 }
 
 impl<'a> ExpRelationForm<'a> {
+    fn new(require_defined_arguments: bool) -> Self {
+        Self {
+            terms: Vec::new(),
+            logarithms: Vec::new(),
+            constant: Rational::zero(),
+            remaining: 128,
+            require_defined_arguments,
+        }
+    }
+
     fn bounded(coefficient: &Rational) -> bool {
         coefficient
             .numerator()
@@ -55,11 +73,67 @@ impl<'a> ExpRelationForm<'a> {
                 return Some(());
             }
         }
-        if self.terms.len() >= 16 {
+        if self.terms.len() + self.logarithms.len() >= 16 {
             return None;
         }
         self.terms.push((atom, coefficient));
         Some(())
+    }
+
+    fn log_term(&mut self, atom: PositiveLogAtom, coefficient: Rational) -> Option<()> {
+        if !Self::bounded(&coefficient) {
+            return None;
+        }
+        for index in 0..self.logarithms.len() {
+            if self.logarithms[index].0 == atom {
+                let sum = &self.logarithms[index].1 + coefficient;
+                if !Self::bounded(&sum) {
+                    return None;
+                }
+                if sum.sign() == Sign::NoSign {
+                    self.logarithms.swap_remove(index);
+                } else {
+                    self.logarithms[index].1 = sum;
+                }
+                return Some(());
+            }
+        }
+        if coefficient.sign() != Sign::NoSign {
+            if self.terms.len() + self.logarithms.len() >= 16 {
+                return None;
+            }
+            self.logarithms.push((atom, coefficient));
+        }
+        Some(())
+    }
+
+    fn log_rational(&mut self, value: Rational, coefficient: Rational) -> Option<()> {
+        if value.sign() != Sign::Plus || !Self::bounded(&value) {
+            return None;
+        }
+        if value.is_one() {
+            return Some(());
+        }
+        let numerator = value.numerator();
+        let denominator = value.denominator();
+        let n = numerator.trailing_zeros()?;
+        let d = denominator.trailing_zeros()?;
+        if numerator.bits() == n + 1 && denominator.bits() == d + 1 {
+            return self.term(None, coefficient * Rational::new(n as i64 - d as i64));
+        }
+        self.log_term(PositiveLogAtom::Rational(value), coefficient)
+    }
+
+    fn linear_atom(&mut self, node: &'a Computable, coefficient: Rational) -> Option<()> {
+        // Ordinary construction already requires real operands. Imported graphs
+        // have no such proof: even a zero coefficient must not erase an unknown
+        // or undefined child before validating its domain.
+        if self.require_defined_arguments
+            && !matches!(node.internal.approximation, Approximation::Constant(_))
+        {
+            return None;
+        }
+        self.term(Some(node), coefficient)
     }
 
     fn linear(&mut self, node: &'a Computable, coefficient: Rational) -> Option<()> {
@@ -84,10 +158,10 @@ impl<'a> ExpRelationForm<'a> {
                 } else if let Some(q) = Self::leaf(b) {
                     self.linear(a, coefficient * q)
                 } else {
-                    self.term(Some(node), coefficient)
+                    self.linear_atom(node, coefficient)
                 }
             }
-            _ => self.term(Some(node), coefficient),
+            _ => self.linear_atom(node, coefficient),
         }
     }
 
@@ -100,6 +174,25 @@ impl<'a> ExpRelationForm<'a> {
                 Self::bounded(&self.constant).then_some(())
             }
             Approximation::One => Some(()),
+            Approximation::Int(_) | Approximation::Ratio(_) => {
+                self.log_rational(Self::leaf(node)?, coefficient)
+            }
+            Approximation::Constant(SharedConstant::Pi) => {
+                self.log_term(PositiveLogAtom::Pi, coefficient)
+            }
+            Approximation::Constant(SharedConstant::InvPi) => {
+                self.log_term(PositiveLogAtom::Pi, -coefficient)
+            }
+            Approximation::Constant(SharedConstant::Tau) => {
+                self.term(None, coefficient.clone())?;
+                self.log_term(PositiveLogAtom::Pi, coefficient)
+            }
+            Approximation::Constant(SharedConstant::Sqrt2) => {
+                self.term(None, coefficient * HALF_RATIONAL.clone())
+            }
+            Approximation::Constant(SharedConstant::Sqrt3) => {
+                self.log_rational(Rational::new(3), coefficient * HALF_RATIONAL.clone())
+            }
             Approximation::Offset(x, shift) => {
                 self.term(None, &coefficient * Rational::new(i64::from(*shift)))?;
                 self.logarithm(x, coefficient)
@@ -128,17 +221,25 @@ impl Computable {
             (Approximation::Negate(a), _) => (b, a),
             _ => return None,
         };
-        let mut form = ExpRelationForm {
-            terms: Vec::new(),
-            constant: Rational::zero(),
-            remaining: 128,
-        };
+        let mut form = ExpRelationForm::new(false);
         form.logarithm(a, Rational::one())?;
         form.logarithm(b, Rational::new(-1))?;
         // Both values are positive and log is strictly increasing. Once all
         // opaque terms cancel, sign(a - b) = sign(log(a) - log(b)); preserve
         // a nonzero rational remainder rather than falling back to refinement.
-        form.terms.is_empty().then(|| form.constant.sign())
+        (form.terms.is_empty() && form.logarithms.is_empty()).then(|| form.constant.sign())
+    }
+
+    /// Compare positive product recipes while proving every traversed operand
+    /// is defined. A declined proof is not a claim of inequality. This uses the
+    /// same 128 visits, 16 atoms and 1024-bit coefficient limits as the native
+    /// exponential relation; it neither refines nor changes either graph.
+    #[cfg(feature = "serde")]
+    pub(crate) fn compare_defined_positive_products(&self, other: &Self) -> Option<Sign> {
+        let mut form = ExpRelationForm::new(true);
+        form.logarithm(self, Rational::one())?;
+        form.logarithm(other, Rational::new(-1))?;
+        (form.terms.is_empty() && form.logarithms.is_empty()).then(|| form.constant.sign())
     }
 
     #[cfg(test)]

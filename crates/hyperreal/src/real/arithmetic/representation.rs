@@ -57,34 +57,91 @@ pub struct Real {
 }
 
 #[cfg(feature = "serde")]
+#[derive(Deserialize)]
+#[serde(rename = "Real")]
+pub(crate) struct RealWire {
+    rational: Rational,
+    class: Class,
+    computable: Option<Computable>,
+}
+
+#[cfg(feature = "serde")]
+pub(crate) struct RealDecodeError {
+    pub(crate) problem: Problem,
+    detail: &'static str,
+}
+
+#[cfg(feature = "serde")]
+impl std::fmt::Display for RealDecodeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.problem, self.detail)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl RealWire {
+    pub(crate) fn validate(self) -> Result<Real, RealDecodeError> {
+        // Symbolic classes can reconstruct a missing lazy payload from their
+        // certificate. An opaque class has no such fallback, including when
+        // the outer scale happens to be zero.
+        if matches!(self.class, Irrational) && self.computable.is_none() {
+            return Err(RealDecodeError {
+                problem: Problem::ParseError,
+                detail: "Real Irrational class requires a Computable payload",
+            });
+        }
+        self.class
+            .validate_serialized_parameters()
+            .map_err(|problem| RealDecodeError {
+                problem,
+                detail: "Class parameter certificate is invalid or unproved",
+            })?;
+        if !matches!(self.class, Irrational)
+            && let Some(payload) = &self.computable
+        {
+            let expected = self.class.computable_certificate();
+            if !Computable::internal_structural_eq(payload, &expected) {
+                let equality = payload.compare_defined_positive_products(&expected);
+                let problem = match equality {
+                    Some(Sign::NoSign) => None,
+                    Some(Sign::Minus | Sign::Plus) => Some(Problem::ParseError),
+                    None => {
+                        if let Some(rational) = payload.exact_rational()
+                            && (self.class.definitely_irrational()
+                                || matches!(self.class, One) && !rational.is_one())
+                        {
+                            Some(Problem::ParseError)
+                        } else {
+                            Some(Problem::UnknownCertificate)
+                        }
+                    }
+                };
+                if let Some(problem) = problem {
+                    return Err(RealDecodeError {
+                        problem,
+                        detail: "Class and Computable payload equality is not certified",
+                    });
+                }
+            }
+        }
+        Ok(Real {
+            rational: self.rational,
+            class: self.class,
+            computable: self.computable,
+            primitive_approx_cache: AtomicPrimitiveApproxCache::default(),
+        })
+    }
+}
+
+#[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for Real {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        #[derive(Deserialize)]
-        #[serde(rename = "Real")]
-        struct RealWire {
-            rational: Rational,
-            class: Class,
-            computable: Option<Computable>,
-        }
-
-        let wire = RealWire::deserialize(deserializer)?;
-        // Symbolic classes can reconstruct a missing lazy payload from their
-        // certificate. An opaque class has no such fallback, including when
-        // the outer scale happens to be zero.
-        if matches!(wire.class, Irrational) && wire.computable.is_none() {
-            return Err(serde::de::Error::custom(
-                "Real Irrational class requires a Computable payload",
-            ));
-        }
-        Ok(Self {
-            rational: wire.rational,
-            class: wire.class,
-            computable: wire.computable,
-            primitive_approx_cache: AtomicPrimitiveApproxCache::default(),
-        })
+        RealWire::deserialize(deserializer)?
+            .validate()
+            .map_err(serde::de::Error::custom)
     }
 }
 
@@ -101,17 +158,11 @@ impl Clone for Real {
                 class: One,
                 computable: None,
                 primitive_approx_cache: {
-                    #[cfg(any(
-                        feature = "cached-f32-approx",
-                        feature = "cached-f64-approx"
-                    ))]
+                    #[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
                     {
                         AtomicPrimitiveApproxCache::new(self.primitive_approx_cache.get())
                     }
-                    #[cfg(not(any(
-                        feature = "cached-f32-approx",
-                        feature = "cached-f64-approx"
-                    )))]
+                    #[cfg(not(any(feature = "cached-f32-approx", feature = "cached-f64-approx")))]
                     {
                         AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty)
                     }
@@ -466,10 +517,8 @@ impl Real {
     /// Certified Euclidean remainder for positive modulus.
     pub fn rem_euclid_certified(&self, modulus: &Real) -> Result<Real, Problem> {
         crate::trace_dispatch!("real", "integer-rounding", "rem-euclid-certified");
-        match modulus.certified_cmp_until(
-            &Self::zero(),
-            Self::CERTIFIED_INTEGER_COMPARE_TOLERANCE,
-        ) {
+        match modulus.certified_cmp_until(&Self::zero(), Self::CERTIFIED_INTEGER_COMPARE_TOLERANCE)
+        {
             CertifiedRealOrdering::Known {
                 ordering: Ordering::Greater,
                 ..

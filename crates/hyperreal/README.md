@@ -338,6 +338,45 @@ obligations](verification/README.md).
 - Hyperreal owns scalar facts. Coordinate, matrix, geometry, and topology facts
   belong to higher crates.
 
+### Serialized certificate admission
+
+With `serde`, JSON and CBOR retain the symbolic class, its rational scale and
+the optional computable expression. Named classes are certificates: their
+parameters must justify the sign, nonzero and irrationality facts they claim.
+A supplied expression must also be proved equal to that certificate. The
+decoder preserves accepted expression graphs and their serialized form.
+
+`Real::from_json`, `Real::from_bytes` and conversions from CBOR `Value` return
+`Problem::ParseError` for a proved invalid certificate. They return
+`Problem::UnknownCertificate` when a claim or payload relationship remains
+unproved. Generic Serde containers carry this diagnostic in the format's
+deserialization error. Neither outcome publishes a `Real`, including when
+its outer rational scale is zero.
+
+This tightens earlier imports that trusted named tags without checking their
+parameters or payloads. Applications must handle undecided imports explicitly;
+an unsupported equality proof does not imply invalid mathematics. Re-export a
+value constructed through the public scalar API to obtain its native
+certificate and payload. Do not remove a supplied payload to bypass validation:
+that would discard the relationship being checked. Valid lazy certificates
+remain supported. The wire layout is unchanged; zero-pi-power constant products
+now reconstruct with the mathematical identity `pi^0 = 1`.
+
+Payload checks first compare the native recipe structurally, then use the
+shared positive-product proof for powers, roots, reciprocals and exponentials.
+That proof visits at most 128 nodes, retains at most 16 atoms and limits
+coefficients to 1024 bits. It checks definedness before cancellation and does
+not refine an untrusted payload. Noncanonical positive sums may use refinement
+through 256 fractional bits on a recipe built from checked parameters.
+These limits do **not** bound total decoding work, parameter sizes or graph
+construction. General opaque-graph domain validation and comprehensive import
+resource limits remain incomplete; externally contain hostile-input workloads.
+
+Hypercurve's exact SVG import exposes undecided scalar admission as
+`SvgError::Scalar(Problem::UnknownCertificate)` with the scalar error as its
+source. Consumers matching every `SvgError` variant must handle the new
+`Scalar` variant. CSGRS classifies this scalar cause as `Undecided`.
+
 ## Ecosystem and further documentation
 
 [Hyperlattice](https://github.com/timschmidt/hyperlattice) builds exact-aware

@@ -20,6 +20,8 @@ mod tests;
 #[cfg(test)]
 mod immediate_equality_tests;
 
+#[cfg(feature = "serde")]
+pub(crate) use arithmetic::RealWire;
 pub use arithmetic::*;
 pub use exact_set::{
     RealExactSetDenominatorKind, RealExactSetDyadicExponentClass, RealExactSetFacts,

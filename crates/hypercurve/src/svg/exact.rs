@@ -309,8 +309,12 @@ impl<'a> ExactReader<'a> {
         if count > self.max_bytes || count > self.remaining() {
             return Err(extension_overflow());
         }
-        Real::from_bytes(self.take(count)?)
-            .map_err(|error| malformed(format!("invalid exact coordinate: {error}")))
+        Real::from_bytes(self.take(count)?).map_err(|error| match error {
+            hyperreal::Problem::UnknownCertificate | hyperreal::Problem::Exhausted => {
+                SvgError::Scalar(error)
+            }
+            _ => malformed(format!("invalid exact coordinate: {error}")),
+        })
     }
 
     fn read_point(&mut self) -> SvgResult<Point2> {

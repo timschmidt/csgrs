@@ -18930,6 +18930,173 @@
       "Earlier missing artifacts were neither reaudited nor recovered. Compiled probes and raw archives require retained external paths."
     ],
     "next": "Repair invalid named parameter claims before lazy reconstruction, restore the zero pi-power identity at its owning helper, and extend native equality evidence for valid payload variants. Preserve unknown proof outcomes as distinct from invalid input; do not weaken the valid public/lazy corpus to make an importer gate pass. Then run affected local/downstream acceptance and cost checks before runtime admission."
+  },
+  "named_certificate_admission": {
+    "status": "Retain named certificate validation, native positive-product proof replay, and zero pi-power reconstruction.",
+    "parent_revision": "6d88cb518bac7e83e8aa8d3ccb5ae3ad85718884",
+    "review": "docs/evidence/2026-10-18-named-certificate-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-named-certificate-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/named-admission-validation-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1073
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 935
+      }
+    },
+    "debug_units_passed": 818,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "runtime_admitted": true,
+    "admitted_scope": "The tested named parameter claims and payload relations are checked before scalar or SVG publication; undecided claims remain typed; all existing affected tests and the valid named/lazy corpus pass.",
+    "remaining_limitations": [
+      "Finite named-certificate and composition coverage does not prove admission of every public expression or arbitrary opaque graph.",
+      "Non-leaf opaque domains, private kernel ranges, quantile seed validation, total import work and retained-memory bounds remain open.",
+      "Full ordinary strict workloads, bindings and the clean shipped-distribution pipeline remain open; this is local affected-source qualification.",
+      "The boxed cache stays rejected and explicit affine subtraction stays withheld.",
+      "Historical missing artifacts were neither reaudited nor recovered; raw evidence and compiled artifacts require their retained external paths."
+    ],
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 40,
+    "logs_allowance_mib": 100,
+    "all_adverse_results_retained": true,
+    "general_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Continue remaining native graph domain and resource obligations, then ordinary strict completion and complete external user-path/release validation under the preserved contracts."
   }
 },
   "status_meanings": {

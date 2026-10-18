@@ -245,4 +245,64 @@ mod exp_relation_tests {
         let restored: Computable = serde_json::from_str(&before).unwrap();
         assert_eq!(restored.sign_until(-64), Some(RealSign::Zero));
     }
+
+    #[test]
+    fn positive_constant_products_replay_inverse_and_root_identities() {
+        // Each side follows independently from (pi*exp(q))^-1 and sqrt(2)^2=2.
+        for numerator in [-7, -1, 1, 9] {
+            let q = Rational::fraction(numerator, 8).unwrap();
+            let a = Computable::pi().multiply(Computable::exp_rational(q.clone()));
+            let b = Computable::pi()
+                .inverse()
+                .multiply(Computable::exp_rational(-q));
+            let zero = difference(a.inverse(), b);
+            assert_eq!(zero.sign_until(0), Some(RealSign::Zero));
+            assert!(zero.cached().is_none());
+        }
+        let common = Computable::pi().multiply(Computable::e_constant());
+        let a = common
+            .clone()
+            .multiply(Computable::sqrt_constant(2).unwrap());
+        let b = common.multiply(raw(Approximation::Sqrt(Computable::integer(2.into()))));
+        let zero = difference(a, b);
+        assert_eq!(zero.sign_until(0), Some(RealSign::Zero));
+        assert!(zero.cached().is_none());
+        let unequal = difference(
+            Computable::pi(),
+            Computable::pi().multiply(Computable::e_constant()),
+        );
+        assert_eq!(unequal.sign_until(0), Some(RealSign::Negative));
+        assert!(unequal.cached().is_none());
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn imported_product_proofs_check_definedness_even_with_zero_coefficients() {
+        let zero = raw(Approximation::Add(
+            Computable::one(),
+            Computable::one().negate(),
+        ));
+        let undefined = raw(Approximation::Inverse(zero));
+        let hidden = raw(Approximation::Multiply(Computable::zero(), undefined));
+        let exponent = raw(Approximation::Add(Computable::one(), hidden));
+        let invalid = raw(Approximation::PrescaledExp(exponent));
+        assert_eq!(
+            invalid.compare_defined_positive_products(&Computable::e_constant()),
+            None
+        );
+        assert!(invalid.cached().is_none());
+
+        let root = raw(Approximation::Sqrt(Computable::integer((-1).into())));
+        let invalid = raw(Approximation::PrescaledExp(root));
+        assert_eq!(invalid.compare_defined_positive_products(&invalid), None);
+        let valid = raw(Approximation::PrescaledExp(Computable::one()));
+        assert_eq!(
+            valid.compare_defined_positive_products(&Computable::e_constant()),
+            Some(Sign::NoSign)
+        );
+        assert_eq!(
+            valid.compare_defined_positive_products(&Computable::one()),
+            Some(Sign::Plus)
+        );
+    }
 }

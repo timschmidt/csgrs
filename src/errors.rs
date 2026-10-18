@@ -220,9 +220,9 @@ impl ValidationError {
                     ValidationErrorKind::ResourceExhausted
                 },
                 hypercurve::MarchingSquaresError::PredicateUndecided { .. }
-                | hypercurve::MarchingSquaresError::Scalar(hyperreal::Problem::UnknownZero) => {
-                    ValidationErrorKind::Undecided
-                },
+                | hypercurve::MarchingSquaresError::Scalar(
+                    hyperreal::Problem::UnknownZero | hyperreal::Problem::UnknownCertificate,
+                ) => ValidationErrorKind::Undecided,
                 hypercurve::MarchingSquaresError::Region(ExactCurveError::Blocked(
                     blocker,
                 )) => match blocker.reason() {
@@ -246,7 +246,8 @@ impl ValidationError {
                 },
                 hypersdf::SdfEvaluationError::Undecided { .. }
                 | hypersdf::SdfEvaluationError::Scalar {
-                    source: hyperreal::Problem::UnknownZero,
+                    source:
+                        hyperreal::Problem::UnknownZero | hyperreal::Problem::UnknownCertificate,
                     ..
                 } => ValidationErrorKind::Undecided,
                 hypersdf::SdfEvaluationError::Scalar {
@@ -315,7 +316,9 @@ impl ValidationError {
             },
             Self::UnboundedTransform { .. } => ValidationErrorKind::Unbounded,
             Self::PredicateUndecided { .. }
-            | Self::Scalar(hyperreal::Problem::UnknownZero) => ValidationErrorKind::Undecided,
+            | Self::Scalar(
+                hyperreal::Problem::UnknownZero | hyperreal::Problem::UnknownCertificate,
+            ) => ValidationErrorKind::Undecided,
             Self::CapacityOverflow
             | Self::AllocationFailed { .. }
             | Self::Scalar(hyperreal::Problem::Exhausted) => {

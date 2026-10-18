@@ -59,3 +59,33 @@ fn exact_svg_rejects_undefined_scalar_graphs_before_publishing_a_path() {
         );
     }
 }
+
+#[test]
+fn exact_svg_rejects_invalid_named_parameters_before_lazy_evaluation() {
+    // Class Ln(0), no payload. A fact query used to overflow the stack.
+    let invalid = b"\xa3\x68rational\xa3\x64sign\x01\x69numerator\x81\x01\
+        \x6bdenominator\x81\x01\x65class\xa1\x62Ln\xa3\x64sign\x00\
+        \x69numerator\x80\x6bdenominator\x81\x01\x6acomputable\xf6";
+    let error = import_svg_document(&document_with_first_coordinate(invalid)).unwrap_err();
+    assert!(matches!(error, SvgError::MalformedInput(ref detail)
+        if detail.contains("invalid exact coordinate") && detail.contains("ParseError")));
+}
+
+#[test]
+fn exact_svg_preserves_an_undecided_scalar_certificate() {
+    // The Pi tag and E payload do not match structurally. The import proof
+    // does not refine this untrusted payload to decide their relationship.
+    let unproved = b"\xa3\x68rational\xa3\x64sign\x01\x69numerator\x81\x01\
+        \x6bdenominator\x81\x01\x65class\x62Pi\x6acomputable\xa1\
+        \x68internal\xa1\x68Constant\x61E";
+    let error = import_svg_document(&document_with_first_coordinate(unproved)).unwrap_err();
+    assert!(matches!(
+        error,
+        SvgError::Scalar(hyperreal::Problem::UnknownCertificate)
+    ));
+    let source = std::error::Error::source(&error).unwrap();
+    assert_eq!(
+        source.downcast_ref::<hyperreal::Problem>(),
+        Some(&hyperreal::Problem::UnknownCertificate)
+    );
+}

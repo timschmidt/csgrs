@@ -23,6 +23,10 @@ fn map_svg_error(error: SvgError) -> IoError {
             format: "SVG",
             detail,
         },
+        SvgError::Scalar(source) => IoError::Construction {
+            format: "SVG",
+            source: source.into(),
+        },
         SvgError::SizeOverflow { limit } => IoError::SizeOverflow {
             format: "SVG",
             limit,

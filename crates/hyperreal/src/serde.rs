@@ -1,6 +1,9 @@
 use std::str::FromStr;
 
-use crate::{Problem, Rational, real::Real};
+use crate::{
+    Problem, Rational,
+    real::{Real, RealWire},
+};
 use ciborium::{Value, de, ser};
 use num::BigInt;
 use num::bigint::Sign as BigIntSign;
@@ -15,11 +18,16 @@ impl Real {
 
     /// Deserializes a Real from a JSON string.
     ///
-    /// An opaque value without its required computable payload returns
-    /// [`Problem::ParseError`]. Present expression graphs are not yet fully
-    /// validated for mathematical domain errors at this boundary.
+    /// Invalid named certificates and missing opaque payloads return
+    /// [`Problem::ParseError`]. An unproved named certificate or a payload whose
+    /// equality is undecided returns [`Problem::UnknownCertificate`]. A supplied
+    /// payload is preserved only after proving its relationship to the class.
+    /// Opaque expression graphs are not yet fully validated for domain errors.
     pub fn from_json(json: &str) -> Result<Self, Problem> {
-        serde_json::from_str(json).map_err(|_| Problem::ParseError)
+        serde_json::from_str::<RealWire>(json)
+            .map_err(|_| Problem::ParseError)?
+            .validate()
+            .map_err(|error| error.problem)
     }
 
     /// Serializes the Real to a CBOR byte vector.
@@ -45,7 +53,10 @@ impl Real {
     /// Uses the same representation checks and remaining mathematical-domain
     /// limitations as [`Real::from_json`].
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Problem> {
-        de::from_reader(bytes).map_err(|_| Problem::ParseError)
+        de::from_reader::<RealWire, _>(bytes)
+            .map_err(|_| Problem::ParseError)?
+            .validate()
+            .map_err(|error| error.problem)
     }
 }
 
@@ -93,8 +104,8 @@ impl TryFrom<&Value> for Real {
             _ => {
                 // In this branch, we should be whatever type ciborium decided to use for `Real`.
                 // Try a fallible conversion. If it fails, we're done.
-                let ret: Real = value.deserialized().map_err(|_| Problem::ParseError)?;
-                Ok(ret)
+                let wire: RealWire = value.deserialized().map_err(|_| Problem::ParseError)?;
+                wire.validate().map_err(|error| error.problem)
             }
         }
     }

@@ -78,8 +78,8 @@ pub(crate) enum Class {
     Log2(Rational),                 // Rational > 1 and never a power of two
     Pow10(Rational), // Exactly 10**Rational for a noninteger exponent not represented as a sqrt
     Pow2(Rational),  // Exactly 2**Rational for a noninteger exponent not represented as a sqrt
-    SinPi(Rational),                // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
-    TanPi(Rational),                // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
+    SinPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
+    TanPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     Irrational,
 }
 
@@ -121,8 +121,7 @@ impl AtomicPrimitiveApproxCache {
     pub(super) fn set(&self, value: PrimitiveApproxCache) {
         let encoded = Self::encode(value);
         if matches!(value, PrimitiveApproxCache::Empty) {
-            self.0
-                .store(encoded, std::sync::atomic::Ordering::Relaxed);
+            self.0.store(encoded, std::sync::atomic::Ordering::Relaxed);
             return;
         }
 
@@ -290,6 +289,9 @@ impl Class {
     fn pi_power_computable(power: u16) -> Computable {
         // Pi powers are kept as shallow multiply chains only for symbolic
         // constants. Large generic powers still use the normal pow machinery.
+        if power == 0 {
+            return Computable::one();
+        }
         let mut value = Computable::pi();
         for _ in 1..power {
             value = value.multiply(Computable::pi());
@@ -643,8 +645,7 @@ impl Class {
             }
             Sqrt(radicand) => Computable::sqrt_squarefree_rational(radicand.clone()),
             PiSqrt(radicand) => {
-                Computable::pi()
-                    .multiply(Computable::sqrt_squarefree_rational(radicand.clone()))
+                Computable::pi().multiply(Computable::sqrt_squarefree_rational(radicand.clone()))
             }
             ConstProductSqrt(product) => {
                 let constant =
@@ -680,6 +681,78 @@ impl Class {
                 Computable::prescaled_tan(argument)
             }
             Irrational => panic!("opaque irrational classes must carry their Computable payload"),
+        }
+    }
+
+    #[cfg(feature = "serde")]
+    fn validate_serialized_parameters(&self) -> Result<(), Problem> {
+        let positive_root = |r: &Rational| r.sign() == Sign::Plus;
+        let irrational_root = |r: &Rational| positive_root(r) && r.perfect_nth_root(2).is_none();
+        let proper_log = |r: &Rational| r > &*rationals::ONE;
+        let interior_angle = |r: &Rational| r.sign() == Sign::Plus && r < &*rationals::HALF;
+        let valid = match self {
+            One | Pi | PiInv | PiExp(_) | PiInvExp(_) | ConstProduct(_) | Irrational => true,
+            PiPow(power) => *power >= 2,
+            PiSqrt(r) => positive_root(r),
+            Sqrt(r) => irrational_root(r),
+            Exp(r) => r.sign() != Sign::NoSign,
+            Ln(r) => proper_log(r),
+            Log10(r) => proper_log(r) && Real::rational_integer_log(r, 10).is_none(),
+            Log2(r) => proper_log(r) && Real::rational_integer_log(r, 2).is_none(),
+            Pow10(r) | Pow2(r) => !r.is_integer(),
+            SinPi(r) => interior_angle(r) && r != &*rationals::SIXTH,
+            TanPi(r) => interior_angle(r) && r != &*rationals::QUARTER,
+            ConstProductSqrt(product) => {
+                positive_root(&product.radicand)
+                    && (product.pi_power != 0
+                        || product.exp_power.sign() != Sign::NoSign
+                        || irrational_root(&product.radicand))
+            }
+            LnProduct(product) => {
+                product.left.sign() == Sign::Plus
+                    && product.right.sign() == Sign::Plus
+                    && !product.left.is_one()
+                    && !product.right.is_one()
+                    && (proper_log(&product.left) == proper_log(&product.right))
+            }
+            LnAffine(affine) => {
+                if affine.base.sign() != Sign::Plus || affine.base.is_one() {
+                    false
+                } else if proper_log(&affine.base) && affine.offset.sign() != Sign::Minus {
+                    true
+                } else {
+                    return self.validate_serialized_positive_sum();
+                }
+            }
+            ConstOffset(offset) => {
+                if Self::const_offset_positive_certified(
+                    offset.pi_power,
+                    &offset.exp_power,
+                    &offset.offset,
+                ) {
+                    true
+                } else {
+                    return self.validate_serialized_positive_sum();
+                }
+            }
+        };
+        if valid {
+            Ok(())
+        } else {
+            Err(Problem::ParseError)
+        }
+    }
+
+    #[cfg(feature = "serde")]
+    fn validate_serialized_positive_sum(&self) -> Result<(), Problem> {
+        // Only construct from already defined rational parameters. Never refine
+        // an untrusted supplied payload to validate its own certificate. Unlike
+        // rejecting every noncanonical sum, an undecided sign preserves the
+        // distinction between a missing proof and a mathematically invalid tag.
+        match self.computable_certificate().sign_until(-256) {
+            Some(RealSign::Positive) => Ok(()),
+            Some(RealSign::Negative | RealSign::Zero) => Err(Problem::ParseError),
+            None => Err(Problem::UnknownCertificate),
         }
     }
 }

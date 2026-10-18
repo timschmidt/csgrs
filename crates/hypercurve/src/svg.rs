@@ -41,6 +41,8 @@ pub enum SvgError {
     Unsupported(String),
     /// Exact geometry construction, transformation, or Boolean failure.
     Geometry(String),
+    /// An exact coordinate has an undecided certificate or exhausted its budget.
+    Scalar(hyperreal::Problem),
     /// A configured finite projection or sampling bound was exceeded.
     SizeOverflow {
         /// Name of the exceeded bound.
@@ -54,6 +56,7 @@ impl fmt::Display for SvgError {
             Self::MalformedInput(detail) => write!(formatter, "malformed SVG input: {detail}"),
             Self::Unsupported(detail) => write!(formatter, "unsupported SVG input: {detail}"),
             Self::Geometry(detail) => write!(formatter, "SVG geometry conversion failed: {detail}"),
+            Self::Scalar(error) => write!(formatter, "SVG exact coordinate failed: {error}"),
             Self::SizeOverflow { limit } => {
                 write!(
                     formatter,
@@ -64,7 +67,14 @@ impl fmt::Display for SvgError {
     }
 }
 
-impl std::error::Error for SvgError {}
+impl std::error::Error for SvgError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Scalar(error) => Some(error),
+            _ => None,
+        }
+    }
+}
 
 impl From<std::num::ParseFloatError> for SvgError {
     fn from(error: std::num::ParseFloatError) -> Self {

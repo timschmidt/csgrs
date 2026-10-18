@@ -1,7 +1,7 @@
 //! Constructive-solid-geometry grammar over native Hyper geometry.
 //!
-//! [`solid`] constructs and operates directly on [`TriangleMesh`], while
-//! [`curve`] constructs native `hypercurve::CurveRegion2`,
+//! [`solid`] constructs and operates directly on [`TriangleMesh`]. With the
+//! `curve` feature, the `curve` module constructs native `hypercurve::CurveRegion2`,
 //! `hypercurve::CurveString2`, and `hypercurve::CurvePath2` values and converts
 //! filled regions into solids through extrusion, revolution, and sweep.
 //! Hypermesh owns solid topology and Booleans; Hypercurve owns planar topology
