@@ -18,6 +18,7 @@ mod axial_lines;
 mod conical_revolution;
 mod location;
 mod periodic_charts;
+mod planes;
 mod point;
 mod transform;
 pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
@@ -26,6 +27,7 @@ use location::{
     locate_ellipse_arc_parameters, locate_line_parameter, locate_nurbs_parameters,
     locate_rational_bezier_parameters,
 };
+use planes::intersect_planes;
 pub use point::{Axis, GeometricPoint3};
 pub(crate) use transform::TransformMetric;
 
@@ -5897,48 +5899,6 @@ fn rational_linear_section_carrier(
             offset: parameter_start.clone(),
         },
     })
-}
-
-fn intersect_planes(
-    first: &PlaneSurface,
-    second: &PlaneSurface,
-) -> GeometryResult<SurfaceSurfaceIntersection> {
-    let first_normal = first.u.cross(&first.v);
-    let second_normal = second.u.cross(&second.v);
-    let direction = first_normal.cross(&second_normal);
-    let direction_squared = direction.norm_squared();
-    if decided_order(compare_reals(
-        &direction_squared,
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Equal
-    {
-        let separation = first_normal.dot(&(&second.origin - &first.origin));
-        return if decided_order(compare_reals(
-            &separation,
-            &Real::zero(),
-            crate::STRICT_PREDICATES,
-        ))? == Ordering::Equal
-        {
-            Ok(SurfaceSurfaceIntersection::Coincident)
-        } else {
-            Ok(SurfaceSurfaceIntersection::None)
-        };
-    }
-
-    let first_constant = first_normal.dot(&Vector3::from(first.origin.clone()));
-    let second_constant = second_normal.dot(&Vector3::from(second.origin.clone()));
-    let numerator = (second_normal.clone() * first_constant
-        - first_normal.clone() * second_constant)
-        .cross(&direction);
-    let point = Point3::from(Vector3::from_xyz(
-        (numerator.0[0].clone() / &direction_squared).map_err(GeometryError::Numeric)?,
-        (numerator.0[1].clone() / &direction_squared).map_err(GeometryError::Numeric)?,
-        (numerator.0[2].clone() / direction_squared).map_err(GeometryError::Numeric)?,
-    ));
-    Ok(SurfaceSurfaceIntersection::Line(Box::new(
-        SurfaceIntersectionLine { point, direction },
-    )))
 }
 
 fn intersect_plane_rational_bezier_surface(

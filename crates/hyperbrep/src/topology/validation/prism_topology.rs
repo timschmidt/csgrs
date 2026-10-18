@@ -175,11 +175,9 @@ impl ArenaModelBuilder {
             let mut position = None;
             for (index, surface) in group_surfaces.iter().enumerate() {
                 if *surface == face.surface
-                    || matches!(
-                        self.surface_ref(*surface)?
-                            .intersect_surface(self.surface_ref(face.surface)?)?,
-                        crate::SurfaceSurfaceIntersection::Coincident
-                    )
+                    || self
+                        .surface_ref(*surface)?
+                        .planes_coincident(self.surface_ref(face.surface)?)?
                 {
                     position = Some(index);
                     break;
@@ -240,10 +238,7 @@ impl ArenaModelBuilder {
             };
             let mut position = None;
             for (group_index, group_plane) in group_planes.iter().enumerate() {
-                if matches!(
-                    group_plane.intersect_surface(&plane)?,
-                    crate::SurfaceSurfaceIntersection::Coincident
-                ) {
+                if group_plane.planes_coincident(&plane)? {
                     position = Some(group_index);
                     break;
                 }
@@ -518,33 +513,33 @@ impl ArenaModelBuilder {
                     let candidate_surface = candidate_face.surface;
                     let mut joins = false;
                     for member in &members {
+                        // Grouping requires a shared internal split edge. Rule
+                        // out missing incidence before comparing whole supports;
+                        // no geometric answer can change that topological fact.
+                        if !lateral_edges[candidate]
+                            .intersection(&lateral_edges[*member])
+                            .any(|edge| {
+                                !matches!(
+                                    self.curve_ref(
+                                        self.edge_ref(*edge).expect("validated face edge").curve
+                                    )
+                                    .expect("validated edge curve")
+                                    .kind(),
+                                    Curve3Kind::Line | Curve3Kind::CircleArc
+                                )
+                            })
+                        {
+                            continue;
+                        }
                         let member_face = self.face_ref(faces[lateral_indices[*member]])?;
                         let supports_equal = candidate_surface == member_face.surface
                             || (self.surface_ref(candidate_surface)?.kind() == SurfaceKind::Plane
                                 && self.surface_ref(member_face.surface)?.kind()
                                     == SurfaceKind::Plane
-                                && matches!(
-                                    self.surface_ref(candidate_surface)?.intersect_surface(
-                                        self.surface_ref(member_face.surface)?
-                                    )?,
-                                    crate::SurfaceSurfaceIntersection::Coincident
-                                ));
-                        if supports_equal
-                            && lateral_edges[candidate]
-                                .intersection(&lateral_edges[*member])
-                                .any(|edge| {
-                                    !matches!(
-                                        self.curve_ref(
-                                            self.edge_ref(*edge)
-                                                .expect("validated face edge")
-                                                .curve
-                                        )
-                                        .expect("validated edge curve")
-                                        .kind(),
-                                        Curve3Kind::Line | Curve3Kind::CircleArc
-                                    )
-                                })
-                        {
+                                && self
+                                    .surface_ref(candidate_surface)?
+                                    .planes_coincident(self.surface_ref(member_face.surface)?)?);
+                        if supports_equal {
                             joins = true;
                             break;
                         }

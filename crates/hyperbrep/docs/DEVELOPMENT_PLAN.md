@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
 Status: implementation blueprint. Updated 2026-10-17 for upstream
-`be2a0c37bfe57799c62a36125a5cb883a5458f00` and concurrent development ownership.
+`7ed43501755fd64a01f54c3078d12229cbc0129d` and concurrent development ownership.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,
@@ -82,6 +82,25 @@ latest upstream intent, and update BREP callers directly. Requalify the affected
 native, feature, WASM and composition paths after integration. Keep a fixed
 revision throughout checks and matched measurements; refresh source-specific
 evidence before making claims on the merged code.
+
+The [prism admission cost increment](evidence/2026-10-17-prism-admission-cost/README.md)
+preserves the complete current domain and deterministic outputs while reducing
+redundant proof work. Keep necessary topology checks before irrelevant support
+queries, and put shared exact geometric relations in the geometry owner.
+Construct full intersection geometry only when the consumer needs it. This
+does not relax whole-boundary validation or prove broader shell embedding.
+Future optimizations must retain the full current 192-case corpus, all 211
+final native/STEP artifacts and supported continuation; historical failures and
+cost obligations stay visible. General CAD functionality and delivery remain
+the project objective, with all work-package completion gates still open.
+
+The retained diagonal STEP case also has a
+[schema and exact-coordinate feasibility review](evidence/2026-10-17-prism-admission-cost/future-step-research.md).
+Do not replace its irrational Cartesian vertices with points-on-curves inside
+the current advanced-face profile. Nor can one affine instance transform make
+all of that fixture's existing vertices finite-decimal. Any exact representation
+normalization, alternate conforming profile or explicit lossy exchange route
+requires its own contract, source mapping and complete admission evidence.
 
 Upstream `7ed435017` adds package/license and README corrections. The
 [package integration](evidence/2026-10-17-package-upstream-integration/README.md)

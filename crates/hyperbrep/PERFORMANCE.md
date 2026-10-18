@@ -1,5 +1,21 @@
 # HyperBREP Performance Contract
 
+## 2026-10-17: exact prism admission proof scheduling
+
+Kept after the [complete qualification](docs/evidence/2026-10-17-prism-admission-cost/README.md).
+The necessary shared internal-edge condition precedes a wall support query.
+Native plane grouping shares the full intersection relation proof and omits
+unused transverse intersection-line construction. Exact topology, strict
+certainty, supported composition, deterministic output and failure semantics
+remain unchanged.
+
+The matched campaign preserves all 192 original case receipts across 22 full corpora in 132 fresh processes (three alternating CPU-pinned pairs per corpus). Median case ratio 0.995179; range 0.625531–1.059740. No case-median ratio exceeds 1.10. NURBS boundary extrusion measures 1.207123 to 0.844273 ms (0.699410x); butt-region ratios are 0.896605 and 0.883451. There are 4 rows with increased allocation requests; all raw/adverse rows, process CPU/wall/RSS and executable/WASM sizes remain. The largest allocation-request increase is 1,363 calls (0.052635%) and 85,128 requested bytes (0.041245%) in the primitive-matrix workflow. Native harness size changes range from -1,104 to +5,712 bytes; the same 138-group WASM harness is 7,958 bytes smaller. The resource review retains these tradeoffs without claiming a heap bound. The two preliminary full-harness pilots and pre-edit historical reproduction stay separate. Retain the measured reduction in redundant proof work against the complete current domain; shared-host samples establish neither broad speedup significance nor a retained-heap/distribution-size bound. Earlier cost observations remain open.
+
+[All cost observations](docs/evidence/2026-10-17-prism-admission-cost/costs.md) retain every case and raw sample.
+All 211 preceding final native/STEP artifacts agree byte-for-byte. Broader
+geometry, resource, coverage, delivery and historical cost obligations remain
+open; all 28 work packages remain open or in progress.
+
 ## 2026-10-17: partial-depth axial shells and continued modeling
 
 Kept for exact capability and downstream consumption. [Admission evidence](docs/evidence/2026-10-17-axial-shells/README.md)
