@@ -150,6 +150,8 @@ pub struct PcbRegion {
     had_non_finite_input: bool,
     exact_construction_error: Option<Arc<str>>,
     finite_projection: OnceLock<MultiPolygon<f64>>,
+    // Authored report decomposition, never proof of disjoint native components.
+    finite_projection_sources: Option<Arc<[PcbRegion]>>,
     exact_component_regions: OnceLock<Vec<Arc<CurveRegion2>>>,
 }
 
@@ -193,6 +195,7 @@ impl PcbRegion {
             had_non_finite_input: false,
             exact_construction_error: None,
             finite_projection: OnceLock::new(),
+            finite_projection_sources: None,
             exact_component_regions: OnceLock::new(),
         }
     }
@@ -205,8 +208,44 @@ impl PcbRegion {
             had_non_finite_input: false,
             exact_construction_error: None,
             finite_projection: OnceLock::new(),
+            finite_projection_sources: None,
             exact_component_regions: OnceLock::new(),
         }
+    }
+
+    /// Attach already-validated source owners to their native aggregate.
+    /// Report views retain authoring order without becoming topology evidence.
+    pub(crate) fn new_aggregate(
+        region: Arc<CurveRegion2>,
+        metadata: Option<LayerMetadata>,
+        sources: &[&Self],
+    ) -> Self {
+        if let [source] = sources {
+            let mut result = Self::clone(source);
+            result.metadata = metadata;
+            return result;
+        }
+        let mut result = Self::new_shared(region, metadata);
+        result.had_non_finite_input = sources.iter().any(|source| source.had_non_finite_input);
+        if !sources.is_empty() {
+            // Keep only authored leaves: retaining aggregate owners would fill
+            // every ancestor's report cache and retain all intermediate prefixes.
+            result.finite_projection_sources = Some(
+                sources
+                    .iter()
+                    .flat_map(|source| {
+                        source
+                            .finite_projection_sources
+                            .as_deref()
+                            .unwrap_or_else(|| std::slice::from_ref(*source))
+                            .iter()
+                    })
+                    .cloned()
+                    .collect::<Vec<_>>()
+                    .into(),
+            );
+        }
+        result
     }
 
     pub(crate) fn new_with_exact_bounds_and_projection(
@@ -227,6 +266,7 @@ impl PcbRegion {
             had_non_finite_input,
             exact_construction_error: None,
             finite_projection: projection,
+            finite_projection_sources: None,
             exact_component_regions: OnceLock::new(),
         }
     }

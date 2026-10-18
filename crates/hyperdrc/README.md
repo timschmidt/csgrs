@@ -608,3 +608,10 @@ HyperDRC is available under the [MIT License](LICENSE).
 Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
 It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
+
+Native copper aggregation retains checked source owners and their diagnostic
+history without requiring finite report coordinates. Readiness implementation
+version 22 identifies this aggregation and uncertainty-reporting correction.
+Finite report projection remains a separate fallible operation; authored
+report order is preserved. Existing version 21 readiness artifacts describe
+the earlier implementation and must be recomputed to claim the new behavior.
