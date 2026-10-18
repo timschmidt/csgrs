@@ -18514,6 +18514,132 @@
     "public_distribution_complete": false,
     "hypervoxel_deferred_by_user": true,
     "next": "Repair owned folding using the existing Class certificate reconstruction. First reproduce directly consumed lazy values against independent mathematical bounds; preserve the separate lazy-query, cache, certificate/domain and automatic-equality obligations."
+  },
+  "owned_symbolic_folding": {
+    "status": "Retain the shared-certificate fallback in owned Real folding.",
+    "parent_revision": "39bdea5aed282e76d9639535e41d00ae9a2cec15",
+    "review": "docs/evidence/2026-10-18-owned-symbolic-folding/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-owned-symbolic-folding/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-owned-symbolic-folding/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1054
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 934
+      }
+    },
+    "debug_units_passed": 817,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 365,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "all_targets": true,
+      "packages": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "runtime_tests_rerun": false,
+      "clippy_on_msrv_run": false
+    },
+    "new_failing_baseline_tests": 4,
+    "new_passing_scalar_tests": 5,
+    "runtime_admitted": true,
+    "admitted_scope": "Correct symbolic value during owned folding of valid lazy named certificates.",
+    "remaining_limitations": [
+      "Valid lazy sign-query and normal-form paths still have missing-payload panics.",
+      "Arbitrary forged certificate/graph consistency and undefined graph domains are not validated.",
+      "The rejected cache prototype remains rejected; composed proof retention and automatic reciprocal equality remain open.",
+      "Explicit affine subtraction remains withheld.",
+      "The complete native workload, all bindings, distribution/release and full pre-push workflow matrix were not rerun."
+    ],
+    "explicit_subtraction_candidate_admitted": false,
+    "lazy_cache_candidate_admitted": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 32,
+    "all_adverse_results_retained": true,
+    "performance_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Restore consumable valid lazy-certificate queries without the rejected common-path cache costs, and validate forged certificates and undefined graph domains before reconsidering affine cancellation."
   }
 },
   "status_meanings": {

@@ -97,6 +97,7 @@ impl Real {
     pub(crate) fn fold(self) -> Computable {
         // Owned folding mirrors `fold_ref` but moves the computable when the
         // rational scale is one; scalar transcendental kernels hit this path.
+        // A missing payload still carries the symbolic class, not just one.
         let crate::Real {
             rational,
             class,
@@ -108,12 +109,12 @@ impl Real {
             .and_then(|computable| computable.signal.as_ref())
             .cloned();
         let mut c = if rational.is_one() {
-            computable.unwrap_or_else(Computable::one)
+            computable.unwrap_or_else(|| class.computable_certificate())
         } else if class == crate::real::Class::One {
             Computable::rational(rational)
         } else {
             computable
-                .unwrap_or_else(Computable::one)
+                .unwrap_or_else(|| class.computable_certificate())
                 .multiply_rational(rational)
         };
         if let Some(signal) = signal {
