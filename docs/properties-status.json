@@ -17763,6 +17763,24 @@
     "exact_ingress_admitted": false,
     "hypervoxel_deferred_by_user": true,
     "full_plan_complete": false
+  },
+  "native_aggregation_retention": {
+    "status": "not admitted: superlinear retained report storage",
+    "checkpoint": "docs/evidence/2026-10-17-native-aggregation-retention/checkpoint-v1.json",
+    "review": "docs/evidence/2026-10-17-native-aggregation-retention/review-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-native-aggregation-retention/artifact-expectations-v1.json.gz",
+    "baseline_revision": "e515480e3f0f19a371c745b60d453ab322094db6",
+    "production_suite_passed": 1669,
+    "native_cases_repaired_in_prototype": 5,
+    "original_project_gates_passed_both_variants": true,
+    "candidate_report_live_bytes_at_256_steps": 9358276,
+    "baseline_256_steps": "external 60-second exhaustion; no completed result",
+    "source_changes_applied": false,
+    "complete_report_comparison_executed": false,
+    "hypercircuit_checks_executed": false,
+    "hypervoxel_deferred_by_user": true,
+    "full_plan_complete": false,
+    "next": "flatten retained report sources; add a semantic allocation-growth regression; requalify the new source"
   }
 },
   "status_meanings": {
