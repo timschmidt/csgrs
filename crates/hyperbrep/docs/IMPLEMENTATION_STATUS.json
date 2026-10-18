@@ -1925,6 +1925,42 @@
       "validation": "Native/IO release suites pass 602 all-feature and 594 minimal-feature tests. All 35 focused debug tests, full/minimal all-target warning-denied Clippy, external consumer lint, warning-denied rustdoc, nine STEP examples, fuzz-target compilation and formatting pass. The unchanged actual source-path WASM harness executes 138 groups with zero imports. All 24 full-size prism outcomes, 81 preceding native diagnostics, eight partial-depth axial workflows, four previous axial workflows, two multi-component workflows and the original four path outcomes persist. All 211 preceding final native/STEP artifacts are byte-identical, including eight original partial-shell prism outputs not included in the preceding increment's older-artifact comparison. Independent exact measures, classifications, incidence, cold replay and repeated supported composition remain exercised. New plane tests cover symbolic/rational heights, skew/reversed/scaled charts, operand reversal, a distinct 1/10^12 offset and independently specified full crossing lines. No public API, representation, supported input, policy or fixture changes. Supporting runtime is unchanged.",
       "cost_evidence": "The matched campaign preserves all 192 original case receipts across 22 full corpora in 132 fresh processes (three alternating CPU-pinned pairs per corpus). Median case ratio 0.995179; range 0.625531\u20131.059740. No case-median ratio exceeds 1.10. NURBS boundary extrusion measures 1.207123 to 0.844273 ms (0.699410x); butt-region ratios are 0.896605 and 0.883451. There are 4 rows with increased allocation requests; all raw/adverse rows, process CPU/wall/RSS and executable/WASM sizes remain. The largest allocation-request increase is 1,363 calls (0.052635%) and 85,128 requested bytes (0.041245%) in the primitive-matrix workflow. Native harness size changes range from -1,104 to +5,712 bytes; the same 138-group WASM harness is 7,958 bytes smaller. The resource review retains these tradeoffs without claiming a heap bound. The two preliminary full-harness pilots and pre-edit historical reproduction stay separate. Retain the measured reduction in redundant proof work against the complete current domain; shared-host samples establish neither broad speedup significance nor a retained-heap/distribution-size bound. Earlier cost observations remain open.",
       "limits": "General curved-shell/Boolean closure, the preceding unencodable diagonal STEP vertex, general rational-path measurement, complete source qualification, operation-wide total-work/retained-memory/cancellation contracts, formal proofs, full coverage, runtime fuzz/ASan/lexicase, registry/MSRV/binding delivery, complete STEP/AP support and the full pre-push matrix remain open. The unchanged original unrotated lower thin-layer STEP shape remains invalid to the optional OCCT reader at its import tolerance; all exact native assertions and eight rotated/reflected outputs remain valid. No tolerance healing is introduced. No package or whole-project completion claim; all 28 work packages stay open or in progress. No push. Necessary future supporting-crate changes remain authorized in their owners; unrelated upstream failures remain with the concurrent thread."
+    },
+    {
+      "id": "retained-region-extrusion-frontier-2026-10-17",
+      "kind": "diagnostic",
+      "work_packages": [
+        "WP00",
+        "WP02",
+        "WP03",
+        "WP06",
+        "WP08",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P11",
+        "P12",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P26",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Reproduce the normalized retained-profile extrusion frontier on the committed prism-admission baseline; no runtime change.",
+      "evidence": "evidence/2026-10-17-retained-region-extrusion/manifest.json",
+      "validation": "Seven original recipe diagnostics: six UnsupportedPlanarProfile outcomes, one already-supported analytic-square extrusion with independently exact area 16/volume 48 and byte-identical cold replay. Original Boolean/affine classification assertions pass. External source-path release build, warning-denied all-target Clippy and rustfmt pass.",
+      "limits": "This is a diagnostic frontier, not seven successful workflows, a capability extension, matched benchmark, continued-modeling/STEP/source-provenance proof or package admission. Production source/dependencies remain unchanged; all work packages stay open."
     }
   ],
   "work_packages": [
@@ -2099,6 +2135,7 @@
   ],
   "next_actions": [
     "Use evidence/2026-10-17-prism-admission-cost/manifest.json as the current preserved-domain cost baseline, with evidence/2026-10-17-axial-shells/manifest.json for the underlying exact feature admission. Preserve all 211 final artifacts, 192 original full benchmark cases, 24 native prism successes, 81 preceding diagnostics, complete STEP workflows, scale/distant-seam controls and 138 WASM groups. Extend the next reproduced unsupported BREP domain with independent set, topology, source-fidelity and complete downstream composition evidence.",
+    "Use evidence/2026-10-17-retained-region-extrusion/manifest.json for the current retained-region extrusion blocker. The uncut mixed parabola/retained-line region has exact area but fails UnsupportedPlanarProfile; four original algebraic Boolean/affine variants and a curved analytic parallel also fail. The analytic-square control already succeeds. First investigate a shared whole-image proof/view in Hypercurve for eligible retained boundaries, consumed by BREP without losing source/parameter identity; qualify complete spatial topology, cold persistence and continued modeling. Keep the selected-parameter measurement and general analytic domains separate, with original full inputs and explicit blockers. Do not reconstruct a curve from endpoints or duplicate the curve kernel.",
     "Retain native plane/cylinder carriers and complete affine prism transport. The prism-admission cost increment removes redundant incidence/support work while retaining all original fixtures and receipts. Historical NURBS, butt-region and other cost observations remain; temporary generic extrusion allocation, repeated positive proof construction and inline optional axial-witness storage are separate unmeasured candidates. Preserve the remaining unencodable diagonal STEP vertex, rational-path measurement and source/resource/delivery blockers without approximation.",
     "Preserve the public normalized-region extrusion corpus: four butt/round stroke workflows, two multi-component STEP workflows, native holes/islands/empty/invalid-height/certainty/budget controls, exact artifacts and 119 WASM groups. General rational-path side measurement and source-qualification delivery require separate proofs and complete consumers; retain the original unsupported inputs.",
     "Use region-extrusion for the current public profile feature and stroke-upstream-integration for merged be2a0c37b ownership guidance. Preserve all 81 native diagnostic outcomes, 24 prism outcomes, 71 old STEP artifacts, six new complete exchanges and historical 176 main/196 dependency benchmark contracts. New source needs fresh applicable evidence; historical timings do not qualify later changes. Supporting crate changes needed for BREP features are authorized; unrelated repairs stay with their owner.",

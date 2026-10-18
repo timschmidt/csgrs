@@ -94,6 +94,15 @@ final native/STEP artifacts and supported continuation; historical failures and
 cost obligations stay visible. General CAD functionality and delivery remain
 the project objective, with all work-package completion gates still open.
 
+The [retained-region extrusion diagnostic](evidence/2026-10-17-retained-region-extrusion/README.md)
+reproduces the next cross-layer boundary on the committed cost baseline.
+Even an uncut mixed parabola/retained-line profile has exact area but fails
+spatial promotion; the analytic-square control already succeeds. Reuse native
+whole-image proof in the curve owner, retain source/parameter identity, and
+admit BREP topology, cold replay and continued modeling together. General
+selected-parameter measurement and analytic parallel extrusion are subsequent
+domains, not reasons to weaken the current proof or input corpus.
+
 The retained diagonal STEP case also has a
 [schema and exact-coordinate feasibility review](evidence/2026-10-17-prism-admission-cost/future-step-research.md).
 Do not replace its irrational Cartesian vertices with points-on-curves inside
