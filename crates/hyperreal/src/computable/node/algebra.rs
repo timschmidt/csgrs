@@ -306,10 +306,7 @@ impl PiLaurentPolynomial {
             return None;
         }
         let (power, coefficient) = self.terms.pop()?;
-        Some(Self::monomial(
-            power.checked_neg()?,
-            coefficient.inverse()?,
-        ))
+        Some(Self::monomial(power.checked_neg()?, coefficient.inverse()?))
     }
 }
 
@@ -683,11 +680,7 @@ impl Computable {
             ),
             Approximation::Multiply(left, right) => {
                 if let Some(scale) = left.exact_rational() {
-                    return Some(
-                        right
-                            .pi_atan_linear_form(budget - 1)?
-                            .scaled(scale),
-                    );
+                    return Some(right.pi_atan_linear_form(budget - 1)?.scaled(scale));
                 }
                 if let Some(scale) = right.exact_rational() {
                     return Some(left.pi_atan_linear_form(budget - 1)?.scaled(scale));
@@ -778,8 +771,7 @@ impl Computable {
                 };
                 return Some(PiAcosLinearForm {
                     constant: Rational::zero(),
-                    pi: orientation.clone()
-                        * Rational::fraction(1, 2).expect("two is nonzero"),
+                    pi: orientation.clone() * Rational::fraction(1, 2).expect("two is nonzero"),
                     acos: -orientation,
                     argument: Some(Self::rational(
                         Rational::fraction(1, 6).expect("six is nonzero"),
@@ -837,11 +829,7 @@ impl Computable {
             ),
             Approximation::Multiply(left, right) => {
                 if let Some(scale) = left.exact_rational() {
-                    return Some(
-                        right
-                            .pi_acos_linear_form(budget - 1)?
-                            .scaled(scale),
-                    );
+                    return Some(right.pi_acos_linear_form(budget - 1)?.scaled(scale));
                 }
                 if let Some(scale) = right.exact_rational() {
                     return Some(left.pi_acos_linear_form(budget - 1)?.scaled(scale));
@@ -921,29 +909,22 @@ impl Computable {
         Some((orientation, form.argument?))
     }
 
-    fn collapsed_inverse_trig_linear_sum(
-        &self,
-        other: &Computable,
-    ) -> Option<Rational> {
+    fn collapsed_inverse_trig_linear_sum(&self, other: &Computable) -> Option<Rational> {
         if !self.internal.contains_inverse_trig_or_pi()
             && !other.internal.contains_inverse_trig_or_pi()
         {
             return None;
         }
-        if let (Some(left), Some(right)) = (
-            self.pi_atan_linear_form(32),
-            other.pi_atan_linear_form(32),
-        )
+        if let (Some(left), Some(right)) =
+            (self.pi_atan_linear_form(32), other.pi_atan_linear_form(32))
             && let Some(form) = left.add(right)
             && form.pi.sign() == Sign::NoSign
             && form.atan.sign() == Sign::NoSign
         {
             return Some(form.constant);
         }
-        if let (Some(left), Some(right)) = (
-            self.pi_acos_linear_form(32),
-            other.pi_acos_linear_form(32),
-        )
+        if let (Some(left), Some(right)) =
+            (self.pi_acos_linear_form(32), other.pi_acos_linear_form(32))
             && let Some(form) = left.add(right)
             && form.pi.sign() == Sign::NoSign
             && form.acos.sign() == Sign::NoSign
@@ -1026,10 +1007,7 @@ impl Computable {
             && form.constant.sign() == Sign::NoSign
         {
             if form.pi.sign() == Sign::NoSign {
-                return Some(product_sign(
-                    form.atan.sign(),
-                    form.argument?.exact_sign()?,
-                ));
+                return Some(product_sign(form.atan.sign(), form.argument?.exact_sign()?));
             }
             if form.atan.sign() == Sign::NoSign {
                 return Some(form.pi.sign());
@@ -1121,9 +1099,7 @@ impl Computable {
                     None
                 }
             }
-            Approximation::Negate(child) => {
-                Some(-child.retained_pi_rational_multiple(budget - 1)?)
-            }
+            Approximation::Negate(child) => Some(-child.retained_pi_rational_multiple(budget - 1)?),
             Approximation::Offset(child, shift) => Some(
                 child.retained_pi_rational_multiple(budget - 1)?
                     * Self::power_of_two_rational(*shift),
@@ -1213,7 +1189,11 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Arc::new(Node::new(Approximation::Negate(self), BoundCache::Invalid, exact_sign)),
+            internal: Arc::new(Node::new(
+                Approximation::Negate(self),
+                BoundCache::Invalid,
+                exact_sign,
+            )),
             signal: None,
         }
     }
@@ -1287,7 +1267,11 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Arc::new(Node::new(Approximation::Inverse(self), BoundCache::Invalid, exact_sign)),
+            internal: Arc::new(Node::new(
+                Approximation::Inverse(self),
+                BoundCache::Invalid,
+                exact_sign,
+            )),
             signal: None,
         }
     }
@@ -1316,7 +1300,11 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Arc::new(Node::new(Approximation::Offset(self, n), BoundCache::Invalid, exact_sign)),
+            internal: Arc::new(Node::new(
+                Approximation::Offset(self, n),
+                BoundCache::Invalid,
+                exact_sign,
+            )),
             signal: None,
         }
     }
@@ -1375,7 +1363,11 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Arc::new(Node::new(Approximation::Square(self), BoundCache::Invalid, exact_sign)),
+            internal: Arc::new(Node::new(
+                Approximation::Square(self),
+                BoundCache::Invalid,
+                exact_sign,
+            )),
             signal: None,
         }
     }
@@ -1402,8 +1394,7 @@ impl Computable {
                         return self.multiply(left.clone()).add(remainder);
                     }
                 }
-                if let Some(remainder) = other.without_scaled_shared_factor(SharedConstant::InvPi)
-                {
+                if let Some(remainder) = other.without_scaled_shared_factor(SharedConstant::InvPi) {
                     return remainder;
                 }
             }
@@ -1428,8 +1419,7 @@ impl Computable {
                         return other.multiply(left.clone()).add(remainder);
                     }
                 }
-                if let Some(remainder) = self.without_scaled_shared_factor(SharedConstant::InvPi)
-                {
+                if let Some(remainder) = self.without_scaled_shared_factor(SharedConstant::InvPi) {
                     return remainder;
                 }
             }
@@ -1540,7 +1530,11 @@ impl Computable {
             }
         }
         Self {
-            internal: Arc::new(Node::new(Approximation::Multiply(self, other), BoundCache::Invalid, exact_sign)),
+            internal: Arc::new(Node::new(
+                Approximation::Multiply(self, other),
+                BoundCache::Invalid,
+                exact_sign,
+            )),
             signal: None,
         }
     }
@@ -1551,12 +1545,10 @@ impl Computable {
     ) -> Computable {
         Self {
             internal: Arc::new(Node::new(
-                Approximation::LinearCombination3(Box::new(
-                    LinearCombination3 {
-                        coefficients,
-                        values,
-                    },
-                )),
+                Approximation::LinearCombination3(Box::new(LinearCombination3 {
+                    coefficients,
+                    values,
+                })),
                 BoundCache::Invalid,
                 ExactSignCache::Invalid,
             )),
@@ -1612,7 +1604,11 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Arc::new(Node::new(Approximation::Multiply(Self::rational(scale), self), BoundCache::Invalid, exact_sign)),
+            internal: Arc::new(Node::new(
+                Approximation::Multiply(Self::rational(scale), self),
+                BoundCache::Invalid,
+                exact_sign,
+            )),
             signal: None,
         }
     }
@@ -1632,9 +1628,8 @@ impl Computable {
                 }
                 let (left, left_scale, left_offset) = left.rational_offset_parts(budget)?;
                 let (right, right_scale, right_offset) = right.rational_offset_parts(budget)?;
-                return Self::internal_structural_eq(left, right).then(|| {
-                    (left, left_scale + right_scale, left_offset + right_offset)
-                });
+                return Self::internal_structural_eq(left, right)
+                    .then(|| (left, left_scale + right_scale, left_offset + right_offset));
             }
             Approximation::Negate(child) => (child, Rational::new(-1)),
             Approximation::Offset(child, shift) if shift.unsigned_abs() <= 4096 => {
@@ -1663,12 +1658,16 @@ impl Computable {
             let left_parts = left.rational_offset_parts(&mut 8);
             let right_parts = right.rational_offset_parts(&mut 8);
             let (left, left_scale, right, right_scale) = match (left_parts, right_parts) {
-                (Some((left, left_scale, left_offset)), Some((right, right_scale, right_offset)))
-                    if left_offset == right_offset => (left, left_scale, right, right_scale),
-                (Some((base, scale, offset)), None) if offset.sign() == Sign::NoSign =>
-                    (base, scale, right, Rational::one()),
-                (None, Some((base, scale, offset))) if offset.sign() == Sign::NoSign =>
-                    (left, Rational::one(), base, scale),
+                (
+                    Some((left, left_scale, left_offset)),
+                    Some((right, right_scale, right_offset)),
+                ) if left_offset == right_offset => (left, left_scale, right, right_scale),
+                (Some((base, scale, offset)), None) if offset.sign() == Sign::NoSign => {
+                    (base, scale, right, Rational::one())
+                }
+                (None, Some((base, scale, offset))) if offset.sign() == Sign::NoSign => {
+                    (left, Rational::one(), base, scale)
+                }
                 _ => return false,
             };
             if left_scale == right_scale {
@@ -1722,14 +1721,18 @@ impl Computable {
             && let Some((base, scale, offset)) = self.rational_offset_parts(&mut 8)
         {
             crate::trace_dispatch!("computable", "add", "rational-offset-fold");
-            return base.clone().multiply_rational(scale)
+            return base
+                .clone()
+                .multiply_rational(scale)
                 .add(Self::rational(offset + rational));
         }
         if let Some(rational) = &left_exact
             && let Some((base, scale, offset)) = other.rational_offset_parts(&mut 8)
         {
             crate::trace_dispatch!("computable", "add", "rational-offset-fold");
-            return base.clone().multiply_rational(scale)
+            return base
+                .clone()
+                .multiply_rational(scale)
                 .add(Self::rational(offset + rational));
         }
         if let Approximation::Add(left, right) = &self.internal.approximation
@@ -1838,7 +1841,9 @@ impl Computable {
                     .and_then(|rational| other.sin_pi_rational_sum_sign(rational))
             });
         Self {
-            internal: Arc::new(Node::new(Approximation::Add(self, other), if certified_bound == BoundInfo::Unknown {
+            internal: Arc::new(Node::new(
+                Approximation::Add(self, other),
+                if certified_bound == BoundInfo::Unknown {
                     BoundCache::Invalid
                 } else {
                     BoundCache::Valid(certified_bound)
@@ -1857,7 +1862,11 @@ impl Computable {
             return Self::one();
         }
         Self {
-            internal: Arc::new(Node::new(Approximation::Int(n), BoundCache::Invalid, ExactSignCache::Invalid)),
+            internal: Arc::new(Node::new(
+                Approximation::Int(n),
+                BoundCache::Invalid,
+                ExactSignCache::Invalid,
+            )),
             signal: None,
         }
     }
@@ -1870,7 +1879,11 @@ impl Computable {
             return Self::zero();
         }
         let series = Self {
-            internal: Arc::new(Node::new(Approximation::ErfSeries(self.clone()), BoundCache::Invalid, ExactSignCache::Invalid)),
+            internal: Arc::new(Node::new(
+                Approximation::ErfSeries(self.clone()),
+                BoundCache::Invalid,
+                ExactSignCache::Invalid,
+            )),
             signal: None,
         };
         let gaussian = self.square().negate().exp();
@@ -1886,7 +1899,11 @@ impl Computable {
             return Self::one();
         }
         Self {
-            internal: Arc::new(Node::new(Approximation::Erfc(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Plus))),
+            internal: Arc::new(Node::new(
+                Approximation::Erfc(self),
+                BoundCache::Invalid,
+                ExactSignCache::Valid(Sign::Plus),
+            )),
             signal: None,
         }
     }
@@ -1928,7 +1945,11 @@ impl Computable {
             return Self::rational(HALF_RATIONAL.clone());
         }
         Self {
-            internal: Arc::new(Node::new(Approximation::NormalSf(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Plus))),
+            internal: Arc::new(Node::new(
+                Approximation::NormalSf(self),
+                BoundCache::Invalid,
+                ExactSignCache::Valid(Sign::Plus),
+            )),
             signal: None,
         }
     }
@@ -1955,7 +1976,11 @@ impl Computable {
             None => ExactSignCache::Invalid,
         };
         Self {
-            internal: Arc::new(Node::new(Approximation::NormalInterval { lo, hi }, BoundCache::Invalid, exact_sign)),
+            internal: Arc::new(Node::new(
+                Approximation::NormalInterval { lo, hi },
+                BoundCache::Invalid,
+                exact_sign,
+            )),
             signal: None,
         }
     }
@@ -1963,7 +1988,11 @@ impl Computable {
     /// Natural logarithm of the standard normal CDF.
     pub fn log_pnorm(self) -> Computable {
         Self {
-            internal: Arc::new(Node::new(Approximation::LogPnorm(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Minus))),
+            internal: Arc::new(Node::new(
+                Approximation::LogPnorm(self),
+                BoundCache::Invalid,
+                ExactSignCache::Valid(Sign::Minus),
+            )),
             signal: None,
         }
     }
@@ -1971,7 +2000,11 @@ impl Computable {
     /// Natural logarithm of the standard normal upper-tail probability.
     pub fn log_normal_sf(self) -> Computable {
         Self {
-            internal: Arc::new(Node::new(Approximation::LogNormalSf(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Minus))),
+            internal: Arc::new(Node::new(
+                Approximation::LogNormalSf(self),
+                BoundCache::Invalid,
+                ExactSignCache::Valid(Sign::Minus),
+            )),
             signal: None,
         }
     }
@@ -1979,20 +2012,28 @@ impl Computable {
     /// Natural logarithm of the standard normal density.
     pub fn log_dnorm(self) -> Computable {
         Self {
-            internal: Arc::new(Node::new(Approximation::LogDnorm(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Minus))),
+            internal: Arc::new(Node::new(
+                Approximation::LogDnorm(self),
+                BoundCache::Invalid,
+                ExactSignCache::Valid(Sign::Minus),
+            )),
             signal: None,
         }
     }
 
-    /// Standard normal quantile by Newton iteration with the analytic density.
+    /// Standard normal quantile for a defined probability strictly between zero and one.
+    ///
+    /// The seed is an evaluation hint. A retained CDF identity or numerical
+    /// enclosures certify the result; safeguarded Newton iteration and monotone
+    /// search repair inaccurate seeds.
     pub fn normal_quantile(p: Computable, seed: BigInt, seed_prec: Precision) -> Computable {
+        if let Some(exact) = p.exact_normal_quantile() {
+            return Self::rational(exact);
+        }
         Self {
             internal: Arc::new(Node::new(
-                Approximation::NormalQuantile(Box::new(NormalQuantileData {
-                    p,
-                    seed,
-                    seed_prec,
-                })), BoundCache::Invalid,
+                Approximation::NormalQuantile(Box::new(NormalQuantileData { p, seed, seed_prec })),
+                BoundCache::Invalid,
                 ExactSignCache::Invalid,
             )),
             signal: None,
@@ -2003,5 +2044,4 @@ impl Computable {
     pub fn abort(&mut self, s: Signal) {
         self.signal = Some(s);
     }
-
 }

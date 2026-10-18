@@ -19304,6 +19304,214 @@
     "public_distribution_complete": false,
     "hypervoxel_deferred_by_user": true,
     "next": "Address native domain obligations and quantile seed evidence before broader strict completion and the complete external release path."
+  },
+  "native_quantile_certification": {
+    "status": "Retain native CDF-certified normal quantiles, safeguarded Newton iteration, monotone fallback and exact half-probability/CDF composition identities.",
+    "parent_revision": "a91983ad7966651ce9ec4f9b0d932db699735429",
+    "review": "docs/evidence/2026-10-18-quantile-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-quantile-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/quantile-admission-validation-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1084
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 940
+      }
+    },
+    "debug_units_passed": 818,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-solid_cache": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "runtime_admitted": true,
+    "admitted_scope": "A seed or Newton proposal cannot publish a certified approximation by itself. Native, imported and wrapped quantiles use CDF enclosures or a verified retained construction identity. Exact half-probability and recognized rational-CDF inverses compose without refinement.",
+    "remaining_limitations": [
+      "General non-leaf domain/range admission remains open, including the earlier false zero fact on an undefined zero product.",
+      "The native quantile constructor still requires a defined probability in its mathematical domain; this patch does not add a general typed domain validator.",
+      "Finite tests and independent numerical oracles do not establish complete producer verification or all expression/precision/resource behavior.",
+      "Full geometry/DRC runtime gates, actual foreign-language consumers, clean shipped-distribution validation and the full properties plan remain open.",
+      "Historical missing artifacts were not reaudited or recovered. Present build artifacts moved to Disk B with verified compatibility aliases; small helper scripts still have temporary paths."
+    ],
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 145,
+    "storage_relocation": "docs/evidence/2026-10-18-quantile-admission/relocation-verification-v1.json",
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "all_adverse_results_retained": true,
+    "general_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Continue native domain obligations and ordinary strict-mode completion, then the complete external user-path and release validation."
   }
 },
   "status_meanings": {

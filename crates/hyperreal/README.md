@@ -381,7 +381,7 @@ when a zero outer factor would hide the invalid child. Small-angle `sinc` and
 constants whose certified magnitude proves they exceed that bound. This
 tightens earlier unchecked private representations; the public trigonometric
 constructors retain their wider input domains through argument reduction.
-General non-leaf kernel ranges and quantile seed admission remain incomplete.
+General non-leaf kernel ranges remain incomplete.
 Inverse-cosine endpoint facts distinguish `acos(1) = acosh(1) = 0`; an imported
 `acosh` node needs evidence about its argument before claiming a positive sign.
 The native rational reader recognizes these exact endpoints so later arithmetic
@@ -389,6 +389,19 @@ can consume them without numerical refinement. For `acosh`, the shared bounded
 quotient evaluator requires rational leaves and checks every denominator before
 discarding zero terms; an arbitrary cached zero is insufficient. Imported
 non-rational `acosh` arguments may remain undecided until new evidence is found.
+
+Normal-quantile seeds are evaluation hints, including in retained wire graphs.
+Recognizable CDF expressions of exact rational arguments retain their inverse
+without evaluating tiny tails: the shared scalar normalizer suggests an argument,
+and structural equality with the complete reconstructed CDF proves the identity.
+Seeds no longer supply certified values by themselves. Other results require
+CDF enclosures, with monotone search when a Newton step or seed is insufficient.
+The exact half-probability identity remains zero through import and downstream
+arithmetic. Valid stored graph bytes are preserved; a native constructor may
+canonicalize the exact half-probability case to zero and recognized rational
+CDF inverses to their exact values. The native quantile
+operation requires a defined probability strictly between zero and one;
+general expression-domain validation and total-work bounds remain incomplete.
 
 Hypercurve's exact SVG import exposes undecided scalar admission as
 `SvgError::Scalar(Problem::UnknownCertificate)` with the scalar error as its

@@ -1161,6 +1161,7 @@ impl Computable {
                 Approximation::AcosPositiveRational(r) => {
                     Some(Some(if r.is_one() { Sign::NoSign } else { Sign::Plus }))
                 }
+                Approximation::NormalQuantile(_) => Some(node.exact_rational().map(|r| r.sign())),
                 Approximation::AcoshNearOne(argument) | Approximation::AcoshDirect(argument) => {
                     // The representation alone does not prove x>1. A checked
                     // rational expression proves the endpoint and its domain;
@@ -1417,8 +1418,33 @@ impl Computable {
         self.cheap_bound().certified_sign_and_msd()
     }
 
+    pub(crate) fn exact_normal_quantile(&self) -> Option<Rational> {
+        if self.exact_rational().as_ref() == Some(&*HALF_RATIONAL) {
+            return Some(Rational::zero());
+        }
+        // Native CDF construction retains erf's argument. It suggests an
+        // inverse, but only reconstructing the complete CDF proves the identity:
+        // a similar-looking expression or an untrusted seed is not a witness.
+        let Approximation::Offset(sum, -1) = &self.internal.approximation else {
+            return None;
+        };
+        let Approximation::Add(_, erf) = &sum.internal.approximation else {
+            return None;
+        };
+        let Approximation::Multiply(_, series) = &erf.internal.approximation else {
+            return None;
+        };
+        let Approximation::ErfSeries(argument) = &series.internal.approximation else {
+            return None;
+        };
+        let (scale, radicand) = argument.exact_pure_quadratic_surd()?;
+        let inverse = scale * (radicand * Rational::new(2)).perfect_nth_root(2)?;
+        let reconstructed = Self::rational(inverse.clone()).pnorm();
+        Self::internal_structural_eq(self, &reconstructed).then_some(inverse)
+    }
+
     pub(crate) fn exact_rational(&self) -> Option<Rational> {
-        // Read exact leaves and defined inverse-cosine endpoints. Do not turn
+        // Read exact leaves and defined inverse-cosine/quantile identities. Do not turn
         // an arbitrary cached zero into a rational: imported graphs may still
         // contain unresolved domain obligations beneath that sign fact.
         match &self.internal.approximation {
@@ -1426,6 +1452,7 @@ impl Computable {
             Approximation::Int(n) => Some(Rational::from_bigint(n.clone())),
             Approximation::Ratio(r) => Some(r.clone()),
             Approximation::AcosPositiveRational(r) if r.is_one() => Some(Rational::zero()),
+            Approximation::NormalQuantile(data) => data.p.exact_normal_quantile(),
             Approximation::AcoshNearOne(argument) | Approximation::AcoshDirect(argument) => {
                 argument
                     .bounded_defined_rational()?
