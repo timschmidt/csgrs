@@ -162,6 +162,27 @@ impl Real {
         }
     }
 
+    /// Returns an exact equality fact available from known rational structure.
+    ///
+    /// Both `Some(true)` and `Some(false)` certify the stated equality or
+    /// inequality. `None` is inconclusive: symbolic values and rational pairs
+    /// requiring wider arithmetic retain their ordinary comparison paths.
+    /// This query reuses shared storage, signs, common denominators, dyadic
+    /// comparisons, checked word products, and disjoint binary magnitudes. It
+    /// does not construct a difference or arbitrary-width cross products.
+    /// Borrowed digit comparisons are not a constant-time resource bound.
+    ///
+    /// ```
+    /// use hyperreal::Real;
+    /// assert_eq!(Real::one().immediate_equality(&Real::from(2)), Some(false));
+    /// assert_eq!(Real::from(3).immediate_equality(&Real::from(3)), Some(true));
+    /// ```
+    #[inline]
+    pub fn immediate_equality(&self, other: &Self) -> Option<bool> {
+        self.exact_rational_ref()?
+            .immediate_equality(other.exact_rational_ref()?)
+    }
+
     /// Return an exact sign available without walking the computable graph.
     ///
     /// Exact rationals, certified symbolic classes, and facts already retained

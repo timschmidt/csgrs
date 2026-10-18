@@ -10,6 +10,49 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Point equality from shared scalar facts (2026-10-18)
+
+Point2 consumes Hyperreal's exact `immediate_equality` fact for coordinate pairs
+with suitable known rational structure. Otherwise it uses its original
+difference/zero-proof path. Shared point identity, symbolic fallback, numerical
+policies, and supported inputs are preserved. A rational coordinate alone does
+not certify equality of a mixed symbolic point. The acceptance tests allow
+warming to establish a stronger proof and reject contradictory facts.
+
+The [admission evidence](../../docs/evidence/2026-10-18-point-equality-facts/README.md)
+retains the same nine-family input construction and B-C-C-B probe: 36 processes,
+72 first/repeated rows, and independently derived exact equality labels. The
+full `1e12000 + i*1e-400` case remains unchanged. Repeated-traversal observations
+are:
+
+| Point family | Median time change | Allocation calls, baseline → candidate |
+| --- | ---: | ---: |
+| Integer | -76.03% | 5,952 → 0 |
+| Shared coordinates | -66.69% | 5,952 → 0 |
+| Same x coordinate | -81.12% | 6,048 → 0 |
+| Decimal | -86.55% | 187,646 → 0 |
+| Non-dyadic | -90.39% | 181,584 → 0 |
+| Subrange | -75.57% | 1,090,336 → 211,131 |
+| Superrange | -91.09% | 189,706 → 0 |
+| Large coefficients | -21.37% | 1,161,938 → 977,072 |
+| Symbolic | -3.99% | 1,103,760 → 1,103,760 |
+
+The probe executable grows 1,160 bytes. Large-coefficient first-traversal live
+payload grows 560 bytes, and subrange repeated-traversal live payload grows
+736 bytes. The separate matched direct Rational control has a +3.27% decimal
+median regression and +0.54% shared-storage change; those costs are retained
+explicitly in Hyperreal's ledger. This is a scoped tradeoff for the Point2
+improvements, not a uniform performance claim. Allocator instrumentation counts
+requested Rust payload, excluding allocator overhead and native allocations;
+it does not measure RSS or prove a retained-heap bound.
+
+Independent semantic regressions and affected consumer suites accompany the
+cost measurements. Twelve complete native reports remain byte-identical, and
+the original full-board, copper-neck, and Gerber resource gates pass. These
+checks do not establish a whole-application speedup. The exact-track importer
+remains separately unadmitted: its combination with the unhinted proposal
+failed the original timing gates; an inline/importer combination was not run.
+
 ## Native segment metrics
 
 `Segment2::distance_squared` and `point_distance_squared` measure exact native

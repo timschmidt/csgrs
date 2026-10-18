@@ -188,7 +188,7 @@ as a general-purpose special-function library.
 
 | Task | API |
 | --- | --- |
-| Cheap object-independent facts | `definitely_zero`, `definitely_one`, `zero_or_one`, `zero_one_or_minus_one`, `immediate_sign`, `structural_facts`, `detailed_facts` |
+| Cheap object-independent facts | `definitely_zero`, `definitely_one`, `zero_or_one`, `zero_one_or_minus_one`, `immediate_equality`, `immediate_sign`, `structural_facts`, `detailed_facts` |
 | Recover exact content | `exact_rational`, `exact_rational_ref`, `is_exact_dyadic_rational`, `exact_set_facts` |
 | Check an opposite structural scale | `is_structural_negation_of` |
 | Check a function domain | `domain_facts`, `reciprocal_domain`, `sqrt_domain`, `log_domain`, `asin_acos_domain`, `acosh_domain`, `atanh_domain` |
@@ -197,6 +197,13 @@ as a general-purpose special-function library.
 | Enclose while retaining exact rational points | `certified_rational_interval` |
 | Reuse an existing enclosure without refinement | `cached_rational_interval` |
 | Enclose on a dyadic grid for interval arithmetic | `certified_dyadic_interval` |
+
+`immediate_equality` consumes already known rational structure. `Some(true)`
+proves equality and `Some(false)` proves inequality; `None` is inconclusive,
+including for rational pairs that require wider arithmetic. It does not
+construct a difference or arbitrary-width cross products. Symbolic inputs
+keep their existing proof paths. Borrowed digit comparisons still depend on
+input size, so this query does not supply a constant-time resource bound.
 
 Higher layers should first use retained facts, then request bounded refinement
 only at a decision boundary. An unresolved certificate is meaningful; it must

@@ -1,23 +1,34 @@
-impl PartialEq for Rational {
-    fn eq(&self, other: &Self) -> bool {
+impl Rational {
+    /// Exact equality from retained shape and borrowed arithmetic, without
+    /// constructing a difference or arbitrary-width cross products.
+    #[inline]
+    pub(crate) fn immediate_equality(&self, other: &Self) -> Option<bool> {
         if std::sync::Arc::ptr_eq(&self.0, &other.0) {
-            true
+            Some(true)
         } else if self.sign != other.sign {
-            false
+            Some(false)
         } else if self.denominator == other.denominator {
-            self.numerator == other.numerator
+            Some(self.numerator == other.numerator)
         } else if let Some(ordering) = compare_dyadic_magnitudes(self, other) {
-            ordering.is_eq()
+            Some(ordering.is_eq())
         } else if let Some(ordering) = compare_word_magnitudes(self, other) {
             crate::trace_dispatch!("rational", "comparison", "word-sized");
-            ordering.is_eq()
+            Some(ordering.is_eq())
         } else if self.msd_exact() != other.msd_exact() {
             crate::trace_dispatch!("rational", "comparison", "magnitude-bits");
-            false
+            Some(false)
         } else {
+            None
+        }
+    }
+}
+
+impl PartialEq for Rational {
+    fn eq(&self, other: &Self) -> bool {
+        self.immediate_equality(other).unwrap_or_else(|| {
             crate::trace_dispatch!("rational", "comparison", "biguint-cross-product");
             &self.numerator * &other.denominator == &other.numerator * &self.denominator
-        }
+        })
     }
 }
 

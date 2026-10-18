@@ -41,6 +41,49 @@ cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates
 cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates --features dispatch-trace -- --write-dispatch-trace-md
 ```
 
+## Shared exact equality facts (2026-10-18)
+
+`Real::immediate_equality` exposes existing rational proofs without constructing
+a difference or arbitrary-width cross products. Both returned Boolean values
+are certified; `None` is inconclusive. `Rational::eq` shares the same inlined
+proof selection and retains its complete cross-product fallback. Borrowed
+digit comparisons still depend on input size. This adds no internal work or
+heap bound.
+
+The [admission evidence](../../docs/evidence/2026-10-18-point-equality-facts/README.md)
+preserves independent fraction/cross-product oracles, symbolic uncertainty,
+all earlier proposals, and every raw cost row. The matched direct Rational
+control uses the actual native-build dependency features, Rust 1.98.1, CPU 6
+on a Ryzen 7 5800X3D, and B-C-C-B-C-B-B-C process order. Four samples per
+implementation retain 4,096 first comparisons, followed by 67,108,864 repeated
+comparisons per ordinary family or 262,144 for the full large-coefficient case.
+The independent equality oracle runs inside the timed loop.
+
+| Direct Rational family | Repeated median time change |
+| --- | ---: |
+| Integer | -0.37% |
+| Shared storage | +0.54% |
+| Decimal | +3.27% |
+| Non-dyadic | -2.23% |
+| Subrange | -2.54% |
+| Superrange | -1.95% |
+| Large coefficients | -0.60% |
+
+All four candidate decimal samples exceed all four baseline samples. This
+observed regression is accepted alongside the broader Point2 time and
+allocation improvements documented in Hypercurve's performance ledger.
+Direct-control allocation counts, requested bytes, and live/peak payloads
+match in every corresponding row; its executable grows 56 bytes. Every first
+traversal and adverse sample remains in the evidence. These allocator-instrumented
+observations do not establish uniform scalar or application speedup, statistical
+significance, RSS, or a general resource bound.
+
+The unhinted extraction is rejected as-is: ordinary direct Rational repeated
+controls regressed about 17–25%. The separately built inline pilot is only
+exploratory because transitive dependency features differed. Its results and
+initial compile failure remain preserved. The original full-comparison Point2
+proposal is also rejected: its large-coefficient case was about 6.7 times slower.
+
 ## Unresolved absolute-value evaluation
 
 `sqrt(Square(x))` now approximates `x` once at the requested precision and

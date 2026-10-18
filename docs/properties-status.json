@@ -17867,6 +17867,42 @@
     "hypervoxel_deferred_by_user": true,
     "public_distribution_complete": false,
     "full_plan_complete": false
+  },
+  "point_equality_facts": {
+    "status": "retain shared exact rational equality facts and the Point2 consumer with the documented direct-scalar tradeoff",
+    "parent_revision": "c4f6b43e4431601853cf482ac9d80936b8adde5f",
+    "review": "docs/evidence/2026-10-18-point-equality-facts/review-v1.json",
+    "cost_review": "docs/evidence/2026-10-18-point-equality-facts/cost-review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-point-equality-facts/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-point-equality-facts/artifact-expectations-v1.json.gz",
+    "implementation_paths": [
+      "crates/hypercurve/PERFORMANCE.md",
+      "crates/hypercurve/src/point.rs",
+      "crates/hyperreal/PERFORMANCE.md",
+      "crates/hyperreal/README.md",
+      "crates/hyperreal/src/rational/arithmetic/comparison.rs",
+      "crates/hyperreal/src/rational/arithmetic/tests.rs",
+      "crates/hyperreal/src/real/arithmetic/facts.rs",
+      "crates/hyperreal/src/real/immediate_equality_tests.rs",
+      "crates/hyperreal/src/real/mod.rs",
+      "crates/hyperreal/tests/gmp_api_coverage.rs"
+    ],
+    "runtime_admitted": true,
+    "exact_track_importer_admitted": false,
+    "cache_proposal_admitted": false,
+    "complete_reports_byte_identical": 12,
+    "main_validation_required_executions": 107,
+    "main_narrow_filter_harness_failure_preserved": true,
+    "matched_scalar_decimal_median_regression_percent": 3.266,
+    "matched_scalar_shared_median_regression_percent": 0.538,
+    "all_adverse_measurements_retained": true,
+    "general_speedup_claimed": false,
+    "disk_b_allowance_gib": 72,
+    "disk_b_baseline_reset": false,
+    "other_execution_limits_unchanged": true,
+    "hypervoxel_deferred_by_user": true,
+    "public_distribution_complete": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
