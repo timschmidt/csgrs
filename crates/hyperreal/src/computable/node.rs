@@ -59,3 +59,5 @@ include!("node/cache_rescale_tests.rs");
 include!("node/precision_boundary_tests.rs");
 include!("node/magnitude_boundary_tests.rs");
 include!("node/certified_planning_tests.rs");
+include!("node/exact_sign_cache_tests.rs");
+include!("node/trig_range_proof_tests.rs");

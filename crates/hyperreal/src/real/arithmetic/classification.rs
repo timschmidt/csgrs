@@ -615,7 +615,7 @@ impl Class {
         )
     }
 
-    fn computable_certificate(&self) -> Computable {
+    pub(super) fn computable_certificate(&self) -> Computable {
         // Materialize a missing computable payload from its exact symbolic
         // certificate. Existing immutable payloads can be shared by cloning.
         match self {

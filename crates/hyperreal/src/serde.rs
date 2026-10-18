@@ -14,6 +14,10 @@ impl Real {
     }
 
     /// Deserializes a Real from a JSON string.
+    ///
+    /// An opaque value without its required computable payload returns
+    /// [`Problem::ParseError`]. Present expression graphs are not yet fully
+    /// validated for mathematical domain errors at this boundary.
     pub fn from_json(json: &str) -> Result<Self, Problem> {
         serde_json::from_str(json).map_err(|_| Problem::ParseError)
     }
@@ -37,6 +41,9 @@ impl Real {
     }
 
     /// Deserializes a Real from a CBOR byte slice.
+    ///
+    /// Uses the same representation checks and remaining mathematical-domain
+    /// limitations as [`Real::from_json`].
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Problem> {
         de::from_reader(bytes).map_err(|_| Problem::ParseError)
     }

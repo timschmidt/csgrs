@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
@@ -42,7 +43,7 @@ pub type Signal = Arc<AtomicBool>;
 /// assert_eq!(answer, three);
 /// ```
 #[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Real {
     pub(super) rational: Rational,
     pub(super) class: Class,
@@ -53,6 +54,38 @@ pub struct Real {
     pub(super) computable: Option<Computable>,
     #[cfg_attr(feature = "serde", serde(skip, default))]
     pub(super) primitive_approx_cache: AtomicPrimitiveApproxCache,
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for Real {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(rename = "Real")]
+        struct RealWire {
+            rational: Rational,
+            class: Class,
+            computable: Option<Computable>,
+        }
+
+        let wire = RealWire::deserialize(deserializer)?;
+        // Symbolic classes can reconstruct a missing lazy payload from their
+        // certificate. An opaque class has no such fallback, including when
+        // the outer scale happens to be zero.
+        if matches!(wire.class, Irrational) && wire.computable.is_none() {
+            return Err(serde::de::Error::custom(
+                "Real Irrational class requires a Computable payload",
+            ));
+        }
+        Ok(Self {
+            rational: wire.rational,
+            class: wire.class,
+            computable: wire.computable,
+            primitive_approx_cache: AtomicPrimitiveApproxCache::default(),
+        })
+    }
 }
 
 impl Clone for Real {
@@ -140,10 +173,14 @@ impl Real {
         }
     }
 
-    fn computable_ref(&self) -> &Computable {
-        self.computable
-            .as_ref()
-            .expect("non-rational Real classes carry a computable payload")
+    fn computable_ref(&self) -> Cow<'_, Computable> {
+        // A named certificate may retain its recipe without a materialized
+        // payload. Borrow existing graphs so their proofs and signals survive;
+        // only reconstruct when the graph is absent.
+        match &self.computable {
+            Some(computable) => Cow::Borrowed(computable),
+            None => Cow::Owned(self.class.computable_certificate()),
+        }
     }
 
     pub(super) fn computable_clone(&self) -> Computable {

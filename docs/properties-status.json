@@ -3,7 +3,7 @@
   "base_revision": "0c5508b89",
   "scope": "All 39 properties, all 14 known open targets, and crate-specific future work remain in scope. Inventory and documentation alone do not prove implementation.",
   "current_work": {
-  "updated_on": "2026-10-17",
+  "updated_on": "2026-10-18",
   "existing_worktree_changes_in_scope": true,
   "accepted_cache_contract": "Warming may strengthen Unknown into Certified and reuse prior higher-precision proofs; it must never contradict or weaken an available certificate.",
   "main_scalar_api": {
@@ -17933,6 +17933,987 @@
     "latest_implementation": "retained-plane-contacts-2026-10-18",
     "latest_feature_evidence": "crates/hyperbrep/docs/evidence/2026-10-18-retained-plane-contacts/manifest.json",
     "integration_qualification": "Merged 18 upstream commits through 540074a8c, preserving both performance histories and all non-BRep ledger bytes. Hyperreal shares sufficient exact rational equality facts; Point2 consumes them and keeps its original symbolic/difference fallback. Native BRep and IO production source remains byte-identical to fbcc75e77. The merged source passes seven scalar equality tests, one new scalar doctest, three public point contracts, fourteen internal point tests, ten new debug groups, 625 all-feature and 617 minimal BRep/IO release tests, 96+4+62 affected curve tests, warning-denied all-target Clippy/rustdoc, nine examples, fuzz-target compilation and formatting. Source-path native consumers preserve the 7, 9 and 14 acceptance groups plus eight full original workflows; zero-import WASM preserves 7+9+14+138 groups. All earlier continuation controls remain. All 289 preceding artifacts remain byte-identical; the 78 recent artifacts also agree across two fresh processes. Original 24 prism and 81 continuation outcomes and seven retained-profile recipes remain unchanged; the latter retain two completions and five unsupported outcomes. The previous eight quintic OCCT observations are reused only for identical file bytes; the original twenty prism reader cases are rerun. Three alternating pairs of each complete six-group native, nine-group spline and seven-group measurement consumer preserve every outcome, assertion and iteration count (22 groups; 18 processes). Observed time ratios range 0.773215\u20131.036326, with median 0.986173; 0 exceed the 10% review marker and 0 increase allocation requests. All slower and adverse rows remain. This is a finite downstream comparison on a shared host, not a rerun of the preceding 192-case catalogue, a general speedup, statistical significance or an internal resource bound. BRep source-path qualification only. Upstream package/MSRV/binding records retain their own revision and domain; they do not qualify this BRep feature surface. Full distribution, MSRV, production binding, coverage/formal, fuzz/ASan/lexicase, operation-wide resource and pre-push gates remain open. No production BRep redesign, lower-layer regression repair or push. All 28 work packages remain open/in-progress; protected stashes remain untouched."
+  },
+  "exact_track_after_scalar_facts": {
+    "status": "reject unchanged exact-track importer on current scalar facts: focused semantics pass, both original KiCad resource gates fail",
+    "parent_revision": "540074a8c05ccc676d7c70b8f0093f98804b81d9",
+    "review": "docs/evidence/2026-10-18-exact-track-profile/review-v1.json",
+    "profile": "docs/evidence/2026-10-18-exact-track-profile/profile-observations-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-exact-track-profile/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-exact-track-profile/artifact-expectations-v1.json.gz",
+    "baseline_stroke_failures": 10,
+    "baseline_aggregation_failures": 3,
+    "candidate_focused_tests_passed": 75,
+    "gates": {
+      "copper-neck": {
+        "assertion_diagnostic_lines": [
+          "complex project copper neck regression fixture took 129.559299287s"
+        ],
+        "exit_code": 101,
+        "process_elapsed_seconds": 366.02996888399866,
+        "summary": [
+          [
+            "FAILED",
+            "0",
+            "1",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      },
+      "full-board": {
+        "assertion_diagnostic_lines": [
+          "complex project KiCad smoke suite took 369.825772873s of worker time"
+        ],
+        "exit_code": 101,
+        "process_elapsed_seconds": 372.0458879170001,
+        "summary": [
+          [
+            "FAILED",
+            "0",
+            "1",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      },
+      "gerber": {
+        "assertion_diagnostic_lines": [],
+        "exit_code": 0,
+        "process_elapsed_seconds": 0.106661432000692,
+        "summary": [
+          [
+            "ok",
+            "1",
+            "0",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      }
+    },
+    "diagnostic_profile_only": true,
+    "source_changes_applied": false,
+    "exact_track_importer_admitted": false,
+    "cache_proposal_admitted": false,
+    "all_adverse_measurements_retained": true,
+    "general_speedup_claimed": false,
+    "disk_b_allowance_gib": 72,
+    "disk_b_baseline_reset": false,
+    "other_execution_limits_unchanged": true,
+    "hypervoxel_deferred_by_user": true,
+    "public_distribution_complete": false,
+    "full_plan_complete": false,
+    "next": "Reproduce repeated scalar sign/normal-form work in the recovered curve comparison and subdivision consumers, identify the earliest reusable construction proof, and evaluate one coherent repair against independent semantic expectations and the unchanged full native resource gates. No implementation is selected from sampling alone.",
+    "profile_attribution_superseded_by": "docs/evidence/2026-10-18-profile-attribution-correction/correction-v1.json"
+  },
+  "profile_attribution_correction": {
+    "status": "corrected E70 subdivision attribution using exact recovered function names",
+    "evidence": "docs/evidence/2026-10-18-profile-attribution-correction/correction-v1.json",
+    "verification": "docs/evidence/2026-10-18-profile-attribution-correction/verification-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-profile-attribution-correction/checkpoint-v1.json",
+    "actual_subdivision_inclusive_percent": 1.8162239013065629,
+    "actual_subdivision_normal_form_overlap_percent": 0.0,
+    "support_bounds_inclusive_percent": 6.764926233254495,
+    "source_changes_applied": false,
+    "runtime_tests_rerun": false,
+    "runtime_admitted": false,
+    "full_plan_complete": false
+  },
+  "circle_envelope_feasibility": {
+    "status": "do not advance the circle-first envelope candidate: original complete native resource gates still fail",
+    "parent_revision": "a1ffc2de7151f0a49229f186001ceae04839d38f",
+    "review": "docs/evidence/2026-10-18-circle-envelope/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-circle-envelope/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-circle-envelope/artifact-expectations-v1.json.gz",
+    "baseline_support_tests_passed": 11,
+    "candidate_support_tests_passed": 11,
+    "candidate_native_tests_passed": 75,
+    "gates": {
+      "copper-neck": {
+        "assertion_diagnostic_lines": [
+          "complex project copper neck regression fixture took 183.749997851s"
+        ],
+        "exit_code": 101,
+        "process_elapsed_seconds": 463.69492495099985,
+        "summary": [
+          [
+            "FAILED",
+            "0",
+            "1",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      },
+      "full-board": {
+        "assertion_diagnostic_lines": [
+          "complex project KiCad smoke suite took 446.624547486s of worker time"
+        ],
+        "exit_code": 101,
+        "process_elapsed_seconds": 449.2876400469977,
+        "summary": [
+          [
+            "FAILED",
+            "0",
+            "1",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      },
+      "gerber": {
+        "assertion_diagnostic_lines": [],
+        "exit_code": 0,
+        "process_elapsed_seconds": 0.10705878599765128,
+        "summary": [
+          [
+            "ok",
+            "1",
+            "0",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      }
+    },
+    "matched_benchmark": false,
+    "source_changes_applied": false,
+    "kernel_candidate_admitted": false,
+    "exact_track_importer_admitted": false,
+    "all_adverse_measurements_retained": true,
+    "general_speedup_claimed": false,
+    "disk_b_allowance_gib": 72,
+    "disk_b_baseline_reset": false,
+    "other_execution_limits_unchanged": true,
+    "hypervoxel_deferred_by_user": true,
+    "public_distribution_complete": false,
+    "full_plan_complete": false,
+    "next": "Reproduce the separately observed exact-sign publication race at the shared scalar owner. Retain the native ingress and full-workload obligations; do not combine unadmitted caches or weaken original gates."
+  },
+  "exact_sign_publication": {
+    "status": "kept: exact-sign publication preserves an existing certificate",
+    "owner": "Hyperreal AtomicFacts for immutable Computable nodes",
+    "parent_revision": "79a67b140eac2251584c7ec6fe0205761dab892e",
+    "review": "docs/evidence/2026-10-18-sign-cache-publication/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-sign-cache-publication/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-sign-cache-publication/artifact-expectations-v1.json.gz",
+    "baseline_regressions_failed": 3,
+    "baseline_positive_control_passed": 1,
+    "candidate_regressions_passed": 4,
+    "actual_main_packages": {
+      "csgrs": {
+        "doctests_passed": 1,
+        "parent_ignored": 0,
+        "parent_test_passed": 439,
+        "test_binaries": 48
+      },
+      "hypercircuit": {
+        "doctests_passed": 0,
+        "parent_ignored": 0,
+        "parent_test_passed": 348,
+        "test_binaries": 46
+      },
+      "hypercurve": {
+        "doctests_passed": 1,
+        "parent_ignored": 33,
+        "parent_test_passed": 2480,
+        "test_binaries": 53
+      },
+      "hyperdrc": {
+        "doctests_passed": 3,
+        "parent_ignored": 0,
+        "parent_test_passed": 1667,
+        "test_binaries": 10
+      },
+      "hyperlimit": {
+        "doctests_passed": 0,
+        "parent_ignored": 0,
+        "parent_test_passed": 365,
+        "test_binaries": 17
+      },
+      "hypermesh": {
+        "doctests_passed": 0,
+        "parent_ignored": 7,
+        "parent_test_passed": 250,
+        "test_binaries": 9
+      },
+      "hyperreal-all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_test_passed": 1041,
+        "test_binaries": 25
+      },
+      "hyperreal-default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_test_passed": 934,
+        "test_binaries": 24
+      }
+    },
+    "debug_library_tests": 817,
+    "downstream_parent_tests": 5549,
+    "existing_downstream_ignored_tests": 40,
+    "original_native_gates_passed": true,
+    "all_twelve_report_bytes_and_parsed_values_equal": true,
+    "allocation_rows_identical": true,
+    "general_speedup_claimed": false,
+    "actual_main_source_without_overlays_checked": true,
+    "compiler_floor_scope": "Rust 1.95 all-target checks with all features and no default features for Hyperreal, Hyperlimit and Hypercurve; no 1.95 runtime or Clippy claim.",
+    "source_changes_applied": true,
+    "runtime_admitted": true,
+    "runtime_admitted_scope": "Monotone exact-sign publication only",
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 12,
+    "cumulative_log_allowance_mib": 96,
+    "storage_baselines_reset": false,
+    "workload_time_and_memory_limits_unchanged": true,
+    "all_adverse_results_retained": true,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Continue the properties plan with the retained cache invariant; evaluate strict native completion separately against its unchanged contracts."
+  },
+  "native_affine_comparison": {
+    "status": "reject constructor-wide affine cancellation; retain diagnostic findings and unchanged main source",
+    "parent_revision": "a62636b985186ff9041f6013b2f840adb3d391b9",
+    "review": "docs/evidence/2026-10-18-native-affine-investigation/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-native-affine-investigation/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-native-affine-investigation/artifact-expectations-v1.json.gz",
+    "current_native_stroke_failures": 10,
+    "current_native_aggregation_failures": 3,
+    "typed_failure_controls_passed": 39,
+    "native_comparison_pairs": 24,
+    "common_factor_controls": 3,
+    "baseline_owner_acceptance_failures": 3,
+    "existing_scalar_tests_passed_on_baseline": 849,
+    "candidate_v2_focused_passed": 4,
+    "candidate_v2_full_passed": 852,
+    "candidate_v2_existing_failures": 1,
+    "both_constructor_candidates_rejected": true,
+    "unequal_radical_zero_refinement_observation": "Unknown; the original failed expectation is retained",
+    "source_changes_applied": false,
+    "runtime_admitted": false,
+    "sign_cache_correction_retained": true,
+    "performance_speedup_claimed": false,
+    "all_adverse_results_retained": true,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 12,
+    "storage_baselines_reset": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Preserve ordinary sums. Reproduce and evaluate explicit subtraction or comparison-owned rational affine proof reuse at the scalar layer, retaining the same native shapes, negative scales, unequal-base controls, original fixtures and full-workload gates. Do not revive either rejected constructor-wide prototype."
+  },
+  "explicit_affine_subtraction": {
+    "status": "retain the isolated explicit-subtraction candidate for further qualification; no production admission",
+    "parent_revision": "eae42f7c336f5de0d0ec3455a338a37a0617a108",
+    "review": "docs/evidence/2026-10-18-explicit-affine-subtraction/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-explicit-affine-subtraction/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-explicit-affine-subtraction/artifact-expectations-v1.json.gz",
+    "baseline_acceptance_failures": 4,
+    "candidate_acceptance_passed": 6,
+    "original_scalar_units_preserved": 849,
+    "wider_units": {
+      "hypercurve": {
+        "features": [
+          "dispatch-trace"
+        ],
+        "summaries": [
+          [
+            "ok",
+            "1734",
+            "0",
+            "1",
+            "0",
+            "0"
+          ]
+        ]
+      },
+      "hyperlimit": {
+        "features": [
+          "std",
+          "dispatch-trace"
+        ],
+        "summaries": [
+          [
+            "ok",
+            "252",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ]
+      },
+      "hyperreal-all": {
+        "features": [
+          "default",
+          "simple",
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "dispatch-trace",
+          "serde"
+        ],
+        "summaries": [
+          [
+            "ok",
+            "910",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ]
+      }
+    },
+    "scalar_integration_files": 23,
+    "scalar_integration_parent_tests": 137,
+    "matched_native_result_rows": 81,
+    "allocation_rows_identical": 100,
+    "native_parallel_pairs_with_less_proof_work": 8,
+    "source_changes_applied": false,
+    "runtime_admitted": false,
+    "original_constructor_candidates_rejected": true,
+    "all_adverse_results_retained": true,
+    "performance_speedup_claimed": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 12,
+    "hypervoxel_deferred_by_user": true,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "next": "Complete the explicit representation-change review and remaining Cargo/downstream/resource gates before applying the candidate to main. Preserve all earlier failures, unchanged original fixtures and limits."
+  },
+  "explicit_affine_cargo_qualification": {
+    "status": "Withhold the explicit affine subtraction candidate. Passing valid-input suites do not override the newly reproduced invalid-input failure masking.",
+    "parent_revision": "0179a1b68621d48e1b5087d64d64493e0c3819c5",
+    "review": "docs/evidence/2026-10-18-affine-cargo-withheld/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-affine-cargo-withheld/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-affine-cargo-withheld/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "packages": {
+        "all": {
+          "doctests_passed": 29,
+          "parent_ignored": 0,
+          "parent_tests_passed": 1047
+        },
+        "default": {
+          "doctests_passed": 24,
+          "parent_ignored": 0,
+          "parent_tests_passed": 940
+        }
+      },
+      "debug_units_passed": 823,
+      "strict_clippy_default_and_all_features_passed": true,
+      "docs_passed": true,
+      "format_passed": true
+    },
+    "downstream_packages": {
+      "csgrs": {
+        "doctests_passed": 1,
+        "parent_ignored": 0,
+        "parent_test_passed": 439,
+        "test_binaries": 48
+      },
+      "hypercircuit": {
+        "doctests_passed": 0,
+        "parent_ignored": 0,
+        "parent_test_passed": 348,
+        "test_binaries": 46
+      },
+      "hypercurve": {
+        "doctests_passed": 1,
+        "parent_ignored": 33,
+        "parent_test_passed": 2480,
+        "test_binaries": 53
+      },
+      "hyperdrc": {
+        "doctests_passed": 3,
+        "parent_ignored": 0,
+        "parent_test_passed": 1667,
+        "test_binaries": 10
+      },
+      "hyperlimit": {
+        "doctests_passed": 0,
+        "parent_ignored": 0,
+        "parent_test_passed": 365,
+        "test_binaries": 17
+      },
+      "hypermesh": {
+        "doctests_passed": 0,
+        "parent_ignored": 7,
+        "parent_test_passed": 250,
+        "test_binaries": 9
+      }
+    },
+    "downstream_parent_tests_passed": 5549,
+    "downstream_parent_ignored": 40,
+    "valid_serialization_value_checks": 144,
+    "new_failure_masking": true,
+    "failure_boundary": "Malformed serialized scalar representations can enter a downstream arithmetic pipeline.",
+    "source_changes_applied": false,
+    "runtime_admitted": false,
+    "semantic_acceptance_passed": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 24,
+    "all_adverse_results_retained": true,
+    "performance_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Repair typed validation at the owning scalar deserialization boundary, preserving valid representations and explicit resource/uncertainty contracts. Reproduce and qualify that repair before revisiting the affine candidate."
+  },
+  "required_opaque_scalar_payload": {
+    "status": "Retain typed rejection of a missing opaque Real payload and repair the reproduced circuit test feature declarations; the present-graph domain blocker remains open.",
+    "parent_revision": "7ce3ff7f000b59d8b497f42b3f9bd9c135fc71fe",
+    "review": "docs/evidence/2026-10-18-required-scalar-payload/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-required-scalar-payload/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-required-scalar-payload/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1049
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 934
+      }
+    },
+    "debug_units_passed": 817,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 365,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "consumer_feature_gate_matrix": {
+      "all": {
+        "features": [
+          "--all-features"
+        ],
+        "summaries": [
+          [
+            "ok",
+            "5",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "test_bodies_unchanged": true
+      },
+      "geometry": {
+        "features": [
+          "--features",
+          "interchange,geometry"
+        ],
+        "summaries": [
+          [
+            "ok",
+            "4",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "test_bodies_unchanged": true
+      }
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "all_targets": true,
+      "packages": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "runtime_tests_rerun": false,
+      "clippy_on_msrv_run": false
+    },
+    "new_failing_baseline_tests": 6,
+    "new_passing_scalar_tests": 8,
+    "downstream_svg_regression_passed": true,
+    "source_changes_applied": true,
+    "runtime_admitted": true,
+    "admitted_scope": "Required opaque payload at deserialization, plus consumer test declarations aligned with their existing feature gates.",
+    "remaining_present_graph_domain_blocker": true,
+    "explicit_subtraction_candidate_admitted": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 24,
+    "all_adverse_results_retained": true,
+    "performance_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Validate mathematical domains and representation certificates at scalar ingress with honest typed uncertainty/resource behavior, preserving valid legacy schedules and the certified-success corpus, before reconsidering affine cancellation."
+  },
+  "lazy_scalar_ingress_investigation": {
+    "status": "Reject lazy reconstruction cache prototype; preserve evidence and restore all production and test sources to the parent revision.",
+    "parent_revision": "0fa83aea7aae9d57a578da0cf28299f12ca75409",
+    "review": "docs/evidence/2026-10-18-lazy-scalar-investigation/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-lazy-scalar-investigation/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-lazy-scalar-investigation/artifact-expectations-v1.json.gz",
+    "candidate_scalar_qualification": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1055
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 936
+      }
+    },
+    "candidate_debug_units_passed": 819,
+    "candidate_rejected": true,
+    "source_restored": true,
+    "new_runtime_admitted": false,
+    "explicit_subtraction_candidate_admitted": false,
+    "remaining_defects": [
+      "Valid lazy Pi sign queries panic despite successful interval construction.",
+      "Lazy symbolic owned exp/asinh substitute the outer rational scale for the represented symbolic value.",
+      "Forged named tags and graphs can give contradictory definite facts and intervals.",
+      "Undefined expression graphs may decode, panic on refinement, or be hidden by zero multiplication.",
+      "Automatic reciprocal equality remains Unknown in ten named-class materialized controls despite an available explicit rational normal form."
+    ],
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 32,
+    "all_adverse_results_retained": true,
+    "performance_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Repair owned folding using the existing Class certificate reconstruction. First reproduce directly consumed lazy values against independent mathematical bounds; preserve the separate lazy-query, cache, certificate/domain and automatic-equality obligations."
+  },
+  "owned_symbolic_folding": {
+    "status": "Retain the shared-certificate fallback in owned Real folding.",
+    "parent_revision": "39bdea5aed282e76d9639535e41d00ae9a2cec15",
+    "review": "docs/evidence/2026-10-18-owned-symbolic-folding/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-owned-symbolic-folding/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-owned-symbolic-folding/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1054
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 934
+      }
+    },
+    "debug_units_passed": 817,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 365,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "all_targets": true,
+      "packages": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "runtime_tests_rerun": false,
+      "clippy_on_msrv_run": false
+    },
+    "new_failing_baseline_tests": 4,
+    "new_passing_scalar_tests": 5,
+    "runtime_admitted": true,
+    "admitted_scope": "Correct symbolic value during owned folding of valid lazy named certificates.",
+    "remaining_limitations": [
+      "Valid lazy sign-query and normal-form paths still have missing-payload panics.",
+      "Arbitrary forged certificate/graph consistency and undefined graph domains are not validated.",
+      "The rejected cache prototype remains rejected; composed proof retention and automatic reciprocal equality remain open.",
+      "Explicit affine subtraction remains withheld.",
+      "The complete native workload, all bindings, distribution/release and full pre-push workflow matrix were not rerun."
+    ],
+    "explicit_subtraction_candidate_admitted": false,
+    "lazy_cache_candidate_admitted": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 32,
+    "all_adverse_results_retained": true,
+    "performance_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Restore consumable valid lazy-certificate queries without the rejected common-path cache costs, and validate forged certificates and undefined graph domains before reconsidering affine cancellation."
+  },
+  "lazy_certificate_proof_replay": {
+    "status": "Retain lazy borrowed certificate reconstruction and checked native sine/tangent proof replay.",
+    "parent_revision": "fb62da439e0fcb4e292032488a7596ec2107dd18",
+    "review": "docs/evidence/2026-10-18-lazy-proof-replay/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-lazy-proof-replay/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/lazy-proof-validation-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1062
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 934
+      }
+    },
+    "debug_units_passed": 817,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "all_targets": true,
+      "runtime_tests_rerun": false,
+      "clippy_on_msrv_run": false
+    },
+    "runtime_admitted": true,
+    "admitted_scope": "Lazy certificate queries and checked reduced-pi sine/tangent proof reuse through the tested compositions and interchange.",
+    "remaining_limitations": [
+      "Malformed named-certificate consistency and arbitrary undefined graph domains remain open.",
+      "The earlier automatic reciprocal equality workflow remains open; this acceptance uses the previously declared explicit exact normal-form workflow.",
+      "The rejected boxed cache remains rejected and explicit affine subtraction remains withheld.",
+      "Full native workloads, all bindings, distribution/release and the complete pre-push workflow matrix were not rerun.",
+      "Raw evidence depends on the recorded Disk B retention location; historical missing artifacts were not reaudited or recovered."
+    ],
+    "explicit_subtraction_candidate_admitted": false,
+    "lazy_cache_candidate_admitted": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 40,
+    "all_adverse_results_retained": true,
+    "general_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Validate named-certificate/graph consistency and undefined graph domains before reconsidering withheld affine cancellation; continue preserved strict workload and distribution acceptance."
+  },
+  "scalar_graph_rational_domains": {
+    "status": "Retain exact-rational domain rejection during native graph decoding.",
+    "parent_revision": "339e4b4393e6211930d3b6abdf69be3b002441c5",
+    "review": "docs/evidence/2026-10-18-scalar-graph-domains/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-scalar-graph-domains/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/certificate-ingress-validation-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1066
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 934
+      }
+    },
+    "debug_units_passed": 817,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "packages": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "compiler": "1.95.0",
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "all_targets": true,
+      "runtime_tests_rerun": false,
+      "clippy_on_msrv_run": false
+    },
+    "runtime_admitted": true,
+    "admitted_scope": "Known exact-rational domain failures are rejected before native/Real/collection/SVG import success; original valid representations and tested compositions remain supported.",
+    "remaining_limitations": [
+      "Eleven named-certificate/payload diagnostic forms still decode; their contradictions and panics remain reproduced and unadmitted.",
+      "Non-leaf domain obligations, private series ranges and quantile seed validation remain open. No arbitrary graph admission claim.",
+      "Unchecked native constructors retain their documented caller domain obligations.",
+      "Automatic reciprocal equality, full strict native workloads, bindings, release/distribution and complete pre-push validation remain open.",
+      "The boxed cache stays rejected and affine subtraction stays withheld.",
+      "Raw archives require the recorded Disk B retention location; old missing artifacts were neither reaudited nor recovered."
+    ],
+    "explicit_subtraction_candidate_admitted": false,
+    "lazy_cache_candidate_admitted": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 40,
+    "all_adverse_results_retained": true,
+    "general_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Enforce named Class parameter and payload consistency, then remaining graph domain obligations, before reconsidering affine cancellation; continue strict workloads and distribution acceptance."
   }
 },
   "status_meanings": {
