@@ -18180,6 +18180,86 @@
     "public_distribution_complete": false,
     "hypervoxel_deferred_by_user": true,
     "next": "Preserve ordinary sums. Reproduce and evaluate explicit subtraction or comparison-owned rational affine proof reuse at the scalar layer, retaining the same native shapes, negative scales, unequal-base controls, original fixtures and full-workload gates. Do not revive either rejected constructor-wide prototype."
+  },
+  "explicit_affine_subtraction": {
+    "status": "retain the isolated explicit-subtraction candidate for further qualification; no production admission",
+    "parent_revision": "eae42f7c336f5de0d0ec3455a338a37a0617a108",
+    "review": "docs/evidence/2026-10-18-explicit-affine-subtraction/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-explicit-affine-subtraction/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-explicit-affine-subtraction/artifact-expectations-v1.json.gz",
+    "baseline_acceptance_failures": 4,
+    "candidate_acceptance_passed": 6,
+    "original_scalar_units_preserved": 849,
+    "wider_units": {
+      "hypercurve": {
+        "features": [
+          "dispatch-trace"
+        ],
+        "summaries": [
+          [
+            "ok",
+            "1734",
+            "0",
+            "1",
+            "0",
+            "0"
+          ]
+        ]
+      },
+      "hyperlimit": {
+        "features": [
+          "std",
+          "dispatch-trace"
+        ],
+        "summaries": [
+          [
+            "ok",
+            "252",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ]
+      },
+      "hyperreal-all": {
+        "features": [
+          "default",
+          "simple",
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "dispatch-trace",
+          "serde"
+        ],
+        "summaries": [
+          [
+            "ok",
+            "910",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ]
+      }
+    },
+    "scalar_integration_files": 23,
+    "scalar_integration_parent_tests": 137,
+    "matched_native_result_rows": 81,
+    "allocation_rows_identical": 100,
+    "native_parallel_pairs_with_less_proof_work": 8,
+    "source_changes_applied": false,
+    "runtime_admitted": false,
+    "original_constructor_candidates_rejected": true,
+    "all_adverse_results_retained": true,
+    "performance_speedup_claimed": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 12,
+    "hypervoxel_deferred_by_user": true,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "next": "Complete the explicit representation-change review and remaining Cargo/downstream/resource gates before applying the candidate to main. Preserve all earlier failures, unchanged original fixtures and limits."
   }
 },
   "status_meanings": {
