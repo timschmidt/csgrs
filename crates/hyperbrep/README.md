@@ -93,8 +93,27 @@ planar evaluator. Selected spatial points retain their planar source and root;
 frame comparisons, bounds, transforms and native replay consume that evidence
 without independent coordinates. Selected edge splits preserve cold replay and
 supported slab Booleans. Selected endpoints of a newly authored spatial carrier,
-general intersections, metrics and STEP encodings remain typed. See the
+general surface intersections, metrics and STEP encodings remain typed. See the
 [planar lift admission](docs/evidence/2026-10-18-planar-curve-lift/README.md).
+
+Finite curve/plane queries retain `Parameter` and `GeometricPoint3` in
+`CurveSurfacePoint`. Native rational Bézier and NURBS queries reuse the planar
+owner's complete root authority for higher-degree equations; planar images
+reduce the target plane through their exact frame. `CurveSurfaceContactKind`
+distinguishes simple roots, repeated roots and finite boundary contacts without
+claiming an integer multiplicity or a global crossing direction at spline joints.
+`CurveSurfaceIntersection::Components` retains mixed isolated contacts and
+maximal closed `ParameterRange` overlaps, including collapsed spans. Closed
+overlaps require usable endpoint images; ambiguous spline joints remain typed
+failures. The original source parameters feed edge splitting, selected-point
+predicates and native replay. Planar subcurve queries and bounds inspect the
+consumed source interval; a pole outside it does not invalidate the finite subcurve. Coefficient-only
+surface consumers and STEP still report typed representation limits. This is a
+direct API migration with no compatibility adapter; see the
+[finite contact admission](docs/evidence/2026-10-18-retained-plane-contacts/README.md).
+Contained planar images also materialize exact pcurves when the projected frame
+is a certified Hypercurve similarity. Their original source chart and signed map
+to spatial parameters remain explicit; general non-similarity projections remain typed.
 
 ## Exactness contract
 

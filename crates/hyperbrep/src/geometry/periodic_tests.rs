@@ -52,8 +52,12 @@ fn conic_plane_contact_keeps_exact_endpoint_lifts() {
                     };
                     assert_eq!(points.len(), 1);
                     assert_eq!(
-                        compare_reals(&points[0].point.z, &height, crate::STRICT_PREDICATES)
-                            .value(),
+                        compare_reals(
+                            &points[0].point.try_coordinates().unwrap().z,
+                            &height,
+                            crate::STRICT_PREDICATES
+                        )
+                        .value(),
                         Some(Ordering::Equal)
                     );
                     if height == Real::from(3) {
@@ -63,26 +67,30 @@ fn conic_plane_contact_keeps_exact_endpoint_lifts() {
                             curve.domain().start()
                         };
                         assert_eq!(
-                            compare_reals(&points[0].parameter, endpoint, crate::STRICT_PREDICATES)
-                                .value(),
+                            compare_reals(
+                                points[0].parameter.try_real().unwrap(),
+                                endpoint,
+                                crate::STRICT_PREDICATES
+                            )
+                            .value(),
                             Some(Ordering::Equal)
                         );
                         assert_eq!(
                             compare_reals(
-                                &points[0].point.x,
+                                &points[0].point.try_coordinates().unwrap().x,
                                 &Real::from(if elliptical { 18 } else { 14 }),
                                 crate::STRICT_PREDICATES
                             )
                             .value(),
                             Some(Ordering::Equal)
                         );
-                        assert_eq!(points[0].multiplicity, IntersectionMultiplicity::Simple);
+                        assert_eq!(points[0].kind, CurveSurfaceContactKind::Simple);
                     } else if height == Real::from(5) {
-                        assert_eq!(points[0].multiplicity, IntersectionMultiplicity::Tangent);
+                        assert_eq!(points[0].kind, CurveSurfaceContactKind::Repeated);
                     } else {
                         assert_eq!(
                             compare_reals(
-                                &points[0].parameter,
+                                points[0].parameter.try_real().unwrap(),
                                 curve.domain().start(),
                                 crate::STRICT_PREDICATES
                             )
@@ -91,7 +99,7 @@ fn conic_plane_contact_keeps_exact_endpoint_lifts() {
                         );
                         assert_eq!(
                             compare_reals(
-                                &points[0].parameter,
+                                points[0].parameter.try_real().unwrap(),
                                 curve.domain().end(),
                                 crate::STRICT_PREDICATES
                             )
@@ -131,7 +139,7 @@ fn a_full_circle_contact_retains_both_seam_parameters() {
         assert_eq!(points.len(), 3);
         assert_eq!(
             compare_reals(
-                &points[0].parameter,
+                points[0].parameter.try_real().unwrap(),
                 curve.domain().start(),
                 crate::STRICT_PREDICATES
             )
@@ -140,7 +148,7 @@ fn a_full_circle_contact_retains_both_seam_parameters() {
         );
         assert_eq!(
             compare_reals(
-                &points[2].parameter,
+                points[2].parameter.try_real().unwrap(),
                 curve.domain().end(),
                 crate::STRICT_PREDICATES
             )
@@ -149,14 +157,24 @@ fn a_full_circle_contact_retains_both_seam_parameters() {
         );
         for (point, x) in points.iter().zip([4, -4, 4]) {
             assert_eq!(
-                compare_reals(&point.point.x, &Real::from(x), crate::STRICT_PREDICATES).value(),
+                compare_reals(
+                    &point.point.try_coordinates().unwrap().x,
+                    &Real::from(x),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             assert_eq!(
-                compare_reals(&point.point.y, &Real::from(3), crate::STRICT_PREDICATES).value(),
+                compare_reals(
+                    &point.point.try_coordinates().unwrap().y,
+                    &Real::from(3),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
-            assert_eq!(point.multiplicity, IntersectionMultiplicity::Simple);
+            assert_eq!(point.kind, CurveSurfaceContactKind::Simple);
         }
     }
 }

@@ -91,9 +91,11 @@ pub fn conic_queries() {
                         )
                     };
                     assert_eq!(points.len(), 1);
-                    equal(&points[0].parameter, &parameter);
+                    equal(points[0].parameter.try_real().unwrap(), &parameter);
                     assert!(
-                        hyperbrep::GeometricPoint3::from(points[0].point.clone())
+                        points[0]
+                            .point
+                            .clone()
                             .coincides_with(&point.clone().into())
                             .unwrap()
                     );

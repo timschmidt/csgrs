@@ -316,6 +316,10 @@ exact signatures.
   overlap ranges. A location retains its support parameter and span chart;
   `location.parameter()` maps it into the authored curve domain on
   demand, preserving selected roots for evaluation and subdivision.
+  `curve.parameter_from_span(index, local)` transports overlap and collapsed
+  component parameters through the same authored chart; it does not itself
+  certify incidence or membership. `restrict_source` preserves that chart for
+  authored curves and generated retained supports, including reversed traversal.
   `CurveParameter2::compare` compares parameters in a shared support chart
   without requiring scalar payloads and reports predicate certainty.
   Curve and open-path intersections consume retained rational-source cuts

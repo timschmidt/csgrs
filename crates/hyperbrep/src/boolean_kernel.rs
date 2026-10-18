@@ -4466,15 +4466,40 @@ fn canonical_surface_edge_parameter(
     if points.is_empty() {
         return Ok(None);
     }
+    if points
+        .iter()
+        .any(|point| point.parameter.try_real().is_none())
+    {
+        // The boundary mapper already supplied an exact represented value.
+        // Reuse it only after equality with a retained contact is proved; the
+        // absence of a stored scalar view is not proof that this view is wrong.
+        let observed_parameter = crate::Parameter::from_real(observed.clone());
+        let mut unresolved = None;
+        for point in &points {
+            match point.parameter.compare(&observed_parameter) {
+                Ok(Ordering::Equal) => return Ok(Some(observed.clone())),
+                Ok(_) => {}
+                Err(error) => {
+                    unresolved.get_or_insert(error);
+                }
+            }
+        }
+        return Err(unresolved.unwrap_or(GeometryError::UnrepresentableParameter));
+    }
     let mut parameters = Vec::with_capacity(points.len());
     for point in points {
+        let parameter = point
+            .parameter
+            .try_real()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
         let mut insertion = parameters.len();
         while insertion > 0
-            && exact_order(&point.parameter, &parameters[insertion - 1])? == Ordering::Less
+            && exact_order(&parameter, &parameters[insertion - 1])? == Ordering::Less
         {
             insertion -= 1;
         }
-        parameters.insert(insertion, point.parameter);
+        parameters.insert(insertion, parameter);
     }
     if parameters.len() == 1 {
         return Ok(parameters.pop());
@@ -4487,6 +4512,49 @@ fn canonical_surface_edge_parameter(
         }
     }
     Ok(parameters.pop())
+}
+
+#[cfg(test)]
+mod retained_plane_contact_tests {
+    use super::*;
+
+    #[test]
+    fn canonical_plane_contact_can_reuse_a_proven_represented_parameter() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // (2t^2-1)(t^2+1) has the sole unit root sqrt(1/2). The
+        // boundary's existing Real view is usable only after exact comparison.
+        let curve = Curve3::rational_bezier(
+            [q(-1, 1), q(-1, 1), q(-5, 6), q(-1, 2), q(2, 1)]
+                .into_iter()
+                .zip(0..5)
+                .map(|(z, x)| crate::Point3::new(x.into(), 0.into(), z))
+                .collect(),
+            vec![Real::one(); 5],
+        )
+        .unwrap();
+        let plane = Surface::plane(
+            crate::Point3::origin(),
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+        )
+        .unwrap();
+        let crate::CurveSurfaceIntersection::Points(points) =
+            plane.intersect_curve(&curve).unwrap()
+        else {
+            panic!("one selected root");
+        };
+        assert_eq!(points.len(), 1);
+        assert!(points[0].parameter.try_real().is_none());
+        let observed = q(1, 2).sqrt().unwrap();
+        let parameter = canonical_surface_edge_parameter(&plane, &curve, &observed)
+            .unwrap()
+            .unwrap();
+        assert_eq!(exact_order(&parameter, &observed).unwrap(), Ordering::Equal);
+        assert_eq!(
+            canonical_surface_edge_parameter(&plane, &curve, &Real::zero()).unwrap_err(),
+            GeometryError::UnrepresentableParameter
+        );
+    }
 }
 
 fn contacts_at_interval_start(

@@ -162,20 +162,20 @@ impl Curve2 {
             .map(|range| (&range.source, &range.range, range.reversed))
     }
 
-    /// Restricts an authored curve without rebasing its parameter chart.
+    /// Restricts a curve without rebasing its parameter chart.
     ///
     /// Unlike scalar subdivision, scalar endpoints also retain the source
     /// chart. The range must be ascending and lie in the current domain;
     /// traversal follows `self`. All endpoint and containment evidence is
-    /// reconstructed under strict predicates. Non-authored support fragments
-    /// return an unsupported-construction error.
+    /// reconstructed under strict predicates. Authored curves retain their
+    /// source range; generated supports reuse their retained restriction authority.
     pub fn restrict_source(&self, range: CurveParameterRange2) -> ExactCurveResult<Self> {
         if self.retained_fragment().is_some() {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Construction,
-                self.family(),
-                UncertaintyReason::Unsupported,
-            ));
+            return self.subcurve_at_parameters(
+                range.start().clone(),
+                range.end().clone(),
+                &CurveContext::STRICT,
+            );
         }
         self.restrict_authored_source(
             range.start().clone(),

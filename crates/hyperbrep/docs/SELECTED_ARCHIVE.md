@@ -262,6 +262,20 @@ and the optional serialization feature still need implementation. Native
 `serde_stacker` handling is retained; WASM compilation does not establish a
 hostile-input runtime bound. WP02/G1 and WP13 remain incomplete.
 
+## Finite contact consumers
+
+Finite curve/plane contacts now feed the same selected-point and parameter
+archive authority. Higher-degree native contacts retain the original spatial
+curve and selected parameter; planar contacts also retain their planar source
+point and frame. No new contact-specific saved model format or validity flag
+is introduced. The [contact admission](evidence/2026-10-18-retained-plane-contacts/README.md)
+exercises actual contact parameters through shared edge splitting, cold replay,
+exact reflected transforms, slab cuts, reunion and empty recovery. Finite
+restrictions of signed-weight planar sources query only the consumed interval.
+The four selected cube/cap STEP attempts before and after replay retain typed,
+body/entity-attributed encoding failures and successful native recovery. Native
+replay and exact STEP encodability remain separate claims.
+
 ## Algorithm reference
 
 CGAL documents the polynomial-plus-isolating-interval representation and

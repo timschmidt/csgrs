@@ -573,10 +573,12 @@ pub fn planar_image_limits_and_typed_frontiers_recover() {
         Err(GeometryError::UnrepresentableParameter)
     ));
     let plane = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
+    // The entire finite planar image is now certified on its supporting plane.
     assert!(matches!(
-        plane.intersect_curve(&image),
-        Err(GeometryError::UnsupportedIntersection)
+        plane.intersect_curve(&image).unwrap(),
+        CurveSurfaceIntersection::Contained
     ));
+    assert!(plane.planar_pcurve(&image).unwrap().is_some());
     let tangent = Surface::extrusion(image, Vector3::x()).unwrap();
     assert!(matches!(
         tangent.extrusion_parameters_of(&Point3::origin()),

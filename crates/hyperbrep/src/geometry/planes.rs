@@ -133,6 +133,76 @@ mod tests {
     use hyperreal::Rational;
 
     #[test]
+    fn retained_projection_restricts_and_reverses_without_rebasing_the_source_chart() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        let source = Curve2::try_analytic_parallel(
+            hypercurve::QuadraticBezier2::new(
+                CurvePoint2::from_values(0, 0),
+                CurvePoint2::from_values(2, 2),
+                CurvePoint2::from_values(4, 0),
+            )
+            .parallel_left(Real::one())
+            .unwrap(),
+            hypercurve::BezierParameterRange2::try_new(
+                hypercurve::BezierParameter2::Exact((-1).into()),
+                hypercurve::BezierParameter2::Exact(2.into()),
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        let curve =
+            Curve3::planar_image(source.clone(), Point3::origin(), Vector3::x(), Vector3::y())
+                .unwrap();
+        let plane = PlaneSurface {
+            origin: Point3::origin(),
+            u: Vector3::x(),
+            v: Vector3::y(),
+        };
+        let mapping = SurfaceIntersectionPcurve::plane_projection(curve, &plane)
+            .subcurve(&q(1, 4), &q(3, 4))
+            .unwrap();
+        for (mapping, reversed) in [
+            (mapping.clone(), false),
+            (mapping.reversed().unwrap(), true),
+        ] {
+            let pcurve = mapping.materialize().unwrap();
+            let domain = pcurve.curve().parameter_domain();
+            assert_eq!(
+                domain.start().compare(&q(-1, 4).into()).unwrap(),
+                Ordering::Equal
+            );
+            assert_eq!(
+                domain.end().compare(&q(5, 4).into()).unwrap(),
+                Ordering::Equal
+            );
+            for t in [q(-1, 4), q(1, 2), q(5, 4)] {
+                // Source t=-1+3s; reversing the retained [1/4,3/4]
+                // spatial chart gives t=2-3s, without rebasing t.
+                let expected = if reversed {
+                    (Real::from(2) - &t) / Real::from(3)
+                } else {
+                    (&t + Real::one()) / Real::from(3)
+                }
+                .unwrap();
+                assert_eq!(
+                    Parameter::from_real(pcurve.spatial_parameter_at(&t).unwrap())
+                        .compare(&expected.into())
+                        .unwrap(),
+                    Ordering::Equal
+                );
+                assert!(
+                    pcurve
+                        .curve()
+                        .point_at(&t.clone().into())
+                        .unwrap()
+                        .coincides_with(&source.point_at(&t.into()).unwrap())
+                        .unwrap()
+                );
+            }
+        }
+    }
+
+    #[test]
     fn plane_relations_preserve_exact_charts_offsets_and_intersection_lines() {
         let gap = Real::new(Rational::fraction(1, 1_000_000_000_000_u64).unwrap());
         for height in [Real::from(3), Real::pi()] {

@@ -85,8 +85,10 @@ Planar-image archive sources include lines, circular arcs, quadratic/cubic
 polynomials, rational quadratic/general Beziers, NURBS, analytic parallels and
 admitted source restrictions. Polynomial B-spline source archives remain typed
 unsupported; builders retain their existing exact NURBS promotion. New tags
-preserve polynomial families without changing prior encodings. Plane/curve and
-general carrier intersections, selected carrier chart endpoints, closed planar-image
+preserve polynomial families without changing prior encodings. Finite plane
+contacts delegate to the planar owner after proving finiteness on the consumed
+source interval, including represented restrictions of signed-weight sources.
+General carrier intersections, selected carrier chart endpoints, closed planar-image
 edges, general revolution certificates, and canonical ordering of unlike
 procedural sources remain typed frontiers. Extrusion inverse queries are exact
 when the retained source plane is transverse to the extrusion direction.
@@ -255,6 +257,9 @@ strict-convexity certificate.
 | Pair | Exact outcomes |
 | --- | --- |
 | Finite line / plane | None, point, contained |
+| Positive-weight rational Bézier / plane | Complete finite isolated contacts with retained selected parameters and original-source point images; none or contained |
+| Finite positive-weight NURBS / plane | Authored-knot contacts, maximal coincident ranges, mixed components, none or contained; shared joints deduplicated without merging distinct visits |
+| Planar image / plane | Owner-supported complete finite point/range contacts after bounds prove the consumed source interval; selected points retain the original planar authority and spatial frame |
 | Circular or elliptic arc / plane | None, simple/tangent points with represented seam parameters, contained |
 | Circular arc / sphere | None, simple/tangent points with represented seam parameters, contained |
 | Transverse circular arc / cylinder | None, simple/tangent points with represented seam parameters, contained |
@@ -283,11 +288,38 @@ strict-convexity certificate.
 | Plane / positive-weight `2×2` rational Bézier tensor | None; one/multiple isolated corner points; one/two native boundary or factorized iso-lines; one/multiple exact bounded rational-quartic branches, including retained denominator poles; or exact containment of the complete bounded tensor surface |
 | Plane / positive-weight degree-one `2×2` NURBS tensor | The same complete rational-bilinear outcome matrix, with every retained line or rational pcurve mapped exactly into the authored active knot domains |
 
+`CurveSurfacePoint` exposes `Parameter`, `GeometricPoint3` and
+`CurveSurfaceContactKind::{Simple, Repeated, Boundary}`. The first two kinds
+classify the first derivative of the contact equation, including both sides
+of native spline joints; a repeated odd root can still cross. They are not
+integer multiplicities or a global smoothness guarantee. `Boundary` denotes
+a singleton clipped from coincident support, such as an upper-cone apex.
+`Overlap` uses `ParameterRange`; `Components` exposes normalized isolated
+contacts and closed ranges, whose endpoints belong to the ranges. Missing
+root, derivative, finite-range or transport evidence returns a typed error;
+partial contact sets are not successful complete intersections. The
+[contact admission](evidence/2026-10-18-retained-plane-contacts/README.md)
+records exact replay, downstream split/solid use and the deliberate API break.
+Closed overlap endpoints must have usable original-source point images on the
+plane. A planar spline's full-multiplicity joint with ambiguous one-sided images
+retains the owner's `Boundary` blocker; interior contacts and finite subcurves
+away from that joint still succeed. Explicit one-sided parameter and open-range
+carriers remain separate work.
+
+After containment, `Surface::planar_pcurve` and the shared retained mapping
+materializer accept planar images whose source frame projects through a
+certified Hypercurve similarity. They preserve the consumed source interval
+and signed map to spatial parameters, including reversed and nonunit charts.
+General non-similarity procedural projections retain the owner's typed
+`InvalidSimilarityTransform` construction failure.
+
 Transverse plane/extrusion intersections apply the exact affine projection
 along the authored extrusion direction; named conics whose projection needs a
 new normalized carrier remain unsupported. Parallel extrusion directions lift
 supported exact profile/plane point contacts into unbounded lines and reject
-two-dimensional overlaps explicitly. Finite curve results retain their exact
+two-dimensional overlaps explicitly. Their line origins and revolution latitude
+coefficients still need represented scalar views; selected plane contacts alone
+do not extend those surface-result carriers. Finite curve results retain their exact
 model-space `Curve3` plus an evaluable pcurve on each operand. The intersection
 graph clips line and rational-Bézier extrusion sections and generator lines in
 both trimmed parameter regions, retains Hypercurve's top-level source ranges,

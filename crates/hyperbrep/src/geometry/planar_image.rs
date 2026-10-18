@@ -235,8 +235,66 @@ impl PlanarCurve3 {
         Ok((self.u.clone() * x + self.v.clone() * y) * power)
     }
 
+    /// Preserve the owner's chart and return its exact map to the target
+    /// spatial interval. A procedural planar image needs a certified similarity
+    /// in parameter space; arbitrary affine source images remain unsupported.
+    pub(super) fn materialize_plane_projection(
+        &self,
+        origin: &Point3,
+        u: &Vector3,
+        v: &Vector3,
+        target: &ParameterDomain,
+        descending: bool,
+    ) -> GeometryResult<MaterializedSurfacePcurve> {
+        let project = |point: &Point3| project_point_to_plane_frame(origin, u, v, point);
+        let projected_origin = project(&self.origin)?;
+        let x = project(&(self.origin.clone() + &self.u))?;
+        let y = project(&(self.origin.clone() + &self.v))?;
+        let transform = hypercurve::Similarity2::try_from_real_affine(
+            &x.x - &projected_origin.x,
+            &y.x - &projected_origin.x,
+            &x.y - &projected_origin.y,
+            &y.y - &projected_origin.y,
+            projected_origin.x,
+            projected_origin.y,
+        )?;
+        let curve = self.finite_source()?.transform_similarity(&transform)?;
+        let (start, end) = if descending {
+            (&self.source_end, &self.source_start)
+        } else {
+            (&self.source_start, &self.source_end)
+        };
+        let scale =
+            ((target.end() - target.start()) / (end - start)).map_err(GeometryError::Numeric)?;
+        let offset = target.start() - &scale * start;
+        Ok(MaterializedSurfacePcurve {
+            curve,
+            correspondence: SurfacePcurveCorrespondence::Affine { scale, offset },
+        })
+    }
+
+    /// Restrict proof queries to the consumed interval while retaining the
+    /// source chart. A pole elsewhere on the original definition is irrelevant.
+    pub(super) fn finite_source(&self) -> GeometryResult<std::borrow::Cow<'_, Curve2>> {
+        let mut start = hypercurve::CurveParameter2::from(self.source_start.clone());
+        let mut end = hypercurve::CurveParameter2::from(self.source_end.clone());
+        if start.compare(&end)? == Ordering::Greater {
+            std::mem::swap(&mut start, &mut end);
+        }
+        let domain = self.source.parameter_domain();
+        if start.compare(domain.start())? == Ordering::Equal
+            && end.compare(domain.end())? == Ordering::Equal
+        {
+            return Ok(std::borrow::Cow::Borrowed(&self.source));
+        }
+        Ok(std::borrow::Cow::Owned(self.source.restrict_source(
+            hypercurve::CurveParameterRange2::try_new(start, end)?,
+        )?))
+    }
+
     pub(super) fn bounds(&self) -> GeometryResult<Aabb> {
-        let bounds = self.source.bounds()?;
+        let source = self.finite_source()?;
+        let bounds = source.bounds()?;
         exact_point_bounds(&[
             self.lift(&CurvePoint2::new(
                 bounds.min_x().clone(),
@@ -277,7 +335,7 @@ impl PlanarCurve3 {
         }
         let uv = project_point_to_plane_frame(&self.origin, &self.u, &self.v, point)?;
         let locations = self
-            .source
+            .finite_source()?
             .point_locations(&CurvePoint2::new(uv.x, uv.y).into())?;
         let locations = match locations {
             hypercurve::CurvePointLocations2::EntireCurve => {

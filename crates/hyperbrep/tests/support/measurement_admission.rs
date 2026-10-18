@@ -79,10 +79,49 @@ pub fn planar_spline_incidence_does_not_require_low_degree_root_solving() {
             // that endpoint incidence alone cannot establish complete containment.
             let mut bowed = controls;
             bowed[1].z = Real::one();
-            assert!(matches!(
-                plane.planar_pcurve(&build(bowed)),
-                Err(GeometryError::UnsupportedIntersection)
-            ));
+            let bowed = build(bowed);
+            assert!(plane.planar_pcurve(&bowed).unwrap().is_none());
+            // Only the endpoints vanish: the positive interior Bernstein/B-spline
+            // coefficient has positive basis support throughout the open domain.
+            let CurveSurfaceIntersection::Points(contacts) = plane.intersect_curve(&bowed).unwrap()
+            else {
+                panic!("complete endpoint contacts");
+            };
+            assert_eq!(contacts.len(), 2);
+            for (contact, endpoint, kind) in [
+                (
+                    &contacts[0],
+                    bowed.domain().start(),
+                    CurveSurfaceContactKind::Simple,
+                ),
+                (
+                    &contacts[1],
+                    bowed.domain().end(),
+                    CurveSurfaceContactKind::Repeated,
+                ),
+            ] {
+                assert_eq!(
+                    contact.parameter.compare(&endpoint.clone().into()).unwrap(),
+                    std::cmp::Ordering::Equal
+                );
+                assert_eq!(contact.kind, kind);
+                assert_eq!(
+                    contact
+                        .point
+                        .compare_linear_form(&Vector3::z(), &Real::zero())
+                        .unwrap(),
+                    std::cmp::Ordering::Equal
+                );
+            }
+            let middle = ((bowed.domain().start() + bowed.domain().end()) / Real::from(2)).unwrap();
+            assert_eq!(
+                bowed
+                    .point_at(&middle.into())
+                    .unwrap()
+                    .compare_linear_form(&Vector3::z(), &Real::zero())
+                    .unwrap(),
+                std::cmp::Ordering::Greater
+            );
         }
     }
 }

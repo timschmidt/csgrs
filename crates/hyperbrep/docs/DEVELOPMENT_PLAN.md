@@ -19,6 +19,18 @@ selected carrier chart endpoints, broader selected surface fields, unlike
 procedural-source ordering, general intersections and STEP encodings remain
 next dependencies. Neither finite extension closes a complete work package.
 
+The [finite plane-contact increment](evidence/2026-10-18-retained-plane-contacts/README.md)
+advances WP02/WP05b/WP06/WP08. Curve/surface contact results now retain exact
+`Parameter` and `GeometricPoint3` values, first-derivative contact kind, and
+complete mixed point/range components. Higher-degree rational Bézier/NURBS
+plane equations reuse owner root authority; planar-image plane contacts reuse
+owner bounds, intersections and chart transport on the actual consumed range.
+Selected contacts feed point queries, edge splits, cold replay and supported
+solid continuation. General selected surface fields and newly authored
+selected procedural-profile endpoints remain dependencies of broader modeling
+closure. The retained STEP encoding boundary remains explicit. This API break
+adds no compatibility layer and closes no complete work package.
+
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,
 and STEP exchange. The critical path is to make intersection results remain

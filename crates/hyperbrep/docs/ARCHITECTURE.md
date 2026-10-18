@@ -43,6 +43,43 @@ slab operations without scalar vertex views. Newly authored source chart endpoin
 without scalar views, full source-history/intent receipts and general surface
 intersections remain separate work.
 
+Finite curve/plane contacts live in
+[`geometry/curve_plane.rs`](../src/geometry/curve_plane.rs). Positive-weight
+spatial Béziers reduce to the homogeneous plane numerator; Hypercurve owns
+its complete root census and derivative-sign queries. NURBS decomposition
+retains authored knot parameters and original selected spatial images.
+Planar images reduce the plane to an affine form on their actual consumed
+source interval. Hypercurve owns chart-preserving restriction, finite bounds,
+contacts and span-to-source parameter transport. A pole outside that interval
+does not invalidate the finite restriction; a pole inside it blocks a definite
+answer, including containment.
+
+`CurveSurfacePoint` carries `Parameter`, `GeometricPoint3` and
+`CurveSurfaceContactKind`. `Simple` and `Repeated` describe nonzero versus zero
+first derivative of the contact equation, including both incident spline spans;
+they do not promise global crossing behavior or an integer multiplicity.
+`Boundary` identifies a singleton clipped from coincident support.
+`CurveSurfaceIntersection::Components` retains mixed isolated points and
+maximal closed parameter ranges. Ranges own their endpoints; separate source
+visits to one spatial point retain separate parameters. Complete overlap is
+`Contained`. Hypercurve's complete overlap proof covers the interior; BRep
+also checks the transported closed endpoint images and their plane membership.
+An ambiguous full-multiplicity planar spline joint retains the owner's typed
+`Boundary` blocker. Unambiguous interior contacts and finite restrictions away
+from the jump remain consumable. Coefficient-only consumers explicitly request optional scalar
+views and preserve typed failures. A boundary mapper can reuse its supplied
+represented parameter only after exact equality proves it is the retained root.
+The [contact admission](evidence/2026-10-18-retained-plane-contacts/README.md)
+records this public API migration and the supported topology/format consumers.
+
+The shared surface-pcurve materializer also consumes a contained planar image
+when the projected source frame is an owner-certified similarity. It restricts
+the original source chart and returns an explicit signed affine correspondence
+to the spatial interval, including reversed mappings. It does not rebase the
+procedural source. General non-similarity projections remain typed owner
+construction failures; finite plane incidence alone does not prove that a
+particular planar carrier can encode the projected image.
+
 HyperBREP is an exact, immutable boundary-representation kernel.
 `hyperreal::Real` is the sole authored coefficient scalar. Approximate numbers may
 eventually propose work at explicit adapter boundaries, but they never decide

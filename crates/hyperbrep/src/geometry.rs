@@ -16,6 +16,7 @@ use crate::error::{GeometryError, GeometryResult};
 mod analytic;
 mod axial_lines;
 mod conical_revolution;
+mod curve_plane;
 mod location;
 mod periodic_charts;
 mod planar_image;
@@ -25,6 +26,9 @@ mod spline;
 mod transform;
 pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
 pub use conical_revolution::{ConeBranch, ConicalRevolution, ConicalRevolutionChart};
+use curve_plane::{
+    intersect_nurbs_plane, intersect_planar_image_plane, intersect_rational_bezier_plane,
+};
 use location::{
     locate_ellipse_arc_parameters, locate_line_parameter, locate_nurbs_parameters,
     locate_rational_bezier_parameters,
@@ -874,15 +878,15 @@ impl Curve3 {
         // When the convex-hull certificate is inconclusive, reduce exact axis
         // contact to membership in two orthogonal planes through the axis.
         // Supported curve/plane intersections enumerate the complete finite
-        // parameter interval; unsupported polynomial degrees remain explicit.
+        // parameter interval, retaining selected points when no scalar view exists.
         let transverse = axis.cross(&witness);
+        let second_normal = axis.cross(&transverse);
         let first_plane = Surface::plane(axis_origin.clone(), axis.clone(), witness.clone())?;
-        let point_is_on_axis = |point: &Point3| -> GeometryResult<bool> {
-            Ok(decided_order(compare_reals(
-                &radial(point).norm_squared(),
-                &Real::zero(),
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Equal)
+        let point_is_on_axis = |point: &GeometricPoint3| -> GeometryResult<bool> {
+            Ok(point.compare_linear_form(
+                &second_normal,
+                &second_normal.dot(&Vector3::from(axis_origin.clone())),
+            )? == Ordering::Equal)
         };
         match first_plane.intersect_curve(self)? {
             CurveSurfaceIntersection::None => Ok(true),
@@ -895,16 +899,19 @@ impl Curve3 {
                 Ok(true)
             }
             CurveSurfaceIntersection::Contained => {
-                let second_plane = Surface::plane(axis_origin.clone(), axis.clone(), transverse)?;
+                let second_plane =
+                    Surface::plane(axis_origin.clone(), axis.clone(), transverse.clone())?;
                 match second_plane.intersect_curve(self)? {
                     CurveSurfaceIntersection::None => Ok(true),
                     CurveSurfaceIntersection::Points(_) => Ok(false),
-                    CurveSurfaceIntersection::Overlap(_) | CurveSurfaceIntersection::Contained => {
-                        Ok(false)
-                    }
+                    CurveSurfaceIntersection::Overlap(_)
+                    | CurveSurfaceIntersection::Components(_)
+                    | CurveSurfaceIntersection::Contained => Ok(false),
                 }
             }
-            CurveSurfaceIntersection::Overlap(_) => Err(GeometryError::UnsupportedIntersection),
+            CurveSurfaceIntersection::Overlap(_) | CurveSurfaceIntersection::Components(_) => {
+                Err(GeometryError::UnsupportedIntersection)
+            }
         }
     }
 
@@ -1654,7 +1661,10 @@ pub enum CurveSurfaceIntersection {
     /// The finite curve meets the surface at isolated exact points.
     Points(Vec<CurveSurfacePoint>),
     /// A finite exact subinterval of the curve belongs to the surface.
-    Overlap(ParameterDomain),
+    Overlap(crate::ParameterRange),
+    /// Multiple coincident ranges, or isolated points together with ranges.
+    /// Points contained in an overlap closure are omitted from the point list.
+    Components(CurveSurfaceComponents),
     /// The entire finite curve belongs to the surface.
     Contained,
 }
@@ -1663,20 +1673,48 @@ pub enum CurveSurfaceIntersection {
 #[derive(Clone, Debug)]
 pub struct CurveSurfacePoint {
     /// Parameter on the spatial curve.
-    pub parameter: Real,
-    /// Exact model-space intersection point.
-    pub point: Point3,
-    /// Certified local intersection multiplicity.
-    pub multiplicity: IntersectionMultiplicity,
+    pub parameter: Parameter,
+    /// Exact model-space point, retaining selected source evidence when needed.
+    pub point: GeometricPoint3,
+    /// Certified first-order root or finite-boundary classification.
+    pub kind: CurveSurfaceContactKind,
 }
 
-/// Certified local multiplicity of an isolated intersection.
+/// Complete isolated and coincident components in the spatial curve's chart.
+#[derive(Clone, Debug)]
+pub struct CurveSurfaceComponents {
+    points: Vec<CurveSurfacePoint>,
+    overlaps: Vec<crate::ParameterRange>,
+}
+
+impl CurveSurfaceComponents {
+    /// Borrows isolated contacts outside every coincident range.
+    pub fn points(&self) -> &[CurveSurfacePoint] {
+        &self.points
+    }
+
+    /// Borrows the disjoint maximal closed coincident ranges.
+    pub fn overlaps(&self) -> &[crate::ParameterRange] {
+        &self.overlaps
+    }
+}
+
+/// Certified first-order classification of an isolated intersection.
+///
+/// For isolated equation roots this distinguishes a simple zero from a repeated
+/// zero of the supporting equation; it does not report an exact integer
+/// multiplicity. At a spline joint, `Simple` requires simple zeros on every incident span, while `Repeated`
+/// records a repeated zero on at least one incident span. Neither establishes
+/// smoothness or the global crossing direction at a nonsmooth joint.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum IntersectionMultiplicity {
-    /// The curve crosses the surface.
+pub enum CurveSurfaceContactKind {
+    /// Each incident span has a nonzero first derivative of its contact equation.
     Simple,
-    /// The curve is tangent to the surface.
-    Tangent,
+    /// At least one incident span has zero first derivative of its contact equation.
+    Repeated,
+    /// A coincident support meets the finite surface only at a clipping boundary.
+    /// This does not claim a simple or repeated root of the supporting equation.
+    Boundary,
 }
 
 /// Exact retained intersection between two supported parameterized surfaces.
@@ -2579,6 +2617,15 @@ impl SurfaceIntersectionPcurve {
                 } => {
                     let source_curve =
                         spatial.subcurve(ordered_source_start, ordered_source_end)?;
+                    if let CurveGeometry3::PlanarImage(image) = &source_curve.data.geometry {
+                        return image.materialize_plane_projection(
+                            origin,
+                            u,
+                            v,
+                            &self.domain,
+                            descending,
+                        );
+                    }
                     let curve = orient_curve(
                         project_curve_to_plane_frame(&source_curve, origin, u, v)?
                             .ok_or(GeometryError::UnsupportedIntersection)?,
@@ -4428,7 +4475,12 @@ impl Surface {
             if let (SurfaceGeometry::Plane(plane), CurveGeometry3::Nurbs(nurbs)) =
                 (&self.data.geometry, &curve.data.geometry)
             {
-                return intersect_nurbs_plane(nurbs, plane);
+                return intersect_nurbs_plane(curve, nurbs, plane);
+            }
+            if let (SurfaceGeometry::Plane(plane), CurveGeometry3::PlanarImage(image)) =
+                (&self.data.geometry, &curve.data.geometry)
+            {
+                return intersect_planar_image_plane(curve, image, plane);
             }
             if let (SurfaceGeometry::Sphere(sphere), CurveGeometry3::CircleArc(arc)) =
                 (&self.data.geometry, &curve.data.geometry)
@@ -4481,7 +4533,7 @@ impl Surface {
                                 ((-start_value) / denominator).map_err(GeometryError::Numeric)?;
                             isolated_line_parameters(
                                 curve,
-                                [(parameter, IntersectionMultiplicity::Simple)],
+                                [(parameter, CurveSurfaceContactKind::Simple)],
                             )
                         }
                     }
@@ -4898,12 +4950,7 @@ fn intersect_transverse_circle_arc_torus(
                 for point in points {
                     let mut duplicate = false;
                     for existing in &combined {
-                        if decided_order(compare_reals(
-                            &existing.parameter,
-                            &point.parameter,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Equal
-                        {
+                        if existing.parameter.compare(&point.parameter)? == Ordering::Equal {
                             duplicate = true;
                             break;
                         }
@@ -4916,7 +4963,7 @@ fn intersect_transverse_circle_arc_torus(
             CurveSurfaceIntersection::Contained => {
                 return Ok(CurveSurfaceIntersection::Contained);
             }
-            CurveSurfaceIntersection::Overlap(_) => {
+            CurveSurfaceIntersection::Overlap(_) | CurveSurfaceIntersection::Components(_) => {
                 unreachable!("exact circle relation has no proper overlap")
             }
         }
@@ -4924,11 +4971,10 @@ fn intersect_transverse_circle_arc_torus(
     for index in 1..combined.len() {
         let mut position = index;
         while position > 0
-            && decided_order(compare_reals(
-                &combined[position].parameter,
-                &combined[position - 1].parameter,
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Less
+            && combined[position]
+                .parameter
+                .compare(&combined[position - 1].parameter)?
+                == Ordering::Less
         {
             combined.swap(position, position - 1);
             position -= 1;
@@ -4999,12 +5045,7 @@ fn intersect_axial_circle_arc_torus(
                 for point in points {
                     let mut duplicate = false;
                     for existing in &combined {
-                        if decided_order(compare_reals(
-                            &existing.parameter,
-                            &point.parameter,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Equal
-                        {
+                        if existing.parameter.compare(&point.parameter)? == Ordering::Equal {
                             duplicate = true;
                             break;
                         }
@@ -5017,7 +5058,7 @@ fn intersect_axial_circle_arc_torus(
             CurveSurfaceIntersection::Contained => {
                 return Ok(CurveSurfaceIntersection::Contained);
             }
-            CurveSurfaceIntersection::Overlap(_) => {
+            CurveSurfaceIntersection::Overlap(_) | CurveSurfaceIntersection::Components(_) => {
                 unreachable!("exact circle relation has no proper overlap")
             }
         }
@@ -5025,11 +5066,10 @@ fn intersect_axial_circle_arc_torus(
     for index in 1..combined.len() {
         let mut position = index;
         while position > 0
-            && decided_order(compare_reals(
-                &combined[position].parameter,
-                &combined[position - 1].parameter,
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Less
+            && combined[position]
+                .parameter
+                .compare(&combined[position - 1].parameter)?
+                == Ordering::Less
         {
             combined.swap(position, position - 1);
             position -= 1;
@@ -5109,10 +5149,10 @@ fn intersect_ellipse_arc_scalar_equation(
     } else {
         vec![&phase + &offset, phase - offset]
     };
-    let multiplicity = if relation == Ordering::Equal {
-        IntersectionMultiplicity::Tangent
+    let kind = if relation == Ordering::Equal {
+        CurveSurfaceContactKind::Repeated
     } else {
-        IntersectionMultiplicity::Simple
+        CurveSurfaceContactKind::Simple
     };
     let mut points = Vec::<CurveSurfacePoint>::new();
     for angle in angles {
@@ -5126,12 +5166,7 @@ fn intersect_ellipse_arc_scalar_equation(
         for parameter in parameters {
             let mut duplicate = false;
             for existing in &points {
-                if decided_order(compare_reals(
-                    &existing.parameter,
-                    &parameter,
-                    crate::STRICT_PREDICATES,
-                ))? == Ordering::Equal
-                {
+                if existing.parameter.compare(&parameter.clone().into())? == Ordering::Equal {
                     duplicate = true;
                     break;
                 }
@@ -5140,20 +5175,19 @@ fn intersect_ellipse_arc_scalar_equation(
                 continue;
             }
             points.push(CurveSurfacePoint {
-                parameter,
-                point: point.clone(),
-                multiplicity,
+                parameter: parameter.into(),
+                point: point.clone().into(),
+                kind,
             });
         }
     }
     for index in 1..points.len() {
         let mut position = index;
         while position > 0
-            && decided_order(compare_reals(
-                &points[position].parameter,
-                &points[position - 1].parameter,
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Less
+            && points[position]
+                .parameter
+                .compare(&points[position - 1].parameter)?
+                == Ordering::Less
         {
             points.swap(position, position - 1);
             position -= 1;
@@ -6723,17 +6757,25 @@ fn intersect_plane_extrusion(
         let plane_surface = Surface::plane(plane.origin.clone(), plane.u.clone(), plane.v.clone())?;
         return match plane_surface.intersect_curve(&surface.profile)? {
             CurveSurfaceIntersection::None => Ok(SurfaceSurfaceIntersection::None),
-            CurveSurfaceIntersection::Contained | CurveSurfaceIntersection::Overlap(_) => {
+            CurveSurfaceIntersection::Contained
+            | CurveSurfaceIntersection::Overlap(_)
+            | CurveSurfaceIntersection::Components(_) => {
                 Err(GeometryError::UnsupportedIntersection)
             }
             CurveSurfaceIntersection::Points(points) => {
                 let mut lines = points
                     .into_iter()
-                    .map(|point| SurfaceIntersectionLine {
-                        point: point.point,
-                        direction: surface.direction.clone(),
+                    .map(|point| {
+                        Ok(SurfaceIntersectionLine {
+                            point: point
+                                .point
+                                .try_coordinates()
+                                .cloned()
+                                .ok_or(GeometryError::UnrepresentablePoint)?,
+                            direction: surface.direction.clone(),
+                        })
                     })
-                    .collect::<Vec<_>>();
+                    .collect::<GeometryResult<Vec<_>>>()?;
                 if lines.len() == 1 {
                     Ok(SurfaceSurfaceIntersection::Line(Box::new(
                         lines.pop().expect("one retained extrusion line"),
@@ -6788,7 +6830,9 @@ fn intersect_plane_revolution(
     let plane_surface = Surface::plane(plane.origin.clone(), plane.u.clone(), plane.v.clone())?;
     let points = match plane_surface.intersect_curve(&surface.profile)? {
         CurveSurfaceIntersection::None => return Ok(SurfaceSurfaceIntersection::None),
-        CurveSurfaceIntersection::Contained | CurveSurfaceIntersection::Overlap(_) => {
+        CurveSurfaceIntersection::Contained
+        | CurveSurfaceIntersection::Overlap(_)
+        | CurveSurfaceIntersection::Components(_) => {
             return Err(GeometryError::UnsupportedIntersection);
         }
         CurveSurfaceIntersection::Points(points) => points,
@@ -6797,7 +6841,11 @@ fn intersect_plane_revolution(
     let mut singular = None;
     let mut radii = Vec::<Real>::with_capacity(points.len());
     for point in points {
-        let relative = &point.point - &surface.axis_origin;
+        let relative = point
+            .point
+            .try_coordinates()
+            .ok_or(GeometryError::UnrepresentablePoint)?
+            - &surface.axis_origin;
         let axial_parameter = relative.dot(&surface.axis);
         let center = surface.axis_origin.clone() + surface.axis.clone() * axial_parameter.clone();
         let radial = relative - surface.axis.clone() * axial_parameter;
@@ -6835,7 +6883,14 @@ fn intersect_plane_revolution(
         sections.push(SurfaceIntersectionCurve::new(
             curve.clone(),
             SurfaceIntersectionPcurve::plane_projection(curve, plane),
-            SurfaceIntersectionPcurve::tensor_iso_v(domain, point.parameter),
+            SurfaceIntersectionPcurve::tensor_iso_v(
+                domain,
+                point
+                    .parameter
+                    .try_real()
+                    .cloned()
+                    .ok_or(GeometryError::UnrepresentableParameter)?,
+            ),
         ));
     }
     if let Some(point) = singular {
@@ -7346,21 +7401,33 @@ fn intersect_plane_linear_tensor_graph(
         let plane_surface = Surface::plane(plane.origin.clone(), plane.u.clone(), plane.v.clone())?;
         return match plane_surface.intersect_curve(&profile)? {
             CurveSurfaceIntersection::None => Ok(SurfaceSurfaceIntersection::None),
-            CurveSurfaceIntersection::Contained | CurveSurfaceIntersection::Overlap(_) => {
+            CurveSurfaceIntersection::Contained
+            | CurveSurfaceIntersection::Overlap(_)
+            | CurveSurfaceIntersection::Components(_) => {
                 Err(GeometryError::UnsupportedIntersection)
             }
             CurveSurfaceIntersection::Points(points) => {
                 let mut curves = points
                     .into_iter()
                     .map(|point| {
-                        let curve =
-                            Curve3::line(point.point.clone(), point.point + direction.clone())?;
+                        let coordinates = point
+                            .point
+                            .try_coordinates()
+                            .ok_or(GeometryError::UnrepresentablePoint)?;
+                        let curve = Curve3::line(
+                            coordinates.clone(),
+                            coordinates.clone() + direction.clone(),
+                        )?;
                         Ok(SurfaceIntersectionCurve::new(
                             curve.clone(),
                             SurfaceIntersectionPcurve::plane_projection(curve.clone(), plane),
                             SurfaceIntersectionPcurve::tensor_iso(
                                 curve.domain().clone(),
-                                point.parameter,
+                                point
+                                    .parameter
+                                    .try_real()
+                                    .cloned()
+                                    .ok_or(GeometryError::UnrepresentableParameter)?,
                                 profile_axis,
                                 coefficient_scale.clone(),
                                 coefficient_offset.clone(),
@@ -9397,7 +9464,7 @@ fn intersect_spheres(
 enum QuadraticRoots {
     None,
     All,
-    Isolated(Vec<(Real, IntersectionMultiplicity)>),
+    Isolated(Vec<(Real, CurveSurfaceContactKind)>),
 }
 
 fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> {
@@ -9417,7 +9484,7 @@ fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> 
         let parameter = ((-c) / b).map_err(GeometryError::Numeric)?;
         return Ok(QuadraticRoots::Isolated(vec![(
             parameter,
-            IntersectionMultiplicity::Simple,
+            CurveSurfaceContactKind::Simple,
         )]));
     }
     let discriminant = &b * &b - Real::from(4) * &a * &c;
@@ -9431,7 +9498,7 @@ fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> 
             let parameter = ((-b) / (Real::from(2) * a)).map_err(GeometryError::Numeric)?;
             Ok(QuadraticRoots::Isolated(vec![(
                 parameter,
-                IntersectionMultiplicity::Tangent,
+                CurveSurfaceContactKind::Repeated,
             )]))
         }
         Ordering::Greater => {
@@ -9440,116 +9507,10 @@ fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> 
             let first = ((-&b - &root) / &denominator).map_err(GeometryError::Numeric)?;
             let second = ((-&b + root) / denominator).map_err(GeometryError::Numeric)?;
             Ok(QuadraticRoots::Isolated(vec![
-                (first, IntersectionMultiplicity::Simple),
-                (second, IntersectionMultiplicity::Simple),
+                (first, CurveSurfaceContactKind::Simple),
+                (second, CurveSurfaceContactKind::Simple),
             ]))
         }
-    }
-}
-
-fn intersect_rational_bezier_plane(
-    curve: &Curve3,
-    bezier: &RationalBezier3,
-    plane: &PlaneSurface,
-) -> GeometryResult<CurveSurfaceIntersection> {
-    let normal = plane.u.cross(&plane.v);
-    let coefficients = bezier
-        .control_points
-        .iter()
-        .zip(&bezier.weights)
-        .map(|(point, weight)| weight * normal.dot(&(point - &plane.origin)))
-        .collect::<Vec<_>>();
-    let roots = match coefficients.as_slice() {
-        [start, end] => quadratic_roots(Real::zero(), end - start, start.clone())?,
-        [start, middle, end] => quadratic_roots(
-            start - Real::from(2) * middle + end,
-            Real::from(2) * (middle - start),
-            start.clone(),
-        )?,
-        _ => {
-            // An identically zero Bernstein numerator proves complete plane
-            // containment at every degree. Root enumeration is unnecessary;
-            // positive weights already prove that the denominator never vanishes.
-            // Nonzero higher-degree equations still need their own root contract.
-            for coefficient in &coefficients {
-                if decided_order(compare_reals(
-                    coefficient,
-                    &Real::zero(),
-                    crate::STRICT_PREDICATES,
-                ))? != Ordering::Equal
-                {
-                    return Err(GeometryError::UnsupportedIntersection);
-                }
-            }
-            QuadraticRoots::All
-        }
-    };
-    match roots {
-        QuadraticRoots::None => Ok(CurveSurfaceIntersection::None),
-        QuadraticRoots::All => Ok(CurveSurfaceIntersection::Contained),
-        QuadraticRoots::Isolated(roots) => isolated_line_parameters(curve, roots),
-    }
-}
-
-fn intersect_nurbs_plane(
-    nurbs: &NurbsCurve3,
-    plane: &PlaneSurface,
-) -> GeometryResult<CurveSurfaceIntersection> {
-    let segments = decompose_nurbs_into_bezier_segments(nurbs)?;
-    let segment_count = segments.len();
-    let mut points: Vec<CurveSurfacePoint> = Vec::new();
-    let mut contained_count = 0_usize;
-    for (segment, domain) in segments {
-        let CurveGeometry3::RationalBezier(bezier) = &segment.data.geometry else {
-            unreachable!("NURBS decomposition produces rational Bézier segments");
-        };
-        match intersect_rational_bezier_plane(&segment, bezier, plane)? {
-            CurveSurfaceIntersection::None => {}
-            CurveSurfaceIntersection::Points(local_points) => {
-                let span = domain.end() - domain.start();
-                for local in local_points {
-                    let parameter = domain.start() + &span * &local.parameter;
-                    let mut duplicate = None;
-                    for (index, existing) in points.iter().enumerate() {
-                        if decided_order(compare_reals(
-                            &existing.parameter,
-                            &parameter,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Equal
-                        {
-                            duplicate = Some(index);
-                            break;
-                        }
-                    }
-                    if let Some(index) = duplicate {
-                        if local.multiplicity == IntersectionMultiplicity::Tangent {
-                            points[index].multiplicity = IntersectionMultiplicity::Tangent;
-                        }
-                    } else {
-                        points.push(CurveSurfacePoint {
-                            parameter,
-                            point: local.point,
-                            multiplicity: local.multiplicity,
-                        });
-                    }
-                }
-            }
-            CurveSurfaceIntersection::Contained => contained_count += 1,
-            CurveSurfaceIntersection::Overlap(_) => {
-                unreachable!("rational Bézier/plane dispatch returns contained spans")
-            }
-        }
-    }
-    if contained_count == segment_count {
-        return Ok(CurveSurfaceIntersection::Contained);
-    }
-    if contained_count != 0 {
-        return Err(GeometryError::UnsupportedIntersection);
-    }
-    if points.is_empty() {
-        Ok(CurveSurfaceIntersection::None)
-    } else {
-        Ok(CurveSurfaceIntersection::Points(points))
     }
 }
 
@@ -9580,7 +9541,7 @@ fn intersect_line_cone(
         QuadraticRoots::None => Ok(CurveSurfaceIntersection::None),
         QuadraticRoots::Isolated(roots) => {
             let mut upper_roots = Vec::new();
-            for (parameter, multiplicity) in roots {
+            for (parameter, kind) in roots {
                 let axial = &axial_offset + &parameter * &axial_direction;
                 if decided_order(compare_reals(
                     &axial,
@@ -9588,7 +9549,7 @@ fn intersect_line_cone(
                     crate::STRICT_PREDICATES,
                 ))? != Ordering::Less
                 {
-                    upper_roots.push((parameter, multiplicity));
+                    upper_roots.push((parameter, kind));
                 }
             }
             isolated_line_parameters(curve, upper_roots)
@@ -9616,7 +9577,7 @@ fn intersect_line_cone(
             if start_order == Ordering::Equal || end_order == Ordering::Equal {
                 return isolated_line_parameters(
                     curve,
-                    [(boundary, IntersectionMultiplicity::Simple)],
+                    [(boundary, CurveSurfaceContactKind::Boundary)],
                 );
             }
             let domain = if start_order == Ordering::Greater {
@@ -9624,7 +9585,7 @@ fn intersect_line_cone(
             } else {
                 ParameterDomain::new(boundary, curve.domain().end().clone())?
             };
-            Ok(CurveSurfaceIntersection::Overlap(domain))
+            Ok(CurveSurfaceIntersection::Overlap(domain.into()))
         }
     }
 }
@@ -9647,15 +9608,15 @@ fn quadratic_line_intersection(
 
 fn isolated_line_parameters(
     curve: &Curve3,
-    parameters: impl IntoIterator<Item = (Real, IntersectionMultiplicity)>,
+    parameters: impl IntoIterator<Item = (Real, CurveSurfaceContactKind)>,
 ) -> GeometryResult<CurveSurfaceIntersection> {
     let mut points = Vec::new();
-    for (parameter, multiplicity) in parameters {
+    for (parameter, kind) in parameters {
         if curve.domain().contains(&parameter)? {
             points.push(CurveSurfacePoint {
-                point: curve.evaluate_real(&parameter)?,
-                parameter,
-                multiplicity,
+                point: curve.evaluate_real(&parameter)?.into(),
+                parameter: parameter.into(),
+                kind,
             });
         }
     }
@@ -15132,12 +15093,16 @@ mod tests {
                 assert_eq!(points.len(), 1);
                 let intersection = &points[0];
                 assert_eq!(
-                    compare_reals(&intersection.parameter, &q(1, 2), crate::STRICT_PREDICATES)
-                        .value(),
+                    compare_reals(
+                        intersection.parameter.try_real().unwrap(),
+                        &q(1, 2),
+                        crate::STRICT_PREDICATES
+                    )
+                    .value(),
                     Some(Ordering::Equal)
                 );
-                assert_points_equal(&intersection.point, &p(2, 3, 0));
-                assert_eq!(intersection.multiplicity, IntersectionMultiplicity::Simple);
+                assert_points_equal(intersection.point.try_coordinates().unwrap(), &p(2, 3, 0));
+                assert_eq!(intersection.kind, CurveSurfaceContactKind::Simple);
             }
             other => panic!("expected point intersection, got {other:?}"),
         }
@@ -15175,7 +15140,7 @@ mod tests {
         assert_eq!(points.len(), 2);
         assert_eq!(
             compare_reals(
-                &points[0].parameter,
+                points[0].parameter.try_real().unwrap(),
                 &(Real::pi() / r(2)).unwrap(),
                 crate::STRICT_PREDICATES
             )
@@ -15184,7 +15149,7 @@ mod tests {
         );
         assert_eq!(
             compare_reals(
-                &points[1].parameter,
+                points[1].parameter.try_real().unwrap(),
                 &(r(3) * Real::pi() / r(2)).unwrap(),
                 crate::STRICT_PREDICATES
             )
@@ -15194,7 +15159,7 @@ mod tests {
         assert!(
             points
                 .iter()
-                .all(|point| point.multiplicity == IntersectionMultiplicity::Simple)
+                .all(|point| point.kind == CurveSurfaceContactKind::Simple)
         );
 
         let tangent = Surface::plane(p(2, 0, 0), Vector3::y(), Vector3::z()).unwrap();
@@ -15205,7 +15170,7 @@ mod tests {
         assert_eq!(points.len(), 2);
         assert_eq!(
             compare_reals(
-                &points[0].parameter,
+                points[0].parameter.try_real().unwrap(),
                 &Real::zero(),
                 crate::STRICT_PREDICATES
             )
@@ -15213,13 +15178,18 @@ mod tests {
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&points[1].parameter, &Real::tau(), crate::STRICT_PREDICATES).value(),
+            compare_reals(
+                points[1].parameter.try_real().unwrap(),
+                &Real::tau(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert!(
             points
                 .iter()
-                .all(|point| point.multiplicity == IntersectionMultiplicity::Tangent)
+                .all(|point| point.kind == CurveSurfaceContactKind::Repeated)
         );
 
         let carrier_plane = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
@@ -15251,7 +15221,7 @@ mod tests {
         assert_eq!(points.len(), 1);
         assert_eq!(
             compare_reals(
-                &points[0].parameter,
+                points[0].parameter.try_real().unwrap(),
                 &(Real::pi() / r(2)).unwrap(),
                 crate::STRICT_PREDICATES
             )
@@ -15261,7 +15231,7 @@ mod tests {
     }
 
     #[test]
-    fn circle_sphere_intersection_retains_exact_arc_parameters_and_multiplicity() {
+    fn circle_sphere_intersection_retains_exact_arc_parameters_and_contact_kind() {
         let sphere = Surface::sphere(
             Point3::origin(),
             Vector3::x(),
@@ -15284,12 +15254,12 @@ mod tests {
             panic!("offset circle must cross the sphere twice");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(3, 4, 0));
-        assert_points_equal(&points[1].point, &p(3, -4, 0));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(3, 4, 0));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(3, -4, 0));
         assert!(
             points
                 .iter()
-                .all(|point| point.multiplicity == IntersectionMultiplicity::Simple)
+                .all(|point| point.kind == CurveSurfaceContactKind::Simple)
         );
 
         let tangent = Curve3::circle_arc(
@@ -15306,8 +15276,8 @@ mod tests {
             panic!("internally tangent circle must retain one point");
         };
         assert_eq!(points.len(), 1);
-        assert_points_equal(&points[0].point, &p(5, 0, 0));
-        assert_eq!(points[0].multiplicity, IntersectionMultiplicity::Tangent);
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(5, 0, 0));
+        assert_eq!(points[0].kind, CurveSurfaceContactKind::Repeated);
 
         let contained = Curve3::circle_arc(
             Point3::origin(),
@@ -15361,8 +15331,8 @@ mod tests {
             panic!("transverse offset circle must cross the cylinder twice");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(3, 4, 2));
-        assert_points_equal(&points[1].point, &p(3, -4, 2));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(3, 4, 2));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(3, -4, 2));
 
         let tangent = Curve3::circle_arc(
             p(4, 0, -3),
@@ -15378,8 +15348,8 @@ mod tests {
             panic!("transverse tangent circle must retain one point");
         };
         assert_eq!(points.len(), 1);
-        assert_eq!(points[0].multiplicity, IntersectionMultiplicity::Tangent);
-        assert_points_equal(&points[0].point, &p(5, 0, -3));
+        assert_eq!(points[0].kind, CurveSurfaceContactKind::Repeated);
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(5, 0, -3));
 
         let contained = Curve3::circle_arc(
             p(0, 0, 7),
@@ -15434,8 +15404,8 @@ mod tests {
             panic!("upper transverse circle must meet the cone twice");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(3, 4, 5));
-        assert_points_equal(&points[1].point, &p(3, -4, 5));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(3, 4, 5));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(3, -4, 5));
 
         let contained = Curve3::circle_arc(
             p(0, 0, 5),
@@ -15491,12 +15461,12 @@ mod tests {
             panic!("center-plane circle must touch both torus radial sections");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(4, 0, 0));
-        assert_points_equal(&points[1].point, &p(2, 0, 0));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(4, 0, 0));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(2, 0, 0));
         assert!(
             points
                 .iter()
-                .all(|point| point.multiplicity == IntersectionMultiplicity::Tangent)
+                .all(|point| point.kind == CurveSurfaceContactKind::Repeated)
         );
 
         let outer = Curve3::circle_arc(
@@ -15528,7 +15498,7 @@ mod tests {
     }
 
     #[test]
-    fn line_sphere_and_cylinder_intersections_retain_multiplicity() {
+    fn line_sphere_and_cylinder_intersections_retain_contact_kind() {
         let sphere = Surface::sphere(
             Point3::origin(),
             Vector3::x(),
@@ -15543,12 +15513,12 @@ mod tests {
             panic!("expected two sphere intersections");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(-2, 0, 0));
-        assert_points_equal(&points[1].point, &p(2, 0, 0));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(-2, 0, 0));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(2, 0, 0));
         assert!(
             points
                 .iter()
-                .all(|point| point.multiplicity == IntersectionMultiplicity::Simple)
+                .all(|point| point.kind == CurveSurfaceContactKind::Simple)
         );
         let tangent = Curve3::line(p(-3, 2, 0), p(3, 2, 0)).unwrap();
         let CurveSurfaceIntersection::Points(points) = sphere.intersect_curve(&tangent).unwrap()
@@ -15556,8 +15526,8 @@ mod tests {
             panic!("expected tangent sphere intersection");
         };
         assert_eq!(points.len(), 1);
-        assert_eq!(points[0].multiplicity, IntersectionMultiplicity::Tangent);
-        assert_points_equal(&points[0].point, &p(0, 2, 0));
+        assert_eq!(points[0].kind, CurveSurfaceContactKind::Repeated);
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(0, 2, 0));
 
         let cylinder = Surface::cylinder(
             Point3::origin(),
@@ -15591,8 +15561,8 @@ mod tests {
             panic!("line through the upper cone must have two intersections");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(-1, 0, 1));
-        assert_points_equal(&points[1].point, &p(1, 0, 1));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(-1, 0, 1));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(1, 0, 1));
 
         let lower = Curve3::line(p(-2, 0, -1), p(2, 0, -1)).unwrap();
         assert!(matches!(
@@ -15605,11 +15575,21 @@ mod tests {
             panic!("generator crossing the apex must retain its upper interval");
         };
         assert_eq!(
-            compare_reals(domain.start(), &q(1, 2), crate::STRICT_PREDICATES).value(),
+            compare_reals(
+                domain.start().try_real().unwrap(),
+                &q(1, 2),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(domain.end(), &r(1), crate::STRICT_PREDICATES).value(),
+            compare_reals(
+                domain.end().try_real().unwrap(),
+                &r(1),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let contained = Curve3::line(p(1, 0, 1), p(2, 0, 2)).unwrap();

@@ -1151,3 +1151,12 @@ The [admission](docs/evidence/2026-10-18-selected-planar-images/README.md) exten
 Three alternating pairs preserve 51 unchanged preceding consumer groups in 36 processes; one migrated control is recorded separately without a time ratio, with original assertions, iterations and outcomes. Time ratios range 0.768883–1.338501; 1 of 51 groups exceed the 10% review marker and 7 increase allocation calls or requested bytes. Fourteen new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
 [All raw costs](docs/evidence/2026-10-18-selected-planar-images/consumer-costs.json), [absolute new costs](docs/evidence/2026-10-18-selected-planar-images/new-costs.json) and [resource observations](docs/evidence/2026-10-18-selected-planar-images/resource-review.json) retain adverse results. The migrated mixed control has no matched ratio; earlier adverse obligations remain.
+
+
+## Retained finite curve/plane contacts (2026-10-18)
+
+The [admission](docs/evidence/2026-10-18-retained-plane-contacts/README.md) extends exact contacts, source-bound parameter/point queries and supported split/replay/solid continuation. It is a capability extension and public API migration.
+
+Three alternating pairs per cohort cover 64 unchanged preceding consumer groups in 42 processes, retaining their full assertions, iterations and outcomes. Two migrated controls are recorded separately without time ratios. Time ratios range 0.976042–1.262197; 1 of 64 groups exceed the 10% review marker and 17 increase allocation calls or requested bytes. Fourteen new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
+
+[All raw costs](docs/evidence/2026-10-18-retained-plane-contacts/consumer-costs.json), [absolute new costs](docs/evidence/2026-10-18-retained-plane-contacts/new-costs.json) and [resource observations](docs/evidence/2026-10-18-retained-plane-contacts/resource-review.json) retain adverse results. The two migrated groups have no matched ratios; earlier adverse obligations remain.

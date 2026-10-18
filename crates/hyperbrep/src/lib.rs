@@ -47,10 +47,10 @@ pub use context::OperationContext;
 pub use error::{GeometryError, GeometryResult, NonConicalGeneratorReason};
 pub use geometry::{
     Axis, CircularArcGeometry, ConeBranch, ConeGeometry, ConicalRevolution, ConicalRevolutionChart,
-    Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceIntersection,
-    CurveSurfacePoint, CylinderGeometry, GeometricPoint3, IntersectionMultiplicity,
-    MaterializedSurfacePcurve, NurbsCurveGeometry, ParameterDomain, Pcurve, PlanarCurveGeometry,
-    RationalBezierCurveGeometry, Surface, SurfaceBounds, SurfaceDomain,
+    Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceComponents,
+    CurveSurfaceContactKind, CurveSurfaceIntersection, CurveSurfacePoint, CylinderGeometry,
+    GeometricPoint3, MaterializedSurfacePcurve, NurbsCurveGeometry, ParameterDomain, Pcurve,
+    PlanarCurveGeometry, RationalBezierCurveGeometry, Surface, SurfaceBounds, SurfaceDomain,
     SurfaceIntersectionComponents, SurfaceIntersectionCurve, SurfaceIntersectionLine,
     SurfaceIntersectionOperand, SurfaceIntersectionParameterRay, SurfaceIntersectionPcurve,
     SurfaceIntersectionRay, SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePartials,

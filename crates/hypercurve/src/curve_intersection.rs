@@ -2895,6 +2895,32 @@ impl Curve2 {
     }
 }
 
+impl Curve2 {
+    /// Transports a promoted span's local parameter to this curve's authored chart.
+    ///
+    /// Use the span index and local parameters returned by this curve's
+    /// intersection overlaps or parameter components. Selected authorities are
+    /// retained through the owning affine chart, including reversed restrictions
+    /// and nonunit NURBS spans. This is a chart conversion, not an incidence or
+    /// membership certificate. An invalid span index returns a typed error.
+    pub fn parameter_from_span(
+        &self,
+        span_index: usize,
+        local_parameter: &CurveParameter2,
+    ) -> ExactCurveResult<CurveParameter2> {
+        let policy = crate::policy::principal_context();
+        let spans = self.source_spans(&policy, CurveOperation2::Evaluation)?;
+        let span = spans.get(span_index).ok_or_else(|| {
+            ExactCurveError::invalid(
+                CurveOperation2::Evaluation,
+                self.family(),
+                CurveError::InvalidCurveParameter,
+            )
+        })?;
+        CurveLocation2::new(span_index, span.chart(), local_parameter.clone()).parameter()
+    }
+}
+
 impl CurveLocation2 {
     pub(crate) fn new(
         span_index: usize,
