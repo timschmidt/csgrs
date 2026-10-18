@@ -18260,6 +18260,86 @@
     "full_plan_complete": false,
     "public_distribution_complete": false,
     "next": "Complete the explicit representation-change review and remaining Cargo/downstream/resource gates before applying the candidate to main. Preserve all earlier failures, unchanged original fixtures and limits."
+  },
+  "explicit_affine_cargo_qualification": {
+    "status": "Withhold the explicit affine subtraction candidate. Passing valid-input suites do not override the newly reproduced invalid-input failure masking.",
+    "parent_revision": "0179a1b68621d48e1b5087d64d64493e0c3819c5",
+    "review": "docs/evidence/2026-10-18-affine-cargo-withheld/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-affine-cargo-withheld/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-affine-cargo-withheld/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "packages": {
+        "all": {
+          "doctests_passed": 29,
+          "parent_ignored": 0,
+          "parent_tests_passed": 1047
+        },
+        "default": {
+          "doctests_passed": 24,
+          "parent_ignored": 0,
+          "parent_tests_passed": 940
+        }
+      },
+      "debug_units_passed": 823,
+      "strict_clippy_default_and_all_features_passed": true,
+      "docs_passed": true,
+      "format_passed": true
+    },
+    "downstream_packages": {
+      "csgrs": {
+        "doctests_passed": 1,
+        "parent_ignored": 0,
+        "parent_test_passed": 439,
+        "test_binaries": 48
+      },
+      "hypercircuit": {
+        "doctests_passed": 0,
+        "parent_ignored": 0,
+        "parent_test_passed": 348,
+        "test_binaries": 46
+      },
+      "hypercurve": {
+        "doctests_passed": 1,
+        "parent_ignored": 33,
+        "parent_test_passed": 2480,
+        "test_binaries": 53
+      },
+      "hyperdrc": {
+        "doctests_passed": 3,
+        "parent_ignored": 0,
+        "parent_test_passed": 1667,
+        "test_binaries": 10
+      },
+      "hyperlimit": {
+        "doctests_passed": 0,
+        "parent_ignored": 0,
+        "parent_test_passed": 365,
+        "test_binaries": 17
+      },
+      "hypermesh": {
+        "doctests_passed": 0,
+        "parent_ignored": 7,
+        "parent_test_passed": 250,
+        "test_binaries": 9
+      }
+    },
+    "downstream_parent_tests_passed": 5549,
+    "downstream_parent_ignored": 40,
+    "valid_serialization_value_checks": 144,
+    "new_failure_masking": true,
+    "failure_boundary": "Malformed serialized scalar representations can enter a downstream arithmetic pipeline.",
+    "source_changes_applied": false,
+    "runtime_admitted": false,
+    "semantic_acceptance_passed": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 24,
+    "all_adverse_results_retained": true,
+    "performance_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Repair typed validation at the owning scalar deserialization boundary, preserving valid representations and explicit resource/uncertainty contracts. Reproduce and qualify that repair before revisiting the affine candidate."
   }
 },
   "status_meanings": {
