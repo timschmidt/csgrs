@@ -1955,10 +1955,7 @@ pub(crate) fn extrude_curve_region(
         };
         let area =
             match crate::error::classified(component.signed_area()).map_err(GeometryError::from)? {
-                Classification::Decided(Some(area)) => area,
-                Classification::Decided(None) => {
-                    return Err(GeometryError::UnsupportedMeasurement.into());
-                }
+                Classification::Decided(area) => area,
                 Classification::Uncertain(reason) => {
                     return Err(BuildError::Geometry(
                         GeometryError::PlanarClassificationUnresolved(reason),
@@ -2106,7 +2103,7 @@ fn add_persistent_curve_region(
     loop_curves: &[Vec<Curve2>],
     z_min: Real,
     z_max: Real,
-    curve_region: Option<(CurveRegion2, Real)>,
+    curve_region: Option<(CurveRegion2, Option<Real>)>,
 ) -> Result<SolidId, ConstructionError> {
     let loop_offsets = loop_curves
         .iter()
@@ -2327,7 +2324,7 @@ fn add_persistent_curve_region(
         // Native conic intervals provide an equivalent metric expression that
         // also survives subdivision and replay without rebuilding their angles
         // from rational planar fragments. The top cap uses the region's XY frame.
-        let area = builder.conic_cap_area(top_face)?.unwrap_or(area);
+        let area = builder.conic_cap_area(top_face)?.or(area);
         builder.solid_with_curve_region_prism_certificate(shell, region, area, z_min, z_max)?
     } else {
         builder.solid(shell, Vec::new())?
@@ -3638,19 +3635,18 @@ fn required_curve_path_signed_area(
     path: &CurvePath2,
     unsupported: ConstructionError,
 ) -> Result<Real, ConstructionError> {
-    match crate::error::classified(
-        path.boundary_loop()
-            .map_err(GeometryError::from)?
-            .signed_area(),
-    )
-    .map_err(GeometryError::from)?
-    {
-        Classification::Decided(Some(area)) => Ok(area),
-        Classification::Decided(None) => Err(unsupported),
-        Classification::Uncertain(reason) => {
-            Err(BuildError::Geometry(GeometryError::PlanarClassificationUnresolved(reason)).into())
-        }
-    }
+    optional_curve_path_signed_area(path)?.ok_or(unsupported)
+}
+
+fn optional_curve_path_signed_area(path: &CurvePath2) -> Result<Option<Real>, ConstructionError> {
+    Ok(resolve_planar_classification(
+        crate::error::classified(
+            path.boundary_loop()
+                .map_err(GeometryError::from)?
+                .signed_area(),
+        )
+        .map_err(GeometryError::from)?,
+    )?)
 }
 
 fn normalize_planar_path(
@@ -3671,28 +3667,28 @@ fn normalize_planar_path(
     };
     let path = partition_periodic_curve_path(&image, ConstructionError::UnsupportedPlanarProfile)?;
     validate_simple_curve_path(&path, ConstructionError::UnsupportedPlanarProfile)?;
-    let signed_area =
-        required_curve_path_signed_area(&path, ConstructionError::UnsupportedPlanarProfile)?;
-    match compare_reals(&signed_area, &Real::zero(), crate::STRICT_PREDICATES) {
-        PredicateOutcome::Decided {
-            value: std::cmp::Ordering::Greater,
-            ..
-        } if counterclockwise => Ok(path),
-        PredicateOutcome::Decided {
-            value: std::cmp::Ordering::Less,
-            ..
-        } if !counterclockwise => Ok(path),
-        PredicateOutcome::Decided {
-            value: std::cmp::Ordering::Greater | std::cmp::Ordering::Less,
-            ..
-        } => path
+    let orientation = match optional_curve_path_signed_area(&path)? {
+        Some(area) => decided_construction_order(compare_reals(
+            &area,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))?,
+        None => match path
+            .simple_loop_orientation()
+            .map_err(GeometryError::from)?
+        {
+            hypercurve::CurveLoopOrientation2::Counterclockwise => std::cmp::Ordering::Greater,
+            hypercurve::CurveLoopOrientation2::Clockwise => std::cmp::Ordering::Less,
+        },
+    };
+    match orientation {
+        std::cmp::Ordering::Greater if counterclockwise => Ok(path),
+        std::cmp::Ordering::Less if !counterclockwise => Ok(path),
+        std::cmp::Ordering::Greater | std::cmp::Ordering::Less => path
             .reversed()
             .map_err(GeometryError::from)
             .map_err(Into::into),
-        PredicateOutcome::Decided { .. } => Err(ConstructionError::DegenerateProfile),
-        PredicateOutcome::Unknown { needed, stage } => {
-            Err(BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into())
-        }
+        std::cmp::Ordering::Equal => Err(ConstructionError::DegenerateProfile),
     }
 }
 

@@ -131,6 +131,12 @@ Point2
 
 A `Contour2` is a closed, connected line/arc boundary with a fill rule.
 `CurvePath2` generalizes connected paths to every supported curve family.
+`CurvePath2::simple_loop_orientation` proves clockwise/counterclockwise traversal
+from complete arrangement topology and winding without requiring an area
+integral. Its domain is one unpinched closed chain of certified injective spans,
+with no overlaps or internal splits. Open paths are invalid; an unavailable
+simplicity or winding proof is a typed blocker. A single periodic carrier may
+need subdivision. Endpoint chords never supply this proof.
 `CurveRegion2` stores filled topology as oriented exact boundary curves and
 is the main input to mixed-family region operations. Curve operations emit
 boundary provenance for inspection; authored input supplies geometry and fill

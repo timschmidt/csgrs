@@ -207,11 +207,11 @@ enum CertifiedPrismProfile {
         holes: Vec<CurvePath2>,
         // Profile-coordinate area derived from admitted cap geometry on every
         // validation, including archive replay; never trusted archive data.
-        area: Real,
+        area: Option<Real>,
     },
     CurveRegion {
         region: CurveRegion2,
-        area: Real,
+        area: Option<Real>,
     },
 }
 

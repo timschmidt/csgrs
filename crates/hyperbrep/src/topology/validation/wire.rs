@@ -31,7 +31,13 @@ impl ArenaModelBuilder {
                         &Real::zero(),
                         crate::STRICT_PREDICATES,
                     ))?,
-                    None => self.tensor_graph_wire_orientation(wire, surface)?,
+                    None => match self.tensor_graph_wire_orientation(wire, surface) {
+                        Ok(order) => order,
+                        Err(BuildError::Geometry(GeometryError::UnsupportedPcurveContour)) => {
+                            curve_path_orientation(&path)?
+                        }
+                        Err(error) => return Err(error),
+                    },
                 }
             }
             Err(error) => return Err(error),

@@ -695,7 +695,9 @@ impl ArenaModel {
             if let Some(prism) = &self.data.certified_prisms[id.index()] {
                 let area = match &prism.profile {
                     CertifiedPrismProfile::Paths { area, .. }
-                    | CertifiedPrismProfile::CurveRegion { area, .. } => area.clone(),
+                    | CertifiedPrismProfile::CurveRegion { area, .. } => {
+                        area.clone().ok_or(GeometryError::UnsupportedMeasurement)?
+                    }
                 };
                 let jacobian = prism.u.dot(&prism.v.cross(&prism.extrusion)).abs();
                 return Ok(area * jacobian * (&prism.parameter_max - &prism.parameter_min));

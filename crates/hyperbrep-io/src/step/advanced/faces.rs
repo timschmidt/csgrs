@@ -49,9 +49,8 @@ impl Builder {
             let loop_id = args.reference()?;
             let bound_forward = args.boolean()?;
             args.finish()?;
-            let (wire, area) =
+            let (wire, sign) =
                 self.edge_loop(resolver, bound_id, loop_id, bound_forward, &surface, scale)?;
-            let sign = order(bound_site, &area, &Real::zero())?;
             if sign == Ordering::Equal {
                 return Err(bound_site.invalid("zero-area parameter-space bound"));
             }
@@ -97,7 +96,7 @@ impl Builder {
         forward: bool,
         surface: &FaceSurface,
         scale: &Real,
-    ) -> Result<(WireKey, Real), Error> {
+    ) -> Result<(WireKey, Ordering), Error> {
         let mut args = resolver.simple(id, "EDGE_LOOP")?;
         let site = args.site;
         resolver.text(args.next()?, site)?;
@@ -230,17 +229,33 @@ impl Builder {
             .model
             .wire(&uses)
             .map_err(|e| site.error(ErrorKind::Build(e)))?;
-        let area = if let Some(curves) = curves {
-            hypercurve::CurvePath2::try_new(curves)
-                .and_then(|path| path.boundary_loop()?.signed_area())
-                .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?
+        let sign = if let Some(curves) = curves {
+            let path = hypercurve::CurvePath2::try_new(curves)
+                .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?;
+            let area = path
+                .boundary_loop()
+                .and_then(|boundary| boundary.signed_area())
+                .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?;
+            match area {
+                Some(area) => order(site, &area, &Real::zero())?,
+                // Hypercurve owns the complete simplicity and winding proof.
+                // A bound does not require a represented area integral.
+                None => match path
+                    .simple_loop_orientation()
+                    .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?
+                {
+                    hypercurve::CurveLoopOrientation2::Counterclockwise => Ordering::Greater,
+                    hypercurve::CurveLoopOrientation2::Clockwise => Ordering::Less,
+                },
+            }
         } else {
-            Contour2::try_new(segments)
+            let area = Contour2::try_new(segments)
                 .and_then(|contour| contour.signed_area())
                 .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?
-        }
-        .ok_or_else(|| site.error(ErrorKind::Unsupported("bound signed area")))?;
-        Ok((wire, area))
+                .ok_or_else(|| site.error(ErrorKind::Unsupported("bound signed area")))?;
+            order(site, &area, &Real::zero())?
+        };
+        Ok((wire, sign))
     }
 }
 

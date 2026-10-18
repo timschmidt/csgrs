@@ -2079,12 +2079,10 @@ fn stitch_graph_faces(
         component.sort_unstable();
         let shell = builder.shell(component).map_err(ConstructionError::from)?;
         let is_outer = if regularize_to_planar {
-            match exact_order(
-                &builder
-                    .signed_shell_six_volume(shell)
-                    .map_err(ConstructionError::from)?,
-                &Real::zero(),
-            )? {
+            match builder
+                .shell_orientation(shell)
+                .map_err(ConstructionError::from)?
+            {
                 Ordering::Greater => true,
                 Ordering::Less => false,
                 Ordering::Equal => source_outer_after_reversal

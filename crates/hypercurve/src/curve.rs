@@ -461,6 +461,15 @@ pub struct CurvePath2 {
     data: Arc<CurvePathData2>,
 }
 
+/// Orientation of a certified simple closed planar path.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveLoopOrientation2 {
+    /// The bounded interior lies on the traversal's left.
+    Counterclockwise,
+    /// The bounded interior lies on the traversal's right.
+    Clockwise,
+}
+
 #[derive(Debug)]
 struct CurvePathData2 {
     curves: Vec<Curve2>,
@@ -2226,6 +2235,22 @@ impl PartialEq for Curve2 {
 }
 
 impl CurvePath2 {
+    /// Proves the orientation of a simple closed path without requiring an area integral.
+    ///
+    /// Complete carrier-pair replay must establish one unpinched closed chain
+    /// of injective spans without overlaps or internal splits. The existing
+    /// arrangement winding predicates then determine its bounded interior.
+    /// An open path is invalid; an unavailable simplicity or winding proof is
+    /// a typed blocker, never an orientation inferred from endpoint chords.
+    /// In particular, a single periodic carrier may require subdivision before
+    /// its individual spans have the required injectivity certificate.
+    pub fn simple_loop_orientation(&self) -> crate::ExactCurveResult<CurveLoopOrientation2> {
+        resolve_certified_operation(&crate::policy::principal_context(), |attempt| {
+            crate::curve_region_boolean::simple_loop_orientation(self, attempt)
+        })
+        .map(CurveOutcome::into_value)
+    }
+
     fn from_connected_curves(
         curves: Vec<Curve2>,
         connectivity_policy: Option<CurveContext>,

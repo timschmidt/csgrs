@@ -1641,6 +1641,50 @@ impl CurveRegion2 {
     }
 }
 
+/// Reuses the arrangement's topology and winding authority for path orientation.
+pub(crate) fn simple_loop_orientation(
+    path: &crate::CurvePath2,
+    policy: &CurveContext,
+) -> ExactCurveResult<crate::CurveLoopOrientation2> {
+    let raw = CurveRegion2::try_from_boundary_paths_raw(std::slice::from_ref(path), policy)?;
+    let context = CurveRegionBooleanContext::try_new_unary(&raw, policy)?;
+    let topology = context.build_split_topology()?;
+    // Unary regularization can remove a symmetric retracing chain. Such a
+    // removal is valid set normalization, but does not prove the authored path
+    // itself is simple. Preserve every original boundary span for this query.
+    if context.data.carriers.len() != raw.boundary_loops()[0].len()
+        || !context.has_certified_simple_single_loop_topology(&topology)
+    {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Classification,
+            path.curves()[0].family(),
+            UncertaintyReason::Unsupported,
+        ));
+    }
+    let mut last_reason = UncertaintyReason::Unsupported;
+    for (index, splits) in topology.split_fragments.iter().enumerate() {
+        match context.regularized_fragment_geometric_decision(index, &splits[0].fragment, true) {
+            Ok(decision) => {
+                return match (
+                    decision.side_windings[0].as_slice(),
+                    decision.side_windings[1].as_slice(),
+                ) {
+                    ([1], [0]) => Ok(crate::CurveLoopOrientation2::Counterclockwise),
+                    ([0], [-1]) => Ok(crate::CurveLoopOrientation2::Clockwise),
+                    _ => Err(context.blocked(index, UncertaintyReason::Boundary)),
+                };
+            }
+            Err(ExactCurveError::Blocked(blocker)) => last_reason = blocker.reason(),
+            Err(error) => return Err(error),
+        }
+    }
+    Err(ExactCurveError::blocked(
+        CurveOperation2::Classification,
+        path.curves()[0].family(),
+        last_reason,
+    ))
+}
+
 /// Classifies retained multi-field point evidence against one certified simple
 /// loop without materializing its coordinates.
 ///

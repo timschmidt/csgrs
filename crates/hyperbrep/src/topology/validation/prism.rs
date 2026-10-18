@@ -67,16 +67,16 @@ impl ArenaModelBuilder {
         shell: ShellId,
     ) -> Result<Option<CertifiedPrismShell>, BuildError> {
         Ok(self
-            .certified_prism_shell_and_volume(shell)?
+            .certified_prism_shell_and_orientation(shell)?
             .map(|(prism, _)| prism))
     }
 
-    /// The signed volume keeps the cap orientation until shell admission has
-    /// checked it. Taking an absolute volume here would admit inward shells.
-    pub(in crate::topology) fn certified_prism_shell_and_volume(
+    /// Cap orientation and transverse translation establish shell orientation.
+    /// A closed-form volume is optional; an inward shell must still be rejected.
+    pub(in crate::topology) fn certified_prism_shell_and_orientation(
         &self,
         shell: ShellId,
-    ) -> Result<Option<(CertifiedPrismShell, Real)>, BuildError> {
+    ) -> Result<Option<(CertifiedPrismShell, std::cmp::Ordering)>, BuildError> {
         if !self.certify_simple_prism_shell(shell)?
             && !self.certify_internally_partitioned_prism_shell(shell)?
             && !self.certify_curved_prism_shell(shell)?
@@ -137,7 +137,7 @@ impl ArenaModelBuilder {
                 }
                 let mut outer = None;
                 let mut holes = Vec::new();
-                let mut profile_area = Real::zero();
+                let mut profile_area = Some(Real::zero());
                 let mut projected_sources = HashMap::new();
                 for uses in first_boundary {
                     let curves = uses
@@ -206,32 +206,57 @@ impl ArenaModelBuilder {
                     let path = CurvePath2::try_new(wire_geometry::coalesce_restrictions(curves)?)
                         .map_err(GeometryError::from)?;
                     let area = match self.conic_cap_signed_area(&uses, &u, &v)? {
-                        Some(area) => area,
-                        None => curve_path_signed_area(&path)?,
+                        Some(area) => Some(area),
+                        None => resolve_planar_classification(
+                            crate::error::classified(
+                                path.boundary_loop()
+                                    .map_err(GeometryError::from)?
+                                    .signed_area(),
+                            )
+                            .map_err(GeometryError::from)?,
+                        )?,
                     };
-                    let positive = decided_model_order(compare_reals(
-                        &area,
-                        &Real::zero(),
-                        crate::STRICT_PREDICATES,
-                    ))? == std::cmp::Ordering::Greater;
+                    let order = match &area {
+                        Some(area) => decided_model_order(compare_reals(
+                            area,
+                            &Real::zero(),
+                            crate::STRICT_PREDICATES,
+                        ))?,
+                        None => curve_path_orientation(&path)?,
+                    };
+                    let positive = order == std::cmp::Ordering::Greater;
                     let is_outer = positive == (first_face.orientation == Orientation::Forward);
                     if is_outer {
                         if outer.replace(path).is_some() {
                             return Ok(None);
                         }
-                        profile_area += area.abs();
+                        profile_area = profile_area.zip(area).map(|(sum, area)| sum + area.abs());
                     } else {
                         holes.push(path);
-                        profile_area -= area.abs();
+                        profile_area = profile_area.zip(area).map(|(sum, area)| sum - area.abs());
                     }
                 }
                 let Some(outer) = outer else {
                     return Ok(None);
                 };
-                let signed_volume = &profile_area * determinant;
-                let signed_volume = match first_face.orientation {
-                    Orientation::Forward => -signed_volume,
-                    Orientation::Reversed => signed_volume,
+                // With no integral, prove positive material from exact nested
+                // simple loops. This also covers boundaries assembled from a
+                // group of coplanar cap faces, whose holes need a group proof.
+                if profile_area.is_none() && !prism_paths_have_positive_material(&outer, &holes)? {
+                    return Ok(None);
+                }
+                let oriented = match &profile_area {
+                    Some(area) => area * &determinant,
+                    None => determinant,
+                };
+                let order = decided_model_order(compare_reals(
+                    &oriented,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))?;
+                let orientation = match first_face.orientation {
+                    Orientation::Forward => order.reverse(),
+                    Orientation::Reversed => order,
                 };
                 return Ok(Some((
                     CertifiedPrismShell {
@@ -247,7 +272,7 @@ impl ArenaModelBuilder {
                         parameter_min: Real::zero(),
                         parameter_max: Real::one(),
                     },
-                    signed_volume,
+                    orientation,
                 )));
             }
         }
@@ -318,4 +343,43 @@ impl ArenaModelBuilder {
             .map_err(GeometryError::Numeric)
             .map_err(Into::into)
     }
+}
+
+/// A simple outer loop minus strictly contained, disjoint simple holes has
+/// positive area independently of whether its Green integral is represented.
+fn prism_paths_have_positive_material(
+    outer: &CurvePath2,
+    holes: &[CurvePath2],
+) -> Result<bool, BuildError> {
+    for (index, hole) in holes.iter().enumerate() {
+        if !outer
+            .intersect_path(hole)
+            .map_err(GeometryError::from)?
+            .is_disjoint()
+            || !classification_is_inside(
+                crate::error::classified(outer.classify_point(&hole.start()))
+                    .map_err(GeometryError::from)?,
+            )?
+        {
+            return Ok(false);
+        }
+        for other in &holes[..index] {
+            if !other
+                .intersect_path(hole)
+                .map_err(GeometryError::from)?
+                .is_disjoint()
+                || classification_is_inside(
+                    crate::error::classified(other.classify_point(&hole.start()))
+                        .map_err(GeometryError::from)?,
+                )?
+                || classification_is_inside(
+                    crate::error::classified(hole.classify_point(&other.start()))
+                        .map_err(GeometryError::from)?,
+                )?
+            {
+                return Ok(false);
+            }
+        }
+    }
+    Ok(true)
 }

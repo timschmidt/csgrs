@@ -110,6 +110,17 @@ Preserve all five unsupported original profile recipes and exact negative contro
 General selected-parameter integration, nonlinear parallel extrusion, spline
 surfaces, arbitrary pcurves and release delivery remain open.
 
+The [measurement admission increment](evidence/2026-10-18-measurement-admission/README.md)
+advances WP12 by separating absent represented integrals from native prism
+validity. Hypercurve owns simple-loop orientation from topology and winding;
+HyperBRep owns cap pairing, positive material, shell orientation and optional
+metrics; IO consumes those proofs. Degree-five rational profiles now continue
+through native replay, supported slab composition and exact STEP exchange while
+measurement queries remain explicitly unsupported. Preserve this distinction
+in further builders and importers. Do not require coordinate materialization or
+an elementary integral merely to admit valid topology. Fully deferred metrics,
+certified integration and retained non-native spatial carriers are still open.
+
 The retained diagonal STEP case also has a
 [schema and exact-coordinate feasibility review](evidence/2026-10-17-prism-admission-cost/future-step-research.md).
 Do not replace its irrational Cartesian vertices with points-on-curves inside

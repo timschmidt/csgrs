@@ -9431,7 +9431,23 @@ fn intersect_rational_bezier_plane(
             Real::from(2) * (middle - start),
             start.clone(),
         )?,
-        _ => return Err(GeometryError::UnsupportedIntersection),
+        _ => {
+            // An identically zero Bernstein numerator proves complete plane
+            // containment at every degree. Root enumeration is unnecessary;
+            // positive weights already prove that the denominator never vanishes.
+            // Nonzero higher-degree equations still need their own root contract.
+            for coefficient in &coefficients {
+                if decided_order(compare_reals(
+                    coefficient,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? != Ordering::Equal
+                {
+                    return Err(GeometryError::UnsupportedIntersection);
+                }
+            }
+            QuadraticRoots::All
+        }
     };
     match roots {
         QuadraticRoots::None => Ok(CurveSurfaceIntersection::None),

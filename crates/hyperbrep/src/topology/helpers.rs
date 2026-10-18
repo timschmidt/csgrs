@@ -2179,6 +2179,19 @@ pub(super) fn curve_path_signed_area(path: &CurvePath2) -> Result<Real, Geometry
     resolve_planar_classification(area)?.ok_or(GeometryError::UnsupportedMeasurement)
 }
 
+/// The path's complete planar topology and winding, not its endpoint polygon.
+pub(super) fn curve_path_orientation(
+    path: &CurvePath2,
+) -> Result<std::cmp::Ordering, GeometryError> {
+    match path
+        .simple_loop_orientation()
+        .map_err(GeometryError::from)?
+    {
+        hypercurve::CurveLoopOrientation2::Counterclockwise => Ok(std::cmp::Ordering::Greater),
+        hypercurve::CurveLoopOrientation2::Clockwise => Ok(std::cmp::Ordering::Less),
+    }
+}
+
 pub(super) fn decided_model_order(
     outcome: PredicateOutcome<std::cmp::Ordering>,
 ) -> Result<std::cmp::Ordering, GeometryError> {

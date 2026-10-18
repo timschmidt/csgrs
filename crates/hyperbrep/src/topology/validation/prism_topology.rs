@@ -651,7 +651,10 @@ impl ArenaModelBuilder {
         Ok(self.vertex_ref(vertex)?.represented_point()?.clone())
     }
 
-    pub(crate) fn signed_shell_six_volume(&self, shell: ShellId) -> Result<Real, BuildError> {
+    pub(crate) fn shell_orientation(
+        &self,
+        shell: ShellId,
+    ) -> Result<std::cmp::Ordering, BuildError> {
         let mut curved = false;
         'faces: for face_id in &self.shell_ref(shell)?.faces {
             for wire_id in self.face_ref(*face_id)?.boundary_wires() {
@@ -664,8 +667,10 @@ impl ArenaModelBuilder {
                 }
             }
         }
-        if curved && let Some((_, volume)) = self.certified_prism_shell_and_volume(shell)? {
-            return Ok(Real::from(6) * volume);
+        if curved
+            && let Some((_, orientation)) = self.certified_prism_shell_and_orientation(shell)?
+        {
+            return Ok(orientation);
         }
         let mut sum = Real::zero();
         for face_id in &self.shell_ref(shell)?.faces {
@@ -685,7 +690,8 @@ impl ArenaModelBuilder {
                 };
             }
         }
-        Ok(sum)
+        decided_model_order(compare_reals(&sum, &Real::zero(), crate::STRICT_PREDICATES))
+            .map_err(Into::into)
     }
 
     pub(crate) fn certify_void_shell_nesting(

@@ -1,5 +1,20 @@
 # HyperBREP Performance Contract
 
+## 2026-10-18: exact prism admission with optional measurements
+
+The [admission record](docs/evidence/2026-10-18-measurement-admission/README.md)
+qualifies native rational prisms, cold replay and STEP continuation without a
+represented area/volume integral. Existing represented measurements remain;
+unavailable queries return their typed error.
+
+All 192 original receipts and iterations remain across 22 corpora and 72 processes. 38 cases in seven affected corpora have three alternating pairs; 154 cases in fifteen corpora have one pair as preservation probes. Across all rows the median observed ratio is 0.999352, range 0.818567–1.236156; One row exceeds the 10% review marker; 10 rows increase allocation requests. The six preceding native and nine preceding spline groups have separate three-pair comparisons. Seven new complete groups have absolute costs from three processes, with no ratio against former failures. Every unfavorable observation remains. Shared-host observations and single pairs establish no general speedup or controlled-host timing admission. A fixed three-pair full-arc follow-up retains all twelve receipts; structural-fact replay then has ratio 0.983872, with the original 1.236156 single-pair observation retained separately. Neither campaign establishes a causal or significance claim.
+
+The [complete costs](docs/evidence/2026-10-18-measurement-admission/costs.md) and
+[resource review](docs/evidence/2026-10-18-measurement-admission/resource-review.md)
+retain all adverse rows, allocator requests, process RSS and binary sizes. Earlier
+cost regressions remain open. This feature establishes no new resource bound
+or release/pre-push qualification.
+
 ## 2026-10-18: exact spline exchange feature admission
 
 The [qualification](docs/evidence/2026-10-18-spline-exchange/README.md) completes exact profile interchange

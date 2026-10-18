@@ -216,15 +216,21 @@ The clean-break implementation currently provides:
   holes and disconnected solids;
 - exact `builder::{extrude_path, extrude_path_region, extrude_path_regions}`
   construction from native `CurvePath2` line, circle, rational Bézier, and
-  NURBS boundaries, including spline-bounded through-holes, exact volume, and
-  material classification;
+  NURBS boundaries, including spline-bounded through-holes and exact material
+  classification. A represented integral supplies exact volume; its absence
+  returns `UnsupportedMeasurement` from the query without preventing admission
+  of a prism whose topology and orientation are independently certified;
 - `builder::extrude_curve_region` consumes a regularized `CurveRegion2`
   directly, retaining its component proof and certified native line/arc view.
   Round stroke profiles keep native circular sides through exact area queries,
   STEP exchange and subsequent modeling. Material components, holes, islands
   and canonical empty geometry use the same native construction authority;
-  height ordering is checked even for empty input. General rational-profile
-  measurement restrictions remain explicit;
+  height ordering is checked even for empty input. Native positive rational
+  profiles with no represented area integral retain classification, affine
+  transforms, cold replay and supported same-profile slab cuts. See the
+  [measurement admission evidence](docs/evidence/2026-10-18-measurement-admission/README.md).
+  Errors while attempting an available integral still propagate; general
+  integration and non-native selected spatial boundaries remain open;
 - exact affine `builder::{sweep, sweep_region}` for polygonal linear-path
   sweeps in an explicit model-space profile frame, including through-holes
   and shear without a hidden moving-frame policy;

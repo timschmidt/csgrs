@@ -76,23 +76,10 @@ impl ArenaModelBuilder {
         &self,
         shell: ShellId,
     ) -> Result<(), BuildError> {
-        let signed_six_volume = self.signed_shell_six_volume(shell)?;
-        match compare_reals(&signed_six_volume, &Real::zero(), crate::STRICT_PREDICATES) {
-            PredicateOutcome::Decided {
-                value: std::cmp::Ordering::Greater,
-                ..
-            } => Ok(()),
-            PredicateOutcome::Decided {
-                value: std::cmp::Ordering::Equal,
-                ..
-            } => Err(BuildError::DegenerateShellVolume(shell)),
-            PredicateOutcome::Decided { .. } => Err(BuildError::InwardSolidShell(shell)),
-            PredicateOutcome::Unknown { needed, stage } => {
-                Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
-                    needed,
-                    stage,
-                }))
-            }
+        match self.shell_orientation(shell)? {
+            std::cmp::Ordering::Greater => Ok(()),
+            std::cmp::Ordering::Equal => Err(BuildError::DegenerateShellVolume(shell)),
+            std::cmp::Ordering::Less => Err(BuildError::InwardSolidShell(shell)),
         }
     }
 
@@ -100,23 +87,10 @@ impl ArenaModelBuilder {
         &self,
         shell: ShellId,
     ) -> Result<(), BuildError> {
-        let signed_six_volume = self.signed_shell_six_volume(shell)?;
-        match compare_reals(&signed_six_volume, &Real::zero(), crate::STRICT_PREDICATES) {
-            PredicateOutcome::Decided {
-                value: std::cmp::Ordering::Less,
-                ..
-            } => Ok(()),
-            PredicateOutcome::Decided {
-                value: std::cmp::Ordering::Equal,
-                ..
-            } => Err(BuildError::DegenerateShellVolume(shell)),
-            PredicateOutcome::Decided { .. } => Err(BuildError::OutwardVoidShell(shell)),
-            PredicateOutcome::Unknown { needed, stage } => {
-                Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
-                    needed,
-                    stage,
-                }))
-            }
+        match self.shell_orientation(shell)? {
+            std::cmp::Ordering::Less => Ok(()),
+            std::cmp::Ordering::Equal => Err(BuildError::DegenerateShellVolume(shell)),
+            std::cmp::Ordering::Greater => Err(BuildError::OutwardVoidShell(shell)),
         }
     }
 

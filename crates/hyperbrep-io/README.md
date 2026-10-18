@@ -33,6 +33,13 @@ ambiguous vertex preimages and other unsupported carriers fail explicitly.
 See the [spline mapping contract](docs/STEP_MAPPING.md#exact-splines-and-linear-extrusions)
 and [independent acceptance fixtures](tests/support/spline_exchange.rs).
 
+Native spline prism admission does not require a represented area integral.
+Hypercurve proves simple-loop orientation and HyperBRep proves complete plane
+incidence and shell orientation. The independent degree-five rational fixture
+completes import, native replay, export and slab cuts in both source directions
+and metre/mm units; volume remains an explicit `UnsupportedMeasurement`.
+See the [measurement admission evidence](../hyperbrep/docs/evidence/2026-10-18-measurement-admission/README.md).
+
 The syntax layer retains numeric lexemes without binary floating-point conversion, unknown
 entity records, complex instances, forward references, multiple DATA sections,
 empty aggregates, typed parameters and encoded string tokens. Every view is

@@ -618,7 +618,7 @@ impl ArenaModelBuilder {
         &mut self,
         outer: ShellId,
         region: CurveRegion2,
-        area: Real,
+        area: Option<Real>,
         z_min: Real,
         z_max: Real,
     ) -> Result<SolidId, BuildError> {

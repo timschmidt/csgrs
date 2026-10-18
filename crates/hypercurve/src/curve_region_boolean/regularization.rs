@@ -1587,16 +1587,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         topology: &CurveRegionSplitTopology,
     ) -> Option<bool> {
-        if self.data.first.boundary_loops().len() != 1
-            || self.data.carriers.is_empty()
-            || topology.split_fragments.len() != self.data.carriers.len()
-            || !topology.overlaps.is_empty()
-            || self.data.carriers.iter().any(|carrier| {
-                carrier.operand != CurveRegionBooleanOperand2::First
-                    || carrier.loop_index != 0
-                    || !carrier_has_certified_injective_image(carrier, &self.data.policy)
-            })
-        {
+        if !self.has_simple_single_loop_carriers(topology) {
             return None;
         }
         let Ok(Classification::Decided(roles)) = self.data.first.loop_roles_raw(&self.data.policy)
@@ -1614,7 +1605,36 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let [filled_side_is_left] = filled_sides else {
             return None;
         };
+        self.has_simple_single_loop_vertex_walk(topology)
+            .then_some(*filled_side_is_left)
+    }
 
+    /// Shared complete-pair topology proof; no area or orientation assumption.
+    pub(super) fn has_certified_simple_single_loop_topology(
+        &self,
+        topology: &CurveRegionSplitTopology,
+    ) -> bool {
+        self.has_simple_single_loop_carriers(topology)
+            && self.has_simple_single_loop_vertex_walk(topology)
+    }
+
+    fn has_simple_single_loop_carriers(&self, topology: &CurveRegionSplitTopology) -> bool {
+        if self.data.first.boundary_loops().len() != 1
+            || self.data.carriers.is_empty()
+            || topology.split_fragments.len() != self.data.carriers.len()
+            || !topology.overlaps.is_empty()
+            || self.data.carriers.iter().any(|carrier| {
+                carrier.operand != CurveRegionBooleanOperand2::First
+                    || carrier.loop_index != 0
+                    || !carrier_has_certified_injective_image(carrier, &self.data.policy)
+            })
+        {
+            return false;
+        }
+        true
+    }
+
+    fn has_simple_single_loop_vertex_walk(&self, topology: &CurveRegionSplitTopology) -> bool {
         // Complete pair replay and splitting have already run. A simple
         // authored loop therefore has one unsplit fragment per injective
         // carrier, each end joined only to the next authored start. Requiring
@@ -1623,32 +1643,32 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // or materializing an algebraic carrier coordinate.
         for (index, splits) in topology.split_fragments.iter().enumerate() {
             let [split] = splits.as_slice() else {
-                return None;
+                return false;
             };
-            let start = split.start_topology_vertex?;
-            let end = split.end_topology_vertex?;
+            let (Some(start), Some(end)) = (split.start_topology_vertex, split.end_topology_vertex)
+            else {
+                return false;
+            };
             if start == end {
-                return None;
+                return false;
             }
-            let next = topology
-                .split_fragments
-                .get((index + 1) % topology.split_fragments.len())?;
+            let next = &topology.split_fragments[(index + 1) % topology.split_fragments.len()];
             let [next] = next.as_slice() else {
-                return None;
+                return false;
             };
             if next.start_topology_vertex != Some(end) {
-                return None;
+                return false;
             }
             for previous in &topology.split_fragments[..index] {
                 let [previous] = previous.as_slice() else {
-                    return None;
+                    return false;
                 };
                 if previous.start_topology_vertex == Some(start) {
-                    return None;
+                    return false;
                 }
             }
         }
-        Some(*filled_side_is_left)
+        true
     }
 
     pub(super) fn regularized_fragment_geometric_decision(

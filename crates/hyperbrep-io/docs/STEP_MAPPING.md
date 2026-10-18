@@ -116,8 +116,10 @@ independently proves their spatial image on the actual face plane. Source maps
 refer to the immutable imported model, not to later edited revisions.
 
 An explicit `FACE_OUTER_BOUND` must have the material orientation. When only
-`FACE_BOUND` records exist, signed contour area and face sense identify exactly
-one finite material outer loop; all opposite loops become holes. This neither
+`FACE_BOUND` records exist, signed contour orientation and face sense identify
+exactly one finite material outer loop; all opposite loops become holes. A
+represented area supplies the sign; otherwise Hypercurve's complete simple-loop
+topology and winding proof supplies orientation. This neither
 reverses author intent nor chooses the first bound. Native validation then proves
 loop simplicity, hole containment, manifold incidence and the supported solid
 domain. General unbounded or disconnected planar face domains remain unsupported.
@@ -584,7 +586,10 @@ published as native certificates. Native validation proves the selected trim.
 This is not full EXPRESS/AP conformance checking of the untrimmed carrier.
 
 Planar caps use HyperBRep's complete plane-incidence proof and exact native
-pcurve projection. `SURFACE_OF_LINEAR_EXTRUSION` uses a spline generator and a
+pcurve projection. Identically zero Bernstein plane numerators certify
+containment at any admitted degree; general nonzero equations above degree two
+still require an unsupported root contract. This proof also covers every Bezier
+span of an admitted NURBS. `SURFACE_OF_LINEAR_EXTRUSION` uses a spline generator and a
 VECTOR. Both geometry and the vector convert by the length unit; the authored
 U and V parameters remain unchanged in `C(u) + vD`. The current inverse-chart
 domain requires a planar generator transverse to D, and the face boundaries
@@ -611,3 +616,13 @@ disconnected components, affine profiles, cold replay and repeated slab
 intersection/difference/restoration. General spline surfaces, arbitrary swept
 wall pcurves, ambiguous trims, general selected-root serialization and other
 STEP application-protocol constructs remain open.
+
+An independent degree-five positive rational fixture extends this domain to
+prisms whose area integral is unavailable. Reversal and metre/mm variants retain
+the source chart, exact near-boundary classification, cold native/STEP replay
+and supported repeated slab cuts. Native orientation and topology are proved
+independently of volume. Measurement queries return `UnsupportedMeasurement`;
+no numerical integration supplies native authority. Errors while attempting
+an available integral still propagate. The
+[acceptance evidence](../../hyperbrep/docs/evidence/2026-10-18-measurement-admission/README.md)
+records this finite extension and the remaining integration limits.

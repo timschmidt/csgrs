@@ -144,8 +144,8 @@ domain. General nonuniform analytic promotion remains open. See the
 | `extrude` / `extrude_region(s)` | Line prisms, holes, components | Yes | Yes | Yes | Affine / exact |
 | `extrude_with_voids` | Nested inward line-prism shells | Yes | Yes | Yes | Affine / exact |
 | `extrude_contour(_regions)` | Native line/arc caps and plane/cylinder sides | Yes | Yes | Yes | Family-preserving / exact |
-| `extrude_curve_region` | Normalized `CurveRegion2` material components and holes, retaining native line/arc images and the original component proof; empty material gives empty bodies | Exact for native line/normal-circle sides; persistent fallback families retain their measurement restrictions | Exact certified component area × height | Exact height interval and retained material-region test | Family-preserving / exact |
-| `extrude_path(_region(s))` | Native `CurvePath2` caps and one exact side per persistent path curve (native lines/circles specialize to planes/cylinders); through-holes share one genus shell | Exact for line, normal-circle, and certified transverse-monotone planar rational Bézier/NURBS sides; other variable-speed sides unsupported | Exact Hypercurve outer-minus-hole area × height | Exact height interval and `CurvePath2` material-region test | Family-preserving / exact |
+| `extrude_curve_region` | Normalized `CurveRegion2` material components and holes, retaining native line/arc images and the original component proof; empty material gives empty bodies | Exact for native line/normal-circle sides; persistent fallback families retain their measurement restrictions | Exact certified component area × height when represented; otherwise explicit unsupported query | Exact height interval and retained material-region test | Family-preserving / exact |
+| `extrude_path(_region(s))` | Native `CurvePath2` caps and one exact side per persistent path curve (native lines/circles specialize to planes/cylinders); through-holes share one genus shell | Exact for line, normal-circle, and certified transverse-monotone planar rational Bézier/NURBS sides; other variable-speed sides unsupported | Exact Hypercurve outer-minus-hole area × height when represented; otherwise explicit unsupported query | Exact height interval and `CurvePath2` material-region test | Family-preserving / exact |
 | `cylinder` | Circular caps and one cylinder carrier | Yes | `pi*r²*h` | Analytic | Certified similarity / exact |
 | `sphere` | One boundaryless closed-surface face | `4*pi*r²` | `4*pi*r³/3` | Analytic radial test | Certified similarity / exact |
 | `sphere_with_voids` | Complete outer and inward spherical faces | Yes | Exact sphere subtraction | Analytic radial test | Certified similarity / exact |
@@ -158,7 +158,7 @@ domain. General nonuniform analytic promotion remains open. See the
 | `sweep_curve` / `sweep_curve_region` | Fixed-frame polygon or through-hole region swept along an affine-progress rational Bézier path / native tensor translation sides and inner cap wires | Caps only | Exact material-region area × signed plane progress | Exact progress inversion and outer-minus-hole profile test | Affine / exact |
 | `sweep_moving_frame` / `sweep_moving_frame_region` | Explicit shared-weight rational Bézier origin/axis frame / native tensor sides and inner cap wires | Caps only | Exact material-region area × signed plane progress × integrated frame-area law | Exact moving inverse-frame profile test | Affine / exact |
 | `loft` | Two or more corresponding sections; each span positive homothetic or exact convex interpolation / planar or bilinear tensor sides with explicit C⁰ rings | Homothetic sides only | Exact piecewise-integrated quadratic section area | Exact span/section test | Affine / exact |
-| `planar_face` | One exact `CurvePath2` outer loop plus disjoint holes in an authored plane / open shell | Exact Hypercurve signed region area × plane-frame Jacobian | N/A | N/A | Affine / exact |
+| `planar_face` | One exact `CurvePath2` outer loop plus disjoint holes in an authored plane / open shell | Exact Hypercurve signed region area × plane-frame Jacobian when represented; otherwise explicit unsupported query | N/A | N/A | Affine / exact |
 | `extrusion_patch` | One finite rectangular exact extrusion face / open shell | Line, normal-circle, and transverse-monotone planar rational Bézier/NURBS profiles exact; other variable-speed profiles unsupported | N/A | N/A | Family-preserving / exact |
 | `revolution_patch` | One sub-period, completely axis-clear rectangular revolution face / open shell | Line, circular-arc, and certified monotone rational Bézier/NURBS line-image profiles exact; other curved spline profiles unsupported | N/A | N/A | Certified similarity / exact |
 | `rational_bezier_patch` | One trimmed exact tensor patch / open shell | Exact for a constant-weight affine Bernstein lattice under any validated trim, or the complete affine image under separable positive weights; general curved patches unsupported | N/A | N/A | Affine / exact |
@@ -183,6 +183,20 @@ and continue through the same supported global-z cuts/restoration. Native point
 location supports oblique transverse charts; it does not alone admit general
 oblique solid modeling. Whole-edge proofs remain mandatory. General spline
 surfaces, arbitrary wall pcurves and ambiguous or unrepresented trims are open.
+
+The [measurement admission increment](evidence/2026-10-18-measurement-admission/README.md)
+admits native rational prisms with no represented area integral. Complete planar
+topology and winding prove orientation; paired caps and transverse translation
+prove shell orientation. Positive material uses a simple outer loop and strictly
+contained, disjoint holes. Degree-five Bezier/NURBS profiles cover reversal,
+holes/components, affine images, split/replay, empty identities and repeated
+same-profile slab cuts. An independent STEP fixture covers both source directions
+and metre/mm units. The path extrusion front doors and `planar_face` consume the
+same orientation proof; explicit outside-hole inputs still fail. Volume and unavailable cap-area queries stay explicitly
+unsupported. Metric-evaluation errors still propagate; general certified
+integration, deferred metric computation and selected non-native spatial
+boundaries remain open. No stored trusted orientation or fabricated volume
+replaces cold validation.
 
 Full cones remain absent until the apex singularity has a topological
 representation rather than degenerate tolerance sewing.
