@@ -85,15 +85,17 @@ Native archives also retain procedural analytic-parallel pcurves: polynomial
 or homogeneous rational sources, signed distance, selected ranges and traversal.
 Replay rechecks source regularity and preserves subsequent planar subdivision
 and region queries. `Curve3::planar_image` retains a planar source in an injective
-affine plane frame, with a unit spatial chart mapped to represented source
-endpoints. Nonlinear parallel caps now feed planar faces, region/path extrusion,
+affine plane frame. Represented source intervals use a unit spatial chart;
+selected intervals keep their source chart and root identity. Nonlinear parallel caps now feed planar faces, region/path extrusion,
 native replay, edge splits, affine transforms and supported slab Booleans.
 Whole source/frame/map proofs validate edge images. Scalar queries reuse the
 planar evaluator. Selected spatial points retain their planar source and root;
 frame comparisons, bounds, transforms and native replay consume that evidence
 without independent coordinates. Selected edge splits preserve cold replay and
-supported slab Booleans. Selected endpoints of a newly authored spatial carrier,
-general surface intersections, metrics and STEP encodings remain typed. See the
+supported slab Booleans. Selected procedural profile domains now construct
+through retained vertices, straight axial translations and coordinate pcurve
+maps, with complete image proofs on cold replay. General surface intersections,
+metrics and STEP encodings retain typed frontiers. See the
 [planar lift admission](docs/evidence/2026-10-18-planar-curve-lift/README.md).
 
 Finite curve/plane queries retain `Parameter` and `GeometricPoint3` in
@@ -117,8 +119,12 @@ to spatial parameters remain explicit; general non-similarity projections remain
 
 ## Exactness contract
 
-- Authored coordinates, coefficients, domains, weights, knots, and transforms
-  use `Real`. Inverse curve queries return opaque `Parameter` values that can
+- Authored coordinates, coefficients, weights, knots, and transforms use
+  `Real`. `Curve3::domain`, closed surface domains and contact pcurve domains
+  use `ParameterRange`; `represented_domain`, `represented_start` and
+  `represented_end` are explicit fallible scalar views. `PlanarCurveGeometry`
+  exposes `source_scale` and `source_offset`. This is a direct API migration,
+  with no compatibility adapter. Inverse curve queries return `Parameter` values that can
   retain selected algebraic roots without a stored `Real` view.
 - `Curve3::point_at(&Parameter)` returns `GeometricPoint3`. Lines and rational
   curves and retained planar lifts retain selected images for exact comparison,
@@ -704,7 +710,7 @@ It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
 
 Selected geometry archive coverage and remaining replay limits are documented
-in [Archive version 9](docs/SELECTED_ARCHIVE.md).
+in [Archive version 10](docs/SELECTED_ARCHIVE.md).
 
 Conic inverse and curve/surface contact queries preserve distant authored
 angular charts and distinct full-period seam parameters. Retained Boolean

@@ -256,12 +256,7 @@ impl Builder {
             .map_err(|e| site.error(ErrorKind::Build(e)))?;
         let key = self
             .model
-            .edge(
-                &first.key,
-                &second.key,
-                &key_curve,
-                curve.domain().clone().into(),
-            )
+            .edge(&first.key, &second.key, &key_curve, curve.domain().clone())
             .map_err(|e| site.error(ErrorKind::Build(e)))?;
         Ok((
             Edge {

@@ -10,6 +10,17 @@ use super::*;
 /// angle-parameterized spatial circle are the canonical example.
 #[derive(Clone, Debug)]
 pub enum ParameterCorrespondence {
+    /// `edge_parameter = scale * coordinate(pcurve(t)) + offset`.
+    /// Whole-image admission proves an injective straight pcurve and its
+    /// surface image; its parameter may be a retained point-order parameter.
+    Coordinate {
+        /// Face-local coordinate used by the relation.
+        axis: hypercurve::Axis2,
+        /// Nonzero exact scale.
+        scale: Real,
+        /// Exact offset.
+        offset: Real,
+    },
     /// `edge_parameter = scale * pcurve_parameter + offset`.
     Affine {
         /// Nonzero exact scale.
@@ -27,6 +38,19 @@ pub enum ParameterCorrespondence {
 }
 
 impl ParameterCorrespondence {
+    /// Relates an edge parameter to one coordinate on a straight iso pcurve.
+    pub fn coordinate(
+        axis: hypercurve::Axis2,
+        scale: Real,
+        offset: Real,
+    ) -> Result<Self, BuildError> {
+        Self::affine(scale.clone(), offset.clone())?;
+        Ok(Self::Coordinate {
+            axis,
+            scale,
+            offset,
+        })
+    }
     /// Constructs `edge_parameter = scale * pcurve_parameter + offset`.
     pub fn affine(scale: Real, offset: Real) -> Result<Self, BuildError> {
         crate::context::strict(|| {
@@ -63,7 +87,7 @@ impl ParameterCorrespondence {
     pub const fn affine_coefficients(&self) -> Option<(&Real, &Real)> {
         match self {
             Self::Affine { scale, offset, .. } => Some((scale, offset)),
-            Self::AngularSweep => None,
+            Self::AngularSweep | Self::Coordinate { .. } => None,
         }
     }
 
@@ -74,6 +98,19 @@ impl ParameterCorrespondence {
         direction: Direction,
         pcurve_parameter: &Parameter,
     ) -> Result<Parameter, GeometryError> {
+        if let Self::Coordinate {
+            axis,
+            scale,
+            offset,
+        } = self
+        {
+            let point = pcurve.point_at(pcurve_parameter)?;
+            let (a, b) = match axis {
+                hypercurve::Axis2::X => (scale.clone(), Real::zero()),
+                hypercurve::Axis2::Y => (Real::zero(), scale.clone()),
+            };
+            return Parameter::from_curve(&point.affine_form(a, b, offset.clone()).parameter()?);
+        }
         if let Self::Affine { scale, offset } = self {
             if let Some(value) = pcurve_parameter.try_real() {
                 return Ok(Parameter::from_real(scale * value + offset));
@@ -120,6 +157,57 @@ impl ParameterCorrespondence {
         direction: Direction,
         edge_parameter: &Parameter,
     ) -> Result<Parameter, GeometryError> {
+        if let Self::Coordinate {
+            axis,
+            scale,
+            offset,
+        } = self
+        {
+            let inverse = (Real::one() / scale).map_err(GeometryError::Numeric)?;
+            let value = edge_parameter.affine_image(&inverse, &(-offset * &inverse))?;
+            let first = pcurve.curve().start();
+            let last = pcurve.curve().end();
+            let (a, b) = match axis {
+                hypercurve::Axis2::X => (Real::zero(), Real::one()),
+                hypercurve::Axis2::Y => (Real::one(), Real::zero()),
+            };
+            let constant = first
+                .affine_form(a.clone(), b.clone(), Real::zero())
+                .parameter()?;
+            if pcurve.kind() != CurveFamily2::Line
+                || constant.compare(&last.affine_form(a, b, Real::zero()).parameter()?)?
+                    != std::cmp::Ordering::Equal
+            {
+                return Err(GeometryError::UnsupportedPcurveContour);
+            }
+            let point = match (axis, value.try_real(), constant.scalar()) {
+                (hypercurve::Axis2::X, _, Some(v)) => value.curve_parameter().affine_point(
+                    Real::one(),
+                    Real::zero(),
+                    Real::zero(),
+                    v.clone(),
+                )?,
+                (hypercurve::Axis2::Y, Some(v), _) => {
+                    constant.affine_point(Real::one(), Real::zero(), Real::zero(), v.clone())?
+                }
+                (hypercurve::Axis2::Y, _, Some(u)) => value.curve_parameter().affine_point(
+                    Real::zero(),
+                    u.clone(),
+                    Real::one(),
+                    Real::zero(),
+                )?,
+                (hypercurve::Axis2::X, Some(u), _) => {
+                    constant.affine_point(Real::zero(), u.clone(), Real::one(), Real::zero())?
+                }
+                _ => return Err(GeometryError::UnsupportedSelectedEvaluation),
+            };
+            return match pcurve.curve().point_locations(&point)? {
+                hypercurve::CurvePointLocations2::Locations(locations) if locations.len() == 1 => {
+                    Parameter::from_curve(&locations[0].parameter()?)
+                }
+                _ => Err(GeometryError::ParameterOutsideDomain),
+            };
+        }
         if let Self::Affine { scale, offset } = self {
             if let Some(value) = edge_parameter.try_real() {
                 return ((value - offset) / scale)
@@ -160,6 +248,26 @@ impl ParameterCorrespondence {
         }
     }
 
+    pub(crate) fn reflected_and_reversed_pcurve(
+        &self,
+        pcurve: &Pcurve,
+        sum: &Real,
+    ) -> Result<Self, GeometryError> {
+        if let Self::Coordinate {
+            axis: hypercurve::Axis2::X,
+            scale,
+            offset,
+        } = self
+        {
+            return Ok(Self::Coordinate {
+                axis: hypercurve::Axis2::X,
+                scale: -scale,
+                offset: offset + scale * sum,
+            });
+        }
+        self.reversed_pcurve(pcurve)
+    }
+
     pub(crate) fn reversed_pcurve(&self, pcurve: &Pcurve) -> Result<Self, GeometryError> {
         // Generated restrictions reverse traversal in their existing chart.
         if pcurve.curve().geometry().is_none() {
@@ -171,6 +279,7 @@ impl ParameterCorrespondence {
                 offset: scale * (pcurve.represented_start()? + pcurve.represented_end()?) + offset,
             },
             Self::AngularSweep => Self::AngularSweep,
+            Self::Coordinate { .. } => self.clone(),
         })
     }
 
@@ -181,19 +290,27 @@ impl ParameterCorrespondence {
         reversed: bool,
     ) -> Result<Self, GeometryError> {
         match self {
-            Self::Affine { scale, offset } => {
+            Self::Affine { scale, offset } | Self::Coordinate { scale, offset, .. } => {
                 let factor = ((target.end() - target.start()) / (source.end() - source.start()))
                     .map_err(GeometryError::Numeric)?;
-                Ok(if reversed {
-                    Self::Affine {
-                        scale: -(&factor * scale),
-                        offset: target.end() - &factor * (offset - source.start()),
-                    }
+                let (scale, offset) = if reversed {
+                    (
+                        -(&factor * scale),
+                        target.end() - &factor * (offset - source.start()),
+                    )
                 } else {
-                    Self::Affine {
-                        scale: &factor * scale,
-                        offset: target.start() + factor * (offset - source.start()),
-                    }
+                    (
+                        &factor * scale,
+                        target.start() + factor * (offset - source.start()),
+                    )
+                };
+                Ok(match self {
+                    Self::Coordinate { axis, .. } => Self::Coordinate {
+                        axis: *axis,
+                        scale,
+                        offset,
+                    },
+                    _ => Self::Affine { scale, offset },
                 })
             }
             Self::AngularSweep => Ok(Self::AngularSweep),

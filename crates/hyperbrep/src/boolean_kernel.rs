@@ -1096,8 +1096,11 @@ fn coalesce_circle_group(
         let mut insertion = ordered.len();
         while insertion > 0
             && exact_order(
-                curve.curve().domain().start(),
-                ordered[insertion - 1].curve().domain().start(),
+                curve.curve().domain().represented_start()?,
+                ordered[insertion - 1]
+                    .curve()
+                    .domain()
+                    .represented_start()?,
             )? == Ordering::Less
         {
             insertion -= 1;
@@ -1105,20 +1108,25 @@ fn coalesce_circle_group(
         ordered.insert(insertion, curve);
     }
     let normalized = ordered;
-    let start = normalized[0].curve().domain().start().clone();
+    let start = normalized[0].curve().domain().represented_start()?.clone();
     let mut end = start.clone();
     let mut ranges = Vec::<(Real, Real)>::new();
     for curve in &normalized {
         let domain = curve.curve().domain();
-        if exact_order(domain.start(), domain.end())? != Ordering::Less {
+        if exact_order(domain.represented_start()?, domain.represented_end()?)? != Ordering::Less {
             return Ok(normalized);
         }
-        if ranges.is_empty() || exact_order(domain.start(), &end)? == Ordering::Greater {
-            ranges.push((domain.start().clone(), domain.end().clone()));
+        if ranges.is_empty() || exact_order(domain.represented_start()?, &end)? == Ordering::Greater
+        {
+            ranges.push((
+                domain.represented_start()?.clone(),
+                domain.represented_end()?.clone(),
+            ));
         } else {
-            ranges.last_mut().expect("a preceding interval").1 = exact_max(&end, domain.end())?;
+            ranges.last_mut().expect("a preceding interval").1 =
+                exact_max(&end, domain.represented_end()?)?;
         }
-        end = exact_max(&end, domain.end())?;
+        end = exact_max(&end, domain.represented_end()?)?;
     }
     let span_order = exact_order(&(&end - &start), &Real::tau())?;
     if ranges.len() > 1 {
@@ -1179,8 +1187,8 @@ fn iso_v_constants(
 ) -> Result<Option<(Real, Real)>, GeometryError> {
     let mut constants = None;
     for curve in curves {
-        let start = curve.curve().domain().start();
-        let end = curve.curve().domain().end();
+        let start = curve.curve().domain().represented_start()?;
+        let end = curve.curve().domain().represented_end()?;
         let first_start = curve.first_pcurve().point_at(start)?;
         let first_end = curve.first_pcurve().point_at(end)?;
         let second_start = curve.second_pcurve().point_at(start)?;
@@ -1310,8 +1318,9 @@ fn planar_trace_crosses_face_interior(
     face: FaceId,
     trace: &Curve3,
 ) -> Result<bool, GeometryError> {
-    let middle = ((trace.domain().start() + trace.domain().end()) / Real::from(2))
-        .map_err(GeometryError::Numeric)?;
+    let middle = ((trace.domain().represented_start()? + trace.domain().represented_end()?)
+        / Real::from(2))
+    .map_err(GeometryError::Numeric)?;
     let point = trace.evaluate_real(&middle)?;
     let surface = face_surface(model, face);
     let parameter = project_to_plane(surface, &point)?;
@@ -1339,8 +1348,8 @@ fn planar_line_support_split_traces(
             traces.push(fragment.clone());
             continue;
         }
-        let start = fragment.evaluate_real(fragment.domain().start())?;
-        let end = fragment.evaluate_real(fragment.domain().end())?;
+        let start = fragment.evaluate_real(fragment.domain().represented_start()?)?;
+        let end = fragment.evaluate_real(fragment.domain().represented_end()?)?;
         let direction = &end - &start;
         let span = match spanning_segment_on_planar_face(model, face, &start, &direction)? {
             Classification::Decided(span) => span,
@@ -1927,7 +1936,8 @@ fn surface_parameter_witness(
     match domain {
         crate::SurfaceParameterDomain::Unbounded => Ok(Real::zero()),
         crate::SurfaceParameterDomain::Closed(domain) => {
-            ((domain.start() + domain.end()) / Real::from(2)).map_err(GeometryError::Numeric)
+            ((domain.represented_start()? + domain.represented_end()?) / Real::from(2))
+                .map_err(GeometryError::Numeric)
         }
         crate::SurfaceParameterDomain::Periodic { start, period } => {
             Ok(start + (period / Real::from(2)).map_err(GeometryError::Numeric)?)
@@ -1938,9 +1948,10 @@ fn surface_parameter_witness(
 
 fn finite_surface_parameter_bounds(domain: &crate::SurfaceParameterDomain) -> Option<(Real, Real)> {
     match domain {
-        crate::SurfaceParameterDomain::Closed(domain) => {
-            Some((domain.start().clone(), domain.end().clone()))
-        }
+        crate::SurfaceParameterDomain::Closed(domain) => Some((
+            domain.start().try_real()?.clone(),
+            domain.end().try_real()?.clone(),
+        )),
         crate::SurfaceParameterDomain::Periodic { start, period } => {
             Some((start.clone(), start + period))
         }
@@ -2748,7 +2759,7 @@ fn copy_or_match_selected_edge(
     } else {
         restricted_curve
     };
-    let restricted_domain = restricted_curve.domain().clone();
+    let restricted_domain = restricted_curve.domain().represented_domain()?;
     let cross_matchable = selected_edge_uses
         .get(&(is_first, source_edge_id))
         .is_some_and(|uses| *uses == 1);
@@ -2759,9 +2770,9 @@ fn copy_or_match_selected_edge(
             }
             if curve_domains_certify_same_parameterization(
                 &restricted_curve,
-                &restricted_domain,
+                &(&restricted_domain).into(),
                 &candidate.curve,
-                &candidate.domain,
+                &(&candidate.domain).into(),
             ) {
                 let mapped = (candidate.id, false, candidate.domain.clone());
                 source_edges.insert((is_first, source_edge_id), mapped.clone());
@@ -2770,9 +2781,9 @@ fn copy_or_match_selected_edge(
             let reversed_curve = restricted_curve.reversed()?;
             if curve_domains_certify_same_parameterization(
                 &reversed_curve,
-                &restricted_domain,
+                &(&restricted_domain).into(),
                 &candidate.curve,
-                &candidate.domain,
+                &(&candidate.domain).into(),
             ) {
                 let mapped = (candidate.id, true, candidate.domain.clone());
                 source_edges.insert((is_first, source_edge_id), mapped.clone());
@@ -2823,25 +2834,13 @@ fn copy_or_match_selected_edge(
 
 fn curve_domains_certify_same_parameterization(
     first_curve: &Curve3,
-    first_domain: &crate::ParameterDomain,
+    first_domain: &crate::ParameterRange,
     second_curve: &Curve3,
-    second_domain: &crate::ParameterDomain,
+    second_domain: &crate::ParameterRange,
 ) -> bool {
     first_curve.has_certified_same_parameterization(second_curve)
-        && compare_reals(
-            first_domain.start(),
-            second_domain.start(),
-            crate::STRICT_PREDICATES,
-        )
-        .value()
-            == Some(Ordering::Equal)
-        && compare_reals(
-            first_domain.end(),
-            second_domain.end(),
-            crate::STRICT_PREDICATES,
-        )
-        .value()
-            == Some(Ordering::Equal)
+        && first_domain.start().compare(second_domain.start()) == Ok(Ordering::Equal)
+        && first_domain.end().compare(second_domain.end()) == Ok(Ordering::Equal)
 }
 
 fn points_certifiably_equal(first: &Point3, second: &Point3) -> bool {
@@ -3420,8 +3419,8 @@ fn trim_face_pair_intersection(
     }
     let mut common_fragments = Vec::new();
     for fragment in first_fragments {
-        let start = fragment.evaluate_real(fragment.domain().start())?;
-        let end = fragment.evaluate_real(fragment.domain().end())?;
+        let start = fragment.evaluate_real(fragment.domain().represented_start()?)?;
+        let end = fragment.evaluate_real(fragment.domain().represented_end()?)?;
         match trim_segment_to_planar_face(second_model, second_face, &start, &end)? {
             Classification::Decided(fragments) => common_fragments.extend(fragments),
             Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
@@ -3933,7 +3932,8 @@ fn push_contained_face_curve_fragments(
                 interval.start_contacts,
                 interval.end_contacts,
             );
-        let midpoint = ((fragment.curve().domain().start() + fragment.curve().domain().end())
+        let midpoint = ((fragment.curve().domain().represented_start()?
+            + fragment.curve().domain().represented_end()?)
             / Real::from(2))
         .map_err(GeometryError::Numeric)?;
         let parameter = fragment.first_pcurve().point_at(&midpoint)?;
@@ -4226,8 +4226,8 @@ fn retained_curve_face_intervals(
     if face_is_boundaryless(model, face) {
         return Ok(Classification::Decided(Some(vec![
             FaceRetainedParameterInterval {
-                start: spatial_domain.start().clone(),
-                end: spatial_domain.end().clone(),
+                start: spatial_domain.represented_start()?.clone(),
+                end: spatial_domain.represented_end()?.clone(),
                 start_contacts: Vec::new(),
                 end_contacts: Vec::new(),
             },
@@ -4330,7 +4330,7 @@ fn retained_spatial_parameter(
                 {
                     let lifts = crate::geometry::angular_parameter_lifts(
                         contact.parameter(),
-                        spatial_curve.domain(),
+                        &spatial_curve.domain().represented_domain()?,
                     )?;
                     if let [lift] = lifts.as_slice() {
                         return Ok(lift.clone());
@@ -5259,9 +5259,10 @@ fn coplanar_boundary_split_traces(
                 }
             };
             for fragment in fragments {
-                let start = fragment.evaluate_real(fragment.domain().start())?;
-                let end = fragment.evaluate_real(fragment.domain().end())?;
-                let middle_parameter = ((fragment.domain().start() + fragment.domain().end())
+                let start = fragment.evaluate_real(fragment.domain().represented_start()?)?;
+                let end = fragment.evaluate_real(fragment.domain().represented_end()?)?;
+                let middle_parameter = ((fragment.domain().represented_start()?
+                    + fragment.domain().represented_end()?)
                     / Real::from(2))
                 .map_err(GeometryError::Numeric)?;
                 let middle = fragment.evaluate_real(&middle_parameter)?;
@@ -7742,8 +7743,8 @@ mod tests {
         for pcurve in [fragment.first_pcurve(), fragment.second_pcurve()] {
             assert_eq!(
                 compare_reals(
-                    pcurve.domain().start(),
-                    fragment.curve().domain().start(),
+                    pcurve.domain().represented_start().unwrap(),
+                    fragment.curve().domain().represented_start().unwrap(),
                     crate::STRICT_PREDICATES
                 )
                 .value(),
@@ -7751,8 +7752,8 @@ mod tests {
             );
             assert_eq!(
                 compare_reals(
-                    pcurve.domain().end(),
-                    fragment.curve().domain().end(),
+                    pcurve.domain().represented_end().unwrap(),
+                    fragment.curve().domain().represented_end().unwrap(),
                     crate::STRICT_PREDICATES
                 )
                 .value(),
@@ -7792,7 +7793,8 @@ mod tests {
                 Some(Ordering::Equal)
             );
         }
-        let parameter = ((fragment.curve().domain().start() + fragment.curve().domain().end())
+        let parameter = ((fragment.curve().domain().represented_start().unwrap()
+            + fragment.curve().domain().represented_end().unwrap())
             / Real::from(2))
         .unwrap();
         let spatial = fragment.curve().evaluate_real(&parameter).unwrap();
@@ -11415,7 +11417,11 @@ mod tests {
         let half = (Real::one() / Real::from(2)).unwrap();
         for fragment in fragments {
             assert_eq!(fragment.kind(), crate::Curve3Kind::Line);
-            for parameter in [fragment.domain().start(), &half, fragment.domain().end()] {
+            for parameter in [
+                fragment.domain().represented_start().unwrap(),
+                &half,
+                fragment.domain().represented_end().unwrap(),
+            ] {
                 let point = fragment.evaluate_real(parameter).unwrap();
                 assert_eq!(
                     first.classify_point(first_solid, &point).unwrap(),
@@ -12046,8 +12052,22 @@ mod tests {
             face_surface(&plane_model, plane_face),
         );
         assert_eq!(nurbs_fragments[0].curve().kind(), crate::Curve3Kind::Nurbs);
-        assert_eq!(nurbs_fragments[0].curve().domain().start(), &Real::from(2));
-        assert_eq!(nurbs_fragments[0].curve().domain().end(), &Real::from(4));
+        assert_eq!(
+            nurbs_fragments[0]
+                .curve()
+                .domain()
+                .represented_start()
+                .unwrap(),
+            &Real::from(2)
+        );
+        assert_eq!(
+            nurbs_fragments[0]
+                .curve()
+                .domain()
+                .represented_end()
+                .unwrap(),
+            &Real::from(4)
+        );
         let (split_nurbs, nurbs_split) = nurbs
             .split_face_by_surface_curve(
                 nurbs_face,
@@ -15043,7 +15063,8 @@ mod tests {
                 fragment.curve().kind(),
                 crate::Curve3Kind::RationalBezier | crate::Curve3Kind::Nurbs
             ));
-            let middle = ((fragment.curve().domain().start() + fragment.curve().domain().end())
+            let middle = ((fragment.curve().domain().represented_start().unwrap()
+                + fragment.curve().domain().represented_end().unwrap())
                 / Real::from(2))
             .unwrap();
             let point = fragment.curve().evaluate_real(&middle).unwrap();
@@ -15201,7 +15222,11 @@ mod tests {
         assert_eq!(surface_curve_fragments.len(), 1);
         assert_eq!(
             compare_reals(
-                surface_curve_fragments[0].curve().domain().end(),
+                surface_curve_fragments[0]
+                    .curve()
+                    .domain()
+                    .represented_end()
+                    .unwrap(),
                 &Real::tau(),
                 crate::STRICT_PREDICATES
             )

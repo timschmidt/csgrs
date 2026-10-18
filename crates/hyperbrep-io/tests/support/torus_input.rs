@@ -124,7 +124,13 @@ fn maps(body: &ImportedBody, length: &Real, angle: &Real) {
             let observed = edge
                 .edge
                 .curve()
-                .point_at(&(domain.start() + (domain.end() - domain.start()) * fraction).into())
+                .point_at(
+                    &(domain.represented_start().unwrap()
+                        + (domain.represented_end().unwrap()
+                            - domain.represented_start().unwrap())
+                            * fraction)
+                        .into(),
+                )
                 .unwrap();
             assert!(observed.coincides_with(&point.into()).unwrap());
         }

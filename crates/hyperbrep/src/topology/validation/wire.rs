@@ -125,14 +125,18 @@ impl ArenaModelBuilder {
                 Some(CurveGeometry2::Line(line))
                     if real_values_equal(line.start().x(), line.end().x())? =>
                 {
-                    has_left_boundary |= real_values_equal(line.start().x(), u_domain.start())?;
-                    has_right_boundary |= real_values_equal(line.start().x(), u_domain.end())?;
+                    has_left_boundary |=
+                        real_values_equal(line.start().x(), u_domain.represented_start()?)?;
+                    has_right_boundary |=
+                        real_values_equal(line.start().x(), u_domain.represented_end()?)?;
                 }
                 Some(CurveGeometry2::Line(line))
                     if real_values_equal(line.start().y(), line.end().y())? =>
                 {
-                    has_bottom_boundary |= real_values_equal(line.start().y(), v_domain.start())?;
-                    has_top_boundary |= real_values_equal(line.start().y(), v_domain.end())?;
+                    has_bottom_boundary |=
+                        real_values_equal(line.start().y(), v_domain.represented_start()?)?;
+                    has_top_boundary |=
+                        real_values_equal(line.start().y(), v_domain.represented_end()?)?;
                 }
                 Some(CurveGeometry2::Line(_)) => {
                     return Err(GeometryError::UnsupportedPcurveContour.into());
@@ -148,26 +152,26 @@ impl ArenaModelBuilder {
                 .coordinates()
                 .ok_or(GeometryError::UnsupportedPcurveContour)?
                 .x(),
-            u_domain.start(),
+            u_domain.represented_start()?,
         )? && real_values_equal(
             (graph_end)
                 .coordinates()
                 .ok_or(GeometryError::UnsupportedPcurveContour)?
                 .x(),
-            u_domain.start(),
+            u_domain.represented_start()?,
         )?;
         let graph_on_right = real_values_equal(
             (graph_start)
                 .coordinates()
                 .ok_or(GeometryError::UnsupportedPcurveContour)?
                 .x(),
-            u_domain.end(),
+            u_domain.represented_end()?,
         )? && real_values_equal(
             (graph_end)
                 .coordinates()
                 .ok_or(GeometryError::UnsupportedPcurveContour)?
                 .x(),
-            u_domain.end(),
+            u_domain.represented_end()?,
         )?;
         let effective_left = if graph_on_left != graph_on_right {
             Some(if graph_on_left {
@@ -198,26 +202,26 @@ impl ArenaModelBuilder {
                 .coordinates()
                 .ok_or(GeometryError::UnsupportedPcurveContour)?
                 .y(),
-            v_domain.start(),
+            v_domain.represented_start()?,
         )? && real_values_equal(
             (graph_end)
                 .coordinates()
                 .ok_or(GeometryError::UnsupportedPcurveContour)?
                 .y(),
-            v_domain.start(),
+            v_domain.represented_start()?,
         )?;
         let graph_on_top = real_values_equal(
             (graph_start)
                 .coordinates()
                 .ok_or(GeometryError::UnsupportedPcurveContour)?
                 .y(),
-            v_domain.end(),
+            v_domain.represented_end()?,
         )? && real_values_equal(
             (graph_end)
                 .coordinates()
                 .ok_or(GeometryError::UnsupportedPcurveContour)?
                 .y(),
-            v_domain.end(),
+            v_domain.represented_end()?,
         )?;
         let effective_bottom = if graph_on_bottom != graph_on_top {
             Some(if graph_on_bottom {

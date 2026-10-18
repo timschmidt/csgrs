@@ -66,6 +66,9 @@ impl Rows {
 
 #[derive(Deserialize)]
 pub(super) enum Curve {
+    Translation {
+        source: Box<Curve>,
+    },
     PlanarImage {
         source: Box<Pcurve>,
     },
@@ -85,6 +88,10 @@ pub(super) enum Curve {
 impl Record for Curve {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::Translation { source } => {
+                budget.record()?;
+                source.admit(budget)
+            }
             Self::PlanarImage { source } => {
                 budget.record()?;
                 source.admit(budget)
@@ -112,6 +119,10 @@ impl Record for Curve {
 
 #[derive(Deserialize)]
 pub(super) enum Pcurve {
+    Chord {
+        start: Box<PlanarPoint>,
+        end: Box<PlanarPoint>,
+    },
     QuadraticBezier(Count),
     CubicBezier(Count),
     AnalyticParallel {
@@ -136,6 +147,12 @@ pub(super) enum Pcurve {
 impl Record for Pcurve {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::Chord { start, end } => {
+                budget.record()?;
+                start.admit(budget)?;
+                budget.record()?;
+                end.admit(budget)
+            }
             Self::QuadraticBezier(count) => {
                 budget.degree(2)?;
                 budget.geometry(count.0)
@@ -262,16 +279,75 @@ impl Record for Surface {
 
 #[derive(Deserialize)]
 pub(super) enum Selection {
+    AffineForm { point: Box<PlanarPoint> },
     Root { polynomial: Count },
     Image(IgnoredAny),
 }
 impl Record for Selection {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
-        if let Self::Root { polynomial } = self {
-            budget.degree(polynomial.0.saturating_sub(1))?;
-            budget.geometry(polynomial.0)?;
+        match self {
+            Self::Root { polynomial } => {
+                budget.degree(polynomial.0.saturating_sub(1))?;
+                budget.geometry(polynomial.0)?;
+            }
+            Self::AffineForm { point } => {
+                budget.record()?;
+                point.admit(budget)?;
+            }
+            Self::Image(_) => {}
         }
         Ok(())
+    }
+}
+
+#[derive(Deserialize)]
+pub(super) enum PlanarPoint {
+    Coordinates(IgnoredAny),
+    Rational {
+        homogeneous_controls: Count,
+    },
+    RationalExpression {
+        x_numerator: Count,
+        y_numerator: Count,
+        denominator: Count,
+    },
+    Parallel {
+        source: ParallelSource,
+    },
+    Similarity {
+        source: Box<PlanarPoint>,
+    },
+}
+impl Record for PlanarPoint {
+    fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
+        match self {
+            Self::Coordinates(_) => Ok(()),
+            Self::Rational {
+                homogeneous_controls,
+            } => {
+                budget.degree(homogeneous_controls.0.saturating_sub(1))?;
+                budget.geometry(homogeneous_controls.0)
+            }
+            Self::RationalExpression {
+                x_numerator,
+                y_numerator,
+                denominator,
+            } => {
+                for count in [x_numerator.0, y_numerator.0, denominator.0] {
+                    budget.degree(count.saturating_sub(1))?;
+                    budget.geometry(count)?;
+                }
+                Ok(())
+            }
+            Self::Parallel { source } => {
+                budget.record()?;
+                source.admit(budget)
+            }
+            Self::Similarity { source } => {
+                budget.record()?;
+                source.admit(budget)
+            }
+        }
     }
 }
 

@@ -1160,3 +1160,12 @@ The [admission](docs/evidence/2026-10-18-retained-plane-contacts/README.md) exte
 Three alternating pairs per cohort cover 64 unchanged preceding consumer groups in 42 processes, retaining their full assertions, iterations and outcomes. Two migrated controls are recorded separately without time ratios. Time ratios range 0.976042–1.262197; 1 of 64 groups exceed the 10% review marker and 17 increase allocation calls or requested bytes. Fourteen new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
 [All raw costs](docs/evidence/2026-10-18-retained-plane-contacts/consumer-costs.json), [absolute new costs](docs/evidence/2026-10-18-retained-plane-contacts/new-costs.json) and [resource observations](docs/evidence/2026-10-18-retained-plane-contacts/resource-review.json) retain adverse results. The two migrated groups have no matched ratios; earlier adverse obligations remain.
+
+
+## Selected procedural-profile construction (2026-10-18)
+
+The [admission](docs/evidence/2026-10-18-selected-procedural-profiles/README.md) extends exact construction and supported edit/replay/slab continuation, with direct API/archive migration.
+
+Three alternating pairs per cohort cover 79 preceding semantic-workflow groups in 48 processes, retaining their full assertions, iterations and outcomes. One capability-migrated control is recorded separately without time ratios. Time ratios range 0.950832–3.131993; 3 of 79 groups exceed the 10% review marker and 63 increase allocation calls or requested bytes. Twelve new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. Archive-version migration changes serialization work; these are the same complete semantic workflows, not identical encoded bytes. Candidate includes upstream dbe99e3cc and cannot isolate the feature effect. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
+
+[Complete costs](docs/evidence/2026-10-18-selected-procedural-profiles/costs.md) and [resource observations](docs/evidence/2026-10-18-selected-procedural-profiles/resource-review.json) retain every adverse result. The capability-migrated control has no ratio. Earlier adverse obligations and whole-operation resource gates remain open.

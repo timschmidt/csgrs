@@ -2,7 +2,157 @@
 
 use crate::topology::*;
 
+pub(in crate::topology) struct PrismCrossPath {
+    pub(in crate::topology) edges: Vec<EdgeId>,
+    pub(in crate::topology) displacement: Vector3,
+}
+
 impl ArenaModelBuilder {
+    /// Proves finite straight connections between cap boundaries. A split
+    /// axial edge may be a chain, but it may neither branch nor backtrack.
+    pub(in crate::topology) fn prism_cross_paths(
+        &self,
+        faces: &[FaceId],
+        first_vertices: &HashSet<VertexId>,
+        second_vertices: &HashSet<VertexId>,
+        first_edges: &HashSet<EdgeId>,
+        second_edges: &HashSet<EdgeId>,
+    ) -> Result<Option<Vec<PrismCrossPath>>, BuildError> {
+        let mut adjacency = HashMap::<VertexId, Vec<EdgeId>>::new();
+        for id in self.shell_edge_set(faces)? {
+            if first_edges.contains(&id) || second_edges.contains(&id) {
+                continue;
+            }
+            let edge = self.edge_ref(id)?;
+            if !matches!(
+                self.curve_ref(edge.curve)?.kind(),
+                Curve3Kind::Line | Curve3Kind::Translation
+            ) {
+                continue;
+            }
+            adjacency.entry(edge.start).or_default().push(id);
+            adjacency.entry(edge.end).or_default().push(id);
+        }
+        let mut starts = first_vertices.iter().copied().collect::<Vec<_>>();
+        starts.sort_unstable();
+        let mut visited = HashSet::new();
+        let mut ends = HashSet::new();
+        let mut paths = Vec::new();
+        for start in starts {
+            let Some(outgoing) = adjacency.get(&start) else {
+                continue;
+            };
+            let [first_edge] = outgoing.as_slice() else {
+                return Ok(None);
+            };
+            let mut current = start;
+            let mut next = *first_edge;
+            let mut edges = Vec::new();
+            let mut displacement = Vector3::from_xyz(Real::zero(), Real::zero(), Real::zero());
+            let mut direction = None;
+            loop {
+                if !visited.insert(next) {
+                    return Ok(None);
+                }
+                let edge = self.edge_ref(next)?;
+                let Some(delta) = self.prism_cross_edge_translation(edge, current)? else {
+                    return Ok(None);
+                };
+                if let Some(direction) = &direction {
+                    if !real_values_equal(&delta.cross(direction).norm_squared(), &Real::zero())?
+                        || decided_model_order(compare_reals(
+                            &delta.dot(direction),
+                            &Real::zero(),
+                            crate::STRICT_PREDICATES,
+                        ))? != std::cmp::Ordering::Greater
+                    {
+                        return Ok(None);
+                    }
+                } else {
+                    if decided_model_order(compare_reals(
+                        &delta.norm_squared(),
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    ))? != std::cmp::Ordering::Greater
+                    {
+                        return Ok(None);
+                    }
+                    direction = Some(delta.clone());
+                }
+                displacement = displacement + delta;
+                edges.push(next);
+                current = if current == edge.start {
+                    edge.end
+                } else {
+                    edge.start
+                };
+                let incident = &adjacency[&current];
+                if second_vertices.contains(&current) {
+                    if incident.len() != 1 || !ends.insert(current) {
+                        return Ok(None);
+                    }
+                    break;
+                }
+                if first_vertices.contains(&current) || incident.len() != 2 {
+                    return Ok(None);
+                }
+                next = if incident[0] == next {
+                    incident[1]
+                } else {
+                    incident[0]
+                };
+            }
+            paths.push(PrismCrossPath {
+                edges,
+                displacement,
+            });
+        }
+        if adjacency
+            .values()
+            .flatten()
+            .any(|edge| !visited.contains(edge))
+        {
+            return Ok(None);
+        }
+        Ok(Some(paths))
+    }
+
+    /// Reads the certified displacement of a cross edge without requiring
+    /// independent coordinates for its retained origin. Existing represented
+    /// edges keep their direct coordinate path.
+    pub(in crate::topology) fn prism_cross_edge_translation(
+        &self,
+        edge: &Edge,
+        first: VertexId,
+    ) -> Result<Option<Vector3>, BuildError> {
+        let (start, end) = (
+            self.vertex_ref(edge.start)?.point(),
+            self.vertex_ref(edge.end)?.point(),
+        );
+        let displacement =
+            if let (Some(start), Some(end)) = (start.try_coordinates(), end.try_coordinates()) {
+                end - start
+            } else {
+                let curve = self.curve_ref(edge.curve)?;
+                let displacement = if let Some(line) = curve.translation_geometry() {
+                    line.displacement.clone()
+                } else if let Some((start, end)) = curve.line_endpoints() {
+                    end - start
+                } else {
+                    return Ok(None);
+                };
+                let Some((a, b)) = edge.domain.try_real_endpoints() else {
+                    return Ok(None);
+                };
+                displacement * (b - a)
+            };
+        Ok(Some(if first == edge.start {
+            displacement
+        } else {
+            -displacement
+        }))
+    }
+
     pub(in crate::topology) fn certified_z_prism_shell(
         &self,
         shell: ShellId,
@@ -387,71 +537,31 @@ impl ArenaModelBuilder {
         if !first_vertices.is_disjoint(&second_vertices) {
             return Ok(false);
         }
-        let shell_edges = self.shell_edge_set(faces)?;
-        let cross_edges = shell_edges
-            .iter()
-            .filter_map(|edge_id| {
-                let edge = &self.edges[edge_id.index()];
-                let first_to_second =
-                    first_vertices.contains(&edge.start) && second_vertices.contains(&edge.end);
-                let second_to_first =
-                    second_vertices.contains(&edge.start) && first_vertices.contains(&edge.end);
-                (first_to_second || second_to_first).then_some(*edge_id)
-            })
-            .collect::<Vec<_>>();
-        let count = cross_edges.len();
-        if count < 2 {
-            return Ok(false);
-        }
-
-        let mut first_to_second = HashMap::with_capacity(count);
-        for edge_id in &cross_edges {
-            let edge = &self.edges[edge_id.index()];
-            let (first, second) = if first_vertices.contains(&edge.start) {
-                (edge.start, edge.end)
-            } else {
-                (edge.end, edge.start)
-            };
-            if first_to_second.insert(first, second).is_some() {
-                return Ok(false);
-            }
-        }
-        if first_to_second.len() != count
-            || first_to_second
-                .values()
-                .copied()
-                .collect::<HashSet<_>>()
-                .len()
-                != count
-        {
-            return Ok(false);
-        }
-        let first_vertex = *first_to_second
-            .keys()
-            .next()
-            .expect("certified cap pair has cross edges");
-        let coordinates =
-            |vertex| Ok::<_, BuildError>(self.vertex_ref(vertex)?.point().try_coordinates());
-        let (Some(first_point), Some(second_point)) = (
-            coordinates(first_vertex)?,
-            coordinates(first_to_second[&first_vertex])?,
-        ) else {
-            return Ok(false);
-        };
-        let translation = second_point - first_point;
-        for (first, second) in &first_to_second {
-            let (Some(first), Some(second)) = (coordinates(*first)?, coordinates(*second)?) else {
-                return Ok(false);
-            };
-            let candidate = second - first;
-            if !vectors_equal(&translation, &candidate)? {
-                return Ok(false);
-            }
-        }
-
         let first_edges = self.boundary_loop_edge_set(&first_boundary)?;
         let second_edges = self.boundary_loop_edge_set(&second_boundary)?;
-        let cross_edges = cross_edges.into_iter().collect::<HashSet<_>>();
+        let Some(cross_paths) = self.prism_cross_paths(
+            faces,
+            &first_vertices,
+            &second_vertices,
+            &first_edges,
+            &second_edges,
+        )?
+        else {
+            return Ok(false);
+        };
+        if cross_paths.len() < 2 {
+            return Ok(false);
+        }
+        let translation = &cross_paths[0].displacement;
+        for path in &cross_paths[1..] {
+            if !vectors_equal(translation, &path.displacement)? {
+                return Ok(false);
+            }
+        }
+        let cross_edges = cross_paths
+            .iter()
+            .flat_map(|path| path.edges.iter().copied())
+            .collect::<HashSet<_>>();
         let lateral_indices = faces
             .iter()
             .enumerate()
@@ -469,7 +579,7 @@ impl ArenaModelBuilder {
             // trim images then prove that its whole lateral face, not merely
             // its corner vertices, connects these two normal cap planes.
             if !real_values_equal(
-                &cylinder.axis.cross(&translation).norm_squared(),
+                &cylinder.axis.cross(translation).norm_squared(),
                 &Real::zero(),
             )? || !real_values_equal(
                 &cylinder.axis.cross(&first_u.cross(first_v)).norm_squared(),
@@ -525,7 +635,9 @@ impl ArenaModelBuilder {
                                     )
                                     .expect("validated edge curve")
                                     .kind(),
-                                    Curve3Kind::Line | Curve3Kind::CircleArc
+                                    Curve3Kind::Line
+                                        | Curve3Kind::Translation
+                                        | Curve3Kind::CircleArc
                                 )
                             })
                         {
@@ -573,9 +685,23 @@ impl ArenaModelBuilder {
             let first_count = edges.intersection(&first_edges).count();
             let second_count = edges.intersection(&second_edges).count();
             let cross_count = edges.intersection(&cross_edges).count();
+            if cross_paths.iter().any(|path| {
+                let covered = path
+                    .edges
+                    .iter()
+                    .filter(|edge| edges.contains(edge))
+                    .count();
+                covered != 0 && covered != path.edges.len()
+            }) {
+                return Ok(false);
+            }
             if first_count == 0
                 || second_count == 0
-                || cross_count != 2
+                || cross_paths
+                    .iter()
+                    .filter(|path| path.edges.iter().all(|edge| edges.contains(edge)))
+                    .count()
+                    != 2
                 || edges.len() != first_count + second_count + cross_count
             {
                 return Ok(false);

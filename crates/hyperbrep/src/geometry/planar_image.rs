@@ -2,10 +2,10 @@
 
 use super::*;
 
-/// Borrowed definition of a planar spatial curve on its unit interval.
+/// Borrowed definition of a planar spatial curve in its retained finite chart.
 ///
 /// The image is `origin + u*x(t) + v*y(t)`, where
-/// `t = source_start + (source_end-source_start)*s`. The source keeps its
+/// `t = source_offset + source_scale*s`. The source keeps its
 /// procedural and selected-parameter evidence. The frame need not be orthogonal
 /// or uniformly scaled. This is a definition, not a topology certificate.
 #[derive(Clone, Copy, Debug)]
@@ -18,10 +18,10 @@ pub struct PlanarCurveGeometry<'a> {
     pub u: &'a Vector3,
     /// Image of the source y direction.
     pub v: &'a Vector3,
-    /// Source parameter at spatial parameter zero.
-    pub source_start: &'a Real,
-    /// Source parameter at spatial parameter one.
-    pub source_end: &'a Real,
+    /// Nonzero scale from spatial to source parameters.
+    pub source_scale: &'a Real,
+    /// Offset from spatial to source parameters.
+    pub source_offset: &'a Real,
 }
 
 #[derive(Clone, Debug)]
@@ -30,8 +30,8 @@ pub(crate) struct PlanarCurve3 {
     pub(crate) origin: Point3,
     pub(crate) u: Vector3,
     pub(crate) v: Vector3,
-    pub(crate) source_start: Real,
-    pub(crate) source_end: Real,
+    pub(crate) source_scale: Real,
+    pub(crate) source_offset: Real,
 }
 
 /// Materialize only an authored scalar query through its owning evaluator.
@@ -50,9 +50,9 @@ pub(crate) fn represented_curve_point(curve: &Curve2, t: &Real) -> GeometryResul
 impl Curve3 {
     /// Lifts an exact planar source through an injective affine plane frame.
     ///
-    /// Spatial parameter zero/one follow the source's directed endpoints.
-    /// Their scalar views must exist; an unavailable selected-domain view is a
-    /// typed error. Native evaluation, inverse queries and source authority are
+    /// Represented endpoint intervals use the unit chart. Selected intervals
+    /// retain the source chart, negated when traversal is reversed. No selected
+    /// endpoint is divided or materialized. Native evaluation, inverse queries and source authority are
     /// reused without fitting. This does not certify simplicity or a solid.
     pub fn planar_image(
         source: Curve2,
@@ -62,21 +62,26 @@ impl Curve3 {
     ) -> GeometryResult<Self> {
         crate::context::strict(|| {
             let (start, end) = source.parameter_endpoints();
-            let source_start = start
-                .scalar()
-                .cloned()
-                .ok_or(GeometryError::UnrepresentableParameter)?;
-            let source_end = end
-                .scalar()
-                .cloned()
-                .ok_or(GeometryError::UnrepresentableParameter)?;
+            let (source_scale, source_offset) =
+                if let (Some(start), Some(end)) = (start.scalar(), end.scalar()) {
+                    (end - start, start.clone())
+                } else {
+                    (
+                        if start.compare(end)? == Ordering::Less {
+                            Real::one()
+                        } else {
+                            -Real::one()
+                        },
+                        Real::zero(),
+                    )
+                };
             Self::from_planar_image(PlanarCurve3 {
                 source,
                 origin,
                 u,
                 v,
-                source_start,
-                source_end,
+                source_scale,
+                source_offset,
             })
         })
     }
@@ -88,19 +93,21 @@ impl Curve3 {
                 GeometryError::DegeneratePlaneBasis,
             )?;
             if decided_order(compare_reals(
-                &image.source_start,
-                &image.source_end,
+                &image.source_scale,
+                &Real::zero(),
                 crate::STRICT_PREDICATES,
             ))? == Ordering::Equal
             {
                 return Err(GeometryError::InvalidParameterDomain);
             }
             // Membership and source validity are owned by the original curve.
-            image.source.point_at(&image.source_start.clone().into())?;
-            image.source.point_at(&image.source_end.clone().into())?;
+            let (start, end) = image.source.parameter_endpoints();
+            image.source.point_at(start)?;
+            image.source.point_at(end)?;
+            let domain = image.spatial_domain()?;
             Ok(Self::from_parts(
                 CurveGeometry3::PlanarImage(Box::new(image)),
-                ParameterDomain::unit(),
+                domain,
             ))
         })
     }
@@ -115,26 +122,32 @@ impl Curve3 {
             origin: &image.origin,
             u: &image.u,
             v: &image.v,
-            source_start: &image.source_start,
-            source_end: &image.source_end,
+            source_scale: &image.source_scale,
+            source_offset: &image.source_offset,
         })
     }
 }
 
 impl PlanarCurve3 {
-    /// Sufficient whole-image identity in the same spatial unit chart.
+    /// Sufficient whole-image identity in the same spatial chart.
     /// It compares definitions after an exactly proved change of plane frame;
     /// no endpoint or sample agreement is used as a complete curve proof.
     pub(crate) fn parameterization_equals(&self, other: &Self) -> GeometryResult<bool> {
         let equal = |a: &Real, b: &Real| -> GeometryResult<bool> {
             Ok(decided_order(compare_reals(a, b, crate::STRICT_PREDICATES))? == Ordering::Equal)
         };
-        if !equal(&self.source_start, &other.source_start)?
-            || !equal(&self.source_end, &other.source_end)?
+        if !equal(&self.source_scale, &other.source_scale)?
+            || !equal(&self.source_offset, &other.source_offset)?
         {
             return Ok(false);
         }
         let definitions_equal = |a: &Curve2, b: &Curve2| {
+            // Source restrictions and their traversal retain the authored
+            // parameter chart. The caller checks the requested domain and
+            // endpoint map; complete carrier equality is independent of a
+            // restriction's traversal flag and selected interval.
+            let a = a.source_restriction().map_or(a, |(source, _, _)| source);
+            let b = b.source_restriction().map_or(b, |(source, _, _)| source);
             a == b
                 || matches!((a.analytic_parallel(), b.analytic_parallel()),
                 (Some(a), Some(b)) if a.parallel() == b.parallel())
@@ -207,7 +220,19 @@ impl PlanarCurve3 {
     }
 
     pub(super) fn parameter(&self, s: &Real) -> Real {
-        &self.source_start + (&self.source_end - &self.source_start) * s
+        &self.source_offset + &self.source_scale * s
+    }
+
+    pub(super) fn spatial_domain(&self) -> GeometryResult<ParameterRange> {
+        let inverse = (Real::one() / &self.source_scale).map_err(GeometryError::Numeric)?;
+        let offset = -&self.source_offset * &inverse;
+        let source = self.source.parameter_domain();
+        let mut start = Parameter::from_curve(source.start())?.affine_image(&inverse, &offset)?;
+        let mut end = Parameter::from_curve(source.end())?.affine_image(&inverse, &offset)?;
+        if start.compare(&end)? == Ordering::Greater {
+            std::mem::swap(&mut start, &mut end);
+        }
+        ParameterRange::new(start, end)
     }
 
     pub(super) fn lift(&self, point: &CurvePoint2) -> Point3 {
@@ -227,10 +252,9 @@ impl PlanarCurve3 {
             .expect("positive derivative order")
             .represented_coordinates()
             .ok_or(GeometryError::UnsupportedSelectedEvaluation)?;
-        let scale = &self.source_end - &self.source_start;
         let mut power = Real::one();
         for _ in 0..order {
-            power *= &scale;
+            power *= &self.source_scale;
         }
         Ok((self.u.clone() * x + self.v.clone() * y) * power)
     }
@@ -243,8 +267,6 @@ impl PlanarCurve3 {
         origin: &Point3,
         u: &Vector3,
         v: &Vector3,
-        target: &ParameterDomain,
-        descending: bool,
     ) -> GeometryResult<MaterializedSurfacePcurve> {
         let project = |point: &Point3| project_point_to_plane_frame(origin, u, v, point);
         let projected_origin = project(&self.origin)?;
@@ -258,43 +280,17 @@ impl PlanarCurve3 {
             projected_origin.x,
             projected_origin.y,
         )?;
-        let curve = self.finite_source()?.transform_similarity(&transform)?;
-        let (start, end) = if descending {
-            (&self.source_end, &self.source_start)
-        } else {
-            (&self.source_start, &self.source_end)
-        };
-        let scale =
-            ((target.end() - target.start()) / (end - start)).map_err(GeometryError::Numeric)?;
-        let offset = target.start() - &scale * start;
+        let curve = self.source.transform_similarity(&transform)?;
+        let scale = (Real::one() / &self.source_scale).map_err(GeometryError::Numeric)?;
+        let offset = -&self.source_offset * &scale;
         Ok(MaterializedSurfacePcurve {
             curve,
             correspondence: SurfacePcurveCorrespondence::Affine { scale, offset },
         })
     }
 
-    /// Restrict proof queries to the consumed interval while retaining the
-    /// source chart. A pole elsewhere on the original definition is irrelevant.
-    pub(super) fn finite_source(&self) -> GeometryResult<std::borrow::Cow<'_, Curve2>> {
-        let mut start = hypercurve::CurveParameter2::from(self.source_start.clone());
-        let mut end = hypercurve::CurveParameter2::from(self.source_end.clone());
-        if start.compare(&end)? == Ordering::Greater {
-            std::mem::swap(&mut start, &mut end);
-        }
-        let domain = self.source.parameter_domain();
-        if start.compare(domain.start())? == Ordering::Equal
-            && end.compare(domain.end())? == Ordering::Equal
-        {
-            return Ok(std::borrow::Cow::Borrowed(&self.source));
-        }
-        Ok(std::borrow::Cow::Owned(self.source.restrict_source(
-            hypercurve::CurveParameterRange2::try_new(start, end)?,
-        )?))
-    }
-
     pub(super) fn bounds(&self) -> GeometryResult<Aabb> {
-        let source = self.finite_source()?;
-        let bounds = source.bounds()?;
+        let bounds = self.source.bounds()?;
         exact_point_bounds(&[
             self.lift(&CurvePoint2::new(
                 bounds.min_x().clone(),
@@ -316,9 +312,48 @@ impl PlanarCurve3 {
     }
 
     pub(super) fn restricted(&self, start: &Real, end: &Real) -> GeometryResult<Curve3> {
+        let source_start = self.parameter(start);
+        let source_end = self.parameter(end);
+        let (lower, upper) = if decided_order(compare_reals(
+            &source_start,
+            &source_end,
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Less
+        {
+            (&source_start, &source_end)
+        } else {
+            (&source_end, &source_start)
+        };
+        let range =
+            hypercurve::CurveParameterRange2::try_new(lower.clone().into(), upper.clone().into())?;
         Curve3::from_planar_image(Self {
-            source_start: self.parameter(start),
-            source_end: self.parameter(end),
+            source: self.source.restrict_source(range)?,
+            source_scale: source_end - &source_start,
+            source_offset: source_start,
+            ..self.clone()
+        })
+    }
+
+    pub(super) fn restricted_to(&self, range: &ParameterRange) -> GeometryResult<Self> {
+        let source_range = range.affine_image(&self.source_scale, &self.source_offset)?;
+        let domain = self.source.parameter_domain();
+        let source = if source_range
+            .start()
+            .curve_parameter()
+            .compare(domain.start())?
+            == Ordering::Equal
+            && source_range.end().curve_parameter().compare(domain.end())? == Ordering::Equal
+        {
+            self.source.clone()
+        } else {
+            self.source
+                .restrict_source(hypercurve::CurveParameterRange2::try_new(
+                    source_range.start().curve_parameter(),
+                    source_range.end().curve_parameter(),
+                )?)?
+        };
+        Ok(Self {
+            source,
             ..self.clone()
         })
     }
@@ -335,7 +370,7 @@ impl PlanarCurve3 {
         }
         let uv = project_point_to_plane_frame(&self.origin, &self.u, &self.v, point)?;
         let locations = self
-            .finite_source()?
+            .source
             .point_locations(&CurvePoint2::new(uv.x, uv.y).into())?;
         let locations = match locations {
             hypercurve::CurvePointLocations2::EntireCurve => {
@@ -343,16 +378,14 @@ impl PlanarCurve3 {
             }
             hypercurve::CurvePointLocations2::Locations(locations) => locations,
         };
-        let inverse = (Real::one() / (&self.source_end - &self.source_start))
-            .map_err(GeometryError::Numeric)?;
-        let offset = -&self.source_start * &inverse;
+        let inverse = (Real::one() / &self.source_scale).map_err(GeometryError::Numeric)?;
+        let offset = -&self.source_offset * &inverse;
+        let domain = self.spatial_domain()?;
         let mut result = Vec::with_capacity(locations.len());
         for location in locations {
             let parameter =
                 Parameter::from_curve(&location.parameter()?)?.affine_image(&inverse, &offset)?;
-            if parameter.compare(&Real::zero().into())? != Ordering::Less
-                && parameter.compare(&Real::one().into())? != Ordering::Greater
-            {
+            if domain.contains(&parameter)? {
                 result.push(parameter);
             }
         }

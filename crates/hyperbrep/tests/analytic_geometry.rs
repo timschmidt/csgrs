@@ -19,11 +19,14 @@ fn borrowed_circle_maps_reversal_and_subdivision_without_a_new_carrier() {
     ] {
         let view = curve.circular_geometry().unwrap();
         for t in [
-            curve.domain().start().clone(),
-            ((curve.domain().start() + curve.domain().end()) / Real::from(2)).unwrap(),
-            curve.domain().end().clone(),
+            curve.domain().represented_start().unwrap().clone(),
+            ((curve.domain().represented_start().unwrap()
+                + curve.domain().represented_end().unwrap())
+                / Real::from(2))
+            .unwrap(),
+            curve.domain().represented_end().unwrap().clone(),
         ] {
-            let delta = &t - curve.domain().start();
+            let delta = &t - curve.domain().represented_start().unwrap();
             let angle = if view.increasing_angle {
                 view.angle_at_start + delta
             } else {

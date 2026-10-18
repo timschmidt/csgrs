@@ -178,7 +178,7 @@ impl Similarity2 {
     /// Borrows the exact affine entries retained by this certified
     /// similarity. Exact carrier transforms use these entries without
     /// reconstructing or re-certifying the same matrix per endpoint.
-    pub(crate) const fn affine_components(&self) -> (&Real, &Real, &Real, &Real, &Real, &Real) {
+    pub const fn affine_components(&self) -> (&Real, &Real, &Real, &Real, &Real, &Real) {
         (&self.a, &self.b, &self.d, &self.e, &self.xoff, &self.yoff)
     }
 

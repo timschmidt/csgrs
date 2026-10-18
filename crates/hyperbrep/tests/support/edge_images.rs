@@ -257,7 +257,7 @@ pub fn faults() {
             let first = builder
                 .vertex(curve.point_at(&Real::zero().into()).unwrap())
                 .unwrap();
-            let end = curve.domain().end().clone();
+            let end = curve.domain().represented_end().unwrap().clone();
             let second = builder
                 .vertex(curve.point_at(&end.clone().into()).unwrap())
                 .unwrap();

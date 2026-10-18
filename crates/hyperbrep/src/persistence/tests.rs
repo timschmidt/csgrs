@@ -149,7 +149,7 @@ fn raw_import_rejects_invalid_references_during_validation() {
 #[test]
 fn raw_import_handles_deep_untrusted_json_on_a_growing_stack() {
     let mut json = String::from(
-        r#"{"version":9,"selection":{"parameters":[],"point_sources":[],"pcurve_sources":[]},"vertices":[],"curves":[],"pcurves":[],"surfaces":[],"edges":[],"edge_uses":[],"wires":[],"faces":[],"shells":[],"solids":[],"ignored":"#,
+        r#"{"version":10,"selection":{"parameters":[],"point_sources":[],"pcurve_sources":[]},"vertices":[],"curves":[],"pcurves":[],"surfaces":[],"edges":[],"edge_uses":[],"wires":[],"faces":[],"shells":[],"solids":[],"ignored":"#,
     );
     for _ in 0..512 {
         json.push('[');
@@ -341,8 +341,12 @@ fn every_current_exact_curve_and_surface_carrier_round_trips() {
     for ((_, original), (_, decoded)) in model.curves().zip(rebuilt.curves()) {
         assert_eq!(
             point3_equal(
-                &original.evaluate_real(original.domain().start()).unwrap(),
-                &decoded.evaluate_real(decoded.domain().start()).unwrap(),
+                &original
+                    .evaluate_real(original.domain().represented_start().unwrap())
+                    .unwrap(),
+                &decoded
+                    .evaluate_real(decoded.domain().represented_start().unwrap())
+                    .unwrap(),
                 crate::STRICT_PREDICATES
             )
             .value(),

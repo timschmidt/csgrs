@@ -2,6 +2,186 @@
 
 use super::*;
 
+/// Use the same checked source recipe at construction and cold replay.
+/// A similarity can be pulled into an affine query without replacing either
+/// selected coordinate or introducing an independent root projection.
+pub(super) fn canonical_affine_form_definition(
+    mut form: crate::CurvePointAffineForm2,
+) -> crate::CurvePointAffineForm2 {
+    loop {
+        let CurvePointData2::Similarity(image) = &form.source().0 else {
+            return form;
+        };
+        if !CurveContext::STRICT.accepts_retained_policy(image.data.policy) {
+            return form;
+        }
+        let [a, b, c] = form.coefficients();
+        let (m00, m01, m10, m11, tx, ty) = image.data.transform.affine_components();
+        form = image.data.source.affine_form(
+            Real::dot2_refs([a, b], [m00, m10]),
+            Real::dot2_refs([a, b], [m01, m11]),
+            Real::dot2_refs([a, b], [tx, ty]) + c,
+        );
+    }
+}
+
+pub(crate) fn point_affine_form_parameter(
+    source: &CurvePoint2,
+    [a, b, c]: &[Real; 3],
+    policy: &CurveContext,
+) -> CurveResult<Classification<CurveParameter2>> {
+    if a.zero_status() == ZeroKnowledge::Zero && b.zero_status() == ZeroKnowledge::Zero {
+        return Ok(Classification::Decided(c.clone().into()));
+    }
+    if let Some(point) = source.coordinates() {
+        return Ok(Classification::Decided(
+            (Real::dot2_refs([a, b], [point.x(), point.y()]) + c).into(),
+        ));
+    }
+    // An affine image of one retained scalar already owns its parameter.
+    // Recover that chart before creating a recursive coordinate expression.
+    // This also keeps a constant coordinate authored, even when the other
+    // coordinate depends on selected roots.
+    let affine = |x: &[Real],
+                  y: &[Real],
+                  w: &[Real],
+                  parameter: &CurveParameter2|
+     -> CurveResult<Option<Classification<CurveParameter2>>> {
+        let zero = Real::zero();
+        if w.is_empty()
+            || w.iter()
+                .skip(1)
+                .any(|v| v.zero_status() != ZeroKnowledge::Zero)
+        {
+            return Ok(None);
+        }
+        let coefficient = |i| {
+            Real::dot2_refs(
+                [a, b],
+                [x.get(i).unwrap_or(&zero), y.get(i).unwrap_or(&zero)],
+            )
+        };
+        if (2..x.len().max(y.len())).any(|i| coefficient(i).zero_status() != ZeroKnowledge::Zero) {
+            return Ok(None);
+        }
+        let scale = (coefficient(1) / &w[0])?;
+        let offset = (coefficient(0) / &w[0])? + c;
+        if scale.zero_status() == ZeroKnowledge::Zero {
+            return Ok(Some(Classification::Decided(offset.into())));
+        }
+        if scale == Real::one() && offset.zero_status() == ZeroKnowledge::Zero {
+            return Ok(Some(Classification::Decided(parameter.clone())));
+        }
+        Ok(Some(
+            parameter.affine_image_unbounded(&scale, &offset, policy)?,
+        ))
+    };
+    match &source.0 {
+        CurvePointData2::Algebraic(point) => {
+            if let (Some((x, y, w)), Some(parameter)) = (
+                point.retained_coordinate_polynomials(),
+                point.retained_parameter(),
+            ) && let Some(result) = affine(
+                x,
+                y,
+                w,
+                &BezierParameter2::Algebraic(parameter.clone()).into(),
+            )? {
+                return Ok(result);
+            }
+        }
+        CurvePointData2::AnalyticParallel(point) => {
+            if let Some((parallel, parameter)) = point.native_parallel_evaluation()
+                && parallel.distance().zero_status() == ZeroKnowledge::Zero
+                && let BezierParallelSource2::Rational(curve) = parallel.source()
+            {
+                let basis = curve.homogeneous_power_basis()?;
+                if let Some(result) = affine(
+                    &basis.x_numerator,
+                    &basis.y_numerator,
+                    &basis.weight,
+                    &parameter,
+                )? {
+                    return Ok(result);
+                }
+            }
+        }
+        CurvePointData2::Endpoint(endpoint) => {
+            return match endpoint.resolve(policy)? {
+                Classification::Decided(Some(point)) => {
+                    point_affine_form_parameter(&point, &[a.clone(), b.clone(), c.clone()], policy)
+                }
+                Classification::Decided(None) => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            };
+        }
+        CurvePointData2::Similarity(image) => {
+            if !policy.accepts_retained_policy(image.data.policy) {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            let (m00, m01, m10, m11, tx, ty) = image.data.transform.affine_components();
+            return point_affine_form_parameter(
+                &image.data.source,
+                &[
+                    Real::dot2_refs([a, b], [m00, m10]),
+                    Real::dot2_refs([a, b], [m01, m11]),
+                    Real::dot2_refs([a, b], [tx, ty]) + c,
+                ],
+                policy,
+            );
+        }
+        _ => {}
+    }
+    let points = match recursive_projective_evidence_points(&[source], policy)? {
+        Classification::Decided(Some(points)) => points,
+        Classification::Decided(None) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let point = match positive_recursive_projective_point(
+        points
+            .into_iter()
+            .next()
+            .expect("one source point supplies one projective image"),
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let Some(numerator) = point
+        .x
+        .scale(a)
+        .and_then(|x| x.add(&point.y.scale(b)?))
+        .and_then(|sum| sum.add(&point.denominator.scale(c)?))
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    if let (Some(numerator), Some(denominator)) = (
+        numerator.exact_real_value_with_retained_witnesses(),
+        point.denominator.exact_real_value_with_retained_witnesses(),
+    ) {
+        return Ok(Classification::Decided((numerator / denominator)?.into()));
+    }
+    Ok(BezierRecursiveProjectiveParameter2::new(
+        RecursiveQuadraticProjectiveScalar {
+            numerator,
+            denominator: point.denominator,
+        },
+        policy,
+    )?
+    .map(|parameter| {
+        CurveParameter2::from_recursive_projective(
+            parameter.with_affine_form_identity(source.affine_form(
+                a.clone(),
+                b.clone(),
+                c.clone(),
+            )),
+        )
+    }))
+}
+
 pub(crate) fn point_affine_form_order_to_real(
     point: &CurvePoint2,
     a: &Real,

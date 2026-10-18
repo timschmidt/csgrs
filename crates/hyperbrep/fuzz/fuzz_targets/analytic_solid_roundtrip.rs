@@ -1693,12 +1693,15 @@ fuzz_target!(|bytes: &[u8]| {
     {
         for fragment in fragments {
             let domain = fragment.curve().domain();
-            let Ok(parameter) = (domain.start() + domain.end()) / Real::from(2) else {
-                continue;
-            };
-            let _ = fragment.curve().point_at(&parameter.clone().into());
-            let _ = fragment.first_pcurve().point_at(&parameter);
-            let _ = fragment.second_pcurve().point_at(&parameter);
+            if let (Ok(start), Ok(end)) = (domain.represented_start(), domain.represented_end())
+                && let Ok(parameter) = (start + end) / Real::from(2)
+            {
+                let _ = fragment.curve().point_at(&parameter.clone().into());
+                let _ = fragment.first_pcurve().point_at(&parameter);
+                let _ = fragment.second_pcurve().point_at(&parameter);
+            }
+            // Selected domains still exercise the topology edit even when a
+            // represented midpoint is unavailable to the sampling queries.
             let _ = patch
                 .faces()
                 .nth(patch_face.index())

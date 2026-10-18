@@ -32,6 +32,10 @@ pub(super) enum RawPointSource {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawSelection {
+    AffineForm {
+        point: Box<RawPlanarPoint>,
+        coefficients: [Real; 3],
+    },
     Root {
         polynomial: Vec<Real>,
         interval: [Real; 2],
@@ -81,10 +85,19 @@ impl GraphEncoder {
         self.curve_parameter(&parameter.curve_parameter())
     }
 
-    fn curve_parameter(
+    pub(super) fn curve_parameter(
         &mut self,
         parameter: &hypercurve::CurveParameter2,
     ) -> Result<RawParameter, PersistenceError> {
+        if let Some(form) = parameter.affine_form_source() {
+            let point = Box::new(self.planar_point(form.source())?);
+            return Ok(RawParameter::Selected(self.selection(
+                RawSelection::AffineForm {
+                    point,
+                    coefficients: form.coefficients().clone(),
+                },
+            )?));
+        }
         match parameter
             .as_bezier_parameter()
             .ok_or(GeometryError::UnsupportedPcurveContour)?
@@ -164,6 +177,15 @@ impl GraphEncoder {
     }
 
     pub(super) fn pcurve(&mut self, curve: &Curve2) -> Result<RawPcurve, PersistenceError> {
+        if curve.family() == CurveFamily2::Line
+            && curve.geometry().is_none()
+            && curve.source_restriction().is_none()
+        {
+            return Ok(RawPcurve::Chord {
+                start: Box::new(self.planar_point(&curve.start())?),
+                end: Box::new(self.planar_point(&curve.end())?),
+            });
+        }
         if let Some(view) = curve.analytic_parallel() {
             return Ok(RawPcurve::AnalyticParallel(Box::new(RawParallelPcurve {
                 source: raw_parallel_source(view.parallel().source()),
@@ -199,7 +221,7 @@ impl GraphEncoder {
 }
 
 pub(super) struct SelectionGraph {
-    parameters: Vec<BezierParameter2>,
+    parameters: Vec<hypercurve::CurveParameter2>,
     point_sources: Vec<Curve3>,
     pub(super) pcurve_sources: Vec<Curve2>,
 }
@@ -223,10 +245,10 @@ impl SelectionGraph {
                         .map_err(GeometryError::from)?;
                     let interval = BezierParameterInterval::try_new(start, end)
                         .map_err(GeometryError::from)?;
-                    BezierParameter2::Algebraic(
+                    hypercurve::CurveParameter2::from(BezierParameter2::Algebraic(
                         BezierAlgebraicParameter2::try_isolate(polynomial, interval)
                             .map_err(GeometryError::from)?,
-                    )
+                    ))
                 }
                 RawSelection::Image {
                     root,
@@ -241,9 +263,20 @@ impl SelectionGraph {
                         });
                     }
                     graph.parameters[root]
+                        .as_bezier_parameter()
+                        .ok_or(GeometryError::UnrepresentableParameter)?
                         .projective_image(&numerator, &denominator)
                         .map_err(GeometryError::from)?
+                        .into()
                 }
+                RawSelection::AffineForm {
+                    point,
+                    coefficients: [a, b, c],
+                } => graph
+                    .planar_point(*point)?
+                    .affine_form(a, b, c)
+                    .parameter()
+                    .map_err(GeometryError::from)?,
             };
             graph.parameters.push(value);
             roots.push(is_root);
@@ -270,15 +303,15 @@ impl SelectionGraph {
     }
 
     pub(super) fn parameter(&self, raw: RawParameter) -> Result<Parameter, PersistenceError> {
-        self.bezier_parameter(raw).map(Parameter::from_bezier)
+        Ok(Parameter::from_curve(&self.curve_parameter(raw)?)?)
     }
 
-    pub(super) fn bezier_parameter(
+    pub(super) fn curve_parameter(
         &self,
         raw: RawParameter,
-    ) -> Result<BezierParameter2, PersistenceError> {
+    ) -> Result<hypercurve::CurveParameter2, PersistenceError> {
         match raw {
-            RawParameter::Scalar(value) => Ok(BezierParameter2::Exact(value)),
+            RawParameter::Scalar(value) => Ok(value.into()),
             RawParameter::Selected(index) => {
                 self.parameters
                     .get(index)
@@ -289,6 +322,16 @@ impl SelectionGraph {
                     })
             }
         }
+    }
+
+    pub(super) fn bezier_parameter(
+        &self,
+        raw: RawParameter,
+    ) -> Result<BezierParameter2, PersistenceError> {
+        self.curve_parameter(raw)?
+            .as_bezier_parameter()
+            .cloned()
+            .ok_or_else(|| GeometryError::UnrepresentableParameter.into())
     }
 
     pub(super) fn point(

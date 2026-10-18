@@ -61,9 +61,11 @@ fn check_traces(graph: &boolean::SolidIntersectionGraph) -> usize {
             assert_eq!(trace.curve().kind(), Curve3Kind::Line);
             let domain = trace.curve().domain();
             for parameter in [
-                domain.start().clone(),
-                ((domain.start() + domain.end()) / Real::from(2)).unwrap(),
-                domain.end().clone(),
+                domain.represented_start().unwrap().clone(),
+                ((domain.represented_start().unwrap() + domain.represented_end().unwrap())
+                    / Real::from(2))
+                .unwrap(),
+                domain.represented_end().unwrap().clone(),
             ] {
                 let point = trace.curve().point_at(&parameter.clone().into()).unwrap();
                 for (face, pcurve) in [

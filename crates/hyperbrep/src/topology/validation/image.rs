@@ -58,7 +58,18 @@ impl ArenaModelBuilder {
         pcurve: &Pcurve,
         surface: &Surface,
     ) -> Result<(), BuildError> {
+        let coordinate_image = matches!(
+            &edge_use.parameter_correspondence,
+            ParameterCorrespondence::Coordinate { .. }
+        );
+        // Finite planar sources use their direct whole-image proof on planes.
+        // Ordinary extrusion-side affine restrictions still require the native
+        // complete-source proof below, including after a selected edge split.
+        let finite_planar_image =
+            curve.kind() == Curve3Kind::PlanarImage && surface.kind() == SurfaceKind::Plane;
         if !edge_use.image_certificate
+            && !finite_planar_image
+            && !coordinate_image
             && let Some((source, _, _)) = pcurve.curve().source_restriction()
         {
             // The trim's exact endpoint map is checked independently. The
@@ -180,7 +191,7 @@ impl ArenaModelBuilder {
             if edge_parameter.compare(expected_edge_parameter)? != std::cmp::Ordering::Equal {
                 return Err(BuildError::ParameterCorrespondenceMismatch { endpoint });
             }
-            if inherited_image || planar_image_proof {
+            if inherited_image || planar_image_proof || coordinate_image {
                 // A retained planar source can have selected endpoints with no
                 // scalar view. The mandatory whole-image proof below implies
                 // endpoint agreement after the exact chart check above.
@@ -201,6 +212,10 @@ impl ArenaModelBuilder {
         }
         if inherited_image {
             return Ok(());
+        }
+
+        if coordinate_image {
+            return self.validate_coordinate_extrusion_image(curve, edge_use, pcurve, surface);
         }
 
         match (

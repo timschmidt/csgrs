@@ -161,7 +161,8 @@ impl ArenaModel {
                         )
                     }
                 }
-                ParameterCorrespondence::Affine { .. } => {
+                ParameterCorrespondence::Affine { .. }
+                | ParameterCorrespondence::Coordinate { .. } => {
                     let pcurve_parameter = edge_use.parameter_correspondence.pcurve_parameter(
                         pcurve,
                         &edge.domain,

@@ -50,7 +50,31 @@ pub(super) fn raw_parallel_source(source: &BezierParallelSource2) -> RawParallel
 
 impl RawParallelPcurve {
     pub(super) fn into_curve(self, graph: &SelectionGraph) -> Result<Curve2, PersistenceError> {
-        let source = match self.source {
+        let source = self.source.into_source()?;
+        let [start, end] = self.range;
+        let start = graph.bezier_parameter(start)?;
+        let end = graph.bezier_parameter(end)?;
+        if start.cmp_by_refinement(&end).map_err(GeometryError::from)? != std::cmp::Ordering::Less {
+            return Err(GeometryError::InvalidParameterDomain.into());
+        }
+        let range = BezierParameterRange2::try_new(start, end).map_err(GeometryError::from)?;
+        // The archive stores a definition, never the original regularity proof.
+        // This rechecks the complete interval, including selected endpoints.
+        Ok(Curve2::try_analytic_parallel(
+            BezierParallel2::from_source(source, self.distance),
+            if self.reversed {
+                range.reversed()
+            } else {
+                range
+            },
+        )
+        .map_err(GeometryError::from)?)
+    }
+}
+
+impl RawParallelSource {
+    pub(super) fn into_source(self) -> Result<BezierParallelSource2, PersistenceError> {
+        Ok(match self {
             RawParallelSource::Quadratic(points) => {
                 let [a, b, c] = points.map(curve_point2);
                 BezierParallelSource2::Quadratic(QuadraticBezier2::new(a, b, c))
@@ -73,24 +97,6 @@ impl RawParallelPcurve {
                     source,
                 )?)
             }
-        };
-        let [start, end] = self.range;
-        let start = graph.bezier_parameter(start)?;
-        let end = graph.bezier_parameter(end)?;
-        if start.cmp_by_refinement(&end).map_err(GeometryError::from)? != std::cmp::Ordering::Less {
-            return Err(GeometryError::InvalidParameterDomain.into());
-        }
-        let range = BezierParameterRange2::try_new(start, end).map_err(GeometryError::from)?;
-        // The archive stores a definition, never the original regularity proof.
-        // This rechecks the complete interval, including selected endpoints.
-        Ok(Curve2::try_analytic_parallel(
-            BezierParallel2::from_source(source, self.distance),
-            if self.reversed {
-                range.reversed()
-            } else {
-                range
-            },
-        )
-        .map_err(GeometryError::from)?)
+        })
     }
 }

@@ -165,8 +165,9 @@ mod tests {
                         let trace = SurfaceIntersectionCurve::from_coincident_iso_boundary(
                             curve.clone(),
                             &pcurve,
-                            &(curve.domain().end() - curve.domain().start()),
-                            curve.domain().start(),
+                            &(curve.domain().represented_end().unwrap()
+                                - curve.domain().represented_start().unwrap()),
+                            curve.domain().represented_start().unwrap(),
                             &source,
                             &target,
                             operand,
@@ -174,8 +175,9 @@ mod tests {
                         .unwrap()
                         .unwrap();
                         for n in 0..=8 {
-                            let t = curve.domain().start()
-                                + (curve.domain().end() - curve.domain().start())
+                            let t = curve.domain().represented_start().unwrap()
+                                + (curve.domain().represented_end().unwrap()
+                                    - curve.domain().represented_start().unwrap())
                                     * (Real::from(n) / Real::from(8)).unwrap();
                             let actual = target
                                 .point_at(&trace.pcurve(operand).point_at(&t).unwrap())

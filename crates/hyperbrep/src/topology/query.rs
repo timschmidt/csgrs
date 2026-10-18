@@ -310,10 +310,22 @@ impl ArenaModel {
         sweep: &CertifiedCurveSweepShell,
         point: &Point3,
     ) -> Result<SolidPointLocation, QueryError> {
-        let start = sweep.path.evaluate_real(sweep.path.domain().start())?;
-        let end = sweep.path.evaluate_real(sweep.path.domain().end())?;
-        let start_u = Vector3::from(sweep.u_path.evaluate_real(sweep.u_path.domain().start())?);
-        let start_v = Vector3::from(sweep.v_path.evaluate_real(sweep.v_path.domain().start())?);
+        let start = sweep
+            .path
+            .evaluate_real(sweep.path.domain().represented_start()?)?;
+        let end = sweep
+            .path
+            .evaluate_real(sweep.path.domain().represented_end()?)?;
+        let start_u = Vector3::from(
+            sweep
+                .u_path
+                .evaluate_real(sweep.u_path.domain().represented_start()?)?,
+        );
+        let start_v = Vector3::from(
+            sweep
+                .v_path
+                .evaluate_real(sweep.v_path.domain().represented_start()?)?,
+        );
         let normal = start_u.cross(&start_v);
         let progress = normal.dot(&(end - &start));
         let parameter = (normal.dot(&(point - &start)) / &progress)

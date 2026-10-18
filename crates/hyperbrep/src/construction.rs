@@ -352,17 +352,19 @@ pub fn extrusion_patch(
 ) -> Result<(ArenaModel, FaceId), ConstructionError> {
     crate::context::strict(|| {
         let v_domain = ParameterDomain::new(v_start, v_end)?;
-        let u_start = profile.domain().start().clone();
-        let u_end = profile.domain().end().clone();
+        let u_start = profile.domain().represented_start()?.clone();
+        let u_end = profile.domain().represented_end()?.clone();
         let surface = Surface::extrusion(profile.clone(), direction.clone())?;
         let lower_offset = direction.clone() * v_domain.start();
         let upper_offset = direction * v_domain.end();
         let lower_profile = translated_curve(&profile, &lower_offset)?;
         let upper_profile = translated_curve(&profile, &upper_offset)?;
-        let lower_start = lower_profile.evaluate_real(lower_profile.domain().start())?;
-        let lower_end = lower_profile.evaluate_real(lower_profile.domain().end())?;
-        let upper_start = upper_profile.evaluate_real(upper_profile.domain().start())?;
-        let upper_end = upper_profile.evaluate_real(upper_profile.domain().end())?;
+        let lower_start =
+            lower_profile.evaluate_real(lower_profile.domain().represented_start()?)?;
+        let lower_end = lower_profile.evaluate_real(lower_profile.domain().represented_end()?)?;
+        let upper_start =
+            upper_profile.evaluate_real(upper_profile.domain().represented_start()?)?;
+        let upper_end = upper_profile.evaluate_real(upper_profile.domain().represented_end()?)?;
         let boundaries = [
             lower_profile,
             Curve3::line(lower_end, upper_end)?,
@@ -411,7 +413,7 @@ pub fn revolution_patch(
                 return Err(GeometryError::PredicateUnresolved { needed, stage }.into());
             }
         }
-        let profile_domain = profile.domain().clone();
+        let profile_domain = profile.domain().represented_domain()?;
         let surface = Surface::revolution(profile, axis_origin, axis)?;
         if !surface
             .revolution_profile_is_strictly_off_axis()
@@ -618,7 +620,7 @@ pub fn tensor_patch_shell(
                 let (edge, domain) = match stitched {
                     Some(stitched) => stitched,
                     None => {
-                        let domain = curve.domain().clone();
+                        let domain = curve.domain().represented_domain()?;
                         let curve_id = builder.curve(curve.clone())?;
                         let edge = builder.edge(start, end, curve_id, (domain.clone()).into())?;
                         shared_edges.push(StitchedTensorEdge {
@@ -837,9 +839,13 @@ fn exact_tensor_boundary_equal(
     } else {
         candidate.clone()
     };
-    if !exact_real_equal(candidate.domain().start(), existing.domain().start())?
-        || !exact_real_equal(candidate.domain().end(), existing.domain().end())?
-    {
+    if !exact_real_equal(
+        candidate.domain().represented_start()?,
+        existing.domain().represented_start()?,
+    )? || !exact_real_equal(
+        candidate.domain().represented_end()?,
+        existing.domain().represented_end()?,
+    )? {
         return Ok(false);
     }
     let unpack = |curve: &Curve3| match curve.exact_data() {
@@ -953,12 +959,7 @@ fn build_rectangular_face_patch(
         };
         let domain = curve.domain().clone();
         let curve = builder.curve(curve)?;
-        edges.push(builder.edge(
-            vertices[start],
-            vertices[end],
-            curve,
-            (domain.clone()).into(),
-        )?);
+        edges.push(builder.edge(vertices[start], vertices[end], curve, domain.clone())?);
         edge_domains.push(domain);
     }
     let specs = [
@@ -976,12 +977,12 @@ fn build_rectangular_face_patch(
         )))?;
         let correspondence = match direction {
             Direction::Forward => ParameterCorrespondence::affine(
-                edge_domain.end() - edge_domain.start(),
-                edge_domain.start().clone(),
+                edge_domain.represented_end()? - edge_domain.represented_start()?,
+                edge_domain.represented_start()?.clone(),
             )?,
             Direction::Reversed => ParameterCorrespondence::affine(
-                edge_domain.start() - edge_domain.end(),
-                edge_domain.end().clone(),
+                edge_domain.represented_start()? - edge_domain.represented_end()?,
+                edge_domain.represented_end()?.clone(),
             )?,
         };
         uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
@@ -2121,72 +2122,81 @@ fn add_persistent_curve_region(
         }
     }
     let curves = loop_curves.iter().flatten().cloned().collect::<Vec<_>>();
-    let points_2d = curves
+    // Reuse the planar owner's represented endpoints and their scalar facts.
+    // Reevaluating an equivalent spatial spline can replace named/rational
+    // coefficients by larger opaque expressions during subsequent slab cuts.
+    let represented_starts = curves
         .iter()
         .map(|curve| {
             if let Some(point) = curve.start().coordinates() {
-                return Ok(point.clone());
+                return Ok(Some(point.clone()));
             }
-            crate::geometry::represented_curve_point(
-                curve,
-                curve
-                    .parameter_endpoints()
-                    .0
-                    .scalar()
-                    .ok_or(GeometryError::UnrepresentableParameter)?,
-            )
+            if curve.analytic_parallel().is_some()
+                && let Some(parameter) = curve.parameter_endpoints().0.scalar()
+            {
+                return crate::geometry::represented_curve_point(curve, parameter).map(Some);
+            }
+            Ok(None)
+        })
+        .collect::<Result<Vec<_>, GeometryError>>()?;
+    let bottom_curves = curves
+        .iter()
+        .map(|curve| spatial_extrusion_curve(curve, &z_min))
+        .collect::<Result<Vec<_>, _>>()?;
+    let top_curves = curves
+        .iter()
+        .map(|curve| spatial_extrusion_curve(curve, &z_max))
+        .collect::<Result<Vec<_>, _>>()?;
+    let points = [(&bottom_curves, &z_min), (&top_curves, &z_max)]
+        .into_iter()
+        .flat_map(|(curves, z)| {
+            curves
+                .iter()
+                .zip(&represented_starts)
+                .map(move |pair| (pair, z))
+        })
+        .map(|((curve, represented), z)| match represented {
+            Some(point) => Ok(Point3::new(point.x().clone(), point.y().clone(), z.clone()).into()),
+            None => curve.point_at(curve.domain().start()),
         })
         .collect::<Result<Vec<_>, _>>()?;
-    let mut points = Vec::with_capacity(points_2d.len() * 2);
-    points.extend(
-        points_2d
-            .iter()
-            .map(|point| Point3::new(point.x().clone(), point.y().clone(), z_min.clone())),
-    );
-    points.extend(
-        points_2d
-            .iter()
-            .map(|point| Point3::new(point.x().clone(), point.y().clone(), z_max.clone())),
-    );
     let vertices = points
         .iter()
         .cloned()
-        .map(|point| builder.vertex((point).into()))
+        .map(|point| builder.vertex(point))
         .collect::<Result<Vec<_>, _>>()?;
-    let mut bottom_curves = Vec::with_capacity(count);
     let mut bottom_edges = Vec::with_capacity(count);
     let mut top_edges = Vec::with_capacity(count);
     let mut domains = Vec::with_capacity(count);
-    for (index, pcurve) in curves.iter().enumerate() {
+    for index in 0..count {
         let next = next_indices[index];
-        let bottom_curve = spatial_extrusion_curve(pcurve, &z_min)?;
+        let bottom_curve = &bottom_curves[index];
         let domain = bottom_curve.domain().clone();
         let bottom_curve_id = builder.curve(bottom_curve.clone())?;
         bottom_edges.push(builder.edge_with_endpoint_certificate(
             vertices[index],
             vertices[next],
             bottom_curve_id,
-            (domain.clone()).into(),
+            domain.clone(),
             true,
         )?);
-        let top_curve = spatial_extrusion_curve(pcurve, &z_max)?;
+        let top_curve = &top_curves[index];
         let top_domain = top_curve.domain().clone();
-        let top_curve_id = builder.curve(top_curve)?;
+        let top_curve_id = builder.curve(top_curve.clone())?;
         top_edges.push(builder.edge_with_endpoint_certificate(
             vertices[index + count],
             vertices[next + count],
             top_curve_id,
-            (top_domain).into(),
+            top_domain,
             true,
         )?);
-        bottom_curves.push(bottom_curve);
         domains.push(domain);
     }
     let mut axial_edges = Vec::with_capacity(count);
     for index in 0..count {
-        let curve = builder.curve(Curve3::line(
+        let curve = builder.curve(Curve3::translation(
             points[index].clone(),
-            points[index + count].clone(),
+            Vector3::new([Real::zero(), Real::zero(), &z_max - &z_min]),
         )?)?;
         axial_edges.push(builder.edge(
             vertices[index],
@@ -2264,39 +2274,113 @@ fn add_persistent_curve_region(
         let domain = &domains[index];
         let carrier = native_extrusion_carrier(&bottom_curves[index])?;
         let surface = builder.surface(carrier.surface)?;
+        if domain.try_real_endpoints().is_none() {
+            let point = |u: &crate::Parameter,
+                         v: &Real|
+             -> Result<hypercurve::CurvePoint2, ConstructionError> {
+                Ok(u.curve_parameter()
+                    .affine_point(
+                        carrier.u_scale.clone(),
+                        carrier.u_offset.clone(),
+                        Real::zero(),
+                        v * &carrier.v_scale,
+                    )
+                    .map_err(GeometryError::from)?)
+            };
+            let zero = Real::zero();
+            let corners = [
+                point(domain.start(), &zero)?,
+                point(domain.end(), &zero)?,
+                point(domain.end(), &height)?,
+                point(domain.start(), &height)?,
+            ];
+            let u_scale = (Real::one() / &carrier.u_scale).map_err(GeometryError::Numeric)?;
+            let u_offset = -&carrier.u_offset * &u_scale;
+            let v_scale =
+                (Real::one() / (&height * &carrier.v_scale)).map_err(GeometryError::Numeric)?;
+            let mut uses = Vec::with_capacity(4);
+            for (i, (edge, direction, axis, scale, offset)) in [
+                (
+                    bottom_edges[index],
+                    Direction::Forward,
+                    hypercurve::Axis2::X,
+                    u_scale.clone(),
+                    u_offset.clone(),
+                ),
+                (
+                    axial_edges[next],
+                    Direction::Forward,
+                    hypercurve::Axis2::Y,
+                    v_scale.clone(),
+                    Real::zero(),
+                ),
+                (
+                    top_edges[index],
+                    Direction::Reversed,
+                    hypercurve::Axis2::X,
+                    u_scale,
+                    u_offset,
+                ),
+                (
+                    axial_edges[index],
+                    Direction::Reversed,
+                    hypercurve::Axis2::Y,
+                    v_scale,
+                    Real::zero(),
+                ),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                let pcurve = builder.pcurve(Pcurve::new(
+                    Curve2::try_line(corners[i].clone(), corners[(i + 1) % 4].clone())
+                        .map_err(GeometryError::from)?,
+                ))?;
+                uses.push(builder.edge_use_with_image_certificate(
+                    edge,
+                    direction,
+                    pcurve,
+                    ParameterCorrespondence::coordinate(axis, scale, offset)?,
+                    true,
+                )?);
+            }
+            let wire = builder.wire_with_simplicity_certificate(uses, true)?;
+            side_faces.push(builder.face(surface, carrier.orientation, wire, Vec::new())?);
+            continue;
+        }
         let specs = [
             (
                 bottom_edges[index],
                 Direction::Forward,
-                CurvePoint2::new(domain.start().clone(), Real::zero()),
-                CurvePoint2::new(domain.end().clone(), Real::zero()),
+                CurvePoint2::new(domain.represented_start()?.clone(), Real::zero()),
+                CurvePoint2::new(domain.represented_end()?.clone(), Real::zero()),
                 ParameterCorrespondence::affine(
-                    domain.end() - domain.start(),
-                    domain.start().clone(),
+                    domain.represented_end()? - domain.represented_start()?,
+                    domain.represented_start()?.clone(),
                 )?,
             ),
             (
                 axial_edges[next],
                 Direction::Forward,
-                CurvePoint2::new(domain.end().clone(), Real::zero()),
-                CurvePoint2::new(domain.end().clone(), height.clone()),
+                CurvePoint2::new(domain.represented_end()?.clone(), Real::zero()),
+                CurvePoint2::new(domain.represented_end()?.clone(), height.clone()),
                 ParameterCorrespondence::identity(),
             ),
             (
                 top_edges[index],
                 Direction::Reversed,
-                CurvePoint2::new(domain.end().clone(), height.clone()),
-                CurvePoint2::new(domain.start().clone(), height.clone()),
+                CurvePoint2::new(domain.represented_end()?.clone(), height.clone()),
+                CurvePoint2::new(domain.represented_start()?.clone(), height.clone()),
                 ParameterCorrespondence::affine(
-                    domain.start() - domain.end(),
-                    domain.end().clone(),
+                    domain.represented_start()? - domain.represented_end()?,
+                    domain.represented_end()?.clone(),
                 )?,
             ),
             (
                 axial_edges[index],
                 Direction::Reversed,
-                CurvePoint2::new(domain.start().clone(), height.clone()),
-                CurvePoint2::new(domain.start().clone(), Real::zero()),
+                CurvePoint2::new(domain.represented_start()?.clone(), height.clone()),
+                CurvePoint2::new(domain.represented_start()?.clone(), Real::zero()),
                 ParameterCorrespondence::affine(-Real::one(), Real::one())?,
             ),
         ];
@@ -2360,11 +2444,12 @@ fn native_extrusion_carrier(curve: &Curve3) -> Result<ExtrusionCarrier, Construc
     };
     match curve.exact_data() {
         Curve3ExactData::Line(line) => {
-            let inverse_span = (Real::one() / (curve.domain().end() - curve.domain().start()))
-                .map_err(GeometryError::Numeric)?;
+            let inverse_span = (Real::one()
+                / (curve.domain().represented_end()? - curve.domain().represented_start()?))
+            .map_err(GeometryError::Numeric)?;
             let direction = (&line.end - &line.start) * inverse_span;
             carrier.surface = Surface::plane(
-                line.start - direction.clone() * curve.domain().start(),
+                line.start - direction.clone() * curve.domain().represented_start()?,
                 direction,
                 Vector3::z(),
             )?;
@@ -3777,7 +3862,7 @@ fn persistent_planar_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, Constructi
     for curve in curves {
         let image = persistent_curve_image(curve)?;
         let curve = image.as_ref();
-        if curve.analytic_parallel().is_some() {
+        if curve.analytic_parallel().is_some() || curve.source_restriction().is_some() {
             persistent.push(curve.clone());
             continue;
         }
@@ -3828,7 +3913,7 @@ fn persistent_extrusion_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, Constru
     for curve in curves {
         let image = persistent_curve_image(curve)?;
         let curve = image.as_ref();
-        if curve.analytic_parallel().is_some() {
+        if curve.analytic_parallel().is_some() || curve.source_restriction().is_some() {
             persistent.push(curve.clone());
             continue;
         }
@@ -3884,10 +3969,11 @@ fn persistent_curve_image(
             // Prefer the existing native complete image when it is available.
             // Otherwise retain the procedural definition for an exact plane
             // lift; this does not turn a failed predicate into a certificate.
-            if curve.analytic_parallel().is_some() {
+            if curve.analytic_parallel().is_some() || curve.source_restriction().is_some() {
                 Ok(std::borrow::Cow::Borrowed(curve))
             } else {
-                Err(ConstructionError::UnsupportedPlanarProfile)
+                let chart = curve.scalar_chart().map_err(GeometryError::from)?;
+                Ok(std::borrow::Cow::Owned(chart.curve().clone()))
             }
         }
         Err(error) => Err(GeometryError::from(error).into()),
@@ -3896,7 +3982,7 @@ fn persistent_curve_image(
 
 fn spatial_extrusion_curve(curve: &Curve2, z: &Real) -> Result<Curve3, ConstructionError> {
     let lift = |point: &CurvePoint2| Point3::new(point.x().clone(), point.y().clone(), z.clone());
-    if curve.analytic_parallel().is_some() {
+    if curve.analytic_parallel().is_some() || curve.source_restriction().is_some() {
         return Ok(Curve3::planar_image(
             curve.clone(),
             Point3::new(Real::zero(), Real::zero(), z.clone()),
@@ -3946,14 +4032,24 @@ fn planar_curve_correspondence(
     curve: &Curve2,
     direction: Direction,
 ) -> Result<ParameterCorrespondence, ConstructionError> {
-    if curve.analytic_parallel().is_some() {
+    if curve.analytic_parallel().is_some() || curve.source_restriction().is_some() {
         // Reversal changes the retained traversal, not the procedural source
         // chart. Both cap directions use this same complete affine map.
         let (a, b) = curve.parameter_endpoints();
-        let a = a.scalar().ok_or(GeometryError::UnrepresentableParameter)?;
-        let b = b.scalar().ok_or(GeometryError::UnrepresentableParameter)?;
-        let scale = (Real::one() / (b - a)).map_err(GeometryError::Numeric)?;
-        return Ok(ParameterCorrespondence::affine(scale.clone(), -a * scale)?);
+        let (scale, offset) = if let (Some(a), Some(b)) = (a.scalar(), b.scalar()) {
+            let scale = (Real::one() / (b - a)).map_err(GeometryError::Numeric)?;
+            (scale.clone(), -a * scale)
+        } else {
+            (
+                if a.compare(b).map_err(GeometryError::from)? == std::cmp::Ordering::Less {
+                    Real::one()
+                } else {
+                    -Real::one()
+                },
+                Real::zero(),
+            )
+        };
+        return Ok(ParameterCorrespondence::affine(scale, offset)?);
     }
     if matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_))) {
         return Ok(ParameterCorrespondence::angular_sweep());
@@ -4067,7 +4163,7 @@ fn add_planar_path_wire(
             vertices[index],
             vertices[(index + 1) % vertices.len()],
             curve,
-            (domain).into(),
+            domain,
         )?;
         let correspondence = planar_curve_correspondence(&pcurve, Direction::Forward)?;
         let pcurve = builder.pcurve(Pcurve::new(pcurve))?;
@@ -4325,7 +4421,7 @@ fn spatial_revolution_curve(
             curve.knots().to_vec(),
         )?,
     };
-    let domain = spatial.domain().clone();
+    let domain = spatial.domain().represented_domain()?;
     Ok((spatial, domain))
 }
 

@@ -2644,6 +2644,7 @@ dependencies = [
  "hyperlimit",
  "hyperreal",
  "num",
+ "serde_json",
 ]
 
 [[package]]

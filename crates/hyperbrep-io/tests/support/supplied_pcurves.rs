@@ -118,7 +118,13 @@ fn maps(body: &ImportedBody, length: &Real, angle: &Real) {
             let native = edge
                 .edge
                 .curve()
-                .point_at(&(domain.start() + (domain.end() - domain.start()) * &s).into())
+                .point_at(
+                    &(domain.represented_start().unwrap()
+                        + (domain.represented_end().unwrap()
+                            - domain.represented_start().unwrap())
+                            * &s)
+                        .into(),
+                )
                 .unwrap();
             for map in edge.parameters {
                 let source_parameter = &map.start + (&map.end - &map.start) * &s;
@@ -254,7 +260,7 @@ pub fn composition() {
         .find(|edge| edge.curve().kind() == Curve3Kind::CircleArc)
         .unwrap();
     let split = edge
-        .split((edge.curve().domain().start() + Real::pi()).into())
+        .split((edge.curve().domain().represented_start().unwrap() + Real::pi()).into())
         .unwrap()
         .into_model();
     let reflected = split

@@ -8,7 +8,9 @@ use crate::{
 use hypersolve::AlgebraicRootRepresentation;
 
 mod affine;
+mod definition;
 pub use affine::CurvePointAffineForm2;
+pub use definition::CurvePointDefinition2;
 
 /// An exact affine point with shared scalar or selected geometric evidence.
 ///

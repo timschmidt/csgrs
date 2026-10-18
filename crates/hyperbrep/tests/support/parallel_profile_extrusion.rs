@@ -435,8 +435,8 @@ pub fn planar_image_archives_reject_forged_interior_and_frames() {
                 image["origin"][1] = json!(-y);
             }
             1 => image["v"] = image["u"].clone(),
-            2 => image["source_range"][1] = image["source_range"][0].clone(),
-            3 => image["source_range"][0] = json!(Real::from(3)),
+            2 => image["source_chart"][0] = json!(Real::zero()),
+            3 => image["source_chart"][1] = json!(Real::from(3)),
             _ => image["source"]["AnalyticParallel"]["range"][0] = json!({"Selected":1000000}),
         }
         let result = RawModel::from_json(&raw.to_string(), &ArchiveLimits::default())
@@ -559,7 +559,7 @@ pub fn planar_image_limits_and_typed_frontiers_recover() {
     .unwrap();
     let selected_parameter = Pcurve::new(source.clone()).domain_end().unwrap();
     // Selected spatial evaluation is now a required exact success; the
-    // constructor's selected-domain frontier below is a separate capability.
+    // constructor's selected-domain capability below is checked separately.
     let point = image.point_at(&selected_parameter).unwrap();
     assert!(point.try_coordinates().is_none());
     assert_eq!(
@@ -568,10 +568,18 @@ pub fn planar_image_limits_and_typed_frontiers_recover() {
             .unwrap(),
         std::cmp::Ordering::Equal
     );
-    assert!(matches!(
-        Curve3::planar_image(source, Point3::origin(), Vector3::x(), Vector3::y()),
-        Err(GeometryError::UnrepresentableParameter)
-    ));
+    // Capability migration: the same selected source now retains its finite
+    // domain. Coordinate materialization remains an explicit capability.
+    let selected =
+        Curve3::planar_image(source, Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
+    assert!(selected.domain().end().try_real().is_none());
+    assert!(
+        selected
+            .point_at(selected.domain().end())
+            .unwrap()
+            .try_coordinates()
+            .is_none()
+    );
     let plane = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
     // The entire finite planar image is now certified on its supporting plane.
     assert!(matches!(
@@ -763,7 +771,7 @@ pub fn planar_lifts_share_native_source_evaluation() {
         for image in [&image, cold.curves().next().unwrap().geometry()] {
             let chart = image.planar_geometry().unwrap();
             for s in [Real::zero(), q(1, 4), q(1, 2), Real::one()] {
-                let t = chart.source_start + (chart.source_end - chart.source_start) * &s;
+                let t = chart.source_offset + chart.source_scale * &s;
                 let expected = source.point_at(&t.into()).unwrap();
                 let actual = image.point_at(&s.into()).unwrap();
                 let actual = actual.try_coordinates().unwrap();

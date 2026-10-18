@@ -482,7 +482,7 @@ impl ArenaModel {
             start,
             end,
             curve,
-            domain: (edge_domain).into(),
+            domain: edge_domain,
             endpoint_certificate: authored_curve,
         });
 

@@ -101,7 +101,7 @@ pub fn planar_spline_incidence_does_not_require_low_degree_root_solving() {
                 ),
             ] {
                 assert_eq!(
-                    contact.parameter.compare(&endpoint.clone().into()).unwrap(),
+                    contact.parameter.compare(endpoint).unwrap(),
                     std::cmp::Ordering::Equal
                 );
                 assert_eq!(contact.kind, kind);
@@ -113,7 +113,10 @@ pub fn planar_spline_incidence_does_not_require_low_degree_root_solving() {
                     std::cmp::Ordering::Equal
                 );
             }
-            let middle = ((bowed.domain().start() + bowed.domain().end()) / Real::from(2)).unwrap();
+            let middle = ((bowed.domain().represented_start().unwrap()
+                + bowed.domain().represented_end().unwrap())
+                / Real::from(2))
+            .unwrap();
             assert_eq!(
                 bowed
                     .point_at(&middle.into())

@@ -269,19 +269,26 @@ pub(super) fn surface(
                 ));
             }
             if profile.kind() == Curve3Kind::Line {
+                let start = profile
+                    .domain()
+                    .represented_start()
+                    .map_err(|error| out.site.error(WriteErrorKind::Geometry(error)))?;
                 let origin = profile
                     .start()
                     .map_err(|error| out.site.error(WriteErrorKind::Geometry(error)))?;
                 let u = profile
-                    .derivative_at(profile.domain().start(), 1)
+                    .derivative_at(start, 1)
                     .map_err(|error| out.site.error(WriteErrorKind::Geometry(error)))?;
                 let (id, mut parameters, reversed) =
                     plane(out, &origin, u.vector(), direction, scale)?;
-                parameters.origin =
-                    Point2::origin() - parameters.u.clone() * profile.domain().start();
+                parameters.origin = Point2::origin() - parameters.u.clone() * start;
                 return Ok((id, parameters, reversed));
             }
             if let Some(arc) = profile.circular_geometry() {
+                let start = profile
+                    .domain()
+                    .represented_start()
+                    .map_err(|error| out.site.error(WriteErrorKind::Geometry(error)))?;
                 let axis = arc.x.cross(arc.y);
                 if order(
                     &axis.cross(direction).norm_squared(),
@@ -306,10 +313,7 @@ pub(super) fn surface(
                     -Real::one()
                 };
                 let parameters = WrittenSurfaceParameters {
-                    origin: Point2::new(
-                        arc.angle_at_start - &sign * profile.domain().start(),
-                        Real::zero(),
-                    ),
+                    origin: Point2::new(arc.angle_at_start - &sign * start, Real::zero()),
                     u: Vector2::new([sign, Real::zero()]),
                     v: Vector2::new([Real::zero(), divide(axial_scale)?]),
                 };

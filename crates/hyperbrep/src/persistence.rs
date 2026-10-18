@@ -21,10 +21,12 @@ mod limits;
 pub use limits::{ArchiveLimitExceeded, ArchiveLimits, ArchiveResource};
 mod parallel;
 use parallel::{RawParallelPcurve, raw_parallel_source};
+mod planar_points;
 mod selection;
+use planar_points::RawPlanarPoint;
 use selection::{GraphEncoder, RawParameter, RawSelectionGraph, RawVertex, SelectionGraph};
 
-const FORMAT_VERSION: u32 = 9;
+const FORMAT_VERSION: u32 = 10;
 
 /// Failure while encoding, decoding, or validating an exact model.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -190,6 +192,18 @@ impl ImportedModel {
                         RawParameterCorrespondence::Affine { scale, offset } => {
                             ParameterCorrespondence::affine(scale, offset)?
                         }
+                        RawParameterCorrespondence::Coordinate {
+                            axis,
+                            scale,
+                            offset,
+                        } => ParameterCorrespondence::coordinate(
+                            match axis {
+                                RawCoordinateAxis::U => hypercurve::Axis2::X,
+                                RawCoordinateAxis::V => hypercurve::Axis2::Y,
+                            },
+                            scale,
+                            offset,
+                        )?,
                         RawParameterCorrespondence::AngularSweep => {
                             ParameterCorrespondence::angular_sweep()
                         }
@@ -353,15 +367,9 @@ impl ArenaModel {
                 let curve = self
                     .curve(edge.curve())
                     .expect("trusted edge references a validated curve");
-                if edge
-                    .domain()
-                    .start()
-                    .compare(&curve.domain().start().clone().into())?
+                if edge.domain().start().compare(curve.domain().start())?
                     != std::cmp::Ordering::Equal
-                    || edge
-                        .domain()
-                        .end()
-                        .compare(&curve.domain().end().clone().into())?
+                    || edge.domain().end().compare(curve.domain().end())?
                         != std::cmp::Ordering::Equal
                 {
                     continue;
@@ -413,13 +421,15 @@ impl ArenaModel {
                             .then_some((edge_use_record, line))
                     })
                     .find(|(_, line)| {
-                        ((line.start().x() - profile.domain().start()).zero_status()
-                            == hyperreal::ZeroKnowledge::Zero
-                            && (line.end().x() - profile.domain().end()).zero_status()
+                        let Some((start, end)) = profile.domain().try_real_endpoints() else {
+                            return false;
+                        };
+                        ((line.start().x() - start).zero_status() == hyperreal::ZeroKnowledge::Zero
+                            && (line.end().x() - end).zero_status()
                                 == hyperreal::ZeroKnowledge::Zero)
-                            || ((line.start().x() - profile.domain().end()).zero_status()
+                            || ((line.start().x() - end).zero_status()
                                 == hyperreal::ZeroKnowledge::Zero
-                                && (line.end().x() - profile.domain().start()).zero_status()
+                                && (line.end().x() - start).zero_status()
                                     == hyperreal::ZeroKnowledge::Zero)
                     })
                 else {
@@ -432,9 +442,9 @@ impl ArenaModel {
                     Direction::Forward => (edge.start(), edge.end()),
                     Direction::Reversed => (edge.end(), edge.start()),
                 };
-                let starts_at_profile_start = (line.start().x() - profile.domain().start())
-                    .zero_status()
-                    == hyperreal::ZeroKnowledge::Zero;
+                let starts_at_profile_start =
+                    (line.start().x() - profile.domain().represented_start()?).zero_status()
+                        == hyperreal::ZeroKnowledge::Zero;
                 let (profile_start, profile_end) = if starts_at_profile_start {
                     (directed_start, directed_end)
                 } else {
@@ -460,6 +470,18 @@ impl ArenaModel {
                                 offset: offset.clone(),
                             }
                         }
+                        ParameterCorrespondence::Coordinate {
+                            axis,
+                            scale,
+                            offset,
+                        } => RawParameterCorrespondence::Coordinate {
+                            axis: match axis {
+                                hypercurve::Axis2::X => RawCoordinateAxis::U,
+                                hypercurve::Axis2::Y => RawCoordinateAxis::V,
+                            },
+                            scale: scale.clone(),
+                            offset: offset.clone(),
+                        },
                         ParameterCorrespondence::AngularSweep => {
                             RawParameterCorrespondence::AngularSweep
                         }
@@ -535,6 +557,11 @@ struct RawModelData {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawCurve3 {
+    Translation {
+        source: Box<RawCurve3>,
+        parameter: RawParameter,
+        displacement: [Real; 3],
+    },
     PlanarImage(Box<RawPlanarCurve3>),
     Line(Box<RawLine3>),
     RationalBezier {
@@ -556,7 +583,7 @@ struct RawPlanarCurve3 {
     origin: [Real; 3],
     u: [Real; 3],
     v: [Real; 3],
-    source_range: [Real; 2],
+    source_chart: [Real; 2],
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -580,6 +607,10 @@ struct RawEllipseArc3 {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawPcurve {
+    Chord {
+        start: Box<RawPlanarPoint>,
+        end: Box<RawPlanarPoint>,
+    },
     QuadraticBezier([[Real; 2]; 3]),
     CubicBezier([[Real; 2]; 4]),
     AnalyticParallel(Box<RawParallelPcurve>),
@@ -633,6 +664,7 @@ fn set_raw_pcurve_start(curve: &mut RawPcurve, start: [Real; 2]) {
         RawPcurve::QuadraticBezier(points) => points[0] = start,
         RawPcurve::CubicBezier(points) => points[0] = start,
         RawPcurve::Nurbs { .. }
+        | RawPcurve::Chord { .. }
         | RawPcurve::SourceRange { .. }
         | RawPcurve::AnalyticParallel(_) => {}
     }
@@ -658,6 +690,7 @@ fn set_raw_pcurve_end(curve: &mut RawPcurve, end: [Real; 2]) {
         RawPcurve::QuadraticBezier(points) => points[2] = end,
         RawPcurve::CubicBezier(points) => points[3] = end,
         RawPcurve::Nurbs { .. }
+        | RawPcurve::Chord { .. }
         | RawPcurve::SourceRange { .. }
         | RawPcurve::AnalyticParallel(_) => {}
     }
@@ -754,9 +787,23 @@ struct RawWire {
     edge_uses: Vec<usize>,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+enum RawCoordinateAxis {
+    U,
+    V,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawParameterCorrespondence {
-    Affine { scale: Real, offset: Real },
+    Coordinate {
+        axis: RawCoordinateAxis,
+        scale: Real,
+        offset: Real,
+    },
+    Affine {
+        scale: Real,
+        offset: Real,
+    },
     AngularSweep,
 }
 
@@ -827,12 +874,23 @@ fn raw_curve3(
     graph: &mut GraphEncoder,
 ) -> Result<RawCurve3, PersistenceError> {
     Ok(match curve {
+        Curve3ExactData::Translation(line) => {
+            let (source, parameter) = line
+                .origin
+                .curve_source()
+                .ok_or(GeometryError::UnrepresentablePoint)?;
+            RawCurve3::Translation {
+                source: Box::new(raw_curve3(source.exact_data(), graph)?),
+                parameter: graph.parameter(parameter)?,
+                displacement: vector_array(&line.displacement),
+            }
+        }
         Curve3ExactData::PlanarImage(image) => RawCurve3::PlanarImage(Box::new(RawPlanarCurve3 {
             source: Box::new(graph.pcurve(&image.source)?),
             origin: point_array(&image.origin),
             u: vector_array(&image.u),
             v: vector_array(&image.v),
-            source_range: [image.source_start, image.source_end],
+            source_chart: [image.source_scale, image.source_offset],
         })),
         Curve3ExactData::Line(data) => RawCurve3::Line(Box::new(RawLine3 {
             start: point_array(&data.start),
@@ -886,21 +944,31 @@ fn raw_curve3(
 
 fn curve3(curve: RawCurve3, graph: &SelectionGraph) -> Result<Curve3, PersistenceError> {
     let data = match curve {
+        RawCurve3::Translation {
+            source,
+            parameter,
+            displacement,
+        } => {
+            return Ok(Curve3::translation(
+                curve3(*source, graph)?.point_at(&graph.parameter(parameter)?)?,
+                Vector3::new(displacement),
+            )?);
+        }
         RawCurve3::PlanarImage(image) => {
             let RawPlanarCurve3 {
                 source,
                 origin,
                 u,
                 v,
-                source_range: [source_start, source_end],
+                source_chart: [source_scale, source_offset],
             } = *image;
             Curve3ExactData::PlanarImage(Box::new(crate::geometry::PlanarCurve3 {
                 source: pcurve(*source, graph)?,
                 origin: point3(origin),
                 u: vector3(u),
                 v: vector3(v),
-                source_start,
-                source_end,
+                source_scale,
+                source_offset,
             }))
         }
         RawCurve3::Line(data) => Curve3ExactData::Line(Box::new(Line3ExactData {
@@ -1244,6 +1312,11 @@ fn shell_id(index: usize) -> ShellId {
 
 fn pcurve(raw: RawPcurve, graph: &SelectionGraph) -> Result<Curve2, PersistenceError> {
     match raw {
+        RawPcurve::Chord { start, end } => Ok(Curve2::try_line(
+            graph.planar_point(*start)?,
+            graph.planar_point(*end)?,
+        )
+        .map_err(GeometryError::from)?),
         RawPcurve::QuadraticBezier(points) => {
             let [a, b, c] = points.map(curve_point2);
             Ok(Curve2::from(hypercurve::QuadraticBezier2::new(a, b, c)))

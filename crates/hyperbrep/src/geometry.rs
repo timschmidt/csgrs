@@ -10,8 +10,8 @@ use hypercurve::{
 use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
-use crate::Parameter;
 use crate::error::{GeometryError, GeometryResult};
+use crate::{Parameter, ParameterRange};
 
 mod analytic;
 mod axial_lines;
@@ -24,6 +24,7 @@ mod planes;
 mod point;
 mod spline;
 mod transform;
+mod translation;
 pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
 pub use conical_revolution::{ConeBranch, ConicalRevolution, ConicalRevolutionChart};
 use curve_plane::{
@@ -39,6 +40,8 @@ use planes::intersect_planes;
 pub use point::{Axis, GeometricPoint3};
 pub use spline::{NurbsCurveGeometry, RationalBezierCurveGeometry};
 pub(crate) use transform::TransformMetric;
+pub(crate) use translation::TranslationCurve3;
+pub use translation::TranslationCurveGeometry;
 
 pub(crate) fn resolve_planar_classification<T>(
     classification: Classification<T>,
@@ -118,6 +121,8 @@ impl ParameterDomain {
 /// Supported exact spatial curve family.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Curve3Kind {
+    /// Straight sweep of a retained point through an authored displacement.
+    Translation,
     /// Exact affine lift of a retained planar curve.
     PlanarImage,
     /// Finite line segment.
@@ -362,13 +367,14 @@ pub struct Curve3 {
 #[derive(Debug)]
 struct Curve3Data {
     geometry: CurveGeometry3,
-    domain: ParameterDomain,
+    domain: ParameterRange,
     bounds: OnceLock<Aabb>,
     projections: OnceLock<Box<point::CurveProjections3>>,
 }
 
 #[derive(Debug)]
 enum CurveGeometry3 {
+    Translation(Box<TranslationCurve3>),
     PlanarImage(Box<PlanarCurve3>),
     Line(Line3),
     RationalBezier(RationalBezier3),
@@ -379,6 +385,7 @@ enum CurveGeometry3 {
 
 #[derive(Clone, Debug)]
 pub(crate) enum Curve3ExactData {
+    Translation(Box<TranslationCurve3>),
     PlanarImage(Box<PlanarCurve3>),
     Line(Box<Line3ExactData>),
     RationalBezier {
@@ -627,11 +634,11 @@ impl Curve3 {
         })
     }
 
-    fn from_parts(geometry: CurveGeometry3, domain: ParameterDomain) -> Self {
+    fn from_parts(geometry: CurveGeometry3, domain: impl Into<ParameterRange>) -> Self {
         Self {
             data: Arc::new(Curve3Data {
                 geometry,
-                domain,
+                domain: domain.into(),
                 bounds: OnceLock::new(),
                 projections: OnceLock::new(),
             }),
@@ -685,14 +692,21 @@ impl Curve3 {
             return false;
         }
         let direction = Real::from(first.direction);
-        let first_offset = &first.angle_at_start - &(direction.clone() * self.domain().start());
-        let second_offset = &second.angle_at_start - &(direction * other.domain().start());
+        let (Some(first_start), Some(second_start)) = (
+            self.domain().start().try_real(),
+            other.domain().start().try_real(),
+        ) else {
+            return false;
+        };
+        let first_offset = &first.angle_at_start - &(direction.clone() * first_start);
+        let second_offset = &second.angle_at_start - &(direction * second_start);
         equal(&first_offset, &second_offset)
     }
 
     /// Returns the curve family.
     pub fn kind(&self) -> Curve3Kind {
         match &self.data.geometry {
+            CurveGeometry3::Translation(_) => Curve3Kind::Translation,
             CurveGeometry3::PlanarImage(_) => Curve3Kind::PlanarImage,
             CurveGeometry3::Line(_) => Curve3Kind::Line,
             CurveGeometry3::RationalBezier(_) => Curve3Kind::RationalBezier,
@@ -762,8 +776,8 @@ impl Curve3 {
                     .control_points
                     .last()
                     .expect("validated NURBS has controls");
-                let domain_start = self.domain().start();
-                let domain_span = self.domain().end() - domain_start;
+                let domain_start = self.domain().represented_start()?;
+                let domain_span = self.domain().represented_end()? - domain_start;
                 for (index, point) in curve.control_points.iter().enumerate() {
                     let greville = curve.knots[(index + 1)..=(index + curve.degree)]
                         .iter()
@@ -781,13 +795,20 @@ impl Curve3 {
             }
             CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
     }
 
     /// Returns the exact public parameter domain.
-    pub fn domain(&self) -> &ParameterDomain {
+    pub fn domain(&self) -> &ParameterRange {
         &self.data.domain
+    }
+
+    pub(crate) fn reversal_pivot(&self) -> Real {
+        self.domain()
+            .try_real_endpoints()
+            .map_or_else(Real::zero, |(start, end)| start + end)
     }
 
     /// Returns conservative exact model-space bounds.
@@ -799,6 +820,7 @@ impl Curve3 {
     pub fn bounds(&self) -> GeometryResult<Aabb> {
         crate::context::strict(|| {
             crate::cache::get_or_try_init(&self.data.bounds, || match &self.data.geometry {
+                CurveGeometry3::Translation(line) => line.bounds(),
                 CurveGeometry3::PlanarImage(image) => image.bounds(),
                 CurveGeometry3::Line(line) => {
                     exact_point_bounds(&[line.start.clone(), line.end.clone()])
@@ -819,7 +841,7 @@ impl Curve3 {
             let axial = axis.clone() * axis.dot(&relative);
             relative - axial
         };
-        let start_radial = radial(&self.evaluate_real(self.domain().start())?);
+        let start_radial = radial(&self.evaluate_real(self.domain().represented_start()?)?);
         if decided_order(compare_reals(
             &start_radial.norm_squared(),
             &Real::zero(),
@@ -828,7 +850,7 @@ impl Curve3 {
         {
             return Ok(false);
         }
-        let end_radial = radial(&self.evaluate_real(self.domain().end())?);
+        let end_radial = radial(&self.evaluate_real(self.domain().represented_end()?)?);
         if decided_order(compare_reals(
             &end_radial.norm_squared(),
             &Real::zero(),
@@ -854,6 +876,7 @@ impl Curve3 {
             CurveGeometry3::Nurbs(curve) => Some(curve.control_points.iter().collect::<Vec<_>>()),
             CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => None,
         };
         if let Some(controls) = controls {
@@ -918,25 +941,30 @@ impl Curve3 {
     /// Native represented-parameter evaluator used by coefficient algorithms.
     pub(crate) fn evaluate_real(&self, parameter: &Real) -> GeometryResult<Point3> {
         crate::context::strict(|| {
-            if !self.domain().contains(parameter)? {
+            if !self.domain().contains_real(parameter)? {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             match &self.data.geometry {
+                CurveGeometry3::Translation(line) => line
+                    .point_at(parameter)?
+                    .try_coordinates()
+                    .cloned()
+                    .ok_or(GeometryError::UnrepresentablePoint),
                 CurveGeometry3::PlanarImage(image) => image.point_at(parameter),
                 CurveGeometry3::Line(line) => {
-                    if parameter == self.domain().start() {
+                    if parameter == self.domain().represented_start()? {
                         return Ok(line.start.clone());
                     }
-                    if parameter == self.domain().end() {
+                    if parameter == self.domain().represented_end()? {
                         return Ok(line.end.clone());
                     }
                     Ok(line.start.lerp(&line.end, parameter))
                 }
                 CurveGeometry3::RationalBezier(curve) => {
-                    if parameter == self.domain().start() {
+                    if parameter == self.domain().represented_start()? {
                         return Ok(curve.control_points[0].clone());
                     }
-                    if parameter == self.domain().end() {
+                    if parameter == self.domain().represented_end()? {
                         return Ok(curve
                             .control_points
                             .last()
@@ -951,7 +979,7 @@ impl Curve3 {
                 CurveGeometry3::Nurbs(curve) => {
                     let span = find_span(
                         parameter,
-                        self.domain(),
+                        &self.domain().represented_domain()?,
                         curve.degree,
                         curve.control_points.len(),
                         &curve.knots,
@@ -964,9 +992,9 @@ impl Curve3 {
                         parameter,
                     )
                 }
-                CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
-                    Ok(evaluate_ellipse_arc(arc, self.domain(), parameter))
-                }
+                CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => Ok(
+                    evaluate_ellipse_arc(arc, &self.domain().represented_domain()?, parameter),
+                ),
             }
         })
     }
@@ -987,10 +1015,17 @@ impl Curve3 {
             if order == 0 {
                 return Err(GeometryError::InvalidDerivativeOrder);
             }
-            if !self.domain().contains(parameter)? {
+            if !self.domain().contains_real(parameter)? {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             let vector = match &self.data.geometry {
+                CurveGeometry3::Translation(line) => {
+                    if order == 1 {
+                        line.displacement.clone()
+                    } else {
+                        Vector3::zeros()
+                    }
+                }
                 CurveGeometry3::PlanarImage(image) => image.derivative_at(parameter, order)?,
                 CurveGeometry3::Line(line) => {
                     if order == 1 {
@@ -1005,7 +1040,7 @@ impl Curve3 {
                 CurveGeometry3::Nurbs(curve) => {
                     let span = find_span(
                         parameter,
-                        self.domain(),
+                        &self.domain().represented_domain()?,
                         curve.degree,
                         curve.control_points.len(),
                         &curve.knots,
@@ -1020,7 +1055,12 @@ impl Curve3 {
                     )?
                 }
                 CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
-                    evaluate_ellipse_arc_derivative(arc, self.domain(), parameter, order)
+                    evaluate_ellipse_arc_derivative(
+                        arc,
+                        &self.domain().represented_domain()?,
+                        parameter,
+                        order,
+                    )
                 }
             };
             Ok(CurveDerivative3 { vector })
@@ -1029,12 +1069,12 @@ impl Curve3 {
 
     /// Evaluates the curve at its exact domain start.
     pub fn start(&self) -> GeometryResult<Point3> {
-        crate::context::strict(|| self.evaluate_real(self.domain().start()))
+        crate::context::strict(|| self.evaluate_real(self.domain().represented_start()?))
     }
 
     /// Evaluates the curve at its exact domain end.
     pub fn end(&self) -> GeometryResult<Point3> {
-        crate::context::strict(|| self.evaluate_real(self.domain().end()))
+        crate::context::strict(|| self.evaluate_real(self.domain().represented_end()?))
     }
 
     pub(crate) fn line_endpoints(&self) -> Option<(&Point3, &Point3)> {
@@ -1044,6 +1084,7 @@ impl Curve3 {
             | CurveGeometry3::Nurbs(_)
             | CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => None,
         }
     }
@@ -1084,12 +1125,14 @@ impl Curve3 {
             }
             CurveGeometry3::RationalBezier(_)
             | CurveGeometry3::Nurbs(_)
+            | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
     }
 
     pub(crate) fn exact_data(&self) -> Curve3ExactData {
         match &self.data.geometry {
+            CurveGeometry3::Translation(line) => Curve3ExactData::Translation(line.clone()),
             CurveGeometry3::PlanarImage(image) => Curve3ExactData::PlanarImage(image.clone()),
             CurveGeometry3::Line(line) => Curve3ExactData::Line(Box::new(Line3ExactData {
                 start: line.start.clone(),
@@ -1113,8 +1156,18 @@ impl Curve3 {
                     y: arc.y.clone(),
                     x_radius: arc.x_radius.clone(),
                     y_radius: arc.y_radius.clone(),
-                    domain_start: self.domain().start().clone(),
-                    domain_end: self.domain().end().clone(),
+                    domain_start: self
+                        .domain()
+                        .start()
+                        .try_real()
+                        .expect("authored conic domain")
+                        .clone(),
+                    domain_end: self
+                        .domain()
+                        .end()
+                        .try_real()
+                        .expect("authored conic domain")
+                        .clone(),
                     angle_at_start: arc.angle_at_start.clone(),
                     direction: arc.direction,
                 }))
@@ -1124,6 +1177,7 @@ impl Curve3 {
 
     pub(crate) fn from_exact_data(data: Curve3ExactData) -> GeometryResult<Self> {
         match data {
+            Curve3ExactData::Translation(line) => Self::translation(line.origin, line.displacement),
             Curve3ExactData::PlanarImage(image) => Self::from_planar_image(*image),
             Curve3ExactData::Line(data) => Self::line(data.start, data.end),
             Curve3ExactData::RationalBezier {
@@ -1189,7 +1243,14 @@ impl Curve3 {
     /// Returns the same geometric image with reversed parameter direction.
     pub fn reversed(&self) -> GeometryResult<Self> {
         crate::context::strict(|| match &self.data.geometry {
-            CurveGeometry3::PlanarImage(image) => image.restricted(&Real::one(), &Real::zero()),
+            CurveGeometry3::Translation(line) => {
+                Self::translation(line.point_at(&Real::one())?, -line.displacement.clone())
+            }
+            CurveGeometry3::PlanarImage(image) => Self::from_planar_image(PlanarCurve3 {
+                source_scale: -&image.source_scale,
+                source_offset: &image.source_offset + &image.source_scale * self.reversal_pivot(),
+                ..(**image).clone()
+            }),
             CurveGeometry3::Line(line) => Self::line(line.end.clone(), line.start.clone()),
             CurveGeometry3::RationalBezier(curve) => {
                 let mut points = curve.control_points.clone();
@@ -1203,7 +1264,8 @@ impl Curve3 {
                 let mut weights = curve.weights.clone();
                 points.reverse();
                 weights.reverse();
-                let domain_sum = self.domain().start() + self.domain().end();
+                let domain_sum =
+                    self.domain().represented_start()? + self.domain().represented_end()?;
                 let knots = curve
                     .knots
                     .iter()
@@ -1213,11 +1275,17 @@ impl Curve3 {
                 Self::nurbs(curve.degree, points, weights, knots)
             }
             CurveGeometry3::CircleArc(arc) => Ok(Self::from_parts(
-                CurveGeometry3::CircleArc(reversed_ellipse_arc(arc, self.domain())),
+                CurveGeometry3::CircleArc(reversed_ellipse_arc(
+                    arc,
+                    &self.domain().represented_domain()?,
+                )),
                 self.domain().clone(),
             )),
             CurveGeometry3::EllipseArc(arc) => Ok(Self::from_parts(
-                CurveGeometry3::EllipseArc(reversed_ellipse_arc(arc, self.domain())),
+                CurveGeometry3::EllipseArc(reversed_ellipse_arc(
+                    arc,
+                    &self.domain().represented_domain()?,
+                )),
                 self.domain().clone(),
             )),
         })
@@ -1229,11 +1297,36 @@ impl Curve3 {
     /// interval; NURBS and conic halves retain their native source intervals.
     pub fn split_at(&self, parameter: &Real) -> GeometryResult<(Self, Self)> {
         crate::context::strict(|| {
-            require_interior_parameter(self.domain(), parameter)?;
+            if self.domain().try_real_endpoints().is_none()
+                && let CurveGeometry3::PlanarImage(image) = &self.data.geometry
+            {
+                let parameter = Parameter::from_real(parameter.clone());
+                if !self.domain().contains(&parameter)? {
+                    return Err(GeometryError::ParameterOutsideDomain);
+                }
+                if parameter.compare(self.domain().start())? == Ordering::Equal
+                    || parameter.compare(self.domain().end())? == Ordering::Equal
+                {
+                    return Err(GeometryError::SplitAtBoundary);
+                }
+                let left = ParameterRange::new(self.domain().start().clone(), parameter.clone())?;
+                let right = ParameterRange::new(parameter, self.domain().end().clone())?;
+                return Ok((
+                    Self::from_planar_image(image.restricted_to(&left)?)?
+                        .retaining_parameterization_of(self),
+                    Self::from_planar_image(image.restricted_to(&right)?)?
+                        .retaining_parameterization_of(self),
+                ));
+            }
+            require_interior_parameter(&self.domain().represented_domain()?, parameter)?;
             match &self.data.geometry {
+                CurveGeometry3::Translation(line) => Ok((
+                    line.restricted(&Real::zero(), parameter)?,
+                    line.restricted(parameter, &Real::one())?,
+                )),
                 CurveGeometry3::PlanarImage(image) => Ok((
-                    image.restricted(&Real::zero(), parameter)?,
-                    image.restricted(parameter, &Real::one())?,
+                    image.restricted(self.domain().represented_start()?, parameter)?,
+                    image.restricted(parameter, self.domain().represented_end()?)?,
                 )),
                 CurveGeometry3::Line(line) => {
                     let split = line.start.lerp(&line.end, parameter);
@@ -1258,16 +1351,24 @@ impl Curve3 {
                     ))
                 }
                 CurveGeometry3::CircleArc(arc) => {
-                    let (left, right) =
-                        split_ellipse_arc(arc, self.domain(), parameter, Curve3Kind::CircleArc)?;
+                    let (left, right) = split_ellipse_arc(
+                        arc,
+                        &self.domain().represented_domain()?,
+                        parameter,
+                        Curve3Kind::CircleArc,
+                    )?;
                     Ok((
                         left.retaining_parameterization_of(self),
                         right.retaining_parameterization_of(self),
                     ))
                 }
                 CurveGeometry3::EllipseArc(arc) => {
-                    let (left, right) =
-                        split_ellipse_arc(arc, self.domain(), parameter, Curve3Kind::EllipseArc)?;
+                    let (left, right) = split_ellipse_arc(
+                        arc,
+                        &self.domain().represented_domain()?,
+                        parameter,
+                        Curve3Kind::EllipseArc,
+                    )?;
                     Ok((
                         left.retaining_parameterization_of(self),
                         right.retaining_parameterization_of(self),
@@ -1288,12 +1389,12 @@ impl Curve3 {
             if decided_order(compare_reals(start, end, crate::STRICT_PREDICATES))? != Ordering::Less
                 || decided_order(compare_reals(
                     start,
-                    self.domain().start(),
+                    self.domain().represented_start()?,
                     crate::STRICT_PREDICATES,
                 ))? == Ordering::Less
                 || decided_order(compare_reals(
                     end,
-                    self.domain().end(),
+                    self.domain().represented_end()?,
                     crate::STRICT_PREDICATES,
                 ))? == Ordering::Greater
             {
@@ -1301,18 +1402,19 @@ impl Curve3 {
             }
             if decided_order(compare_reals(
                 start,
-                self.domain().start(),
+                self.domain().represented_start()?,
                 crate::STRICT_PREDICATES,
             ))? == Ordering::Equal
                 && decided_order(compare_reals(
                     end,
-                    self.domain().end(),
+                    self.domain().represented_end()?,
                     crate::STRICT_PREDICATES,
                 ))? == Ordering::Equal
             {
                 return Ok(self.clone());
             }
             match &self.data.geometry {
+                CurveGeometry3::Translation(line) => line.restricted(start, end),
                 CurveGeometry3::PlanarImage(image) => image.restricted(start, end),
                 CurveGeometry3::Line(_) => {
                     Self::line(self.evaluate_real(start)?, self.evaluate_real(end)?)
@@ -1338,7 +1440,7 @@ impl Curve3 {
                     let mut selected = self.clone();
                     if decided_order(compare_reals(
                         end,
-                        selected.domain().end(),
+                        selected.domain().represented_end()?,
                         crate::STRICT_PREDICATES,
                     ))? == Ordering::Less
                     {
@@ -1346,7 +1448,7 @@ impl Curve3 {
                     }
                     if decided_order(compare_reals(
                         start,
-                        selected.domain().start(),
+                        selected.domain().represented_start()?,
                         crate::STRICT_PREDICATES,
                     ))? == Ordering::Greater
                     {
@@ -1356,7 +1458,11 @@ impl Curve3 {
                 }
                 CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
                     let geometry = EllipseArc3 {
-                        angle_at_start: ellipse_arc_angle(arc, self.domain(), start),
+                        angle_at_start: ellipse_arc_angle(
+                            arc,
+                            &self.domain().represented_domain()?,
+                            start,
+                        ),
                         ..arc.clone()
                     };
                     Ok(Self::from_parts(
@@ -1382,6 +1488,7 @@ impl Curve3 {
     /// remain an explicit unsupported result, never an incomplete finite set.
     pub fn parameters_of(&self, point: &Point3) -> GeometryResult<CurveParameterLocation> {
         crate::context::strict(|| match &self.data.geometry {
+            CurveGeometry3::Translation(_) => Err(GeometryError::UnsupportedParameterLocation),
             CurveGeometry3::PlanarImage(image) => image.parameters_of(point),
             CurveGeometry3::Line(line) => locate_line_parameter(self, line, point),
             CurveGeometry3::RationalBezier(curve) => {
@@ -1404,6 +1511,10 @@ impl Curve3 {
     ) -> GeometryResult<Self> {
         let transform = metric.matrix();
         match &self.data.geometry {
+            CurveGeometry3::Translation(line) => Self::translation(
+                line.origin.transformed(transform)?,
+                transform.transform_direction3(&line.displacement),
+            ),
             CurveGeometry3::PlanarImage(image) => image.transformed(transform),
             CurveGeometry3::Line(line) => Self::line(
                 transform_point(transform, &line.start)?,
@@ -1428,8 +1539,8 @@ impl Curve3 {
                     y,
                     x_radius: &arc.x_radius * &scale,
                     y_radius: &arc.y_radius * &scale,
-                    domain_start: self.domain().start().clone(),
-                    domain_end: self.domain().end().clone(),
+                    domain_start: self.domain().represented_start()?.clone(),
+                    domain_end: self.domain().represented_end()?.clone(),
                     angle_at_start: arc.angle_at_start.clone(),
                     direction: arc.direction,
                 };
@@ -1612,7 +1723,7 @@ pub enum SurfaceParameterDomain {
     /// Every real parameter is accepted.
     Unbounded,
     /// A finite closed exact interval.
-    Closed(ParameterDomain),
+    Closed(ParameterRange),
     /// A periodic parameter with canonical start and positive period.
     Periodic {
         /// Canonical period start.
@@ -1905,7 +2016,7 @@ impl SurfaceIntersectionOperand {
 /// Exact surface-parameter image of a retained intersection curve.
 #[derive(Clone, Debug)]
 pub struct SurfaceIntersectionPcurve {
-    domain: ParameterDomain,
+    domain: ParameterRange,
     source_scale: Real,
     source_offset: Real,
     mapping: SurfaceIntersectionPcurveMapping,
@@ -2239,20 +2350,24 @@ impl SurfaceIntersectionCurve {
     pub fn subcurve(&self, start: &Real, end: &Real) -> GeometryResult<Self> {
         crate::context::strict(|| {
             let curve = self.curve.subcurve(start, end)?;
-            let first_pcurve =
-                self.first_pcurve
-                    .reparameterized_subcurve(start, end, curve.domain())?;
-            let second_pcurve =
-                self.second_pcurve
-                    .reparameterized_subcurve(start, end, curve.domain())?;
+            let first_pcurve = self.first_pcurve.reparameterized_subcurve(
+                start,
+                end,
+                &curve.domain().represented_domain()?,
+            )?;
+            let second_pcurve = self.second_pcurve.reparameterized_subcurve(
+                start,
+                end,
+                &curve.domain().represented_domain()?,
+            )?;
             let retain_start = decided_order(compare_reals(
                 start,
-                self.curve.domain().start(),
+                self.curve.domain().represented_start()?,
                 crate::STRICT_PREDICATES,
             ))? == Ordering::Equal;
             let retain_end = decided_order(compare_reals(
                 end,
-                self.curve.domain().end(),
+                self.curve.domain().represented_end()?,
                 crate::STRICT_PREDICATES,
             ))? == Ordering::Equal;
             Ok(Self {
@@ -2352,9 +2467,9 @@ impl SurfaceIntersectionPcurve {
         )
     }
 
-    fn unsupported(domain: ParameterDomain) -> Self {
+    fn unsupported(domain: impl Into<ParameterRange>) -> Self {
         Self {
-            domain,
+            domain: domain.into(),
             source_scale: Real::one(),
             source_offset: Real::zero(),
             mapping: SurfaceIntersectionPcurveMapping::Unsupported,
@@ -2363,11 +2478,11 @@ impl SurfaceIntersectionPcurve {
 
     fn retained_curve(curve: Curve2) -> GeometryResult<Self> {
         let curve_domain = curve.parameter_domain();
-        let (curve_domain_start, curve_domain_end) = curve_domain
-            .scalar_endpoints()
-            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         Ok(Self {
-            domain: ParameterDomain::new(curve_domain_start.clone(), curve_domain_end.clone())?,
+            domain: ParameterRange::new(
+                Parameter::from_curve(curve_domain.start())?,
+                Parameter::from_curve(curve_domain.end())?,
+            )?,
             source_scale: Real::one(),
             source_offset: Real::zero(),
             mapping: SurfaceIntersectionPcurveMapping::RetainedCurve { curve },
@@ -2412,9 +2527,9 @@ impl SurfaceIntersectionPcurve {
         }
     }
 
-    fn tensor_iso_v(domain: ParameterDomain, constant: Real) -> Self {
+    fn tensor_iso_v(domain: impl Into<ParameterRange>, constant: Real) -> Self {
         Self {
-            domain,
+            domain: domain.into(),
             source_scale: Real::one(),
             source_offset: Real::zero(),
             mapping: SurfaceIntersectionPcurveMapping::TensorIsoV { constant },
@@ -2422,14 +2537,14 @@ impl SurfaceIntersectionPcurve {
     }
 
     fn tensor_iso(
-        domain: ParameterDomain,
+        domain: impl Into<ParameterRange>,
         constant: Real,
         profile_axis: TensorAxis,
         coefficient_scale: Real,
         coefficient_offset: Real,
     ) -> Self {
         Self {
-            domain,
+            domain: domain.into(),
             source_scale: coefficient_scale,
             source_offset: coefficient_offset,
             mapping: match profile_axis {
@@ -2441,7 +2556,7 @@ impl SurfaceIntersectionPcurve {
 
     /// Returns the pcurve's parameter domain, shared exactly with the spatial
     /// intersection curve.
-    pub const fn domain(&self) -> &ParameterDomain {
+    pub const fn domain(&self) -> &ParameterRange {
         &self.domain
     }
 
@@ -2453,7 +2568,7 @@ impl SurfaceIntersectionPcurve {
     /// the retained spatial curve.
     pub fn point_at(&self, parameter: &Real) -> GeometryResult<Point2> {
         crate::context::strict(|| {
-            if !self.domain.contains(parameter)? {
+            if !self.domain.contains_real(parameter)? {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             let source_parameter = &self.source_scale * parameter + &self.source_offset;
@@ -2514,11 +2629,11 @@ impl SurfaceIntersectionPcurve {
     /// authoritative spatial-curve parameterization.
     pub fn subcurve(&self, start: &Real, end: &Real) -> GeometryResult<Self> {
         crate::context::strict(|| {
-            if !self.domain.contains(start)? || !self.domain.contains(end)? {
+            if !self.domain.contains_real(start)? || !self.domain.contains_real(end)? {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             Ok(Self {
-                domain: ParameterDomain::new(start.clone(), end.clone())?,
+                domain: ParameterDomain::new(start.clone(), end.clone())?.into(),
                 source_scale: self.source_scale.clone(),
                 source_offset: self.source_offset.clone(),
                 mapping: self.mapping.clone(),
@@ -2529,9 +2644,12 @@ impl SurfaceIntersectionPcurve {
     /// Returns the same exact parameter-space image with reversed traversal.
     pub fn reversed(&self) -> GeometryResult<Self> {
         crate::context::strict(|| {
-            let domain_sum = self.domain.start() + self.domain.end();
+            let domain_sum = self
+                .domain
+                .try_real_endpoints()
+                .map_or_else(Real::zero, |(a, b)| a + b);
             Ok(Self {
-                domain: self.domain.clone(),
+                domain: self.domain.affine_image(&-Real::one(), &domain_sum)?,
                 source_scale: -self.source_scale.clone(),
                 source_offset: &self.source_scale * domain_sum + &self.source_offset,
                 mapping: self.mapping.clone(),
@@ -2547,8 +2665,37 @@ impl SurfaceIntersectionPcurve {
     /// explicitly unsupported.
     pub fn materialize(&self) -> GeometryResult<MaterializedSurfacePcurve> {
         crate::context::strict(|| {
-            let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
-            let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
+            if let SurfaceIntersectionPcurveMapping::PlaneProjection {
+                spatial,
+                origin,
+                u,
+                v,
+            } = &self.mapping
+                && let CurveGeometry3::PlanarImage(image) = &spatial.data.geometry
+            {
+                let range = self
+                    .domain
+                    .affine_image(&self.source_scale, &self.source_offset)?;
+                let projected = image
+                    .restricted_to(&range)?
+                    .materialize_plane_projection(origin, u, v)?;
+                let SurfacePcurveCorrespondence::Affine { scale, offset } =
+                    projected.correspondence
+                else {
+                    unreachable!("planar projection retains an affine source chart");
+                };
+                return orient_affine_surface_pcurve(
+                    projected.curve,
+                    (scale / &self.source_scale).map_err(GeometryError::Numeric)?,
+                    ((offset - &self.source_offset) / &self.source_scale)
+                        .map_err(GeometryError::Numeric)?,
+                    &self.domain,
+                );
+            }
+            let source_start =
+                &self.source_scale * self.domain.represented_start()? + &self.source_offset;
+            let source_end =
+                &self.source_scale * self.domain.represented_end()? + &self.source_offset;
             let source_order = decided_order(compare_reals(
                 &source_start,
                 &source_end,
@@ -2606,7 +2753,7 @@ impl SurfaceIntersectionPcurve {
                     };
                     materialized_surface_pcurve_from_matching_domains(
                         orient_curve(restricted)?,
-                        &self.domain,
+                        &self.domain.represented_domain()?,
                     )
                 }
                 SurfaceIntersectionPcurveMapping::PlaneProjection {
@@ -2617,15 +2764,6 @@ impl SurfaceIntersectionPcurve {
                 } => {
                     let source_curve =
                         spatial.subcurve(ordered_source_start, ordered_source_end)?;
-                    if let CurveGeometry3::PlanarImage(image) = &source_curve.data.geometry {
-                        return image.materialize_plane_projection(
-                            origin,
-                            u,
-                            v,
-                            &self.domain,
-                            descending,
-                        );
-                    }
                     let curve = orient_curve(
                         project_curve_to_plane_frame(&source_curve, origin, u, v)?
                             .ok_or(GeometryError::UnsupportedIntersection)?,
@@ -2634,12 +2772,15 @@ impl SurfaceIntersectionPcurve {
                         Ok(MaterializedSurfacePcurve {
                             curve,
                             correspondence: SurfacePcurveCorrespondence::AngularSweep {
-                                spatial_start: self.domain.start().clone(),
-                                spatial_end: self.domain.end().clone(),
+                                spatial_start: self.domain.represented_start()?.clone(),
+                                spatial_end: self.domain.represented_end()?.clone(),
                             },
                         })
                     } else {
-                        materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
+                        materialized_surface_pcurve_from_matching_domains(
+                            curve,
+                            &self.domain.represented_domain()?,
+                        )
                     }
                 }
                 SurfaceIntersectionPcurveMapping::LinearPlaneSection { .. } => {
@@ -2664,7 +2805,7 @@ impl SurfaceIntersectionPcurve {
                     }
                     materialized_surface_pcurve_from_matching_domains(
                         concatenate_rational_bezier_spans_as_nurbs(&curves, &boundaries)?,
-                        &self.domain,
+                        &self.domain.represented_domain()?,
                     )
                 }
                 SurfaceIntersectionPcurveMapping::TensorIsoV { constant } => {
@@ -2672,14 +2813,20 @@ impl SurfaceIntersectionPcurve {
                         CurvePoint2::new(compact(ordered_source_start), compact(constant)),
                         CurvePoint2::new(compact(ordered_source_end), compact(constant)),
                     )?))?;
-                    materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
+                    materialized_surface_pcurve_from_matching_domains(
+                        curve,
+                        &self.domain.represented_domain()?,
+                    )
                 }
                 SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
                     let curve = orient_curve(Curve2::from(LineSeg2::try_new(
                         CurvePoint2::new(compact(constant), compact(ordered_source_start)),
                         CurvePoint2::new(compact(constant), compact(ordered_source_end)),
                     )?))?;
-                    materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
+                    materialized_surface_pcurve_from_matching_domains(
+                        curve,
+                        &self.domain.represented_domain()?,
+                    )
                 }
             }
         })
@@ -2691,7 +2838,7 @@ impl SurfaceIntersectionPcurve {
         end: &Real,
         target_domain: &ParameterDomain,
     ) -> GeometryResult<Self> {
-        if !self.domain.contains(start)? || !self.domain.contains(end)? {
+        if !self.domain.contains_real(start)? || !self.domain.contains_real(end)? {
             return Err(GeometryError::ParameterOutsideDomain);
         }
         let source_start = &self.source_scale * start + &self.source_offset;
@@ -2701,7 +2848,7 @@ impl SurfaceIntersectionPcurve {
             ((&source_end - &source_start) / target_span).map_err(GeometryError::Numeric)?;
         let source_offset = source_start - &source_scale * target_domain.start();
         Ok(Self {
-            domain: target_domain.clone(),
+            domain: target_domain.clone().into(),
             source_scale,
             source_offset,
             mapping: self.mapping.clone(),
@@ -2742,8 +2889,9 @@ impl SurfaceIntersectionPcurve {
         else {
             return Ok(None);
         };
-        let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
-        let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
+        let source_start =
+            &self.source_scale * self.domain.represented_start()? + &self.source_offset;
+        let source_end = &self.source_scale * self.domain.represented_end()? + &self.source_offset;
         let descending = decided_order(compare_reals(
             &source_start,
             &source_end,
@@ -2879,6 +3027,42 @@ impl MaterializedSurfacePcurve {
             }
         })
     }
+}
+
+fn orient_affine_surface_pcurve(
+    mut curve: Curve2,
+    mut scale: Real,
+    mut offset: Real,
+    target: &ParameterRange,
+) -> GeometryResult<MaterializedSurfacePcurve> {
+    let (first, last) = curve.parameter_endpoints();
+    let mapped_first = Parameter::from_curve(first)?.affine_image(&scale, &offset)?;
+    let mapped_last = Parameter::from_curve(last)?.affine_image(&scale, &offset)?;
+    if mapped_first.compare(target.end())? == Ordering::Equal
+        && mapped_last.compare(target.start())? == Ordering::Equal
+    {
+        // Authored reversal changes coefficients in a reflected chart;
+        // generated and source-restricted curves keep their existing chart.
+        if curve.geometry().is_some() {
+            let pivot = first
+                .scalar()
+                .ok_or(GeometryError::UnrepresentableParameter)?
+                + last
+                    .scalar()
+                    .ok_or(GeometryError::UnrepresentableParameter)?;
+            offset += &scale * pivot;
+            scale = -scale;
+        }
+        curve = curve.reversed()?;
+    } else if mapped_first.compare(target.start())? != Ordering::Equal
+        || mapped_last.compare(target.end())? != Ordering::Equal
+    {
+        return Err(GeometryError::InvalidParameterDomain);
+    }
+    Ok(MaterializedSurfacePcurve {
+        curve,
+        correspondence: SurfacePcurveCorrespondence::Affine { scale, offset },
+    })
 }
 
 fn materialized_surface_pcurve_from_matching_domains(
@@ -3165,10 +3349,9 @@ impl Surface {
                 }),
                 SurfaceDomain {
                     u: angle_domain(),
-                    v: SurfaceParameterDomain::Closed(ParameterDomain::new(
-                        -half_pi.clone(),
-                        half_pi,
-                    )?),
+                    v: SurfaceParameterDomain::Closed(
+                        ParameterDomain::new(-half_pi.clone(), half_pi)?.into(),
+                    ),
                 },
             ))
         })
@@ -3326,8 +3509,8 @@ impl Surface {
                     homogeneous_controls: OnceLock::new(),
                 }),
                 SurfaceDomain {
-                    u: SurfaceParameterDomain::Closed(ParameterDomain::unit()),
-                    v: SurfaceParameterDomain::Closed(ParameterDomain::unit()),
+                    u: SurfaceParameterDomain::Closed(ParameterRange::unit()),
+                    v: SurfaceParameterDomain::Closed(ParameterRange::unit()),
                 },
             ))
         })
@@ -3365,8 +3548,8 @@ impl Surface {
                     homogeneous_controls: OnceLock::new(),
                 }),
                 SurfaceDomain {
-                    u: SurfaceParameterDomain::Closed(u_domain),
-                    v: SurfaceParameterDomain::Closed(v_domain),
+                    u: SurfaceParameterDomain::Closed(u_domain.into()),
+                    v: SurfaceParameterDomain::Closed(v_domain.into()),
                 },
             ))
         })
@@ -3897,10 +4080,16 @@ impl Surface {
                             surface.control_points[0].len(),
                         ),
                     };
-                    if !domain.contains(constant)? {
+                    if !domain.contains_real(constant)? {
                         return Err(GeometryError::ParameterOutsideDomain);
                     }
-                    let span = find_span(constant, domain, degree, control_count, knots)?;
+                    let span = find_span(
+                        constant,
+                        &domain.represented_domain()?,
+                        degree,
+                        control_count,
+                        knots,
+                    )?;
                     let controls = surface.homogeneous_controls();
                     let iso_controls = match axis {
                         SurfaceIsoAxis::U => (0..controls[0].len())
@@ -4165,7 +4354,7 @@ impl Surface {
             let SurfaceParameterDomain::Closed(domain) = self.domain().u() else {
                 return Err(GeometryError::UnsupportedSubdivision);
             };
-            require_interior_parameter(domain, parameter)?;
+            require_interior_parameter(&domain.represented_domain()?, parameter)?;
             match &self.data.geometry {
                 SurfaceGeometry::RationalBezier(surface) => {
                     split_rational_bezier_surface_u(surface, parameter)
@@ -4182,7 +4371,7 @@ impl Surface {
             let SurfaceParameterDomain::Closed(domain) = self.domain().v() else {
                 return Err(GeometryError::UnsupportedSubdivision);
             };
-            require_interior_parameter(domain, parameter)?;
+            require_interior_parameter(&domain.represented_domain()?, parameter)?;
             match &self.data.geometry {
                 SurfaceGeometry::RationalBezier(surface) => {
                     split_rational_bezier_surface_v(surface, parameter)
@@ -4305,6 +4494,7 @@ impl Surface {
         let rotate_vector =
             |vector: &Vector3| rotate_vector_about_axis(vector, &surface.axis, angle);
         match surface.profile.exact_data() {
+            Curve3ExactData::Translation(_) => Err(GeometryError::UnsupportedSubdivision),
             Curve3ExactData::PlanarImage(mut image) => {
                 image.origin = rotate_point(&image.origin);
                 image.u = rotate_vector(&image.u);
@@ -5210,7 +5400,10 @@ fn ellipse_arc_parameters_at_angle(
     } else {
         &angle - &arc.angle_at_start
     };
-    let result = angular_parameter_lifts(&(curve.domain().start() + delta), curve.domain());
+    let result = angular_parameter_lifts(
+        &(curve.domain().represented_start()? + delta),
+        &curve.domain().represented_domain()?,
+    );
     if !matches!(
         result,
         Err(GeometryError::PredicateUnresolved { .. }
@@ -5225,8 +5418,11 @@ fn ellipse_arc_parameters_at_angle(
     // Only a positive exact certificate replaces the original typed failure.
     let sine = angle.clone().sin();
     let cosine = angle.cos();
-    for endpoint in [curve.domain().start(), curve.domain().end()] {
-        let offset = endpoint - curve.domain().start();
+    for endpoint in [
+        curve.domain().represented_start()?,
+        curve.domain().represented_end()?,
+    ] {
+        let offset = endpoint - curve.domain().represented_start()?;
         let phase = if arc.direction < 0 {
             &arc.angle_at_start - offset
         } else {
@@ -5237,7 +5433,7 @@ fn ellipse_arc_parameters_at_angle(
             && compare_reals(&cosine, &phase.cos(), crate::STRICT_PREDICATES).value()
                 == Some(Ordering::Equal)
         {
-            return angular_parameter_lifts(endpoint, curve.domain());
+            return angular_parameter_lifts(endpoint, &curve.domain().represented_domain()?);
         }
     }
     result
@@ -5332,7 +5528,7 @@ fn surface_axis_contains(
 ) -> GeometryResult<bool> {
     match domain {
         SurfaceParameterDomain::Unbounded | SurfaceParameterDomain::Periodic { .. } => Ok(true),
-        SurfaceParameterDomain::Closed(domain) => domain.contains(parameter),
+        SurfaceParameterDomain::Closed(domain) => domain.contains_real(parameter),
         SurfaceParameterDomain::LowerBounded { start } => Ok(matches!(
             decided_order(compare_reals(parameter, start, crate::STRICT_PREDICATES))?,
             Ordering::Equal | Ordering::Greater
@@ -5563,8 +5759,10 @@ pub(crate) fn project_curve_to_plane_frame(
             }
             let start = project(&curve.start()?)?;
             let end = project(&curve.end()?)?;
-            let tangent_point =
-                data.center.clone() + curve.derivative_at(curve.domain().start(), 1)?.vector();
+            let tangent_point = data.center.clone()
+                + curve
+                    .derivative_at(curve.domain().represented_start()?, 1)?
+                    .vector();
             let projected_tangent_point = project(&tangent_point)?;
             let projected_tangent = (
                 projected_tangent_point.x() - center.x(),
@@ -5581,7 +5779,9 @@ pub(crate) fn project_curve_to_plane_frame(
                 start, end, center, clockwise,
             )?)))
         }
-        Curve3ExactData::EllipseArc(_) | Curve3ExactData::PlanarImage(_) => Ok(None),
+        Curve3ExactData::Translation(_)
+        | Curve3ExactData::EllipseArc(_)
+        | Curve3ExactData::PlanarImage(_) => Ok(None),
     }
 }
 
@@ -5723,29 +5923,29 @@ fn linear_section_pcurve_carriers(
             .map_err(GeometryError::Numeric)?;
         Ok(coefficient_offset + coefficient_scale * normalized)
     };
-    let span = profile.domain().end() - profile.domain().start();
+    let span = profile.domain().represented_end()? - profile.domain().represented_start()?;
     match &profile.data.geometry {
         CurveGeometry3::Line(line) => Ok(Some(vec![MaterializedSurfacePcurve {
             curve: Curve2::from(LineSeg2::try_new(
                 section_parameter_point(
-                    profile.domain().start().clone(),
+                    profile.domain().represented_start()?.clone(),
                     coefficient(&line.start)?,
                     profile_axis,
                 ),
                 section_parameter_point(
-                    profile.domain().end().clone(),
+                    profile.domain().represented_end()?.clone(),
                     coefficient(&line.end)?,
                     profile_axis,
                 ),
             )?),
             correspondence: SurfacePcurveCorrespondence::Affine {
                 scale: span,
-                offset: profile.domain().start().clone(),
+                offset: profile.domain().represented_start()?.clone(),
             },
         }])),
         CurveGeometry3::RationalBezier(curve) => Ok(Some(vec![rational_linear_section_carrier(
             curve,
-            profile.domain().start(),
+            profile.domain().represented_start()?,
             &span,
             &coefficient,
             profile_axis,
@@ -5768,6 +5968,7 @@ fn linear_section_pcurve_carriers(
         }
         CurveGeometry3::CircleArc(_)
         | CurveGeometry3::EllipseArc(_)
+        | CurveGeometry3::Translation(_)
         | CurveGeometry3::PlanarImage(_) => Ok(None),
     }
 }
@@ -6922,7 +7123,9 @@ fn project_revolution_meridian(
         Curve3ExactData::Line(line) => vec![line.start, line.end],
         Curve3ExactData::RationalBezier { control_points, .. }
         | Curve3ExactData::Nurbs { control_points, .. } => control_points,
-        Curve3ExactData::EllipseArc(_) | Curve3ExactData::PlanarImage(_) => {
+        Curve3ExactData::Translation(_)
+        | Curve3ExactData::EllipseArc(_)
+        | Curve3ExactData::PlanarImage(_) => {
             return Err(GeometryError::UnsupportedIntersection);
         }
     };
@@ -7549,6 +7752,7 @@ fn curve_is_strictly_on_one_plane_side(
         }
         CurveGeometry3::CircleArc(_)
         | CurveGeometry3::EllipseArc(_)
+        | CurveGeometry3::Translation(_)
         | CurveGeometry3::PlanarImage(_) => Ok(false),
     }
 }
@@ -7559,8 +7763,8 @@ fn clip_linear_tensor_section(
     coefficient_start: &Real,
     coefficient_end: &Real,
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
-    let profile_start = section.curve.domain().start();
-    let profile_end = section.curve.domain().end();
+    let profile_start = section.curve.domain().represented_start()?;
+    let profile_end = section.curve.domain().represented_end()?;
     let region = tensor_parameter_region(
         profile_axis,
         profile_start,
@@ -8764,7 +8968,7 @@ fn orthonormal_frames_equal(
 }
 
 fn angular_iso_v_pcurve(
-    domain: ParameterDomain,
+    domain: ParameterRange,
     constant: Real,
     reversed: bool,
 ) -> SurfaceIntersectionPcurve {
@@ -9581,9 +9785,9 @@ fn intersect_line_cone(
                 );
             }
             let domain = if start_order == Ordering::Greater {
-                ParameterDomain::new(curve.domain().start().clone(), boundary)?
+                ParameterDomain::new(curve.domain().represented_start()?.clone(), boundary)?
             } else {
-                ParameterDomain::new(boundary, curve.domain().end().clone())?
+                ParameterDomain::new(boundary, curve.domain().represented_end()?.clone())?
             };
             Ok(CurveSurfaceIntersection::Overlap(domain.into()))
         }
@@ -9612,7 +9816,7 @@ fn isolated_line_parameters(
 ) -> GeometryResult<CurveSurfaceIntersection> {
     let mut points = Vec::new();
     for (parameter, kind) in parameters {
-        if curve.domain().contains(&parameter)? {
+        if curve.domain().contains_real(&parameter)? {
             points.push(CurveSurfacePoint {
                 point: curve.evaluate_real(&parameter)?.into(),
                 parameter: parameter.into(),
@@ -10013,6 +10217,7 @@ fn split_ellipse_arc(
         Curve3Kind::Line
         | Curve3Kind::RationalBezier
         | Curve3Kind::Nurbs
+        | Curve3Kind::Translation
         | Curve3Kind::PlanarImage => {
             unreachable!("ellipse split kind")
         }
@@ -10270,14 +10475,14 @@ fn evaluate_tensor_nurbs_homogeneous(
     let v_count = controls.len();
     let u_span = find_span(
         &parameter.x,
-        u_domain,
+        &u_domain.represented_domain()?,
         surface.u_degree,
         u_count,
         &surface.u_knots,
     )?;
     let v_span = find_span(
         &parameter.y,
-        v_domain,
+        &v_domain.represented_domain()?,
         surface.v_degree,
         v_count,
         &surface.v_knots,
@@ -11684,8 +11889,8 @@ mod tests {
             vec![r(0), r(0), r(1), r(2), r(2)],
         )
         .unwrap();
-        assert_eq!(curve.domain().start(), &r(0));
-        assert_eq!(curve.domain().end(), &r(2));
+        assert_eq!(curve.domain().represented_start().unwrap(), &r(0));
+        assert_eq!(curve.domain().represented_end().unwrap(), &r(2));
         assert_points_equal(&curve.evaluate_real(&q(3, 2)).unwrap(), &p(3, 0, 0));
         assert_eq!(
             curve.derivative_at(&q(3, 2), 1).unwrap().vector().0,
@@ -11768,8 +11973,8 @@ mod tests {
             &nurbs.evaluate_real(&q(3, 2)).unwrap(),
         );
         let middle = nurbs.subcurve(&q(1, 2), &q(3, 2)).unwrap();
-        assert_eq!(middle.domain().start(), &q(1, 2));
-        assert_eq!(middle.domain().end(), &q(3, 2));
+        assert_eq!(middle.domain().represented_start().unwrap(), &q(1, 2));
+        assert_eq!(middle.domain().represented_end().unwrap(), &q(3, 2));
         assert_points_equal(
             &middle.evaluate_real(&r(1)).unwrap(),
             &nurbs.evaluate_real(&r(1)).unwrap(),
@@ -12286,11 +12491,21 @@ mod tests {
             panic!("NURBS v domain must be closed");
         };
         assert_eq!(
-            compare_reals(u_domain.end(), &r(2), crate::STRICT_PREDICATES).value(),
+            compare_reals(
+                u_domain.represented_end().unwrap(),
+                &r(2),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(v_domain.start(), &r(1), crate::STRICT_PREDICATES).value(),
+            compare_reals(
+                v_domain.represented_start().unwrap(),
+                &r(1),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let middle = Point2::new(r(1), r(2));
@@ -12831,8 +13046,8 @@ mod tests {
         assert_eq!(fragments.len(), 2);
         for fragment in &fragments {
             for parameter in [
-                fragment.curve().domain().start(),
-                fragment.curve().domain().end(),
+                fragment.curve().domain().represented_start().unwrap(),
+                fragment.curve().domain().represented_end().unwrap(),
             ] {
                 let tensor_parameter = fragment.first_pcurve().point_at(parameter).unwrap();
                 assert_eq!(tensor_parameter.x, r(7));
@@ -13365,8 +13580,8 @@ mod tests {
         else {
             panic!("v-linear NURBS tensor must retain its native graph section");
         };
-        assert_eq!(section.curve().domain().start(), &r(2));
-        assert_eq!(section.curve().domain().end(), &r(5));
+        assert_eq!(section.curve().domain().represented_start().unwrap(), &r(2));
+        assert_eq!(section.curve().domain().represented_end().unwrap(), &r(5));
         assert_eq!(
             section.second_pcurve().point_at(&q(7, 2)).unwrap(),
             Point2::new(q(7, 2), q(17, 2))
@@ -13598,8 +13813,8 @@ mod tests {
         else {
             panic!("rectangle clipping must retain the represented section fragment");
         };
-        assert_eq!(clipped.curve().domain().start(), &r(0));
-        assert_eq!(clipped.curve().domain().end(), &r(1));
+        assert_eq!(clipped.curve().domain().represented_start().unwrap(), &r(0));
+        assert_eq!(clipped.curve().domain().represented_end().unwrap(), &r(1));
         assert_eq!(
             clipped.first_pcurve().point_at(&r(0)).unwrap(),
             Point2::new(r(1), q(1, 2))
@@ -13903,8 +14118,8 @@ mod tests {
         else {
             panic!("weighted bilinear section must retain its represented rectangle clip");
         };
-        assert_eq!(clipped.curve().domain().start(), &r(0));
-        assert_eq!(clipped.curve().domain().end(), &r(1));
+        assert_eq!(clipped.curve().domain().represented_start().unwrap(), &r(0));
+        assert_eq!(clipped.curve().domain().represented_end().unwrap(), &r(1));
         assert_eq!(
             clipped.first_pcurve().point_at(&r(0)).unwrap(),
             Point2::new(r(1), q(1, 7))
@@ -14678,8 +14893,8 @@ mod tests {
         else {
             panic!("single-span NURBS tensor must retain one graph section");
         };
-        assert_eq!(section.curve().domain().start(), &r(2));
-        assert_eq!(section.curve().domain().end(), &r(5));
+        assert_eq!(section.curve().domain().represented_start().unwrap(), &r(2));
+        assert_eq!(section.curve().domain().represented_end().unwrap(), &r(5));
         let materialized = section.first_pcurve().materialize().unwrap();
         assert_eq!(
             materialized.correspondence().affine_coefficients(),
@@ -14745,8 +14960,8 @@ mod tests {
         else {
             panic!("multi-span NURBS tensor must retain one graph section");
         };
-        assert_eq!(section.curve().domain().start(), &r(2));
-        assert_eq!(section.curve().domain().end(), &r(5));
+        assert_eq!(section.curve().domain().represented_start().unwrap(), &r(2));
+        assert_eq!(section.curve().domain().represented_end().unwrap(), &r(5));
         let materialized = section.first_pcurve().materialize().unwrap();
         assert_eq!(materialized.curve().family(), CurveFamily2::Nurbs);
         assert_eq!(

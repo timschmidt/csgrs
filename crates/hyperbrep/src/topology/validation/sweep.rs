@@ -200,8 +200,8 @@ impl ArenaModelBuilder {
             .expect("grouped curve sweep has connectors");
         let reference_point = self.vertex_ref(reference)?.represented_point()?.clone();
         let path = connector_by_lower[&reference].clone();
-        if !real_values_equal(path.domain().start(), &Real::zero())?
-            || !real_values_equal(path.domain().end(), &Real::one())?
+        if !real_values_equal(path.domain().represented_start()?, &Real::zero())?
+            || !real_values_equal(path.domain().represented_end()?, &Real::one())?
             || !certified_affine_sweep_progress(&path, &lower_u.cross(&lower_v))?
         {
             return Ok(None);
@@ -527,8 +527,8 @@ impl ArenaModelBuilder {
                 .collect::<Result<Vec<_>, BuildError>>()?;
             if !self.exact_intervals_tile(
                 &edge_intervals,
-                curve.domain().start(),
-                curve.domain().end(),
+                curve.domain().represented_start()?,
+                curve.domain().represented_end()?,
             )? {
                 continue;
             }
@@ -601,8 +601,8 @@ impl ArenaModelBuilder {
             }
             let lower_point = self.vertex_ref(lowers[0])?.represented_point()?;
             let upper_point = self.vertex_ref(uppers[0])?.represented_point()?;
-            let curve_start = curve.evaluate_real(curve.domain().start())?;
-            let curve_end = curve.evaluate_real(curve.domain().end())?;
+            let curve_start = curve.evaluate_real(curve.domain().represented_start()?)?;
+            let curve_end = curve.evaluate_real(curve.domain().represented_end()?)?;
             let curve = if points_equal(&curve_start, lower_point)?
                 && points_equal(&curve_end, upper_point)?
             {
@@ -991,8 +991,8 @@ impl ArenaModelBuilder {
             .expect("curve sweep cap has vertices");
         let reference_point = self.vertex_ref(reference)?.represented_point()?.clone();
         let path = connector_by_lower[&reference].clone();
-        if !real_values_equal(path.domain().start(), &Real::zero())?
-            || !real_values_equal(path.domain().end(), &Real::one())?
+        if !real_values_equal(path.domain().represented_start()?, &Real::zero())?
+            || !real_values_equal(path.domain().represented_end()?, &Real::one())?
             || !certified_affine_sweep_progress(&path, &lower_u.cross(&lower_v))?
         {
             return Ok(None);

@@ -297,6 +297,11 @@ pub(super) fn rational_bezier_weights_proportional(
 
 pub(super) fn translated_curve(curve: &Curve3, offset: &Vector3) -> Result<Curve3, BuildError> {
     match curve.exact_data() {
+        Curve3ExactData::Translation(line) => Ok(Curve3::translation(
+            line.origin
+                .transformed(&Matrix4::affine_translation(offset.0.clone()))?,
+            line.displacement,
+        )?),
         Curve3ExactData::PlanarImage(mut image) => {
             image.origin = image.origin + offset;
             Ok(Curve3::from_planar_image(*image)?)
@@ -350,7 +355,7 @@ pub(super) fn extrusion_constant_area_scale(
     }
     Ok(Some(
         profile
-            .derivative_at(profile.domain().start(), 1)?
+            .derivative_at(profile.domain().represented_start()?, 1)?
             .vector()
             .cross(direction)
             .norm_squared()
@@ -365,8 +370,8 @@ pub(super) fn certified_monotone_line_curve_image(curve: &Curve3) -> Result<bool
         | Curve3ExactData::Nurbs { control_points, .. } => control_points,
         _ => return Ok(false),
     };
-    let start = curve.evaluate_real(curve.domain().start())?;
-    let end = curve.evaluate_real(curve.domain().end())?;
+    let start = curve.evaluate_real(curve.domain().represented_start()?)?;
+    let end = curve.evaluate_real(curve.domain().represented_end()?)?;
     if !points_equal(
         control_points
             .first()
@@ -436,8 +441,8 @@ pub(super) fn certified_monotone_planar_extrusion_image(
         | Curve3ExactData::Nurbs { control_points, .. } => control_points,
         _ => return Ok(false),
     };
-    let start = curve.evaluate_real(curve.domain().start())?;
-    let end = curve.evaluate_real(curve.domain().end())?;
+    let start = curve.evaluate_real(curve.domain().represented_start()?)?;
+    let end = curve.evaluate_real(curve.domain().represented_end()?)?;
     if !points_equal(
         control_points
             .first()
@@ -1495,12 +1500,16 @@ pub(super) fn curve_parameterizations_equal(
     expected: &Curve3,
 ) -> Result<bool, BuildError> {
     if actual.kind() != expected.kind()
-        || !real_values_equal(actual.domain().start(), expected.domain().start())?
-        || !real_values_equal(actual.domain().end(), expected.domain().end())?
+        || actual.domain().start().compare(expected.domain().start())? != std::cmp::Ordering::Equal
+        || actual.domain().end().compare(expected.domain().end())? != std::cmp::Ordering::Equal
     {
         return Ok(false);
     }
     match (actual.exact_data(), expected.exact_data()) {
+        (Curve3ExactData::Translation(actual), Curve3ExactData::Translation(expected)) => {
+            Ok(actual.origin.coincides_with(&expected.origin)?
+                && vectors_equal(&actual.displacement, &expected.displacement)?)
+        }
         (Curve3ExactData::PlanarImage(actual), Curve3ExactData::PlanarImage(expected)) => actual
             .parameterization_equals(&expected)
             .map_err(Into::into),
@@ -1649,6 +1658,7 @@ pub(super) fn split_parameter_correspondence(
     direction: Direction,
 ) -> Result<ParameterCorrespondence, BuildError> {
     match source {
+        ParameterCorrespondence::Coordinate { .. } => Ok(source.clone()),
         ParameterCorrespondence::AngularSweep => Ok(ParameterCorrespondence::AngularSweep),
         ParameterCorrespondence::Affine { scale, offset } => {
             let (edge_start, edge_end) = match direction {
@@ -2233,12 +2243,22 @@ pub(crate) fn compare_curve3_exact_data(
         Curve3ExactData::EllipseArc(data) if data.circle => 3,
         Curve3ExactData::EllipseArc(_) => 4,
         Curve3ExactData::PlanarImage(_) => 5,
+        Curve3ExactData::Translation(_) => 6,
     };
     let family = rank(left).cmp(&rank(right));
     if family != std::cmp::Ordering::Equal {
         return Ok(family);
     }
     match (left, right) {
+        (Curve3ExactData::Translation(left), Curve3ExactData::Translation(right)) => {
+            for axis in [crate::Axis::X, crate::Axis::Y, crate::Axis::Z] {
+                let order = left.origin.compare_coordinate(&right.origin, axis)?;
+                if order != std::cmp::Ordering::Equal {
+                    return Ok(order);
+                }
+            }
+            compare_vector3(&left.displacement, &right.displacement)
+        }
         (Curve3ExactData::PlanarImage(left), Curve3ExactData::PlanarImage(right)) => {
             let order = exact_point_order(&left.origin, &right.origin)?;
             if order != std::cmp::Ordering::Equal {
@@ -2251,8 +2271,8 @@ pub(crate) fn compare_curve3_exact_data(
                 }
             }
             for (a, b) in [
-                (&left.source_start, &right.source_start),
-                (&left.source_end, &right.source_end),
+                (&left.source_scale, &right.source_scale),
+                (&left.source_offset, &right.source_offset),
             ] {
                 let order = decided_model_order(compare_reals(a, b, crate::STRICT_PREDICATES))?;
                 if order != std::cmp::Ordering::Equal {

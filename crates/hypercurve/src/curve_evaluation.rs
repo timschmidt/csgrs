@@ -262,6 +262,48 @@ impl Curve2 {
         if parameter.as_bezier_parameter().is_none() && !parameter.is_retained_scalar() {
             return Err(evaluation_error(family, CurveError::InvalidCurveParameter));
         }
+        if let Some(CurveGeometry2::Line(line)) = self.geometry()
+            && let Some(form) = parameter.affine_form_source()
+        {
+            let strict = policy.strict_counterpart();
+            let [a, b, c] = form.coefficients();
+            let (dx, dy) = line.delta();
+            // An inverse affine coordinate plus complete support incidence
+            // proves that evaluating this line returns the original point.
+            // Retain that point before unrelated coordinate fields are built.
+            // A form with merely matching numeric bounds is insufficient.
+            if crate::classify::is_zero(
+                &(Real::dot2_refs([a, b], [&dx, &dy]) - Real::one()),
+                &strict,
+            ) == Some(true)
+                && crate::classify::is_zero(
+                    &(Real::dot2_refs([a, b], [line.start().x(), line.start().y()]) + c),
+                    &strict,
+                ) == Some(true)
+                && matches!(
+                    crate::bezier_offset::point_affine_form_order_to_real(
+                        form.source(),
+                        &(-&dy),
+                        &dx,
+                        &(-&dy * line.start().x() + &dx * line.start().y()),
+                        &strict,
+                    )
+                    .map_err(|cause| evaluation_error(family, cause))?,
+                    Classification::Decided(Ordering::Equal)
+                )
+            {
+                let in_domain = decided(
+                    CurveParameterDomain2::new(self.parameter_domain(), None)
+                        .contains_finite_parameter(parameter, &strict)
+                        .map_err(|cause| evaluation_error(family, cause))?,
+                    family,
+                )?;
+                if !in_domain {
+                    return Err(evaluation_error(family, CurveError::InvalidCurveParameter));
+                }
+                return Ok(form.source().clone());
+            }
+        }
         let fragments =
             self.native_bezier_fragments_for_operation(policy, CurveOperation2::Evaluation)?;
         for (fragment_index, fragment) in fragments.iter().enumerate() {
@@ -344,7 +386,7 @@ fn validate_rational_point(
     }
 }
 
-pub(super) fn rational_point(
+pub(crate) fn rational_point(
     source: &RationalBezier2,
     parameter: &CurveParameter2,
     family: CurveFamily2,

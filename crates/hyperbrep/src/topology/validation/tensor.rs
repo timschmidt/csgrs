@@ -610,7 +610,7 @@ impl ArenaModelBuilder {
             )
         };
         let complete = surface.iso_curve(axis, constant)?;
-        if !complete.domain().contains(lower)? || !complete.domain().contains(upper)? {
+        if !complete.domain().contains_real(lower)? || !complete.domain().contains_real(upper)? {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
         let (source_start, source_end) = match edge_use.direction {

@@ -28,10 +28,10 @@ pub(super) fn axial_support_traces(
         }
         let a = trace
             .pcurve(operand)
-            .point_at(trace.curve().domain().start())?;
+            .point_at(trace.curve().domain().represented_start()?)?;
         let b = trace
             .pcurve(operand)
-            .point_at(trace.curve().domain().end())?;
+            .point_at(trace.curve().domain().represented_end()?)?;
         if exact_order(&a.x, &b.x)? != Ordering::Equal {
             result.push(trace);
             continue;
@@ -95,8 +95,8 @@ pub(super) fn disjoint_iso_traces(
         if !pcurve.is_iso_parameter_line() {
             return Ok(None);
         }
-        let a = pcurve.point_at(trace.curve().domain().start())?;
-        let b = pcurve.point_at(trace.curve().domain().end())?;
+        let a = pcurve.point_at(trace.curve().domain().represented_start()?)?;
+        let b = pcurve.point_at(trace.curve().domain().represented_end()?)?;
         if exact_order(&a.x, &b.x)? == Ordering::Equal {
             Ok(Some((
                 true,
@@ -123,13 +123,15 @@ pub(super) fn disjoint_iso_traces(
         upper: &Real,
     ) -> Result<SurfaceIntersectionCurve, GeometryError> {
         let domain = trace.curve().domain();
-        let a = trace.pcurve(operand).point_at(domain.start())?;
-        let b = trace.pcurve(operand).point_at(domain.end())?;
+        let a = trace
+            .pcurve(operand)
+            .point_at(domain.represented_start()?)?;
+        let b = trace.pcurve(operand).point_at(domain.represented_end()?)?;
         let (a, b) = if u_constant { (a.y, b.y) } else { (a.x, b.x) };
-        let scale =
-            ((domain.end() - domain.start()) / (&b - &a)).map_err(GeometryError::Numeric)?;
-        let first = domain.start() + (lower - &a) * &scale;
-        let second = domain.start() + (upper - &a) * scale;
+        let scale = ((domain.represented_end()? - domain.represented_start()?) / (&b - &a))
+            .map_err(GeometryError::Numeric)?;
+        let first = domain.represented_start()? + (lower - &a) * &scale;
+        let second = domain.represented_start()? + (upper - &a) * scale;
         trace.subcurve(&exact_min(&first, &second)?, &exact_max(&first, &second)?)
     }
     let mut result = Vec::<SurfaceIntersectionCurve>::new();
@@ -198,8 +200,8 @@ pub(super) fn periodic_face_trace_lifts(
             return Err(GeometryError::PlanarClassificationUnresolved(reason));
         }
     };
-    let start = pcurve.point_at(intersection.curve().domain().start())?;
-    let end = pcurve.point_at(intersection.curve().domain().end())?;
+    let start = pcurve.point_at(intersection.curve().domain().represented_start()?)?;
+    let end = pcurve.point_at(intersection.curve().domain().represented_end()?)?;
     let u = periodic_offsets(
         surface.domain().u(),
         &start.x,

@@ -84,12 +84,22 @@ impl ArenaModel {
             let mut split_parameters = ordered
                 .iter()
                 .map(|trace| {
-                    vec![
-                        trace.intersection.curve().domain().start().clone(),
-                        trace.intersection.curve().domain().end().clone(),
-                    ]
+                    Ok(vec![
+                        trace
+                            .intersection
+                            .curve()
+                            .domain()
+                            .represented_start()?
+                            .clone(),
+                        trace
+                            .intersection
+                            .curve()
+                            .domain()
+                            .represented_end()?
+                            .clone(),
+                    ])
                 })
-                .collect::<Vec<_>>();
+                .collect::<Result<Vec<_>, GeometryError>>()?;
             let materialized = ordered
                 .iter()
                 .map(|trace| trace.intersection.pcurve(operand).materialize())
@@ -130,7 +140,7 @@ impl ArenaModel {
                             .intersection
                             .curve()
                             .domain()
-                            .contains(&first_spatial)?
+                            .contains_real(&first_spatial)?
                         {
                             return Err(GeometryError::UnsupportedIntersection.into());
                         }
@@ -248,7 +258,8 @@ impl ArenaModel {
                         }
                     }
                     if candidates.len() > 1 {
-                        let midpoint = ((curve.domain().start() + curve.domain().end())
+                        let midpoint = ((curve.domain().represented_start()?
+                            + curve.domain().represented_end()?)
                             / Real::from(2))
                         .map_err(GeometryError::Numeric)?;
                         let parameter = segment.pcurve(operand).point_at(&midpoint)?;
@@ -768,7 +779,7 @@ impl ArenaModel {
                 start: bridge.start_vertex,
                 end: bridge.end_vertex,
                 curve: curve_id,
-                domain: (bridge.curve.domain().clone()).into(),
+                domain: bridge.curve.domain().clone(),
                 endpoint_certificate: true,
             });
             let forward_pcurve = PcurveId::from_index(data.pcurves.len())

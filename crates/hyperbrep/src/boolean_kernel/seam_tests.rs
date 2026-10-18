@@ -51,7 +51,8 @@ fn partial_circle_dedup_uses_complete_anchored_map() {
     assert_eq!(result.len(), 1);
     assert_eq!(
         exact_order(
-            &(result[0].curve().domain().end() - result[0].curve().domain().start()),
+            &(result[0].curve().domain().represented_end().unwrap()
+                - result[0].curve().domain().represented_start().unwrap()),
             &Real::tau()
         )
         .unwrap(),
@@ -313,7 +314,8 @@ fn complete_planar_circle_trace_union_handles_reflected_and_redundant_charts() {
     assert_eq!(result.len(), 1);
     assert_eq!(
         compare_reals(
-            &(result[0].curve().domain().end() - result[0].curve().domain().start()),
+            &(result[0].curve().domain().represented_end().unwrap()
+                - result[0].curve().domain().represented_start().unwrap()),
             &Real::tau(),
             crate::STRICT_PREDICATES,
         )
@@ -400,7 +402,8 @@ fn native_circle_trace_union_requires_complete_coverage_in_actual_charts() {
     assert_eq!(result.len(), 1);
     assert_eq!(
         compare_reals(
-            &(result[0].curve().domain().end() - result[0].curve().domain().start()),
+            &(result[0].curve().domain().represented_end().unwrap()
+                - result[0].curve().domain().represented_start().unwrap()),
             &Real::tau(),
             crate::STRICT_PREDICATES
         )
@@ -428,7 +431,8 @@ fn native_circle_trace_union_requires_complete_coverage_in_actual_charts() {
     assert!(exact_edge_curve_equal(result[0].curve(), &upper, false).unwrap());
     assert_eq!(
         exact_order(
-            &(result[0].curve().domain().end() - result[0].curve().domain().start()),
+            &(result[0].curve().domain().represented_end().unwrap()
+                - result[0].curve().domain().represented_start().unwrap()),
             &Real::pi()
         )
         .unwrap(),
@@ -467,8 +471,8 @@ fn periodic_iso_lifts_retain_images_across_distant_signed_charts() {
         for (actual, expected) in lifts.iter().zip(&baseline) {
             assert!(actual.curve().shares_parameterization(expected.curve()));
             for parameter in [
-                actual.curve().domain().start(),
-                actual.curve().domain().end(),
+                actual.curve().domain().represented_start().unwrap(),
+                actual.curve().domain().represented_end().unwrap(),
             ] {
                 let a = actual.first_pcurve().point_at(parameter).unwrap();
                 let b = expected.first_pcurve().point_at(parameter).unwrap();

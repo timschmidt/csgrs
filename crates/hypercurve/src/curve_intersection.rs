@@ -2619,10 +2619,11 @@ impl Curve2 {
     ///
     /// Each span replays its exact incidence equations; roots remain
     /// represented values or certified isolators, and no parameter is
-    /// rounded. Distinct visits of the same point are all reported. The
-    /// query point must have represented coordinates; a retained algebraic
-    /// point or a generated carrier without a rational span evaluator reports
-    /// an unsupported blocker rather than an empty result.
+    /// rounded. Distinct visits of the same point are all reported.
+    /// Retained points on generated straight chords reuse the chord's exact
+    /// incidence and finite-order proofs. Other retained-point queries without
+    /// an applicable incidence authority report an unsupported blocker rather
+    /// than an empty result.
     pub fn point_locations(
         &self,
         point: &CurvePoint2,
@@ -2648,7 +2649,33 @@ impl Curve2 {
         let blocked =
             |reason| ExactCurveError::blocked(CurveOperation2::Intersection, self.family(), reason);
         let Some(point) = point.coordinates() else {
-            return Err(blocked(UncertaintyReason::Unsupported));
+            let spans = self.source_spans(policy, CurveOperation2::Intersection)?;
+            let mut locations = Vec::new();
+            for (span_index, span) in spans.iter().enumerate() {
+                let crate::curve_support::CurveSupport2::Line(chord) =
+                    crate::curve_support::CurveSupport2::from_fragment(&span.fragment)
+                else {
+                    return Err(blocked(UncertaintyReason::Unsupported));
+                };
+                let parameter = ExactCurveError::decided(
+                    CurveOperation2::Intersection,
+                    chord.point_parameter(point, policy).map_err(|cause| {
+                        ExactCurveError::invalid(
+                            CurveOperation2::Intersection,
+                            self.family(),
+                            cause,
+                        )
+                    })?,
+                )?;
+                if let Some(parameter) = parameter {
+                    locations.push(CurveLocation2::new(
+                        span_index,
+                        span.chart(),
+                        CurveParameter2::from_algebraic_chord(parameter),
+                    ));
+                }
+            }
+            return Ok(CurvePointLocations2::Locations(locations));
         };
         let spans = match self.span_point_locations(point, CurveOperation2::Intersection, policy)? {
             Classification::Decided(Some(locations)) => locations,

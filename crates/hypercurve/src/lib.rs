@@ -47,6 +47,7 @@ mod curve_path_intersection;
 mod curve_point;
 mod curve_region_boolean;
 mod curve_region_trim;
+mod curve_scalar_chart;
 mod curve_string;
 mod curve_support;
 mod direction;
@@ -192,7 +193,7 @@ pub use curve_path_intersection::{
     CurvePathIntersectionTopology2, CurvePathSplit2,
 };
 pub(crate) use curve_point::CurvePointData2;
-pub use curve_point::{CurvePoint2, CurvePointAffineForm2};
+pub use curve_point::{CurvePoint2, CurvePointAffineForm2, CurvePointDefinition2};
 pub use curve_region_boolean::{
     CurveRegionBooleanOperand2, CurveRegionBooleanResults2, CurveRegionCarrier2,
     CurveRegionIntersectionBlocker2, CurveRegionIntersectionContact2,
@@ -202,6 +203,7 @@ pub use curve_region_trim::{
     CurvePathRegionTrim2, CurvePathRegionTrimFragment2, CurveRegionBoundaryContact2,
     CurveRegionBoundaryKind2, CurveRegionTrimFragment2,
 };
+pub use curve_scalar_chart::CurveScalarChart2;
 pub use curve_string::{
     CurveString2, CurveStringEndpoint2, CurveStringIntersection, CurveStringLinkKind2,
     CurveStringTrimPoint2,

@@ -338,17 +338,27 @@ impl Curve3 {
     /// # Ok::<(), hyperbrep::GeometryError>(())
     /// ```
     pub fn point_at(&self, parameter: &Parameter) -> GeometryResult<GeometricPoint3> {
-        if let Some(value) = parameter.try_real() {
+        if let CurveGeometry3::Translation(line) = &self.data.geometry {
+            return crate::context::strict(|| {
+                if !self.domain().contains(parameter)? {
+                    return Err(GeometryError::ParameterOutsideDomain);
+                }
+                line.point_at(
+                    parameter
+                        .try_real()
+                        .ok_or(GeometryError::UnsupportedSelectedEvaluation)?,
+                )
+            });
+        }
+        if let Some(value) = parameter.try_real()
+            && !matches!(self.data.geometry, CurveGeometry3::PlanarImage(_))
+        {
             return self
                 .evaluate_real(value)
                 .map(GeometricPoint3::from_coordinates);
         }
         crate::context::strict(|| {
-            if parameter.compare(&Parameter::from_real(self.domain().start().clone()))?
-                == Ordering::Less
-                || parameter.compare(&Parameter::from_real(self.domain().end().clone()))?
-                    == Ordering::Greater
-            {
+            if !self.domain().contains(parameter)? {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             if matches!(
@@ -358,10 +368,18 @@ impl Curve3 {
                 return Err(GeometryError::UnsupportedSelectedEvaluation);
             }
             let projections = if let CurveGeometry3::PlanarImage(image) = &self.data.geometry {
-                let mapped = parameter.affine_image(
-                    &(&image.source_end - &image.source_start),
-                    &image.source_start,
-                )?;
+                let mapped = parameter.affine_image(&image.source_scale, &image.source_offset)?;
+                if let Some(value) = mapped.try_real() {
+                    // Preserve the represented evaluator fast path where its
+                    // owner provides coordinates; a retained point is equally valid.
+                    match super::represented_curve_point(&image.source, value) {
+                        Ok(point) => {
+                            return Ok(GeometricPoint3::from_coordinates(image.lift(&point)));
+                        }
+                        Err(GeometryError::UnsupportedPcurveContour) => {}
+                        Err(error) => return Err(error),
+                    }
+                }
                 PointProjections3::Planar(image.source.point_at(&mapped.curve_parameter())?)
             } else {
                 PointProjections3::default()
@@ -416,6 +434,7 @@ impl Curve3 {
             )?,
             CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => {
                 return Err(GeometryError::UnsupportedSelectedEvaluation);
             }

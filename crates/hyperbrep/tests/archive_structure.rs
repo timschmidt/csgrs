@@ -345,16 +345,21 @@ fn every_arena_record_is_charged_before_payload_decoding() {
 #[test]
 fn version_admission_is_independent_of_field_order_and_rejects_ambiguity() {
     let limits = ArchiveLimits::default();
-    for raw in [
-        r#"{"version":8,"curves":["obsolete record"]}"#,
-        r#"{"curves":["obsolete record"],"version":8}"#,
+    for (raw, version) in [
+        (r#"{"version":8,"curves":["obsolete record"]}"#, 8),
+        (r#"{"curves":["obsolete record"],"version":8}"#, 8),
+        (r#"{"version":9,"curves":["obsolete record"]}"#, 9),
+        (r#"{"curves":["obsolete record"],"version":9}"#, 9),
     ] {
         assert_eq!(
             RawModel::from_json(raw, &limits).unwrap_err(),
-            PersistenceError::UnsupportedVersion(8)
+            PersistenceError::UnsupportedVersion(version)
         );
     }
     for raw in [
+        r#"{"version":10,"version":10}"#,
+        r#"{"version":10,"version":9}"#,
+        r#"{"version":9,"version":10}"#,
         r#"{"version":9,"version":9}"#,
         r#"{"version":9,"version":8}"#,
         r#"{"version":8,"version":9}"#,
@@ -369,8 +374,9 @@ fn version_admission_is_independent_of_field_order_and_rejects_ambiguity() {
     let canonical = raw.to_string();
     // The independent Value serializer orders keys lexically (version late).
     // Our encoder writes version first; both must admit the same exact model.
-    let first = format!("{{\"version\":9,{}", &canonical[1..]);
-    let first = first.replacen(",\"version\":9", "", 1);
+    let version = &raw["version"];
+    let first = format!("{{\"version\":{version},{}", &canonical[1..]);
+    let first = first.replacen(&format!(",\"version\":{version}"), "", 1);
     for input in [&canonical, &first] {
         let model = RawModel::from_json(input, &limits)
             .unwrap()

@@ -7,9 +7,7 @@ impl BezierAnalyticParallelPoint2 {
     /// The original source evaluation, without a replacement tangent frame,
     /// tangent displacement or translation. Only certified constructions can
     /// supply identities that will later be replayed under a strict policy.
-    pub(in crate::bezier_offset) fn native_parallel_evaluation(
-        &self,
-    ) -> Option<(&BezierParallel2, CurveParameter2)> {
+    pub(crate) fn native_parallel_evaluation(&self) -> Option<(&BezierParallel2, CurveParameter2)> {
         if !CurveContext::STRICT.accepts_retained_policy(self.data.policy)
             || self.data.frame_tangent.is_some()
             || self.data.tangent_distance.zero_status() != ZeroKnowledge::Zero

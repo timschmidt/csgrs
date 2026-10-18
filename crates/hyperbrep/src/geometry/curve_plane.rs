@@ -131,7 +131,7 @@ pub(super) fn intersect_planar_image_plane(
     let c = normal.dot(&(&image.origin - &plane.origin));
     // A stored definition alone does not prove that a signed-weight source has
     // no poles. Certify the consumed interval before publishing even containment.
-    let source = image.finite_source()?;
+    let source = &image.source;
     let bounds = source.bounds()?;
     let a_zero = is_zero(&a)?;
     let b_zero = is_zero(&b)?;
@@ -173,13 +173,12 @@ pub(super) fn intersect_planar_image_plane(
             }
         });
     }
-    let inverse = (Real::one() / (&image.source_end - &image.source_start))
-        .map_err(GeometryError::Numeric)?;
-    let offset = -&image.source_start * &inverse;
+    let inverse = (Real::one() / &image.source_scale).map_err(GeometryError::Numeric)?;
+    let offset = -&image.source_offset * &inverse;
     let transport = |parameter: &hypercurve::CurveParameter2| {
         Parameter::from_curve(parameter)?.affine_image(&inverse, &offset)
     };
-    let domain = ParameterRange::from(curve.domain());
+    let domain = curve.domain();
     let mut points = Vec::new();
     let mut overlaps = Vec::new();
     let mut derivative_image = None;
@@ -371,7 +370,7 @@ fn assemble(
     }
     if ranges.len() == 1 && isolated.is_empty() {
         let range = ranges.pop().expect("one normalized range");
-        let domain = ParameterRange::from(curve.domain());
+        let domain = curve.domain();
         return Ok(
             if range.start().compare(domain.start())? == Ordering::Equal
                 && range.end().compare(domain.end())? == Ordering::Equal

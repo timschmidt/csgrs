@@ -30,6 +30,27 @@ impl CurvePoint2 {
 }
 
 impl CurvePointAffineForm2 {
+    /// Retains this affine value as a parameter in its existing selected field.
+    ///
+    /// No coordinate elimination or independent root reconstruction is used.
+    /// Authored constants remain authored; other values retain their defining
+    /// field and its selected sources. Unsupported fields fail explicitly.
+    pub fn parameter(&self) -> ExactCurveResult<crate::CurveParameter2> {
+        resolve(CurveOperation2::Evaluation, || {
+            crate::policy::resolve_certified_operation(
+                &crate::policy::principal_context(),
+                |policy| {
+                    crate::bezier_offset::point_affine_form_parameter(
+                        &self.source,
+                        &self.coefficients,
+                        policy,
+                    )
+                },
+            )
+            .map(crate::CurveOutcome::into_value)
+        })
+    }
+
     /// Borrows the complete correlated source point.
     pub const fn source(&self) -> &CurvePoint2 {
         &self.source

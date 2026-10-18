@@ -192,7 +192,15 @@ impl FaceSurface {
         } else {
             (
                 -scale,
-                curve.domain().start() + curve.domain().end() - offset,
+                curve
+                    .domain()
+                    .represented_start()
+                    .map_err(|e| site.error(ErrorKind::Geometry(e)))?
+                    + curve
+                        .domain()
+                        .represented_end()
+                        .map_err(|e| site.error(ErrorKind::Geometry(e)))?
+                    - offset,
             )
         };
         let correspondence = ParameterCorrespondence::affine(scale, offset)
@@ -294,12 +302,16 @@ impl FaceSurface {
         let correspondence = if matches!(segment, Segment2::Arc(_)) {
             ParameterCorrespondence::angular_sweep()
         } else {
-            let domain = edge
-                .circle
-                .as_ref()
-                .map(|circle| circle.domain.clone())
-                .or_else(|| edge.spline.as_ref().map(|curve| curve.domain().clone()))
-                .unwrap_or_else(ParameterDomain::unit);
+            let domain = if let Some(circle) = &edge.circle {
+                circle.domain.clone()
+            } else if let Some(curve) = &edge.spline {
+                curve
+                    .domain()
+                    .represented_domain()
+                    .map_err(|e| site.error(ErrorKind::Geometry(e)))?
+            } else {
+                ParameterDomain::unit()
+            };
             ParameterCorrespondence::affine(
                 (domain.end() - domain.start()) * direction,
                 if forward {

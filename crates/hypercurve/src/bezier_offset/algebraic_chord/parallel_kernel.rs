@@ -78,6 +78,7 @@ impl BezierAlgebraicChord2 {
                     if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
                         match parameter.data.identity.as_deref() {
                             None => eprintln!("retained tangent identity: none"),
+                            Some(BezierRecursiveProjectiveParameterIdentity2::AffineForm(_)) => eprintln!("retained tangent identity: affine form"),
                             Some(BezierRecursiveProjectiveParameterIdentity2::Line(_)) => {
                                 eprintln!("retained tangent identity: line")
                             }

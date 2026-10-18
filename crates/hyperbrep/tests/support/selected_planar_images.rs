@@ -417,7 +417,7 @@ pub fn selected_planar_archives_reject_forged_sources_and_recover() {
                 .unwrap();
             match mode {
                 0 => image["origin"][2] = json!(Real::one()),
-                1 => image["source_range"][1] = json!(q(1, 2)),
+                1 => image["source_chart"][0] = json!(q(-1, 2)),
                 _ => image["v"] = image["u"].clone(),
             }
         } else {

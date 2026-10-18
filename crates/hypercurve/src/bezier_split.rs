@@ -352,6 +352,23 @@ impl CurveParameter2 {
             })
     }
 
+    /// Applies an authored affine chart while retaining the selected field.
+    ///
+    /// This does not promote a selected fiber or recursive field value into an
+    /// independent scalar root. Point-ordered geometric parameters admit the
+    /// identity map; other maps require a scalar chart from their owning curve.
+    pub fn affine_image(&self, scale: &Real, offset: &Real) -> crate::ExactCurveResult<Self> {
+        if scale == &Real::one() && offset.zero_status() == hyperreal::ZeroKnowledge::Zero {
+            return Ok(self.clone());
+        }
+        let operation = crate::CurveOperation2::Evaluation;
+        crate::policy::resolve_certified_operation(&crate::policy::principal_context(), |policy| {
+            self.affine_image_unbounded(scale, offset, policy)
+        })
+        .map_err(|cause| crate::ExactCurveError::invalid_unattributed(operation, cause))
+        .and_then(|outcome| crate::ExactCurveError::decided(operation, outcome.into_value()))
+    }
+
     /// [`Self::compare`] under an explicit predicate policy.
     pub(crate) fn compare_with_policy(
         &self,

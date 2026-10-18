@@ -9,6 +9,8 @@
 //! local relationships as they are staged, and [`ModelBuilder::finish`]
 //! publishes an immutable [`Model`] only after global ownership checks pass.
 
+// Retained spatial points add another geometry layer to rustdoc auto-trait traversal.
+#![recursion_limit = "256"]
 #![warn(missing_docs)]
 
 mod cache;
@@ -55,6 +57,7 @@ pub use geometry::{
     SurfaceIntersectionOperand, SurfaceIntersectionParameterRay, SurfaceIntersectionPcurve,
     SurfaceIntersectionRay, SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePartials,
     SurfacePcurveCorrespondence, SurfaceSurfaceIntersection, TorusGeometry,
+    TranslationCurveGeometry,
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};

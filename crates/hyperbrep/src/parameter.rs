@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 
-use hypercurve::BezierParameter2;
+use hypercurve::{BezierParameter2, CurveParameter2};
 use hyperlimit::{PredicateOutcome, compare_reals};
 
 use crate::{GeometryError, GeometryResult, Real};
@@ -23,14 +23,14 @@ use crate::{GeometryError, GeometryResult, Real};
 /// typed blockers remain explicit. Native archives retain selected root graphs.
 #[derive(Clone, Debug)]
 pub struct Parameter {
-    value: BezierParameter2,
+    value: CurveParameter2,
 }
 
 impl Parameter {
     /// Retains an authored exact scalar without conversion.
     pub fn from_real(value: Real) -> Self {
         Self {
-            value: BezierParameter2::Exact(value),
+            value: value.into(),
         }
     }
 
@@ -58,28 +58,30 @@ impl Parameter {
                     }
                 };
             }
-            Ok(self.value.cmp_by_refinement(&other.value)?)
+            Ok(self.value.compare(&other.value)?)
         })
     }
 
     pub(crate) fn from_bezier(value: BezierParameter2) -> Self {
-        Self { value }
+        Self {
+            value: value.into(),
+        }
     }
 
     pub(crate) fn from_curve(value: &hypercurve::CurveParameter2) -> GeometryResult<Self> {
-        value
-            .as_bezier_parameter()
-            .cloned()
-            .map(Self::from_bezier)
-            .ok_or(GeometryError::UnsupportedPcurveContour)
+        Ok(Self {
+            value: value.clone(),
+        })
     }
 
     pub(crate) fn curve_parameter(&self) -> hypercurve::CurveParameter2 {
-        self.value.clone().into()
+        self.value.clone()
     }
 
     pub(crate) fn affine_image(&self, scale: &Real, offset: &Real) -> GeometryResult<Self> {
-        Ok(Self::from_bezier(self.value.affine_image(scale, offset)?))
+        Ok(Self {
+            value: self.value.affine_image(scale, offset)?,
+        })
     }
 }
 
@@ -134,24 +136,41 @@ impl ParameterRange {
             && parameter.compare(&self.end)? != Ordering::Greater)
     }
 
+    pub(crate) fn contains_real(&self, parameter: &Real) -> GeometryResult<bool> {
+        self.contains(&Parameter::from_real(parameter.clone()))
+    }
+
+    pub(crate) fn affine_image(&self, scale: &Real, offset: &Real) -> GeometryResult<Self> {
+        let mut start = self.start.affine_image(scale, offset)?;
+        let mut end = self.end.affine_image(scale, offset)?;
+        if start.compare(&end)? == Ordering::Greater {
+            std::mem::swap(&mut start, &mut end);
+        }
+        Self::new(start, end)
+    }
+
     /// Borrows both endpoints when stored scalar views are available.
     pub fn try_real_endpoints(&self) -> Option<(&Real, &Real)> {
         Some((self.start.try_real()?, self.end.try_real()?))
     }
 
-    pub(crate) fn represented_start(&self) -> GeometryResult<&Real> {
+    /// Borrows the lower endpoint when a stored authored scalar is available.
+    pub fn represented_start(&self) -> GeometryResult<&Real> {
         self.start
             .try_real()
             .ok_or(GeometryError::UnrepresentableParameter)
     }
 
-    pub(crate) fn represented_end(&self) -> GeometryResult<&Real> {
+    /// Borrows the upper endpoint when a stored authored scalar is available.
+    pub fn represented_end(&self) -> GeometryResult<&Real> {
         self.end
             .try_real()
             .ok_or(GeometryError::UnrepresentableParameter)
     }
 
-    pub(crate) fn represented_domain(&self) -> GeometryResult<crate::ParameterDomain> {
+    /// Materializes the authored interval view without solving or approximating roots.
+    /// An unavailable view does not invalidate this retained range.
+    pub fn represented_domain(&self) -> GeometryResult<crate::ParameterDomain> {
         crate::ParameterDomain::new(
             self.represented_start()?.clone(),
             self.represented_end()?.clone(),

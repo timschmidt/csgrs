@@ -35,7 +35,7 @@ pub(super) fn locate_line_parameter(
         }
     }
     let parameter = parameter.ok_or(GeometryError::DegenerateLine)?;
-    if !curve.domain().contains(&parameter)? {
+    if !curve.domain().contains_real(&parameter)? {
         return Ok(CurveParameterLocation::None);
     }
     let parameter_axis = parameter_axis.expect("a line parameter has a source axis");
@@ -207,19 +207,12 @@ pub(super) fn locate_ellipse_arc_parameters(
         endpoints.push(curve.domain().start().clone());
     }
     if point3_equal(&curve.end()?, point, crate::STRICT_PREDICATES).value() == Some(true)
-        && (endpoints.is_empty()
-            || decided_order(compare_reals(
-                &endpoints[0],
-                curve.domain().end(),
-                crate::STRICT_PREDICATES,
-            ))? != Ordering::Equal)
+        && (endpoints.is_empty() || endpoints[0].compare(curve.domain().end())? != Ordering::Equal)
     {
         endpoints.push(curve.domain().end().clone());
     }
     if !endpoints.is_empty() {
-        return Ok(CurveParameterLocation::Parameters(
-            endpoints.into_iter().map(Parameter::from_real).collect(),
-        ));
+        return Ok(CurveParameterLocation::Parameters(endpoints));
     }
 
     let relative = point - &arc.center;

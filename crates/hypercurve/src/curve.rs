@@ -1,7 +1,7 @@
 //! Top-level exact curve carriers.
 
 #[path = "curve_evaluation.rs"]
-mod curve_evaluation;
+pub(crate) mod curve_evaluation;
 
 #[path = "curve_injectivity.rs"]
 mod curve_injectivity;

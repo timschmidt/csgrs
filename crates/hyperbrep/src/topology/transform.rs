@@ -75,7 +75,9 @@ impl ArenaModel {
                 },
                 pcurve,
                 parameter_correspondence: if reflected {
-                    edge_use.parameter_correspondence.reversed_pcurve(source)?
+                    edge_use
+                        .parameter_correspondence
+                        .reflected_and_reversed_pcurve(source, &surface.reflection_sum())?
                 } else {
                     edge_use.parameter_correspondence.clone()
                 },
@@ -206,7 +208,11 @@ impl ArenaModel {
                     self.data
                         .edge_uses
                         .iter()
-                        .map(|edge_use| {
+                        .enumerate()
+                        .map(|(index, edge_use)| {
+                            let face = self.data.wire_face[self.data.edge_use_wire[index].index()];
+                            let surface =
+                                &self.data.surfaces[self.data.faces[face.index()].surface.index()];
                             let pcurve = &self.data.pcurves[edge_use.pcurve.index()];
                             Ok::<_, GeometryError>(EdgeUse {
                                 edge: edge_use.edge,
@@ -214,7 +220,10 @@ impl ArenaModel {
                                 pcurve: edge_use.pcurve,
                                 parameter_correspondence: edge_use
                                     .parameter_correspondence
-                                    .reversed_pcurve(pcurve)?,
+                                    .reflected_and_reversed_pcurve(
+                                        pcurve,
+                                        &surface.reflection_sum(),
+                                    )?,
                                 image_certificate: edge_use.image_certificate,
                             })
                         })

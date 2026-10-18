@@ -3888,7 +3888,7 @@ impl BezierParameterRange2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        match start.cmp_by_interval_with_policy(&end, policy)? {
+        match start.cmp_by_refinement_with_policy(&end, policy)? {
             Classification::Decided(Ordering::Equal) => Err(CurveError::InvalidBezierRange),
             Classification::Decided(Ordering::Less | Ordering::Greater) => {
                 Ok(Classification::Decided(Self { start, end }))

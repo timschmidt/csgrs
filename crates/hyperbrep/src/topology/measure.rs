@@ -174,8 +174,8 @@ impl ArenaModel {
                 };
                 let angular_span = &u_values[1] - &u_values[0];
                 let line_image_area = || -> Result<Real, QueryError> {
-                    let start = profile.evaluate_real(profile.domain().start())?;
-                    let end = profile.evaluate_real(profile.domain().end())?;
+                    let start = profile.evaluate_real(profile.domain().represented_start()?)?;
+                    let end = profile.evaluate_real(profile.domain().represented_end()?)?;
                     let start_radial = radial_at(&start);
                     let end_radial = radial_at(&end);
                     if decided_model_order(compare_reals(
@@ -217,7 +217,8 @@ impl ArenaModel {
                         line_image_area()
                     }
                     Curve3ExactData::EllipseArc(data) if data.circle => {
-                        let start_point = profile.evaluate_real(profile.domain().start())?;
+                        let start_point =
+                            profile.evaluate_real(profile.domain().represented_start()?)?;
                         let start_radial = radial_at(&start_point);
                         let start_radius = start_radial
                             .norm_squared()
@@ -230,16 +231,17 @@ impl ArenaModel {
                         let y_radial = radial_unit.dot(&data.y);
                         let start_angle = &data.angle_at_start
                             + Real::from(data.direction)
-                                * (profile.domain().start() - &data.domain_start);
+                                * (profile.domain().represented_start()? - &data.domain_start);
                         let end_angle = &data.angle_at_start
                             + Real::from(data.direction)
-                                * (profile.domain().end() - &data.domain_start);
+                                * (profile.domain().represented_end()? - &data.domain_start);
                         let direction = Real::from(data.direction);
                         let integral_cos =
                             &direction * (end_angle.clone().sin() - start_angle.clone().sin());
                         let integral_sin =
                             direction * (start_angle.clone().cos() - end_angle.clone().cos());
-                        let parameter_span = profile.domain().end() - profile.domain().start();
+                        let parameter_span = profile.domain().represented_end()?
+                            - profile.domain().represented_start()?;
                         let radial_integral = center_radial * parameter_span
                             + &data.x_radius * (x_radial * integral_cos + y_radial * integral_sin);
                         Ok(angular_span * data.x_radius * radial_integral)
@@ -318,14 +320,14 @@ impl ArenaModel {
         let rectangle_double_area = Real::from(2) * (&u_max - &u_min) * (&v_max - &v_min);
         if !real_values_equal(parameter_double_area, &rectangle_double_area)
             .map_err(build_error_geometry)?
-            || !profile.domain().contains(&u_min)?
-            || !profile.domain().contains(&u_max)?
+            || !profile.domain().contains_real(&u_min)?
+            || !profile.domain().contains_real(&u_max)?
         {
             return Err(GeometryError::UnsupportedMeasurement.into());
         }
         let restricted = profile.subcurve(&u_min, &u_max)?;
-        let start = restricted.evaluate_real(restricted.domain().start())?;
-        let end = restricted.evaluate_real(restricted.domain().end())?;
+        let start = restricted.evaluate_real(restricted.domain().represented_start()?)?;
+        let end = restricted.evaluate_real(restricted.domain().represented_end()?)?;
         let swept_area = (&end - &start)
             .cross(direction)
             .norm_squared()
@@ -685,10 +687,22 @@ impl ArenaModel {
                         .ok_or(GeometryError::UnsupportedMeasurement)?
                         .abs();
                 }
-                let path_start = sweep.path.evaluate_real(sweep.path.domain().start())?;
-                let path_end = sweep.path.evaluate_real(sweep.path.domain().end())?;
-                let u = Vector3::from(sweep.u_path.evaluate_real(sweep.u_path.domain().start())?);
-                let v = Vector3::from(sweep.v_path.evaluate_real(sweep.v_path.domain().start())?);
+                let path_start = sweep
+                    .path
+                    .evaluate_real(sweep.path.domain().represented_start()?)?;
+                let path_end = sweep
+                    .path
+                    .evaluate_real(sweep.path.domain().represented_end()?)?;
+                let u = Vector3::from(
+                    sweep
+                        .u_path
+                        .evaluate_real(sweep.u_path.domain().represented_start()?)?,
+                );
+                let v = Vector3::from(
+                    sweep
+                        .v_path
+                        .evaluate_real(sweep.v_path.domain().represented_start()?)?,
+                );
                 let progress = u.cross(&v).dot(&(path_end - path_start)).abs();
                 return Ok(area * progress * &sweep.area_scale_integral);
             }

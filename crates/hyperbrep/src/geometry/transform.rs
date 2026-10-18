@@ -155,9 +155,7 @@ impl Surface {
             SurfaceGeometry::Nurbs(surface) => {
                 &surface.u_knots[0] + &surface.u_knots[surface.u_knots.len() - 1]
             }
-            SurfaceGeometry::Extrusion(surface) => {
-                surface.profile.domain().start() + surface.profile.domain().end()
-            }
+            SurfaceGeometry::Extrusion(surface) => surface.profile.reversal_pivot(),
             _ => Real::zero(),
         }
     }

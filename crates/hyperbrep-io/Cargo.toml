@@ -17,6 +17,9 @@ hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = fal
 hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
 num = { version = "0.4.3", features = ["num-bigint"] }
 
+[dev-dependencies]
+serde_json = "1.0.149"
+
 [[bench]]
 name = "part21"
 harness = false

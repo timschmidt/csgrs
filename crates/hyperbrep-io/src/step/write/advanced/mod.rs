@@ -207,8 +207,12 @@ impl<'a> Body<'a> {
                         GeometryError::UnrepresentableParameter,
                     ))
                 })?;
+                let start = curve
+                    .domain()
+                    .represented_start()
+                    .map_err(|error| site.error(WriteErrorKind::Geometry(error)))?;
                 let angle = |parameter: &Real| {
-                    let delta = parameter - curve.domain().start();
+                    let delta = parameter - start;
                     if circle.increasing_angle {
                         circle.angle_at_start + delta
                     } else {

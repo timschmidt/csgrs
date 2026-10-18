@@ -7,7 +7,7 @@ use super::PersistenceError;
 /// Caller-selected bounds checked before exact scalar/geometry deserialization.
 ///
 /// Syntax limits count the borrowed input, including unknown fields. Record
-/// limits inspect version 9 metadata without decoding coordinate values.
+/// limits inspect version 10 metadata without decoding coordinate values.
 /// They do not bound scalar arithmetic, allocations during scalar
 /// reconstruction, geometry validation, elapsed time, or native stack usage.
 /// Increasing a limit permits retry without changing exact geometry semantics.

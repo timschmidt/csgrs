@@ -23,6 +23,7 @@ impl ArenaModelBuilder {
                     if !matches!(
                         self.curve_ref(edge.curve)?.kind(),
                         Curve3Kind::Line
+                            | Curve3Kind::Translation
                             | Curve3Kind::CircleArc
                             | Curve3Kind::EllipseArc
                             | Curve3Kind::RationalBezier
@@ -108,25 +109,22 @@ impl ArenaModelBuilder {
                     .expect("certified cap group has a manifold boundary");
                 let first_vertices = self.boundary_loop_vertex_set(&first_boundary)?;
                 let second_vertices = self.boundary_loop_vertex_set(&second_boundary)?;
-                let cross_edge = self
-                    .shell_edge_set(faces)?
+                let first_edges = self.boundary_loop_edge_set(&first_boundary)?;
+                let second_edges = self.boundary_loop_edge_set(&second_boundary)?;
+                let paths = self
+                    .prism_cross_paths(
+                        faces,
+                        &first_vertices,
+                        &second_vertices,
+                        &first_edges,
+                        &second_edges,
+                    )?
+                    .ok_or(BuildError::UnsupportedSolidShell(shell))?;
+                let extrusion = paths
                     .into_iter()
-                    .find(|edge_id| {
-                        let edge = &self.edges[edge_id.index()];
-                        (first_vertices.contains(&edge.start)
-                            && second_vertices.contains(&edge.end))
-                            || (first_vertices.contains(&edge.end)
-                                && second_vertices.contains(&edge.start))
-                    })
-                    .expect("certified cap pair has cross edges");
-                let edge = self.edge_ref(cross_edge)?;
-                let (first_vertex, second_vertex) = if first_vertices.contains(&edge.start) {
-                    (edge.start, edge.end)
-                } else {
-                    (edge.end, edge.start)
-                };
-                let extrusion = self.vertex_ref(second_vertex)?.represented_point()?
-                    - self.vertex_ref(first_vertex)?.represented_point()?;
+                    .next()
+                    .ok_or(BuildError::UnsupportedSolidShell(shell))?
+                    .displacement;
                 let determinant = u.dot(&v.cross(&extrusion));
                 if decided_model_order(compare_reals(
                     &determinant,

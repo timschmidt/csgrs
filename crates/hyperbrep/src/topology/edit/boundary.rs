@@ -128,7 +128,7 @@ impl ArenaModel {
         let start = builder.vertex(curve.start()?.into())?;
         let end = builder.vertex(curve.end()?.into())?;
         let curve_id = builder.curve(curve.clone())?;
-        let edge = builder.edge(start, end, curve_id, curve.domain().clone().into())?;
+        let edge = builder.edge(start, end, curve_id, curve.domain().clone())?;
         let pcurve = builder.pcurve(pcurve)?;
         let correspondence = match materialized.correspondence() {
             SurfacePcurveCorrespondence::Affine { scale, offset } => {

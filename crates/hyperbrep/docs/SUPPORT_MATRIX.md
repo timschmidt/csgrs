@@ -66,7 +66,8 @@ covered. See the [operation-scope contract](ARCHITECTURE.md#operation-scopes).
 Procedural analytic-parallel pcurves replay quadratic/cubic/homogeneous rational
 sources, signed distance, selected parameters and traversal. The spatial
 `PlanarImage` carrier retains that source in an injective affine plane frame.
-Its unit chart maps to represented directed source endpoints. Native scalar
+Represented endpoint intervals use a unit spatial chart; selected intervals
+retain a signed source chart with exact `ParameterRange` endpoints. Native scalar
 queries and inverse location reuse the planar owner. Selected point queries
 retain that owner's evidence for exact affine comparisons, conservative bounds,
 transforms and native replay; absence of scalar coordinates is an unavailable
@@ -74,7 +75,8 @@ view. See the [selected-image admission](evidence/2026-10-18-selected-planar-ima
 
 | Family | Evaluate / derivatives | Bounds | Parameter location | Reverse / split | Persistence |
 | --- | --- | --- | --- | --- | --- |
-| Planar image | Represented or retained selected point; owner-supported represented-parameter derivatives (first order for analytic parallels) | Conservative lifted source or point bound | Plane membership plus exact source inverse query and chart filtering | Exact represented chart restriction / reversal; selected topology edge split | Exact for admitted pcurve sources and selected points/trims |
+| Planar image | Represented or retained selected point, including selected finite-domain endpoints; owner-supported represented-parameter derivatives (first order for analytic parallels) | Conservative lifted finite source or point bound | Plane membership plus exact source inverse query and chart filtering | Exact represented restriction / reversal; selected topology edge split | Exact for admitted pcurve sources, source charts and selected points/trims |
+| Translation of retained point | Authored parameter retains the original point; constant first derivative | Conservative union of endpoint bounds | Unsupported | Exact reversal and authored-parameter split | Exact retained origin and authored displacement |
 | Finite line | Exact, arbitrary positive derivative order | Exact | Certified | Exact | Exact |
 | Circular arc | Exact angle semantics | Conservative exact | Certified, including seams | Exact | Exact |
 | Elliptic arc | Exact angle semantics | Conservative exact | Certified | Exact | Exact |
@@ -84,11 +86,11 @@ view. See the [selected-image admission](evidence/2026-10-18-selected-planar-ima
 Planar-image archive sources include lines, circular arcs, quadratic/cubic
 polynomials, rational quadratic/general Beziers, NURBS, analytic parallels and
 admitted source restrictions. Polynomial B-spline source archives remain typed
-unsupported; builders retain their existing exact NURBS promotion. New tags
-preserve polynomial families without changing prior encodings. Finite plane
+unsupported; builders retain their existing exact NURBS promotion. Version 10
+stores explicit source-chart coefficients and retained point definitions. Finite plane
 contacts delegate to the planar owner after proving finiteness on the consumed
 source interval, including represented restrictions of signed-weight sources.
-General carrier intersections, selected carrier chart endpoints, closed planar-image
+General carrier intersections, independently selected axial translation parameters, closed planar-image
 edges, general revolution certificates, and canonical ordering of unlike
 procedural sources remain typed frontiers. Extrusion inverse queries are exact
 when the retained source plane is transverse to the extrusion direction.
@@ -110,12 +112,15 @@ forms through Hypercurve. Scalar parameters expose stored coordinates;
 selected conic angular evaluation returns `UnsupportedSelectedEvaluation`.
 
 Native coefficient derivatives/subdivision still require stored
-parameters/coordinates. Archive version 9 retains selected geometry graphs. Topology vertices and edge trims now retain selected
+parameters/coordinates. `Curve3::domain`, closed surface domains and contact-pcurve
+domains use `ParameterRange`; coefficient consumers request fallible represented
+views. Archive version 10 retains selected geometry graphs, correlated point
+definitions and straight translations of retained origins. Topology vertices and edge trims retain selected
 images and parameters; affine pcurve transfers and exact edge splits preserve
 them. A remaining scalar-only path returns `UnrepresentableParameter` or
 `UnrepresentablePoint`. Selected sheet fixtures, cuboid edge subdivisions and
 cylinder axial subdivisions independently replay. General selected solid
-recertification and bounded decoding remain open. See the
+recertification and complete resource bounds for decoding remain open. See the
 [archive contract](SELECTED_ARCHIVE.md). See the
 [parameter contract](ARCHITECTURE.md#retained-inverse-parameters) and
 [spatial point contract](ARCHITECTURE.md#retained-spatial-points).
@@ -711,8 +716,15 @@ rational-Bézier parameters or accumulate equivalent expression trees.
 Selected parallel-cap splits retain the complete planar source and parameter
 mapping, replay without scalar endpoint reconstruction, and continue through
 supported same-profile slab cuts and reunion. The [selected-image admission](evidence/2026-10-18-selected-planar-images/README.md)
-records the finite domain and its independent set checks. Constructing a new
-planar-image carrier with selected chart endpoints remains unsupported.
+records the finite domain and its independent set checks. The
+[selected procedural-profile extension](evidence/2026-10-18-selected-procedural-profiles/README.md)
+also constructs finite planar-image carriers with selected chart endpoints and
+extrudes normalized selected procedural regions. It retains correlated UV
+corners and coordinate correspondences on extrusion sides. Straight cross-cap
+chains admit authored axial splits alongside selected profile splits, cold
+replay, affine reflection/shear, holes/components and repeated supported slab
+operations. General selected surface fields and arbitrary curved Boolean
+closure remain open; exact native persistence does not establish STEP encoding.
 
 Selected source restrictions preserve their parameter charts through repeated
 splits and affine transforms, including reflection. Validation checks actual
@@ -720,7 +732,7 @@ affine endpoint mappings and retains the source's complete image/wire proofs
 under exact subdivision. Arbitrary edits invalidate those proofs. Cuboid and
 cylinder selected splits retain classification and volume certificates;
 the [qualification cases](evidence/2026-10-15-selected-topology/README.md)
-also exercise rational and NURBS profile sheets. Version 9 archive regressions
+also exercise rational and NURBS profile sheets. Native archive regressions
 now replay those selected sheet boundaries, reflected rational planar trims,
 and further splits without scalar reconstruction. Independent selected solid
 replay additionally covers every cuboid edge alone or together, shear/reflection,

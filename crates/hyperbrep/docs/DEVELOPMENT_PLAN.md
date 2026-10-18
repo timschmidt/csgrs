@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
 Status: implementation blueprint. Updated 2026-10-18 for upstream
-`540074a8c05ccc676d7c70b8f0093f98804b81d9` and concurrent development ownership.
+`dbe99e3cc` and concurrent development ownership.
 
 The [planar lift increment](evidence/2026-10-18-planar-curve-lift/README.md)
 advances WP02/WP07/WP08/WP13 with retained planar spatial curves, complete
@@ -14,10 +14,11 @@ The [selected planar-image increment](evidence/2026-10-18-selected-planar-images
 adds retained spatial points at selected roots, correlated affine queries,
 selected edge splitting and cold replay, followed by the same supported solid
 operations. Hypercurve owns affine-form and range-injectivity proofs; BRep owns
-spatial frames, complete trim agreement and prism continuation. Newly authored
-selected carrier chart endpoints, broader selected surface fields, unlike
-procedural-source ordering, general intersections and STEP encodings remain
-next dependencies. Neither finite extension closes a complete work package.
+spatial frames, complete trim agreement and prism continuation. The selected
+procedural-profile extension below advances the former selected carrier-endpoint
+frontier. Broader selected surface fields, unlike procedural-source ordering,
+general intersections and STEP encodings remain dependencies. These finite
+extensions do not close a complete work package.
 
 The [finite plane-contact increment](evidence/2026-10-18-retained-plane-contacts/README.md)
 advances WP02/WP05b/WP06/WP08. Curve/surface contact results now retain exact
@@ -26,10 +27,23 @@ complete mixed point/range components. Higher-degree rational Bézier/NURBS
 plane equations reuse owner root authority; planar-image plane contacts reuse
 owner bounds, intersections and chart transport on the actual consumed range.
 Selected contacts feed point queries, edge splits, cold replay and supported
-solid continuation. General selected surface fields and newly authored
-selected procedural-profile endpoints remain dependencies of broader modeling
-closure. The retained STEP encoding boundary remains explicit. This API break
-adds no compatibility layer and closes no complete work package.
+solid continuation. General selected surface fields remain dependencies of
+broader modeling closure. The retained STEP encoding boundary remains explicit.
+This API break adds no compatibility layer and closes no complete work package.
+
+The [selected procedural-profile increment](evidence/2026-10-18-selected-procedural-profiles/README.md)
+advances WP02/WP05b/WP06/WP08/WP13. Spatial domains retain selected parameters;
+planar source charts, translated selected origins and coordinate-based side
+correspondences construct and replay the original nonlinear cap after exact
+planar clipping. Hypercurve owns scalar charts, correlated affine point fields,
+point definitions and finite membership; BRep owns spatial images, topology and
+whole edge/surface validation. Existing represented endpoints retain their
+native scalar facts. Axial/profile splits, reflection/shear, holes/components,
+repeated slab cuts, directed set identities and empty recovery consume the
+result. Archive version 10 and direct API migrations introduce no old-reader
+adapter. Independently selected axial parameters, arbitrary selected surface
+fields, general intersections/metrics and procedural STEP encodings remain
+explicit frontiers. All 28 work packages stay open or in progress.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,

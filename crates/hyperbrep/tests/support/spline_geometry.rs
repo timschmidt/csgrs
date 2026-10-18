@@ -56,8 +56,13 @@ pub fn spline_views_retain_weights_knots_and_reversed_subcurve_charts() {
             );
             assert!(curve.nurbs_geometry().is_none());
         }
-        let middle = ((curve.domain().start() + curve.domain().end()) / Real::from(2)).unwrap();
-        let trimmed = curve.subcurve(&middle, curve.domain().end()).unwrap();
+        let middle = ((curve.domain().represented_start().unwrap()
+            + curve.domain().represented_end().unwrap())
+            / Real::from(2))
+        .unwrap();
+        let trimmed = curve
+            .subcurve(&middle, curve.domain().represented_end().unwrap())
+            .unwrap();
         assert_eq!(trimmed.kind(), curve.kind());
         assert!(
             curve
@@ -169,7 +174,10 @@ pub fn extrusion_location_preserves_oblique_nonunit_direction_and_source_paramet
             Vector3::new([2.into(), 1.into(), 3.into()]),
         ] {
             let curve = spline(nurbs);
-            let middle = ((curve.domain().start() + curve.domain().end()) / Real::from(2)).unwrap();
+            let middle = ((curve.domain().represented_start().unwrap()
+                + curve.domain().represented_end().unwrap())
+                / Real::from(2))
+            .unwrap();
             let surface = Surface::extrusion(curve, direction).unwrap();
             for v in [-2, 0, 3] {
                 let uv = Point2::new(middle.clone(), v.into());

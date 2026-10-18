@@ -163,16 +163,18 @@ impl ArenaModel {
         if exact_point_order(&start, &end)? != std::cmp::Ordering::Equal {
             return Err(TopologyEditError::DegenerateFaceSplit);
         }
-        let midpoint = ((curve.domain().start() + curve.domain().end()) / Real::from(2))
-            .map_err(GeometryError::Numeric)?;
+        let midpoint = ((curve.domain().represented_start()?
+            + curve.domain().represented_end()?)
+            / Real::from(2))
+        .map_err(GeometryError::Numeric)?;
         let midpoint_point = curve.evaluate_real(&midpoint)?;
         if exact_point_order(&start, &midpoint_point)? == std::cmp::Ordering::Equal {
             return Err(TopologyEditError::DegenerateFaceSplit);
         }
 
         let ranges = [
-            (curve.domain().start(), &midpoint),
-            (&midpoint, curve.domain().end()),
+            (curve.domain().represented_start()?, &midpoint),
+            (&midpoint, curve.domain().represented_end()?),
         ];
         let mut halves = Vec::with_capacity(2);
         for (range_start, range_end) in ranges {
@@ -186,12 +188,13 @@ impl ArenaModel {
             {
                 SurfacePcurveCorrespondence::Affine { scale, offset } => {
                     let source_span = range_end - range_start;
-                    let spatial_span = spatial.domain().end() - spatial.domain().start();
+                    let spatial_span = spatial.domain().represented_end()?
+                        - spatial.domain().represented_start()?;
                     let domain_scale =
                         (spatial_span / source_span).map_err(GeometryError::Numeric)?;
                     let edge_scale = &domain_scale * scale;
-                    let edge_offset =
-                        spatial.domain().start() + &domain_scale * (offset - range_start);
+                    let edge_offset = spatial.domain().represented_start()?
+                        + &domain_scale * (offset - range_start);
                     (
                         ParameterCorrespondence::affine(edge_scale.clone(), edge_offset.clone())?,
                         ParameterCorrespondence::affine(
@@ -254,7 +257,7 @@ impl ArenaModel {
                     seam_vertex
                 },
                 curve: curve_id,
-                domain: domain.into(),
+                domain,
                 endpoint_certificate: false,
             });
             edges.push(edge);
@@ -449,12 +452,14 @@ impl ArenaModel {
         }
 
         let start = curve.start()?;
-        let midpoint = ((curve.domain().start() + curve.domain().end()) / Real::from(2))
-            .map_err(GeometryError::Numeric)?;
+        let midpoint = ((curve.domain().represented_start()?
+            + curve.domain().represented_end()?)
+            / Real::from(2))
+        .map_err(GeometryError::Numeric)?;
         let midpoint_point = curve.evaluate_real(&midpoint)?;
         let ranges = [
-            (curve.domain().start(), &midpoint),
-            (&midpoint, curve.domain().end()),
+            (curve.domain().represented_start()?, &midpoint),
+            (&midpoint, curve.domain().represented_end()?),
         ];
         let mut halves = Vec::with_capacity(2);
         for (range_start, range_end) in ranges {
@@ -468,12 +473,13 @@ impl ArenaModel {
             {
                 SurfacePcurveCorrespondence::Affine { scale, offset } => {
                     let source_span = range_end - range_start;
-                    let spatial_span = spatial.domain().end() - spatial.domain().start();
+                    let spatial_span = spatial.domain().represented_end()?
+                        - spatial.domain().represented_start()?;
                     let domain_scale =
                         (spatial_span / source_span).map_err(GeometryError::Numeric)?;
                     let edge_scale = &domain_scale * scale;
-                    let edge_offset =
-                        spatial.domain().start() + &domain_scale * (offset - range_start);
+                    let edge_offset = spatial.domain().represented_start()?
+                        + &domain_scale * (offset - range_start);
                     (
                         ParameterCorrespondence::affine(edge_scale.clone(), edge_offset.clone())?,
                         ParameterCorrespondence::affine(
@@ -535,7 +541,7 @@ impl ArenaModel {
                     seam_vertex
                 },
                 curve: curve_id,
-                domain: domain.into(),
+                domain,
                 endpoint_certificate: false,
             });
             edges.push(edge);
@@ -660,8 +666,10 @@ impl ArenaModel {
         if exact_point_order(&start, &end)? != std::cmp::Ordering::Equal {
             return Err(TopologyEditError::DegenerateFaceSplit);
         }
-        let midpoint = ((curve.domain().start() + curve.domain().end()) / Real::from(2))
-            .map_err(GeometryError::Numeric)?;
+        let midpoint = ((curve.domain().represented_start()?
+            + curve.domain().represented_end()?)
+            / Real::from(2))
+        .map_err(GeometryError::Numeric)?;
         let midpoint_point = curve.evaluate_real(&midpoint)?;
         if exact_point_order(&start, &midpoint_point)? == std::cmp::Ordering::Equal {
             return Err(TopologyEditError::DegenerateFaceSplit);
@@ -718,8 +726,8 @@ impl ArenaModel {
         }
 
         let ranges = [
-            (curve.domain().start(), &midpoint),
-            (&midpoint, curve.domain().end()),
+            (curve.domain().represented_start()?, &midpoint),
+            (&midpoint, curve.domain().represented_end()?),
         ];
         let mut halves = Vec::with_capacity(2);
         for (range_start, range_end) in ranges {
@@ -733,12 +741,13 @@ impl ArenaModel {
             {
                 SurfacePcurveCorrespondence::Affine { scale, offset } => {
                     let source_span = range_end - range_start;
-                    let spatial_span = spatial.domain().end() - spatial.domain().start();
+                    let spatial_span = spatial.domain().represented_end()?
+                        - spatial.domain().represented_start()?;
                     let domain_scale =
                         (spatial_span / source_span).map_err(GeometryError::Numeric)?;
                     let edge_scale = &domain_scale * scale;
-                    let edge_offset =
-                        spatial.domain().start() + &domain_scale * (offset - range_start);
+                    let edge_offset = spatial.domain().represented_start()?
+                        + &domain_scale * (offset - range_start);
                     (
                         ParameterCorrespondence::affine(edge_scale.clone(), edge_offset.clone())?,
                         ParameterCorrespondence::affine(
@@ -819,7 +828,7 @@ impl ArenaModel {
                     seam_vertex
                 },
                 curve: curve_id,
-                domain: domain.into(),
+                domain,
                 endpoint_certificate: false,
             });
             edges.push(edge);

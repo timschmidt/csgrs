@@ -228,7 +228,9 @@ pub fn parameters() {
             .enumerate()
         {
             let fraction = (Real::from(i as u32) / Real::from(4)).unwrap();
-            let parameter = domain.start() + (domain.end() - domain.start()) * &fraction;
+            let parameter = domain.represented_start().unwrap()
+                + (domain.represented_end().unwrap() - domain.represented_start().unwrap())
+                    * &fraction;
             let point = edge
                 .edge
                 .curve()
@@ -263,10 +265,10 @@ pub fn parameters() {
         }
         for use_ in edge.edge.uses() {
             let a = use_
-                .pcurve_parameter_at(&domain.start().clone().into())
+                .pcurve_parameter_at(&domain.represented_start().unwrap().clone().into())
                 .unwrap();
             let b = use_
-                .pcurve_parameter_at(&domain.end().clone().into())
+                .pcurve_parameter_at(&domain.represented_end().unwrap().clone().into())
                 .unwrap();
             assert_ne!(a.compare(&b).unwrap(), Ordering::Equal);
         }
@@ -503,7 +505,7 @@ pub fn composition() {
         .edges()
         .find(|e| e.curve().kind() == Curve3Kind::CircleArc)
         .unwrap();
-    let t = circle.curve().domain().start() + Real::pi();
+    let t = circle.curve().domain().represented_start().unwrap() + Real::pi();
     let split = circle.split(t.into()).unwrap().into_model();
     check(&replay(&split));
     assert_eq!(

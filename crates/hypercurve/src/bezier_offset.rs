@@ -2854,6 +2854,7 @@ pub(crate) enum BezierRecursiveChordContactLocation2 {
 
 #[derive(Clone, Debug)]
 enum BezierRecursiveProjectiveParameterIdentity2 {
+    AffineForm(crate::CurvePointAffineForm2),
     Line(BezierRecursiveLineParameterIdentity2),
     ChordRationalTangent(BezierRecursiveChordRationalTangentIdentity2),
 }
@@ -8589,6 +8590,7 @@ pub(crate) fn affine_line_parameter_at_incident_point(
     point: &CurvePoint2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurveParameter2>> {
+    let original_point = point.clone();
     let (dx, dy) = line.delta();
     let Some((axis, direction)) =
         [(Axis2::X, dx), (Axis2::Y, dy)]
@@ -8683,7 +8685,18 @@ pub(crate) fn affine_line_parameter_at_incident_point(
         },
         policy,
     )?
-    .map(CurveParameter2::from_recursive_projective))
+    .map(|parameter| {
+        let scale = (Real::one() / &delta)
+            .expect("the selected affine coordinate has certified nonzero direction");
+        let offset = -start * &scale;
+        let (a, b) = match axis {
+            Axis2::X => (scale, Real::zero()),
+            Axis2::Y => (Real::zero(), scale),
+        };
+        CurveParameter2::from_recursive_projective(
+            parameter.with_affine_form_identity(original_point.affine_form(a, b, offset)),
+        )
+    }))
 }
 
 fn algebraic_chord_parameter_axis(
@@ -13205,6 +13218,11 @@ fn retained_bounds_axis_order_to_real(
 }
 
 impl BezierSimilarityPoint2 {
+    pub(crate) fn strict_definition(&self) -> Option<(&CurvePoint2, &Similarity2)> {
+        CurveContext::STRICT
+            .accepts_retained_policy(self.data.policy)
+            .then_some((&self.data.source, &self.data.transform))
+    }
     pub(crate) fn new(
         mut source: CurvePoint2,
         mut transform: Similarity2,

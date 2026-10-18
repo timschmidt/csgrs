@@ -52,9 +52,10 @@ impl SurfaceIntersectionCurve {
         }
         let angle = certified_atan2(radial.dot(&cylinder.frame.y), radial.dot(&cylinder.frame.x))?;
         let axial_delta = direction.dot(&cylinder.frame.z);
-        let parameter_span = curve.domain().end() - curve.domain().start();
+        let parameter_span =
+            curve.domain().represented_end()? - curve.domain().represented_start()?;
         let scale = (axial_delta / parameter_span).map_err(GeometryError::Numeric)?;
-        let offset = axial_start - &scale * curve.domain().start();
+        let offset = axial_start - &scale * curve.domain().represented_start()?;
         let cylinder_pcurve = SurfaceIntersectionPcurve::tensor_iso(
             curve.domain().clone(),
             angle,
@@ -102,8 +103,8 @@ mod tests {
     fn check(trace: &SurfaceIntersectionCurve, first: &Surface, second: &Surface) {
         let domain = trace.curve().domain();
         for numerator in 0..=4 {
-            let parameter = domain.start()
-                + (domain.end() - domain.start())
+            let parameter = domain.represented_start().unwrap()
+                + (domain.represented_end().unwrap() - domain.represented_start().unwrap())
                     * (Real::from(numerator) / Real::from(4)).unwrap();
             let point = trace.curve().evaluate_real(&parameter).unwrap();
             for (surface, pcurve) in [
@@ -145,14 +146,24 @@ mod tests {
                     )
                     .unwrap()
                     .unwrap();
-                    assert_eq!(trace.curve().domain().start(), curve.domain().start());
-                    assert_eq!(trace.curve().domain().end(), curve.domain().end());
+                    assert_eq!(
+                        trace.curve().domain().represented_start().unwrap(),
+                        curve.domain().represented_start().unwrap()
+                    );
+                    assert_eq!(
+                        trace.curve().domain().represented_end().unwrap(),
+                        curve.domain().represented_end().unwrap()
+                    );
                     check(&trace, first, second);
                     check(&trace.reversed().unwrap(), first, second);
-                    let middle =
-                        ((curve.domain().start() + curve.domain().end()) / Real::from(2)).unwrap();
+                    let middle = ((curve.domain().represented_start().unwrap()
+                        + curve.domain().represented_end().unwrap())
+                        / Real::from(2))
+                    .unwrap();
                     check(
-                        &trace.subcurve(curve.domain().start(), &middle).unwrap(),
+                        &trace
+                            .subcurve(curve.domain().represented_start().unwrap(), &middle)
+                            .unwrap(),
                         first,
                         second,
                     );

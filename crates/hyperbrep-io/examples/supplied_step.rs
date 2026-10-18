@@ -29,7 +29,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let split = edge
         .edge
-        .split((edge.edge.curve().domain().start() + Real::pi()).into())?
+        .split((edge.edge.curve().domain().represented_start()? + Real::pi()).into())?
         .into_model();
     let archive = split.to_json()?;
     let replay = RawModel::from_json(&archive, &ArchiveLimits::default())?.validate()?;

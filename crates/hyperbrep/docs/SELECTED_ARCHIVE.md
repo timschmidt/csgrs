@@ -1,7 +1,7 @@
-# Selected geometry in archive version 9
+# Selected geometry in archive version 10
 
-Version 9 retains authored coordinates and selected curve images in the same
-model. It replaces version 8; there is no migration reader.
+Version 10 retains authored coordinates and selected curve images in the same
+model. It replaces version 9; there is no migration reader.
 `RawModel::from_json(json, &limits)` admits input syntax and record structure
 under explicit `ArchiveLimits`, checks the format version before decoding exact
 scalar data and rejects trailing input.
@@ -17,9 +17,9 @@ The caller passes `ArchiveLimits` explicitly. Its defaults and units are:
 | `input_bytes` | 16 MiB | All UTF-8 bytes, including whitespace and ignored fields |
 | `nesting_depth` | 1,024 | Simultaneously open JSON objects and arrays |
 | `tokens` | 1,000,000 | Opening containers, quoted strings (including keys), and primitive lexemes |
-| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve sources, inline extrusion/revolution profiles, planar-image sources and analytic-parallel sources |
-| `degree` | 256 | Each declared NURBS axis degree, inferred Bezier axis degree, or selected-root polynomial storage degree |
-| `geometry_elements` | 1,000,000 | Aggregate controls (including polynomial parallel sources), weights, knots, root coefficients, and tensor row headers |
+| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve sources, inline extrusion/revolution profiles, planar-image sources, translation origins, affine-form point definitions and analytic-parallel sources |
+| `degree` | 256 | Each declared NURBS axis degree, inferred Bezier axis degree, selected-root polynomial storage degree, or correlated point-expression polynomial degree |
+| `geometry_elements` | 1,000,000 | Aggregate controls (including polynomial parallel sources), weights, knots, root and correlated point-expression coefficients, and tensor row headers |
 | `topology_references` | 1,000,000 | Aggregate wire edge uses, face inner wires, shell faces and solid void shells |
 
 Byte admission runs first. A constant-storage iterative scan then counts depth
@@ -75,20 +75,26 @@ introduced.
 
 A closed circular or elliptic edge stores the same vertex index at both ends
 and two distinct parameter endpoints spanning exactly one period. It uses the
-existing version-9 records. Validation reconstructs the carrier's regularity,
+existing closed-edge records. Validation reconstructs the carrier's regularity,
 period and actual endpoint agreement; it does not trust an archive flag.
 Circular cap and periodic cylinder edge uses also replay their complete
 pcurve-image, direction and shell certificates. Distinct adjacency, parameter
 maps, split/reflection and forged-record rejection are covered in the
 [closed-edge evidence](evidence/2026-10-15-closed-edges/README.md).
 
-`selection.parameters` contains two node forms:
+`selection.parameters` contains three node forms:
 
 - `Root { polynomial, interval }` supplies ascending power-basis coefficients
   and a singleton isolating interval. It does not supply a trusted root count.
 - `Image { root, numerator, denominator }` supplies a flattened projective map
   `(n0 + n1*t) / (d0 + d1*t)` of an earlier root. Images cannot reference other
   images, themselves, later nodes or missing nodes.
+- `AffineForm { point, coefficients }` supplies a retained planar point and
+  `a*x + b*y + c`. The point definition contains authored coordinates, a rational
+  or regular parallel source with its parameter, correlated rational coordinate
+  polynomials in one selected parameter, or a strict-compatible similarity.
+  Every selected reference must name an earlier node. Replay reconstructs the
+  source and shared parameter field; it does not trust precomputed coordinates.
 
 The encoder interns root and chart records by their exact serialized contents.
 An identity chart references its root directly. This also handles inverse
@@ -105,26 +111,42 @@ The source is a polynomial quadratic/cubic control array or homogeneous rational
 Bezier controls, including zero-weight controls. Range endpoints reuse the
 selected-parameter graph and its flattened charts; traversal is separate from
 ascending parameter order. Direct parallels and their selected-fiber
-subdivisions use this definition. General non-Bezier selected parameter fields
-remain unsupported by this archive. Loading reconstructs the source and checks
+subdivisions use this definition. Other recursive/projective selected fields without one of these
+replayable definitions remain unsupported by this archive. Loading reconstructs the source and checks
 the complete range for poles, undefined normals and unsplit interior cusps.
 It accepts certified cusp endpoints and zero-distance stationary sources.
 No source regularity flag is serialized or trusted. Source records, degrees and
 controls are charged before scalar decoding, including in detached pcurve sources.
 
-This adds a family tag to version 9 without changing existing family encodings.
 It preserves the current procedural geometry and selectors, not a complete
 authoring-history or source-intent receipt. A saved unattached pcurve does not
 establish a valid face or solid.
 
-The `PlanarImage { source, origin, u, v, source_range }` spatial record now
-retains a pcurve source and an injective affine frame. Its spatial domain is
-`[0,1]`; the two represented source parameters define the complete affine chart.
-Loading validates the frame, nonzero chart span, endpoint membership, and source
-constructor. Model admission then rechecks the full edge image and topology.
-A forged interior with correct endpoints is rejected. Native `QuadraticBezier`
-and `CubicBezier` pcurve tags preserve polynomial definitions used by lifts.
-These are additional version-9 family tags; prior encodable bytes are unchanged.
+The `PlanarImage { source, origin, u, v, source_chart }` spatial record
+retains a finite pcurve source and an injective affine frame. Its source chart
+is `[scale, offset]`, with `t_source = scale*t_spatial + offset` and nonzero
+scale. Authored endpoint intervals use a unit spatial chart; selected intervals
+retain the source chart with a sign change for reversed traversal. No selected
+endpoint is divided or replaced with an approximate scalar. The spatial domain
+is reconstructed from the finite source and this map. Loading validates the
+frame, map, endpoint membership and source constructor, then model admission
+rechecks the full edge image and topology. Native `QuadraticBezier` and
+`CubicBezier` pcurve tags preserve polynomial definitions used by lifts.
+
+`Translation { source, parameter, displacement }` retains a
+straight unit-chart sweep of a point through a nonzero authored displacement.
+Its origin uses an inline spatial source and selected parameter, with recursive
+record admission. Authored scalar evaluation, split and affine transform keep
+the origin's source; an independently selected sweep parameter remains typed
+unsupported. `Chord { start, end }` pcurves use checked planar point definitions
+and Hypercurve's exact line constructor.
+
+Coordinate pcurve correspondence records retain a chosen U or V coordinate and
+nonzero affine scale/offset. Cold extrusion admission proves constant orthogonal
+coordinate and complete profile or axial translation image. These records carry
+no image certificate. Similarities inside affine point-query definitions are
+composed when authored and replayed so both encodings use the same recipe.
+Version 10 is an intentional schema break, not a byte-preserving optimization.
 
 Load order is selected roots/charts, authored pcurve sources, detached spatial
 point sources, model spatial curves, then point images and topology. Pcurve
@@ -136,8 +158,8 @@ on scalar reconstruction or subsequent geometric validation. The
 records the original lift workflows and costs. The
 [selected-image admission](evidence/2026-10-18-selected-planar-images/README.md)
 adds spatial point images at selected roots and selected topology trims. They
-use the same source and parameter graph; no format version or trusted flag is
-added. New carrier chart endpoints still require represented scalar views.
+used the earlier source and parameter graph without a trusted flag. Version 10
+extends that graph to selected carrier domains and procedural-profile construction.
 
 Other pcurves retain the existing native families or
 `SourceRange { source, range, reversed }`. The source indexes an authored
@@ -151,7 +173,9 @@ Hypercurve owns this distinction through `Curve2::restrict_source` and
 ## Proof reconstruction
 
 Each root is reconstructed using Hypercurve's checked polynomial, interval and
-singleton-isolation constructors. Each image reapplies the projective map,
+singleton-isolation constructors. Correlated point expressions prove their
+shared denominator nonzero; parallel points also prove regular source weight
+and normal where required. Each image reapplies the projective map,
 checking its finite denominator. References are checked before indexing; shared
 roots and sources are reconstructed once and cloned as immutable handles.
 Spatial points call `Curve3::point_at` with the restored selector. Pcurve ranges
@@ -166,7 +190,7 @@ Exact restriction transfers that agreement to the trim. It does not sample a
 selected point or trust a serialized image certificate.
 
 For a selected planar-image trim, the validator compares the complete retained
-planar source and frame under the inverse affine unit-chart map. Exact endpoint
+planar source and frame under the inverse affine source-chart map. Exact endpoint
 correspondence supplies the actual restriction. This proof subsumes endpoint
 sampling without requiring independent scalar coordinates. Source definitions,
 parameters, frames and pcurve agreement remain mandatory on cold replay.
@@ -251,8 +275,8 @@ decline selected inputs, allowing another complete shell proof to decide them.
 No successful selected input bypasses shell closure or geometric validation.
 
 General selected solid validation, selected corners without a reconstructible
-boundary image, void-shell nesting, surface/contact/fiber graphs, non-authored
-Hypercurve support fragments, general Boolean transfer, and selected angular
+boundary image, void-shell nesting, general surface/contact/fiber graphs,
+unsupported Hypercurve support fragments, general Boolean transfer, and selected angular
 conic images remain open. A typed failure is not a successful round trip.
 
 This format is not the completed WP13 resource-boundary design. Aggregate
@@ -275,6 +299,27 @@ restrictions of signed-weight planar sources query only the consumed interval.
 The four selected cube/cap STEP attempts before and after replay retain typed,
 body/entity-attributed encoding failures and successful native recovery. Native
 replay and exact STEP encodability remain separate claims.
+
+## Selected procedural profiles
+
+The selected-profile regressions retain the original nonlinear parallel cap
+and its quadratic closing segments after exact clipping creates selected
+boundaries. Construction retains selected vertices, profile carriers, axial
+translations and side pcurves together. Cold validation proves axial chains
+are nonbranching, collinear and forward, connect distinct cap boundaries, and
+are wholly covered by their incident side faces. It does not assume one axial
+edge per connection or authorize a solid from endpoints alone.
+
+Tests consume these models through selected profile and authored axial splits,
+affine reflection/shear, holes, disconnected components, reversed contours,
+repeated slab operations, both directed set identities and empty recovery.
+Malformed maps, displacements, selected references, point expressions and scalar
+records must fail with typed diagnostics. Strict/approximate/strict reuse and
+budget exhaustion/recovery preserve the certainty contract. The full clipped
+profile currently reaches the STEP writer's attributed
+`UnsupportedCurve(PlanarImage)` frontier; native replay remains separate.
+Qualification and its remaining limits are tracked in the
+[selected procedural-profile evidence](evidence/2026-10-18-selected-procedural-profiles/contract.md).
 
 ## Algorithm reference
 

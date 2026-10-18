@@ -46,7 +46,11 @@ pub(super) fn coalesce_planar_images(
         let mut full = None;
         for (index, curve) in group.iter().enumerate() {
             let domain = curve.curve().domain();
-            if exact_order(&(domain.end() - domain.start()), &Real::tau())? == Ordering::Equal {
+            if exact_order(
+                &(domain.represented_end()? - domain.represented_start()?),
+                &Real::tau(),
+            )? == Ordering::Equal
+            {
                 full = Some(index);
                 break;
             }
@@ -84,16 +88,16 @@ fn native_full_circle_union(
     surface: &Surface,
     group: &[SurfaceIntersectionCurve],
 ) -> Result<Option<SurfaceIntersectionCurve>, GeometryError> {
-    let mut start = group[0].curve().domain().start().clone();
-    let mut end = group[0].curve().domain().end().clone();
+    let mut start = group[0].curve().domain().represented_start()?.clone();
+    let mut end = group[0].curve().domain().represented_end()?.clone();
     let mut common_chart = true;
     for trace in &group[1..] {
         if !circle_supports_equal(group[0].curve(), trace.curve())? {
             common_chart = false;
             break;
         }
-        start = exact_min(&start, trace.curve().domain().start())?;
-        end = exact_max(&end, trace.curve().domain().end())?;
+        start = exact_min(&start, trace.curve().domain().represented_start()?)?;
+        end = exact_max(&end, trace.curve().domain().represented_end()?)?;
     }
     // A common angular chart spanning less than a period cannot cover the
     // whole circle. This exact exclusion also preserves arbitrarily small

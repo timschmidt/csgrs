@@ -62,9 +62,9 @@ fn conic_plane_contact_keeps_exact_endpoint_lifts() {
                     );
                     if height == Real::from(3) {
                         let endpoint = if reversed {
-                            curve.domain().end()
+                            curve.domain().represented_end().unwrap()
                         } else {
-                            curve.domain().start()
+                            curve.domain().represented_start().unwrap()
                         };
                         assert_eq!(
                             compare_reals(
@@ -91,7 +91,7 @@ fn conic_plane_contact_keeps_exact_endpoint_lifts() {
                         assert_eq!(
                             compare_reals(
                                 points[0].parameter.try_real().unwrap(),
-                                curve.domain().start(),
+                                curve.domain().represented_start().unwrap(),
                                 crate::STRICT_PREDICATES
                             )
                             .value(),
@@ -100,7 +100,7 @@ fn conic_plane_contact_keeps_exact_endpoint_lifts() {
                         assert_eq!(
                             compare_reals(
                                 points[0].parameter.try_real().unwrap(),
-                                curve.domain().end(),
+                                curve.domain().represented_end().unwrap(),
                                 crate::STRICT_PREDICATES
                             )
                             .value(),
@@ -140,7 +140,7 @@ fn a_full_circle_contact_retains_both_seam_parameters() {
         assert_eq!(
             compare_reals(
                 points[0].parameter.try_real().unwrap(),
-                curve.domain().start(),
+                curve.domain().represented_start().unwrap(),
                 crate::STRICT_PREDICATES
             )
             .value(),
@@ -149,7 +149,7 @@ fn a_full_circle_contact_retains_both_seam_parameters() {
         assert_eq!(
             compare_reals(
                 points[2].parameter.try_real().unwrap(),
-                curve.domain().end(),
+                curve.domain().represented_end().unwrap(),
                 crate::STRICT_PREDICATES
             )
             .value(),

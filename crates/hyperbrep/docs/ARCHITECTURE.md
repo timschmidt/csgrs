@@ -249,7 +249,7 @@ selected-point enclosures with the existing conservative curve bounds.
 
 The [topology qualification](evidence/2026-10-15-selected-topology/README.md)
 covers shared-edge splits, repeated edits, rational/NURBS charts, reflections
-and retained solid queries. [Archive version 9](SELECTED_ARCHIVE.md) now retains
+and retained solid queries. [Archive version 10](SELECTED_ARCHIVE.md) retains
 selected roots, flattened charts, spatial curve images and authored pcurve
 restrictions. Independent replay covers the selected sheet fixtures and exact
 planar area, every cuboid edge alone or together (including shear/reflection),
@@ -264,6 +264,16 @@ See [solid replay evidence](evidence/2026-10-15-selected-solids/README.md).
 General selected solid/surface/contact graphs and Boolean transfer remain open. Native
 coefficient subdivision and angular conic evaluation retain their explicit
 scalar requirements. WP02/G1 and WP13 are not complete.
+
+Spatial curve domains now use `ParameterRange`. Retained planar lifts expose
+an authored source scale/offset rather than two scalar endpoints; selected
+source intervals keep their chart. Straight axial sweeps use `Curve3::translation`
+to preserve a selected origin. Hypercurve owns scalar-chart, affine-point and
+point-definition replay; BRep owns the spatial frame and complete extrusion
+image proof. Coordinate pcurve maps preserve selected UV corners through edge
+splits and reflection. Archive version 10 records these definitions and rejects
+version 9 without an adapter. General recursive selected fields remain outside
+the supported replay domain.
 
 Independent planar spline image validation compares the complete lifted pcurve
 with the spatial curve restricted to the mapped edge interval. The shared

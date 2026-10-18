@@ -19,7 +19,7 @@ fn native_sheet(curves: Vec<Curve3>) -> Result<ArenaModel, BuildError> {
             vertices[i],
             vertices[(i + 1) % vertices.len()],
             id,
-            curve.domain().clone().into(),
+            curve.domain().clone(),
         )?;
         let trace = SurfaceIntersectionCurve::on_plane(curve.clone(), &plane)?;
         let materialized = trace.first_pcurve().materialize()?;

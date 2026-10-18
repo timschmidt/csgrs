@@ -127,7 +127,10 @@ impl Builder {
             center: frame.origin,
             normal,
             sweep,
-            domain: curve.domain().clone(),
+            domain: curve
+                .domain()
+                .represented_domain()
+                .map_err(|e| site.error(ErrorKind::Geometry(e)))?,
         };
         let curve = self
             .model

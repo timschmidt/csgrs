@@ -917,6 +917,15 @@ impl RationalBezierAlgebraicPointImage2 {
         }
     }
 
+    pub(crate) fn native_curve_evaluation(
+        &self,
+    ) -> Option<(&RationalBezier2, &BezierAlgebraicParameter2)> {
+        match &self.data.definition {
+            RationalPointDefinition::Parametric(source) => Some((&source.curve, &source.parameter)),
+            _ => None,
+        }
+    }
+
     /// Returns the exact x numerator, y numerator, and shared denominator for
     /// this selected-parameter rational expression.
     ///
