@@ -45,6 +45,11 @@ pub fn symmetric_difference(first: &BodySet, second: &BodySet) -> Result<BodySet
 /// contain all selected components; a failed constituent operation fails the
 /// whole call without changing either input. Single-solid kernels and their
 /// supported geometry matrix are shared with the multi-body path.
+/// Certified world-Z prisms with provably equal filled profiles also support
+/// partial-height difference and unions across touching or overlapping slabs.
+/// Positive gaps remain separate components. Matching bounds or outer curves
+/// alone do not establish profile equality; unequal-profile stepped shells
+/// retain their existing intersection and stitching restrictions.
 ///
 /// Input admission precedes this API: only validated `BodySet` values are
 /// accepted. An untrusted archive or failed constructor cannot masquerade as

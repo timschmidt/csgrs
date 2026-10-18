@@ -6010,10 +6010,23 @@ fn boolean(
                 });
             match fallback {
                 Ok(result) => Ok(result),
-                Err(graph) => Err(BooleanError::FallbackFailed {
-                    optimized: Box::new(optimized_error),
-                    graph: Box::new(graph),
-                }),
+                Err(graph) => {
+                    if matches!(optimized_error, BooleanError::IncompatibleExtrusionSlabs)
+                        && let Some(result) = same_profile_prism_interval_boolean(
+                            first_model,
+                            first_solid,
+                            second_model,
+                            second_solid,
+                            operation,
+                        )?
+                    {
+                        return Ok(result);
+                    }
+                    Err(BooleanError::FallbackFailed {
+                        optimized: Box::new(optimized_error),
+                        graph: Box::new(graph),
+                    })
+                }
             }
         }
     }
@@ -6364,6 +6377,82 @@ fn z_prism_boolean(
     } else {
         Ok(ArenaBooleanResult::Solids { model, solids })
     }
+}
+
+/// For a proved common profile R, regularized set operations on R × I reduce
+/// to finite interval operations. This completes partial-slab reuse without
+/// claiming a shell intersection algorithm for unequal nonlinear profiles.
+fn same_profile_prism_interval_boolean(
+    first_model: &ArenaModel,
+    first_solid: SolidId,
+    second_model: &ArenaModel,
+    second_solid: SolidId,
+    operation: BooleanOp,
+) -> Result<Option<ArenaBooleanResult>, BooleanError> {
+    if !matches!(operation, BooleanOp::Union | BooleanOp::Difference) {
+        return Ok(None);
+    }
+    let Some(first) = first_model.certified_z_prism_profile(first_solid)? else {
+        return Ok(None);
+    };
+    let Some(second) = second_model.certified_z_prism_profile(second_solid)? else {
+        return Ok(None);
+    };
+    if !first
+        .region
+        .boolean_region(&second.region, BooleanOp::Xor)
+        .map_err(GeometryError::from)?
+        .is_empty()
+    {
+        return Ok(None);
+    }
+    let ranges = match operation {
+        BooleanOp::Union => {
+            if exact_order(
+                &exact_max(&first.z_min, &second.z_min)?,
+                &exact_min(&first.z_max, &second.z_max)?,
+            )? == Ordering::Greater
+            {
+                // The positive gap remains two components. Retain their
+                // existing models so normalization can continue with another
+                // interval without inventing connecting material.
+                return Ok(Some(merge_owned_solids(vec![
+                    (first_model.clone(), first_solid),
+                    (second_model.clone(), second_solid),
+                ])?));
+            }
+            vec![(
+                exact_min(&first.z_min, &second.z_min)?,
+                exact_max(&first.z_max, &second.z_max)?,
+            )]
+        }
+        BooleanOp::Difference => {
+            let mut ranges = Vec::with_capacity(2);
+            for (start, end) in [
+                (first.z_min.clone(), exact_min(&first.z_max, &second.z_min)?),
+                (exact_max(&first.z_min, &second.z_max)?, first.z_max.clone()),
+            ] {
+                if exact_order(&start, &end)? == Ordering::Less {
+                    ranges.push((start, end));
+                }
+            }
+            ranges
+        }
+        _ => unreachable!("only union and difference reach interval continuation"),
+    };
+    let mut components = Vec::new();
+    for (start, end) in ranges {
+        let (model, solids) = extrude_curve_region(&first.region, start, end)?;
+        components.extend(solids.into_iter().map(|solid| (model.clone(), solid)));
+    }
+    Ok(Some(match components.len() {
+        0 => ArenaBooleanResult::Empty,
+        1 => {
+            let (model, solid) = components.pop().expect("one product component");
+            ArenaBooleanResult::Solid { model, solid }
+        }
+        _ => merge_owned_solids(components)?,
+    }))
 }
 
 fn identical_torus_boolean(

@@ -94,14 +94,20 @@ final native/STEP artifacts and supported continuation; historical failures and
 cost obligations stay visible. General CAD functionality and delivery remain
 the project objective, with all work-package completion gates still open.
 
-The [retained-region extrusion diagnostic](evidence/2026-10-17-retained-region-extrusion/README.md)
-reproduces the next cross-layer boundary on the committed cost baseline.
-Even an uncut mixed parabola/retained-line profile has exact area but fails
-spatial promotion; the analytic-square control already succeeds. Reuse native
-whole-image proof in the curve owner, retain source/parameter identity, and
-admit BREP topology, cold replay and continued modeling together. General
-selected-parameter measurement and analytic parallel extrusion are subsequent
-domains, not reasons to weaken the current proof or input corpus.
+The [retained-region diagnostic](evidence/2026-10-17-retained-region-extrusion/README.md)
+preserves the seven original profile recipes. The subsequent
+[native boundary image increment](evidence/2026-10-18-native-boundary-images/README.md)
+resolves the uncut mixed parabola/retained-line workflow through construction,
+cold replay and exact cuts/restoration. Hypercurve owns the source-bound whole
+image view; BREP owns spatial topology and common-profile interval composition.
+Native image charts and native geometry archives must not be described as the
+original source chart or complete authoring history. Preserve the five remaining
+unsupported recipes, nonmonotone image controls and unequal-hole rejection.
+The [next STEP domain](evidence/2026-10-18-native-boundary-images/next-step-domain.md)
+starts from the reproduced rational Bezier edge blocker. Exact B-spline and
+linear-extrusion exchange needs native chart/image proof, format-owned numeric
+admission, independent authored import and complete continued modeling. General
+selected-parameter measurement and analytic parallel extrusion remain open.
 
 The retained diagonal STEP case also has a
 [schema and exact-coordinate feasibility review](evidence/2026-10-17-prism-admission-cost/future-step-research.md).

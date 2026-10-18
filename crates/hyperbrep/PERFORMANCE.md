@@ -1,5 +1,20 @@
 # HyperBREP Performance Contract
 
+## 2026-10-18: native boundary image feature admission
+
+The [complete qualification](docs/evidence/2026-10-18-native-boundary-images/README.md) extends retained-profile
+construction and continued modeling. This is a capability extension, with
+previous successful routes and all deterministic receipts preserved.
+
+All 192 original case receipts are preserved across 22 full corpora and 132 fresh processes (three alternating CPU-pinned pairs). Median case ratio 1.003374; range 0.803214–1.139206. 1 rows exceed the 10% review marker; 12 rows increase allocation requests. Every adverse row, raw process sample, allocation and executable/WASM size is retained and reviewed. Six new complete native regression groups have separate absolute costs from three fresh processes, with four completion groups distinguished from two expected-rejection controls. No faster-error comparison or speedup claim. The one above-marker row measures 5.22210 to 5.94905 ns, a 0.72695 ns difference on a nanosecond-scale structural-fact replay. It remains an unfavorable observation; these shared-host trials do not establish a significant speed change or its cause. The largest allocation-request increase is 1,149.000 calls (0.044397%) and 72,800.000 requested bytes (0.035288%) in similarity/primitive_matrix. Native harness size deltas range from -23,816 to +20,752 bytes; the unchanged 138-group WASM harness changes by -41,188 bytes. These small observed costs are retained for the expanded exact native workflow. No performance-only optimization, significant speedup, retained-heap bound or distribution-size improvement is claimed; historical cost obligations remain open.
+
+The [full report](docs/evidence/2026-10-18-native-boundary-images/costs.md),
+[new absolute costs](docs/evidence/2026-10-18-native-boundary-images/new-cost-summary.json) and
+[resource review](docs/evidence/2026-10-18-native-boundary-images/resource-review.md) retain every observation.
+Allocation requests and process RSS are not retained-heap bounds; harness sizes
+are not distribution sizes. Historical regressions remain tied to their source
+and are not erased by this campaign. All project completion gates remain open.
+
 ## 2026-10-17: exact prism admission proof scheduling
 
 Kept after the [complete qualification](docs/evidence/2026-10-17-prism-admission-cost/README.md).

@@ -27,6 +27,7 @@ This README describes crate version `0.3.1`.
 | `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, `RationalBezier2` | Polynomial and rational Bézier carriers |
 | `PolynomialSplineCurve2`, `NurbsCurve2` | Validated B-spline and NURBS curves |
 | `Curve2` | Shared exact curve carrier with borrowed operations |
+| `CurveNativeSegment2` | Proof of a complete oriented line/arc image, borrowing the original curve |
 | `CurveString2`, `CurvePath2`, `Contour2` | Connected open strings, general paths, and closed line/arc contours |
 | `CurveRegion2` | Native mixed-family filled planar region |
 | `provisional`, `evaluate_under`, `Provisional<T>`, `CurvePreviewOptions`, `Classification<T>` | Explicitly qualified approximate evaluation, its certainty-carrying result, lossy preview adapter, and decided/uncertain result |
@@ -35,6 +36,14 @@ This README describes crate version `0.3.1`.
 
 `CurveRegion2` is the sole public filled-region carrier. Native line/arc
 specializations remain private fast paths inside the unified kernel.
+
+`Curve2::native_segment()` proves eligible complete line/arc images under a
+strict policy, including represented retained chords and supported single-span
+restrictions. The returned view retains the source curve; its native segment
+may have a different parameter chart. A support fit alone does not prove a
+trim's traversal. Missing range, injectivity or representation proofs return
+typed blockers. This query neither samples geometry nor certifies an earlier
+approximate construction's fidelity.
 
 Region and closed-path point queries accept `CurvePoint2`, preserving selected
 roots and generated contact evidence. Convert authored coordinates with

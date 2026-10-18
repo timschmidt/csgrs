@@ -2,7 +2,7 @@
 
 use super::*;
 
-pub(super) fn retained_native_fragment_segment(
+pub(crate) fn retained_native_fragment_segment(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Segment2>> {

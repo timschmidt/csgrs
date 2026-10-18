@@ -165,6 +165,18 @@ domain. General nonuniform analytic promotion remains open. See the
 | `nurbs_patch` | One trimmed exact tensor patch / open shell | Exact for a constant-weight affine Greville lattice under any validated trim, or the complete native-domain affine image under separable positive weights; general curved patches unsupported | N/A | N/A | Affine / exact |
 | `tensor_patch_shell` | Multiple exact rational Bézier/NURBS patches; projectively identical boundaries identity-stitched | Per-face exact for the same affine tensor families | N/A | N/A | Affine / exact |
 
+Retained path boundaries can use Hypercurve's source-bound `Curve2::native_segment`
+view when it proves the complete oriented line/arc image. Source ranges require
+range and traversal evidence; source fitting or endpoint sampling is insufficient.
+BREP then validates the complete path and uses the native image's parameter chart.
+The [retained-profile evidence](evidence/2026-10-18-native-boundary-images/README.md)
+covers the mixed parabola/chord profile, reversal, affine maps, holes/components,
+planar faces, cold replay and further native cuts/restoration. The live extrusion
+retains its original region. Native geometry replay does not persist the full
+authoring boundary graph. Selected-parameter integrals and general nonlinear
+parallel extrusion remain unsupported; STEP rejects this profile's rational
+Bezier edge before reaching any later surface requirements.
+
 Full cones remain absent until the apex singularity has a topological
 representation rather than degenerate tolerance sewing.
 
@@ -384,14 +396,23 @@ open. An unsupported constituent operation fails the complete Boolean; no
 partial selection is published as success. XOR currently composes two directed
 differences and their union, with the same intermediate support limits.
 
-`boolean::{union, intersection, difference}` supports certified global-z
-prisms whose planar boundaries contain exact lines and circular arcs.
-Intersection may use the overlapping z slab; union requires identical slabs.
-Directed difference permits a cutter slab containing the source slab, including
-equal endpoints. Partial coverage and exact small gaps remain outside that
-route. Certified right-prism outputs with parallel axes can continue in a
-common orthonormal chart after transforms or replay; skew/nonparallel prisms
-are not admitted by that shortcut. Other Boolean routes retain their domains.
+`boolean::{union, intersection, difference}` has a native line/arc global-z
+prism route. Its profile Boolean uses the overlapping z slab for intersection,
+identical slabs for union, and a covering cutter slab for directed difference.
+Other routes retain their separate domains. Certified right-prism outputs with
+parallel axes can continue in a common orthonormal chart after transforms or
+replay; skew/nonparallel prisms are not admitted by that shortcut.
+
+Cold global-z prism queries also consume admitted complete cap-path certificates
+when native line/arc projection is unsupported. After the earlier Boolean routes
+fail with incompatible slabs, a common-profile rule proves empty symmetric
+difference of the complete filled profiles, including holes. Union then merges
+touching/overlapping finite z intervals or retains two disjoint solids; difference
+can leave zero, one or two finite products. Exact 1/10^12 residual layers remain
+distinct. This completes the retained mixed-profile cut/restoration workflow;
+matching outer contours or bounds cannot substitute for profile equality.
+Unequal-profile stepped shells and arbitrary oblique products remain outside
+this rule. See the [proof and continuation review](evidence/2026-10-18-native-boundary-images/review.md).
 
 Parallel and antiparallel analytic cylinders are reduced through a certified
 orthonormal cylinder-local frame, so the same exact line/arc region kernel is

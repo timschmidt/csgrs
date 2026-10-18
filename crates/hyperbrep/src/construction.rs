@@ -305,6 +305,9 @@ pub fn cuboid(min: Point3, max: Point3) -> Result<(ArenaModel, SolidId), Constru
 /// are promoted without approximation to persistent rational Bézier or NURBS
 /// carriers. The returned model contains one validated open shell and no
 /// solid.
+/// Eligible retained line/arc images use Hypercurve's complete image proof
+/// before the same path validators. Native image parameters do not purport to
+/// preserve the original authoring chart.
 pub fn planar_face(
     outer: &CurvePath2,
     holes: &[CurvePath2],
@@ -3654,7 +3657,19 @@ fn normalize_planar_path(
     path: &CurvePath2,
     counterclockwise: bool,
 ) -> Result<CurvePath2, ConstructionError> {
-    let path = partition_periodic_curve_path(path, ConstructionError::UnsupportedPlanarProfile)?;
+    // The complete image proof supplies native carriers to the existing
+    // whole-path validator. It does not replace simplicity or nesting checks.
+    let image = if path.curves().iter().all(|curve| curve.geometry().is_some()) {
+        std::borrow::Cow::Borrowed(path)
+    } else {
+        let curves = path
+            .curves()
+            .iter()
+            .map(|curve| persistent_curve_image(curve).map(std::borrow::Cow::into_owned))
+            .collect::<Result<Vec<_>, _>>()?;
+        std::borrow::Cow::Owned(CurvePath2::try_new(curves).map_err(GeometryError::from)?)
+    };
+    let path = partition_periodic_curve_path(&image, ConstructionError::UnsupportedPlanarProfile)?;
     validate_simple_curve_path(&path, ConstructionError::UnsupportedPlanarProfile)?;
     let signed_area =
         required_curve_path_signed_area(&path, ConstructionError::UnsupportedPlanarProfile)?;
@@ -3758,6 +3773,8 @@ fn persistent_rational_bezier(curve: &CurveGeometry2) -> Result<Curve2, Construc
 fn persistent_planar_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, ConstructionError> {
     let mut persistent = Vec::new();
     for curve in curves {
+        let image = persistent_curve_image(curve)?;
+        let curve = image.as_ref();
         match curve.geometry() {
             None => return Err(ConstructionError::UnsupportedPlanarProfile),
             Some(CurveGeometry2::Line(_))
@@ -3803,6 +3820,8 @@ fn persistent_planar_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, Constructi
 fn persistent_extrusion_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, ConstructionError> {
     let mut persistent = Vec::new();
     for curve in curves {
+        let image = persistent_curve_image(curve)?;
+        let curve = image.as_ref();
         match curve.geometry() {
             None => return Err(ConstructionError::UnsupportedPlanarProfile),
             Some(CurveGeometry2::Line(_))
@@ -3834,6 +3853,29 @@ fn persistent_extrusion_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, Constru
         }
     }
     Ok(persistent)
+}
+
+/// Borrows native definitions or consumes Hypercurve's complete image proof.
+/// Region extrusion retains its original component as the source authority.
+/// Native image parameters belong to the new spatial carrier; this conversion
+/// alone does not persist an authoring history or a source parameter map.
+fn persistent_curve_image(
+    curve: &Curve2,
+) -> Result<std::borrow::Cow<'_, Curve2>, ConstructionError> {
+    if curve.geometry().is_some() {
+        return Ok(std::borrow::Cow::Borrowed(curve));
+    }
+    match curve.native_segment() {
+        Ok(image) => Ok(std::borrow::Cow::Owned(curve2_from_segment(
+            image.segment(),
+        ))),
+        Err(hypercurve::ExactCurveError::Blocked(blocker))
+            if blocker.reason() == hypercurve::UncertaintyReason::Unsupported =>
+        {
+            Err(ConstructionError::UnsupportedPlanarProfile)
+        }
+        Err(error) => Err(GeometryError::from(error).into()),
+    }
 }
 
 fn spatial_extrusion_curve(curve: &Curve2, z: &Real) -> Result<Curve3, ConstructionError> {

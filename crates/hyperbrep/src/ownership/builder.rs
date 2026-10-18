@@ -24,6 +24,9 @@ pub fn cuboid(min: Point3, max: Point3) -> Result<BodySet, ConstructionError> {
 /// are promoted without approximation to persistent rational Bézier or NURBS
 /// carriers. The returned model contains one validated open shell and no
 /// solid.
+/// Eligible retained line/arc images use Hypercurve's complete image proof
+/// before the same path validators. Their new spatial parameters are native
+/// image parameters, not a persisted map to the authoring chart.
 pub fn planar_face(
     outer: &CurvePath2,
     holes: &[CurvePath2],
@@ -250,6 +253,10 @@ pub fn extrude_path_regions(
 /// component remains the solid's planar support proof; no fitting or display
 /// geometry is used. Other persistent boundary families retain their existing
 /// construction and measurement restrictions as typed errors.
+/// Mixed boundaries may also use per-curve native image proofs, so a retained
+/// chord need not prevent extrusion of an otherwise persistent profile. Native
+/// archives replay the resulting geometry; full authoring-history persistence
+/// is a separate contract.
 ///
 /// `z_min` must be strictly less than `z_max`, including for an empty region.
 /// Empty material returns an empty body set. Predicate decisions remain strict

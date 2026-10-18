@@ -1364,19 +1364,26 @@ impl ArenaModel {
             }
         }
 
-        if let Some(CertifiedPrismShell {
-            profile: CertifiedPrismProfile::CurveRegion { region, .. },
-            origin,
-            u,
-            v,
-            extrusion,
-            ..
-        }) = self
+        let prism = self
             .data
             .certified_prisms
             .get(solid_id.index())
-            .and_then(Option::as_ref)
-        {
+            .and_then(Option::as_ref);
+        // Cold admission derives complete cap paths, while construction may
+        // retain a CurveRegion directly. Both are shell certificates; neither
+        // may be replaced by an endpoint polygon when a cap is nonlinear.
+        let certified_region = || -> Result<Option<CurveRegion2>, GeometryError> {
+            let Some(CertifiedPrismShell {
+                profile,
+                origin,
+                u,
+                v,
+                extrusion,
+                ..
+            }) = prism
+            else {
+                return Ok(None);
+            };
             let zero = Real::zero();
             let horizontal_profile =
                 decided_model_order(compare_reals(&u.0[2], &zero, crate::STRICT_PREDICATES))?
@@ -1397,15 +1404,47 @@ impl ArenaModel {
                     crate::STRICT_PREDICATES,
                 ))? == std::cmp::Ordering::Equal;
             if horizontal_profile && vertical_extrusion {
+                let region = match profile {
+                    CertifiedPrismProfile::CurveRegion { region, .. } => {
+                        std::borrow::Cow::Borrowed(region)
+                    }
+                    CertifiedPrismProfile::Paths { outer, holes, .. } => {
+                        let paths = std::iter::once(outer)
+                            .chain(holes)
+                            .cloned()
+                            .collect::<Vec<_>>();
+                        let roles = std::iter::once(hypercurve::CurveRegionLoopRole::Material)
+                            .chain(std::iter::repeat_n(
+                                hypercurve::CurveRegionLoopRole::Hole,
+                                holes.len(),
+                            ))
+                            .collect::<Vec<_>>();
+                        std::borrow::Cow::Owned(
+                            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                                &paths,
+                                &roles,
+                                &vec![hypercurve::FillRule::NonZero; paths.len()],
+                            )
+                            .map_err(GeometryError::from)?,
+                        )
+                    }
+                };
                 let region = region
                     .transform_affine(&u.0[0], &v.0[0], &u.0[1], &v.0[1], &origin.x, &origin.y)
                     .map_err(GeometryError::from)?;
-                return Ok(Some(CertifiedZPrismProfile {
-                    region,
-                    z_min,
-                    z_max,
-                }));
+                return Ok(Some(region));
             }
+            Ok(None)
+        };
+        if prism
+            .is_some_and(|prism| matches!(prism.profile, CertifiedPrismProfile::CurveRegion { .. }))
+            && let Some(region) = certified_region()?
+        {
+            return Ok(Some(CertifiedZPrismProfile {
+                region,
+                z_min,
+                z_max,
+            }));
         }
 
         let mut top_region = None::<CurveRegion2>;
@@ -1442,11 +1481,20 @@ impl ArenaModel {
                         is_top = false;
                         break;
                     }
-                    segments.push(self.projected_model_cap_segment(
-                        *edge_use_id,
-                        point,
-                        endpoint,
-                    )?);
+                    let segment = self.projected_model_cap_segment(*edge_use_id, point, endpoint);
+                    match segment {
+                        Ok(segment) => segments.push(segment),
+                        Err(GeometryError::UnsupportedPcurveContour) => {
+                            let region = certified_region()?
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?;
+                            return Ok(Some(CertifiedZPrismProfile {
+                                region,
+                                z_min,
+                                z_max,
+                            }));
+                        }
+                        Err(error) => return Err(error),
+                    }
                 }
                 if !is_top {
                     break;
