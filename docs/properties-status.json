@@ -17992,6 +17992,80 @@
     "runtime_tests_rerun": false,
     "runtime_admitted": false,
     "full_plan_complete": false
+  },
+  "circle_envelope_feasibility": {
+    "status": "do not advance the circle-first envelope candidate: original complete native resource gates still fail",
+    "parent_revision": "a1ffc2de7151f0a49229f186001ceae04839d38f",
+    "review": "docs/evidence/2026-10-18-circle-envelope/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-circle-envelope/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-circle-envelope/artifact-expectations-v1.json.gz",
+    "baseline_support_tests_passed": 11,
+    "candidate_support_tests_passed": 11,
+    "candidate_native_tests_passed": 75,
+    "gates": {
+      "copper-neck": {
+        "assertion_diagnostic_lines": [
+          "complex project copper neck regression fixture took 183.749997851s"
+        ],
+        "exit_code": 101,
+        "process_elapsed_seconds": 463.69492495099985,
+        "summary": [
+          [
+            "FAILED",
+            "0",
+            "1",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      },
+      "full-board": {
+        "assertion_diagnostic_lines": [
+          "complex project KiCad smoke suite took 446.624547486s of worker time"
+        ],
+        "exit_code": 101,
+        "process_elapsed_seconds": 449.2876400469977,
+        "summary": [
+          [
+            "FAILED",
+            "0",
+            "1",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      },
+      "gerber": {
+        "assertion_diagnostic_lines": [],
+        "exit_code": 0,
+        "process_elapsed_seconds": 0.10705878599765128,
+        "summary": [
+          [
+            "ok",
+            "1",
+            "0",
+            "0",
+            "0",
+            "1558"
+          ]
+        ]
+      }
+    },
+    "matched_benchmark": false,
+    "source_changes_applied": false,
+    "kernel_candidate_admitted": false,
+    "exact_track_importer_admitted": false,
+    "all_adverse_measurements_retained": true,
+    "general_speedup_claimed": false,
+    "disk_b_allowance_gib": 72,
+    "disk_b_baseline_reset": false,
+    "other_execution_limits_unchanged": true,
+    "hypervoxel_deferred_by_user": true,
+    "public_distribution_complete": false,
+    "full_plan_complete": false,
+    "next": "Reproduce the separately observed exact-sign publication race at the shared scalar owner. Retain the native ingress and full-workload obligations; do not combine unadmitted caches or weaken original gates."
   }
 },
   "status_meanings": {
