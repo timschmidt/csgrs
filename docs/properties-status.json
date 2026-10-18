@@ -18884,6 +18884,52 @@
     "public_distribution_complete": false,
     "hypervoxel_deferred_by_user": true,
     "next": "Enforce named Class parameter and payload consistency, then remaining graph domain obligations, before reconsidering affine cancellation; continue strict workloads and distribution acceptance."
+  },
+  "named_certificate_audit": {
+    "status": "Retain current-revision failures and reject direct structural payload comparison as an admission strategy. No runtime repair is admitted here.",
+    "parent_revision": "dbe99e3cc145e8ca58a53ade6e79fd46311972fb",
+    "review": "docs/evidence/2026-10-18-named-certificate-audit/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-named-certificate-audit/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/named-certificate-validation-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "public_recipe_census": {
+      "different": 9,
+      "family": 22,
+      "lazy": 8,
+      "opaque": 56,
+      "same": 103
+    },
+    "child_failures": {
+      "ln-zero-scale-1": 134,
+      "lnaffine-zero-base-scale-1": 134
+    },
+    "missing_acceptance_tests": {
+      "failed": 2,
+      "invalid_forms": 35,
+      "scales": [
+        0,
+        1,
+        -3
+      ],
+      "formats": [
+        "JSON",
+        "CBOR"
+      ],
+      "invalid_tuple_scales_accepted": 105,
+      "zero_pi_power_value_failures": 4,
+      "both_formats_evaluated_before_combining_assertions": true
+    },
+    "runtime_admitted": false,
+    "source_changes_applied": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "remaining_limitations": [
+      "All reproduced named-certificate failures remain unfixed at this checkpoint.",
+      "The finite census is not a proof over all public constructor compositions.",
+      "Non-leaf graph domains, private kernel ranges, quantile seeds and imported resource bounds remain open.",
+      "Earlier missing artifacts were neither reaudited nor recovered. Compiled probes and raw archives require retained external paths."
+    ],
+    "next": "Repair invalid named parameter claims before lazy reconstruction, restore the zero pi-power identity at its owning helper, and extend native equality evidence for valid payload variants. Preserve unknown proof outcomes as distinct from invalid input; do not weaken the valid public/lazy corpus to make an importer gate pass. Then run affected local/downstream acceptance and cost checks before runtime admission."
   }
 },
   "status_meanings": {
