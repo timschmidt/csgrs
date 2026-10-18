@@ -17807,6 +17807,27 @@
     "public_distribution_complete": false,
     "general_speedup_claimed": false,
     "full_plan_complete": false
+  },
+  "native_track_revisit": {
+    "status": "rejected: exact-track importer passes focused semantics but exceeds both original native resource gates",
+    "parent_revision": "7abc7128c00ad1b4bbb10ddd24dc968c39dfdd8a",
+    "review": "docs/evidence/2026-10-17-native-track-revisit/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-native-track-revisit/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-native-track-revisit/artifact-expectations-v1.json.gz",
+    "baseline_stroke_failures": 10,
+    "baseline_aggregation_failures": 3,
+    "candidate_focused_tests_passed": 75,
+    "original_native_resource_gates_failed": 2,
+    "production_source_unchanged": true,
+    "exact_ingress_admitted": false,
+    "point_equality_changed": false,
+    "point_cost_cases_completed": 9,
+    "point_cost_implementation_pending": true,
+    "qualified_aggregation_retained": true,
+    "cache_proposal_admitted": false,
+    "hypervoxel_deferred_by_user": true,
+    "public_distribution_complete": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
