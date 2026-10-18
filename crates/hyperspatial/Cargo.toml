@@ -1,0 +1,17 @@
+[package]
+name = "hyperspatial"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95.0"
+description = "Geospatial and astronomical coordinate transformations for the Hyper stack"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/timschmidt/csgrs"
+readme = "README.md"
+keywords = ["geodesy", "astronomy", "coordinates", "geometry", "transformations"]
+categories = ["science", "mathematics", "simulation"]
+# The initial package records the development contract; no transform API exists yet.
+publish = false
+
+[features]
+default = []
