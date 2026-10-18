@@ -17828,6 +17828,24 @@
     "hypervoxel_deferred_by_user": true,
     "public_distribution_complete": false,
     "full_plan_complete": false
+  },
+  "point_equality_contracts": {
+    "status": "retain three Point2 acceptance tests only; optimization proposals remain unadmitted",
+    "parent_revision": "1b90c0105c71e09cacb613b4d8bfe63d62011d1c",
+    "review": "docs/evidence/2026-10-18-point-equality-contracts/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-point-equality-contracts/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-18-point-equality-contracts/artifact-expectations-v1.json.gz",
+    "test_source": "crates/hypercurve/tests/point_equality_contract.rs",
+    "new_acceptance_tests": 3,
+    "production_implementation_changed": false,
+    "candidate_optimization_admitted": false,
+    "experiment_targets_remain_open": true,
+    "disk_b_allowance_gib": 72,
+    "disk_b_baseline_reset": false,
+    "other_execution_limits_unchanged": true,
+    "hypervoxel_deferred_by_user": true,
+    "public_distribution_complete": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
