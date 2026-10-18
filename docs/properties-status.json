@@ -18759,6 +18759,131 @@
     "public_distribution_complete": false,
     "hypervoxel_deferred_by_user": true,
     "next": "Validate named-certificate/graph consistency and undefined graph domains before reconsidering withheld affine cancellation; continue preserved strict workload and distribution acceptance."
+  },
+  "scalar_graph_rational_domains": {
+    "status": "Retain exact-rational domain rejection during native graph decoding.",
+    "parent_revision": "339e4b4393e6211930d3b6abdf69be3b002441c5",
+    "review": "docs/evidence/2026-10-18-scalar-graph-domains/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-scalar-graph-domains/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/certificate-ingress-validation-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1066
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 934
+      }
+    },
+    "debug_units_passed": 817,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "packages": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "compiler": "1.95.0",
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "all_targets": true,
+      "runtime_tests_rerun": false,
+      "clippy_on_msrv_run": false
+    },
+    "runtime_admitted": true,
+    "admitted_scope": "Known exact-rational domain failures are rejected before native/Real/collection/SVG import success; original valid representations and tested compositions remain supported.",
+    "remaining_limitations": [
+      "Eleven named-certificate/payload diagnostic forms still decode; their contradictions and panics remain reproduced and unadmitted.",
+      "Non-leaf domain obligations, private series ranges and quantile seed validation remain open. No arbitrary graph admission claim.",
+      "Unchecked native constructors retain their documented caller domain obligations.",
+      "Automatic reciprocal equality, full strict native workloads, bindings, release/distribution and complete pre-push validation remain open.",
+      "The boxed cache stays rejected and affine subtraction stays withheld.",
+      "Raw archives require the recorded Disk B retention location; old missing artifacts were neither reaudited nor recovered."
+    ],
+    "explicit_subtraction_candidate_admitted": false,
+    "lazy_cache_candidate_admitted": false,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 40,
+    "all_adverse_results_retained": true,
+    "general_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Enforce named Class parameter and payload consistency, then remaining graph domain obligations, before reconsidering affine cancellation; continue strict workloads and distribution acceptance."
   }
 },
   "status_meanings": {

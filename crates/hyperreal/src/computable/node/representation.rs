@@ -3,6 +3,11 @@
 /// This is a demand-driven exact-real representation: every node can produce an
 /// integer approximation at a requested binary precision, and caches store only
 /// approximations and exact reductions proven for that node.
+///
+/// With `serde`, decoding rejects out-of-domain exact rational arguments to
+/// partial functions. This check does not prove that an arbitrary expression
+/// is defined: non-leaf domain obligations and private kernel range requirements
+/// still apply. Deserialization does not refine an operand to decide its domain.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg(not(verus_keep_ghost))]
@@ -36,6 +41,7 @@ impl<'de> Deserialize<'de> for Node {
         // Replay this bounded proof from the expression itself so a subsequent
         // bounded reducer can consume it without first warming a numeric cache.
         let approximation = Approximation::deserialize(deserializer)?;
+        Self::check_serialized_rational_domain(&approximation).map_err(serde::de::Error::custom)?;
         let facts = AtomicFacts::default();
         if let Approximation::PrescaledSin(argument) | Approximation::PrescaledTan(argument) =
             &approximation
@@ -48,6 +54,62 @@ impl<'de> Deserialize<'de> for Node {
             approximation,
             cache: EvaluationCache::default(),
         })
+    }
+}
+
+#[cfg(all(feature = "serde", not(verus_keep_ghost)))]
+impl Node {
+    fn check_serialized_rational_domain(approximation: &Approximation) -> Result<(), &'static str> {
+        // Children have already passed the same check while decoding. Reject
+        // an undefined child before a parent can hide it with multiplication
+        // by zero, cancellation, or an outer Real scale. Only inspect exact
+        // leaves; an inconclusive domain proof must not reject a valid graph.
+        let outside_closed_unit = |r: &Rational| r < &-Rational::one() || r > &Rational::one();
+        let outside_open_unit = |r: &Rational| r <= &-Rational::one() || r >= &Rational::one();
+        let outside_positive_unit = |r: &Rational| r.sign() == Sign::Minus || r > &Rational::one();
+        let invalid = match approximation {
+            Approximation::Inverse(value) | Approximation::PrescaledCot(value) => value
+                .exact_rational()
+                .is_some_and(|r| r.sign() == Sign::NoSign),
+            Approximation::Sqrt(value) | Approximation::NthRoot(value, _) => value
+                .exact_rational()
+                .is_some_and(|r| r.sign() == Sign::Minus),
+            Approximation::PrescaledLn(value) => value
+                .exact_rational()
+                .is_some_and(|r| r <= -Rational::one()),
+            // These variants store x for ln(1+x), not the logarithm's input.
+            Approximation::PrescaledLnRational(r)
+            | Approximation::BinaryScaledLnRational { residual: r, .. } => r <= &-Rational::one(),
+            Approximation::IntegralAtan(denominator) => denominator.is_zero(),
+            Approximation::AsinRational(r) => outside_closed_unit(r),
+            Approximation::PrescaledAsin(value) | Approximation::AsinDeferred(value) => value
+                .exact_rational()
+                .is_some_and(|r| outside_closed_unit(&r)),
+            // Both rational endpoint variants store an absolute argument.
+            Approximation::AcosPositiveRational(r) | Approximation::AcosNegativeRational(r) => {
+                outside_positive_unit(r)
+            }
+            Approximation::AcosPositive(value) => value
+                .exact_rational()
+                .is_some_and(|r| outside_positive_unit(&r)),
+            Approximation::AtanhRational(r) => outside_open_unit(r),
+            Approximation::PrescaledAtanh(value) | Approximation::AtanhDirect(value) => value
+                .exact_rational()
+                .is_some_and(|r| outside_open_unit(&r)),
+            Approximation::AcoshNearOne(value) | Approximation::AcoshDirect(value) => {
+                value.exact_rational().is_some_and(|r| r < Rational::one())
+            }
+            Approximation::NormalQuantile(data) => data
+                .p
+                .exact_rational()
+                .is_some_and(|r| r.sign() != Sign::Plus || r >= Rational::one()),
+            _ => false,
+        };
+        if invalid {
+            Err("Computable argument is outside its real-valued domain")
+        } else {
+            Ok(())
+        }
     }
 }
 
