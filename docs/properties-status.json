@@ -19097,6 +19097,213 @@
     "public_distribution_complete": false,
     "hypervoxel_deferred_by_user": true,
     "next": "Continue remaining native graph domain and resource obligations, then ordinary strict completion and complete external user-path/release validation under the preserved contracts."
+  },
+  "native_kernel_admission": {
+    "status": "Retain native private-kernel parameter checks and defined inverse-cosine endpoint proofs. Reject broad cached-zero rational reuse.",
+    "parent_revision": "e5e292ae5f45e7eaca19bd2cd9612f88218fb961",
+    "review": "docs/evidence/2026-10-18-kernel-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-kernel-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/kernel-admission-validation-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1077
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 935
+      }
+    },
+    "debug_units_passed": 818,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-solid_cache": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "runtime_admitted": true,
+    "admitted_scope": "Known-invalid stored kernel ranges fail parsing before wrappers publish a scalar. Exact inverse-cosine endpoints retain zero and downstream division failure; arithmetic consumes a new proof of a defined rational endpoint, never an arbitrary cached zero.",
+    "remaining_limitations": [
+      "General non-leaf domain/range admission remains open. The baseline already gives a false zero fact to an undefined zero product; this patch prevents the new reader from erasing it but does not repair that general fact path.",
+      "NormalQuantile still trusts a bad seed: p=1/2 with the retained seed yields 100 at precision zero through both import and the native public constructor.",
+      "Finite valid private and public representation coverage does not prove every graph or constructor.",
+      "Full geometry/DRC runtime gates, actual affected foreign-language consumers, clean shipped-distribution validation and complete resource bounds remain open.",
+      "Historical missing artifacts were not reaudited or recovered; closed evidence relies on retained external paths."
+    ],
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 72,
+    "tmp_allowance_gib": 46,
+    "logs_allowance_mib": 100,
+    "all_adverse_results_retained": true,
+    "general_speedup_claimed": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "next": "Address native domain obligations and quantile seed evidence before broader strict completion and the complete external release path."
   }
 },
   "status_meanings": {

@@ -21,6 +21,8 @@ struct RingRecognition<'a> {
     // Earlier polynomial/quotient attempts keep their original arithmetic.
     root_squares: bool,
     root_square_used: bool,
+    // Imported endpoint proofs cannot assume opaque atoms denote valid reals.
+    rational_only: bool,
 }
 
 impl<'a> RingRecognition<'a> {
@@ -41,6 +43,7 @@ impl<'a> RingRecognition<'a> {
             signal: &value.signal,
             root_squares: false,
             root_square_used: false,
+            rational_only: false,
         }
     }
 
@@ -193,6 +196,9 @@ impl<'a> RingRecognition<'a> {
     }
 
     fn atom(&mut self, value: &'a Computable) -> Option<RingPolynomial> {
+        if self.rational_only {
+            return None;
+        }
         for index in 0..self.atoms.len() {
             self.charge()?;
             if Computable::internal_structural_eq(self.atoms[index], value) {

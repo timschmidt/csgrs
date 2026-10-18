@@ -5,9 +5,10 @@
 /// approximations and exact reductions proven for that node.
 ///
 /// With `serde`, decoding rejects out-of-domain exact rational arguments to
-/// partial functions. This check does not prove that an arbitrary expression
-/// is defined: non-leaf domain obligations and private kernel range requirements
-/// still apply. Deserialization does not refine an operand to decide its domain.
+/// partial functions and known violations of stored kernel parameter ranges.
+/// This check does not prove that an arbitrary expression is defined: general
+/// non-leaf domain/range obligations and quantile seed proofs still apply.
+/// Deserialization does not refine an operand to decide its domain.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg(not(verus_keep_ghost))]
@@ -42,6 +43,8 @@ impl<'de> Deserialize<'de> for Node {
         // bounded reducer can consume it without first warming a numeric cache.
         let approximation = Approximation::deserialize(deserializer)?;
         Self::check_serialized_rational_domain(&approximation).map_err(serde::de::Error::custom)?;
+        Self::check_serialized_kernel_parameters(&approximation)
+            .map_err(serde::de::Error::custom)?;
         let facts = AtomicFacts::default();
         if let Approximation::PrescaledSin(argument) | Approximation::PrescaledTan(argument) =
             &approximation
@@ -59,6 +62,50 @@ impl<'de> Deserialize<'de> for Node {
 
 #[cfg(all(feature = "serde", not(verus_keep_ghost)))]
 impl Node {
+    fn check_serialized_kernel_parameters(
+        approximation: &Approximation,
+    ) -> Result<(), &'static str> {
+        // These variants store a reduced argument, not an arbitrary argument
+        // to the corresponding total trigonometric function. Reuse the native
+        // constructor's classification before accepting its range-dependent
+        // sign facts and approximation bounds. Preserve the supplied graph.
+        let invalid = match approximation {
+            Approximation::PrescaledCosRational(r)
+            | Approximation::PrescaledSinRational(r)
+            | Approximation::PrescaledTanRational(r) => r.msd_exact().is_some_and(|msd| msd >= 0),
+            Approximation::PrescaledCosHalfPiMinusRational(r)
+            | Approximation::PrescaledSinHalfPiMinusRational(r)
+            | Approximation::PrescaledCotHalfPiMinusRational(r) => {
+                r.sign() != Sign::Plus
+                    || Computable::exact_rational_half_pi_shortcut_magnitude(r).is_none()
+            }
+            Approximation::SincSmall(argument) | Approximation::CoscSmall(argument) => {
+                if let Some(rational) = argument.exact_rational() {
+                    let limit = Rational::fraction(3, 4).expect("nonzero constant denominator");
+                    rational.compare_magnitude(&limit) == Ordering::Greater
+                } else if let Approximation::Constant(constant) = &argument.internal.approximation {
+                    // A certified MSD >= 0 proves |x| >= 1 > 3/4. Inspect only
+                    // these trusted constants; do not refine an untrusted
+                    // expression or mistake a planning estimate for a proof.
+                    constant
+                        .bound_info()
+                        .known_msd()
+                        .flatten()
+                        .is_some_and(|msd| msd >= 0)
+                } else {
+                    // General non-leaf domain/range admission remains open.
+                    false
+                }
+            }
+            _ => false,
+        };
+        if invalid {
+            Err("Computable argument violates its stored kernel range")
+        } else {
+            Ok(())
+        }
+    }
+
     fn check_serialized_rational_domain(approximation: &Approximation) -> Result<(), &'static str> {
         // Children have already passed the same check while decoding. Reject
         // an undefined child before a parent can hide it with multiplication

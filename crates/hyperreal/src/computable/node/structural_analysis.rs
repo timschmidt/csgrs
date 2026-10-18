@@ -76,15 +76,9 @@ impl AlgebraicSeparation {
     fn rational_root(root: &Computable) -> Option<(u32, Rational)> {
         match &root.internal.approximation {
             Approximation::Sqrt(child) => Some((2, child.exact_rational()?)),
-            Approximation::NthRoot(child, degree) => {
-                Some((*degree, child.exact_rational()?))
-            }
-            Approximation::Constant(SharedConstant::Sqrt2) => {
-                Some((2, Rational::new(2)))
-            }
-            Approximation::Constant(SharedConstant::Sqrt3) => {
-                Some((2, Rational::new(3)))
-            }
+            Approximation::NthRoot(child, degree) => Some((*degree, child.exact_rational()?)),
+            Approximation::Constant(SharedConstant::Sqrt2) => Some((2, Rational::new(2))),
+            Approximation::Constant(SharedConstant::Sqrt3) => Some((2, Rational::new(3))),
             _ => None,
         }
     }
@@ -173,18 +167,14 @@ impl AlgebraicSeparation {
             .checked_add(self.conjugate_log2)?
             .max(self.denominator_log2.checked_add(other.conjugate_log2)?)
             .checked_add(1)?;
-        self.denominator_log2 = self
-            .denominator_log2
-            .checked_add(other.denominator_log2)?;
+        self.denominator_log2 = self.denominator_log2.checked_add(other.denominator_log2)?;
         self.conjugate_log2 = conjugate_log2;
         self.merge_generators(other)?;
         self.within_limits().then_some(self)
     }
 
     fn multiply(mut self, other: Self) -> Option<Self> {
-        self.denominator_log2 = self
-            .denominator_log2
-            .checked_add(other.denominator_log2)?;
+        self.denominator_log2 = self.denominator_log2.checked_add(other.denominator_log2)?;
         self.conjugate_log2 = self.conjugate_log2.checked_add(other.conjugate_log2)?;
         self.merge_generators(other)?;
         self.within_limits().then_some(self)
@@ -213,9 +203,7 @@ impl AlgebraicSeparation {
             .denominator_log2
             .checked_mul(degree_u64.checked_sub(1)?)?
             .checked_add(self.conjugate_log2)?;
-        self.conjugate_log2 = numerator
-            .checked_add(degree_u64.checked_sub(1)?)?
-            / degree_u64;
+        self.conjugate_log2 = numerator.checked_add(degree_u64.checked_sub(1)?)? / degree_u64;
         self.insert_generator(root, degree)?;
         self.within_limits().then_some(self)
     }
@@ -273,9 +261,7 @@ impl Binary64Interval {
         let numerator = num::ToPrimitive::to_u64(value.numerator())?;
         let denominator = num::ToPrimitive::to_u64(value.denominator())?;
         const MAX_EXACT_BINARY64_INTEGER: u64 = 1_u64 << 53;
-        if numerator > MAX_EXACT_BINARY64_INTEGER
-            || denominator > MAX_EXACT_BINARY64_INTEGER
-        {
+        if numerator > MAX_EXACT_BINARY64_INTEGER || denominator > MAX_EXACT_BINARY64_INTEGER {
             return None;
         }
         // Both integer-to-binary64 conversions are exact. Division is the only
@@ -324,10 +310,7 @@ impl Binary64Interval {
         if self.lower <= 0.0 && self.upper >= 0.0 {
             return None;
         }
-        Self::new(
-            (1.0 / self.upper).next_down(),
-            (1.0 / self.lower).next_up(),
-        )
+        Self::new((1.0 / self.upper).next_down(), (1.0 / self.lower).next_up())
     }
 
     fn square(self) -> Option<Self> {
@@ -382,9 +365,9 @@ impl Computable {
             *remaining = remaining.checked_sub(1)?;
             let result = match &node.internal.approximation {
                 Approximation::One => AlgebraicSeparation::rational(&Rational::one()),
-                Approximation::Int(value) => AlgebraicSeparation::rational(
-                    &Rational::from_bigint(value.clone()),
-                ),
+                Approximation::Int(value) => {
+                    AlgebraicSeparation::rational(&Rational::from_bigint(value.clone()))
+                }
                 Approximation::Ratio(value) => AlgebraicSeparation::rational(value),
                 Approximation::Constant(SharedConstant::Sqrt2)
                 | Approximation::Constant(SharedConstant::Sqrt3) => {
@@ -393,28 +376,25 @@ impl Computable {
                         Approximation::Constant(SharedConstant::Sqrt3) => 3,
                         _ => unreachable!(),
                     };
-                    AlgebraicSeparation::rational(&Rational::new(radicand))?
-                        .root(node.clone(), 2)
+                    AlgebraicSeparation::rational(&Rational::new(radicand))?.root(node.clone(), 2)
                 }
                 Approximation::Negate(child) => parse(child, remaining, memo),
                 Approximation::Offset(child, shift) => {
                     parse(child, remaining, memo)?.offset(*shift)
                 }
-                Approximation::Add(left, right) => parse(left, remaining, memo)?
-                    .add(parse(right, remaining, memo)?),
-                Approximation::Multiply(left, right) => parse(left, remaining, memo)?
-                    .multiply(parse(right, remaining, memo)?),
+                Approximation::Add(left, right) => {
+                    parse(left, remaining, memo)?.add(parse(right, remaining, memo)?)
+                }
+                Approximation::Multiply(left, right) => {
+                    parse(left, remaining, memo)?.multiply(parse(right, remaining, memo)?)
+                }
                 Approximation::Inverse(child)
-                    if child
-                        .exact_sign()
-                        .is_some_and(|sign| sign != Sign::NoSign) =>
+                    if child.exact_sign().is_some_and(|sign| sign != Sign::NoSign) =>
                 {
                     parse(child, remaining, memo)?.inverse()
                 }
                 Approximation::Square(child) => parse(child, remaining, memo)?.square(),
-                Approximation::Sqrt(child) => {
-                    parse(child, remaining, memo)?.root(node.clone(), 2)
-                }
+                Approximation::Sqrt(child) => parse(child, remaining, memo)?.root(node.clone(), 2),
                 Approximation::NthRoot(child, degree) => {
                     parse(child, remaining, memo)?.root(node.clone(), *degree)
                 }
@@ -573,9 +553,9 @@ impl Computable {
             return Some(cached);
         }
         if constant == SharedConstant::Tau
-                && let Some(pi_precision) = p.checked_sub(1)
-                && let Some(cached) =
-                    Self::cached_shared_constant_at_precision(SharedConstant::Pi, pi_precision)
+            && let Some(pi_precision) = p.checked_sub(1)
+            && let Some(cached) =
+                Self::cached_shared_constant_at_precision(SharedConstant::Pi, pi_precision)
         {
             // tau is exactly 2*pi, so a pi approximation at precision p-1
             // is already a tau approximation at precision p. Populate the
@@ -585,9 +565,9 @@ impl Computable {
             return Some(cached);
         }
         if constant == SharedConstant::Pi
-                && let Some(tau_precision) = p.checked_add(1)
-                && let Some(cached) =
-                    Self::cached_shared_constant_at_precision(SharedConstant::Tau, tau_precision)
+            && let Some(tau_precision) = p.checked_add(1)
+            && let Some(cached) =
+                Self::cached_shared_constant_at_precision(SharedConstant::Tau, tau_precision)
         {
             // The same identity works in reverse: a tau approximation at
             // precision p+1 is already a pi approximation at precision p.
@@ -690,7 +670,15 @@ impl Computable {
             Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
                 BoundInfo::Zero
             } else {
-                BoundInfo::with_sign(n.sign(), crate::verified::word::checked_bit_length_msd(n.magnitude().bits(), 1, false, 0))
+                BoundInfo::with_sign(
+                    n.sign(),
+                    crate::verified::word::checked_bit_length_msd(
+                        n.magnitude().bits(),
+                        1,
+                        false,
+                        0,
+                    ),
+                )
             }),
             Approximation::Constant(constant) => Some(constant.bound_info()),
             Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
@@ -783,7 +771,15 @@ impl Computable {
                 Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
                     BoundInfo::Zero
                 } else {
-                    BoundInfo::with_sign(n.sign(), crate::verified::word::checked_bit_length_msd(n.magnitude().bits(), 1, false, 0))
+                    BoundInfo::with_sign(
+                        n.sign(),
+                        crate::verified::word::checked_bit_length_msd(
+                            n.magnitude().bits(),
+                            1,
+                            false,
+                            0,
+                        ),
+                    )
                 }),
                 Approximation::Constant(constant) => Some(constant.bound_info()),
                 Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
@@ -970,9 +966,7 @@ impl Computable {
                     .binary64_filter_interval(remaining)?
                     .multiply(Binary64Interval::exact(scale)?)
             }
-            Approximation::Inverse(child) => {
-                child.binary64_filter_interval(remaining)?.inverse()
-            }
+            Approximation::Inverse(child) => child.binary64_filter_interval(remaining)?.inverse(),
             Approximation::Square(child) => child.binary64_filter_interval(remaining)?.square(),
             Approximation::Add(left, right) => left
                 .binary64_filter_interval(remaining)?
@@ -1113,7 +1107,9 @@ impl Computable {
                         && appr.abs() > BigInt::one()
                     {
                         let sign = appr.sign();
-                        node.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
+                        node.internal
+                            .facts
+                            .replace_exact_sign(ExactSignCache::Valid(sign));
                         Some(Some(sign))
                     } else {
                         Some(None)
@@ -1162,10 +1158,24 @@ impl Computable {
                 Approximation::PrescaledCosHalfPiMinusRational(_)
                 | Approximation::PrescaledSinHalfPiMinusRational(_)
                 | Approximation::PrescaledCotHalfPiMinusRational(_) => Some(Some(Sign::Plus)),
-                Approximation::AcosPositiveRational(_)
-                | Approximation::AcosNegativeRational(_)
-                | Approximation::AcoshNearOne(_)
-                | Approximation::AcoshDirect(_)
+                Approximation::AcosPositiveRational(r) => {
+                    Some(Some(if r.is_one() { Sign::NoSign } else { Sign::Plus }))
+                }
+                Approximation::AcoshNearOne(argument) | Approximation::AcoshDirect(argument) => {
+                    // The representation alone does not prove x>1. A checked
+                    // rational expression proves the endpoint and its domain;
+                    // a cached sign alone could hide an undefined child.
+                    Some(argument.bounded_defined_rational().and_then(|r| {
+                        if r.is_one() {
+                            Some(Sign::NoSign)
+                        } else if r > Rational::one() {
+                            Some(Sign::Plus)
+                        } else {
+                            None
+                        }
+                    }))
+                }
+                Approximation::AcosNegativeRational(_)
                 | Approximation::Erfc(_)
                 | Approximation::NormalSf(_) => Some(Some(Sign::Plus)),
                 Approximation::AcosPositive(_) | Approximation::NormalInterval { .. } => Some(None),
@@ -1302,7 +1312,8 @@ impl Computable {
                         (Some(Sign::Plus), Some(Sign::Plus)) => Some(Sign::Plus),
                         (Some(Sign::Minus), Some(Sign::Minus)) => Some(Sign::Minus),
                         _ => None,
-                    }.or_else(|| node.exact_positive_exp_difference_sign());
+                    }
+                    .or_else(|| node.exact_positive_exp_difference_sign());
                     store_exact_sign(node, result);
                     values.push(result);
                 }
@@ -1343,14 +1354,16 @@ impl Computable {
         }
         let rational_square = &rational * &rational;
         let radical_square = &scale * &scale * radicand?;
-        Some(match rational_square
-            .partial_cmp(&radical_square)
-            .expect("finite exact rationals are totally ordered")
-        {
-            Ordering::Less => scale.sign(),
-            Ordering::Equal => Sign::NoSign,
-            Ordering::Greater => rational.sign(),
-        })
+        Some(
+            match rational_square
+                .partial_cmp(&radical_square)
+                .expect("finite exact rationals are totally ordered")
+            {
+                Ordering::Less => scale.sign(),
+                Ordering::Equal => Sign::NoSign,
+                Ordering::Greater => rational.sign(),
+            },
+        )
     }
 
     pub(crate) fn exact_pure_quadratic_surd(&self) -> Option<(Rational, Rational)> {
@@ -1405,15 +1418,21 @@ impl Computable {
     }
 
     pub(crate) fn exact_rational(&self) -> Option<Rational> {
-        // Only exact leaf nodes are exposed here. Keeping this narrow prevents
-        // constructor shortcuts from accidentally forcing approximation of a
-        // composite just to discover that it is not rational.
+        // Read exact leaves and defined inverse-cosine endpoints. Do not turn
+        // an arbitrary cached zero into a rational: imported graphs may still
+        // contain unresolved domain obligations beneath that sign fact.
         match &self.internal.approximation {
             Approximation::One => Some(Rational::one()),
             Approximation::Int(n) => Some(Rational::from_bigint(n.clone())),
             Approximation::Ratio(r) => Some(r.clone()),
+            Approximation::AcosPositiveRational(r) if r.is_one() => Some(Rational::zero()),
+            Approximation::AcoshNearOne(argument) | Approximation::AcoshDirect(argument) => {
+                argument
+                    .bounded_defined_rational()?
+                    .is_one()
+                    .then(Rational::zero)
+            }
             _ => None,
         }
     }
-
 }

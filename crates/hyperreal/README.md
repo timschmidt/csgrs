@@ -372,6 +372,24 @@ These limits do **not** bound total decoding work, parameter sizes or graph
 construction. General opaque-graph domain validation and comprehensive import
 resource limits remain incomplete; externally contain hostile-input workloads.
 
+Private trigonometric wire variants retain reduced parameters. The dedicated
+`PrescaledCosRational`, `PrescaledSinRational` and `PrescaledTanRational` kernels
+require `|r| < 1`; their half-pi-complement variants require `1 <= r < 3/2`.
+Imports outside those stored parameter ranges return `ParseError`, including
+when a zero outer factor would hide the invalid child. Small-angle `sinc` and
+`cosc` nodes reject exact rational inputs outside `|x| <= 3/4` and shared
+constants whose certified magnitude proves they exceed that bound. This
+tightens earlier unchecked private representations; the public trigonometric
+constructors retain their wider input domains through argument reduction.
+General non-leaf kernel ranges and quantile seed admission remain incomplete.
+Inverse-cosine endpoint facts distinguish `acos(1) = acosh(1) = 0`; an imported
+`acosh` node needs evidence about its argument before claiming a positive sign.
+The native rational reader recognizes these exact endpoints so later arithmetic
+can consume them without numerical refinement. For `acosh`, the shared bounded
+quotient evaluator requires rational leaves and checks every denominator before
+discarding zero terms; an arbitrary cached zero is insufficient. Imported
+non-rational `acosh` arguments may remain undecided until new evidence is found.
+
 Hypercurve's exact SVG import exposes undecided scalar admission as
 `SvgError::Scalar(Problem::UnknownCertificate)` with the scalar error as its
 source. Consumers matching every `SvgError` variant must handle the new

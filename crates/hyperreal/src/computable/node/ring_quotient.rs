@@ -249,16 +249,28 @@ impl<'a> RingRecognition<'a> {
 
 impl Computable {
     pub(crate) fn bounded_quotient_rational(&self) -> Option<Rational> {
-        self.bounded_quotient_projection(false)
+        self.bounded_quotient_projection(false, false)
     }
 
     pub(crate) fn bounded_root_square_rational(&self) -> Option<Rational> {
-        self.bounded_quotient_projection(true)
+        self.bounded_quotient_projection(true, false)
     }
 
-    fn bounded_quotient_projection(&self, root_squares: bool) -> Option<Rational> {
+    // Reuse the quotient evaluator and its existing limits, but require every
+    // leaf to be rational and every inverse to have a nonzero denominator.
+    // Both children are checked before multiplication can erase a zero term.
+    fn bounded_defined_rational(&self) -> Option<Rational> {
+        self.bounded_quotient_projection(false, true)
+    }
+
+    fn bounded_quotient_projection(
+        &self,
+        root_squares: bool,
+        rational_only: bool,
+    ) -> Option<Rational> {
         let mut recognition = RingRecognition::new(self);
         recognition.root_squares = root_squares;
+        recognition.rational_only = rational_only;
         let quotient = recognition.expand_quotient(self, RingRecognition::MAX_DEPTH)?;
         let rational = recognition.project_quotient(&quotient)?;
         if should_stop(&self.signal) || (root_squares && !recognition.root_square_used) {
