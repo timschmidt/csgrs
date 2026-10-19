@@ -69,7 +69,19 @@ fn shared_source_identity_never_aliases_opposite_native_cone_branches() {
             }
         );
         let expected = source.generator().0.clone() + source.generator().1.clone() * mapped.y;
-        let actual = chart.surface().point_at(&uv).unwrap();
+        let actual = chart
+            .surface()
+            .point_at(&{
+                let uv = &uv;
+                hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+            })
+            .map(|point| {
+                point
+                    .try_coordinates()
+                    .expect("represented surface fixture")
+                    .clone()
+            })
+            .unwrap();
         assert!(
             same_vector(
                 Site::entity(file.syntax().entity(12).unwrap()),

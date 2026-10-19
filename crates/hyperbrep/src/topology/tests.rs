@@ -213,7 +213,7 @@ fn angular_sweep_correspondence_certifies_a_complete_planar_circle() {
     let from_face = model
         .surface(face.surface())
         .unwrap()
-        .point_at(&Point2::new(
+        .evaluate_real(&Point2::new(
             surface_parameter.coordinates().unwrap().x().clone(),
             surface_parameter.coordinates().unwrap().y().clone(),
         ))
@@ -256,7 +256,7 @@ fn revolution_patch_certifies_complete_meridian_and_latitude_images() {
     ];
     let points = parameters
         .iter()
-        .map(|parameter| surface.point_at(parameter).unwrap())
+        .map(|parameter| surface.evaluate_real(parameter).unwrap())
         .collect::<Vec<_>>();
     let mut builder = ArenaModelBuilder::new();
     let vertices = points

@@ -1,6 +1,6 @@
 # HyperBRep development plan
 
-Status: implementation blueprint. Updated 2026-10-19 for retained pcurve
+Status: implementation blueprint. Updated 2026-10-19 for retained surface
 evaluation, upstream `dbe99e3cc` and concurrent development ownership.
 
 The [procedural solid-revolution increment](evidence/2026-10-18-procedural-revolution/README.md)
@@ -1252,10 +1252,21 @@ caller migration and no legacy overload. Native rational sections/projections,
 retained/iso mappings and admitted planar-source similarity projections preserve
 source evidence through queries and point-graph replay. Face classification
 consumes the retained UV point directly. `geometry/pcurve.rs` owns these maps;
-Hypercurve retains scalar and point proof authority. General `Surface::point_at`
-UV images, whole-section selected restriction and branch/event persistence remain
-required next steps. Follow the [current next domains](evidence/2026-10-19-pcurve-evaluation/next-domains.md).
+Hypercurve retains scalar and point proof authority. Selected nonlinear `Surface::point_at`
+images, whole-section selected restriction and branch/event persistence remain
+required next steps. Follow the [associated next domains](evidence/2026-10-19-pcurve-evaluation/next-domains.md).
 No work package or release gate is closed by this increment.
+
+The [retained surface evaluation increment](evidence/2026-10-19-surface-evaluation/README.md)
+now takes a joint Hypercurve UV point and returns `GeometricPoint3`. Plane images
+retain their source surface and UV evidence directly; shared affine queries,
+transforms, straight/rotational sweep origins and checked archive 11 replay
+consume the result. Represented formulas remain in one private coefficient
+evaluator. Nonlinear selected images fail typed after domain checks. Archive 11
+uses a generic sweep origin and has no legacy decoder. Follow the
+[current next domains](evidence/2026-10-19-surface-evaluation/next-domains.md)
+for source-bound nonlinear maps, complete selected section restrictions and
+branch/event persistence. Work-package and publication gates remain open.
 
 Apply [research gates G2–G5](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)
 before making practical-completeness claims. ESOLID and exact quadric work

@@ -254,7 +254,7 @@ pub fn triangulate_planar_face(
         }
         let points = parameters
             .iter()
-            .map(|parameter| surface.point_at(parameter))
+            .map(|parameter| surface.evaluate_real(parameter))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(ExactPlanarFaceTriangulation {
             parameters,
@@ -314,7 +314,7 @@ pub fn approximate_face_chordally(
         }
         let points = parameters
             .iter()
-            .map(|parameter| surface.point_at(parameter))
+            .map(|parameter| surface.evaluate_real(parameter))
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(ArenaChordalFaceApproximation {
@@ -417,7 +417,7 @@ fn approximate_complete_sphere_chordally(
     debug_assert_eq!(triangles.len(), triangle_count);
     let points = parameters
         .iter()
-        .map(|parameter| surface.point_at(parameter))
+        .map(|parameter| surface.evaluate_real(parameter))
         .collect::<Result<Vec<_>, _>>()?;
     Ok(ArenaChordalFaceApproximation {
         source_face: face_id,
@@ -766,7 +766,7 @@ mod tests {
             assert_eq!(
                 point3_equal(
                     point,
-                    &surface.point_at(parameter).unwrap(),
+                    &surface.evaluate_real(parameter).unwrap(),
                     crate::STRICT_PREDICATES
                 )
                 .value(),
@@ -826,7 +826,7 @@ mod tests {
                 assert_eq!(
                     point3_equal(
                         point,
-                        &surface.point_at(parameter).unwrap(),
+                        &surface.evaluate_real(parameter).unwrap(),
                         crate::STRICT_PREDICATES
                     )
                     .value(),
@@ -867,7 +867,7 @@ mod tests {
             assert_eq!(
                 point3_equal(
                     point,
-                    &surface.point_at(parameter).unwrap(),
+                    &surface.evaluate_real(parameter).unwrap(),
                     crate::STRICT_PREDICATES
                 )
                 .value(),

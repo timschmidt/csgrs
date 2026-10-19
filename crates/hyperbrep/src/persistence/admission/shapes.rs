@@ -65,18 +65,60 @@ impl Rows {
 }
 
 #[derive(Deserialize)]
-pub(super) enum RotationOrigin {
+pub(super) enum SpatialPoint {
     Coordinates(IgnoredAny),
     CurveImage { source: Box<Curve> },
+    SurfaceImage(SurfacePoint),
+}
+
+impl Record for SpatialPoint {
+    fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
+        match self {
+            Self::Coordinates(_) => Ok(()),
+            Self::CurveImage { source } => source.admit(budget),
+            Self::SurfaceImage(point) => point.admit(budget),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub(super) struct SurfacePoint {
+    source: Box<Surface>,
+    parameter: Box<PlanarPoint>,
+}
+
+impl Record for SurfacePoint {
+    fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
+        budget.record()?;
+        self.source.admit(budget)?;
+        budget.record()?;
+        self.parameter.admit(budget)
+    }
+}
+
+#[derive(Deserialize)]
+pub(super) enum Vertex {
+    Coordinates(IgnoredAny),
+    CurveImage(IgnoredAny),
+    SurfaceImage(SurfacePoint),
+}
+
+impl Record for Vertex {
+    fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
+        match self {
+            Self::Coordinates(_) | Self::CurveImage(_) => Ok(()),
+            Self::SurfaceImage(point) => point.admit(budget),
+        }
+    }
 }
 
 #[derive(Deserialize)]
 pub(super) enum Curve {
     Rotation {
-        origin: RotationOrigin,
+        origin: SpatialPoint,
     },
     Translation {
-        source: Box<Curve>,
+        origin: SpatialPoint,
     },
     PlanarImage {
         source: Box<Pcurve>,
@@ -97,16 +139,9 @@ pub(super) enum Curve {
 impl Record for Curve {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
-            Self::Rotation { origin } => {
+            Self::Rotation { origin } | Self::Translation { origin } => {
                 budget.record()?;
-                match origin {
-                    RotationOrigin::Coordinates(_) => Ok(()),
-                    RotationOrigin::CurveImage { source } => source.admit(budget),
-                }
-            }
-            Self::Translation { source } => {
-                budget.record()?;
-                source.admit(budget)
+                origin.admit(budget)
             }
             Self::PlanarImage { source } => {
                 budget.record()?;

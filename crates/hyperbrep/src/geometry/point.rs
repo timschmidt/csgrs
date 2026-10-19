@@ -6,7 +6,9 @@ use std::sync::{Arc, OnceLock};
 use hypercurve::{Axis2, Curve2, CurvePoint2, CurvePointAffineForm2, Point2, RationalBezier2};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
-use super::{Curve3, CurveGeometry3, affine_transform_orientation};
+use super::{
+    Curve3, CurveGeometry3, Surface, SurfaceGeometry, TransformMetric, affine_transform_orientation,
+};
 use crate::{Aabb, GeometryError, GeometryResult, Matrix4, Parameter, Point3, Real, Vector3};
 
 /// Model-space coordinate axis.
@@ -20,12 +22,14 @@ pub enum Axis {
     Z,
 }
 
-/// An exact spatial point with authored coordinates or retained curve evidence.
+/// An exact spatial point with authored coordinates or retained image evidence.
 ///
 /// A selected curve image keeps its immutable source and parameter. It remains
 /// meaningful when no independent [`Real`] coordinates are stored. Exact
 /// predicates reuse this evidence; a bounding box never replaces the point.
 /// The source geometry owns no reference back to this point or its model.
+/// Plane images likewise retain the entire joint UV point and source surface;
+/// they never reconstruct independent coordinate roots.
 #[derive(Clone, Debug)]
 pub struct GeometricPoint3 {
     data: PointData3,
@@ -35,6 +39,26 @@ pub struct GeometricPoint3 {
 enum PointData3 {
     Authored(Point3),
     CurveImage(Arc<CurvePointImage3>),
+    SurfaceImage(Arc<SurfacePointImage3>),
+}
+
+#[derive(Debug)]
+struct SurfacePointImage3 {
+    surface: Surface,
+    parameter: CurvePoint2,
+}
+
+struct PlanarPointView<'a> {
+    point: &'a CurvePoint2,
+    origin: &'a Point3,
+    u: &'a Vector3,
+    v: &'a Vector3,
+}
+
+impl PlanarPointView<'_> {
+    fn lift(&self, point: &Point2) -> Point3 {
+        self.origin.clone() + self.u.clone() * point.x() + self.v.clone() * point.y()
+    }
 }
 
 #[derive(Debug)]
@@ -82,15 +106,32 @@ impl GeometricPoint3 {
     pub fn try_coordinates(&self) -> Option<&Point3> {
         match &self.data {
             PointData3::Authored(point) => Some(point),
-            PointData3::CurveImage(_) => None,
+            PointData3::CurveImage(_) | PointData3::SurfaceImage(_) => None,
         }
     }
 
     /// Borrows the retained source curve and its authored parameter, if present.
     pub fn curve_source(&self) -> Option<(&Curve3, &Parameter)> {
         match &self.data {
-            PointData3::Authored(_) => None,
+            PointData3::Authored(_) | PointData3::SurfaceImage(_) => None,
             PointData3::CurveImage(image) => Some((&image.curve, &image.parameter)),
+        }
+    }
+
+    /// Borrows the retained surface and joint UV point, when present.
+    ///
+    /// The UV point keeps its shared source and selector. This view does not
+    /// promise independent UV or spatial scalar coordinates.
+    pub fn surface_source(&self) -> Option<(&Surface, &CurvePoint2)> {
+        match &self.data {
+            PointData3::SurfaceImage(image) => Some((&image.surface, &image.parameter)),
+            _ => None,
+        }
+    }
+
+    pub(super) fn from_surface_image(surface: Surface, parameter: CurvePoint2) -> Self {
+        Self {
+            data: PointData3::SurfaceImage(Arc::new(SurfacePointImage3 { surface, parameter })),
         }
     }
 
@@ -118,6 +159,12 @@ impl GeometricPoint3 {
                             first.parameter.compare(&second.parameter),
                             Ok(Ordering::Equal)
                         )))
+            {
+                return Ok(true);
+            }
+            if let (PointData3::SurfaceImage(first), PointData3::SurfaceImage(second)) =
+                (&self.data, &other.data)
+                && Arc::ptr_eq(first, second)
             {
                 return Ok(true);
             }
@@ -153,7 +200,7 @@ impl GeometricPoint3 {
                     }
                 };
             }
-            if self.has_planar_source() || other.has_planar_source() {
+            if self.planar_source().is_some() || other.planar_source().is_some() {
                 return Ok(self
                     .affine_coordinate(axis)?
                     .compare(&other.affine_coordinate(axis)?)?);
@@ -173,30 +220,34 @@ impl GeometricPoint3 {
     /// without constructing independent scalar coordinates or using a bounding
     /// box as the point. Unresolved proof work returns a typed error.
     pub fn compare_linear_form(&self, direction: &Vector3, rhs: &Real) -> GeometryResult<Ordering> {
-        crate::context::strict(|| match &self.data {
-            PointData3::Authored(point) => super::decided_order(compare_reals(
-                &direction.dot(&Vector3::from(point.clone())),
-                rhs,
-                crate::STRICT_PREDICATES,
-            )),
-            PointData3::CurveImage(image) => {
-                if let (CurveGeometry3::PlanarImage(frame), PointProjections3::Planar(point)) =
-                    (&image.curve.data.geometry, &image.projections)
-                {
-                    return Ok(point
-                        .affine_form(
-                            direction.dot(&frame.u),
-                            direction.dot(&frame.v),
-                            direction.dot(&Vector3::from(frame.origin.clone())),
-                        )
-                        .compare_to_real(rhs)?);
+        crate::context::strict(|| {
+            if let Some(frame) = self.planar_source() {
+                return Ok(frame
+                    .point
+                    .affine_form(
+                        direction.dot(frame.u),
+                        direction.dot(frame.v),
+                        direction.dot(&Vector3::from(frame.origin.clone())),
+                    )
+                    .compare_to_real(rhs)?);
+            }
+            match &self.data {
+                PointData3::Authored(point) => super::decided_order(compare_reals(
+                    &direction.dot(&Vector3::from(point.clone())),
+                    rhs,
+                    crate::STRICT_PREDICATES,
+                )),
+                PointData3::CurveImage(image) => {
+                    let curve = image.curve.planar_control_image(|point| {
+                        Point2::new(direction.dot(&Vector3::from(point.clone())), Real::zero())
+                    })?;
+                    let point = curve.point_at(&image.parameter.curve_parameter())?;
+                    Ok(point.compare_coordinate(
+                        &Point2::new(rhs.clone(), Real::zero()).into(),
+                        Axis2::X,
+                    )?)
                 }
-                let curve = image.curve.planar_control_image(|point| {
-                    Point2::new(direction.dot(&Vector3::from(point.clone())), Real::zero())
-                })?;
-                let point = curve.point_at(&image.parameter.curve_parameter())?;
-                Ok(point
-                    .compare_coordinate(&Point2::new(rhs.clone(), Real::zero()).into(), Axis2::X)?)
+                PointData3::SurfaceImage(_) => Err(GeometryError::UnsupportedSelectedEvaluation),
             }
         })
     }
@@ -210,11 +261,8 @@ impl GeometricPoint3 {
             if let Some(point) = self.try_coordinates() {
                 return Ok(Aabb::new(point.clone(), point.clone()));
             }
-            if let PointData3::CurveImage(image) = &self.data
-                && let (CurveGeometry3::PlanarImage(frame), PointProjections3::Planar(point)) =
-                    (&image.curve.data.geometry, &image.projections)
-            {
-                let bounds = point.bounds()?;
+            if let Some(frame) = self.planar_source() {
+                let bounds = frame.point.bounds()?;
                 return super::exact_point_bounds(&[
                     frame.lift(&Point2::new(bounds.min_x().clone(), bounds.min_y().clone())),
                     frame.lift(&Point2::new(bounds.min_x().clone(), bounds.max_y().clone())),
@@ -245,28 +293,55 @@ impl GeometricPoint3 {
                     .curve
                     .transformed(transform)?
                     .point_at(&image.parameter),
+                PointData3::SurfaceImage(image) => image
+                    .surface
+                    .transformed(&TransformMetric::new(transform), false)?
+                    .point_at(&image.parameter),
             }
         })
     }
 
-    fn has_planar_source(&self) -> bool {
-        matches!(&self.data, PointData3::CurveImage(image) if matches!(image.projections, PointProjections3::Planar(_)))
+    fn planar_source(&self) -> Option<PlanarPointView<'_>> {
+        match &self.data {
+            PointData3::SurfaceImage(image) => {
+                let SurfaceGeometry::Plane(frame) = &image.surface.data.geometry else {
+                    return None;
+                };
+                Some(PlanarPointView {
+                    point: &image.parameter,
+                    origin: &frame.origin,
+                    u: &frame.u,
+                    v: &frame.v,
+                })
+            }
+            PointData3::CurveImage(image) => {
+                let (CurveGeometry3::PlanarImage(frame), PointProjections3::Planar(point)) =
+                    (&image.curve.data.geometry, &image.projections)
+                else {
+                    return None;
+                };
+                Some(PlanarPointView {
+                    point,
+                    origin: &frame.origin,
+                    u: &frame.u,
+                    v: &frame.v,
+                })
+            }
+            PointData3::Authored(_) => None,
+        }
     }
 
     fn affine_coordinate(&self, axis: Axis) -> GeometryResult<CurvePointAffineForm2> {
-        if let PointData3::CurveImage(image) = &self.data
-            && let (CurveGeometry3::PlanarImage(frame), PointProjections3::Planar(point)) =
-                (&image.curve.data.geometry, &image.projections)
-        {
+        if let Some(frame) = self.planar_source() {
             let index = match axis {
                 Axis::X => 0,
                 Axis::Y => 1,
                 Axis::Z => 2,
             };
-            return Ok(point.affine_form(
+            return Ok(frame.point.affine_form(
                 frame.u[index].clone(),
                 frame.v[index].clone(),
-                coordinate(&frame.origin, axis).clone(),
+                coordinate(frame.origin, axis).clone(),
             ));
         }
         let (a, b) = if axis == Axis::X {
@@ -279,6 +354,7 @@ impl GeometricPoint3 {
 
     fn projection(&self, axis: Axis) -> GeometryResult<CurvePoint2> {
         match &self.data {
+            PointData3::SurfaceImage(_) => Err(GeometryError::UnsupportedSelectedEvaluation),
             PointData3::Authored(point) => Ok(Point2::new(
                 point.x.clone(),
                 if axis == Axis::Z {
@@ -460,6 +536,43 @@ impl Curve3 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn surface_points_own_their_sources_without_cycles() {
+        let curve = Curve3::rational_bezier(
+            [-1, -1, -1, 1]
+                .map(|x| Point3::new(x.into(), 0.into(), 0.into()))
+                .to_vec(),
+            vec![Real::one(); 4],
+        )
+        .unwrap();
+        let crate::CurveParameterLocation::Parameters(parameters) =
+            curve.parameters_of(&Point3::origin()).unwrap()
+        else {
+            panic!("selected root");
+        };
+        let uv = parameters[0]
+            .curve_parameter()
+            .affine_point(1.into(), 0.into(), 0.into(), 1.into())
+            .unwrap();
+        let surface = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
+        let weak = Arc::downgrade(&surface.data);
+        let point = surface.point_at(&uv).unwrap();
+        assert!(point.try_coordinates().is_none());
+        drop(surface);
+        assert!(weak.upgrade().is_some());
+        let alias = point.clone();
+        drop(point);
+        assert!(weak.upgrade().is_some());
+        assert_eq!(
+            alias
+                .compare_linear_form(&Vector3::z(), &Real::zero())
+                .unwrap(),
+            Ordering::Equal
+        );
+        drop(alias);
+        assert!(weak.upgrade().is_none());
+    }
 
     #[test]
     fn selected_planar_points_keep_sources_alive_without_cycles() {

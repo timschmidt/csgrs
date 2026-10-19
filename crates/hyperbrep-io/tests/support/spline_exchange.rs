@@ -401,7 +401,20 @@ pub fn independent_splines_retain_charts_weights_trims_units_and_modeling() {
             let source = face.parameters.map(&uv);
             equal(source.x, uv.x.clone());
             equal(source.y, uv.y.clone());
-            let actual = face.face.surface().point_at(&uv).unwrap();
+            let actual = face
+                .face
+                .surface()
+                .point_at(&{
+                    let uv = &uv;
+                    hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                })
+                .map(|point| {
+                    point
+                        .try_coordinates()
+                        .expect("represented surface fixture")
+                        .clone()
+                })
+                .unwrap();
             // Nonuniform weights map normalized t=1/2 to 2/3 on the parabola.
             let x = if kind == 1 { q(2, 3) } else { Real::zero() };
             equal(actual.x, &x * &scale);

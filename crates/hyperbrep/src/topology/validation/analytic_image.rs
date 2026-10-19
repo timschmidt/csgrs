@@ -254,19 +254,19 @@ impl ArenaModelBuilder {
             .circular_arc()
             .ok_or(GeometryError::UnsupportedPcurveContour)?;
         let center_parameter = Point2::new(arc.center().x().clone(), arc.center().y().clone());
-        let mapped_center = surface.point_at(&center_parameter)?;
+        let mapped_center = surface.evaluate_real(&center_parameter)?;
         require_point_equal(
             &mapped_center,
             &data.center,
             BuildError::EdgeUseSupportMismatch,
         )?;
 
-        let mapped_start = surface.point_at(&Point2::new(
+        let mapped_start = surface.evaluate_real(&Point2::new(
             arc.start().x().clone(),
             arc.start().y().clone(),
         ))?;
         let mapped_end =
-            surface.point_at(&Point2::new(arc.end().x().clone(), arc.end().y().clone()))?;
+            surface.evaluate_real(&Point2::new(arc.end().x().clone(), arc.end().y().clone()))?;
         let (directed_start_vertex, directed_end_vertex) = match edge_use.direction {
             Direction::Forward => (edge.start, edge.end),
             Direction::Reversed => (edge.end, edge.start),

@@ -151,7 +151,18 @@ fn check_patch_samples(model: &Model, reversed: bool, transformed: bool) {
         ]
     };
     for (v, expected) in samples {
-        let actual = surface.point_at(&Point2::new(u.clone(), v)).unwrap();
+        let actual = surface
+            .point_at(&{
+                let uv = &Point2::new(u.clone(), v);
+                hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+            })
+            .map(|point| {
+                point
+                    .try_coordinates()
+                    .expect("represented surface fixture")
+                    .clone()
+            })
+            .unwrap();
         assert!(
             hyperlimit::point3_equal(&actual, &expected, hyperlimit::PredicatePolicy::STRICT)
                 .value()

@@ -13,7 +13,7 @@ use super::{
 };
 
 mod shapes;
-use shapes::{Curve, Face, Pcurve, Selection, Solid, Surface, Wire};
+use shapes::{Curve, Face, Pcurve, Selection, Solid, Surface, Vertex, Wire};
 
 pub(super) fn check_records(json: &str, limits: &ArchiveLimits) -> Result<(), PersistenceError> {
     let mut budget = Budget {
@@ -215,7 +215,8 @@ impl<'de> Visitor<'de> for Envelope<'_, '_> {
                     map.next_value::<IgnoredAny>()?;
                 }
                 Field::Selection => map.next_value_seed(Graph(self.0))?,
-                Field::Vertices | Field::Edges | Field::EdgeUses => {
+                Field::Vertices => map.next_value_seed(Records::<Vertex>(self.0, PhantomData))?,
+                Field::Edges | Field::EdgeUses => {
                     map.next_value_seed(Records::<IgnoredAny>(self.0, PhantomData))?
                 }
                 Field::Curves => map.next_value_seed(Records::<Curve>(self.0, PhantomData))?,

@@ -53,7 +53,7 @@ fn circle_image(
     // The exact points differ even though the centers and the two tangents
     // at parameter zero coincide. No numerical oracle or tolerance is needed.
     let expected = surface
-        .point_at(&Point2::new(Real::zero(), height))
+        .evaluate_real(&Point2::new(Real::zero(), height))
         .unwrap();
     assert!(!points_equal(&point, &expected).unwrap());
     builder.validate_edge_use_image(

@@ -220,15 +220,17 @@ pub fn parameterizations() {
                             let surface_point = case
                                 .surface
                                 .point_at(&if case.varying_u {
-                                    Point2::new(theta(&t), case.fixed.clone())
+                                    Uv::new(theta(&t), case.fixed.clone()).into()
                                 } else {
-                                    Point2::new(case.fixed.clone(), theta(&t))
+                                    Uv::new(case.fixed.clone(), theta(&t)).into()
                                 })
                                 .unwrap();
                             assert!(matches!(
                                 point3_equal(
                                     point.try_coordinates().unwrap(),
-                                    &surface_point,
+                                    surface_point
+                                        .try_coordinates()
+                                        .expect("represented surface fixture"),
                                     STRICT_PREDICATES
                                 ),
                                 PredicateOutcome::Decided { value: true, .. }

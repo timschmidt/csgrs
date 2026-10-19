@@ -73,7 +73,18 @@ pub fn selected_meridian_patch_retains_latitudes_and_replays() {
             Point3::new(0.into(), 5.into(), 2.into()),
         ),
     ] {
-        let actual = surface.point_at(&Point2::new(angle, q(1, 2))).unwrap();
+        let actual = surface
+            .point_at(&{
+                let uv = &Point2::new(angle, q(1, 2));
+                hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+            })
+            .map(|point| {
+                point
+                    .try_coordinates()
+                    .expect("represented surface fixture")
+                    .clone()
+            })
+            .unwrap();
         assert!(
             hyperlimit::point3_equal(&actual, &expected, hyperlimit::PredicatePolicy::STRICT)
                 .value()
@@ -288,7 +299,18 @@ fn check_patch_samples(model: &Model, reversed: bool, reflected: bool) {
         ]
     };
     for (u, expected) in samples {
-        let actual = surface.point_at(&Point2::new(u, v.clone())).unwrap();
+        let actual = surface
+            .point_at(&{
+                let uv = &Point2::new(u, v.clone());
+                hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+            })
+            .map(|point| {
+                point
+                    .try_coordinates()
+                    .expect("represented surface fixture")
+                    .clone()
+            })
+            .unwrap();
         assert!(
             hyperlimit::point3_equal(&actual, &expected, hyperlimit::PredicatePolicy::STRICT)
                 .value()
@@ -619,7 +641,18 @@ pub fn selected_revolution_oblique_axes_tangencies_and_exact_gaps() {
         (Real::zero(), Point3::new(12.into(), -q(4, 5), q(33, 5))),
         (quarter(), Point3::new(7.into(), q(16, 5), q(18, 5))),
     ] {
-        let actual = surface.point_at(&Point2::new(angle, q(1, 2))).unwrap();
+        let actual = surface
+            .point_at(&{
+                let uv = &Point2::new(angle, q(1, 2));
+                hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+            })
+            .map(|point| {
+                point
+                    .try_coordinates()
+                    .expect("represented surface fixture")
+                    .clone()
+            })
+            .unwrap();
         assert!(
             hyperlimit::point3_equal(&actual, &expected, hyperlimit::PredicatePolicy::STRICT)
                 .value()

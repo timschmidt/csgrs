@@ -118,7 +118,7 @@ mod tests {
                 assert_eq!(
                     point3_equal(
                         &point,
-                        &surface.point_at(&uv).unwrap(),
+                        &surface.evaluate_real(&uv).unwrap(),
                         crate::STRICT_PREDICATES
                     )
                     .value(),

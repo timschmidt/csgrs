@@ -48,7 +48,16 @@ fn unresolved_incidence_stays_typed_under_ambient_preview_and_recovery() {
         let chart = source.chart(branch).unwrap();
         let point = chart
             .surface()
-            .point_at(&Point2::new(Real::zero(), Real::one()))
+            .point_at(&{
+                let uv = &Point2::new(Real::zero(), Real::one());
+                hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+            })
+            .map(|point| {
+                point
+                    .try_coordinates()
+                    .expect("represented surface fixture")
+                    .clone()
+            })
             .unwrap();
         assert_eq!(source.branch_at(&point).unwrap(), branch);
     }
@@ -140,9 +149,39 @@ fn conical_revolution_maps_both_branches_and_oriented_partials() {
                         let expected =
                             center.clone() + rotate(&(&line_point - &center), &axis, &angle);
                         assert_eq!(source.branch_at(&expected).unwrap(), branch);
-                        equal_point(&chart.surface().point_at(&native).unwrap(), &expected);
+                        equal_point(
+                            &chart
+                                .surface()
+                                .point_at(&{
+                                    let uv = &native;
+                                    hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                                })
+                                .map(|point| {
+                                    point
+                                        .try_coordinates()
+                                        .expect("represented surface fixture")
+                                        .clone()
+                                })
+                                .unwrap(),
+                            &expected,
+                        );
                         let canonical = chart.canonical_parameters_of(&expected).unwrap();
-                        equal_point(&chart.surface().point_at(&canonical).unwrap(), &expected);
+                        equal_point(
+                            &chart
+                                .surface()
+                                .point_at(&{
+                                    let uv = &canonical;
+                                    hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                                })
+                                .map(|point| {
+                                    point
+                                        .try_coordinates()
+                                        .expect("represented surface fixture")
+                                        .clone()
+                                })
+                                .unwrap(),
+                            &expected,
+                        );
                         equal(&canonical.y, &native.y);
                         let recovered = chart.source_parameters(&native).unwrap();
                         equal(&recovered.x, &angle);
@@ -167,12 +206,37 @@ fn conical_revolution_maps_both_branches_and_oriented_partials() {
                     &apex_parameter - Real::from(sign),
                 ));
                 assert_eq!(
-                    chart.surface().point_at(&wrong).unwrap_err(),
+                    chart
+                        .surface()
+                        .point_at(&{
+                            let uv = &wrong;
+                            hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                        })
+                        .map(|point| point
+                            .try_coordinates()
+                            .expect("represented surface fixture")
+                            .clone())
+                        .unwrap_err(),
                     GeometryError::SurfaceParameterOutsideDomain
                 );
                 let at_apex =
                     chart.native_parameters(&Point2::new(Real::zero(), apex_parameter.clone()));
-                equal_point(&chart.surface().point_at(&at_apex).unwrap(), &apex);
+                equal_point(
+                    &chart
+                        .surface()
+                        .point_at(&{
+                            let uv = &at_apex;
+                            hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                        })
+                        .map(|point| {
+                            point
+                                .try_coordinates()
+                                .expect("represented surface fixture")
+                                .clone()
+                        })
+                        .unwrap(),
+                    &apex,
+                );
                 assert_eq!(
                     chart.surface().normal_at(&at_apex).unwrap_err(),
                     GeometryError::SingularSurfaceParameter
@@ -210,7 +274,19 @@ fn shifted_generator_keeps_negative_parameters_on_a_native_cone() {
     );
     let uv = chart.native_parameters(&Point2::new(0.into(), (-1).into()));
     equal_point(
-        &chart.surface().point_at(&uv).unwrap(),
+        &chart
+            .surface()
+            .point_at(&{
+                let uv = &uv;
+                hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+            })
+            .map(|point| {
+                point
+                    .try_coordinates()
+                    .expect("represented surface fixture")
+                    .clone()
+            })
+            .unwrap(),
         &Point3::new(2.into(), 0.into(), 7.into()),
     );
     assert!(matches!(

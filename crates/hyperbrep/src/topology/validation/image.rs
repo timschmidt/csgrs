@@ -198,14 +198,10 @@ impl ArenaModelBuilder {
                 continue;
             }
             let edge_point = curve.point_at(&edge_parameter)?;
-            let surface_parameter = pcurve.evaluate_real(
-                pcurve_parameter
-                    .try_real()
-                    .ok_or(GeometryError::UnrepresentableParameter)?,
-            )?;
+            let surface_parameter = pcurve.point_at(&pcurve_parameter)?;
             let surface_point = surface.point_at(&surface_parameter)?;
             if !complete_image_certificate_subsumes_endpoint_sampling
-                && !edge_point.coincides_with(&surface_point.into())?
+                && !edge_point.coincides_with(&surface_point)?
             {
                 return Err(BuildError::EdgeUseImageMismatch { endpoint });
             }

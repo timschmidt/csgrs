@@ -1,4 +1,4 @@
-# Selected geometry in archive version 10
+# Selected geometry in archive version 11
 
 The additive `PolynomialFiber` planar-point record stores a bivariate equation,
 the selected first parameter, the second-coordinate interval and an optional
@@ -79,7 +79,12 @@ and [structural admission evidence](evidence/2026-10-15-archive-structure/README
 ## Records and deterministic ordering
 
 The existing topology arrays retain their order and references. Vertices are
-`Coordinates([Real; 3])` or `CurveImage { source, parameter }`. A point source
+`Coordinates([Real; 3])`, `CurveImage { source, parameter }`, or
+`SurfaceImage { source, parameter }`. A surface image embeds the checked surface
+definition and one complete planar point definition; it does not store independent
+UV roots. Nested surface and point records consume admission quotas before scalar
+decoding. Rebuilding the surface and evaluating the UV rechecks frame validity,
+domain membership and the admitted image family. A point source
 refers either to the model's spatial-curve arena or to a detached immutable
 curve in `selection.point_sources`. Detached sources have no model back-reference.
 Edges store two `Scalar(Real)` or `Selected(index)` parameter records. Scalar
@@ -149,10 +154,11 @@ frame, map, endpoint membership and source constructor, then model admission
 rechecks the full edge image and topology. Native `QuadraticBezier` and
 `CubicBezier` pcurve tags preserve polynomial definitions used by lifts.
 
-`Translation { source, parameter, displacement }` retains a
+`Translation { origin, displacement }` retains a
 straight unit-chart sweep of a point through a nonzero authored displacement.
-Its origin uses an inline spatial source and selected parameter, with recursive
-record admission. Authored scalar evaluation, split and affine transform keep
+Its origin shares the rotation origin definition: `Coordinates`, `CurveImage`
+with an inline curve and parameter, or `SurfaceImage` with a surface and joint
+UV point. Recursive record admission covers every embedded definition. Authored scalar evaluation, split and affine transform keep
 the origin's source; an independently selected sweep parameter remains typed
 unsupported. `Chord { start, end }` pcurves use checked planar point definitions
 and Hypercurve's exact line constructor.
@@ -396,6 +402,15 @@ are not thereby admitted. See the [parameter-map record](evidence/2026-10-19-sel
 Selected section UV evaluations now feed exact chord endpoint definitions in the
 existing retained point graph. Rational Bezier/NURBS section roots, restrictions
 and reversal replay cold with independently checked UV images. The same models
-retain their spatial selected point through transform/replay. No new schema is
-introduced; whole polynomial branches and arbitrary generated rational curve
+retain their spatial selected point through transform/replay. That pcurve increment introduced no new schema; whole polynomial branches and arbitrary generated rational curve
 carriers remain separate persistence targets. See the [evaluation record](evidence/2026-10-19-pcurve-evaluation/README.md).
+
+
+Version 11 deliberately rejects version 10 and earlier. The old translation
+`source`/`parameter` pair is replaced by a generic `origin`; there is no legacy
+decoder. Plane images preserve joint polynomial-fiber and selected rational UV
+evidence through point queries, affine transforms, sweeps and cold replay.
+This is a point-image capability, not whole surface-intersection branch or
+nonlinear surface-image persistence. Existing payloads are compared after only
+the declared schema migration, alongside unchanged exact geometric assertions.
+See the [surface archive evidence](evidence/2026-10-19-surface-evaluation/README.md).

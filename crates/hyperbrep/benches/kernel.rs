@@ -803,7 +803,16 @@ fn main() {
         .find_map(|face| {
             let surface = face.surface();
             let origin = surface
-                .point_at(&hyperbrep::Point2::new(Real::zero(), Real::zero()))
+                .point_at(&{
+                    let uv = &hyperbrep::Point2::new(Real::zero(), Real::zero());
+                    hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                })
+                .map(|point| {
+                    point
+                        .try_coordinates()
+                        .expect("represented surface fixture")
+                        .clone()
+                })
                 .ok()?;
             (surface.kind() == hyperbrep::SurfaceKind::Plane
                 && compare_reals(&origin.z, &Real::one(), STRICT_PREDICATES).value()

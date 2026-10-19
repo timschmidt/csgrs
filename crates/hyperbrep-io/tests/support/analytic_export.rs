@@ -197,7 +197,20 @@ pub fn source_maps(file: &StepFile<'_>, imported: &ImportedRepresentation) {
                 }
                 let (point, mut normal) = surface_sample(file, parameters.surface, &source);
                 equal_point(
-                    &face.face.surface().point_at(&uv).unwrap(),
+                    &face
+                        .face
+                        .surface()
+                        .point_at(&{
+                            let uv = &uv;
+                            hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                        })
+                        .map(|point| {
+                            point
+                                .try_coordinates()
+                                .expect("represented surface fixture")
+                                .clone()
+                        })
+                        .unwrap(),
                     &Point3::new(point.x * length, point.y * length, point.z * length),
                 );
                 let mut native = face.face.surface().normal_at(&uv).unwrap();
@@ -401,7 +414,20 @@ pub fn graph(output: &AdvancedStep<'_>, scale: &Real) {
                 let uv = pcurve.point_at(&t.into()).unwrap();
                 let uv = uv.coordinates().unwrap();
                 let uv = Point2::new(uv.x().clone(), uv.y().clone());
-                let native = face.source.surface().point_at(&uv).unwrap();
+                let native = face
+                    .source
+                    .surface()
+                    .point_at(&{
+                        let uv = &uv;
+                        hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                    })
+                    .map(|point| {
+                        point
+                            .try_coordinates()
+                            .expect("represented surface fixture")
+                            .clone()
+                    })
+                    .unwrap();
                 let native_uv = uv.clone();
                 let uv = face.parameters.map(&uv);
                 let (encoded, mut encoded_normal) = surface_sample(&file, face.surface, &uv);

@@ -44,7 +44,7 @@ pub(super) fn axial_support_traces(
         }
         let a = crate::Point2::new(a.x().clone(), bounds.min_y().clone());
         let b = crate::Point2::new(a.x.clone(), bounds.max_y().clone());
-        let curve = Curve3::line(surface.point_at(&a)?, surface.point_at(&b)?)?;
+        let curve = Curve3::line(surface.evaluate_real(&a)?, surface.evaluate_real(&b)?)?;
         let pcurve = crate::Pcurve::new(Curve2::from(LineSeg2::try_new(
             hypercurve::Point2::new(a.x, a.y),
             hypercurve::Point2::new(b.x, b.y),

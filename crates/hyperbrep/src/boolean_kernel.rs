@@ -1702,7 +1702,7 @@ fn face_interior_parameter_witnesses(
             surface_parameter_witness(surface.domain().u())?,
             surface_parameter_witness(surface.domain().v())?,
         );
-        return Ok(vec![(surface.point_at(&parameter)?, parameter)]);
+        return Ok(vec![(surface.evaluate_real(&parameter)?, parameter)]);
     };
     if surface.kind() == crate::SurfaceKind::Sphere {
         let wire = model.wire(outer).expect("validated spherical trim wire");
@@ -1749,7 +1749,7 @@ fn face_interior_parameter_witnesses(
         return (0..4)
             .map(|index| {
                 let parameter = crate::Point2::new(&quarter * Real::from(index), latitude.clone());
-                Ok((surface.point_at(&parameter)?, parameter))
+                Ok((surface.evaluate_real(&parameter)?, parameter))
             })
             .collect();
     }
@@ -1845,7 +1845,7 @@ fn face_interior_parameter_witnesses(
         match model.classify_surface_parameter_on_face(face, &candidate.clone().into())? {
             Classification::Decided(ContourPointLocation::Inside) => {
                 let parameter = crate::Point2::new(candidate.x().clone(), candidate.y().clone());
-                witnesses.push((surface.point_at(&parameter)?, parameter));
+                witnesses.push((surface.evaluate_real(&parameter)?, parameter));
                 if witnesses.len() == 8 {
                     break;
                 }
@@ -4021,7 +4021,7 @@ fn lift_planar_line_image(
         return Ok(None);
     };
     let lift = |point: &hypercurve::Point2| {
-        surface.point_at(&crate::Point2::new(point.x().clone(), point.y().clone()))
+        surface.evaluate_real(&crate::Point2::new(point.x().clone(), point.y().clone()))
     };
     Ok(Some(Curve3::line(
         lift(fit.line().start())?,
@@ -4393,7 +4393,7 @@ fn model_boundary_contacts(
         let surface = model
             .surface(face.surface())
             .expect("validated trim face surface");
-        let spatial_point = surface.point_at(&crate::Point2::new(
+        let spatial_point = surface.evaluate_real(&crate::Point2::new(
             pcurve_point.x().clone(),
             pcurve_point.y().clone(),
         ))?;
@@ -5500,7 +5500,7 @@ fn surface_parameters_of_point(
     let mut replayed = Vec::new();
     for parameter in parameters {
         match point3_equal(
-            &surface.point_at(&crate::Point2::new(
+            &surface.evaluate_real(&crate::Point2::new(
                 parameter.x().clone(),
                 parameter.y().clone(),
             ))?,
@@ -5689,10 +5689,10 @@ fn trim_segment_to_planar_face(
             Classification::Decided(RegionPointLocation::Inside) => {
                 let start = source.point_at(interval[0].clone());
                 let end = source.point_at(interval[1].clone());
-                let start =
-                    surface.point_at(&crate::Point2::new(start.x().clone(), start.y().clone()))?;
+                let start = surface
+                    .evaluate_real(&crate::Point2::new(start.x().clone(), start.y().clone()))?;
                 let end =
-                    surface.point_at(&crate::Point2::new(end.x().clone(), end.y().clone()))?;
+                    surface.evaluate_real(&crate::Point2::new(end.x().clone(), end.y().clone()))?;
                 curves.push(Curve3::line(start, end)?);
             }
             Classification::Decided(
@@ -7405,7 +7405,9 @@ fn lift_planar_bezier(surface: &Surface, curve: &CurveGeometry2) -> Result<Curve
     };
     let points = points
         .into_iter()
-        .map(|point| surface.point_at(&crate::Point2::new(point.x().clone(), point.y().clone())))
+        .map(|point| {
+            surface.evaluate_real(&crate::Point2::new(point.x().clone(), point.y().clone()))
+        })
         .collect::<Result<Vec<_>, _>>()?;
     Curve3::rational_bezier(points, weights)
 }
@@ -7693,7 +7695,7 @@ mod tests {
         .unwrap();
         let spatial = fragment.curve().evaluate_real(&parameter).unwrap();
         let first = first_surface
-            .point_at(
+            .evaluate_real(
                 &fragment
                     .first_pcurve()
                     .point_at(&Real::clone(&parameter).into())
@@ -7702,7 +7704,7 @@ mod tests {
             )
             .unwrap();
         let second = second_surface
-            .point_at(
+            .evaluate_real(
                 &fragment
                     .second_pcurve()
                     .point_at(&Real::clone(&parameter).into())
@@ -11855,7 +11857,7 @@ mod tests {
         let point = fragments[0].curve().evaluate_real(&half).unwrap();
         let patch_surface = face_surface(&patch, patch_face);
         let expected = patch_surface
-            .point_at(&crate::Point2::new(half.clone(), half.clone()))
+            .evaluate_real(&crate::Point2::new(half.clone(), half.clone()))
             .unwrap();
         assert_eq!(
             point3_equal(&point, &expected, crate::STRICT_PREDICATES).value(),

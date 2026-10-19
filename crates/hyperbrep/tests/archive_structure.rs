@@ -357,9 +357,9 @@ fn version_admission_is_independent_of_field_order_and_rejects_ambiguity() {
         );
     }
     for raw in [
-        r#"{"version":10,"version":10}"#,
-        r#"{"version":10,"version":9}"#,
-        r#"{"version":9,"version":10}"#,
+        r#"{"version":11,"version":11}"#,
+        r#"{"version":11,"version":9}"#,
+        r#"{"version":9,"version":11}"#,
         r#"{"version":9,"version":9}"#,
         r#"{"version":9,"version":8}"#,
         r#"{"version":8,"version":9}"#,

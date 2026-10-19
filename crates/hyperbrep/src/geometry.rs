@@ -27,6 +27,7 @@ mod rotation;
 #[cfg(test)]
 mod selected_pcurves;
 mod spline;
+mod surface_point;
 mod transform;
 mod translation;
 pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
@@ -3643,8 +3644,8 @@ impl Surface {
         })
     }
 
-    /// Evaluates an exact model-space point.
-    pub fn point_at(&self, parameter: &Point2) -> GeometryResult<Point3> {
+    /// Evaluates represented coefficients for internal surface algorithms.
+    pub(crate) fn evaluate_real(&self, parameter: &Point2) -> GeometryResult<Point3> {
         crate::context::strict(|| {
             validate_surface_parameter(&self.data.domain, parameter)?;
             match &self.data.geometry {
@@ -11623,7 +11624,7 @@ mod tests {
     fn parameterized_plane_retains_authored_frame() {
         let surface = Surface::plane(p(1, 2, 3), Vector3::x(), Vector3::z()).unwrap();
         let parameter = Point2::new(r(4), r(5));
-        assert_points_equal(&surface.point_at(&parameter).unwrap(), &p(5, 2, 8));
+        assert_points_equal(&surface.evaluate_real(&parameter).unwrap(), &p(5, 2, 8));
         let partials = surface.partials_at(&parameter).unwrap();
         assert_eq!(partials.u().0, Vector3::x().0);
         assert_eq!(partials.v().0, Vector3::z().0);
@@ -11639,7 +11640,7 @@ mod tests {
         assert_eq!(surface.kind(), SurfaceKind::RationalBezier);
         let middle = Point2::new(q(1, 2), q(1, 2));
         assert_points_equal(
-            &surface.point_at(&middle).unwrap(),
+            &surface.evaluate_real(&middle).unwrap(),
             &Point3::new(r(1), r(2), q(1, 2)),
         );
         let partials = surface.partials_at(&middle).unwrap();
@@ -11661,7 +11662,7 @@ mod tests {
         .unwrap();
         assert_eq!(extrusion.kind(), SurfaceKind::Extrusion);
         let parameter = Point2::new(q(1, 2), r(2));
-        assert_points_equal(&extrusion.point_at(&parameter).unwrap(), &p(1, 6, 0));
+        assert_points_equal(&extrusion.evaluate_real(&parameter).unwrap(), &p(1, 6, 0));
         let partials = extrusion.partials_at(&parameter).unwrap();
         assert_points_equal(&Point3::from(partials.u().clone()), &p(2, 0, 0));
         assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 3, 0));
@@ -11679,7 +11680,7 @@ mod tests {
         assert_eq!(revolution.kind(), SurfaceKind::Revolution);
         let half_pi = (Real::pi() / r(2)).unwrap();
         let parameter = Point2::new(half_pi, q(1, 2));
-        assert_points_equal(&revolution.point_at(&parameter).unwrap(), &p(0, 2, 0));
+        assert_points_equal(&revolution.evaluate_real(&parameter).unwrap(), &p(0, 2, 0));
         let partials = revolution.partials_at(&parameter).unwrap();
         assert_points_equal(&Point3::from(partials.u().clone()), &p(-2, 0, 0));
         assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 0, 2));
@@ -11747,9 +11748,9 @@ mod tests {
                 compare_reals(&revolution_parameter.y, &q(1, 2), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
-            assert_points_equal(&plane.point_at(&plane_parameter).unwrap(), &spatial);
+            assert_points_equal(&plane.evaluate_real(&plane_parameter).unwrap(), &spatial);
             assert_points_equal(
-                &revolution.point_at(&revolution_parameter).unwrap(),
+                &revolution.evaluate_real(&revolution_parameter).unwrap(),
                 &spatial,
             );
         }
@@ -11762,7 +11763,7 @@ mod tests {
         let spatial = swapped.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &revolution
-                .point_at(
+                .evaluate_real(
                     &swapped
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -11774,7 +11775,7 @@ mod tests {
         );
         assert_points_equal(
             &plane
-                .point_at(
+                .evaluate_real(
                     &swapped
                         .second_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -11879,8 +11880,8 @@ mod tests {
                 compare_reals(&second_parameter.y, &q(1, 2), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
-            assert_points_equal(&first.point_at(&first_parameter).unwrap(), &spatial);
-            assert_points_equal(&second.point_at(&second_parameter).unwrap(), &spatial);
+            assert_points_equal(&first.evaluate_real(&first_parameter).unwrap(), &spatial);
+            assert_points_equal(&second.evaluate_real(&second_parameter).unwrap(), &spatial);
         }
 
         let SurfaceSurfaceIntersection::Curve(swapped) = second.intersect_surface(&first).unwrap()
@@ -11891,7 +11892,7 @@ mod tests {
         let spatial = swapped.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &second
-                .point_at(
+                .evaluate_real(
                     &swapped
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -11903,7 +11904,7 @@ mod tests {
         );
         assert_points_equal(
             &first
-                .point_at(
+                .evaluate_real(
                     &swapped
                         .second_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -11947,7 +11948,7 @@ mod tests {
             Some(Ordering::Equal)
         );
         assert_points_equal(
-            &mirrored.point_at(&mirrored_parameter).unwrap(),
+            &mirrored.evaluate_real(&mirrored_parameter).unwrap(),
             &mirrored_section.curve().evaluate_real(&parameter).unwrap(),
         );
 
@@ -12083,7 +12084,7 @@ mod tests {
         );
         let middle = Point2::new(r(1), r(2));
         assert_points_equal(
-            &surface.point_at(&middle).unwrap(),
+            &surface.evaluate_real(&middle).unwrap(),
             &Point3::new(r(1), r(2), q(1, 2)),
         );
         let partials = surface.partials_at(&middle).unwrap();
@@ -12106,31 +12107,51 @@ mod tests {
         .unwrap();
         let (u_left, u_right) = bezier.split_u_at(&q(1, 2)).unwrap();
         assert_points_equal(
-            &u_left.point_at(&Point2::new(q(1, 2), q(3, 4))).unwrap(),
-            &bezier.point_at(&Point2::new(q(1, 4), q(3, 4))).unwrap(),
+            &u_left
+                .evaluate_real(&Point2::new(q(1, 2), q(3, 4)))
+                .unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(1, 4), q(3, 4)))
+                .unwrap(),
         );
         assert_points_equal(
-            &u_right.point_at(&Point2::new(q(1, 2), q(3, 4))).unwrap(),
-            &bezier.point_at(&Point2::new(q(3, 4), q(3, 4))).unwrap(),
+            &u_right
+                .evaluate_real(&Point2::new(q(1, 2), q(3, 4)))
+                .unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(3, 4), q(3, 4)))
+                .unwrap(),
         );
         let (v_left, v_right) = bezier.split_v_at(&q(1, 2)).unwrap();
         assert_points_equal(
-            &v_left.point_at(&Point2::new(q(3, 4), q(1, 2))).unwrap(),
-            &bezier.point_at(&Point2::new(q(3, 4), q(1, 4))).unwrap(),
+            &v_left
+                .evaluate_real(&Point2::new(q(3, 4), q(1, 2)))
+                .unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(3, 4), q(1, 4)))
+                .unwrap(),
         );
         assert_points_equal(
-            &v_right.point_at(&Point2::new(q(3, 4), q(1, 2))).unwrap(),
-            &bezier.point_at(&Point2::new(q(3, 4), q(3, 4))).unwrap(),
+            &v_right
+                .evaluate_real(&Point2::new(q(3, 4), q(1, 2)))
+                .unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(3, 4), q(3, 4)))
+                .unwrap(),
         );
         let iso_u = bezier.iso_curve(SurfaceIsoAxis::U, &q(3, 4)).unwrap();
         assert_points_equal(
             &iso_u.evaluate_real(&q(1, 3)).unwrap(),
-            &bezier.point_at(&Point2::new(q(1, 3), q(3, 4))).unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(1, 3), q(3, 4)))
+                .unwrap(),
         );
         let iso_v = bezier.iso_curve(SurfaceIsoAxis::V, &q(1, 3)).unwrap();
         assert_points_equal(
             &iso_v.evaluate_real(&q(3, 4)).unwrap(),
-            &bezier.point_at(&Point2::new(q(1, 3), q(3, 4))).unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(1, 3), q(3, 4)))
+                .unwrap(),
         );
 
         let nurbs = Surface::nurbs(
@@ -12154,29 +12175,33 @@ mod tests {
         for (surface, parameter) in [(&u_left, q(1, 4)), (&u_right, q(3, 4))] {
             assert_points_equal(
                 &surface
-                    .point_at(&Point2::new(parameter.clone(), q(2, 3)))
+                    .evaluate_real(&Point2::new(parameter.clone(), q(2, 3)))
                     .unwrap(),
-                &nurbs.point_at(&Point2::new(parameter, q(2, 3))).unwrap(),
+                &nurbs
+                    .evaluate_real(&Point2::new(parameter, q(2, 3)))
+                    .unwrap(),
             );
         }
         let (v_left, v_right) = nurbs.split_v_at(&q(1, 2)).unwrap();
         for (surface, parameter) in [(&v_left, q(1, 4)), (&v_right, q(3, 4))] {
             assert_points_equal(
                 &surface
-                    .point_at(&Point2::new(q(1, 3), parameter.clone()))
+                    .evaluate_real(&Point2::new(q(1, 3), parameter.clone()))
                     .unwrap(),
-                &nurbs.point_at(&Point2::new(q(1, 3), parameter)).unwrap(),
+                &nurbs
+                    .evaluate_real(&Point2::new(q(1, 3), parameter))
+                    .unwrap(),
             );
         }
         let iso_u = nurbs.iso_curve(SurfaceIsoAxis::U, &q(2, 3)).unwrap();
         assert_points_equal(
             &iso_u.evaluate_real(&q(1, 3)).unwrap(),
-            &nurbs.point_at(&Point2::new(q(1, 3), q(2, 3))).unwrap(),
+            &nurbs.evaluate_real(&Point2::new(q(1, 3), q(2, 3))).unwrap(),
         );
         let iso_v = nurbs.iso_curve(SurfaceIsoAxis::V, &q(1, 3)).unwrap();
         assert_points_equal(
             &iso_v.evaluate_real(&q(2, 3)).unwrap(),
-            &nurbs.point_at(&Point2::new(q(1, 3), q(2, 3))).unwrap(),
+            &nurbs.evaluate_real(&Point2::new(q(1, 3), q(2, 3))).unwrap(),
         );
     }
 
@@ -12228,8 +12253,9 @@ mod tests {
             )
             .unwrap();
         let parameter = Point2::new(q(1, 4), q(3, 4));
-        let expected = surface.point_at(&parameter).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
-        assert_points_equal(&translated.point_at(&parameter).unwrap(), &expected);
+        let expected =
+            surface.evaluate_real(&parameter).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
+        assert_points_equal(&translated.evaluate_real(&parameter).unwrap(), &expected);
 
         let reflected = surface
             .transformed(
@@ -12254,13 +12280,15 @@ mod tests {
                 true,
             )
             .unwrap();
-        let mirrored_original = surface.point_at(&Point2::new(q(3, 4), q(3, 4))).unwrap();
+        let mirrored_original = surface
+            .evaluate_real(&Point2::new(q(3, 4), q(3, 4)))
+            .unwrap();
         let expected = Point3::new(
             -mirrored_original.x,
             mirrored_original.y,
             mirrored_original.z,
         );
-        assert_points_equal(&reflected.point_at(&parameter).unwrap(), &expected);
+        assert_points_equal(&reflected.evaluate_real(&parameter).unwrap(), &expected);
     }
 
     #[test]
@@ -12273,8 +12301,8 @@ mod tests {
         let bezier_parameters = bezier.affine_parameter_plane().unwrap().unwrap();
         let parameter = Point2::new(q(1, 3), q(2, 5));
         assert_points_equal(
-            &bezier.point_at(&parameter).unwrap(),
-            &bezier_parameters.point_at(&parameter).unwrap(),
+            &bezier.evaluate_real(&parameter).unwrap(),
+            &bezier_parameters.evaluate_real(&parameter).unwrap(),
         );
 
         let nurbs = Surface::nurbs(
@@ -12289,8 +12317,8 @@ mod tests {
         let nurbs_parameters = nurbs.affine_parameter_plane().unwrap().unwrap();
         let native_parameter = Point2::new(r(3), r(7));
         assert_points_equal(
-            &nurbs.point_at(&native_parameter).unwrap(),
-            &nurbs_parameters.point_at(&native_parameter).unwrap(),
+            &nurbs.evaluate_real(&native_parameter).unwrap(),
+            &nurbs_parameters.evaluate_real(&native_parameter).unwrap(),
         );
 
         let projective = Surface::rational_bezier(
@@ -12334,7 +12362,7 @@ mod tests {
                 .clone();
             assert_points_equal(
                 &surface
-                    .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
+                    .evaluate_real(&Point2::new(uv.x().clone(), uv.y().clone()))
                     .unwrap(),
                 &curve.evaluate_real(&parameter).unwrap(),
             );
@@ -12386,7 +12414,7 @@ mod tests {
                 .clone();
             assert_points_equal(
                 &nurbs
-                    .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
+                    .evaluate_real(&Point2::new(uv.x().clone(), uv.y().clone()))
                     .unwrap(),
                 &curve.evaluate_real(&parameter).unwrap(),
             );
@@ -12424,7 +12452,9 @@ mod tests {
         assert_eq!(curve.curve().kind(), Curve3Kind::RationalBezier);
         assert_points_equal(
             &curve.curve().evaluate_real(&q(1, 2)).unwrap(),
-            &rational.point_at(&Point2::new(q(1, 2), q(1, 2))).unwrap(),
+            &rational
+                .evaluate_real(&Point2::new(q(1, 2), q(1, 2)))
+                .unwrap(),
         );
         assert_eq!(
             curve
@@ -12462,7 +12492,7 @@ mod tests {
         assert_eq!(curve.curve().kind(), Curve3Kind::Nurbs);
         assert_points_equal(
             &curve.curve().evaluate_real(&q(1, 2)).unwrap(),
-            &nurbs.point_at(&Point2::new(q(1, 2), q(1, 3))).unwrap(),
+            &nurbs.evaluate_real(&Point2::new(q(1, 2), q(1, 3))).unwrap(),
         );
         assert_eq!(
             curve
@@ -12510,8 +12540,8 @@ mod tests {
             .map(crate::geometry::represented_test_surface_parameter)
             .unwrap();
         let point = section.curve().evaluate_real(&parameter).unwrap();
-        assert_points_equal(&point, &rational.point_at(&tensor_parameter).unwrap());
-        assert_points_equal(&point, &transverse.point_at(&plane_parameter).unwrap());
+        assert_points_equal(&point, &rational.evaluate_real(&tensor_parameter).unwrap());
+        assert_points_equal(&point, &transverse.evaluate_real(&plane_parameter).unwrap());
         assert_eq!(tensor_parameter, Point2::new(q(1, 2), q(1, 2)));
     }
 
@@ -12548,7 +12578,7 @@ mod tests {
         );
         assert_points_equal(
             &section.curve().evaluate_real(&parameter).unwrap(),
-            &rational.point_at(&tensor_parameter).unwrap(),
+            &rational.evaluate_real(&tensor_parameter).unwrap(),
         );
         let materialized = section.second_pcurve().materialize().unwrap();
         assert_eq!(materialized.curve().family(), CurveFamily2::RationalBezier);
@@ -12587,7 +12617,7 @@ mod tests {
         );
         assert_points_equal(
             &section.curve().evaluate_real(&parameter).unwrap(),
-            &nurbs.point_at(&Point2::new(q(3, 8), q(1, 2))).unwrap(),
+            &nurbs.evaluate_real(&Point2::new(q(3, 8), q(1, 2))).unwrap(),
         );
 
         let disjoint = Surface::plane(
@@ -12658,7 +12688,7 @@ mod tests {
                 assert_eq!(tensor_parameter.x, r(7));
                 assert_points_equal(
                     &fragment.curve().evaluate_real(parameter).unwrap(),
-                    &tensor.point_at(&tensor_parameter).unwrap(),
+                    &tensor.evaluate_real(&tensor_parameter).unwrap(),
                 );
             }
         }
@@ -13173,7 +13203,9 @@ mod tests {
         );
         assert_points_equal(
             &section.curve().evaluate_real(&q(1, 2)).unwrap(),
-            &rational.point_at(&Point2::new(q(1, 2), q(3, 8))).unwrap(),
+            &rational
+                .evaluate_real(&Point2::new(q(1, 2), q(3, 8)))
+                .unwrap(),
         );
 
         let nurbs = Surface::nurbs(
@@ -13381,7 +13413,7 @@ mod tests {
             assert_points_equal(
                 &section.curve().evaluate_real(&parameter).unwrap(),
                 &surface
-                    .point_at(&Point2::new(
+                    .evaluate_real(&Point2::new(
                         surface_parameter.x.clone(),
                         surface_parameter.y.clone(),
                     ))
@@ -13681,7 +13713,7 @@ mod tests {
             assert_points_equal(
                 &section.curve().evaluate_real(&parameter).unwrap(),
                 &surface
-                    .point_at(&Point2::new(
+                    .evaluate_real(&Point2::new(
                         surface_parameter.x.clone(),
                         surface_parameter.y.clone(),
                     ))
@@ -13756,7 +13788,7 @@ mod tests {
             assert_points_equal(
                 &native_section.curve().evaluate_real(&parameter).unwrap(),
                 &nurbs
-                    .point_at(&Point2::new(
+                    .evaluate_real(&Point2::new(
                         surface_parameter.x.clone(),
                         surface_parameter.y.clone(),
                     ))
@@ -13854,7 +13886,7 @@ mod tests {
                 .unwrap();
             assert_points_equal(
                 &native_clipped.curve().evaluate_real(&parameter).unwrap(),
-                &nurbs.point_at(&Point2::new(uv.x, uv.y)).unwrap(),
+                &nurbs.evaluate_real(&Point2::new(uv.x, uv.y)).unwrap(),
             );
         }
 
@@ -14140,7 +14172,7 @@ mod tests {
                     .unwrap();
                 assert_points_equal(
                     &branch.curve().evaluate_real(&parameter).unwrap(),
-                    &surface.point_at(&surface_parameter).unwrap(),
+                    &surface.evaluate_real(&surface_parameter).unwrap(),
                 );
             }
         }
@@ -14764,7 +14796,7 @@ mod tests {
             assert_points_equal(
                 &section.curve().evaluate_real(&parameter).unwrap(),
                 &surface
-                    .point_at(&Point2::new(
+                    .evaluate_real(&Point2::new(
                         surface_parameter.x().clone(),
                         surface_parameter.y().clone(),
                     ))
@@ -15876,7 +15908,7 @@ mod tests {
                 let spatial = ray.point.clone() + ray.direction.clone() * &parameter;
                 assert_points_equal(
                     &cone
-                        .point_at(
+                        .evaluate_real(
                             &ray.pcurve(SurfaceIntersectionOperand::First)
                                 .point_at(&parameter),
                         )
@@ -15885,7 +15917,7 @@ mod tests {
                 );
                 assert_points_equal(
                     &axial_plane
-                        .point_at(
+                        .evaluate_real(
                             &ray.pcurve(SurfaceIntersectionOperand::Second)
                                 .point_at(&parameter),
                         )
@@ -15912,7 +15944,7 @@ mod tests {
             let spatial = ray.point.clone() + ray.direction.clone() * &sqrt_two;
             assert_points_equal(
                 &axial_plane
-                    .point_at(
+                    .evaluate_real(
                         &ray.pcurve(SurfaceIntersectionOperand::First)
                             .point_at(&sqrt_two),
                     )
@@ -15921,7 +15953,7 @@ mod tests {
             );
             assert_points_equal(
                 &cone
-                    .point_at(
+                    .evaluate_real(
                         &ray.pcurve(SurfaceIntersectionOperand::Second)
                             .point_at(&sqrt_two),
                     )
@@ -16019,7 +16051,7 @@ mod tests {
                 let point = section.curve().evaluate_real(&parameter).unwrap();
                 assert_points_equal(
                     &torus
-                        .point_at(
+                        .evaluate_real(
                             &section
                                 .first_pcurve()
                                 .point_at(&Real::clone(&parameter).into())
@@ -16031,7 +16063,7 @@ mod tests {
                 );
                 assert_points_equal(
                     &plane
-                        .point_at(
+                        .evaluate_real(
                             &section
                                 .second_pcurve()
                                 .point_at(&Real::clone(&parameter).into())
@@ -16208,7 +16240,7 @@ mod tests {
             let parameter = Real::pi();
             let spatial = circle.curve().evaluate_real(&parameter).unwrap();
             let sphere_point = sphere
-                .point_at(
+                .evaluate_real(
                     &circle
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -16217,7 +16249,7 @@ mod tests {
                 )
                 .unwrap();
             let cylinder_point = cylinder
-                .point_at(
+                .evaluate_real(
                     &circle
                         .second_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -16238,7 +16270,7 @@ mod tests {
         let parameter = Real::pi();
         assert_points_equal(
             &cylinder
-                .point_at(
+                .evaluate_real(
                     &swapped[0]
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -16250,7 +16282,7 @@ mod tests {
         );
         assert_points_equal(
             &sphere
-                .point_at(
+                .evaluate_real(
                     &swapped[0]
                         .second_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -16294,7 +16326,7 @@ mod tests {
                 .unwrap();
             assert_points_equal(
                 &mirrored_cylinder
-                    .point_at(
+                    .evaluate_real(
                         &mirrored_circle
                             .second_pcurve()
                             .point_at(&Real::clone(&mirrored_parameter).into())
@@ -16392,7 +16424,7 @@ mod tests {
             let spatial = circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &centered
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .first_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -16404,7 +16436,7 @@ mod tests {
             );
             assert_points_equal(
                 &cone
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -16429,7 +16461,7 @@ mod tests {
             let spatial = circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &two_circle_sphere
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .first_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -16441,7 +16473,7 @@ mod tests {
             );
             assert_points_equal(
                 &cone
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -16499,7 +16531,7 @@ mod tests {
             let spatial = mixed_circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &mixed_dimension
-                    .point_at(
+                    .evaluate_real(
                         &mixed_circle
                             .first_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -16511,7 +16543,7 @@ mod tests {
             );
             assert_points_equal(
                 &cone
-                    .point_at(
+                    .evaluate_real(
                         &mixed_circle
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -16535,7 +16567,7 @@ mod tests {
         let spatial = swapped_circle.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &cone
-                .point_at(
+                .evaluate_real(
                     &swapped_circle
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -16547,7 +16579,7 @@ mod tests {
         );
         assert_points_equal(
             &mixed_dimension
-                .point_at(
+                .evaluate_real(
                     &swapped_circle
                         .second_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -16616,7 +16648,7 @@ mod tests {
         let spatial = mirrored_circle.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &mirrored_centered
-                .point_at(
+                .evaluate_real(
                     &mirrored_circle
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -16653,7 +16685,7 @@ mod tests {
             let spatial = circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &cylinder
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .first_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -16665,7 +16697,7 @@ mod tests {
             );
             assert_points_equal(
                 &cone
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -16683,7 +16715,7 @@ mod tests {
         let parameter = q(2, 3);
         assert_points_equal(
             &cone
-                .point_at(
+                .evaluate_real(
                     &swapped
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -16731,7 +16763,7 @@ mod tests {
         let spatial = mirrored_circle.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &mirrored_cylinder
-                .point_at(
+                .evaluate_real(
                     &mirrored_circle
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -16787,7 +16819,7 @@ mod tests {
             let spatial = circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &wide
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .first_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -16799,7 +16831,7 @@ mod tests {
             );
             assert_points_equal(
                 &narrow
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -16818,7 +16850,7 @@ mod tests {
         let spatial = swapped.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &narrow
-                .point_at(
+                .evaluate_real(
                     &swapped
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -16830,7 +16862,7 @@ mod tests {
         );
         assert_points_equal(
             &wide
-                .point_at(
+                .evaluate_real(
                     &swapped
                         .second_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -16926,7 +16958,7 @@ mod tests {
             let spatial = counteroriented.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &wide
-                    .point_at(
+                    .evaluate_real(
                         &counteroriented
                             .first_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -16938,7 +16970,7 @@ mod tests {
             );
             assert_points_equal(
                 &antiparallel
-                    .point_at(
+                    .evaluate_real(
                         &counteroriented
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -17036,7 +17068,7 @@ mod tests {
                 let spatial = circle.curve().evaluate_real(&parameter).unwrap();
                 assert_points_equal(
                     &first
-                        .point_at(
+                        .evaluate_real(
                             &circle
                                 .first_pcurve()
                                 .point_at(&Real::clone(&parameter).into())
@@ -17048,7 +17080,7 @@ mod tests {
                 );
                 assert_points_equal(
                     &second
-                        .point_at(
+                        .evaluate_real(
                             &circle
                                 .second_pcurve()
                                 .point_at(&Real::clone(&parameter).into())
@@ -17068,7 +17100,7 @@ mod tests {
         let spatial = swapped[0].curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &second
-                .point_at(
+                .evaluate_real(
                     &swapped[0]
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -17080,7 +17112,7 @@ mod tests {
         );
         assert_points_equal(
             &first
-                .point_at(
+                .evaluate_real(
                     &swapped[0]
                         .second_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -17208,7 +17240,7 @@ mod tests {
             let parameter = q(2, 3);
             assert_points_equal(
                 &mirrored
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -17286,7 +17318,7 @@ mod tests {
                 let spatial = circle.curve().evaluate_real(&parameter).unwrap();
                 assert_points_equal(
                     &sphere
-                        .point_at(
+                        .evaluate_real(
                             &circle
                                 .first_pcurve()
                                 .point_at(&Real::clone(&parameter).into())
@@ -17298,7 +17330,7 @@ mod tests {
                 );
                 assert_points_equal(
                     &torus
-                        .point_at(
+                        .evaluate_real(
                             &circle
                                 .second_pcurve()
                                 .point_at(&Real::clone(&parameter).into())
@@ -17318,7 +17350,7 @@ mod tests {
         let spatial = swapped[0].curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &torus
-                .point_at(
+                .evaluate_real(
                     &swapped[0]
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -17330,7 +17362,7 @@ mod tests {
         );
         assert_points_equal(
             &sphere
-                .point_at(
+                .evaluate_real(
                     &swapped[0]
                         .second_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -17407,7 +17439,7 @@ mod tests {
             let parameter = q(5, 7);
             assert_points_equal(
                 &mirrored
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -17499,7 +17531,7 @@ mod tests {
                 let spatial = circle.curve().evaluate_real(&parameter).unwrap();
                 assert_points_equal(
                     &cylinder
-                        .point_at(
+                        .evaluate_real(
                             &circle
                                 .first_pcurve()
                                 .point_at(&Real::clone(&parameter).into())
@@ -17511,7 +17543,7 @@ mod tests {
                 );
                 assert_points_equal(
                     &torus
-                        .point_at(
+                        .evaluate_real(
                             &circle
                                 .second_pcurve()
                                 .point_at(&Real::clone(&parameter).into())
@@ -17532,7 +17564,7 @@ mod tests {
         let spatial = swapped[0].curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &torus
-                .point_at(
+                .evaluate_real(
                     &swapped[0]
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -17544,7 +17576,7 @@ mod tests {
         );
         assert_points_equal(
             &cylinder
-                .point_at(
+                .evaluate_real(
                     &swapped[0]
                         .second_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -17621,7 +17653,7 @@ mod tests {
             let parameter = q(6, 7);
             assert_points_equal(
                 &mirrored
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -17713,7 +17745,7 @@ mod tests {
                 let spatial = circle.curve().evaluate_real(&parameter).unwrap();
                 assert_points_equal(
                     &cone
-                        .point_at(
+                        .evaluate_real(
                             &circle
                                 .first_pcurve()
                                 .point_at(&Real::clone(&parameter).into())
@@ -17725,7 +17757,7 @@ mod tests {
                 );
                 assert_points_equal(
                     &torus
-                        .point_at(
+                        .evaluate_real(
                             &circle
                                 .second_pcurve()
                                 .point_at(&Real::clone(&parameter).into())
@@ -17745,7 +17777,7 @@ mod tests {
         let spatial = swapped[0].curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &torus
-                .point_at(
+                .evaluate_real(
                     &swapped[0]
                         .first_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -17757,7 +17789,7 @@ mod tests {
         );
         assert_points_equal(
             &cone
-                .point_at(
+                .evaluate_real(
                     &swapped[0]
                         .second_pcurve()
                         .point_at(&Real::clone(&parameter).into())
@@ -17839,7 +17871,7 @@ mod tests {
             let parameter = q(6, 7);
             assert_points_equal(
                 &mirrored
-                    .point_at(
+                    .evaluate_real(
                         &circle
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -18001,7 +18033,7 @@ mod tests {
             let spatial = axial_circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &sphere
-                    .point_at(
+                    .evaluate_real(
                         &axial_circle
                             .first_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -18013,7 +18045,7 @@ mod tests {
             );
             assert_points_equal(
                 &axial_second
-                    .point_at(
+                    .evaluate_real(
                         &axial_circle
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -18055,7 +18087,7 @@ mod tests {
             let spatial = mirrored_circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &mirrored_second
-                    .point_at(
+                    .evaluate_real(
                         &mirrored_circle
                             .second_pcurve()
                             .point_at(&Real::clone(&parameter).into())
@@ -18093,7 +18125,7 @@ mod tests {
             Surface::cylinder(p(1, 2, 3), Vector3::x(), Vector3::y(), Vector3::z(), r(2)).unwrap();
         assert_eq!(cylinder.kind(), SurfaceKind::Cylinder);
         assert_points_equal(
-            &cylinder.point_at(&Point2::new(r(0), r(5))).unwrap(),
+            &cylinder.evaluate_real(&Point2::new(r(0), r(5))).unwrap(),
             &p(3, 2, 8),
         );
         let partials = cylinder.partials_at(&Point2::new(r(0), r(5))).unwrap();
@@ -18109,7 +18141,7 @@ mod tests {
         )
         .unwrap();
         assert_points_equal(
-            &sphere.point_at(&Point2::new(r(0), r(0))).unwrap(),
+            &sphere.evaluate_real(&Point2::new(r(0), r(0))).unwrap(),
             &p(2, 0, 0),
         );
         let partials = sphere.partials_at(&Point2::new(r(0), r(0))).unwrap();
@@ -18126,7 +18158,9 @@ mod tests {
             GeometryError::SingularSurfaceParameter
         );
         assert_eq!(
-            sphere.point_at(&Point2::new(r(0), Real::pi())).unwrap_err(),
+            sphere
+                .evaluate_real(&Point2::new(r(0), Real::pi()))
+                .unwrap_err(),
             GeometryError::SurfaceParameterOutsideDomain
         );
 
@@ -18139,7 +18173,7 @@ mod tests {
         )
         .unwrap();
         assert_points_equal(
-            &cone.point_at(&Point2::new(r(7), r(0))).unwrap(),
+            &cone.evaluate_real(&Point2::new(r(7), r(0))).unwrap(),
             &p(1, 2, 3),
         );
         assert_eq!(
@@ -18147,7 +18181,7 @@ mod tests {
             GeometryError::SingularSurfaceParameter
         );
         assert_eq!(
-            cone.point_at(&Point2::new(r(0), r(-1))).unwrap_err(),
+            cone.evaluate_real(&Point2::new(r(0), r(-1))).unwrap_err(),
             GeometryError::SurfaceParameterOutsideDomain
         );
 
@@ -18161,7 +18195,7 @@ mod tests {
         )
         .unwrap();
         assert_points_equal(
-            &torus.point_at(&Point2::new(r(0), r(0))).unwrap(),
+            &torus.evaluate_real(&Point2::new(r(0), r(0))).unwrap(),
             &p(5, 0, 0),
         );
     }

@@ -232,7 +232,18 @@ pub fn selected_profile_domains_retain_endpoints_and_projection() {
         range.end().compare(curve.domain().end()).unwrap(),
         Ordering::Equal
     );
-    let sample = extruded.point_at(&Point2::new(q(1, 2), 3.into())).unwrap();
+    let sample = extruded
+        .point_at(&{
+            let uv = &Point2::new(q(1, 2), 3.into());
+            hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+        })
+        .map(|point| {
+            point
+                .try_coordinates()
+                .expect("represented surface fixture")
+                .clone()
+        })
+        .unwrap();
     assert_eq!(sample, Point3::new(2.into(), 2.into(), 3.into()));
 }
 

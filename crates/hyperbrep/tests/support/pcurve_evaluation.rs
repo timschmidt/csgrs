@@ -95,6 +95,24 @@ pub fn selected_section_pcurves_preserve_images_and_replay() {
             assert_eq!(contacts.len(), 1);
             let contact = &contacts[0];
             assert!(contact.parameter.try_real().is_none());
+            // The plane consumes the selected joint UV directly. Its point
+            // agrees with the independent spatial section/cutting-plane result.
+            let section_plane = Surface::plane(
+                Point3::origin(),
+                Vector3::from_xyz(1.into(), 0.into(), 1.into()),
+                Vector3::y(),
+            )
+            .unwrap();
+            let uv = trace.second_pcurve().point_at(&contact.parameter).unwrap();
+            let surface_point = section_plane.point_at(&uv).unwrap();
+            assert!(surface_point.try_coordinates().is_none());
+            assert!(surface_point.coincides_with(&contact.point).unwrap());
+            assert_eq!(
+                surface_point
+                    .compare_linear_form(&Vector3::x(), &q(1, 2))
+                    .unwrap(),
+                std::cmp::Ordering::Equal
+            );
             let mut builder = ModelBuilder::new();
             builder.vertex(contact.point.clone()).unwrap();
             builder.curve(trace.curve().clone()).unwrap();

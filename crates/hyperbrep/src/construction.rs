@@ -815,7 +815,7 @@ fn tensor_patch_build_data(patch: TensorPatch) -> Result<TensorPatchBuildData, C
     let points = parameters
         .iter()
         .map(|parameter| {
-            surface.point_at(&Point2::new(parameter.x().clone(), parameter.y().clone()))
+            surface.evaluate_real(&Point2::new(parameter.x().clone(), parameter.y().clone()))
         })
         .collect::<Result<Vec<_>, _>>()?
         .try_into()
@@ -955,7 +955,7 @@ fn build_rectangular_face_patch(
         .iter()
         .map(|parameter| {
             surface
-                .point_at(&Point2::new(parameter.x().clone(), parameter.y().clone()))
+                .evaluate_real(&Point2::new(parameter.x().clone(), parameter.y().clone()))
                 .map_err(ConstructionError::from)
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -1686,7 +1686,7 @@ pub fn torus(
         let mut points = Vec::with_capacity(16);
         for u in &angles {
             for v in &angles {
-                points.push(surface.point_at(&Point2::new(u.clone(), v.clone()))?);
+                points.push(surface.evaluate_real(&Point2::new(u.clone(), v.clone()))?);
             }
         }
         let vertices = points
@@ -4077,8 +4077,9 @@ fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, Const
         };
         return Ok(Curve3::planar_image(curve.clone(), origin, u, v)?);
     }
-    let lift =
-        |point: &CurvePoint2| surface.point_at(&Point2::new(point.x().clone(), point.y().clone()));
+    let lift = |point: &CurvePoint2| {
+        surface.evaluate_real(&Point2::new(point.x().clone(), point.y().clone()))
+    };
     match curve.geometry() {
         None => Err(ConstructionError::UnsupportedPlanarProfile),
         Some(CurveGeometry2::Line(line)) => {
@@ -4146,7 +4147,7 @@ fn add_planar_path_wire(
                 return spatial.point_at(spatial.domain().start());
             };
             surface
-                .point_at(&Point2::new(point.x().clone(), point.y().clone()))
+                .evaluate_real(&Point2::new(point.x().clone(), point.y().clone()))
                 .map(Into::into)
         })
         .collect::<Result<Vec<_>, _>>()?;

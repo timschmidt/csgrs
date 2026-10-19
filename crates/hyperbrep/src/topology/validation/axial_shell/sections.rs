@@ -161,9 +161,9 @@ impl Side {
                 let a = frame.project(
                     &self
                         .surface
-                        .point_at(&Point2::new(start.clone(), v.clone()))?,
+                        .evaluate_real(&Point2::new(start.clone(), v.clone()))?,
                 );
-                let b = frame.project(&self.surface.point_at(&Point2::new(end.clone(), v))?);
+                let b = frame.project(&self.surface.evaluate_real(&Point2::new(end.clone(), v))?);
                 let SurfaceExactData::Cylinder { origin, axis, .. } = self.surface.exact_data()
                 else {
                     unreachable!("prevalidated cylinder side")

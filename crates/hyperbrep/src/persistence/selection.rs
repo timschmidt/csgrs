@@ -18,6 +18,7 @@ pub(super) enum RawParameter {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(super) enum RawVertex {
     Coordinates([Real; 3]),
+    SurfaceImage(Box<RawSurfacePoint>),
     CurveImage {
         source: RawPointSource,
         parameter: RawParameter,
@@ -156,6 +157,11 @@ impl GraphEncoder {
     pub(super) fn point(&mut self, point: &GeometricPoint3) -> Result<RawVertex, PersistenceError> {
         if let Some(point) = point.try_coordinates() {
             return Ok(RawVertex::Coordinates(point_array(point)));
+        }
+        if let Some((source, parameter)) = point.surface_source() {
+            return Ok(RawVertex::SurfaceImage(Box::new(
+                self.surface_point(source, parameter)?,
+            )));
         }
         let (curve, parameter) = point
             .curve_source()
@@ -341,6 +347,7 @@ impl SelectionGraph {
     ) -> Result<GeometricPoint3, PersistenceError> {
         match raw {
             RawVertex::Coordinates(point) => Ok(point3(point).into()),
+            RawVertex::SurfaceImage(point) => self.surface_point(*point),
             RawVertex::CurveImage { source, parameter } => {
                 let (sources, index) = match source {
                     RawPointSource::Model(index) => (curves, index),

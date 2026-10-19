@@ -85,7 +85,18 @@ fn borrowed_cylinder_frame_exposes_the_exact_authored_chart() {
             + (view.x.clone() * uv.x.clone().cos() + view.y.clone() * uv.x.clone().sin())
                 * view.radius
             + view.axis.clone() * &uv.y;
-        let actual = source.point_at(&uv).unwrap();
+        let actual = source
+            .point_at(&{
+                let uv = &uv;
+                hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+            })
+            .map(|point| {
+                point
+                    .try_coordinates()
+                    .expect("represented surface fixture")
+                    .clone()
+            })
+            .unwrap();
         assert!(
             hyperbrep::GeometricPoint3::from(actual)
                 .coincides_with(&expected.into())

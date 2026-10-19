@@ -87,7 +87,7 @@ Selected retained/iso mappings preserve restrictions, reversal and checked
 archive replay; selected iso carriers use degree-one splines in the original
 chart. Represented iso carriers retain native lines. Angular selected interior
 queries still fail typed when their coordinates are unavailable. The complete
-section evaluator and surface UV evaluator remain separate open boundaries.
+section evaluator and nonlinear selected surface images remain open boundaries.
 See the [parameter-map evidence](evidence/2026-10-19-selected-pcurve-maps/README.md).
 
 Retained pcurve `point_at` accepts `Parameter` and returns
@@ -96,8 +96,17 @@ sections/projections, retained/iso charts and admitted planar-lift similarity
 charts support exact queries and point-graph replay. The face classifier accepts
 these images directly; periodic coordinate arithmetic explicitly requests a
 stored view. Selected angular and general procedural non-similarity projections
-remain typed blockers. `Surface::point_at` still needs retained joint-UV migration.
+remain typed blockers. `Surface::point_at` consumes joint UV points and retains plane images; nonlinear selected images remain typed blockers.
 See the [evaluation evidence](evidence/2026-10-19-pcurve-evaluation/README.md).
+
+`Surface::point_at(&hypercurve::CurvePoint2)` returns `GeometricPoint3`.
+Represented inputs preserve all nine surface evaluators. Selected plane images
+retain the source surface and joint UV authority, with exact affine queries,
+conservative source bounds, transforms, translation/rotation origins and archive
+11 replay. Finite and lower-bounded domains are checked before representation
+dispatch; periodic axes retain their unbounded real semantics. Selected nonlinear
+images remain unsupported. Bounds retain the planar owner's representation
+limits. See the [surface evidence](evidence/2026-10-19-surface-evaluation/README.md).
 
 ## Spatial curve carriers
 
@@ -155,7 +164,7 @@ angular evaluation returns `UnsupportedSelectedEvaluation`.
 Native coefficient derivatives/subdivision still require stored
 parameters/coordinates. `Curve3::domain`, closed surface domains and contact-pcurve
 domains use `ParameterRange`; coefficient consumers request fallible represented
-views. Archive version 10 retains selected geometry graphs, correlated point
+views. Archive version 11 retains selected geometry graphs, correlated point
 definitions and straight translations of retained origins. Topology vertices and edge trims retain selected
 images and parameters; affine pcurve transfers and exact edge splits preserve
 them. A remaining scalar-only path returns `UnrepresentableParameter` or

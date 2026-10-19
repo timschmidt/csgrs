@@ -78,7 +78,18 @@ fn check_traces(graph: &boolean::SolidIntersectionGraph) -> usize {
                     assert_eq!(
                         hyperlimit::point3_equal(
                             point.try_coordinates().unwrap(),
-                            &face.surface().geometry().point_at(&uv).unwrap(),
+                            &face
+                                .surface()
+                                .geometry()
+                                .point_at(&{
+                                    let uv = &uv;
+                                    hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                                })
+                                .map(|point| point
+                                    .try_coordinates()
+                                    .expect("represented surface fixture")
+                                    .clone())
+                                .unwrap(),
                             STRICT_PREDICATES
                         )
                         .value(),

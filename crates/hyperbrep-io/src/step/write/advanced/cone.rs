@@ -89,9 +89,14 @@ fn select(out: &Output, face: FaceRef<'_>, scale: &Real) -> Result<Anchor, Write
                 // frame consistent when several faces share one native support.
                 let canonical = Point2::new(Real::zero(), uv.y.clone());
                 let point = surface
-                    .point_at(&canonical)
+                    .point_at(
+                        &hypercurve::Point2::new(canonical.x.clone(), canonical.y.clone()).into(),
+                    )
                     .map_err(|error| out.site.error(WriteErrorKind::Geometry(error)))?;
-                match anchor(out, &surface, &canonical, &point, scale) {
+                let point = point
+                    .try_coordinates()
+                    .ok_or_else(|| out.site.error(WriteErrorKind::UnmaterializedPoint))?;
+                match anchor(out, &surface, &canonical, point, scale) {
                     Ok(anchor) => return Ok(anchor),
                     Err(error) if representability(&error) => {}
                     Err(error) => return Err(error),

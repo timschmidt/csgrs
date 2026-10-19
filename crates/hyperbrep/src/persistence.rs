@@ -23,10 +23,12 @@ mod parallel;
 use parallel::{RawParallelPcurve, raw_parallel_source};
 mod planar_points;
 mod selection;
+mod spatial_points;
 use planar_points::RawPlanarPoint;
 use selection::{GraphEncoder, RawParameter, RawSelectionGraph, RawVertex, SelectionGraph};
+use spatial_points::{RawSpatialPoint, RawSurfacePoint};
 
-const FORMAT_VERSION: u32 = 10;
+const FORMAT_VERSION: u32 = 11;
 
 /// Failure while encoding, decoding, or validating an exact model.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -572,11 +574,7 @@ struct RawModelData {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawCurve3 {
     Rotation(Box<RawRotationCurve3>),
-    Translation {
-        source: Box<RawCurve3>,
-        parameter: RawParameter,
-        displacement: [Real; 3],
-    },
+    Translation(Box<RawTranslationCurve3>),
     PlanarImage(Box<RawPlanarCurve3>),
     Line(Box<RawLine3>),
     RationalBezier {
@@ -594,7 +592,7 @@ enum RawCurve3 {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct RawRotationCurve3 {
-    origin: RawRotationOrigin,
+    origin: RawSpatialPoint,
     axis_origin: [Real; 3],
     axis: [Real; 3],
     domain: [Real; 2],
@@ -603,12 +601,9 @@ struct RawRotationCurve3 {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-enum RawRotationOrigin {
-    Coordinates([Real; 3]),
-    CurveImage {
-        source: Box<RawCurve3>,
-        parameter: RawParameter,
-    },
+struct RawTranslationCurve3 {
+    origin: RawSpatialPoint,
+    displacement: [Real; 3],
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -908,41 +903,22 @@ fn raw_curve3(
     graph: &mut GraphEncoder,
 ) -> Result<RawCurve3, PersistenceError> {
     Ok(match curve {
-        Curve3ExactData::Rotation(rotation) => {
-            let origin = if let Some(point) = rotation.origin.try_coordinates() {
-                RawRotationOrigin::Coordinates(point_array(point))
-            } else {
-                let (source, parameter) = rotation
-                    .origin
-                    .curve_source()
-                    .ok_or(GeometryError::UnrepresentablePoint)?;
-                RawRotationOrigin::CurveImage {
-                    source: Box::new(raw_curve3(source.exact_data(), graph)?),
-                    parameter: graph.parameter(parameter)?,
-                }
-            };
-            RawCurve3::Rotation(Box::new(RawRotationCurve3 {
-                origin,
-                axis_origin: point_array(&rotation.axis_origin),
-                axis: vector_array(&rotation.axis),
-                domain: [
-                    rotation.domain.start().clone(),
-                    rotation.domain.end().clone(),
-                ],
-                angle_direction: rotation.angle_direction,
-                angle_offset: rotation.angle_offset,
-            }))
-        }
+        Curve3ExactData::Rotation(rotation) => RawCurve3::Rotation(Box::new(RawRotationCurve3 {
+            origin: graph.spatial_point(&rotation.origin)?,
+            axis_origin: point_array(&rotation.axis_origin),
+            axis: vector_array(&rotation.axis),
+            domain: [
+                rotation.domain.start().clone(),
+                rotation.domain.end().clone(),
+            ],
+            angle_direction: rotation.angle_direction,
+            angle_offset: rotation.angle_offset,
+        })),
         Curve3ExactData::Translation(line) => {
-            let (source, parameter) = line
-                .origin
-                .curve_source()
-                .ok_or(GeometryError::UnrepresentablePoint)?;
-            RawCurve3::Translation {
-                source: Box::new(raw_curve3(source.exact_data(), graph)?),
-                parameter: graph.parameter(parameter)?,
+            RawCurve3::Translation(Box::new(RawTranslationCurve3 {
+                origin: graph.spatial_point(&line.origin)?,
                 displacement: vector_array(&line.displacement),
-            }
+            }))
         }
         Curve3ExactData::PlanarImage(image) => RawCurve3::PlanarImage(Box::new(RawPlanarCurve3 {
             source: Box::new(graph.pcurve(&image.source)?),
@@ -1004,12 +980,7 @@ fn raw_curve3(
 fn curve3(curve: RawCurve3, graph: &SelectionGraph) -> Result<Curve3, PersistenceError> {
     let data = match curve {
         RawCurve3::Rotation(rotation) => {
-            let origin = match rotation.origin {
-                RawRotationOrigin::Coordinates(point) => point3(point).into(),
-                RawRotationOrigin::CurveImage { source, parameter } => {
-                    curve3(*source, graph)?.point_at(&graph.parameter(parameter)?)?
-                }
-            };
+            let origin = graph.spatial_point(rotation.origin)?;
             let [start, end] = rotation.domain;
             Curve3ExactData::Rotation(Box::new(crate::geometry::RotationCurve3 {
                 origin,
@@ -1020,13 +991,13 @@ fn curve3(curve: RawCurve3, graph: &SelectionGraph) -> Result<Curve3, Persistenc
                 angle_offset: rotation.angle_offset,
             }))
         }
-        RawCurve3::Translation {
-            source,
-            parameter,
-            displacement,
-        } => {
+        RawCurve3::Translation(line) => {
+            let RawTranslationCurve3 {
+                origin,
+                displacement,
+            } = *line;
             return Ok(Curve3::translation(
-                curve3(*source, graph)?.point_at(&graph.parameter(parameter)?)?,
+                graph.spatial_point(origin)?,
                 Vector3::new(displacement),
             )?);
         }

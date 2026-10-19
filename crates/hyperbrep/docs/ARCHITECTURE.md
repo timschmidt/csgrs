@@ -223,8 +223,8 @@ coordinate reconstruction. This projection is local to the query; there is no
 unbounded cache keyed by arbitrary plane coefficients. Typed uncertainty can be
 retried after stronger scalar evidence.
 
-The XY and XZ curves and their selected images are prepared independently on
-demand. Successful projection preparation is cached, while failed work remains
+For native curve images, the XY and XZ projections and their selected points are
+prepared independently on demand. Successful projection preparation is cached, while failed work remains
 retryable. Cold readers may duplicate preparation before publishing a shared
 success. Source geometry owns no point or model reference, preventing a cycle.
 Bounds are conservative exact enclosures, with no promised width. Affine
@@ -241,7 +241,7 @@ implemented subsequently is described below.
 `ParameterDomain` describes authored carrier domains with `Real` coefficients.
 `ParameterRange` describes canonical increasing edge trims with exact
 `Parameter` endpoints. Vertex records store `GeometricPoint3`. Builder incidence
-checks compare retained curve images; they do not demand stored coordinates.
+checks compare retained images; they do not demand stored coordinates.
 Scalar coefficient algorithms explicitly request an available scalar or
 coordinate view and return a typed blocker otherwise.
 
@@ -269,7 +269,7 @@ selected-point enclosures with the existing conservative curve bounds.
 
 The [topology qualification](evidence/2026-10-15-selected-topology/README.md)
 covers shared-edge splits, repeated edits, rational/NURBS charts, reflections
-and retained solid queries. [Archive version 10](SELECTED_ARCHIVE.md) retains
+and retained solid queries. [Archive version 11](SELECTED_ARCHIVE.md) retains
 selected roots, flattened charts, spatial curve images and authored pcurve
 restrictions. Independent replay covers the selected sheet fixtures and exact
 planar area, every cuboid edge alone or together (including shear/reflection),
@@ -291,7 +291,7 @@ source intervals keep their chart. Straight axial sweeps use `Curve3::translatio
 to preserve a selected origin. Hypercurve owns scalar-chart, affine-point and
 point-definition replay; BRep owns the spatial frame and complete extrusion
 image proof. Coordinate pcurve maps preserve selected UV corners through edge
-splits and reflection. Archive version 10 records these definitions and rejects
+splits and reflection. Archive version 11 records these definitions and rejects
 version 9 without an adapter. General recursive selected fields remain outside
 the supported replay domain.
 
@@ -876,8 +876,18 @@ spans and plane projections preserve selected parameters; iso/retained mappings
 reuse their source authority. Planar procedural projections currently require a
 similarity of the source chart. Face classification accepts the retained UV
 point directly; coordinate algorithms explicitly request an optional view.
-General retained surface evaluation and full selected section restriction remain
+Selected nonlinear surface evaluation and full selected section restriction remain
 open boundaries, documented in the [evaluation record](evidence/2026-10-19-pcurve-evaluation/README.md).
+`Surface::point_at(&hypercurve::CurvePoint2)` returns `GeometricPoint3`.
+`geometry/surface_point.rs` validates retained UV domains; plane evaluation stores
+the immutable surface and the joint UV point directly. Spatial affine-form
+queries share the planar owner's proofs with curve images. Point transforms map
+the source plane frame without changing the UV selector. The private represented
+surface evaluator remains the common coefficient path. Endpoint image validation
+consumes retained pcurve and surface points directly. Archive 11 persists surface
+point definitions and generic translation/rotation origins through
+`persistence/spatial_points.rs`; nested shape admission precedes scalar decoding.
+See the [surface evaluation record](evidence/2026-10-19-surface-evaluation/README.md).
 Retained pcurves may run in either source direction; materialization preserves
 that affine direction exactly for lines, rational Béziers, and NURBS curves.
 For an authored-frame-aligned coaxial sphere/cylinder pair, each intersection

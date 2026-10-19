@@ -152,7 +152,16 @@ pub fn planar_pcurves_prove_whole_image_and_retain_parameter_correspondence() {
                 let uv = projected.curve().point_at(&t.clone().into()).unwrap();
                 let uv = uv.coordinates().unwrap();
                 let on_plane = plane
-                    .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
+                    .point_at(&{
+                        let uv = &Point2::new(uv.x().clone(), uv.y().clone());
+                        hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                    })
+                    .map(|point| {
+                        point
+                            .try_coordinates()
+                            .expect("represented surface fixture")
+                            .clone()
+                    })
                     .unwrap();
                 let on_curve = curve.point_at(&parameter).unwrap();
                 assert!(on_curve.coincides_with(&on_plane.into()).unwrap());
@@ -181,7 +190,18 @@ pub fn extrusion_location_preserves_oblique_nonunit_direction_and_source_paramet
             let surface = Surface::extrusion(curve, direction).unwrap();
             for v in [-2, 0, 3] {
                 let uv = Point2::new(middle.clone(), v.into());
-                let point = surface.point_at(&uv).unwrap();
+                let point = surface
+                    .point_at(&{
+                        let uv = &uv;
+                        hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                    })
+                    .map(|point| {
+                        point
+                            .try_coordinates()
+                            .expect("represented surface fixture")
+                            .clone()
+                    })
+                    .unwrap();
                 let (location, height) = surface.extrusion_parameters_of(&point).unwrap();
                 equal(&height, &uv.y);
                 let CurveParameterLocation::Parameters(parameters) = location else {

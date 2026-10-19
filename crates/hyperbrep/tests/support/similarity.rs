@@ -76,7 +76,16 @@ pub fn check_images(model: &Model) {
                 .wire()
                 .face()
                 .surface()
-                .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
+                .point_at(&{
+                    let uv = &Point2::new(uv.x().clone(), uv.y().clone());
+                    hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                })
+                .map(|point| {
+                    point
+                        .try_coordinates()
+                        .expect("represented surface fixture")
+                        .clone()
+                })
                 .unwrap();
             let edge_parameter = edge_use.edge_parameter_at(&parameter).unwrap();
             let on_edge = edge_use.edge().curve().point_at(&edge_parameter).unwrap();

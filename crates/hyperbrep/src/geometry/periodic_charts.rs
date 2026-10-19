@@ -136,8 +136,8 @@ mod tests {
                     };
                     let curve = if axial {
                         Curve3::line(
-                            source.point_at(&start).unwrap(),
-                            source.point_at(&end).unwrap(),
+                            source.evaluate_real(&start).unwrap(),
+                            source.evaluate_real(&end).unwrap(),
                         )
                         .unwrap()
                     } else {
@@ -180,7 +180,7 @@ mod tests {
                                     - curve.domain().represented_start().unwrap())
                                     * (Real::from(n) / Real::from(8)).unwrap();
                             let actual = target
-                                .point_at(
+                                .evaluate_real(
                                     &trace
                                         .pcurve(operand)
                                         .point_at(&Real::clone(&t).into())

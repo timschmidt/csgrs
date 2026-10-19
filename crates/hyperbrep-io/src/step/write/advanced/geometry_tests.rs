@@ -52,7 +52,18 @@ fn extrusion_charts_keep_shifted_reversed_angles_and_signed_axial_units() {
                 };
                 equal(&actual.x, &expected);
                 equal(&actual.y, &Real::from(if negative { -6000 } else { 6000 }));
-                let point = source.point_at(&Point2::new(t, 2.into())).unwrap();
+                let point = source
+                    .point_at(&{
+                        let uv = &Point2::new(t, 2.into());
+                        hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                    })
+                    .map(|point| {
+                        point
+                            .try_coordinates()
+                            .expect("represented surface fixture")
+                            .clone()
+                    })
+                    .unwrap();
                 equal(
                     &point.x,
                     &(Real::from(2) + Real::from(5) * actual.x.clone().cos()),

@@ -66,7 +66,16 @@ pub fn planar_spline_incidence_does_not_require_low_degree_root_solving() {
             let uv = pcurve.curve().point_at(&middle.clone().into()).unwrap();
             let uv = uv.coordinates().unwrap();
             let point = plane
-                .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
+                .point_at(&{
+                    let uv = &Point2::new(uv.x().clone(), uv.y().clone());
+                    hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                })
+                .map(|point| {
+                    point
+                        .try_coordinates()
+                        .expect("represented surface fixture")
+                        .clone()
+                })
                 .unwrap();
             assert!(
                 curve
