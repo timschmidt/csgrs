@@ -1,0 +1,4300 @@
+[
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Multiply": [
+              {
+                "internal": {
+                  "Ratio": {
+                    "denominator": [
+                      3
+                    ],
+                    "numerator": [
+                      1
+                    ],
+                    "sign": -1
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Multiply": [
+          {
+            "internal": {
+              "Ratio": {
+                "denominator": [
+                  3
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          },
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Multiply": [
+              {
+                "internal": {
+                  "Ratio": {
+                    "denominator": [
+                      3
+                    ],
+                    "numerator": [
+                      1
+                    ],
+                    "sign": -1
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Multiply": [
+          {
+            "internal": {
+              "Ratio": {
+                "denominator": [
+                  3
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          },
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Add": [
+              {
+                "internal": {
+                  "Add": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Multiply": [
+                          {
+                            "internal": {
+                              "Ratio": {
+                                "denominator": [
+                                  3
+                                ],
+                                "numerator": [
+                                  1
+                                ],
+                                "sign": -1
+                              }
+                            }
+                          },
+                          {
+                            "internal": {
+                              "Constant": "Pi"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "internal": {
+                  "Negate": {
+                    "internal": {
+                      "Offset": [
+                        {
+                          "internal": {
+                            "Constant": "Pi"
+                          }
+                        },
+                        -1
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        3
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": -1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Constant": "Pi"
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Multiply": [
+                              {
+                                "internal": {
+                                  "Ratio": {
+                                    "denominator": [
+                                      3
+                                    ],
+                                    "numerator": [
+                                      1
+                                    ],
+                                    "sign": -1
+                                  }
+                                }
+                              },
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Negate": {
+                        "internal": {
+                          "Offset": [
+                            {
+                              "internal": {
+                                "Constant": "Pi"
+                              }
+                            },
+                            -1
+                          ]
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        3
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": -1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -1
+                            ]
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Multiply": [
+                              {
+                                "internal": {
+                                  "Ratio": {
+                                    "denominator": [
+                                      3
+                                    ],
+                                    "numerator": [
+                                      1
+                                    ],
+                                    "sign": 1
+                                  }
+                                }
+                              },
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Negate": {
+                        "internal": {
+                          "Constant": "Pi"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        3
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -1
+                            ]
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Multiply": [
+                              {
+                                "internal": {
+                                  "Ratio": {
+                                    "denominator": [
+                                      3
+                                    ],
+                                    "numerator": [
+                                      1
+                                    ],
+                                    "sign": 1
+                                  }
+                                }
+                              },
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Negate": {
+                        "internal": {
+                          "Constant": "Pi"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        3
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Add": [
+              {
+                "internal": {
+                  "Negate": {
+                    "internal": {
+                      "Offset": [
+                        {
+                          "internal": {
+                            "Constant": "Pi"
+                          }
+                        },
+                        -1
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Ratio": {
+                          "denominator": [
+                            3
+                          ],
+                          "numerator": [
+                            1
+                          ],
+                          "sign": 1
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        3
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Add": [
+              {
+                "internal": {
+                  "Negate": {
+                    "internal": {
+                      "Offset": [
+                        {
+                          "internal": {
+                            "Constant": "Pi"
+                          }
+                        },
+                        -1
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Ratio": {
+                          "denominator": [
+                            3
+                          ],
+                          "numerator": [
+                            1
+                          ],
+                          "sign": 1
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        3
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Multiply": [
+              {
+                "internal": {
+                  "Ratio": {
+                    "denominator": [
+                      3
+                    ],
+                    "numerator": [
+                      1
+                    ],
+                    "sign": 1
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Multiply": [
+          {
+            "internal": {
+              "Ratio": {
+                "denominator": [
+                  3
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          },
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Multiply": [
+              {
+                "internal": {
+                  "Ratio": {
+                    "denominator": [
+                      3
+                    ],
+                    "numerator": [
+                      1
+                    ],
+                    "sign": 1
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Multiply": [
+          {
+            "internal": {
+              "Ratio": {
+                "denominator": [
+                  3
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          },
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Constant": "Pi"
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Multiply": [
+                              {
+                                "internal": {
+                                  "Ratio": {
+                                    "denominator": [
+                                      3
+                                    ],
+                                    "numerator": [
+                                      1
+                                    ],
+                                    "sign": 1
+                                  }
+                                }
+                              },
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Multiply": [
+                        {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -1
+                            ]
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Int": [
+                              -1,
+                              [
+                                3
+                              ]
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        3
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Add": [
+              {
+                "internal": {
+                  "Add": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Multiply": [
+                          {
+                            "internal": {
+                              "Ratio": {
+                                "denominator": [
+                                  3
+                                ],
+                                "numerator": [
+                                  1
+                                ],
+                                "sign": 1
+                              }
+                            }
+                          },
+                          {
+                            "internal": {
+                              "Constant": "Pi"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Offset": [
+                          {
+                            "internal": {
+                              "Constant": "Pi"
+                            }
+                          },
+                          -1
+                        ]
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Int": [
+                          -1,
+                          [
+                            3
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        3
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Add": [
+              {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              },
+              {
+                "internal": {
+                  "Negate": {
+                    "internal": {
+                      "Multiply": [
+                        {
+                          "internal": {
+                            "Ratio": {
+                              "denominator": [
+                                3
+                              ],
+                              "numerator": [
+                                1
+                              ],
+                              "sign": 1
+                            }
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Constant": "Pi"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Ratio": {
+                          "denominator": [
+                            3
+                          ],
+                          "numerator": [
+                            1
+                          ],
+                          "sign": 1
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Add": [
+              {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              },
+              {
+                "internal": {
+                  "Negate": {
+                    "internal": {
+                      "Multiply": [
+                        {
+                          "internal": {
+                            "Ratio": {
+                              "denominator": [
+                                3
+                              ],
+                              "numerator": [
+                                1
+                              ],
+                              "sign": 1
+                            }
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Constant": "Pi"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Ratio": {
+                          "denominator": [
+                            3
+                          ],
+                          "numerator": [
+                            1
+                          ],
+                          "sign": 1
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Offset": [
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  },
+                                  -1
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Multiply": [
+                                  {
+                                    "internal": {
+                                      "Ratio": {
+                                        "denominator": [
+                                          3
+                                        ],
+                                        "numerator": [
+                                          1
+                                        ],
+                                        "sign": 1
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Ratio": {
+                          "denominator": [
+                            3
+                          ],
+                          "numerator": [
+                            1
+                          ],
+                          "sign": 1
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 3,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Offset": [
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  },
+                                  -1
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Multiply": [
+                                  {
+                                    "internal": {
+                                      "Ratio": {
+                                        "denominator": [
+                                          3
+                                        ],
+                                        "numerator": [
+                                          1
+                                        ],
+                                        "sign": 1
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Ratio": {
+                          "denominator": [
+                            3
+                          ],
+                          "numerator": [
+                            1
+                          ],
+                          "sign": 1
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Offset": [
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  },
+                  -2
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "Offset": [
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              },
+              -2
+            ]
+          }
+        }
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Offset": [
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              },
+              -2
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "Offset": [
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              },
+              -2
+            ]
+          }
+        }
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Negate": {
+                  "internal": {
+                    "Offset": [
+                      {
+                        "internal": {
+                          "Constant": "Pi"
+                        }
+                      },
+                      -2
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -2
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Negate": {
+                  "internal": {
+                    "Offset": [
+                      {
+                        "internal": {
+                          "Constant": "Pi"
+                        }
+                      },
+                      -2
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -2
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -1
+                            ]
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -2
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Negate": {
+                        "internal": {
+                          "Constant": "Pi"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -2
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -1
+                            ]
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -2
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Negate": {
+                        "internal": {
+                          "Constant": "Pi"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -2
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Offset": [
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  },
+                                  -1
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -2
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Offset": [
+                        {
+                          "internal": {
+                            "Constant": "Pi"
+                          }
+                        },
+                        -1
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -2
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Add": [
+              {
+                "internal": {
+                  "Add": [
+                    {
+                      "internal": {
+                        "Negate": {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -1
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Offset": [
+                          {
+                            "internal": {
+                              "Constant": "Pi"
+                            }
+                          },
+                          -2
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -2
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Offset": [
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              },
+              -2
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Offset": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          -2
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Offset": [
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              },
+              -2
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Offset": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          -2
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Constant": "Pi"
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -2
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Multiply": [
+                        {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -1
+                            ]
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Int": [
+                              -1,
+                              [
+                                3
+                              ]
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -2
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Add": [
+              {
+                "internal": {
+                  "Add": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Offset": [
+                          {
+                            "internal": {
+                              "Constant": "Pi"
+                            }
+                          },
+                          -2
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Offset": [
+                          {
+                            "internal": {
+                              "Constant": "Pi"
+                            }
+                          },
+                          -1
+                        ]
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Int": [
+                          -1,
+                          [
+                            3
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -2
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Negate": {
+              "internal": {
+                "Offset": [
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  },
+                  -2
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -2
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Negate": {
+                  "internal": {
+                    "Offset": [
+                      {
+                        "internal": {
+                          "Constant": "Pi"
+                        }
+                      },
+                      -2
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -2
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Offset": [
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  },
+                                  -1
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Offset": [
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  },
+                                  -2
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -2
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 4,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Offset": [
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  },
+                                  -1
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Offset": [
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  },
+                                  -2
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -2
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Multiply": [
+              {
+                "internal": {
+                  "Ratio": {
+                    "denominator": [
+                      6
+                    ],
+                    "numerator": [
+                      1
+                    ],
+                    "sign": -1
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Multiply": [
+          {
+            "internal": {
+              "Ratio": {
+                "denominator": [
+                  6
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          },
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Multiply": [
+              {
+                "internal": {
+                  "Ratio": {
+                    "denominator": [
+                      6
+                    ],
+                    "numerator": [
+                      1
+                    ],
+                    "sign": -1
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Multiply": [
+          {
+            "internal": {
+              "Ratio": {
+                "denominator": [
+                  6
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": -1
+              }
+            }
+          },
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Multiply": [
+                  {
+                    "internal": {
+                      "Ratio": {
+                        "denominator": [
+                          6
+                        ],
+                        "numerator": [
+                          1
+                        ],
+                        "sign": -1
+                      }
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        6
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": -1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Multiply": [
+                  {
+                    "internal": {
+                      "Ratio": {
+                        "denominator": [
+                          6
+                        ],
+                        "numerator": [
+                          1
+                        ],
+                        "sign": -1
+                      }
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        6
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": -1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Multiply": [
+              {
+                "internal": {
+                  "Ratio": {
+                    "denominator": [
+                      6
+                    ],
+                    "numerator": [
+                      1
+                    ],
+                    "sign": 1
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        6
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Multiply": [
+                  {
+                    "internal": {
+                      "Ratio": {
+                        "denominator": [
+                          6
+                        ],
+                        "numerator": [
+                          1
+                        ],
+                        "sign": 1
+                      }
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        6
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Offset": [
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  },
+                                  -1
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Multiply": [
+                              {
+                                "internal": {
+                                  "Ratio": {
+                                    "denominator": [
+                                      6
+                                    ],
+                                    "numerator": [
+                                      1
+                                    ],
+                                    "sign": 1
+                                  }
+                                }
+                              },
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Offset": [
+                        {
+                          "internal": {
+                            "Constant": "Pi"
+                          }
+                        },
+                        -1
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        6
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Add": [
+              {
+                "internal": {
+                  "Add": [
+                    {
+                      "internal": {
+                        "Negate": {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -1
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Multiply": [
+                          {
+                            "internal": {
+                              "Ratio": {
+                                "denominator": [
+                                  6
+                                ],
+                                "numerator": [
+                                  1
+                                ],
+                                "sign": 1
+                              }
+                            }
+                          },
+                          {
+                            "internal": {
+                              "Constant": "Pi"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": -1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        6
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Multiply": [
+              {
+                "internal": {
+                  "Ratio": {
+                    "denominator": [
+                      6
+                    ],
+                    "numerator": [
+                      1
+                    ],
+                    "sign": 1
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Multiply": [
+          {
+            "internal": {
+              "Ratio": {
+                "denominator": [
+                  6
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          },
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "direct",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Multiply": [
+              {
+                "internal": {
+                  "Ratio": {
+                    "denominator": [
+                      6
+                    ],
+                    "numerator": [
+                      1
+                    ],
+                    "sign": 1
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Constant": "Pi"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Multiply": [
+          {
+            "internal": {
+              "Ratio": {
+                "denominator": [
+                  6
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          },
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Multiply": [
+                  {
+                    "internal": {
+                      "Ratio": {
+                        "denominator": [
+                          6
+                        ],
+                        "numerator": [
+                          1
+                        ],
+                        "sign": 1
+                      }
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        6
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "pi-plus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Multiply": [
+                  {
+                    "internal": {
+                      "Ratio": {
+                        "denominator": [
+                          6
+                        ],
+                        "numerator": [
+                          1
+                        ],
+                        "sign": 1
+                      }
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Constant": "Pi"
+            }
+          },
+          {
+            "internal": {
+              "Multiply": [
+                {
+                  "internal": {
+                    "Ratio": {
+                      "denominator": [
+                        6
+                      ],
+                      "numerator": [
+                        1
+                      ],
+                      "sign": 1
+                    }
+                  }
+                },
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledCos": {
+          "internal": {
+            "Negate": {
+              "internal": {
+                "Multiply": [
+                  {
+                    "internal": {
+                      "Ratio": {
+                        "denominator": [
+                          6
+                        ],
+                        "numerator": [
+                          1
+                        ],
+                        "sign": 1
+                      }
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Constant": "Pi"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Ratio": {
+                          "denominator": [
+                            6
+                          ],
+                          "numerator": [
+                            1
+                          ],
+                          "sign": 1
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "half-minus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledSin": {
+              "internal": {
+                "Negate": {
+                  "internal": {
+                    "Multiply": [
+                      {
+                        "internal": {
+                          "Ratio": {
+                            "denominator": [
+                              6
+                            ],
+                            "numerator": [
+                              1
+                            ],
+                            "sign": 1
+                          }
+                        }
+                      },
+                      {
+                        "internal": {
+                          "Constant": "Pi"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Offset": [
+                {
+                  "internal": {
+                    "Constant": "Pi"
+                  }
+                },
+                -1
+              ]
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Ratio": {
+                          "denominator": [
+                            6
+                          ],
+                          "numerator": [
+                            1
+                          ],
+                          "sign": 1
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "sin",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "Negate": {
+          "internal": {
+            "PrescaledCos": {
+              "internal": {
+                "Add": [
+                  {
+                    "internal": {
+                      "Add": [
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Offset": [
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  },
+                                  -1
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "internal": {
+                            "Negate": {
+                              "internal": {
+                                "Multiply": [
+                                  {
+                                    "internal": {
+                                      "Ratio": {
+                                        "denominator": [
+                                          6
+                                        ],
+                                        "numerator": [
+                                          1
+                                        ],
+                                        "sign": 1
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "internal": {
+                                      "Constant": "Pi"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "internal": {
+                      "Offset": [
+                        {
+                          "internal": {
+                            "Constant": "Pi"
+                          }
+                        },
+                        -1
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Ratio": {
+                          "denominator": [
+                            6
+                          ],
+                          "numerator": [
+                            1
+                          ],
+                          "sign": 1
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  },
+  {
+    "composition": "negative-half-minus",
+    "contradicted": false,
+    "denominator": 6,
+    "function": "cos",
+    "history": "cold",
+    "legacy_output": {
+      "internal": {
+        "PrescaledSin": {
+          "internal": {
+            "Add": [
+              {
+                "internal": {
+                  "Add": [
+                    {
+                      "internal": {
+                        "Negate": {
+                          "internal": {
+                            "Offset": [
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              },
+                              -1
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Negate": {
+                          "internal": {
+                            "Multiply": [
+                              {
+                                "internal": {
+                                  "Ratio": {
+                                    "denominator": [
+                                      6
+                                    ],
+                                    "numerator": [
+                                      1
+                                    ],
+                                    "sign": 1
+                                  }
+                                }
+                              },
+                              {
+                                "internal": {
+                                  "Constant": "Pi"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mode": "native-atan",
+    "sign": 1,
+    "sign_certified": true,
+    "source_wire": {
+      "internal": {
+        "Add": [
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Offset": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    -1
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "internal": {
+              "Negate": {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Ratio": {
+                          "denominator": [
+                            6
+                          ],
+                          "numerator": [
+                            1
+                          ],
+                          "sign": 1
+                        }
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "square_certified": false
+  }
+]

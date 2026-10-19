@@ -27527,6 +27527,681 @@
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/integral-atan-facts-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
     "runtime_admitted": true,
     "general_speedup_claimed": false
+  },
+  "known_angle_atan_facts": {
+    "decision": "Retain native recovery of normalized atan/pi anchors with new exact facts and preserved public Real serialization.",
+    "admitted_scope": "Share the existing forward atan/pi anchor correspondence, recover its selected argument from the native pi/atan form for sine/cosine, and reuse the existing unit-hypotenuse implementation. The Real-facing reader keeps its previous forms and canonical output path. No second trigonometric kernel or public API is added.",
+    "acceptance": {
+      "original_cases": 72,
+      "original_both_certified_before": 68,
+      "original_both_certified_after": 72,
+      "expanded_function_rows": 480,
+      "native_square_certified_before": 0,
+      "native_square_certified_after": 384,
+      "real_square_certified_before_and_after": 96,
+      "all_480_signs_preserved": true,
+      "contradictions": 0,
+      "original_cases_preserved": true,
+      "focused_integration_tests": 38,
+      "new_unit_tests": 3,
+      "new_integration_tests": 2,
+      "parent_regression_fails": true,
+      "identity_query_precision": 0,
+      "large_periods": "even/odd signed integers including 2^256",
+      "nearby_offset": "signed 2^-512, checked at 0 and -1024",
+      "cache_histories": [
+        "cold",
+        "angle refined at -128",
+        "derived value refined at -256 then exact proof at 0"
+      ],
+      "concurrent_threads": 16,
+      "concurrent_squared_identity_checks": 96,
+      "post_concurrency_squared_identity_checks": 6,
+      "cotangent_following_identity_and_zero_failure_checked": true,
+      "formats": [
+        "native JSON/CBOR",
+        "Real JSON/CBOR",
+        "owned/borrowed CBOR Values",
+        "JSON/CBOR collections"
+      ],
+      "outer_real_scales": [
+        0,
+        -1,
+        1,
+        2
+      ]
+    },
+    "interchange": {
+      "intentional_native_derived_representation_migration": true,
+      "description": "New derived native results use existing algebraic forms; no decoder tags or wire versions change. Public atan source graphs match the pre-edit capture.",
+      "legacy_graphs": 48,
+      "legacy_fixture_sha256": "9466c9b21ac10d51d4d796caaa92d3691dc7a6e8f8029b82554ef5efecc7f03a",
+      "legacy_json_and_cbor_reencoding_checked": true,
+      "legacy_native_cbor_bytes_captured_before_edit": false,
+      "legacy_enclosure_checks": 288,
+      "legacy_precision_sequence": [
+        0,
+        -128,
+        0
+      ],
+      "public_real_json_and_cbor_rows_unchanged": 532,
+      "first_working_candidate_unnecessary_real_wire_changes": 56,
+      "those_changes_removed": true
+    },
+    "serialized_graph_metrics": {
+      "rows": 48,
+      "raw_metrics_sha256": "007d80e4ba6f2a88369d75454e05536c78bcc3ae96d88b3cddca05bdfde8cd72",
+      "maximum_per_metric": {
+        "candidate_derived": {
+          "compact_sorted_json_bytes": 282,
+          "maximum_absolute_binary_shift": 0,
+          "maximum_observed_integer_or_rational_payload_bits": 2,
+          "maximum_serialized_node_nesting": 8,
+          "serialized_node_occurrences": 11
+        },
+        "parent_derived": {
+          "compact_sorted_json_bytes": 394,
+          "maximum_absolute_binary_shift": 2,
+          "maximum_observed_integer_or_rational_payload_bits": 3,
+          "maximum_serialized_node_nesting": 7,
+          "serialized_node_occurrences": 13
+        },
+        "source": {
+          "compact_sorted_json_bytes": 257,
+          "maximum_absolute_binary_shift": 2,
+          "maximum_observed_integer_or_rational_payload_bits": 3,
+          "maximum_serialized_node_nesting": 4,
+          "serialized_node_occurrences": 8
+        }
+      },
+      "changes_by_metric": {
+        "compact_sorted_json_bytes": {
+          "rows_increased": 13,
+          "rows_decreased": 35,
+          "maximum_increase": 125,
+          "maximum_decrease": -209
+        },
+        "maximum_absolute_binary_shift": {
+          "rows_increased": 0,
+          "rows_decreased": 32,
+          "maximum_increase": 0,
+          "maximum_decrease": -2
+        },
+        "maximum_observed_integer_or_rational_payload_bits": {
+          "rows_increased": 14,
+          "rows_decreased": 32,
+          "maximum_increase": 2,
+          "maximum_decrease": -3
+        },
+        "maximum_serialized_node_nesting": {
+          "rows_increased": 25,
+          "rows_decreased": 13,
+          "maximum_increase": 5,
+          "maximum_decrease": -3
+        },
+        "serialized_node_occurrences": {
+          "rows_increased": 17,
+          "rows_decreased": 26,
+          "maximum_increase": 7,
+          "maximum_decrease": -7
+        }
+      },
+      "source_graphs_preserved": true,
+      "scope": "Serialized node occurrences, nesting and observed scalar payload sizes for the captured finite domain; not unique DAG nodes, heap usage or intermediate expression-growth bounds. Candidate maximum nesting rises from seven to eight; individual rows grow by up to five nesting levels, seven node occurrences and 125 compact JSON bytes. These changes are retained alongside exact completion."
+    },
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1133
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 962
+      }
+    },
+    "debug_units_passed": 840,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-solid_cache": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "cost_comparisons": {
+      "anchor": {
+        "allocator_changed_rows": [
+          "public-computable-cos-inverse-sqrt3-cold--128",
+          "public-computable-cos-inverse-sqrt3-cold--32",
+          "public-computable-cos-inverse-sqrt3-cold-0",
+          "public-computable-cos-sqrt3-cold--128",
+          "public-computable-cos-sqrt3-cold--32",
+          "public-computable-cos-sqrt3-cold-0",
+          "public-computable-cos-unit-cold--128",
+          "public-computable-cos-unit-cold--32",
+          "public-computable-cos-unit-cold-0",
+          "public-computable-sin-inverse-sqrt3-cold--128",
+          "public-computable-sin-inverse-sqrt3-cold--32",
+          "public-computable-sin-inverse-sqrt3-cold-0",
+          "public-computable-sin-sqrt3-cold--128",
+          "public-computable-sin-sqrt3-cold--32",
+          "public-computable-sin-sqrt3-cold-0",
+          "public-computable-sin-unit-cold--128",
+          "public-computable-sin-unit-cold--32",
+          "public-computable-sin-unit-cold-0",
+          "public-real-cos-inverse-sqrt3-cold--128",
+          "public-real-cos-inverse-sqrt3-cold--32",
+          "public-real-cos-inverse-sqrt3-cold-0",
+          "public-real-cos-inverse-sqrt3-warm--32",
+          "public-real-sin-sqrt3-cold--128",
+          "public-real-sin-sqrt3-cold--32",
+          "public-real-sin-sqrt3-cold-0",
+          "public-real-sin-sqrt3-warm--32",
+          "public-real-sin-unit-cold--128"
+        ],
+        "alternating_pairs": 5,
+        "binary_byte_delta": 1840,
+        "binary_sizes": {
+          "candidate": 6672488,
+          "parent": 6670648
+        },
+        "iterations_per_row": 10000,
+        "maximum_median_ratio": 1.8767044430563355,
+        "minimum_median_ratio": 0.6554328769173763,
+        "raw_result_sha256": "8ff9fff6293c40cb1c7ef0148cb5b9280fe2c2202212626bf40434a4ba47d386",
+        "rows": 72,
+        "rows_over_10_percent_slower": [
+          "public-computable-cos-inverse-sqrt3-cold--128",
+          "public-computable-cos-inverse-sqrt3-cold--32",
+          "public-computable-cos-inverse-sqrt3-cold-0",
+          "public-computable-cos-sqrt3-cold--32",
+          "public-computable-cos-sqrt3-cold-0",
+          "public-computable-sin-inverse-sqrt3-cold--128",
+          "public-computable-sin-inverse-sqrt3-cold--32",
+          "public-computable-sin-inverse-sqrt3-cold-0",
+          "public-computable-sin-sqrt3-cold--128",
+          "public-computable-sin-sqrt3-cold--32",
+          "public-computable-sin-sqrt3-cold-0",
+          "public-computable-sin-unit-cold-0",
+          "public-real-sin-sqrt3-cold--32",
+          "public-real-sin-sqrt3-cold-0"
+        ],
+        "slower_rows": [
+          "public-computable-cos-inverse-sqrt3-cold--128",
+          "public-computable-cos-inverse-sqrt3-cold--32",
+          "public-computable-cos-inverse-sqrt3-cold-0",
+          "public-computable-cos-inverse-sqrt3-warm--128",
+          "public-computable-cos-inverse-sqrt3-warm--32",
+          "public-computable-cos-inverse-sqrt3-warm-0",
+          "public-computable-cos-sqrt3-cold--128",
+          "public-computable-cos-sqrt3-cold--32",
+          "public-computable-cos-sqrt3-cold-0",
+          "public-computable-cos-sqrt3-warm--128",
+          "public-computable-cos-sqrt3-warm--32",
+          "public-computable-cos-sqrt3-warm-0",
+          "public-computable-cos-unit-cold-0",
+          "public-computable-cos-unit-warm--128",
+          "public-computable-cos-unit-warm-0",
+          "public-computable-sin-inverse-sqrt3-cold--128",
+          "public-computable-sin-inverse-sqrt3-cold--32",
+          "public-computable-sin-inverse-sqrt3-cold-0",
+          "public-computable-sin-inverse-sqrt3-warm--128",
+          "public-computable-sin-sqrt3-cold--128",
+          "public-computable-sin-sqrt3-cold--32",
+          "public-computable-sin-sqrt3-cold-0",
+          "public-computable-sin-sqrt3-warm--128",
+          "public-computable-sin-sqrt3-warm-0",
+          "public-computable-sin-unit-cold-0",
+          "public-computable-sin-unit-warm--128",
+          "public-computable-sin-unit-warm--32",
+          "public-computable-sin-unit-warm-0",
+          "public-real-cos-inverse-sqrt3-cold--128",
+          "public-real-cos-inverse-sqrt3-cold--32",
+          "public-real-cos-inverse-sqrt3-cold-0",
+          "public-real-cos-inverse-sqrt3-warm--128",
+          "public-real-cos-inverse-sqrt3-warm--32",
+          "public-real-cos-inverse-sqrt3-warm-0",
+          "public-real-cos-sqrt3-cold--128",
+          "public-real-cos-sqrt3-cold--32",
+          "public-real-cos-sqrt3-cold-0",
+          "public-real-cos-sqrt3-warm--128",
+          "public-real-cos-sqrt3-warm--32",
+          "public-real-cos-sqrt3-warm-0",
+          "public-real-sin-inverse-sqrt3-cold--128",
+          "public-real-sin-inverse-sqrt3-warm--32",
+          "public-real-sin-sqrt3-cold--128",
+          "public-real-sin-sqrt3-cold--32",
+          "public-real-sin-sqrt3-cold-0",
+          "public-real-sin-sqrt3-warm--128",
+          "public-real-sin-sqrt3-warm--32",
+          "public-real-sin-sqrt3-warm-0"
+        ]
+      },
+      "native": {
+        "allocator_changed_rows": [
+          "imported-computable-sin-one-cold--128",
+          "public-computable-cos-one-cold--128",
+          "public-computable-cos-one-cold--32",
+          "public-computable-cos-one-cold-0",
+          "public-computable-sin-one-cold--128",
+          "public-computable-sin-one-cold--32",
+          "public-computable-sin-one-cold-0"
+        ],
+        "alternating_pairs": 5,
+        "binary_byte_delta": 1688,
+        "binary_sizes": {
+          "candidate": 7050128,
+          "parent": 7048440
+        },
+        "iterations_per_row": 10000,
+        "maximum_median_ratio": 1.1934350359199395,
+        "minimum_median_ratio": 0.6988915751653543,
+        "raw_result_sha256": "215ebb1c5246512cd9976351e4f87564b8f2a878ba7260b33c5edddeb97170e4",
+        "rows": 96,
+        "rows_over_10_percent_slower": [
+          "public-computable-cos-one-cold-0",
+          "public-computable-sin-one-cold-0"
+        ],
+        "slower_rows": [
+          "imported-computable-cos-one-warm-0",
+          "imported-computable-cos-two-warm--128",
+          "imported-computable-cos-two-warm--32",
+          "imported-computable-cos-two-warm-0",
+          "imported-computable-sin-two-cold--128",
+          "imported-computable-sin-two-warm--128",
+          "imported-computable-sin-two-warm--32",
+          "imported-real-cos-two-cold--32",
+          "imported-real-cos-two-warm--128",
+          "imported-real-cos-two-warm--32",
+          "imported-real-cos-two-warm-0",
+          "imported-real-sin-one-cold--128",
+          "imported-real-sin-one-warm--128",
+          "imported-real-sin-two-cold-0",
+          "imported-real-sin-two-warm--128",
+          "public-computable-cos-one-cold-0",
+          "public-computable-cos-two-warm--128",
+          "public-computable-cos-two-warm-0",
+          "public-computable-sin-one-cold-0",
+          "public-computable-sin-one-warm--128",
+          "public-computable-sin-two-cold--128",
+          "public-real-cos-one-cold--128",
+          "public-real-cos-one-cold-0",
+          "public-real-cos-one-warm--128",
+          "public-real-cos-one-warm-0",
+          "public-real-cos-two-warm--128",
+          "public-real-cos-two-warm--32",
+          "public-real-sin-one-cold--32",
+          "public-real-sin-one-cold-0",
+          "public-real-sin-one-warm--128",
+          "public-real-sin-two-warm--128",
+          "public-real-sin-two-warm-0"
+        ]
+      },
+      "ordinary": {
+        "allocator_changed_rows": [],
+        "alternating_pairs": 5,
+        "binary_byte_delta": 1848,
+        "binary_sizes": {
+          "candidate": 6786928,
+          "parent": 6785080
+        },
+        "iterations_per_row": 100000,
+        "maximum_median_ratio": 1.061627899433682,
+        "minimum_median_ratio": 0.9592789385855501,
+        "raw_result_sha256": "512a570dee69bde6b113dc9d7f3480463dac2ceba54637c115f692cffd04c84f",
+        "rows": 17,
+        "rows_over_10_percent_slower": [],
+        "slower_rows": [
+          "named-root-cbor",
+          "opaque-add-fresh",
+          "opaque-root-cbor",
+          "opaque-root-json",
+          "radical-add-fresh",
+          "rational-json",
+          "trig-add-fresh",
+          "trig-json"
+        ]
+      }
+    },
+    "cost_retention": {
+      "all_adverse_results_retained": true,
+      "decision": "keep",
+      "focused_result_sha256": "fef2d9c2fe9e3c86cd4f0b534742ca2cbafa74b0c7b0a8c8f85469820a1ab5d7",
+      "full_plan_complete": false,
+      "general_speedup_claimed": false,
+      "graph_growth": "The separate 48-row graph record includes all larger forms: up to seven extra serialized node occurrences, five extra nesting levels and 125 compact JSON bytes in individual rows; maximum nesting across the corpus rises from seven to eight. These are representation measurements, not runtime heap bounds.",
+      "interpretation_sha256": "110799c83b844db52f230613157db0ead8c28e5c660526cf8219dc3af5865192",
+      "measured_tradeoffs": {
+        "anchor": {
+          "all_allocator_counters_stable_across_five_pairs": true,
+          "allocator_changed_rows": 27,
+          "binary_byte_delta": 1840,
+          "largest_absolute_latency_increase": {
+            "nanoseconds": 3814.6893,
+            "row": "public-computable-sin-inverse-sqrt3-cold--128"
+          },
+          "maximum_measured_resource_deltas": {
+            "allocated_byte_delta_per_iteration": {
+              "delta": 2759.8888000000006,
+              "row": "public-computable-sin-inverse-sqrt3-cold--128"
+            },
+            "allocation_delta_per_iteration": {
+              "delta": 110.9966,
+              "row": "public-computable-sin-inverse-sqrt3-cold--128"
+            },
+            "peak_extra_byte_delta": {
+              "delta": 432,
+              "row": "public-computable-sin-sqrt3-cold--32"
+            },
+            "retained_byte_delta": {
+              "delta": 40,
+              "row": "public-computable-sin-inverse-sqrt3-cold--32"
+            }
+          },
+          "maximum_median_ratio": 1.8767044430563355,
+          "minimum_median_ratio": 0.6554328769173763,
+          "rows": 72,
+          "rows_over_10_percent_slower": [
+            "public-computable-cos-inverse-sqrt3-cold--128",
+            "public-computable-cos-inverse-sqrt3-cold--32",
+            "public-computable-cos-inverse-sqrt3-cold-0",
+            "public-computable-cos-sqrt3-cold--32",
+            "public-computable-cos-sqrt3-cold-0",
+            "public-computable-sin-inverse-sqrt3-cold--128",
+            "public-computable-sin-inverse-sqrt3-cold--32",
+            "public-computable-sin-inverse-sqrt3-cold-0",
+            "public-computable-sin-sqrt3-cold--128",
+            "public-computable-sin-sqrt3-cold--32",
+            "public-computable-sin-sqrt3-cold-0",
+            "public-computable-sin-unit-cold-0",
+            "public-real-sin-sqrt3-cold--32",
+            "public-real-sin-sqrt3-cold-0"
+          ],
+          "slower_rows": 48,
+          "worst_ratio": {
+            "candidate_ns": 5041.1072,
+            "parent_ns": 2686.1487,
+            "row": "public-computable-sin-sqrt3-cold-0"
+          }
+        },
+        "native": {
+          "all_allocator_counters_stable_across_five_pairs": true,
+          "allocator_changed_rows": 7,
+          "binary_byte_delta": 1688,
+          "largest_absolute_latency_increase": {
+            "nanoseconds": 305.6030999999998,
+            "row": "public-computable-sin-one-cold-0"
+          },
+          "maximum_measured_resource_deltas": {
+            "allocated_byte_delta_per_iteration": {
+              "delta": 687.684,
+              "row": "public-computable-sin-one-cold-0"
+            },
+            "allocation_delta_per_iteration": {
+              "delta": 15.9925,
+              "row": "public-computable-sin-one-cold-0"
+            },
+            "peak_extra_byte_delta": {
+              "delta": 128,
+              "row": "public-computable-cos-one-cold--32"
+            },
+            "retained_byte_delta": {
+              "delta": 16,
+              "row": "public-computable-sin-one-cold--128"
+            }
+          },
+          "maximum_median_ratio": 1.1934350359199395,
+          "minimum_median_ratio": 0.6988915751653543,
+          "rows": 96,
+          "rows_over_10_percent_slower": [
+            "public-computable-cos-one-cold-0",
+            "public-computable-sin-one-cold-0"
+          ],
+          "slower_rows": 32,
+          "worst_ratio": {
+            "candidate_ns": 1885.4777,
+            "parent_ns": 1579.8746,
+            "row": "public-computable-sin-one-cold-0"
+          }
+        },
+        "ordinary": {
+          "all_allocator_counters_stable_across_five_pairs": true,
+          "allocator_changed_rows": 0,
+          "binary_byte_delta": 1848,
+          "largest_absolute_latency_increase": {
+            "nanoseconds": 43.920390000000225,
+            "row": "opaque-root-cbor"
+          },
+          "maximum_measured_resource_deltas": {
+            "allocated_byte_delta_per_iteration": {
+              "delta": 0.0,
+              "row": "named-root-cbor"
+            },
+            "allocation_delta_per_iteration": {
+              "delta": 0.0,
+              "row": "named-root-cbor"
+            },
+            "peak_extra_byte_delta": {
+              "delta": 0,
+              "row": "named-root-cbor"
+            },
+            "retained_byte_delta": {
+              "delta": 0,
+              "row": "named-root-cbor"
+            }
+          },
+          "maximum_median_ratio": 1.061627899433682,
+          "minimum_median_ratio": 0.9592789385855501,
+          "rows": 17,
+          "rows_over_10_percent_slower": [],
+          "slower_rows": 8,
+          "worst_ratio": {
+            "candidate_ns": 540.05765,
+            "parent_ns": 508.7071,
+            "row": "trig-add-fresh"
+          }
+        }
+      },
+      "measurement_scope": "Numerical construction/materialization is compared against the same independent MPFR enclosures. Exact identity completion is separately verified and is not represented as a comparable baseline timing. Cold roots are fresh; shared constants persist within each process, and native rows precede Real rows. Their cache histories can differ between implementations, so preserved Real wire graphs do not imply identical resource counters. These observations do not establish isolated Real-path causality, general speedup, an internal work bound, or a heap-byte limit.",
+      "reason": "Retain a finite native certified-completion extension under exactness > completeness > performance > memory. All 72 original cases certify both identities (68 before); the 384 previously undecided native square rows now certify, while all 96 previously certified Real rows and all signs remain certified. Final scalar and affected consumer checks pass, source angle graphs and 532 captured public Real wire rows stay unchanged, and old derived graphs remain consumable. This stronger contract justifies the explicitly measured construction/evaluation and allocation increases in the added native domain.",
+      "regressions_retained": "Coarse native unit-angle construction is up to 1.1935x baseline in the original retained-atan matrix. In the new anchor matrix, native sqrt(3) sine construction at precision 0 is 1.8768x (about 2.686 to 5.041 microseconds). Inverse-sqrt(3) sine at -128 adds about 111 allocator calls and 2760 requested bytes per iteration, and about 3.815 microseconds. Maximum observed extra peak/retained bytes increase by 432/40. Ordinary row ratios range from about 0.9593 to 1.0617 with identical allocation, peak and retained counters. Driver binaries grow by 1688 to 1848 bytes. Every slower row and every raw sample is retained.",
+      "resources": {
+        "disk_b_free_bytes": 208677269504,
+        "free_bytes": 74268049408,
+        "host_available_bytes": 105707597824,
+        "log_bytes": 168151528,
+        "new_volume_free_bytes": 1979236253696,
+        "tmp_free_bytes": 66810290176
+      },
+      "supported_workloads_or_validation_reduced": false,
+      "validation_sha256": "89cefaace349fd8f8177a36a598c1ebeda0867782348c536a9e45cc808b36a86"
+    },
+    "remaining_limitations": [
+      "General native angle/expression domains, full-width precision and typed evaluation/cancellation remain open.",
+      "Depth-limited recognition and external containment do not establish internal total-work, coefficient-growth or heap bounds.",
+      "Finite tests and concurrent schedules do not establish exhaustive coverage or formal verification of production code.",
+      "Complete ordinary workflow coverage, clean shipped distribution, foreign consumers and full CI remain open. No push or release was performed.",
+      "Historical missing evidence was not reaudited or recovered."
+    ],
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": null,
+    "disk_b_quota_mode": "User authorized available artifact volume capacity; no retained-artifact quota.",
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "all_adverse_results_retained": true,
+    "next": "Return to the broader ordinary strict-workflow and evidence contracts, then complete shipped-user-path and release validation; this finite scalar extension does not complete properties.md.",
+    "parent_revision": "6febb211e5a209ad31471853ec1fd6d8696c6911",
+    "review": "docs/evidence/2026-10-19-known-angle-facts-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-known-angle-facts-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/known-angle-facts-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "runtime_admitted": true,
+    "general_speedup_claimed": false
   }
 },
   "status_meanings": {

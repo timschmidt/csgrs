@@ -430,6 +430,12 @@ nodes keep their wire graphs, and previously serialized derived graphs
 remain supported.
 Native sine and cosine also consume retained signed half-π complements
 directly, preserving their algebraic facts without refining the angle.
+The same native reader recovers the selected arctangent arguments for π/6,
+π/4 and π/3, including sign, integer-π shifts and half-π complements. This
+keeps their sine/cosine identities available after `atan` normalizes an exact
+argument to a π fraction. The angle's existing representation is preserved;
+new derived native outputs use existing algebraic forms, while older serialized
+trig graphs remain consumable. Other rational angles keep their existing paths.
 The negative-rational `acos` complement reserves the combined error of its
 π and positive-`acos` samples before subtraction, then rounds once. This
 keeps its enclosure valid when a shared π sample is reused at a coarser

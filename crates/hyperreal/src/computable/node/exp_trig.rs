@@ -540,9 +540,7 @@ impl Computable {
 
     fn pi_atan_sin_cos(&self) -> Option<(Computable, Computable)> {
         let (sine_sign, cosine_sign, argument, swap) =
-            if let Some((sine_sign, cosine_sign, argument)) =
-                self.integer_pi_plus_or_minus_atan_argument()
-            {
+            if let Some((sine_sign, cosine_sign, argument)) = self.pi_atan_trig_argument(true) {
                 (sine_sign, cosine_sign, argument, false)
             } else {
                 let (orientation, argument) = self.half_pi_minus_atan_argument()?;

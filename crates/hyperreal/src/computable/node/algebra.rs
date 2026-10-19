@@ -714,10 +714,20 @@ impl Computable {
     pub(crate) fn integer_pi_plus_or_minus_atan_argument(
         &self,
     ) -> Option<(Sign, Sign, Computable)> {
+        // Real already has canonical rational-pi trig forms. Preserve that
+        // consumer's established argument recognition and representation path.
+        self.pi_atan_trig_argument(false)
+    }
+
+    fn pi_atan_trig_argument(&self, recover_pi_anchor: bool) -> Option<(Sign, Sign, Computable)> {
         let form = self.pi_atan_linear_form(64)?;
-        if form.constant.sign() != Sign::NoSign
-            || (!form.atan.is_one() && !form.atan.is_minus_one())
-        {
+        if form.constant.sign() != Sign::NoSign {
+            return None;
+        }
+        if recover_pi_anchor && form.atan.is_zero() && form.argument.is_none() {
+            return AtanPiAnchor::periodic_trig_argument(form.pi);
+        }
+        if !form.atan.is_one() && !form.atan.is_minus_one() {
             return None;
         }
         let multiple = form.pi.integer_magnitude()?;

@@ -235,19 +235,9 @@ impl Computable {
             } else {
                 scale.clone()
             };
-            let denominator = if magnitude.is_one() {
-                Some(3)
-            } else if magnitude == Rational::fraction(1, 3).expect("three is nonzero") {
-                Some(6)
-            } else {
-                None
-            };
-            if let Some(denominator) = denominator {
-                let numerator = if scale.sign() == Sign::Minus { -1 } else { 1 };
+            if let Some(anchor) = AtanPiAnchor::from_root_three_scale(&magnitude) {
                 crate::trace_dispatch!("computable", "atan", "quadratic-surd-pi-anchor");
-                return Self::pi().multiply_rational(
-                    Rational::fraction(numerator, denominator).expect("denominator is nonzero"),
-                );
+                return anchor.angle(scale.sign());
             }
         }
         if let Some(rational) = self
@@ -260,12 +250,7 @@ impl Computable {
             }
             if rational.is_one() || rational.is_minus_one() {
                 crate::trace_dispatch!("computable", "atan", "exact-quarter-turn");
-                let quarter_turn = Self::pi().shift_right(2);
-                return if rational.sign() == Sign::Minus {
-                    quarter_turn.negate()
-                } else {
-                    quarter_turn
-                };
+                return AtanPiAnchor::Unit.angle(rational.sign());
             }
             match rational.sign() {
                 Sign::Plus => {
