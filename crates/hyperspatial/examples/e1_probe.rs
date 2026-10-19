@@ -26,6 +26,8 @@ mod transverse_mercator;
 #[path = "../dev/elliptic.rs"]
 mod elliptic;
 
+#[path = "../dev/complex_atanh.rs"]
+mod complex_atanh;
 #[path = "../dev/complex_jacobi.rs"]
 mod complex_jacobi;
 #[path = "../dev/inverse_legendre.rs"]
@@ -61,6 +63,7 @@ fn main() {
         "jacobi" => jacobi::exercise(data),
         "complex_jacobi" => complex_jacobi::exercise(data),
         "jacobi_epsilon" => jacobi_epsilon::exercise(data),
+        "complex_atanh" => complex_atanh::exercise(data),
         _ => panic!("unknown workload {workload}"),
     });
     let evaluation_ns = start.elapsed().as_nanos();

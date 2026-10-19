@@ -45,6 +45,15 @@ independent ODE oracle and scalar endpoint/quotient fixes. The
 records passing stable/MSRV checks, four cache configurations, nine independent
 coverage gates and actual sanitizer mutation after seed replay. Thompson/Lee mapping and its selected
 inverse maps, and a complete ellipsoidal transverse projection, remain open.
+The following increment adds native principal `Complex::atanh` for isometric
+coordinate reconstruction. Its [native admission](../hyperlattice/docs/admission-complex-atanh.md),
+[checked atan2 contract](../hyperreal/docs/admission-atan2-right-half-plane.md)
+and [spatial consumer contract](docs/admission/e2-complex-atanh.md) record cut
+semantics, an independent interval-series oracle, quadrant completion and
+cancellation fixes. Its [verification record](verification/2026-10-19-e2-complex-atanh/README.md)
+records passing stable/MSRV checks, four cache configurations, twelve independent
+coverage floors and actual sanitizer mutation. Thompson/Lee inversion remains
+open after this prerequisite.
 See the [spherical Mercator admission](docs/admission/e2-mercator.md),
 the [forward/local admission](docs/admission/e1-native.md)
 and [closest-point inverse admission](docs/admission/e1-inverse.md).
@@ -211,6 +220,13 @@ inverse. The two intermediate-map inversions need
 certified enclosures and a named chart or sheet; convergence of ordinary
 complex Newton iteration alone is insufficient. See
 [Jacobi epsilon and its addition law](https://dlmf.nist.gov/22.16.ii).
+Native principal `Complex::atanh` now supplies the elementary function needed
+to reconstruct the isometric coordinate from Jacobi data. It excludes the real
+cuts and propagates unresolved membership as typed exhaustion. Its
+[admission](../hyperlattice/docs/admission-complex-atanh.md) records the
+independent oracle and required acceptance. The
+[verification record](verification/2026-10-19-e2-complex-atanh/README.md)
+records the completed checks and remaining resource limits.
 Other references are
 [DLMF integral relations](https://dlmf.nist.gov/19.25),
 [Jacobi computation](https://dlmf.nist.gov/22.20), and

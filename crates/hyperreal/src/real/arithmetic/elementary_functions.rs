@@ -3219,58 +3219,9 @@ impl Real {
     /// or quadrant. Use [`Real::try_atan2`] to preserve that uncertainty.
     #[inline]
     pub fn atan2(self, x: Real) -> Real {
-        let y_sign = self.structural_facts().sign.map(num_sign_from_real);
-        let x_sign = x.structural_facts().sign.map(num_sign_from_real);
-        match (y_sign, x_sign) {
-            (Some(Sign::NoSign), Some(Sign::NoSign | Sign::Plus)) => {
-                crate::trace_dispatch!("real", "atan2", "axis-zero-y");
-                return Self::zero();
-            }
-            (Some(Sign::NoSign), Some(Sign::Minus)) => {
-                crate::trace_dispatch!("real", "atan2", "axis-negative-x");
-                return Self::pi();
-            }
-            (Some(Sign::Plus), Some(Sign::NoSign)) => {
-                crate::trace_dispatch!("real", "atan2", "axis-positive-y");
-                return Self::pi_fraction(1, 2);
-            }
-            (Some(Sign::Minus), Some(Sign::NoSign)) => {
-                crate::trace_dispatch!("real", "atan2", "axis-negative-y");
-                return Self::pi_fraction(-1, 2);
-            }
-            _ => {}
-        }
-
-        let y_sign = y_sign.unwrap_or_else(|| {
-            self.operation_sign().expect(
-                "atan2 y sign could not be certified; use Real::try_atan2 to handle uncertainty",
-            )
-        });
-        let x_sign = x_sign.unwrap_or_else(|| {
-            x.operation_sign().expect(
-                "atan2 x sign could not be certified; use Real::try_atan2 to handle uncertainty",
-            )
-        });
-        match (y_sign, x_sign) {
-            (Sign::NoSign, Sign::NoSign | Sign::Plus) => return Self::zero(),
-            (Sign::NoSign, Sign::Minus) => return Self::pi(),
-            (Sign::Plus, Sign::NoSign) => return Self::pi_fraction(1, 2),
-            (Sign::Minus, Sign::NoSign) => return Self::pi_fraction(-1, 2),
-            _ => {}
-        }
-
-        let ratio = (self / &x).expect("nonzero x rules out divide-by-zero");
-        let base = ratio.atan().expect("Real::atan is total");
-        if x_sign == Sign::Plus {
-            crate::trace_dispatch!("real", "atan2", "quadrant-right");
-            base
-        } else if y_sign == Sign::Plus {
-            crate::trace_dispatch!("real", "atan2", "quadrant-upper-left");
-            base + Self::pi()
-        } else {
-            crate::trace_dispatch!("real", "atan2", "quadrant-lower-left");
-            base - Self::pi()
-        }
+        self.try_atan2(x).expect(
+            "atan2 quadrant could not be certified; use Real::try_atan2 to handle uncertainty",
+        )
     }
 
     /// Checked counterpart to [`Real::atan2`].
@@ -3279,7 +3230,8 @@ impl Real {
     /// certify a required axis or quadrant decision. This is necessary because
     /// `atan2` is discontinuous on the negative x-axis: treating an unresolved
     /// sign as zero can silently select an angle on the wrong side of the branch
-    /// cut.
+    /// cut. On the positive x half-plane, only x's sign is required:
+    /// the exact analytic expression `atan(self / x)` also covers unresolved y.
     #[inline]
     pub fn try_atan2(self, x: Real) -> Result<Real, Problem> {
         let y_sign = self.structural_facts().sign.map(num_sign_from_real);
@@ -3304,13 +3256,24 @@ impl Real {
             _ => {}
         }
 
+        let Some(x_sign) = x_sign.or_else(|| x.operation_sign().ok()) else {
+            // The Computable owner also admits a known nonzero y with an
+            // unresolved x through its continuous half-angle expression.
+            let value = self
+                .fold()
+                .try_atan2_until(x.fold(), Self::PARTIAL_CMP_MIN_PRECISION)
+                .ok_or(Problem::Exhausted)?;
+            return Ok(Self::irrational_from_computable(value));
+        };
+        // The right half-plane is one analytic branch, including y=0.
+        // Its positive denominator is sufficient; no y sign is required.
+        if x_sign == Sign::Plus {
+            crate::trace_dispatch!("real", "atan2", "quadrant-right");
+            return (self / x)?.atan();
+        }
         let y_sign = match y_sign {
             Some(sign) => sign,
             None => self.operation_sign()?,
-        };
-        let x_sign = match x_sign {
-            Some(sign) => sign,
-            None => x.operation_sign()?,
         };
         match (y_sign, x_sign) {
             (Sign::NoSign, Sign::NoSign | Sign::Plus) => return Ok(Self::zero()),
@@ -3320,12 +3283,8 @@ impl Real {
             _ => {}
         }
 
-        let ratio = (self / &x).expect("nonzero x rules out divide-by-zero");
-        let base = ratio.atan().expect("Real::atan is total");
-        if x_sign == Sign::Plus {
-            crate::trace_dispatch!("real", "atan2", "quadrant-right");
-            Ok(base)
-        } else if y_sign == Sign::Plus {
+        let base = (self / x)?.atan()?;
+        if y_sign == Sign::Plus {
             crate::trace_dispatch!("real", "atan2", "quadrant-upper-left");
             Ok(base + Self::pi())
         } else {

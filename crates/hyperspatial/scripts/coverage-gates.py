@@ -11,7 +11,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from coverage_common import native_elliptic_coverage, check_native_elliptic_coverage, native_source_groups
+from coverage_common import native_elliptic_coverage, check_native_elliptic_coverage, native_source_groups, check_native_function_coverage
 
 root = Path(__file__).resolve().parents[3]
 sources = native_source_groups(root)
@@ -73,6 +73,11 @@ if args.report:
                                    for path, summary in measured.items()]}]}
     report.update(native_elliptic_coverage(export, root))
     check_native_elliptic_coverage(report)
+    check_native_function_coverage(report)
+    for label in ("native_atan2", "native_atan_deferred"):
+        for path, digest in report[label]["source_sha256"].items():
+            if hashlib.sha256((root / path).read_bytes()).hexdigest() != digest:
+                raise SystemExit(f"Measured production source changed: {path}")
     assert report["totals"]["lines"]["percent"] >= 95
     assert report["native_inverse"]["physical_executable_lines"]["percent"] >= 95
     report["gate_replay"] = {"input": str(args.report),

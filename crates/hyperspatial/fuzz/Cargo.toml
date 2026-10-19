@@ -92,3 +92,10 @@ path = "fuzz_targets/ellipsoidal_mercator.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "complex_atanh"
+path = "fuzz_targets/complex_atanh.rs"
+test = false
+doc = false
+bench = false

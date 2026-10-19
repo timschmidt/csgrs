@@ -55,3 +55,7 @@ harness = false
 [[bench]]
 name = "jacobi_epsilon"
 harness = false
+
+[[bench]]
+name = "complex_atanh"
+harness = false

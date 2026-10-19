@@ -179,13 +179,14 @@ impl Computable {
     fn atan_deferred(value: Computable) -> Self {
         crate::trace_dispatch!("computable", "constructor", "atan-deferred");
         let sign = value.exact_sign();
+        let signal = value.signal.clone();
         Self {
             internal: Arc::new(Node::new(
                 Approximation::AtanDeferred(value),
                 BoundCache::Invalid,
                 sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid),
             )),
-            signal: None,
+            signal,
         }
     }
 

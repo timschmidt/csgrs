@@ -8,6 +8,7 @@ use crate::{
     BlasResult, CheckedBlasResult, ExactRationalKind, Problem, Real, RealKernelExt, ZeroKnowledge,
 };
 
+mod elementary;
 mod jacobi;
 
 /// Complex scalar with real and imaginary components.

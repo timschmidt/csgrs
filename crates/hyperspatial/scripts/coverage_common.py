@@ -15,6 +15,7 @@ def native_source_groups(root):
         if label == "native_jacobi":
             sources.append(root / "crates/hyperreal/src/computable/node/log_argument.rs")
         groups[label] = sources
+    groups["native_complex_elementary"] = [root / "crates/hyperlattice/src/complex/elementary.rs"]
     groups["native_complex_jacobi"] = [root / "crates/hyperlattice/src/complex/jacobi.rs"]
     groups["native_square_quotient"] = [root / "crates/hyperreal/src/computable/node/shared_square_quotient.rs"]
     groups["native_relations"] = [root / "crates/hyperreal/src/computable/node" / name
@@ -54,6 +55,80 @@ def check_native_elliptic_coverage(groups):
     # Keep the existing Carlson floor independent: new lines cannot mask a
     # regression in its denominator. Each later family gets its own floor.
     for label in ("native_elliptic", "native_legendre", "native_inverse_legendre", "native_jacobi",
-                  "native_complex_jacobi", "native_square_quotient", "native_relations"):
+                  "native_complex_jacobi", "native_square_quotient", "native_relations", "native_complex_elementary"):
         if groups[label]["totals"]["lines"]["percent"] < 95:
             raise SystemExit(f"{label} production line coverage is below the 95% gate")
+
+
+def native_function_ranges(root):
+    selectors = {
+        "native_atan2": [
+            ("crates/hyperreal/src/real/arithmetic/elementary_functions.rs", "    pub fn atan2(", "    /// Checked counterpart"),
+            ("crates/hyperreal/src/real/arithmetic/elementary_functions.rs", "    pub fn try_atan2(", "    /// The hyperbolic sine"),
+        ],
+        "native_atan_deferred": [
+            ("crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs", "    fn atan_deferred(", "    fn asin_rational_deferred("),
+        ],
+    }
+    groups = {}
+    for label, entries in selectors.items():
+        groups[label] = []
+        for name, start_marker, end_marker in entries:
+            path = root / name
+            lines = path.read_text().splitlines()
+            start = next(i for i, line in enumerate(lines, 1) if line.startswith(start_marker))
+            end = next(i for i, line in enumerate(lines, 1) if i > start and line.startswith(end_marker))
+            groups[label].append({"path": str(path), "start": start, "end_exclusive": end})
+    return groups
+
+
+def count_function_lines(annotated, groups, root):
+    """Count each physical executable line once in every complete named function."""
+    counts = {label: [dict(entry, measured={}) for entry in entries]
+              for label, entries in groups.items()}
+    paths = {entry["path"] for entries in groups.values() for entry in entries}
+    active = None
+    for line in annotated.splitlines():
+        if line.endswith(":") and line[:-1] in paths:
+            active = line[:-1]
+            continue
+        fields = line.split("|", 2)
+        if active is None or len(fields) != 3 or not fields[0].strip().isdigit():
+            continue
+        number, count = int(fields[0].strip()), fields[1].strip()
+        if not count:
+            continue
+        for entries in counts.values():
+            for entry in entries:
+                if entry["path"] == active and entry["start"] <= number < entry["end_exclusive"]:
+                    entry["measured"][number] = count != "0"
+    report = {}
+    for label, entries in counts.items():
+        files = {}
+        for entry in entries:
+            if not entry["measured"]:
+                raise SystemExit(f"LLVM reported no {label} function executable lines")
+            path = str(Path(entry["path"]).relative_to(root))
+            row = {key: entry[key] for key in ("start", "end_exclusive")}
+            row.update(count=len(entry["measured"]), covered=sum(entry["measured"].values()))
+            files.setdefault(path, []).append(row)
+        total = {key: sum(row[key] for rows in files.values() for row in rows)
+                 for key in ("count", "covered")}
+        total["percent"] = 100 * total["covered"] / total["count"]
+        report[label] = {
+            "scope": "complete named production functions; physical executable lines",
+            "regions_functions_branches": "not measured separately for these function ranges",
+            "files": files,
+            "physical_executable_lines": total,
+            "source_sha256": {path: hashlib.sha256((root / path).read_bytes()).hexdigest()
+                              for path in files},
+        }
+    return report
+
+
+def check_native_function_coverage(report):
+    for label in ("native_atan2", "native_atan_deferred"):
+        group = report[label]
+        if (not group["files"] or any(not row["count"] for rows in group["files"].values() for row in rows)
+                or group["physical_executable_lines"]["percent"] < 95):
+            raise SystemExit(f"{label} production function line coverage is below the 95% gate or missing")

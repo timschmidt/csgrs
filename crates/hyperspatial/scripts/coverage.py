@@ -14,7 +14,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from coverage_common import native_elliptic_coverage, check_native_elliptic_coverage
+from coverage_common import (native_elliptic_coverage, check_native_elliptic_coverage,
+                             native_function_ranges, count_function_lines, check_native_function_coverage)
 
 crate = Path(__file__).resolve().parents[1]
 root = crate.parents[1]
@@ -33,9 +34,9 @@ arguments = ["cargo", "test", "--locked", "-p", "hyperspatial", "--all-features"
 native_arguments = ["cargo", "test", "--locked", "-p", "hyperreal", "--no-default-features",
                     "--features", "serde,dispatch-trace"]
 commands = [arguments,
-            native_arguments + ["--test", "inverse_isometric_latitude", "--test", "negative_exp_tail", "--test", "elliptic_integrals", "--test", "legendre_integrals", "--test", "inverse_legendre", "--test", "jacobi", "--test", "jacobi_prepared"],
+            native_arguments + ["--test", "inverse_isometric_latitude", "--test", "negative_exp_tail", "--test", "elliptic_integrals", "--test", "legendre_integrals", "--test", "inverse_legendre", "--test", "jacobi", "--test", "jacobi_prepared", "--test", "atan2_right_half_plane"],
             native_arguments + ["--lib"],
-            ["cargo", "test", "--locked", "-p", "hyperlattice", "--all-features", "--test", "complex_jacobi", "--test", "jacobi_epsilon"]]
+            ["cargo", "test", "--locked", "-p", "hyperlattice", "--all-features", "--test", "complex_jacobi", "--test", "jacobi_epsilon", "--test", "complex_atanh"]]
 with tempfile.TemporaryDirectory(prefix="profiles-", dir=target) as profiles:
     environment["LLVM_PROFILE_FILE"] = str(Path(profiles) / "%p-%m.profraw")
     executables = set()
@@ -168,6 +169,12 @@ report["native_exponential"] = {
 }
 output = target / "coverage.json"
 report.update(native_elliptic_coverage(export, root))
+function_ranges = native_function_ranges(root)
+function_sources = sorted({entry["path"] for entries in function_ranges.values() for entry in entries})
+function_annotated = subprocess.check_output(
+    [str(llvm / "llvm-cov"), "show", *cov_args, *function_sources,
+     "--show-instantiations=false", "--show-line-counts-or-regions"], text=True)
+report.update(count_function_lines(function_annotated, function_ranges, root))
 output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
 print(json.dumps(totals, indent=2))
 print("Native inverse production lines:", json.dumps(native_total))
@@ -177,3 +184,4 @@ if totals["lines"]["percent"] < 95:
 if native_total["percent"] < 95:
     raise SystemExit("Native inverse production line coverage is below the 95% gate")
 check_native_elliptic_coverage(report)
+check_native_function_coverage(report)

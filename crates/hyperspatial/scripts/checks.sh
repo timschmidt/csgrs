@@ -7,6 +7,7 @@ cd "$repo_dir"
 cargo fmt --all -- --check
 cargo fmt --manifest-path crates/hyperspatial/fuzz/Cargo.toml -- --check
 python3 crates/hyperspatial/scripts/test_fuzz_smoke.py
+python3 crates/hyperspatial/scripts/test_function_coverage.py
 cargo check --locked -p hyperspatial --all-targets --all-features
 cargo test --locked -p hyperspatial --no-default-features
 cargo test --locked -p hyperspatial --all-targets --all-features

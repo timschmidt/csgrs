@@ -62,8 +62,8 @@ jobs:
         run: cargo bench --locked -p hyperspatial --benches
       - name: Verify native elliptic integrals and run completion-checked references
         run: |
-          cargo test --locked -p hyperreal --test elliptic_integrals --test legendre_integrals --test inverse_legendre --test jacobi --test jacobi_prepared --features serde
-          cargo test --locked -p hyperlattice --test complex_jacobi --test jacobi_epsilon --all-features
+          cargo test --locked -p hyperreal --test elliptic_integrals --test legendre_integrals --test inverse_legendre --test jacobi --test jacobi_prepared --test atan2_right_half_plane --features serde
+          cargo test --locked -p hyperlattice --test complex_jacobi --test jacobi_epsilon --test complex_atanh --all-features
           cargo test --locked -p hyperlimit --test real_representations --all-features
           cargo bench --locked -p hyperreal --bench elliptic_integrals
           cargo bench --locked -p hyperreal --bench legendre_integrals
@@ -71,6 +71,7 @@ jobs:
           cargo bench --locked -p hyperreal --bench jacobi
           cargo bench --locked -p hyperlattice --bench complex_jacobi
           cargo bench --locked -p hyperlattice --bench jacobi_epsilon
+          cargo bench --locked -p hyperlattice --bench complex_atanh
 
   representations:
     name: Scalar representations and caches
@@ -143,8 +144,12 @@ jobs:
         env:
           RUSTUP_TOOLCHAIN: stable
         run: python3 crates/hyperspatial/scripts/directed.py --workload jacobi_epsilon --output target/hyperspatial-directed-epsilon
+      - name: Select complex atanh cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload complex_atanh --output target/hyperspatial-directed-atanh
       - name: Mutate and replay with address sanitizer
-        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus --transverse-corpus target/hyperspatial-directed-transverse/corpus --elliptic-corpus target/hyperspatial-directed-elliptic/corpus --inverse-legendre-corpus target/hyperspatial-directed-inverse-legendre/corpus --jacobi-corpus target/hyperspatial-directed-jacobi/corpus --complex-jacobi-corpus target/hyperspatial-directed-complex-jacobi/corpus --epsilon-corpus target/hyperspatial-directed-epsilon/corpus
+        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus --transverse-corpus target/hyperspatial-directed-transverse/corpus --elliptic-corpus target/hyperspatial-directed-elliptic/corpus --inverse-legendre-corpus target/hyperspatial-directed-inverse-legendre/corpus --jacobi-corpus target/hyperspatial-directed-jacobi/corpus --complex-jacobi-corpus target/hyperspatial-directed-complex-jacobi/corpus --epsilon-corpus target/hyperspatial-directed-epsilon/corpus --atanh-corpus target/hyperspatial-directed-atanh/corpus
       - name: Retain campaign evidence and failure inputs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -161,6 +166,7 @@ jobs:
             target/hyperspatial-directed-jacobi/
             target/hyperspatial-directed-complex-jacobi/
             target/hyperspatial-directed-epsilon/
+            target/hyperspatial-directed-atanh/
             target/hyperspatial-asan/
             crates/hyperspatial/fuzz/artifacts/
           retention-days: 30
@@ -208,4 +214,5 @@ jobs:
           CARGO_PROFILE_TEST_OVERFLOW_CHECKS: "true"
         run: |
           python3 crates/hyperspatial/scripts/coverage-gates.py
+          python3 crates/hyperspatial/scripts/test_function_coverage.py
           python3 crates/hyperspatial/scripts/coverage.py

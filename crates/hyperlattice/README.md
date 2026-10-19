@@ -115,6 +115,13 @@ is the Jacobi argument; the real-axis implementation uses
 See the [epsilon admission](docs/admission-jacobi-epsilon.md) for the native
 construction and independent development oracle.
 
+`Complex::atanh()` evaluates the principal analytic inverse hyperbolic tangent.
+It excludes the real cuts outside (-1,1), reports the poles as `Infinity`,
+and keeps unresolved domain decisions typed. Components remain native Real
+expressions. The [atanh admission](docs/admission-complex-atanh.md) records
+independent series and reciprocal references, cut-bank tests, and the
+[checked scalar quadrant extension](../hyperreal/docs/admission-atan2-right-half-plane.md).
+
 ### Scalar and complex operations
 
 | Task | API |
@@ -125,7 +132,7 @@ construction and independent development oracle.
 | Structural checked reciprocal | `reciprocal_checked`, `reciprocal_ref_checked` |
 | Elementary functions | Native `Real` methods: `sqrt`, `exp`, `ln`, `log10`, `sin`, `cos`, `tan`, `sinh`, `cosh`, `tanh` |
 | Inverse functions | Native `Real` methods: `asin`, `acos`, `atan`, `asinh`, `acosh`, `atanh` |
-| Complex values | `Complex::new`, `zero`, `one`, `i`, `conjugate`, `norm_squared`, `reciprocal`, `powi`, checked division variants |
+| Complex values | `Complex::new`, `zero`, `one`, `i`, `conjugate`, `norm_squared`, `reciprocal`, `powi`, checked division variants, `atanh` |
 
 Hyperreal owns scalar arithmetic, domain checks, and structural type names;
 Hyperlattice does not wrap or rename those APIs. Attach cancellation directly
