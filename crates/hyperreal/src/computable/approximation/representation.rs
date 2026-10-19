@@ -208,6 +208,10 @@ pub(super) enum Approximation {
     // Boxing preserves the size of the common expression variants.
     EllipticRf(Box<[Computable; 3]>),
     EllipticRd(Box<[Computable; 3]>),
+    // All real amplitudes, parameter m = 1-exp(log_complement) < 1.
+    // Keep appended: existing binary serialization indices remain unchanged.
+    EllipticF(Box<[Computable; 2]>),
+    EllipticE(Box<[Computable; 2]>),
 }
 
 #[cfg(feature = "serde")]

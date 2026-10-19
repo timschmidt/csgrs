@@ -14,6 +14,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 
+from coverage_common import native_elliptic_coverage, check_native_elliptic_coverage
+
 crate = Path(__file__).resolve().parents[1]
 root = crate.parents[1]
 rustc = subprocess.check_output(["rustc", "-vV"], text=True)
@@ -31,7 +33,7 @@ arguments = ["cargo", "test", "--locked", "-p", "hyperspatial", "--all-features"
 native_arguments = ["cargo", "test", "--locked", "-p", "hyperreal", "--no-default-features",
                     "--features", "serde,dispatch-trace"]
 commands = [arguments,
-            native_arguments + ["--test", "inverse_isometric_latitude", "--test", "negative_exp_tail", "--test", "elliptic_integrals"],
+            native_arguments + ["--test", "inverse_isometric_latitude", "--test", "negative_exp_tail", "--test", "elliptic_integrals", "--test", "legendre_integrals"],
             native_arguments + ["--lib"]]
 with tempfile.TemporaryDirectory(prefix="profiles-", dir=target) as profiles:
     environment["LLVM_PROFILE_FILE"] = str(Path(profiles) / "%p-%m.profraw")
@@ -163,26 +165,7 @@ report["native_exponential"] = {
                       for p in exp_ranges},
 }
 output = target / "coverage.json"
-elliptic_sources = [root / "crates/hyperreal/src" / part / "elliptic_integrals.rs"
-                    for part in ("computable/approximation", "computable/node", "real/arithmetic")]
-elliptic_files = {
-    str(Path(file["filename"]).resolve().relative_to(root)): file["summary"]
-    for dataset in export["data"] for file in dataset["files"]
-    if Path(file["filename"]).resolve() in elliptic_sources
-}
-if len(elliptic_files) != len(elliptic_sources):
-    raise SystemExit("LLVM did not report every native elliptic implementation file")
-elliptic_totals = {metric: {key: sum(file[metric][key] for file in elliptic_files.values())
-                           for key in ("count", "covered")}
-                   for metric in ("lines", "regions", "functions")}
-for row in elliptic_totals.values():
-    row["percent"] = 100 * row["covered"] / row["count"] if row["count"] else None
-report["native_elliptic"] = {
-    "scope": "three native elliptic implementation files; shared dispatch and structural matching excluded",
-    "files": elliptic_files, "totals": elliptic_totals,
-    "source_sha256": {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
-                      for p in elliptic_sources},
-}
+report.update(native_elliptic_coverage(export, root))
 output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
 print(json.dumps(totals, indent=2))
 print("Native inverse production lines:", json.dumps(native_total))
@@ -191,5 +174,4 @@ if totals["lines"]["percent"] < 95:
     raise SystemExit("Production line coverage is below the 95% gate; the 100% target remains open")
 if native_total["percent"] < 95:
     raise SystemExit("Native inverse production line coverage is below the 95% gate")
-if elliptic_totals["lines"]["percent"] < 95:
-    raise SystemExit("Native elliptic production line coverage is below the 95% gate")
+check_native_elliptic_coverage(report)

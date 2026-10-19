@@ -106,6 +106,8 @@ impl Approximation {
             }
             EllipticRf(arguments) => elliptic_carlson(signal, arguments, false, p),
             EllipticRd(arguments) => elliptic_carlson(signal, arguments, true, p),
+            EllipticF(arguments) => elliptic_legendre(signal, arguments, false, p),
+            EllipticE(arguments) => elliptic_legendre(signal, arguments, true, p),
         }
     }
 }

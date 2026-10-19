@@ -162,9 +162,12 @@ conversion can reuse the native isometric scalar. Rectification still needs
 its own finite-model or certified-remainder contract; the spherical chart and
 zone selector do not supply ellipsoidal projected coordinates.
 
-The exact rectification path now starts with native Carlson RF/RD integrals.
-Next, admit stable complete/incomplete Legendre combinations and Jacobi
-functions with retained periods, branch choices and inverse relations, then
+The exact rectification path now has native Carlson RF/RD and complete/incomplete
+Legendre F/E integrals (real parameter m < 1, unwrapped real amplitudes). The
+[Legendre admission](../hyperreal/docs/admission-legendre-integrals.md) records
+period reduction, positive second-kind formulas, and independent development
+oracles. Next, admit inverse Legendre and Jacobi functions with retained
+periods, branch choices and inverse relations, then
 the Thompson/Lee mapping and its certified inverse. References are
 [DLMF integral relations](https://dlmf.nist.gov/19.25),
 [Jacobi computation](https://dlmf.nist.gov/22.20), and

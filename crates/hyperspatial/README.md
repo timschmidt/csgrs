@@ -162,6 +162,30 @@ assert!(zone.parameters()?.receipt().is_some());
 not scalar heap-byte or wall-clock bounds. Cancellation is cooperative between
 native calls and cannot change the meaning of an already returned coordinate.
 
+The native elliptic primitives also support scalar calculations on an
+ellipsoid. For example, its meridian quadrant length is
+`b * E_complete(1-a²/b²)`. Here the argument is the parameter (squared modulus),
+which is negative for an oblate ellipsoid in this formula:
+
+```rust
+use hyperspatial::*;
+let mut context = Context::new(PredicatePolicy::STRICT, Limits::default());
+let ellipsoid = Ellipsoid::wgs84(&mut context)?;
+let a = ellipsoid.equatorial_radius().as_metres();
+let b = ellipsoid.polar_radius().as_metres();
+let ratio = (a / b)?;
+let parameter = Real::one() - &ratio * &ratio;
+let quadrant = Length::metres(b * Real::elliptic_e_complete(&parameter)?);
+let half_pi = (Real::pi() / Real::from(2))?;
+let endpoint = half_pi.elliptic_e(&parameter)?;
+assert!(quadrant.as_metres().certified_rational_interval(-64).is_some());
+assert!(endpoint.certified_rational_interval(-128).is_some());
+# Ok::<(), hyperspatial::Error>(())
+```
+
+This produces a scalar length for the defined ellipsoid. Coordinate-operation
+receipts and physical measurement accuracy require their separate contracts.
+
 Ellipsoidal Transverse Mercator/UTM, geodesics, datum operations,
 serialization, celestial/observer transformations
 and ephemerides remain under development.
@@ -191,6 +215,9 @@ ingress requires an explicit `InputProvenance`; missing uncertainty stays unknow
   domains, source identities, independent fixtures and development evidence.
 - [Inverse-isometric scalar admission](../hyperreal/docs/admission-inverse-isometric-latitude.md):
   native oblate/prolate inversion, independent MPFR checks and Earth/local composition.
+- [Legendre scalar admission](../hyperreal/docs/admission-legendre-integrals.md):
+  native complete/incomplete elliptic integrals, unwrapped amplitudes, independent
+  MPFR oracles and downstream representation gates.
 
 - [Ellipsoidal Mercator admission](docs/admission/e2-ellipsoidal.md): exact inverse
   relations, open latitude evidence, shared projection rules and validation.

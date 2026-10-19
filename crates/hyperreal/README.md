@@ -160,6 +160,7 @@ All entries below are methods on `Real`:
 | Hyperbolic | `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh` |
 | Ellipsoidal latitude | `inverse_isometric_latitude` (positive polar/equatorial axis ratio; exact retained inverse equation) |
 | Elliptic integrals | `Real::elliptic_rf`, `Real::elliptic_rd` (Carlson integrals on their real nonnegative domains; exact retained integrals with certified refinement) |
+| Legendre elliptic integrals | `Real::elliptic_k`, `Real::elliptic_e_complete`, `elliptic_f`, `elliptic_e` (parameter m < 1; incomplete integrals retain every real, unwrapped amplitude) |
 | Cancellation helpers | `sqrt1pm1`, `sqrt1m1`, `hypot_minus` |
 | Fused algebra | `mul_add`, `sum_products`, `diff_of_products`, `eval_poly`, `eval_rational_poly` |
 | Vector-length helpers | `hypot2`, `hypot3`, `dot2_refs`, `dot3_refs`, `dot4_refs` |

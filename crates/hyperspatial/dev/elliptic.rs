@@ -71,30 +71,70 @@ pub fn exercise(data: [u8; 6]) -> Result<(u64, usize, &'static str, &'static str
         let sum = &rd + Real::elliptic_rd(&y, &z, &x)? + Real::elliptic_rd(&z, &x, &y)?;
         close(&sum, &(Real::from(3) / (&x * &y * &z).sqrt()?)?);
     }
-    // The new scalar output must remain usable by an existing native spatial
+    let small = (&first.value / (Real::from(2) * (&first.value + &second.value)))?;
+    let complement = match data[4] % 4 {
+        1 => Real::one(),
+        3 => &first.value * "1e-20".parse::<Real>().unwrap(),
+        _ => (&first.value / &second.value)?,
+    };
+    let parameter = Real::one() - complement;
+    let amplitude = match data[4] % 4 {
+        1 => (Real::pi() / Real::from(2))?,
+        2 => {
+            let quarter = if data[3] & 1 == 0 {
+                Real::zero()
+            } else {
+                (Real::pi() / Real::from(2))?
+            };
+            Real::pi() * Real::from(data[2]) + quarter + small
+        }
+        _ => small,
+    };
+    let amplitude = if data[5] & 1 == 0 {
+        amplitude
+    } else {
+        -amplitude
+    };
+    let f = amplitude.clone().elliptic_f(&parameter)?;
+    let e = amplitude.clone().elliptic_e(&parameter)?;
+    close(
+        &(&amplitude + Real::pi()).elliptic_f(&parameter)?,
+        &(&f + Real::from(2) * Real::elliptic_k(&parameter)?),
+    );
+    close(
+        &(&amplitude + Real::pi()).elliptic_e(&parameter)?,
+        &(&e + Real::from(2) * Real::elliptic_e_complete(&parameter)?),
+    );
+    close(&(-&amplitude).elliptic_f(&parameter)?, &(-&f));
+    close(&(-amplitude).elliptic_e(&parameter)?, &(-&e));
+    // Both Carlson and Legendre outputs must remain usable by a native spatial
     // construction, strict positivity proof, and geodetic forward operation.
     let mut context = Context::new(PredicatePolicy::STRICT, Limits::default());
-    let ellipsoid = Arc::new(Ellipsoid::from_axes(
-        Length::metres(rf.clone()),
-        Length::metres(rd),
-        &mut context,
-    )?);
-    let height = Real::from(data[2]);
-    let position = GeodeticPosition::new(
-        Latitude::new(Angle::radians(Real::zero()), &mut context)?,
-        Longitude::unrolled(Angle::radians(Real::zero())),
-        Length::metres(height.clone()),
-        ellipsoid,
-        ReferenceFrame::fixed("elliptic prerequisite composition")?,
-        InputProvenance::new("native elliptic model", InputAccuracy::ExactModel),
-        &mut context,
-    )?;
-    let point = position.to_ecef(&mut context)?;
-    close(&point.coordinates().x, &(rf + height));
-    assert_ne!(point.receipt().certainty(), Certainty::Approximate);
+    let mut depth = 0;
+    for (a, b) in [(rf, rd), (f.abs(), e.abs())] {
+        let ellipsoid = Arc::new(Ellipsoid::from_axes(
+            Length::metres(a.clone()),
+            Length::metres(b),
+            &mut context,
+        )?);
+        let height = Real::from(data[2]);
+        let position = GeodeticPosition::new(
+            Latitude::new(Angle::radians(Real::zero()), &mut context)?,
+            Longitude::unrolled(Angle::radians(Real::zero())),
+            Length::metres(height.clone()),
+            ellipsoid,
+            ReferenceFrame::fixed("elliptic prerequisite composition")?,
+            InputProvenance::new("native elliptic model", InputAccuracy::ExactModel),
+            &mut context,
+        )?;
+        let point = position.to_ecef(&mut context)?;
+        close(&point.coordinates().x, &(a + height));
+        assert_ne!(point.receipt().certainty(), Certainty::Approximate);
+        depth = depth.max(point.receipt().depth());
+    }
     Ok((
         context.steps_used(),
-        point.receipt().depth(),
+        depth,
         first.certificate,
         second.certificate,
     ))

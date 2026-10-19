@@ -1183,6 +1183,8 @@ impl Computable {
                 | Approximation::PrescaledAtanh(child)
                 | Approximation::InverseIsometricLatitude { psi: child, .. }
                 | Approximation::Expm1(child) => Some(child.exact_sign()),
+                Approximation::EllipticF(arguments)
+                | Approximation::EllipticE(arguments) => Some(arguments[0].exact_sign()),
                 Approximation::PrescaledExp(_)
                 | Approximation::EllipticRf(_)
                 | Approximation::EllipticRd(_) => Some(Some(Sign::Plus)),

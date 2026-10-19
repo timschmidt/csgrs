@@ -21,7 +21,9 @@ The `transverse_mercator` target exercises the spherical transverse chart,
 huge-coordinate inverses, pole/edge conventions and angular UTM selection.
 The `elliptic` target checks the native RF/RD prerequisites with ordinary,
 one-zero, extreme-scale and near-singular inputs, independent identities and
-consumption of their outputs in ellipsoid/ECEF construction.
+consumption of their outputs in ellipsoid/ECEF construction. It also checks
+complete/incomplete Legendre F/E, unwrapped periods, odd symmetry, circular
+endpoints, and separate spatial consumption of the Legendre outputs.
 
 From the repository root:
 

@@ -21,6 +21,9 @@ use rug::{
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
 
+#[path = "../tests/support/legendre_oracle.rs"]
+mod legendre_oracle;
+
 const GMP_PRECISION: u32 = 128;
 
 fn real(value: f64) -> Real {
@@ -699,6 +702,47 @@ fn bench_real_arithmetic_api(c: &mut Criterion) {
 
 fn bench_real_elementary_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_real_elementary_api");
+
+    // All four native APIs are evaluated, with independent AGM / integrand
+    // series point references. These different contracts imply no speed ratio.
+    for name in [
+        "elliptic_k",
+        "elliptic_e_complete",
+        "elliptic_f",
+        "elliptic_e",
+    ] {
+        let parameter: Real = "0.5".parse().unwrap();
+        let amplitude: Real = "0.75".parse().unwrap();
+        let native = || {
+            match name {
+                "elliptic_k" => Real::elliptic_k(&parameter),
+                "elliptic_e_complete" => Real::elliptic_e_complete(&parameter),
+                "elliptic_f" => amplitude.clone().elliptic_f(&parameter),
+                _ => amplitude.clone().elliptic_e(&parameter),
+            }
+            .unwrap()
+        };
+        let reference = || {
+            let values = if matches!(name, "elliptic_k" | "elliptic_e_complete") {
+                legendre_oracle::complete(&(Real::one() - &parameter))
+            } else {
+                legendre_oracle::series(&amplitude, &parameter)
+            };
+            values[usize::from(matches!(name, "elliptic_e" | "elliptic_e_complete"))].clone()
+        };
+        let expected = legendre_oracle::native(reference());
+        let [lo, hi] = (native() - expected)
+            .certified_rational_interval(-144)
+            .unwrap();
+        let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+        assert!(lo >= -tolerance.clone() && hi <= tolerance);
+        group.bench_function(BenchmarkId::new("hyperreal_evaluated_p128", name), |b| {
+            b.iter(|| black_box(native().certified_rational_interval(-128).unwrap()))
+        });
+        group.bench_function(BenchmarkId::new("mpfr1024_point_reference", name), |b| {
+            b.iter(|| black_box(reference()))
+        });
+    }
 
     // Carlson circular limits RF(0,1,1)=pi/2 and RD(0,1,1)=3*pi/4.
     // Both native rows force refinement. MPFR evaluates the independent
