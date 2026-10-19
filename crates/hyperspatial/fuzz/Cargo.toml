@@ -29,3 +29,10 @@ path = "fuzz_targets/normal_offset.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "mercator"
+path = "fuzz_targets/mercator.rs"
+test = false
+doc = false
+bench = false

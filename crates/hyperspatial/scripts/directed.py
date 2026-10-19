@@ -43,6 +43,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "target/hyperspatial-directed")
     parser.add_argument("--seed", type=int, default=20261018)
+    parser.add_argument("--workload", choices=("normal_offset", "mercator"), default="normal_offset")
     parser.add_argument("--candidates", type=int, default=4)
     parser.add_argument("--generations", type=int, default=2)
     parser.add_argument("--timeout", type=float, default=15)
@@ -58,12 +59,12 @@ def main():
     metadata = json.loads(run_text("cargo", "metadata", "--no-deps", "--format-version", "1"))
     executable = Path(metadata["target_directory"]) / "release/examples/e1_probe"
     source_files = sorted((CRATE / "src").glob("*.rs")) + [
-        CRATE / "dev/normal_offset.rs", CRATE / "examples/e1_probe.rs",
+        CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "examples/e1_probe.rs",
         Path(__file__).resolve(), CRATE / "Cargo.toml", ROOT / "Cargo.lock",
         ROOT / "crates/hyperreal/tests/support/representations.rs",
     ]
     report = {
-        "schema": 1, "seed": args.seed, "build": build,
+        "schema": 1, "seed": args.seed, "workload": args.workload, "build": build,
         "compiler": run_text("rustc", "-vV"), "platform": platform.platform(),
         "processor": platform.processor(), "source_revision": run_text("git", "rev-parse", "HEAD"),
         "build_environment": {key: os.environ.get(key) for key in
@@ -101,7 +102,7 @@ def main():
                         data = bytes(mutated)
                     encoded = data.hex()
                     try:
-                        process = subprocess.run([str(executable), encoded], cwd=ROOT,
+                        process = subprocess.run([str(executable), encoded, args.workload], cwd=ROOT,
                                                  capture_output=True, text=True, timeout=args.timeout)
                         try:
                             row = json.loads(process.stdout)

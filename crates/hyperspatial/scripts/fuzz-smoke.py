@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Seed both E1 fuzz domains and run bounded, address-sanitized campaigns."""
+"""Seed geodesy/projection fuzz domains and run bounded, address-sanitized campaigns."""
 
 import argparse
 import hashlib
@@ -21,6 +21,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "target/hyperspatial-asan")
     parser.add_argument("--selected-corpus", type=Path)
+    parser.add_argument("--mercator-corpus", type=Path)
     parser.add_argument("--seconds", type=int, default=60)
     parser.add_argument("--seed", type=int, default=20261018)
     parser.add_argument("--toolchain", default="nightly")
@@ -37,14 +38,14 @@ def main():
         "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted((CRATE / "src").glob("*.rs")) +
                           sorted((CRATE / "fuzz/fuzz_targets").glob("*.rs")) +
-                          [CRATE / "dev/normal_offset.rs", CRATE / "fuzz/Cargo.lock",
+                          [CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "fuzz/Cargo.lock",
                            Path(__file__).resolve(),
                            ROOT / "crates/hyperreal/tests/support/representations.rs"]},
         "limitations": "External timeout/RSS containment, not native resource bounds. Counter/feature coverage is for the instrumented binary, not production line/branch coverage.",
         "campaigns": [],
     }
     failed = False
-    for target in ("forward_local", "normal_offset"):
+    for target in ("forward_local", "normal_offset", "mercator"):
         corpus = args.output / (target + "-corpus")
         corpus.mkdir(exist_ok=True)
         if target == "forward_local":
@@ -54,8 +55,9 @@ def main():
         else:
             seeds = [bytes([family, (family + 7) % 22, 0, 0, 0, flags])
                      for family in range(22) for flags in (0, 3)]
-            if args.selected_corpus:
-                seeds += [p.read_bytes() for p in sorted(args.selected_corpus.iterdir()) if p.is_file()]
+            selected = args.selected_corpus if target == "normal_offset" else args.mercator_corpus
+            if selected:
+                seeds += [p.read_bytes() for p in sorted(selected.iterdir()) if p.is_file()]
         for seed in seeds:
             (corpus / seed.hex()).write_bytes(seed)
         command = ["cargo", "+" + args.toolchain, "fuzz", "run", target,

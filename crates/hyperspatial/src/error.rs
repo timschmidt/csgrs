@@ -26,6 +26,12 @@ pub enum Error {
     ReferenceMismatch,
     /// Local coordinates belong to a different prepared anchor.
     LocalFrameMismatch,
+    /// Geodetic input and operation use different reference surfaces.
+    EllipsoidMismatch,
+    /// Projected coordinates belong to another prepared projection.
+    ProjectionMismatch,
+    /// The projection has no finite value at this location.
+    ProjectionSingularity(&'static str),
     /// The selected inverse has multiple solutions or needs a pole convention.
     AmbiguousInverse(&'static str),
 }

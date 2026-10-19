@@ -1,12 +1,18 @@
-//! Isolated, dispatch-instrumented probe for the development lexicase driver.
+//! Isolated native workflow probe for the development lexicase driver.
 
 use std::time::Instant;
 
 use hyperreal::dispatch_trace;
 use serde_json::json;
 
+#[path = "../../hyperreal/tests/support/representations.rs"]
+mod scalar_cases;
+
 #[path = "../dev/normal_offset.rs"]
 mod normal_offset;
+
+#[path = "../dev/mercator.rs"]
+mod mercator;
 
 fn main() {
     let encoded = std::env::args()
@@ -18,9 +24,16 @@ fn main() {
     for (index, byte) in data.iter_mut().enumerate() {
         *byte = u8::from_str_radix(&encoded[2 * index..2 * index + 2], 16).expect("hex byte");
     }
+    let workload = std::env::args()
+        .nth(2)
+        .unwrap_or_else(|| "normal_offset".into());
     dispatch_trace::reset();
     let start = Instant::now();
-    let result = dispatch_trace::with_recording(|| normal_offset::exercise(data));
+    let result = dispatch_trace::with_recording(|| match workload.as_str() {
+        "normal_offset" => normal_offset::exercise(data),
+        "mercator" => mercator::exercise(data),
+        _ => panic!("unknown workload {workload}"),
+    });
     let evaluation_ns = start.elapsed().as_nanos();
     let trace = dispatch_trace::take();
     let dispatch_count: u64 = trace.iter().map(|row| row.count).sum();

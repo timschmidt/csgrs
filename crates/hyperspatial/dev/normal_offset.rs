@@ -5,8 +5,7 @@ use std::{cmp::Ordering, sync::Arc};
 use hyperlattice::{Point3, Vector3};
 use hyperspatial::*;
 
-#[path = "../../hyperreal/tests/support/representations.rs"]
-mod scalar_cases;
+use crate::scalar_cases;
 
 fn close(actual: &Real, expected: &Real) {
     let bound: Real = "0.000000000000000000000000000001".parse().unwrap();

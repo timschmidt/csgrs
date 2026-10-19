@@ -139,6 +139,29 @@ impl Ellipsoid {
     pub fn receipt(&self) -> &Receipt {
         &self.receipt
     }
+
+    pub(crate) fn compatible(
+        &self,
+        other: &Self,
+        context: &mut Context,
+        decisions: &mut Vec<Decision>,
+    ) -> Result<()> {
+        for (left, right) in [
+            (&self.equatorial, &other.equatorial),
+            (&self.polar, &other.polar),
+        ] {
+            if context.compare(
+                "ellipsoid axes agree",
+                left.as_metres(),
+                right.as_metres(),
+                decisions,
+            )? != Ordering::Equal
+            {
+                return Err(Error::EllipsoidMismatch);
+            }
+        }
+        Ok(())
+    }
 }
 
 /// Geodetic latitude, longitude and ellipsoidal height on a named reference.
@@ -268,6 +291,8 @@ impl GeodeticPosition {
 pub enum GeodeticSource {
     /// Explicit geodetic ingress, qualified by its input receipt.
     Input,
+    /// Inverse of retained spherical/pseudo-Mercator coordinates and parameters.
+    SphericalMercator(Arc<crate::ProjectedPosition<crate::SphericalMercator>>),
     /// Closest-point inverse of the retained Cartesian position.
     EcefClosest {
         /// Original Cartesian source, including frame, epoch and qualification.
@@ -384,17 +409,5 @@ pub fn geodetic_to_ecef_batch(
     positions: &[GeodeticPosition],
     context: &mut Context,
 ) -> Result<Vec<EcefPosition>> {
-    context.checkpoint()?;
-    if positions.len() > context.limits().max_batch_len {
-        return Err(Error::ResourceExhausted("batch length"));
-    }
-    let mut output = Vec::new();
-    output
-        .try_reserve_exact(positions.len())
-        .map_err(|_| Error::ResourceExhausted("batch allocation"))?;
-    for position in positions {
-        output.push(position.to_ecef(context)?);
-    }
-    context.checkpoint()?;
-    Ok(output)
+    context.batch(positions, GeodeticPosition::to_ecef)
 }

@@ -8,13 +8,18 @@ unpublished development package; libFuzzer is not a production dependency.
 The `normal_offset` target uses Hyperreal's 22 shared representation recipes
 for positive axes and heights, checks the independently constructed normal foot,
 then consumes the inverse in fresh forward evaluation and local vector operations.
+The `mercator` target uses the same scalar inventory for independently
+parameterized latitudes and longitudes, all three longitude policies, false
+origins, scales, signed heights and oblate/prolate/spherical source ellipsoids.
+It checks fresh inverse/forward arithmetic and downstream ECEF/local use.
 
 From the repository root:
 
 ```sh
 cargo check --locked --manifest-path crates/hyperspatial/fuzz/Cargo.toml --bins
 python3 crates/hyperspatial/scripts/directed.py
-python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus
+python3 crates/hyperspatial/scripts/directed.py --workload mercator --output target/hyperspatial-directed-mercator
+python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus
 ```
 
 Retain every crash/timeout and its minimized counterpart, then promote the
@@ -24,7 +29,8 @@ inside a scalar call remain unbounded. The libFuzzer containment flags are
 therefore part of the campaign command. Install nightly Rust and the pinned
 development tool with `cargo install --locked cargo-fuzz --version 0.13.2`.
 The smoke driver supplies 918 initial forward/local cases, 44 normal-offset
-cases, and any cases selected by the directed driver. Both targets use ASan,
+cases, 44 projection cases, and any cases selected by the directed driver.
+All three targets use ASan,
 a 60-second libFuzzer time budget, a 10-second per-input timeout, and a 2048 MiB
 RSS limit. Initialization can consume or extend the time budget; the raw log
 distinguishes corpus replay from mutation and any newly discovered paths.

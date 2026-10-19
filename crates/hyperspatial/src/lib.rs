@@ -8,6 +8,7 @@ mod evidence;
 mod geodesy;
 mod inverse;
 mod local;
+mod mercator;
 mod units;
 
 pub use context::{Context, Limits};
@@ -21,4 +22,5 @@ pub use hyperlimit::{Certainty, PredicatePolicy};
 pub use hyperreal::Real;
 pub use inverse::{PoleMeridian, ecef_to_geodetic_batch};
 pub use local::{LocalAxes, LocalFrame, LocalPosition, LocalVector};
+pub use mercator::{LongitudePolicy, MercatorParameters, ProjectedPosition, SphericalMercator};
 pub use units::{Angle, Latitude, Length, Longitude};

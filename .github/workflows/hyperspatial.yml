@@ -93,8 +93,12 @@ jobs:
         env:
           RUSTUP_TOOLCHAIN: stable
         run: python3 crates/hyperspatial/scripts/directed.py
+      - name: Select projection cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload mercator --output target/hyperspatial-directed-mercator
       - name: Mutate and replay with address sanitizer
-        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus
+        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus
       - name: Retain campaign evidence and failure inputs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -102,6 +106,7 @@ jobs:
           name: hyperspatial-directed-evidence
           path: |
             target/hyperspatial-directed/
+            target/hyperspatial-directed-mercator/
             target/hyperspatial-asan/
             crates/hyperspatial/fuzz/artifacts/
           retention-days: 30

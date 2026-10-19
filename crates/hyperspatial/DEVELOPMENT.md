@@ -11,8 +11,11 @@ and reference-frame model to Earth orientation, celestial coordinates,
 observers, and ephemerides. Implementation is incremental; the full plan remains
 active. E1 provides units, validated ellipsoids, forward and closest-point
 inverse geodetic/ECEF operations, atomic batches and anchored ENU/NED transforms
-with retained evidence. Further E1 testing/admission work is open; E2–E4 and
-A1–A5 remain planned. See the [forward/local admission](docs/admission/e1-native.md)
+with retained evidence. E2 begins with spherical/pseudo-Mercator and explicit
+longitude policies; its remaining projection/geodesic work, E3–E4 and A1–A5
+remain planned. Further testing/admission work is open.
+See the [spherical Mercator admission](docs/admission/e2-mercator.md),
+the [forward/local admission](docs/admission/e1-native.md)
 and [closest-point inverse admission](docs/admission/e1-inverse.md).
 Dedicated stable/MSRV CI, native WASM compilation, production coverage,
 source-consumer checks and workspace adversarial/benchmark integration are

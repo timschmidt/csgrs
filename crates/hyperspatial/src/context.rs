@@ -126,4 +126,24 @@ impl Context {
         }
         Ok(Receipt::build(operation, parents, decisions, input))
     }
+
+    pub(crate) fn batch<I, O>(
+        &mut self,
+        inputs: &[I],
+        mut operation: impl FnMut(&I, &mut Self) -> Result<O>,
+    ) -> Result<Vec<O>> {
+        self.checkpoint()?;
+        if inputs.len() > self.limits.max_batch_len {
+            return Err(Error::ResourceExhausted("batch length"));
+        }
+        let mut output = Vec::new();
+        output
+            .try_reserve_exact(inputs.len())
+            .map_err(|_| Error::ResourceExhausted("batch allocation"))?;
+        for input in inputs {
+            output.push(operation(input, self)?);
+        }
+        self.checkpoint()?;
+        Ok(output)
+    }
 }

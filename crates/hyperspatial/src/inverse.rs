@@ -34,19 +34,9 @@ pub fn ecef_to_geodetic_batch(
     pole: PoleMeridian,
     context: &mut Context,
 ) -> Result<Vec<GeodeticPosition>> {
-    context.checkpoint()?;
-    if positions.len() > context.limits().max_batch_len {
-        return Err(Error::ResourceExhausted("batch length"));
-    }
-    let mut output = Vec::new();
-    output
-        .try_reserve_exact(positions.len())
-        .map_err(|_| Error::ResourceExhausted("batch allocation"))?;
-    for position in positions {
-        output.push(position.to_geodetic_closest(ellipsoid.clone(), pole.clone(), context)?);
-    }
-    context.checkpoint()?;
-    Ok(output)
+    context.batch(positions, |position, context| {
+        position.to_geodetic_closest(ellipsoid.clone(), pole.clone(), context)
+    })
 }
 
 impl EcefPosition {

@@ -8,7 +8,8 @@ ephemerides.
 
 The first implementation provides exact angular/length units, validated
 spherical/oblate/prolate ellipsoids, geodetic/ECEF conversion, and anchored
-ENU/NED position/vector transforms. Reference identity, coordinate epoch,
+ENU/NED position/vector transforms, plus spherical/pseudo-Mercator projections.
+Reference identity, coordinate epoch,
 source construction and predicate evidence survive supported compositions.
 The package is unpublished; the development plan is still in progress.
 
@@ -45,6 +46,12 @@ let inverse = ecef.to_geodetic_closest(
 )?;
 assert_eq!(inverse.height().as_metres(), &Real::zero());
 assert!(matches!(inverse.source(), GeodeticSource::EcefClosest { .. }));
+let projection = SphericalMercator::web_mercator(
+    origin.reference().clone(), LongitudePolicy::WrapSigned, &mut context,
+)?;
+let projected = projection.project(&origin, &mut context)?;
+let geographic = projection.unproject(&projected, &mut context)?;
+assert_eq!(geographic.height().as_metres(), &Real::zero());
 # Ok::<(), hyperspatial::Error>(())
 ```
 
@@ -59,6 +66,12 @@ medial disk and on the prolate axial medial segment. Their unique cusp endpoints
 remain supported. At a pole, `PoleMeridian::Use(longitude)` explicitly chooses
 the meridian for subsequent local frames; `Reject` returns a typed ambiguity.
 Forward and inverse batch APIs return complete output or an error.
+`SphericalMercator` uses the source ellipsoid's equatorial radius and preserves
+ellipsoidal height. Its parameters include scale, central meridian and false
+origin. Longitude policy explicitly preserves turns, rejects outside the
+principal strip, or wraps relative to the central meridian. Poles return a
+typed singularity; Web tile clipping is not implicit. Prepared projections
+retain their identity, model, source coordinates and certainty through inversion.
 `Angle` and `Length` equality follows `Real` structural equality. Use native
 certified scalar comparisons when mathematical equality of different expressions
 is required.
@@ -67,7 +80,8 @@ is required.
 not scalar heap-byte or wall-clock bounds. Cancellation is cooperative between
 native calls and cannot change the meaning of an already returned coordinate.
 
-Projections, datum operations, serialization, celestial/observer transformations
+Ellipsoidal Mercator, Transverse Mercator/UTM, geodesics, datum operations,
+serialization, celestial/observer transformations
 and ephemerides remain under development.
 No physical accuracy is inferred from exact evaluation of a model. Raw Cartesian
 ingress requires an explicit `InputProvenance`; missing uncertainty stays unknown.
@@ -89,6 +103,8 @@ ingress requires an explicit `InputProvenance`; missing uncertainty stays unknow
 - [Representation and directed-testing admission](docs/admission/e1-directed-testing.md):
   22 scalar recipes, 484 ordered pairs, cache configurations, dispatch traces
   and sanitized campaigns.
+- [Spherical Mercator admission](docs/admission/e2-mercator.md): projection
+  domains, source identities, independent fixtures and development evidence.
 
 From the repository root:
 
