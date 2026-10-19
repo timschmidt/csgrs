@@ -23,6 +23,7 @@ include!("approximation/certified_interval.rs");
 include!("approximation/elliptic_integrals.rs");
 include!("approximation/legendre_integrals.rs");
 include!("approximation/inverse_legendre.rs");
+include!("approximation/jacobi.rs");
 include!("approximation/statistics.rs");
 
 #[cfg(test)]
@@ -48,6 +49,10 @@ mod legendre_tests;
 #[cfg(test)]
 #[path = "approximation/inverse_legendre_tests.rs"]
 mod inverse_legendre_tests;
+
+#[cfg(test)]
+#[path = "approximation/jacobi_tests.rs"]
+mod jacobi_tests;
 
 #[cfg(test)]
 mod chudnovsky_pi_tests {

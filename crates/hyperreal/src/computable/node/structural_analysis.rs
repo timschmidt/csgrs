@@ -1189,6 +1189,7 @@ impl Computable {
                 | Approximation::InverseEllipticE(arguments) => Some(arguments[0].exact_sign()),
                 Approximation::PrescaledExp(_)
                 | Approximation::EllipticRf(_)
+                | Approximation::JacobiDn(_)
                 | Approximation::EllipticRd(_) => Some(Some(Sign::Plus)),
                 Approximation::Negate(_)
                 | Approximation::Offset(_, _)

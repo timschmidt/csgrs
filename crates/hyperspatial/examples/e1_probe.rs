@@ -28,6 +28,8 @@ mod elliptic;
 
 #[path = "../dev/inverse_legendre.rs"]
 mod inverse_legendre;
+#[path = "../dev/jacobi.rs"]
+mod jacobi;
 
 fn main() {
     let encoded = std::env::args()
@@ -52,6 +54,7 @@ fn main() {
         "inverse_isometric" => inverse_isometric::exercise(data),
         "elliptic" => elliptic::exercise(data),
         "inverse_legendre" => inverse_legendre::exercise(data),
+        "jacobi" => jacobi::exercise(data),
         _ => panic!("unknown workload {workload}"),
     });
     let evaluation_ns = start.elapsed().as_nanos();

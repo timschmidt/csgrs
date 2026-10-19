@@ -4,6 +4,13 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$repo_dir"
 
+# The exact scalar pair corpus is expensive without optimization. Keep the
+# test profile's assertions and overflow checks in all four configurations;
+# checks.sh separately exercises the complete unoptimized debug corpus.
+export CARGO_PROFILE_TEST_OPT_LEVEL=1
+export CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true
+export CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true
+
 # These dependency features change Real's storage/cache layout. All existing
 # strict, qualified, failure and oracle cases run in each configuration.
 run_matrix() {
@@ -13,6 +20,7 @@ run_matrix() {
     HYPERREAL_EXPECT_F32_CACHE="$expected_f32" \
         HYPERREAL_EXPECT_EXACT_CLONE_CACHE="$expected_clone" \
         cargo test --locked -p hyperspatial --tests "$@"
+    cargo test --locked -p hyperreal --test jacobi --features serde "$@"
     cargo clippy --locked -p hyperspatial --all-targets "$@" -- -D warnings
 }
 

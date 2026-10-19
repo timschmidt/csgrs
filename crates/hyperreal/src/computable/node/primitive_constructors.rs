@@ -165,6 +165,9 @@ impl Computable {
                 (Approximation::EllipticF(left), Approximation::EllipticF(right))
                 | (Approximation::EllipticE(left), Approximation::EllipticE(right))
                 | (Approximation::JacobiAmplitude(left), Approximation::JacobiAmplitude(right))
+                | (Approximation::JacobiSn(left), Approximation::JacobiSn(right))
+                | (Approximation::JacobiCn(left), Approximation::JacobiCn(right))
+                | (Approximation::JacobiDn(left), Approximation::JacobiDn(right))
                 | (Approximation::InverseEllipticE(left), Approximation::InverseEllipticE(right)) =>
                     NodeComparison::Two((&left[0], &right[0]), (&left[1], &right[1])),
                 _ => NodeComparison::Decided(false),

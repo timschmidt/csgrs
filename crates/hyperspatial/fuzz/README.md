@@ -24,6 +24,10 @@ one-zero, extreme-scale and near-singular inputs, independent identities and
 consumption of their outputs in ellipsoid/ECEF construction. It also checks
 complete/incomplete Legendre F/E, unwrapped periods, odd symmetry, circular
 endpoints, and separate spatial consumption of the Legendre outputs.
+The `jacobi` target evaluates the three native components, consumes their
+exact unit norm and positive dn in an ellipsoid/ECEF operation, and preserves
+qualified input provenance. Its regimes include circular parameters, both
+signs of m, quarter-period shifts and small positive complements.
 
 From the repository root:
 
@@ -35,7 +39,9 @@ python3 crates/hyperspatial/scripts/directed.py --workload inverse_isometric --o
 python3 crates/hyperspatial/scripts/directed.py --workload ellipsoidal_mercator --output target/hyperspatial-directed-ellipsoidal
 python3 crates/hyperspatial/scripts/directed.py --workload transverse_mercator --output target/hyperspatial-directed-transverse
 python3 crates/hyperspatial/scripts/directed.py --workload elliptic --output target/hyperspatial-directed-elliptic
-python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus --transverse-corpus target/hyperspatial-directed-transverse/corpus --elliptic-corpus target/hyperspatial-directed-elliptic/corpus
+python3 crates/hyperspatial/scripts/directed.py --workload inverse_legendre --output target/hyperspatial-directed-inverse-legendre
+python3 crates/hyperspatial/scripts/directed.py --workload jacobi --output target/hyperspatial-directed-jacobi
+python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus --transverse-corpus target/hyperspatial-directed-transverse/corpus --elliptic-corpus target/hyperspatial-directed-elliptic/corpus --inverse-legendre-corpus target/hyperspatial-directed-inverse-legendre/corpus --jacobi-corpus target/hyperspatial-directed-jacobi/corpus
 ```
 
 Retain every crash/timeout and its minimized counterpart, then promote the
@@ -48,12 +54,15 @@ The smoke driver supplies 918 initial forward/local cases, 44 normal-offset
 cases, 44 spherical projection cases, 44 inverse-scalar cases, 44 ellipsoidal
 projection cases, 176 transverse cases, 176 elliptic cases, and any cases
 selected by the directed driver. The inverse-Legendre target adds 176 cases
-covering the same 22 families, four regimes, and cold/warm inputs. All eight
+covering the same 22 families, four regimes, and cold/warm inputs. The Jacobi
+target adds another 176 seeds with the same family/regime/warming layout. All nine
 targets use ASan, a 10-second per-input timeout, and a 2048 MiB RSS limit.
 The existing forward/local, normal-offset and spherical projection targets
 have a 60-second libFuzzer budget. The inverse scalar, ellipsoidal projection,
-transverse chart, elliptic prerequisites and inverse integrals each have 900 seconds because
-replaying their full seeds is more expensive.
+transverse chart, elliptic prerequisites and inverse integrals each have 900
+seconds because replaying their full seeds is more expensive. Jacobi has 1800
+seconds: the measured 900-second campaign completed initialization without
+reaching mutation, so its budget includes additional mutation time.
 `--targets` permits focused reruns without changing any target's seed set. Initialization can consume or extend the time budget; the raw log
 distinguishes corpus replay from mutation and any newly discovered paths.
 

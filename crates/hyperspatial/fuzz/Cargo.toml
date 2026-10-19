@@ -9,6 +9,13 @@ cargo-fuzz = true
 
 [workspace]
 
+[[bin]]
+name = "jacobi"
+path = "fuzz_targets/jacobi.rs"
+test = false
+doc = false
+bench = false
+
 [dependencies]
 libfuzzer-sys = "0.4"
 hyperspatial = { path = ".." }

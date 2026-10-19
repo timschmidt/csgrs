@@ -25,9 +25,11 @@ selection, with retained inverse relations and explicit pole conventions. The
 Ellipsoidal Transverse Mercator/UTM and geodesic measurements remain open within E2.
 Native Carlson RF/RD elliptic integrals are an additional scalar prerequisite
 for exact rectification, with [scalar admission](../hyperreal/docs/admission-elliptic-integrals.md).
-Native Legendre F/E and their continuous inverses now supply further scalar
-prerequisites. Jacobi sn/cn/dn, complex continuation, Thompson/Lee rectification
-and a complete ellipsoidal transverse projection remain open.
+Native Legendre F/E, their continuous inverses and shared real Jacobi sn/cn/dn
+now supply further scalar prerequisites. The [Jacobi admission](../hyperreal/docs/admission-jacobi.md)
+records retained square-sum relations and positive dn. Complex continuation,
+Thompson/Lee rectification and a complete ellipsoidal transverse projection
+remain open.
 See the [spherical Mercator admission](docs/admission/e2-mercator.md),
 the [forward/local admission](docs/admission/e1-native.md)
 and [closest-point inverse admission](docs/admission/e1-inverse.md).
@@ -170,8 +172,12 @@ period reduction, positive second-kind formulas, and independent development
 oracles. Native `jacobi_amplitude` and `inverse_elliptic_e` now retain unwrapped
 inverse relations and use certified rational root enclosures; their
 [admission](../hyperreal/docs/admission-inverse-legendre.md) distinguishes the
-retained exact value from finite evaluation bounds. Next, admit Jacobi sn/cn/dn
-with retained periods and branch choices, complex continuation, then the
+retained exact value from finite evaluation bounds. Native `jacobi_sncndn`
+now shares that amplitude, reduces its periods with a certified quotient,
+and retains unit/elliptic square relations and the positive dn branch. Its
+[admission](../hyperreal/docs/admission-jacobi.md) records the real parameter
+domain and bounded relation recognition; [verification](verification/2026-10-19-e2-jacobi/README.md)
+records executed evidence and limits. Next, admit complex continuation, then the
 Thompson/Lee mapping and its certified inverse. References are
 [DLMF integral relations](https://dlmf.nist.gov/19.25),
 [Jacobi computation](https://dlmf.nist.gov/22.20), and

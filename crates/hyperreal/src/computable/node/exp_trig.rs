@@ -17,33 +17,11 @@ impl Computable {
     }
 
     fn integer_ratio_nearest(&self, divisor: Computable) -> BigInt {
-        // Low-precision nearest-integer quotient used only for range reduction.
-        // Use fixed-precision values directly and explicit remainder correction
-        // to avoid creating an extra inverse path before the caller's own
-        // correction loop.
-        // This keeps reduction for very large arguments on the cheap path while
-        // preserving Payne-Hanek-style behavior.
-        let precision: Precision = -4;
-        let numerator = self.approx(precision);
-        let denominator = divisor.approx(precision);
-        if denominator.is_zero() {
-            return BigInt::zero();
-        }
-
-        let same_sign = numerator.sign() == denominator.sign();
-        let abs_numerator = numerator.magnitude().clone();
-        let abs_denominator = denominator.magnitude().clone();
-        let mut quotient = abs_numerator.clone() / abs_denominator.clone();
-        let remainder = abs_numerator % abs_denominator.clone();
-        if remainder >= (abs_denominator >> 1) {
-            quotient += 1_u32;
-        }
-
-        if same_sign {
-            BigInt::from_biguint(Sign::Plus, quotient)
-        } else {
-            BigInt::from_biguint(Sign::Minus, quotient)
-        }
+        // A strict-error near-integer quotient: |self/divisor - n| < 1.
+        // All callers use a positive shared divisor (pi, pi/2 or ln(2)).
+        // Refining the quotient as one expression accounts for divisor error
+        // at the numerator's magnitude, including huge opaque amplitudes.
+        self.clone().multiply(divisor.inverse()).approx_signal(&self.signal, 0)
     }
 
     fn reduce_by_divisor(
@@ -89,11 +67,10 @@ impl Computable {
     /// kernel also uses this when construction deferred the reduction work.
     pub(crate) fn reduced_exp(&self) -> Option<Self> {
         let (reduced, multiple) = self.reduce_by_divisor(&Self::ln2(), -4, 64)?;
-        Some(reduced.prescaled_exp().shift_left(
-            multiple
-                .try_into()
-                .expect("binary exponent should fit in i32"),
-        ))
+        // Reduction is optional: a finite exact exponent can require a
+        // binary scale larger than the node's i32 representation permits.
+        // Retain the lazy exponential instead of panicking at construction.
+        Some(reduced.prescaled_exp().shift_left(multiple.try_into().ok()?))
     }
 
     fn prescaled_exp(self) -> Self {

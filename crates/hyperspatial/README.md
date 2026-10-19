@@ -199,12 +199,19 @@ assert!(amplitude.certified_rational_interval(-128).is_some());
 assert!(rectifying.certified_rational_interval(-128).is_some());
 assert_eq!(amplitude.elliptic_f(&parameter)?, integral_value);
 assert_eq!(rectifying.elliptic_e(&parameter)?, integral_value);
+let (sn, cn, dn) = integral_value.jacobi_sncndn(&parameter)?;
+assert!((&sn * &sn + &cn * &cn).exact_rational_normal_form().unwrap().is_one());
+assert!(dn.certified_rational_interval(-128).is_some());
+let _positive_reciprocal = dn.inverse_ref()?;
 # Ok::<(), hyperspatial::Error>(())
 ```
 
 These inverse scalars retain every real period and support negative parameters.
 Their arguments are dimensionless integral values; coordinate operations own
 ellipsoid length scaling.
+Jacobi `sn`, `cn` and positive `dn` share the retained amplitude and expose
+exact unit and elliptic norm relations. Mathematical equality uses certificates;
+`Real` structural equality does not promise one canonical expression for a value.
 They do not yet supply the ellipsoidal transverse coordinate operation.
 
 Ellipsoidal Transverse Mercator/UTM, geodesics, datum operations,
@@ -241,6 +248,8 @@ ingress requires an explicit `InputProvenance`; missing uncertainty stays unknow
   MPFR oracles and downstream representation gates.
 - [Inverse Legendre admission](../hyperreal/docs/admission-inverse-legendre.md):
   Jacobi amplitude, inverse E, retained relations and certified root enclosures.
+- [Jacobi admission](../hyperreal/docs/admission-jacobi.md): shared sn/cn/dn,
+  positive branch, certified period reduction and exact norm relations.
 
 - [Ellipsoidal Mercator admission](docs/admission/e2-ellipsoidal.md): exact inverse
   relations, open latitude evidence, shared projection rules and validation.

@@ -23,6 +23,9 @@ mod benchmark_report;
 
 #[path = "../tests/support/inverse_legendre_oracle.rs"]
 mod inverse_legendre_oracle;
+use inverse_legendre_oracle as inverse_oracle;
+#[path = "../tests/support/jacobi_oracle.rs"]
+mod jacobi_oracle;
 #[path = "../tests/support/legendre_oracle.rs"]
 mod legendre_oracle;
 
@@ -704,6 +707,29 @@ fn bench_real_arithmetic_api(c: &mut Criterion) {
 
 fn bench_real_elementary_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_real_elementary_api");
+
+    let argument: Real = "0.75".parse().unwrap();
+    let parameter: Real = "0.5".parse().unwrap();
+    let native = || {
+        let (sn, cn, dn) = argument.clone().jacobi_sncndn(&parameter).unwrap();
+        [sn, cn, dn]
+    };
+    let reference = || jacobi_oracle::values(&argument, &parameter);
+    for (actual, expected) in native().into_iter().zip(reference()) {
+        let [lo, hi] = (actual - legendre_oracle::native(expected))
+            .certified_rational_interval(-144)
+            .unwrap();
+        let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+        assert!(lo >= -tolerance.clone() && hi <= tolerance);
+    }
+    group.bench_function(
+        BenchmarkId::new("hyperreal_evaluated_p128", "jacobi_sncndn"),
+        |b| b.iter(|| black_box(native().map(|v| v.certified_rational_interval(-128).unwrap()))),
+    );
+    group.bench_function(
+        BenchmarkId::new("mpfr1024_point_reference", "jacobi_sncndn"),
+        |b| b.iter(|| black_box(reference())),
+    );
 
     for (name, second) in [("jacobi_amplitude", false), ("inverse_elliptic_e", true)] {
         let parameter: Real = "0.5".parse().unwrap();

@@ -110,6 +110,9 @@ impl Approximation {
             EllipticE(arguments) => elliptic_legendre(signal, arguments, true, p),
             JacobiAmplitude(arguments) => inverse_legendre(signal, arguments, false, p),
             InverseEllipticE(arguments) => inverse_legendre(signal, arguments, true, p),
+            JacobiSn(arguments) => jacobi(signal, arguments, 0, p),
+            JacobiCn(arguments) => jacobi(signal, arguments, 1, p),
+            JacobiDn(arguments) => jacobi(signal, arguments, 2, p),
         }
     }
 }

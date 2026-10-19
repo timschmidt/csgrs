@@ -68,6 +68,10 @@ name = "inverse_legendre"
 harness = false
 
 [[bench]]
+name = "jacobi"
+harness = false
+
+[[bench]]
 name = "legendre_integrals"
 harness = false
 

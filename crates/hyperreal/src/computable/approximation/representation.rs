@@ -215,6 +215,11 @@ pub(super) enum Approximation {
     // Unwrapped inverse integrals: [value, ln(1-m)], intrinsically in-domain.
     JacobiAmplitude(Box<[Computable; 2]>),
     InverseEllipticE(Box<[Computable; 2]>),
+    // Shared amplitude and ln(1-m), intrinsically valid for all finite payloads.
+    // Appended variants preserve the existing binary serialization indices.
+    JacobiSn(Box<[Computable; 2]>),
+    JacobiCn(Box<[Computable; 2]>),
+    JacobiDn(Box<[Computable; 2]>),
 }
 
 #[cfg(feature = "serde")]
