@@ -22957,6 +22957,1092 @@
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/atan-kernel-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
     "runtime_admitted": true,
     "general_speedup_claimed": false
+  },
+  "atanh_rational_kernel_ranges": {
+    "decision": "Retain rational atanh range checks and native exact logarithm reduction.",
+    "admitted_scope": "The rational atanh evaluator requires an exact tiny-range proof before its recurrence and coarse-zero shortcut. Other valid rationals reuse native atanh/logarithm reduction. Valid imported graphs, wire representation, sign and following arithmetic retain their meaning across cold and warm queries.",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1113
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 950
+      }
+    },
+    "debug_units_passed": 828,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-solid_cache": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "ordinary_cost": {
+      "candidate_over_parent_median_latency": {
+        "named-root-cbor": 1.0114321836108444,
+        "named-root-json": 0.9788423583369811,
+        "opaque-add-fresh": 1.0567370824275566,
+        "opaque-add-warm": 1.0223445222110725,
+        "opaque-root-cbor": 0.9896492046297757,
+        "opaque-root-json": 0.9757807409537442,
+        "radical-add-fresh": 0.9538165402161592,
+        "radical-add-warm": 1.0051578195140252,
+        "rational-add": 1.0228671837752668,
+        "rational-cbor": 1.0069873810341023,
+        "rational-json": 0.970984302834946,
+        "small-atanh-cbor": 1.0640171585291671,
+        "small-atanh-json": 0.9909224572751273,
+        "trig-add-fresh": 1.054985243525215,
+        "trig-add-warm": 1.059898196571351,
+        "trig-cbor": 1.0046684881250356,
+        "trig-json": 0.9948521032705514
+      },
+      "binary_bytes": {
+        "candidate": 6783616,
+        "parent": 6783168
+      },
+      "allocation_deltas_first_pair": {
+        "named-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "named-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-add": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "allocation_deltas_stable_across_all_five_pairs": true,
+      "all_allocation_and_byte_metrics_identical": true,
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "native_atanh_cost": {
+      "candidate_over_parent_median_latency": {
+        "computable-atanh-boundary-rational-s-1-cold--128": 1.0725482089287182,
+        "computable-atanh-boundary-rational-s-1-cold--32": 1.0336540651836699,
+        "computable-atanh-boundary-rational-s-1-cold-0": 0.9776681804124551,
+        "computable-atanh-boundary-rational-s-1-warm--128": 1.008970246149636,
+        "computable-atanh-boundary-rational-s-1-warm--32": 1.0195982948286046,
+        "computable-atanh-boundary-rational-s-1-warm-0": 1.0002342450671893,
+        "computable-atanh-boundary-rational-s1-cold--128": 0.9967976964939467,
+        "computable-atanh-boundary-rational-s1-cold--32": 1.014837602536538,
+        "computable-atanh-boundary-rational-s1-cold-0": 1.0258742219635297,
+        "computable-atanh-boundary-rational-s1-warm--128": 1.0160957443128755,
+        "computable-atanh-boundary-rational-s1-warm--32": 1.0378901480698477,
+        "computable-atanh-boundary-rational-s1-warm-0": 0.9813617014555247,
+        "computable-atanh-tiny-rational-s-1-cold--128": 1.0665264958556273,
+        "computable-atanh-tiny-rational-s-1-cold--32": 1.0075219484247866,
+        "computable-atanh-tiny-rational-s-1-cold-0": 1.0727493577107183,
+        "computable-atanh-tiny-rational-s-1-warm--128": 1.0905951052769007,
+        "computable-atanh-tiny-rational-s-1-warm--32": 1.0708208662927563,
+        "computable-atanh-tiny-rational-s-1-warm-0": 0.9825862477182639,
+        "computable-atanh-tiny-rational-s1-cold--128": 0.9875795934472433,
+        "computable-atanh-tiny-rational-s1-cold--32": 1.0524422266088875,
+        "computable-atanh-tiny-rational-s1-cold-0": 1.1278401715061916,
+        "computable-atanh-tiny-rational-s1-warm--128": 1.0348902838053253,
+        "computable-atanh-tiny-rational-s1-warm--32": 1.0865897403011133,
+        "computable-atanh-tiny-rational-s1-warm-0": 1.0155603780409177,
+        "imported-rational-atanh-boundary-rational-s-1-cold--128": 0.8422259330216556,
+        "imported-rational-atanh-boundary-rational-s-1-cold--32": 2.264733870700361,
+        "imported-rational-atanh-boundary-rational-s-1-cold-0": 3.5563952289080607,
+        "imported-rational-atanh-boundary-rational-s-1-warm--128": 1.013866557149665,
+        "imported-rational-atanh-boundary-rational-s-1-warm--32": 0.9980461974616517,
+        "imported-rational-atanh-boundary-rational-s-1-warm-0": 0.8865175498967653,
+        "imported-rational-atanh-boundary-rational-s1-cold--128": 0.7232602011615993,
+        "imported-rational-atanh-boundary-rational-s1-cold--32": 2.0404932096432717,
+        "imported-rational-atanh-boundary-rational-s1-cold-0": 3.3449434423686664,
+        "imported-rational-atanh-boundary-rational-s1-warm--128": 1.0190382773641447,
+        "imported-rational-atanh-boundary-rational-s1-warm--32": 1.0087320920705258,
+        "imported-rational-atanh-boundary-rational-s1-warm-0": 1.0045903870962636,
+        "imported-rational-atanh-tiny-rational-s-1-cold--128": 1.118862695568685,
+        "imported-rational-atanh-tiny-rational-s-1-cold--32": 1.0383387840963159,
+        "imported-rational-atanh-tiny-rational-s-1-cold-0": 0.9896753633949152,
+        "imported-rational-atanh-tiny-rational-s-1-warm--128": 1.079112075440207,
+        "imported-rational-atanh-tiny-rational-s-1-warm--32": 1.0574558335321447,
+        "imported-rational-atanh-tiny-rational-s-1-warm-0": 1.036431509733424,
+        "imported-rational-atanh-tiny-rational-s1-cold--128": 1.0284097667707457,
+        "imported-rational-atanh-tiny-rational-s1-cold--32": 1.0310931321992924,
+        "imported-rational-atanh-tiny-rational-s1-cold-0": 1.0434006358054926,
+        "imported-rational-atanh-tiny-rational-s1-warm--128": 1.043802076951354,
+        "imported-rational-atanh-tiny-rational-s1-warm--32": 1.0290000994431185,
+        "imported-rational-atanh-tiny-rational-s1-warm-0": 1.000553705476147,
+        "real-atanh-boundary-rational-s-1-cold--128": 1.0022751039731528,
+        "real-atanh-boundary-rational-s-1-cold--32": 0.9568283076862275,
+        "real-atanh-boundary-rational-s-1-cold-0": 0.9702846963711067,
+        "real-atanh-boundary-rational-s-1-warm--128": 1.0223791135401044,
+        "real-atanh-boundary-rational-s-1-warm--32": 1.0145238945945132,
+        "real-atanh-boundary-rational-s-1-warm-0": 0.9314076984665447,
+        "real-atanh-boundary-rational-s1-cold--128": 0.9826973835503936,
+        "real-atanh-boundary-rational-s1-cold--32": 1.0393597816764053,
+        "real-atanh-boundary-rational-s1-cold-0": 1.0205674540563998,
+        "real-atanh-boundary-rational-s1-warm--128": 1.028359242801657,
+        "real-atanh-boundary-rational-s1-warm--32": 1.0259757912013527,
+        "real-atanh-boundary-rational-s1-warm-0": 1.0059803123132725,
+        "real-atanh-tiny-rational-s-1-cold--128": 1.0488371445158782,
+        "real-atanh-tiny-rational-s-1-cold--32": 1.0703130452492382,
+        "real-atanh-tiny-rational-s-1-cold-0": 1.073280827999459,
+        "real-atanh-tiny-rational-s-1-warm--128": 1.0158411604885629,
+        "real-atanh-tiny-rational-s-1-warm--32": 0.9956367889112465,
+        "real-atanh-tiny-rational-s-1-warm-0": 0.9896774777272356,
+        "real-atanh-tiny-rational-s1-cold--128": 1.0786658191361314,
+        "real-atanh-tiny-rational-s1-cold--32": 1.0445736827911651,
+        "real-atanh-tiny-rational-s1-cold-0": 1.107604077803817,
+        "real-atanh-tiny-rational-s1-warm--128": 1.02431776633358,
+        "real-atanh-tiny-rational-s1-warm--32": 0.9952003498803612,
+        "real-atanh-tiny-rational-s1-warm-0": 1.0314013988675386
+      },
+      "binary_bytes": {
+        "candidate": 6907600,
+        "parent": 6907088
+      },
+      "allocation_deltas_first_pair": {
+        "computable-atanh-boundary-rational-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-boundary-rational-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-boundary-rational-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-boundary-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-boundary-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-boundary-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-boundary-rational-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-boundary-rational-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-boundary-rational-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-boundary-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-boundary-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-boundary-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atanh-tiny-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-boundary-rational-s-1-cold--128": {
+          "allocations": 220000,
+          "allocated_bytes": 18160000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 1232
+        },
+        "imported-rational-atanh-boundary-rational-s-1-cold--32": {
+          "allocations": 590000,
+          "allocated_bytes": 29440000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 1288
+        },
+        "imported-rational-atanh-boundary-rational-s-1-cold-0": {
+          "allocations": 630000,
+          "allocated_bytes": 30240000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 1288
+        },
+        "imported-rational-atanh-boundary-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-boundary-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-boundary-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-boundary-rational-s1-cold--128": {
+          "allocations": 130000,
+          "allocated_bytes": 11120000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 600
+        },
+        "imported-rational-atanh-boundary-rational-s1-cold--32": {
+          "allocations": 500000,
+          "allocated_bytes": 22640000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 672
+        },
+        "imported-rational-atanh-boundary-rational-s1-cold-0": {
+          "allocations": 540000,
+          "allocated_bytes": 23440000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 664
+        },
+        "imported-rational-atanh-boundary-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-boundary-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-boundary-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-atanh-tiny-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-boundary-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atanh-tiny-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "allocation_deltas_stable_across_all_five_pairs": true,
+      "all_allocation_and_byte_metrics_identical": false,
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "cost_interpretation": {
+      "all_unfavorable_samples_retained": true,
+      "claim": "Correctness and completed-domain extension; no general speedup claim.",
+      "measurement_limitations": [
+        "Finite single-host measurements with five alternating pairs; timing changes are not causal attribution.",
+        "The counted Rust allocator covers the measured implementation allocations; this is not a process-wide heap bound.",
+        "Former incorrect parent enclosures are reported separately from matched successful cost rows."
+      ],
+      "native": {
+        "all_completed_output_assertions_passed": true,
+        "all_slower_rows_retained_in_raw_result": true,
+        "allocation_deltas_stable_across_pairs": true,
+        "binary_bytes": {
+          "candidate": 6907600,
+          "parent": 6907088
+        },
+        "binary_bytes_delta": 512,
+        "changed_allocator_metrics_first_pair": {
+          "imported-rational-atanh-boundary-rational-s-1-cold--128": {
+            "allocated_bytes": 18160000,
+            "allocations": 220000,
+            "frees": 220000,
+            "peak_extra_bytes": 1232,
+            "retained_bytes": 0
+          },
+          "imported-rational-atanh-boundary-rational-s-1-cold--32": {
+            "allocated_bytes": 29440000,
+            "allocations": 590000,
+            "frees": 590000,
+            "peak_extra_bytes": 1288,
+            "retained_bytes": 0
+          },
+          "imported-rational-atanh-boundary-rational-s-1-cold-0": {
+            "allocated_bytes": 30240000,
+            "allocations": 630000,
+            "frees": 630000,
+            "peak_extra_bytes": 1288,
+            "retained_bytes": 0
+          },
+          "imported-rational-atanh-boundary-rational-s1-cold--128": {
+            "allocated_bytes": 11120000,
+            "allocations": 130000,
+            "frees": 130000,
+            "peak_extra_bytes": 600,
+            "retained_bytes": 0
+          },
+          "imported-rational-atanh-boundary-rational-s1-cold--32": {
+            "allocated_bytes": 22640000,
+            "allocations": 500000,
+            "frees": 500000,
+            "peak_extra_bytes": 672,
+            "retained_bytes": 0
+          },
+          "imported-rational-atanh-boundary-rational-s1-cold-0": {
+            "allocated_bytes": 23440000,
+            "allocations": 540000,
+            "frees": 540000,
+            "peak_extra_bytes": 664,
+            "retained_bytes": 0
+          }
+        },
+        "iterations_per_row": 10000,
+        "maximum_added_allocated_bytes_per_iteration": 3024.0,
+        "maximum_added_allocation_calls_per_iteration": 63.0,
+        "maximum_added_peak_bytes_per_row": 1288,
+        "median_latency_ratio_range": [
+          0.7232602011615993,
+          3.5563952289080607
+        ],
+        "pairs": 5,
+        "result_sha256": "a424df1c07b638ac15968c6de2fdd87e2f7c2d71bae094d6ed5ab9358687049d",
+        "rows": 72,
+        "rows_with_changed_allocator_metrics": 6,
+        "slower_rows": 55,
+        "slowest_ratios": {
+          "computable-atanh-tiny-rational-s-1-warm--128": 1.0905951052769007,
+          "computable-atanh-tiny-rational-s1-cold-0": 1.1278401715061916,
+          "computable-atanh-tiny-rational-s1-warm--32": 1.0865897403011133,
+          "imported-rational-atanh-boundary-rational-s-1-cold--32": 2.264733870700361,
+          "imported-rational-atanh-boundary-rational-s-1-cold-0": 3.5563952289080607,
+          "imported-rational-atanh-boundary-rational-s1-cold--32": 2.0404932096432717,
+          "imported-rational-atanh-boundary-rational-s1-cold-0": 3.3449434423686664,
+          "imported-rational-atanh-tiny-rational-s-1-cold--128": 1.118862695568685,
+          "imported-rational-atanh-tiny-rational-s-1-warm--128": 1.079112075440207,
+          "real-atanh-tiny-rational-s1-cold-0": 1.107604077803817
+        }
+      },
+      "ordinary": {
+        "all_completed_output_assertions_passed": true,
+        "all_slower_rows_retained_in_raw_result": true,
+        "allocation_deltas_stable_across_pairs": true,
+        "binary_bytes": {
+          "candidate": 6783616,
+          "parent": 6783168
+        },
+        "binary_bytes_delta": 448,
+        "changed_allocator_metrics_first_pair": {},
+        "iterations_per_row": 100000,
+        "maximum_added_allocated_bytes_per_iteration": 0.0,
+        "maximum_added_allocation_calls_per_iteration": 0.0,
+        "maximum_added_peak_bytes_per_row": 0,
+        "median_latency_ratio_range": [
+          0.9538165402161592,
+          1.0640171585291671
+        ],
+        "pairs": 5,
+        "result_sha256": "f03eed23cf425e083461e261b25fa2233e586b528873ef5965a152a5bfb1ac63",
+        "rows": 17,
+        "rows_with_changed_allocator_metrics": 0,
+        "slower_rows": 10,
+        "slowest_ratios": {
+          "named-root-cbor": 1.0114321836108444,
+          "opaque-add-fresh": 1.0567370824275566,
+          "opaque-add-warm": 1.0223445222110725,
+          "radical-add-warm": 1.0051578195140252,
+          "rational-add": 1.0228671837752668,
+          "rational-cbor": 1.0069873810341023,
+          "small-atanh-cbor": 1.0640171585291671,
+          "trig-add-fresh": 1.054985243525215,
+          "trig-add-warm": 1.059898196571351,
+          "trig-cbor": 1.0046684881250356
+        }
+      },
+      "resources": {
+        "disk_b_free_bytes": 208677269504,
+        "free_bytes": 74392756224,
+        "host_available_bytes": 107119022080,
+        "log_bytes": 148896022,
+        "new_volume_free_bytes": 1992140705792,
+        "tmp_free_bytes": 66844184576
+      }
+    },
+    "cost_retention": {
+      "all_unfavorable_samples_retained": true,
+      "cost_interpretation": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/atanh-rational-admission-20261019-v1/cost-interpretation-v1.json",
+      "cost_interpretation_sha256": "522c730529990666fca614953bfa3ce259ac10ab7ecf593c97cb738b2312a3c0",
+      "decision": "Retain the rational atanh range guard and native fallback with all measured costs disclosed.",
+      "future_work": "Any cheaper range proof or native reduction must preserve the admitted domain, independent enclosures, cancellation recovery, wire representation and downstream completion.",
+      "general_speedup_claimed": false,
+      "governing_priority": "Exactness and supported completion precede performance and memory.",
+      "measured_costs": {
+        "native": {
+          "allocation_deltas_stable_across_pairs": true,
+          "executable_growth_bytes": 512,
+          "maximum_added_allocated_bytes_per_iteration": 3024.0,
+          "maximum_added_allocation_calls_per_iteration": 63.0,
+          "maximum_added_peak_bytes_per_row": 1288,
+          "median_latency_ratio_range": [
+            0.7232602011615993,
+            3.5563952289080607
+          ],
+          "rows_more_than_ten_percent_slower": {
+            "computable-atanh-tiny-rational-s1-cold-0": {
+              "candidate_over_parent_median_ratio": 1.1278401715061916,
+              "median_nanoseconds_per_query": {
+                "candidate": 479.5811,
+                "parent": 425.2208
+              }
+            },
+            "imported-rational-atanh-boundary-rational-s-1-cold--32": {
+              "candidate_over_parent_median_ratio": 2.264733870700361,
+              "median_nanoseconds_per_query": {
+                "candidate": 2882.5501,
+                "parent": 1272.7986
+              }
+            },
+            "imported-rational-atanh-boundary-rational-s-1-cold-0": {
+              "candidate_over_parent_median_ratio": 3.5563952289080607,
+              "median_nanoseconds_per_query": {
+                "candidate": 2637.8388,
+                "parent": 741.717
+              }
+            },
+            "imported-rational-atanh-boundary-rational-s1-cold--32": {
+              "candidate_over_parent_median_ratio": 2.0404932096432717,
+              "median_nanoseconds_per_query": {
+                "candidate": 2559.9332,
+                "parent": 1254.5659
+              }
+            },
+            "imported-rational-atanh-boundary-rational-s1-cold-0": {
+              "candidate_over_parent_median_ratio": 3.3449434423686664,
+              "median_nanoseconds_per_query": {
+                "candidate": 2489.621,
+                "parent": 744.2939
+              }
+            },
+            "imported-rational-atanh-tiny-rational-s-1-cold--128": {
+              "candidate_over_parent_median_ratio": 1.118862695568685,
+              "median_nanoseconds_per_query": {
+                "candidate": 3007.0245,
+                "parent": 2687.5724
+              }
+            },
+            "real-atanh-tiny-rational-s1-cold-0": {
+              "candidate_over_parent_median_ratio": 1.107604077803817,
+              "median_nanoseconds_per_query": {
+                "candidate": 847.1759,
+                "parent": 764.8725
+              }
+            }
+          },
+          "rows_with_changed_allocator_metrics": 6
+        },
+        "ordinary": {
+          "allocation_deltas_stable_across_pairs": true,
+          "executable_growth_bytes": 448,
+          "maximum_added_allocated_bytes_per_iteration": 0.0,
+          "maximum_added_allocation_calls_per_iteration": 0.0,
+          "maximum_added_peak_bytes_per_row": 0,
+          "median_latency_ratio_range": [
+            0.9538165402161592,
+            1.0640171585291671
+          ],
+          "rows_more_than_ten_percent_slower": {},
+          "rows_with_changed_allocator_metrics": 0
+        }
+      },
+      "measurement_limits": "Five alternating pairs on one host; latency changes alone do not establish causation. Rust allocator instrumentation is not a process-wide heap bound. Former wrong results are corrected behavior, not matched successful-workload speedups.",
+      "reason": "The unchanged parent produces eight independently refuted coarse enclosures for valid imported rational atanh nodes. The repair proves the tiny-series range before either its coarse shortcut or recurrence and reuses the native exact logarithm reducer elsewhere. The original scalar and downstream validation workloads still complete, and every matched cost row passes independent result assertions under its original resource limits.",
+      "tradeoff": "Imported values outside the constructor-selected tiny range may require additional native reduction even where the prior series happened to return an accurate result. These costs are retained for the range and enclosure contract; a faster unproved series is not an accepted alternative."
+    },
+    "remaining_limitations": [
+      "General expression domains, other kernel ranges and typed native evaluation/cancellation remain open.",
+      "The isolated fallible-evaluation prototype remains unadmitted.",
+      "The missing-MSD branch is handled conservatively by inspection; no multi-gigabit denominator was allocated for empirical coverage.",
+      "External containment does not establish internal total-work, heap, expression-growth or cancellation contracts.",
+      "Finite tests and cost measurements do not establish exhaustive correctness, formal verification, coverage targets or the full useful-workflow corpus.",
+      "Clean shipped-distribution and foreign consumers, full CI/DRC gates and the full properties plan remain open.",
+      "Historical missing evidence was neither reaudited nor recovered."
+    ],
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": null,
+    "disk_b_quota_mode": "User authorized available artifact volume capacity; no retained-artifact quota.",
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "all_adverse_results_retained": true,
+    "next": "Continue scalar domain/evidence ownership and ordinary strict completion, then complete the shipped user path and release validation.",
+    "parent_revision": "38bf8a3130d40ddd7842e3e841a392205256f137",
+    "review": "docs/evidence/2026-10-19-atanh-rational-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-atanh-rational-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/atanh-rational-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "runtime_admitted": true,
+    "general_speedup_claimed": false
   }
 },
   "status_meanings": {

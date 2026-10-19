@@ -415,6 +415,10 @@ time. Larger rational arguments reuse native rational reduction; other real
 arguments use the shared half-angle construction twice to ensure convergence.
 This preserves valid imported graphs and their meaning across refinement,
 without proving the domain of an arbitrary child expression.
+The rational `atanh` kernel likewise proves its tiny-argument range before
+using either its series or a coarse-zero result. Other valid rationals in
+`(-1, 1)` reuse native exact logarithm reduction, preserving imported values
+near the endpoints through cold and warm refinement.
 Inverse-cosine endpoint facts distinguish `acos(1) = acosh(1) = 0`; an imported
 `acosh` node needs evidence about its argument before claiming a positive sign.
 The native rational reader recognizes these exact endpoints so later arithmetic

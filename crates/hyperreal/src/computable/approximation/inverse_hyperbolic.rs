@@ -229,6 +229,20 @@ fn atanh_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt
     // Direct exact-rational variant of the tiny atanh series. This mirrors the
     // direct rational trig kernels: preserve the symbolic rational payload and
     // round only once at the requested working precision.
+    // A stored rational tag does not prove the tiny-series range. For nonzero
+    // r, an exact MSD <= -4 proves |r| < 1/8 and justifies both this series
+    // and the coarse-zero shortcut. Missing metadata is not a range proof.
+    if r.sign() != Sign::NoSign && r.msd_exact().is_none_or(|msd| msd >= -3) {
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+        // Native rational atanh uses this kernel only for MSD <= -4, so this
+        // fallback instead reaches its exact logarithm reduction or endpoint
+        // identities without recreating the inadmissible series node.
+        return Computable::rational(r.clone())
+            .atanh()
+            .approx_signal(signal, p);
+    }
     if p >= 1 {
         return Zero::zero();
     }
