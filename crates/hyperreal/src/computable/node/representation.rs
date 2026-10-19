@@ -246,6 +246,7 @@ impl Node {
         match approximation {
             Approximation::Constant(SharedConstant::Pi)
             | Approximation::AtanRational(_)
+            | Approximation::IntegralAtan(_)
             | Approximation::PrescaledAtan(_)
             | Approximation::AtanDeferred(_)
             | Approximation::AcosPositive(_)

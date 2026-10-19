@@ -89,11 +89,13 @@ impl Computable {
     /// kernel also uses this when construction deferred the reduction work.
     pub(crate) fn reduced_exp(&self) -> Option<Self> {
         let (reduced, multiple) = self.reduce_by_divisor(&Self::ln2(), -4, 64)?;
-        Some(reduced.prescaled_exp().shift_left(
-            multiple
-                .try_into()
-                .expect("binary exponent should fit in i32"),
-        ))
+        Some(
+            reduced.prescaled_exp().shift_left(
+                multiple
+                    .try_into()
+                    .expect("binary exponent should fit in i32"),
+            ),
+        )
     }
 
     fn prescaled_exp(self) -> Self {
@@ -103,7 +105,11 @@ impl Computable {
         // exp(x) stays strictly positive across all domain values, so cache
         // that fact directly for fast sign/zero checks.
         Self {
-            internal: Arc::new(Node::new(Approximation::PrescaledExp(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Plus))),
+            internal: Arc::new(Node::new(
+                Approximation::PrescaledExp(self),
+                BoundCache::Invalid,
+                ExactSignCache::Valid(Sign::Plus),
+            )),
             signal: None,
         }
     }
@@ -189,7 +195,11 @@ impl Computable {
             None => ExactSignCache::Invalid,
         };
         Self {
-            internal: Arc::new(Node::new(Approximation::Expm1(self), BoundCache::Invalid, exact_sign)),
+            internal: Arc::new(Node::new(
+                Approximation::Expm1(self),
+                BoundCache::Invalid,
+                exact_sign,
+            )),
             signal: None,
         }
     }
@@ -256,9 +266,7 @@ impl Computable {
             return None;
         }
 
-        let precision_bits = msd
-            .checked_add(quotient_guard_bits.max(16))?
-            .max(16);
+        let precision_bits = msd.checked_add(quotient_guard_bits.max(16))?.max(16);
         let shift = usize::try_from(precision_bits).ok()?;
         let pi_scaled = Self::pi().approx(-precision_bits).to_biguint()?;
         let numerator = rational.numerator() << (shift + 1);
@@ -338,9 +346,9 @@ impl Computable {
         match &self.internal.approximation {
             // pi > 1, so every exact rational r satisfies |r| < |r| * pi.
             Approximation::One => Some(Rational::one()),
-            Approximation::Int(value) => {
-                Some(Self::rational_magnitude(Rational::from_bigint(value.clone())))
-            }
+            Approximation::Int(value) => Some(Self::rational_magnitude(Rational::from_bigint(
+                value.clone(),
+            ))),
             Approximation::Ratio(value) => Some(Self::rational_magnitude(value.clone())),
             Approximation::Constant(SharedConstant::Pi) => Some(Rational::one()),
             Approximation::Constant(SharedConstant::Tau) => Some(Rational::new(2)),
@@ -358,9 +366,7 @@ impl Computable {
             Approximation::AsinRational(_)
             | Approximation::PrescaledAsin(_)
             | Approximation::AsinDeferred(_) => Some(HALF_RATIONAL.clone()),
-            Approximation::Negate(child) => {
-                child.trig_pi_magnitude_upper_bound(next_budget)
-            }
+            Approximation::Negate(child) => child.trig_pi_magnitude_upper_bound(next_budget),
             Approximation::Offset(child, shift) => {
                 // Keep this proof helper cheap even for deliberately enormous
                 // symbolic shifts; the ordinary magnitude/reduction path can
@@ -421,8 +427,8 @@ impl Computable {
         let quadrant =
             ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref()) % signed::FOUR.deref();
 
-        if let Some((sine, cosine)) = reduced.integer_pi_atan_sin_cos() {
-            crate::trace_dispatch!("computable", "cos", "reduced-integer-pi-atan-rewrite");
+        if let Some((sine, cosine)) = reduced.pi_atan_sin_cos() {
+            crate::trace_dispatch!("computable", "cos", "reduced-pi-atan-rewrite");
             return if quadrant.is_zero() {
                 cosine
             } else if quadrant == *signed::ONE {
@@ -452,8 +458,8 @@ impl Computable {
         let quadrant =
             ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref()) % signed::FOUR.deref();
 
-        if let Some((sine, cosine)) = reduced.integer_pi_atan_sin_cos() {
-            crate::trace_dispatch!("computable", "sin", "reduced-integer-pi-atan-rewrite");
+        if let Some((sine, cosine)) = reduced.pi_atan_sin_cos() {
+            crate::trace_dispatch!("computable", "sin", "reduced-pi-atan-rewrite");
             return if quadrant.is_zero() {
                 sine
             } else if quadrant == *signed::ONE {
@@ -477,9 +483,8 @@ impl Computable {
 
     fn atan_argument(&self) -> Option<Computable> {
         match &self.internal.approximation {
-            Approximation::AtanRational(argument) => {
-                Some(Self::rational(argument.clone()))
-            }
+            Approximation::AtanRational(argument) => Some(Self::rational(argument.clone())),
+            Approximation::IntegralAtan(_) => self.atan_rational_argument().map(Self::rational),
             Approximation::PrescaledAtan(argument) | Approximation::AtanDeferred(argument) => {
                 Some(argument.clone())
             }
@@ -490,9 +495,12 @@ impl Computable {
     pub(crate) fn atan_rational_argument(&self) -> Option<Rational> {
         match &self.internal.approximation {
             Approximation::AtanRational(argument) => Some(argument.clone()),
-            Approximation::Negate(argument) => {
-                argument.atan_rational_argument().map(Rational::neg)
+            // IntegralAtan retains atan(1/n), including the sign of n.
+            // Share this exact inversion with native and Real consumers.
+            Approximation::IntegralAtan(denominator) => {
+                Rational::from_bigint(denominator.clone()).inverse().ok()
             }
+            Approximation::Negate(argument) => argument.atan_rational_argument().map(Rational::neg),
             _ => None,
         }
     }
@@ -503,9 +511,7 @@ impl Computable {
 
     pub(crate) fn asin_argument(&self) -> Option<Computable> {
         match &self.internal.approximation {
-            Approximation::AsinRational(argument) => {
-                Some(Self::rational(argument.clone()))
-            }
+            Approximation::AsinRational(argument) => Some(Self::rational(argument.clone())),
             Approximation::PrescaledAsin(argument) | Approximation::AsinDeferred(argument) => {
                 Some(argument.clone())
             }
@@ -516,9 +522,7 @@ impl Computable {
     pub(crate) fn acos_argument(&self) -> Option<Computable> {
         match &self.internal.approximation {
             Approximation::AcosPositive(argument) => Some(argument.clone()),
-            Approximation::AcosPositiveRational(argument) => {
-                Some(Self::rational(argument.clone()))
-            }
+            Approximation::AcosPositiveRational(argument) => Some(Self::rational(argument.clone())),
             Approximation::AcosNegativeRational(argument) => {
                 Some(Self::rational(argument.clone().neg()))
             }
@@ -531,16 +535,28 @@ impl Computable {
     }
 
     fn unit_complement(argument: &Computable) -> Computable {
-        Self::one()
-            .add(argument.clone().square().negate())
-            .sqrt()
+        Self::one().add(argument.clone().square().negate()).sqrt()
     }
 
-    fn integer_pi_atan_sin_cos(&self) -> Option<(Computable, Computable)> {
-        let (sine_sign, cosine_sign, argument) =
-            self.integer_pi_plus_or_minus_atan_argument()?;
+    fn pi_atan_sin_cos(&self) -> Option<(Computable, Computable)> {
+        let (sine_sign, cosine_sign, argument, swap) =
+            if let Some((sine_sign, cosine_sign, argument)) =
+                self.integer_pi_plus_or_minus_atan_argument()
+            {
+                (sine_sign, cosine_sign, argument, false)
+            } else {
+                let (orientation, argument) = self.half_pi_minus_atan_argument()?;
+                (orientation, orientation, argument, true)
+            };
         let inverse_hypotenuse = Self::unit_hypotenuse(&argument).inverse();
         let sine = argument.multiply(inverse_hypotenuse.clone());
+        // sin(s*pi/2-atan(a))=s*cos(atan(a)),
+        // cos(s*pi/2-atan(a))=s*sin(atan(a)), for s in {-1,+1}.
+        let (sine, cosine) = if swap {
+            (inverse_hypotenuse, sine)
+        } else {
+            (sine, inverse_hypotenuse)
+        };
         Some((
             if sine_sign == Sign::Minus {
                 sine.negate()
@@ -548,9 +564,9 @@ impl Computable {
                 sine
             },
             if cosine_sign == Sign::Minus {
-                inverse_hypotenuse.negate()
+                cosine.negate()
             } else {
-                inverse_hypotenuse
+                cosine
             },
         ))
     }
@@ -569,8 +585,8 @@ impl Computable {
             crate::trace_dispatch!("computable", "cos", "atan-inverse-rewrite");
             return Self::unit_hypotenuse(&argument).inverse();
         }
-        if let Some((_, cosine)) = self.integer_pi_atan_sin_cos() {
-            crate::trace_dispatch!("computable", "cos", "integer-pi-atan-rewrite");
+        if let Some((_, cosine)) = self.pi_atan_sin_cos() {
+            crate::trace_dispatch!("computable", "cos", "pi-atan-rewrite");
             return cosine;
         }
         if let Some(argument) = self.asin_argument() {
@@ -670,8 +686,8 @@ impl Computable {
                 .clone()
                 .multiply(Self::unit_hypotenuse(&argument).inverse());
         }
-        if let Some((sine, _)) = self.integer_pi_atan_sin_cos() {
-            crate::trace_dispatch!("computable", "sin", "integer-pi-atan-rewrite");
+        if let Some((sine, _)) = self.pi_atan_sin_cos() {
+            crate::trace_dispatch!("computable", "sin", "pi-atan-rewrite");
             return sine;
         }
         if let Some(argument) = self.asin_argument() {
@@ -798,7 +814,11 @@ impl Computable {
             // Known |x| < 2: enter the tangent quotient kernel directly.
             crate::trace_dispatch!("computable", "tan", "structural-small-prescaled");
             return Self {
-                internal: Arc::new(Node::new(Approximation::PrescaledTan(self), BoundCache::Invalid, ExactSignCache::Invalid)),
+                internal: Arc::new(Node::new(
+                    Approximation::PrescaledTan(self),
+                    BoundCache::Invalid,
+                    ExactSignCache::Invalid,
+                )),
                 signal: None,
             };
         }
@@ -813,7 +833,11 @@ impl Computable {
         if abs_rough_appr < unsigned::TWO.deref() {
             crate::trace_dispatch!("computable", "tan", "rough-small-prescaled");
             return Self {
-                internal: Arc::new(Node::new(Approximation::PrescaledTan(self), BoundCache::Invalid, ExactSignCache::Invalid)),
+                internal: Arc::new(Node::new(
+                    Approximation::PrescaledTan(self),
+                    BoundCache::Invalid,
+                    ExactSignCache::Invalid,
+                )),
                 signal: None,
             };
         }
@@ -824,7 +848,11 @@ impl Computable {
             let complement = Self::pi().shift_right(1).add(self.negate());
             crate::trace_dispatch!("computable", "tan", "near-half-pi-cotangent-rewrite");
             return Self {
-                internal: Arc::new(Node::new(Approximation::PrescaledCot(complement), BoundCache::Invalid, ExactSignCache::Invalid)),
+                internal: Arc::new(Node::new(
+                    Approximation::PrescaledCot(complement),
+                    BoundCache::Invalid,
+                    ExactSignCache::Invalid,
+                )),
                 signal: None,
             };
         }

@@ -61,3 +61,4 @@ include!("node/atan_range_tests.rs");
 include!("node/atanh_rational_range_tests.rs");
 include!("node/integral_atan_range_tests.rs");
 include!("node/acos_complement_range_tests.rs");
+include!("node/integral_atan_facts_tests.rs");

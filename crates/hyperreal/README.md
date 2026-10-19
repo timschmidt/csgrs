@@ -423,6 +423,13 @@ The integral arctangent kernel represents `atan(1/n)` for nonzero integers.
 Unit denominators reuse the native exact `atan(±1) = ±π/4` identity, so valid
 imported endpoints refine without the slowly converging unit-argument series.
 The stored graph and its wire representation remain intact.
+Sine, cosine and cotangent consumers also reuse the exact argument retained
+by imported `IntegralAtan(n)` nodes. Newly derived results can carry exact
+algebraic proofs and serialize using existing algebraic forms. The input
+nodes keep their wire graphs, and previously serialized derived graphs
+remain supported.
+Native sine and cosine also consume retained signed half-π complements
+directly, preserving their algebraic facts without refining the angle.
 The negative-rational `acos` complement reserves the combined error of its
 π and positive-`acos` samples before subtraction, then rounds once. This
 keeps its enclosure valid when a shared π sample is reused at a coarser

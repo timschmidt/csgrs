@@ -691,7 +691,7 @@ impl Computable {
         }
     }
 
-    pub(crate) fn signed_half_pi_minus_atan_argument(&self) -> Option<(Sign, Computable)> {
+    fn half_pi_minus_atan_argument(&self) -> Option<(Sign, Computable)> {
         let form = self.pi_atan_linear_form(32)?;
         if form.constant.sign() != Sign::NoSign || !form.atan.is_minus_one() {
             return None;
@@ -703,7 +703,11 @@ impl Computable {
         } else {
             return None;
         };
-        let argument = form.argument?;
+        Some((orientation, form.argument?))
+    }
+
+    pub(crate) fn signed_half_pi_minus_atan_argument(&self) -> Option<(Sign, Computable)> {
+        let (orientation, argument) = self.half_pi_minus_atan_argument()?;
         (argument.exact_sign()? == orientation).then_some((orientation, argument))
     }
 
