@@ -237,7 +237,11 @@ The clean-break implementation currently provides:
 - validated open-shell `builder::revolution_patch` construction with native
   meridian domains, exact latitude circles, complete profile/axis-clearance
   certification, and an explicit sub-period angular contract so complete
-  revolutions use periodic subdivision;
+  revolutions use periodic subdivision. Selected meridian endpoints retain
+  latitude origins through `Curve3::rotation`; exact angular charts, similarity
+  and reflection, edge subdivision and cold replay consume the result. Complete
+  boundary images and axis clearance do not establish global embedding; see the
+  [selected-revolution evidence](docs/evidence/2026-10-18-selected-revolution/README.md);
 - exact face area for affine-image rational Bézier and NURBS tensor patches,
   certified from the complete Bernstein/Greville control lattice without
   tessellation; constant weights support arbitrary validated trims, while a

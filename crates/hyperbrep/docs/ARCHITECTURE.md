@@ -117,13 +117,32 @@ the core does not depend on the exchange layer.
 Parsed records confer no geometry authority. Source-scoped views and flat
 parameter storage preserve references and avoid recursive parameter-tree drop.
 
+## Retained rotation orbits
+
+`Curve3::rotation` stores an exact point, authored unit axis and finite angular
+domain of at most one turn. Its chart is `theta = s*t+b`, with `s` equal to +1 or
+-1. Authored angular evaluation applies the existing affine rotation primitives
+to the retained point. Reversal and restriction preserve the source; similarities
+transport the axis as an axial vector, including the orientation sign under
+reflection. Bounds conservatively enclose the full orbit. Positive-order vector
+derivatives require stored origin coordinates; independent selected angular
+parameters and general affine orbit transport remain typed frontiers.
+
+The [rotation implementation](../src/geometry/rotation.rs) owns these invariants.
+Selected revolution patches use it for their latitude boundaries. Ordinary
+face admission checks complete coordinate images and profile-axis clearance,
+including during cold reconstruction. Those checks do not certify general
+rank-two surface regularity, global embedding or solid interior. The
+[finite evidence](evidence/2026-10-18-selected-revolution/README.md) records composition and replay.
+
 ## Closed edges and periodic seam uses
 
-`ModelBuilder::edge` may reference the same vertex twice for a circle or ellipse
-whose exact parameter interval spans one `tau` period. Positive radii and
-independent axes, already required by the spatial carrier, prove that this
-closed curve is regular and simple. Both endpoint images must still agree with
-the vertex. A shorter interval returns `ClosedEdgePeriodMismatch`; other closed
+`ModelBuilder::edge` may reference the same vertex twice for a circle, ellipse
+or retained rotation whose exact parameter interval spans one `tau` period.
+Positive radii and independent axes prove the native conic is regular and simple.
+A retained rotation instead certifies a unit axis, a nonzero radial component
+and a signed angular chart with derivative +1 or -1. Both endpoint images must
+still agree with the vertex. A shorter interval returns `ClosedEdgePeriodMismatch`; other closed
 curve families return `UnsupportedClosedEdge` until they have an appropriate
 regularity certificate. Equality of endpoint coordinates alone is insufficient.
 
@@ -181,10 +200,11 @@ evaluation added subsequently is described below.
 ## Retained spatial points
 
 `Curve3::point_at(&Parameter)` returns `GeometricPoint3`. Authored scalar
-parameters use the native evaluator and store `Point3` coordinates. A selected
-line, rational Bézier or finite NURBS image retains its immutable source curve
-and one shared parameter; `try_coordinates` returns `None` without attempting
-materialization. Conic angular parameters still require a scalar view and
+parameters on authored carriers store `Point3` coordinates. Retained translation
+and rotation origins can preserve a selected source even at scalar parameters.
+A selected line, rational Bézier, finite NURBS or planar image retains its
+immutable source curve and one shared parameter; `try_coordinates` returns `None`
+without attempting materialization. Conic angular parameters still require a scalar view and
 otherwise return `UnsupportedSelectedEvaluation`.
 
 [`geometry/point.rs`](../src/geometry/point.rs) owns the spatial evidence.

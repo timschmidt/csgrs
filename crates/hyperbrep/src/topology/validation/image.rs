@@ -215,7 +215,7 @@ impl ArenaModelBuilder {
         }
 
         if coordinate_image {
-            return self.validate_coordinate_extrusion_image(curve, edge_use, pcurve, surface);
+            return self.validate_coordinate_surface_image(curve, edge_use, pcurve, surface);
         }
 
         match (

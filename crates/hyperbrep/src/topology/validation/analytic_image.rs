@@ -42,7 +42,7 @@ fn profile_parameterizations_equal(actual: &Curve3, expected: &Curve3) -> Result
 }
 
 impl ArenaModelBuilder {
-    pub(in crate::topology) fn validate_coordinate_extrusion_image(
+    pub(in crate::topology) fn validate_coordinate_surface_image(
         &self,
         curve: &Curve3,
         edge_use: &EdgeUse,
@@ -55,9 +55,6 @@ impl ArenaModelBuilder {
             offset,
         } = &edge_use.parameter_correspondence
         else {
-            return Err(BuildError::EdgeUseSupportMismatch);
-        };
-        let Some((profile, direction)) = surface.extrusion_profile_and_direction() else {
             return Err(BuildError::EdgeUseSupportMismatch);
         };
         // Exact line geometry plus a constant orthogonal coordinate proves the
@@ -87,6 +84,14 @@ impl ArenaModelBuilder {
         if constant.compare(&last_constant)? != std::cmp::Ordering::Equal {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
+        if surface.kind() == SurfaceKind::Revolution {
+            return self.validate_coordinate_revolution_image(
+                curve, *axis, scale, offset, &constant, surface,
+            );
+        }
+        let Some((profile, direction)) = surface.extrusion_profile_and_direction() else {
+            return Err(BuildError::EdgeUseSupportMismatch);
+        };
         match axis {
             hypercurve::Axis2::X => {
                 let v = constant
@@ -117,6 +122,59 @@ impl ArenaModelBuilder {
                 let expected = Curve3::translation(expected_origin, expected_displacement)?;
                 if curve_parameterizations_equal(curve, &expected)? {
                     Ok(())
+                } else {
+                    Err(BuildError::EdgeUseSupportMismatch)
+                }
+            }
+        }
+    }
+
+    fn validate_coordinate_revolution_image(
+        &self,
+        curve: &Curve3,
+        axis: hypercurve::Axis2,
+        scale: &Real,
+        offset: &Real,
+        constant: &Parameter,
+        surface: &Surface,
+    ) -> Result<(), BuildError> {
+        match axis {
+            hypercurve::Axis2::X => {
+                let direction = if real_values_equal(scale, &Real::one())? {
+                    1
+                } else if real_values_equal(scale, &(-Real::one()))? {
+                    -1
+                } else {
+                    return Err(BuildError::EdgeUseSupportMismatch);
+                };
+                // The complete angular chart is u = direction * (edge - offset).
+                let expected = surface.revolution_rotation_curve(
+                    constant,
+                    curve.domain().represented_domain()?,
+                    direction,
+                    -offset * scale,
+                )?;
+                if curve_parameterizations_equal(curve, &expected)? {
+                    Ok(())
+                } else {
+                    Err(BuildError::EdgeUseSupportMismatch)
+                }
+            }
+            hypercurve::Axis2::Y => {
+                let angle = constant
+                    .try_real()
+                    .ok_or(GeometryError::UnrepresentableParameter)?;
+                let expected = surface.revolution_meridian_curve(angle)?;
+                if curve_parameterizations_equal(curve, &expected)? {
+                    require_real_equal(scale, &Real::one(), BuildError::EdgeUseSupportMismatch)?;
+                    require_real_equal(offset, &Real::zero(), BuildError::EdgeUseSupportMismatch)
+                } else if curve_parameterizations_equal(curve, &expected.reversed()?)? {
+                    require_real_equal(scale, &(-Real::one()), BuildError::EdgeUseSupportMismatch)?;
+                    require_real_equal(
+                        offset,
+                        &expected.reversal_pivot(),
+                        BuildError::EdgeUseSupportMismatch,
+                    )
                 } else {
                     Err(BuildError::EdgeUseSupportMismatch)
                 }

@@ -297,6 +297,9 @@ pub(super) fn rational_bezier_weights_proportional(
 
 pub(super) fn translated_curve(curve: &Curve3, offset: &Vector3) -> Result<Curve3, BuildError> {
     match curve.exact_data() {
+        Curve3ExactData::Rotation(_) => {
+            Ok(curve.transformed(&Matrix4::affine_translation(offset.0.clone()))?)
+        }
         Curve3ExactData::Translation(line) => Ok(Curve3::translation(
             line.origin
                 .transformed(&Matrix4::affine_translation(offset.0.clone()))?,
@@ -1506,6 +1509,22 @@ pub(super) fn curve_parameterizations_equal(
         return Ok(false);
     }
     match (actual.exact_data(), expected.exact_data()) {
+        (Curve3ExactData::Rotation(actual), Curve3ExactData::Rotation(expected)) => {
+            if !actual.origin.coincides_with(&expected.origin)?
+                || !points_equal(&actual.axis_origin, &expected.axis_origin)?
+            {
+                return Ok(false);
+            }
+            if vectors_equal(&actual.axis, &expected.axis)? {
+                Ok(actual.angle_direction == expected.angle_direction
+                    && real_values_equal(&actual.angle_offset, &expected.angle_offset)?)
+            } else if vectors_equal(&actual.axis, &(-expected.axis.clone()))? {
+                Ok(actual.angle_direction == -expected.angle_direction
+                    && real_values_equal(&actual.angle_offset, &(-expected.angle_offset.clone()))?)
+            } else {
+                Ok(false)
+            }
+        }
         (Curve3ExactData::Translation(actual), Curve3ExactData::Translation(expected)) => {
             Ok(actual.origin.coincides_with(&expected.origin)?
                 && vectors_equal(&actual.displacement, &expected.displacement)?)
@@ -2244,12 +2263,45 @@ pub(crate) fn compare_curve3_exact_data(
         Curve3ExactData::EllipseArc(_) => 4,
         Curve3ExactData::PlanarImage(_) => 5,
         Curve3ExactData::Translation(_) => 6,
+        Curve3ExactData::Rotation(_) => 7,
     };
     let family = rank(left).cmp(&rank(right));
     if family != std::cmp::Ordering::Equal {
         return Ok(family);
     }
     match (left, right) {
+        (Curve3ExactData::Rotation(left), Curve3ExactData::Rotation(right)) => {
+            for axis in [crate::Axis::X, crate::Axis::Y, crate::Axis::Z] {
+                let order = left.origin.compare_coordinate(&right.origin, axis)?;
+                if order != std::cmp::Ordering::Equal {
+                    return Ok(order);
+                }
+            }
+            let order = exact_point_order(&left.axis_origin, &right.axis_origin)?;
+            if order != std::cmp::Ordering::Equal {
+                return Ok(order);
+            }
+            let order = compare_vector3(&left.axis, &right.axis)?;
+            if order != std::cmp::Ordering::Equal {
+                return Ok(order);
+            }
+            let order = left.angle_direction.cmp(&right.angle_direction);
+            if order != std::cmp::Ordering::Equal {
+                return Ok(order);
+            }
+            compare_real_slices(
+                &[
+                    left.domain.start().clone(),
+                    left.domain.end().clone(),
+                    left.angle_offset.clone(),
+                ],
+                &[
+                    right.domain.start().clone(),
+                    right.domain.end().clone(),
+                    right.angle_offset.clone(),
+                ],
+            )
+        }
         (Curve3ExactData::Translation(left), Curve3ExactData::Translation(right)) => {
             for axis in [crate::Axis::X, crate::Axis::Y, crate::Axis::Z] {
                 let order = left.origin.compare_coordinate(&right.origin, axis)?;

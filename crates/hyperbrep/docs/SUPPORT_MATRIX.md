@@ -77,6 +77,7 @@ view. See the [selected-image admission](evidence/2026-10-18-selected-planar-ima
 | --- | --- | --- | --- | --- | --- |
 | Planar image | Represented or retained selected point, including selected finite-domain endpoints; owner-supported represented-parameter derivatives (first order for analytic parallels) | Conservative lifted finite source or point bound | Plane membership plus exact source inverse query and chart filtering | Exact represented restriction / reversal; selected topology edge split | Exact for admitted pcurve sources, source charts and selected points/trims |
 | Translation of retained point | Authored parameter retains the original point; constant first derivative | Conservative union of endpoint bounds | Unsupported | Exact reversal and authored-parameter split | Exact retained origin and authored displacement |
+| Rotation of retained point | Authored angle retains source; positive-order derivatives require stored origin coordinates | Conservative full-orbit enclosure | Unsupported | Exact reversal and authored-angle split | Exact origin, axis and angular chart |
 | Finite line | Exact, arbitrary positive derivative order | Exact | Certified | Exact | Exact |
 | Circular arc | Exact angle semantics | Conservative exact | Certified, including seams | Exact | Exact |
 | Elliptic arc | Exact angle semantics | Conservative exact | Certified | Exact | Exact |
@@ -108,8 +109,10 @@ images for lines, rational Béziers, finite NURBS and planar images. It supports
 coincidence/coordinate/linear-form comparisons, conservative enclosures and certified
 invertible affine transforms. NURBS selectors stay in their authored knot
 chart. Planar images retain the source point and evaluate their frame's affine
-forms through Hypercurve. Scalar parameters expose stored coordinates;
-selected conic angular evaluation returns `UnsupportedSelectedEvaluation`.
+forms through Hypercurve. Scalar parameters expose stored coordinates for
+authored carriers; retained translation/rotation origins can keep selected
+source images even at scalar parameters. Independently selected conic/rotation
+angular evaluation returns `UnsupportedSelectedEvaluation`.
 
 Native coefficient derivatives/subdivision still require stored
 parameters/coordinates. `Curve3::domain`, closed surface domains and contact-pcurve
@@ -125,14 +128,22 @@ recertification and complete resource bounds for decoding remain open. See the
 [parameter contract](ARCHITECTURE.md#retained-inverse-parameters) and
 [spatial point contract](ARCHITECTURE.md#retained-spatial-points).
 
-Circle and ellipse edges may retain one vertex at both endpoints when their
-exact interval spans one full period. The vertex lists that edge once; incident
-edge uses and parameter endpoints remain distinct. Single-edge circular caps
+Circle, ellipse and nondegenerate retained rotation edges may retain one
+vertex at both endpoints when their exact interval spans one full period. The
+vertex lists that edge once; incident edge uses and parameter endpoints remain
+distinct. Single-edge circular caps
 and a cylinder with one periodic side face validate, subdivide and replay.
-Standalone closed ellipse edges subdivide and replay; this does not add
-ellipse/plane pcurve-image admission. Other closed curve families return
+Standalone closed ellipse and retained rotation edges subdivide and replay;
+this does not add ellipse/plane pcurve-image admission. Other closed curve families return
 `UnsupportedClosedEdge`. See the [closed-edge contract](ARCHITECTURE.md#closed-edges-and-periodic-seam-uses)
 and [evidence](evidence/2026-10-15-closed-edges/README.md).
+
+Retained rotations preserve their point source, unit axis and signed angular chart.
+Similarities and reflections transport that chart; general affine transforms,
+independent selected angular parameters, retained-vector derivatives and general
+inverse/intersection queries remain typed frontiers. Selected revolution patches
+prove complete boundary images and axis clearance, not global embedding or solid
+interior. See the [finite qualification](evidence/2026-10-18-selected-revolution/README.md).
 
 ## Surface carriers
 
@@ -144,7 +155,7 @@ and [evidence](evidence/2026-10-15-closed-edges/README.md).
 | Cone | Periodic `u`, lower-bounded `v` | Unbounded | Generator and constant-`v` circle away from apex | Certified similarity / reflection | Exact |
 | Ring torus | Periodic `u` and `v` | Exact cube | Both constant-parameter circle families | Certified similarity / reflection | Exact |
 | Linear extrusion | Profile domain × unbounded | Unbounded | Line/circle/ellipse/rational Bézier/NURBS/planar-image profile and extrusion direction | Family-preserving | Exact |
-| Revolution | Periodic × profile domain | Conservative exact | Line/circle/ellipse/rational Bézier/NURBS meridians and latitude circles | Certified similarity / reflection | Exact |
+| Revolution | Periodic × profile domain | Conservative exact | Native meridians/latitudes; coordinate charts also retain selected planar-image meridians and rotation origins with complete axis clearance | Certified similarity / reflection | Exact |
 | Tensor rational Bézier | Closed × closed | Control hull | Exact iso-boundary rational Bézier curves and subintervals | Affine | Exact |
 | Tensor NURBS | Active closed domains | Control hull | Exact iso-boundary NURBS curves and subintervals | Affine | Exact |
 
@@ -189,7 +200,7 @@ domain. General nonuniform analytic promotion remains open. See the
 | `loft` | Two or more corresponding sections; each span positive homothetic or exact convex interpolation / planar or bilinear tensor sides with explicit C⁰ rings | Homothetic sides only | Exact piecewise-integrated quadratic section area | Exact span/section test | Affine / exact |
 | `planar_face` | One exact `CurvePath2` outer loop plus disjoint holes in an authored plane, including supported selected procedural/source-restriction endpoints / open shell | Exact Hypercurve signed region area × plane-frame Jacobian when represented; otherwise explicit unsupported query | N/A | N/A | Affine / exact |
 | `extrusion_patch` | One finite rectangular exact extrusion face, including selected profile domains with retained connector origins and authored sweep bounds / open shell | Line, normal-circle, and transverse-monotone planar rational Bézier/NURBS profiles exact; other variable-speed profiles unsupported | N/A | N/A | Family-preserving / exact |
-| `revolution_patch` | One sub-period, completely axis-clear rectangular revolution face / open shell | Line, circular-arc, and certified monotone rational Bézier/NURBS line-image profiles exact; other curved spline profiles unsupported | N/A | N/A | Certified similarity / exact |
+| `revolution_patch` | One sub-period, completely axis-clear rectangular revolution face / open shell, including supported selected meridian endpoints | Line, circular-arc, and certified monotone rational Bézier/NURBS line-image profiles exact; other curved spline profiles unsupported | N/A | N/A | Certified similarity / exact |
 | `rational_bezier_patch` | One trimmed exact tensor patch / open shell | Exact for a constant-weight affine Bernstein lattice under any validated trim, or the complete affine image under separable positive weights; general curved patches unsupported | N/A | N/A | Affine / exact |
 | `nurbs_patch` | One trimmed exact tensor patch / open shell | Exact for a constant-weight affine Greville lattice under any validated trim, or the complete native-domain affine image under separable positive weights; general curved patches unsupported | N/A | N/A | Affine / exact |
 | `tensor_patch_shell` | Multiple exact rational Bézier/NURBS patches; projectively identical boundaries identity-stitched | Per-face exact for the same affine tensor families | N/A | N/A | Affine / exact |

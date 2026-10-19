@@ -22,6 +22,7 @@ mod periodic_charts;
 mod planar_image;
 mod planes;
 mod point;
+mod rotation;
 mod spline;
 mod transform;
 mod translation;
@@ -38,6 +39,9 @@ pub use planar_image::PlanarCurveGeometry;
 pub(crate) use planar_image::{PlanarCurve3, represented_curve_point};
 use planes::intersect_planes;
 pub use point::{Axis, GeometricPoint3};
+pub(crate) use rotation::RotationCurve3;
+pub use rotation::RotationCurveGeometry;
+use rotation::rotation_transform;
 pub use spline::{NurbsCurveGeometry, RationalBezierCurveGeometry};
 pub(crate) use transform::TransformMetric;
 pub(crate) use translation::TranslationCurve3;
@@ -121,6 +125,8 @@ impl ParameterDomain {
 /// Supported exact spatial curve family.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Curve3Kind {
+    /// Circular orbit of a retained point around an authored unit axis.
+    Rotation,
     /// Straight sweep of a retained point through an authored displacement.
     Translation,
     /// Exact affine lift of a retained planar curve.
@@ -374,6 +380,7 @@ struct Curve3Data {
 
 #[derive(Debug)]
 enum CurveGeometry3 {
+    Rotation(Box<RotationCurve3>),
     Translation(Box<TranslationCurve3>),
     PlanarImage(Box<PlanarCurve3>),
     Line(Line3),
@@ -385,6 +392,7 @@ enum CurveGeometry3 {
 
 #[derive(Clone, Debug)]
 pub(crate) enum Curve3ExactData {
+    Rotation(Box<RotationCurve3>),
     Translation(Box<TranslationCurve3>),
     PlanarImage(Box<PlanarCurve3>),
     Line(Box<Line3ExactData>),
@@ -706,6 +714,7 @@ impl Curve3 {
     /// Returns the curve family.
     pub fn kind(&self) -> Curve3Kind {
         match &self.data.geometry {
+            CurveGeometry3::Rotation(_) => Curve3Kind::Rotation,
             CurveGeometry3::Translation(_) => Curve3Kind::Translation,
             CurveGeometry3::PlanarImage(_) => Curve3Kind::PlanarImage,
             CurveGeometry3::Line(_) => Curve3Kind::Line,
@@ -795,6 +804,7 @@ impl Curve3 {
             }
             CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
@@ -820,6 +830,7 @@ impl Curve3 {
     pub fn bounds(&self) -> GeometryResult<Aabb> {
         crate::context::strict(|| {
             crate::cache::get_or_try_init(&self.data.bounds, || match &self.data.geometry {
+                CurveGeometry3::Rotation(rotation) => rotation.bounds(),
                 CurveGeometry3::Translation(line) => line.bounds(),
                 CurveGeometry3::PlanarImage(image) => image.bounds(),
                 CurveGeometry3::Line(line) => {
@@ -836,6 +847,23 @@ impl Curve3 {
     }
 
     fn is_strictly_off_axis(&self, axis_origin: &Point3, axis: &Vector3) -> GeometryResult<bool> {
+        if self.domain().try_real_endpoints().is_none() {
+            // An authored plane through the axis avoids materializing either
+            // selected endpoint. Complete contacts, not endpoint samples,
+            // establish clearance over the entire retained interval.
+            for basis in [Vector3::x(), Vector3::y(), Vector3::z()] {
+                let witness = axis.cross(&basis);
+                if decided_order(compare_reals(
+                    &witness.norm_squared(),
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Greater
+                {
+                    return self.axis_clearance_from_witness(axis_origin, axis, &witness);
+                }
+            }
+            return Err(GeometryError::InvalidRevolutionAxis);
+        }
         let radial = |point: &Point3| {
             let relative = point - axis_origin;
             let axial = axis.clone() * axis.dot(&relative);
@@ -876,6 +904,7 @@ impl Curve3 {
             CurveGeometry3::Nurbs(curve) => Some(curve.control_points.iter().collect::<Vec<_>>()),
             CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => None,
         };
@@ -898,11 +927,20 @@ impl Curve3 {
             }
         }
 
+        self.axis_clearance_from_witness(axis_origin, axis, &witness)
+    }
+
+    fn axis_clearance_from_witness(
+        &self,
+        axis_origin: &Point3,
+        axis: &Vector3,
+        witness: &Vector3,
+    ) -> GeometryResult<bool> {
         // When the convex-hull certificate is inconclusive, reduce exact axis
         // contact to membership in two orthogonal planes through the axis.
         // Supported curve/plane intersections enumerate the complete finite
         // parameter interval, retaining selected points when no scalar view exists.
-        let transverse = axis.cross(&witness);
+        let transverse = axis.cross(witness);
         let second_normal = axis.cross(&transverse);
         let first_plane = Surface::plane(axis_origin.clone(), axis.clone(), witness.clone())?;
         let point_is_on_axis = |point: &GeometricPoint3| -> GeometryResult<bool> {
@@ -945,6 +983,11 @@ impl Curve3 {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             match &self.data.geometry {
+                CurveGeometry3::Rotation(rotation) => rotation
+                    .point_at(parameter)?
+                    .try_coordinates()
+                    .cloned()
+                    .ok_or(GeometryError::UnrepresentablePoint),
                 CurveGeometry3::Translation(line) => line
                     .point_at(parameter)?
                     .try_coordinates()
@@ -1019,6 +1062,7 @@ impl Curve3 {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             let vector = match &self.data.geometry {
+                CurveGeometry3::Rotation(rotation) => rotation.derivative_at(parameter, order)?,
                 CurveGeometry3::Translation(line) => {
                     if order == 1 {
                         line.displacement.clone()
@@ -1084,6 +1128,7 @@ impl Curve3 {
             | CurveGeometry3::Nurbs(_)
             | CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => None,
         }
@@ -1125,6 +1170,7 @@ impl Curve3 {
             }
             CurveGeometry3::RationalBezier(_)
             | CurveGeometry3::Nurbs(_)
+            | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
@@ -1132,6 +1178,7 @@ impl Curve3 {
 
     pub(crate) fn exact_data(&self) -> Curve3ExactData {
         match &self.data.geometry {
+            CurveGeometry3::Rotation(rotation) => Curve3ExactData::Rotation(rotation.clone()),
             CurveGeometry3::Translation(line) => Curve3ExactData::Translation(line.clone()),
             CurveGeometry3::PlanarImage(image) => Curve3ExactData::PlanarImage(image.clone()),
             CurveGeometry3::Line(line) => Curve3ExactData::Line(Box::new(Line3ExactData {
@@ -1177,6 +1224,7 @@ impl Curve3 {
 
     pub(crate) fn from_exact_data(data: Curve3ExactData) -> GeometryResult<Self> {
         match data {
+            Curve3ExactData::Rotation(rotation) => Self::from_rotation(*rotation),
             Curve3ExactData::Translation(line) => Self::translation(line.origin, line.displacement),
             Curve3ExactData::PlanarImage(image) => Self::from_planar_image(*image),
             Curve3ExactData::Line(data) => Self::line(data.start, data.end),
@@ -1243,6 +1291,7 @@ impl Curve3 {
     /// Returns the same geometric image with reversed parameter direction.
     pub fn reversed(&self) -> GeometryResult<Self> {
         crate::context::strict(|| match &self.data.geometry {
+            CurveGeometry3::Rotation(rotation) => rotation.reversed(),
             CurveGeometry3::Translation(line) => {
                 Self::translation(line.point_at(&Real::one())?, -line.displacement.clone())
             }
@@ -1320,6 +1369,14 @@ impl Curve3 {
             }
             require_interior_parameter(&self.domain().represented_domain()?, parameter)?;
             match &self.data.geometry {
+                CurveGeometry3::Rotation(rotation) => Ok((
+                    rotation
+                        .restricted(rotation.domain.start(), parameter)?
+                        .retaining_parameterization_of(self),
+                    rotation
+                        .restricted(parameter, rotation.domain.end())?
+                        .retaining_parameterization_of(self),
+                )),
                 CurveGeometry3::Translation(line) => Ok((
                     line.restricted(&Real::zero(), parameter)?,
                     line.restricted(parameter, &Real::one())?,
@@ -1414,6 +1471,7 @@ impl Curve3 {
                 return Ok(self.clone());
             }
             match &self.data.geometry {
+                CurveGeometry3::Rotation(rotation) => rotation.restricted(start, end),
                 CurveGeometry3::Translation(line) => line.restricted(start, end),
                 CurveGeometry3::PlanarImage(image) => image.restricted(start, end),
                 CurveGeometry3::Line(_) => {
@@ -1488,7 +1546,9 @@ impl Curve3 {
     /// remain an explicit unsupported result, never an incomplete finite set.
     pub fn parameters_of(&self, point: &Point3) -> GeometryResult<CurveParameterLocation> {
         crate::context::strict(|| match &self.data.geometry {
-            CurveGeometry3::Translation(_) => Err(GeometryError::UnsupportedParameterLocation),
+            CurveGeometry3::Rotation(_) | CurveGeometry3::Translation(_) => {
+                Err(GeometryError::UnsupportedParameterLocation)
+            }
             CurveGeometry3::PlanarImage(image) => image.parameters_of(point),
             CurveGeometry3::Line(line) => locate_line_parameter(self, line, point),
             CurveGeometry3::RationalBezier(curve) => {
@@ -1511,6 +1571,7 @@ impl Curve3 {
     ) -> GeometryResult<Self> {
         let transform = metric.matrix();
         match &self.data.geometry {
+            CurveGeometry3::Rotation(rotation) => rotation.transformed(metric),
             CurveGeometry3::Translation(line) => Self::translation(
                 line.origin.transformed(transform)?,
                 transform.transform_direction3(&line.displacement),
@@ -4494,7 +4555,13 @@ impl Surface {
         let rotate_vector =
             |vector: &Vector3| rotate_vector_about_axis(vector, &surface.axis, angle);
         match surface.profile.exact_data() {
-            Curve3ExactData::Translation(_) => Err(GeometryError::UnsupportedSubdivision),
+            Curve3ExactData::Rotation(_) | Curve3ExactData::Translation(_) => {
+                surface.profile.transformed(&rotation_transform(
+                    &surface.axis_origin,
+                    &surface.axis,
+                    angle,
+                ))
+            }
             Curve3ExactData::PlanarImage(mut image) => {
                 image.origin = rotate_point(&image.origin);
                 image.u = rotate_vector(&image.u);
@@ -4546,6 +4613,26 @@ impl Surface {
         surface
             .profile
             .is_strictly_off_axis(&surface.axis_origin, &surface.axis)
+    }
+
+    pub(crate) fn revolution_rotation_curve(
+        &self,
+        profile_parameter: &Parameter,
+        domain: ParameterDomain,
+        angle_direction: i8,
+        angle_offset: Real,
+    ) -> GeometryResult<Curve3> {
+        let SurfaceGeometry::Revolution(surface) = &self.data.geometry else {
+            return Err(GeometryError::UnsupportedSubdivision);
+        };
+        Curve3::from_rotation(RotationCurve3 {
+            origin: surface.profile.point_at(profile_parameter)?,
+            axis_origin: surface.axis_origin.clone(),
+            axis: surface.axis.clone(),
+            domain,
+            angle_direction,
+            angle_offset,
+        })
     }
 
     pub(crate) fn revolution_latitude_curve(
@@ -5779,7 +5866,8 @@ pub(crate) fn project_curve_to_plane_frame(
                 start, end, center, clockwise,
             )?)))
         }
-        Curve3ExactData::Translation(_)
+        Curve3ExactData::Rotation(_)
+        | Curve3ExactData::Translation(_)
         | Curve3ExactData::EllipseArc(_)
         | Curve3ExactData::PlanarImage(_) => Ok(None),
     }
@@ -5968,6 +6056,7 @@ fn linear_section_pcurve_carriers(
         }
         CurveGeometry3::CircleArc(_)
         | CurveGeometry3::EllipseArc(_)
+        | CurveGeometry3::Rotation(_)
         | CurveGeometry3::Translation(_)
         | CurveGeometry3::PlanarImage(_) => Ok(None),
     }
@@ -7123,7 +7212,8 @@ fn project_revolution_meridian(
         Curve3ExactData::Line(line) => vec![line.start, line.end],
         Curve3ExactData::RationalBezier { control_points, .. }
         | Curve3ExactData::Nurbs { control_points, .. } => control_points,
-        Curve3ExactData::Translation(_)
+        Curve3ExactData::Rotation(_)
+        | Curve3ExactData::Translation(_)
         | Curve3ExactData::EllipseArc(_)
         | Curve3ExactData::PlanarImage(_) => {
             return Err(GeometryError::UnsupportedIntersection);
@@ -7752,6 +7842,7 @@ fn curve_is_strictly_on_one_plane_side(
         }
         CurveGeometry3::CircleArc(_)
         | CurveGeometry3::EllipseArc(_)
+        | CurveGeometry3::Rotation(_)
         | CurveGeometry3::Translation(_)
         | CurveGeometry3::PlanarImage(_) => Ok(false),
     }
@@ -10217,6 +10308,7 @@ fn split_ellipse_arc(
         Curve3Kind::Line
         | Curve3Kind::RationalBezier
         | Curve3Kind::Nurbs
+        | Curve3Kind::Rotation
         | Curve3Kind::Translation
         | Curve3Kind::PlanarImage => {
             unreachable!("ellipse split kind")
@@ -10261,32 +10353,36 @@ fn centered_cube_bounds(center: &Point3, radius: &Real) -> Aabb {
 }
 
 fn revolution_bounds(surface: &RevolutionSurface) -> GeometryResult<Aabb> {
-    let bounds = surface.profile.bounds()?;
+    rotation_bounds(
+        &surface.profile.bounds()?,
+        &surface.axis_origin,
+        &surface.axis,
+    )
+}
+
+fn rotation_bounds(bounds: &Aabb, axis_origin: &Point3, axis: &Vector3) -> GeometryResult<Aabb> {
     let xs = [&bounds.mins.x, &bounds.maxs.x];
     let ys = [&bounds.mins.y, &bounds.maxs.y];
     let zs = [&bounds.mins.z, &bounds.maxs.z];
     let first_offset = Vector3::from_xyz(
-        xs[0] - &surface.axis_origin.x,
-        ys[0] - &surface.axis_origin.y,
-        zs[0] - &surface.axis_origin.z,
+        xs[0] - &axis_origin.x,
+        ys[0] - &axis_origin.y,
+        zs[0] - &axis_origin.z,
     );
-    let first_axial = surface.axis.dot(&first_offset);
-    let first_radial = first_offset - surface.axis.clone() * first_axial.clone();
+    let first_axial = axis.dot(&first_offset);
+    let first_radial = first_offset - axis.clone() * first_axial.clone();
     let mut axial_min = first_axial.clone();
     let mut axial_max = first_axial;
     let mut radius_squared = first_radial.norm_squared();
     for x in xs {
         for y in ys {
             for z in zs {
-                let offset = Vector3::from_xyz(
-                    x - &surface.axis_origin.x,
-                    y - &surface.axis_origin.y,
-                    z - &surface.axis_origin.z,
-                );
-                let axial = surface.axis.dot(&offset);
+                let offset =
+                    Vector3::from_xyz(x - &axis_origin.x, y - &axis_origin.y, z - &axis_origin.z);
+                let axial = axis.dot(&offset);
                 update_bound_min(&mut axial_min, &axial)?;
                 update_bound_max(&mut axial_max, &axial)?;
-                let radial = offset - surface.axis.clone() * axial;
+                let radial = offset - axis.clone() * axial;
                 update_bound_max(&mut radius_squared, &radial.norm_squared())?;
             }
         }
@@ -10315,9 +10411,9 @@ fn revolution_bounds(surface: &RevolutionSurface) -> GeometryResult<Aabb> {
                 origin + axial_high + radial_extent,
             ))
         };
-    let (min_x, max_x) = coordinate_bounds(&surface.axis_origin.x, &surface.axis.0[0])?;
-    let (min_y, max_y) = coordinate_bounds(&surface.axis_origin.y, &surface.axis.0[1])?;
-    let (min_z, max_z) = coordinate_bounds(&surface.axis_origin.z, &surface.axis.0[2])?;
+    let (min_x, max_x) = coordinate_bounds(&axis_origin.x, &axis.0[0])?;
+    let (min_y, max_y) = coordinate_bounds(&axis_origin.y, &axis.0[1])?;
+    let (min_z, max_z) = coordinate_bounds(&axis_origin.z, &axis.0[2])?;
     Ok(Aabb::new(
         Point3::new(min_x, min_y, min_z),
         Point3::new(max_x, max_y, max_z),

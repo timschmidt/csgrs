@@ -17,7 +17,7 @@ The caller passes `ArchiveLimits` explicitly. Its defaults and units are:
 | `input_bytes` | 16 MiB | All UTF-8 bytes, including whitespace and ignored fields |
 | `nesting_depth` | 1,024 | Simultaneously open JSON objects and arrays |
 | `tokens` | 1,000,000 | Opening containers, quoted strings (including keys), and primitive lexemes |
-| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve sources, inline extrusion/revolution profiles, planar-image sources, translation origins, affine-form point definitions and analytic-parallel sources |
+| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve sources, inline extrusion/revolution profiles, planar-image sources, translation/rotation origins, affine-form point definitions and analytic-parallel sources |
 | `degree` | 256 | Each declared NURBS axis degree, inferred Bezier axis degree, selected-root polynomial storage degree, or correlated point-expression polynomial degree |
 | `geometry_elements` | 1,000,000 | Aggregate controls (including polynomial parallel sources), weights, knots, root and correlated point-expression coefficients, and tensor row headers |
 | `topology_references` | 1,000,000 | Aggregate wire edge uses, face inner wires, shell faces and solid void shells |
@@ -141,9 +141,20 @@ the origin's source; an independently selected sweep parameter remains typed
 unsupported. `Chord { start, end }` pcurves use checked planar point definitions
 and Hypercurve's exact line constructor.
 
+`Rotation` curves add an origin (`Coordinates` or `CurveImage`), authored axis
+origin/unit direction, angular domain, direction sign and offset to schema 10.
+Selected source and parameter identities use the existing graph. Cold admission
+reconstructs the nonzero-radius proof, complete boundary images and profile-axis
+clearance; no serialized certificate flag is trusted. Each origin and nested
+source is charged before scalar decoding. The [revolution qualification](evidence/2026-10-18-selected-revolution/README.md)
+retains all prior corpus bytes and repeated new archives. No old record is
+reinterpreted and no compatibility reader is introduced.
+
 Coordinate pcurve correspondence records retain a chosen U or V coordinate and
 nonzero affine scale/offset. Cold extrusion admission proves constant orthogonal
-coordinate and complete profile or axial translation image. These records carry
+coordinate and complete profile or axial translation image. Revolution
+admission proves complete retained latitude or rotated-meridian images and
+rechecks the profile over its whole interval for axis contact. These records carry
 no image certificate. Similarities inside affine point-query definitions are
 composed when authored and replayed so both encodings use the same recipe.
 Version 10 is an intentional schema break, not a byte-preserving optimization.

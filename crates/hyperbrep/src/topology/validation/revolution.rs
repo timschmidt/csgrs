@@ -3,6 +3,35 @@
 use crate::topology::*;
 
 impl ArenaModelBuilder {
+    /// Coordinate-chart revolution faces require complete axis clearance on
+    /// the retained profile, including during untrusted archive reconstruction.
+    /// An image certificate for each boundary alone does not establish this.
+    pub(in crate::topology) fn validate_retained_revolution_chart(
+        &self,
+        wires: &[WireId],
+        surface: SurfaceId,
+    ) -> Result<(), BuildError> {
+        let surface = self.surface_ref(surface)?;
+        if surface.kind() != SurfaceKind::Revolution {
+            return Ok(());
+        }
+        for wire in wires {
+            for edge_use in &self.wire_ref(*wire)?.edge_uses {
+                if matches!(
+                    self.edge_use_ref(*edge_use)?.parameter_correspondence,
+                    ParameterCorrespondence::Coordinate { .. }
+                ) {
+                    return if surface.revolution_profile_is_strictly_off_axis()? {
+                        Ok(())
+                    } else {
+                        Err(GeometryError::SingularSurfaceParameter.into())
+                    };
+                }
+            }
+        }
+        Ok(())
+    }
+
     pub(in crate::topology) fn certified_revolution_shell(
         &self,
         shell: ShellId,

@@ -66,8 +66,11 @@ pub fn extrusion_patch(
 /// subdivision. The profile's exact curve family and native parameter domain
 /// are retained on both meridians. Its complete interval must carry an exact
 /// strict axis-clearance certificate; unsupported higher-degree contact
-/// problems return [`ConstructionError::UnsupportedRevolutionProfile`]. The
-/// returned model contains one validated open shell and no solid.
+/// problems return [`ConstructionError::UnsupportedRevolutionProfile`]. Selected
+/// meridian endpoints retain their exact latitude origins through rotation
+/// curves and complete coordinate image proofs. Face admission rechecks the
+/// retained profile's axis clearance during native replay. The returned model
+/// contains one validated open shell and no solid; global embedding is not proved.
 pub fn revolution_patch(
     profile: Curve3,
     axis_origin: Point3,

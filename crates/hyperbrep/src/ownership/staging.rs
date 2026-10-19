@@ -109,8 +109,8 @@ impl ModelBuilder {
     }
     /// Adds an edge after checking all key owners and exact endpoints.
     ///
-    /// A circle or ellipse spanning exactly one period may use the same vertex
-    /// at both endpoints. Other closed curve families require a future
+    /// A circle, ellipse, or retained rotation spanning exactly one period may
+    /// use the same vertex at both endpoints. Other closed curve families require a future
     /// regularity certificate and return [`BuildError::UnsupportedClosedEdge`].
     pub fn edge(
         &mut self,

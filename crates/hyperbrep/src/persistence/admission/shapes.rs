@@ -65,7 +65,16 @@ impl Rows {
 }
 
 #[derive(Deserialize)]
+pub(super) enum RotationOrigin {
+    Coordinates(IgnoredAny),
+    CurveImage { source: Box<Curve> },
+}
+
+#[derive(Deserialize)]
 pub(super) enum Curve {
+    Rotation {
+        origin: RotationOrigin,
+    },
     Translation {
         source: Box<Curve>,
     },
@@ -88,6 +97,13 @@ pub(super) enum Curve {
 impl Record for Curve {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::Rotation { origin } => {
+                budget.record()?;
+                match origin {
+                    RotationOrigin::Coordinates(_) => Ok(()),
+                    RotationOrigin::CurveImage { source } => source.admit(budget),
+                }
+            }
             Self::Translation { source } => {
                 budget.record()?;
                 source.admit(budget)

@@ -2420,6 +2420,49 @@
       "validation": "Seven shared patch groups, 698 all-feature and 690 minimal-feature BRep/IO release tests pass after the final production edit. The later test alias correction is covered by final focused tests, strict Clippy and consumers. Affected strict Clippy/rustdoc, fuzz-target compilation and formatting pass. Source-path native consumers execute 107 groups plus eight original axial exchange workflows; actual zero-import WASM executes all 245 groups. All 354 prior native archives re-encode byte-identically; 115 STEP files import 125 bodies and replay; eight text controls are inventory-only. Fresh paired exports preserve exact values and structure: 177 byte-identical pairs and 105 explicit coefficient-encoding migrations across 2,952 scalar fields. Every export recipe repeats deterministically; 26 new patch archives also replay stably. The original nonorthogonal planar archive failure is reproduced on eaa0 and compared exactly to the corrected output.",
       "cost_evidence": "Three alternating pairs cover 92 preserved semantic rows; seven new groups have three absolute trials. All 57 processes pass their assertions. Observed time ratios range 0.852615\u20133.458309; 7 exceed the 10% review marker and 28 increase allocation calls or requested bytes. Selected-profile exports grow from 7,200,347 to 15,409,257 bytes. All adverse observations are retained. Shared-host instrumented samples, changed expression encodings and process RSS establish neither a byte-preserving optimization nor a general speedup or internal bound.",
       "limits": "Finite open-shell planar/extrusion patch support, not general embedding, selected revolution/axial parameters, curved arrangements, solid Boolean closure or complete CAD. First-export encodings intentionally change within schema 10; no compatibility reader. Total work, retained heap, coefficient growth and cancellation bounds, runtime fuzz/ASan/lexicase, formal coverage, MSRV, installed distributions and production bindings remain open. All 28 work packages remain open/in-progress. Full pre-push qualification remains required; the eaa0 one-time exception was consumed and does not authorize publishing this increment."
+    },
+    {
+      "id": "selected-revolution-2026-10-18",
+      "work_packages": [
+        "WP02",
+        "WP03",
+        "WP09",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P3",
+        "P6",
+        "P8",
+        "P9",
+        "P11",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Add exact retained-point rotation curves and selected-endpoint revolution patches. Ordinary face admission proves complete boundary images and profile-axis clearance; full-period orbit edges split and replay.",
+      "sources": [
+        "../src/geometry/rotation.rs",
+        "../src/construction/patches.rs",
+        "../src/topology/validation/analytic_image.rs",
+        "../src/topology/validation/revolution.rs",
+        "../src/persistence.rs"
+      ],
+      "evidence": "evidence/2026-10-18-selected-revolution/manifest.json",
+      "validation": "Eight shared public groups and one internal face-admission regression extend the retained corpus. BRep/IO release suites pass 707 all-feature and 699 minimal-feature tests. Affected all-target strict Clippy, warning-denied rustdoc, fuzz-target compilation and formatting pass. Source-path native consumers execute 115 groups plus eight original exchange workflows; actual zero-import WASM executes 253 groups, including all nine original exports. All 610 prior native archives re-encode byte-identically; 159 STEP inputs import 173 bodies and replay. The 785-file inventory has 408 distinct contents; text controls are inventory-only. All 308 fresh baseline/candidate pairs remain byte-identical, with no coefficient encoding migration. Every export recipe repeats deterministically; 22 new rotation/revolution archive files (12 distinct encodings) also replay stably. The initial copied-consumer root error is retained and corrected; its mis-scoped baseline result is excluded.",
+      "cost_evidence": "Three alternating pairs cover 99 preserved semantic rows; eight new groups have three absolute trials. All 63 processes pass their assertions. Observed time ratios range 0.786806 to 1.271032; 5 exceed the 10% review marker and 2 increase allocation calls or requested bytes. All adverse observations are retained. Shared-host instrumented samples and process RSS establish neither a general speedup nor internal work/heap bounds.",
+      "limits": "Finite retained circular orbits and selected open revolution sheets, with complete boundary-image and profile-axis-clearance proofs. No general rank-two surface regularity, embedding, solid closure or new STEP claim. Independent selected angular/axial parameters, retained vector derivatives, general affine orbit transport and inverse/intersection families remain typed frontiers. Schema 10 gains an additive Rotation record; existing corpus bytes are preserved, with no compatibility reader. Total work, retained heap, coefficient growth, cancellation, runtime fuzz/ASan/lexicase, formal coverage, MSRV, installed distributions and production binding gates remain open. All 28 work packages remain open/in-progress. Full pre-push qualification remains required; the consumed eaa0 one-time exception does not authorize publishing this increment."
     }
   ],
   "work_packages": [
@@ -2494,7 +2537,7 @@
       "status": "in-progress",
       "deliverable": "General extrusion/revolution, prescribed-frame sweeps and spline lofts",
       "gate": "Existing constructors remain fast paths; holes, partial turns, frame closure and global self-intersection cases pass",
-      "progress": "Finite selected standalone extrusion patches only; general sweep/loft, revolution and embedding gates remain open."
+      "progress": "Finite selected extrusion and sub-period revolution patches, including retained latitude generators and complete axis clearance; general sweep/loft, surface regularity and embedding gates remain open."
     },
     {
       "id": "WP10",
@@ -2594,7 +2637,7 @@
     }
   ],
   "next_actions": [
-    "Preserve evidence/2026-10-18-selected-surface-patches/manifest.json: final seven patch groups, 245 WASM groups, 354 unchanged prior native archives, 115 STEP inputs, 282 paired fresh artifacts, 26 new archives and every adverse cost. Follow next-domains.md for selected revolution/axis-clearance, complete contact/arrangement/embedding proofs and justified pcurve expression reuse. These correctness/completeness changes do not establish an optimization or close release gates.",
+    "Preserve evidence/2026-10-18-selected-revolution/manifest.json and every earlier corpus/artifact/cost record. Follow its next-domains.md for selected angular/axial fields, complete contact/arrangement/regularity/embedding proofs and further modeling/STEP continuation. Finite retained rotation support does not close general CAD, resource or delivery gates.",
     "Retain evidence/2026-10-18-prepush-fixtures/manifest.json. Future proof extensions must keep newly certified original fixtures and independently unresolved controls. Complete the final pre-push matrix and resolve required failures before publishing unless the user explicitly authorizes an exception; focused checks do not waive AGENTS.md.",
     "Use evidence/2026-10-18-selected-procedural-profiles/manifest.json as the current finite baseline. Preserve all 238 WASM groups, 450 migrated prior artifacts and 27 new repeated archives, 24 prism/81 continuation outcomes, seven original full profiles and every adverse cost. Retain the rejected scalar-fact candidate and upstream-only reproduction; do not waive native facts or replace the schema audit with approximate geometry comparisons.",
     "Follow evidence/2026-10-18-selected-procedural-profiles/next-domains.md for retained selected surface/contact/branch graphs, general arrangements and shell proofs, modeling features, exchange and release/resource gates. Hypercurve/Hypersolve own root, chart and field authority; BRep owns spatial images and topology; IO owns encoding. Independent selected axial translations remain unsupported.",
@@ -2604,7 +2647,7 @@
     "Preserve and extend named BREP strict workflows with independent set, topology and source-fidelity checks. Observe upstream drilled-body and dependency corrections during integration; unrelated repairs remain upstream work. Record all seven outcome categories and the concrete failing BREP stage (WP00/WP21, P39).",
     "Preserve the completed half-case recut/clear/reconstruct workflows in evidence/2026-10-16-curved-coplanar/manifest.json alongside the sector extension: nine original exact configurations and 54 transformed variants, full-size geometry, near samples, split/reflection/replay, source parameters and public overlap provenance. The five formerly blocked quarter/band diagnostics now complete in evidence/2026-10-16-sector-cuts/continuation-frontier.json. Further composition extensions must retain these successes and independently verify represented-set identities (WP03/WP06/WP07/WP08, P17-P20/P35/P39).",
     "Complete the documented-package pipeline in clean external consumers and actual affected bindings; verify features, dependency versions, MSRV, certainty and format-specific round trips. Local paths, source builds and WASM probes do not close delivery gates (WP17/WP18/WP23, P37).",
-    "Continue WP03 beyond native single-vertex circle/ellipse edges: add regular closed-spline and singular-chart certificates, complete periodic chart gluing, and general ellipse/plane pcurve-image proofs. Keep the new closed-edge/BodySet/empty composition corpus. The verified stash remains a historical backup; its selectively recovered candidate is requalified on integrated dependencies.",
+    "Continue WP03 beyond native single-vertex circle/ellipse and retained-rotation edges: add regular closed-spline and singular-chart certificates, complete periodic chart gluing, and general ellipse/plane pcurve-image proofs. Keep the new closed-edge/BodySet/empty composition corpus. The verified stash remains a historical backup; its selectively recovered candidate is requalified on integrated dependencies.",
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
     "Complete WP02/G1 beyond planar spline replay, subdivided cuboid and axial-cylinder archive replay. Extend independent solid/void/corner proofs, retained surface/contact images and selected Boolean transfer while preserving every existing exact behavior. Native-to-selected spline composition and five repeated selected cuboid cuts now have regression evidence.",
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",

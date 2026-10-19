@@ -322,8 +322,10 @@ impl From<Point3> for GeometricPoint3 {
 impl Curve3 {
     /// Evaluates an exact point while retaining a selected parameter's evidence.
     ///
-    /// Authored scalar parameters use the native evaluator and expose stored
-    /// coordinates. Lines, rational Béziers, finite NURBS and planar images also
+    /// Authored scalar parameters expose stored coordinates when that view is
+    /// available. Retained translations and rotations instead preserve their
+    /// origin's source through an exact affine image. Lines, rational Béziers,
+    /// finite NURBS and planar images also
     /// accept selected algebraic parameters without materialization. A planar
     /// image retains its source point and evaluates frame linear forms through
     /// Hypercurve. Conics keep their exact angular semantics and currently
@@ -338,6 +340,18 @@ impl Curve3 {
     /// # Ok::<(), hyperbrep::GeometryError>(())
     /// ```
     pub fn point_at(&self, parameter: &Parameter) -> GeometryResult<GeometricPoint3> {
+        if let CurveGeometry3::Rotation(rotation) = &self.data.geometry {
+            return crate::context::strict(|| {
+                if !self.domain().contains(parameter)? {
+                    return Err(GeometryError::ParameterOutsideDomain);
+                }
+                rotation.point_at(
+                    parameter
+                        .try_real()
+                        .ok_or(GeometryError::UnsupportedSelectedEvaluation)?,
+                )
+            });
+        }
         if let CurveGeometry3::Translation(line) = &self.data.geometry {
             return crate::context::strict(|| {
                 if !self.domain().contains(parameter)? {
@@ -434,6 +448,7 @@ impl Curve3 {
             )?,
             CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => {
                 return Err(GeometryError::UnsupportedSelectedEvaluation);

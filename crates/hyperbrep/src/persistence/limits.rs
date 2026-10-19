@@ -24,8 +24,8 @@ pub struct ArchiveLimits {
     /// string or a number/boolean/null lexeme counts once, regardless of length.
     pub tokens: usize,
     /// Total topology/geometry records, selected parameters and source records.
-    /// Inline extrusion/revolution profiles and analytic-parallel sources each
-    /// count as additional geometry records.
+    /// Inline extrusion/revolution profiles, rotation origins and
+    /// analytic-parallel sources count as additional geometry records.
     pub records: usize,
     /// Largest authored spline/root degree (Bezier control count minus one).
     /// Tensor Bezier extents use row count and maximum row width. Trailing

@@ -3,6 +3,16 @@
 Status: implementation blueprint. Updated 2026-10-18 for upstream
 `dbe99e3cc` and concurrent development ownership.
 
+The [selected revolution increment](evidence/2026-10-18-selected-revolution/README.md)
+advances WP02/WP03/WP09/WP13 with retained circular orbits, selected meridian
+endpoints and ordinary complete image/axis-clearance admission. Reflected
+similarities, selected meridian splits, latitude splits, full-period standalone
+edges and cold persistence consume the result. Schema 10 gains an additive
+Rotation record; the retained prior corpus and fresh paired exports keep their
+bytes. General surface regularity/embedding, selected angular fields, solid CAD
+closure and release/resource gates remain open. All 28 work packages remain
+incomplete; the finite evidence does not change their broader acceptance gates.
+
 The [selected surface-patch increment](evidence/2026-10-18-selected-surface-patches/README.md)
 advances WP02/WP09/WP13 with public planar faces and finite extrusion patches
 whose endpoints retain selected parameters. Ordinary builder admission proves
@@ -10,8 +20,8 @@ complete coordinate boundary images. Holes, reversal, affine transforms, selecte
 contact splits and cold replay consume the result. A reproduced nonorthogonal
 archive-growth bug is corrected by preserving unchanged pcurve definitions;
 first-export expression changes and their adverse size/time costs are explicitly
-audited. General embedding, revolution latitude generators and CAD closure
-remain open; no complete work package or release gate is closed.
+audited. The revolution increment above extends selected latitude generators;
+general embedding and CAD closure remain open; no complete work package or release gate is closed.
 
 The [planar lift increment](evidence/2026-10-18-planar-curve-lift/README.md)
 advances WP02/WP07/WP08/WP13 with retained planar spatial curves, complete

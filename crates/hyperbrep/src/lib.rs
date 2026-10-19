@@ -52,12 +52,12 @@ pub use geometry::{
     Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceComponents,
     CurveSurfaceContactKind, CurveSurfaceIntersection, CurveSurfacePoint, CylinderGeometry,
     GeometricPoint3, MaterializedSurfacePcurve, NurbsCurveGeometry, ParameterDomain, Pcurve,
-    PlanarCurveGeometry, RationalBezierCurveGeometry, Surface, SurfaceBounds, SurfaceDomain,
-    SurfaceIntersectionComponents, SurfaceIntersectionCurve, SurfaceIntersectionLine,
-    SurfaceIntersectionOperand, SurfaceIntersectionParameterRay, SurfaceIntersectionPcurve,
-    SurfaceIntersectionRay, SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePartials,
-    SurfacePcurveCorrespondence, SurfaceSurfaceIntersection, TorusGeometry,
-    TranslationCurveGeometry,
+    PlanarCurveGeometry, RationalBezierCurveGeometry, RotationCurveGeometry, Surface,
+    SurfaceBounds, SurfaceDomain, SurfaceIntersectionComponents, SurfaceIntersectionCurve,
+    SurfaceIntersectionLine, SurfaceIntersectionOperand, SurfaceIntersectionParameterRay,
+    SurfaceIntersectionPcurve, SurfaceIntersectionRay, SurfaceIsoAxis, SurfaceKind,
+    SurfaceParameterDomain, SurfacePartials, SurfacePcurveCorrespondence,
+    SurfaceSurfaceIntersection, TorusGeometry, TranslationCurveGeometry,
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};

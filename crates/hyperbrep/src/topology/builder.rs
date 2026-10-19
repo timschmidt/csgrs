@@ -81,7 +81,7 @@ impl ArenaModelBuilder {
             // also admit constant or self-intersecting spline carriers.
             if !matches!(
                 curve_ref.kind(),
-                Curve3Kind::CircleArc | Curve3Kind::EllipseArc
+                Curve3Kind::CircleArc | Curve3Kind::EllipseArc | Curve3Kind::Rotation
             ) {
                 return Err(BuildError::UnsupportedClosedEdge(curve_ref.kind()));
             }
@@ -275,6 +275,7 @@ impl ArenaModelBuilder {
                 }
                 self.validate_wire_image(*wire, surface)?;
             }
+            self.validate_retained_revolution_chart(&wires, surface)?;
             if spherical {
                 if inner.len() > 1 {
                     return Err(BuildError::UnsupportedSphericalTrim(outer));
