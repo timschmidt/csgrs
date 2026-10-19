@@ -32,9 +32,11 @@ impl CurvePoint2 {
 impl CurvePointAffineForm2 {
     /// Retains this affine value as a parameter in its existing selected field.
     ///
-    /// No coordinate elimination or independent root reconstruction is used.
     /// Authored constants remain authored; other values retain their defining
-    /// field and its selected sources. Unsupported fields fail explicitly.
+    /// field and selected sources. Polynomial-fiber points construct a local
+    /// image relation and select its root from source enclosures, without a
+    /// global norm through the base root. The affine recipe remains available
+    /// for replay. Unsupported fields fail explicitly.
     /// A retained supporting-line intersection preserves both source lines
     /// even when their endpoints also admit scalar coordinate expressions.
     pub fn parameter(&self) -> ExactCurveResult<crate::CurveParameter2> {

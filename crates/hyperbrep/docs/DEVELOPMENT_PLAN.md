@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
-Status: implementation blueprint. Updated 2026-10-19 for native polynomial
-branches, upstream `dbe99e3cc` and concurrent development ownership.
+Status: implementation blueprint. Updated 2026-10-19 for selected-fiber
+images, upstream `dbe99e3cc` and concurrent development ownership.
 
 The [procedural solid-revolution increment](evidence/2026-10-18-procedural-revolution/README.md)
 advances WP02/WP07/WP09/WP13 by consuming retained latitude generators in closed
@@ -1217,6 +1217,21 @@ replay. The public surface section remains unsupported. Follow the new
 rational functions, regular derivatives/maps, spatial/dual-chart images,
 whole-branch replay, components and arrangements. General filled topology and
 all complete work-package/release gates remain open.
+
+The [selected-fiber image increment](evidence/2026-10-19-selected-fiber-images/README.md)
+now computes mixed affine coordinates of polynomial-fiber points in their
+retained algebraic field. Hypersolve owns local rational-image norms; Hypercurve
+owns source selection, denominator checks and replayable affine recipes. BRep
+consumes these parameters through existing scalar charts, planar spatial images,
+model validation and deterministic archive replay. Selected pcurve/surface
+evaluation, both original charts, branch/event certificates and whole-branch
+replay remain prerequisites to the original interior-loop section. The next
+record describes an affine projection domain for general height equations that
+can reuse BRep's existing planar spatial lift. General rational maps, further
+regularity/derivative support and patch-pair spatial images remain later work.
+Follow the current
+[next domains](evidence/2026-10-19-selected-fiber-images/next-domains.md) before
+claiming a complete section or trim arrangement. No work package is closed.
 
 Apply [research gates G2–G5](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)
 before making practical-completeness claims. ESOLID and exact quadric work

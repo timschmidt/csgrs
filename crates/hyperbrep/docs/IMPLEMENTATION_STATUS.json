@@ -2634,6 +2634,53 @@
       "validation": "Six shared Hypercurve groups and one public BRep point-archive group pass natively and in actual zero-import WebAssembly. The public model recipe retains a polynomial-fiber chord endpoint through cold replay and reversal, verifies deterministic archive bytes, rejects forged singleton claims, and checks record/degree/element refusal and recovery before scalar decoding. The internal selected-point archive regression also passes. Final BRep/IO all-feature release suites pass 731 tests. The final Hypercurve all-feature no-fail-fast run records 2533 passed, 2 failed and 33 ignored tests across 64 batches. Both failures reproduce on unchanged ea05bc2aa: oblique fillet certainty and the exterior parameter's recursive-projective view. Their original assertions remain unchanged. Affected native all-feature/all-target Clippy and rustdoc deny warnings; BRep fuzz-target compilation and formatting pass. Three complete preserved BRep workflows pass on fresh baseline/candidate binaries, with 227 byte-identical archive records. These checks do not establish the original public interior-loop surface section: that complete probe still returns UnsupportedIntersection with its success assertion intact.",
       "cost_evidence": "Fifteen CPU-pinned processes retain three alternating baseline/candidate pairs for three complete preserved modeling workflows, three absolute processes for six new curve recipes, three for the complete public point-archive recipe, and three for the rejected inline curve representation using unchanged recipes. Its paired tradeoff samples are retained separately. First and three repeated fresh-input calls retain all assertions and validation. The six matched median phase ratios range 0.996644 to 1.025039; 0 of 18 paired rows increase counted Rust allocation traffic. Maximum process RSS is 22880 KiB. All adverse samples remain. An inline point payload was rejected after increasing CurvePoint2 from 16 to 56 bytes and its definition from 360 to 400 bytes; shared indirection restores the baseline 16/360-byte layouts, with the Curve2 handle still 8 bytes on this target. On the unchanged six curve recipes, shared storage adds 6\u201312 counted allocations per first call while reducing requested bytes by 48\u2013832; all tradeoff samples remain. Requested allocation traffic excludes foreign allocator internals and is not live heap. Shared-host timings and finite layouts establish neither a general speedup nor a total resource bound. New successful operations have no prior successful-work timing baseline.",
       "limits": "This is a native planar branch and point foundation, not a completed general BRep section. The source equation must satisfy the solver's finite-fiber rational-domain restrictions; vertical/nullified components, generic repeated factors and whole boundary components remain typed blockers. Interior queries need a native BezierParameter2 view; mixed affine scalar images over an algebraic base and general selected scalar persistence remain restricted. General derivatives, rational planar/spatial maps, dual surface charts, filled arrangements, trim/material topology, whole-branch replay and general surface intersections remain open. Conservative branch boxes use the complete source rectangle. Existing refinement/work counters and archive input limits do not bound total arithmetic, coefficient growth, live heap, stack or cancellation latency. Runtime fuzz/ASan/lexicase, formal/coverage, MSRV, installed distributions, production bindings and the full pre-push matrix remain unqualified. All 28 work packages remain open/in-progress. The consumed eaa0cae54 push exception does not authorize publishing this increment."
+    },
+    {
+      "id": "selected-fiber-images-2026-10-19",
+      "work_packages": [
+        "WP05a",
+        "WP05b",
+        "WP06",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P10",
+        "P11",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P29",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Select exact rational images in the retained algebraic coefficient field; expose mixed polynomial-point affine parameters and replay their source through existing BRep scalar charts and archives.",
+      "sources": [
+        "../../hypersolve/src/algebraic_fiber.rs",
+        "../../hypercurve/src/bezier_offset/selected_fiber.rs",
+        "../../hypercurve/src/bezier_offset/affine_form.rs",
+        "../../hypercurve/src/polynomial_point.rs",
+        "../tests/support/selected_fiber_images.rs"
+      ],
+      "evidence": "evidence/2026-10-19-selected-fiber-images/manifest.json",
+      "validation": "Six shared groups (three solver, two curve, one BRep) pass natively and in actual zero-import WebAssembly. They verify exact local coefficient identities, both axis conventions, saturation and poles, selected conjugates, mixed affine coordinates, strict/approximate/strict reuse, promotion refusal/recovery and complete BRep edge/scalar-chart/transform/archive replay. Three internal curve tests also pass, including near-pole refinement and retained-source lifetime without a reference cycle. Final all-feature release suites pass 988 solver and 732 BRep/IO tests. The curve suite records 2538 passed, 2 failed and 33 ignored tests across 65 batches. Both failures reproduce on clean 76238cec8: oblique-fillet certainty and the exterior parameter recursive-projective view. Their assertions remain unchanged. Affected all-feature/all-target Clippy and rustdoc deny warnings; BRep fuzz-target compilation and formatting pass. Five preserved assertion-bearing workflows pass on baseline and candidate, including 227 byte-identical BRep archives; the new recipe emits three checked transformed archives. The original mixed affine-form success assertion now passes. The complete original interior-loop surface-section success assertion still fails with UnsupportedIntersection; it is not credited as a completed section.",
+      "cost_evidence": "Nine CPU-pinned processes retain three alternating baseline/candidate pairs for five preserved workflows (three complete BRep modeling recipes, polynomial branches and the existing local/global polynomial-image APIs), plus three absolute processes for six new workflows. First and three repeated fresh-input calls retain all assertions, validation and output materialization. The ten matched median phase ratios range 0.984839 to 1.041885; 0 of 30 paired rows increase counted Rust allocation calls and 6 increase requested bytes. Each byte increase is 344 bytes per complete polynomial-branch invocation (about 0.0091% of baseline request traffic); the other preserved workflows have identical allocation calls and requested bytes. The legacy local/global projection recipe retains adverse first/repeated median latency ratios 1.041885/1.010552. Maximum measured process RSS is 23952 KiB. The matched native executable grows by 32336 bytes; all native/WASM artifact sizes and hashes are recorded. All unfavorable samples remain in cost-analysis.json and the raw record. The public Curve2/CurvePoint2/definition layouts remain identical to baseline; optional affine provenance adds one pointer to internal selected-fiber parameter data. Requested allocation traffic excludes foreign allocator internals and is not live heap. Shared-host timings and finite layouts establish neither a general speedup nor a total resource bound. New successful operations have no prior successful-work timing baseline.",
+      "limits": "This is an exact selected-scalar and replay extension, not a completed general BRep section. The public solver enumerates local rational images; its caller must exclude poles and select the image of the retained source. The curve extension selects that image and exposes mixed affine forms of admitted PolynomialFiber points. General source-bound rational planar/spatial maps, branch derivatives and regularity, dual surface charts, filled arrangements, trim/material topology and whole-branch replay remain open. The underlying finite-fiber solver still rejects unsupported vertical/nullified components, generic repeated factors and whole boundary components. General rational-map persistence remains unsupported; the existing AffineForm archive covers the implemented affine source recipes. Existing degree caps, refinement/promotion counters and archive admission limits do not bound total arithmetic, coefficient growth, live heap, stack or cancellation latency. Runtime fuzz/ASan/lexicase, formal/coverage, MSRV, installed distributions, production bindings and the full pre-push matrix remain unqualified. All 28 work packages remain open/in-progress. The consumed eaa0cae54 push exception does not authorize publishing this increment."
     }
   ],
   "work_packages": [
@@ -2808,6 +2855,7 @@
     }
   ],
   "next_actions": [
+    "Continue WP05a/WP05b from evidence/2026-10-19-selected-fiber-images/manifest.json and next-domains.md. Preserve the original complete interior-loop section, all mixed affine point/scalar-chart/transform/archive recipes, independently derived image identities, poles, budgets and every adverse cost. Next retain rational planar maps with source and denominator/regularity authority, selected BRep pcurve evaluation/materialization and both original surface charts. Reuse the existing planar spatial lift for plane/tensor sections; general patch pairs need further spatial images. Complete branch/event replay and section/trim consumers. Do not count a scalar image or a passing archive as a completed section. All work-package and publication gates remain open.",
     "Continue WP05a/WP05b from evidence/2026-10-19-polynomial-branches/manifest.json and next-domains.md. Preserve the original complete BRep interior-loop probe, native branch/point and public archive recipes, exact shared source charts, resource refusal/recovery, baseline curve failures and every adverse cost. Extend selected rational functions, regular derivative and image evidence, spatial/dual-chart correspondence, whole-branch replay, component processing and trim arrangements in their owning layers before claiming section completion. This prerequisite closes no work package or publication gate.",
     "Continue WP05a/WP05b from evidence/2026-10-19-bivariate-cell-prototype/manifest.json and its next-domains.md. Preserve the original complete interior-loop surface probe, all exact graph fixtures, independent slice/strip checks, typed component blockers and adverse costs. Build retained Hypercurve branches and BRep spatial/dual-chart correspondence before claiming the public section fixed; complete component processing, surface guards, trim arrangements, persistence and resource contracts. This solver prerequisite closes no work package or publication gate.",
     "Preserve evidence/2026-10-19-coaxial-procedural/manifest.json and all earlier original profiles, archives and adverse costs. Continue its next-domains.md: selected angular/axial fields, partial and singular revolutions, general surface arrangements/Booleans, metrics, STEP, resource bounds and shipped consumers. The common-axis product reduction does not close general surface arrangements, replay resource contracts, any work package or pre-push qualification.",

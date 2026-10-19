@@ -145,6 +145,18 @@ impl CurveParameter2 {
         Self::from_selected_scalar(SelectedScalar2::SelectedFiber(parameter))
     }
 
+    pub(crate) fn with_selected_fiber_affine_form(
+        self,
+        form: crate::CurvePointAffineForm2,
+    ) -> Self {
+        match self.data {
+            CurveParameterData2::Scalar(SelectedScalar2::SelectedFiber(parameter)) => {
+                Self::from_selected_fiber(parameter.with_affine_form_identity(form))
+            }
+            data => Self { data },
+        }
+    }
+
     pub(crate) fn from_recursive_projective(
         parameter: BezierRecursiveProjectiveParameter2,
     ) -> Self {

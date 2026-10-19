@@ -135,6 +135,7 @@ pub use algebraic_fiber::{
     deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter,
     isolate_bivariate_fiber_roots_at_algebraic_parameter, project_algebraic_fiber_polynomial_image,
     project_algebraic_fiber_polynomial_image_relation,
+    project_algebraic_fiber_rational_image_relation,
     project_bivariate_fiber_at_algebraic_parameter,
     reduce_bivariate_rational_function_at_algebraic_parameter, subresultant_in_algebraic_fiber,
 };

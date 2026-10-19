@@ -70,9 +70,15 @@ and similarity; bounds conservatively enclose the full source rectangle.
 Correlated point definitions replay through the existing selected-fiber owner.
 The BRep archive accepts these definitions in retained-chord endpoints, charges
 both equation degrees and coefficient/row entries, and rejects forged singletons.
-See the [finite evidence](evidence/2026-10-19-polynomial-branches/README.md).
-This does not supply general derivatives, filled arrangements, tensor-surface
-images, both section charts or whole implicit-branch archives. The original
+See the [finite branch evidence](evidence/2026-10-19-polynomial-branches/README.md).
+Mixed affine coordinates now remain selected in the same algebraic field and
+carry replayable point/form recipes. Existing BRep scalar charts and planar
+spatial images consume them through complete edge validation, transforms and
+deterministic native archive replay; see the
+[image evidence](evidence/2026-10-19-selected-fiber-images/README.md).
+This does not supply general rational planar/spatial maps, branch derivatives,
+filled arrangements, tensor-surface images, both section charts or whole
+implicit-branch archives. The original
 public biquadratic interior-loop section still reports `UnsupportedIntersection`.
 
 ## Spatial curve carriers

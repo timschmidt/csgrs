@@ -12,7 +12,9 @@ impl CurveParameter2 {
     /// Replaying [`crate::CurvePointAffineForm2::parameter`] reconstructs the
     /// selected field from the same source; this view is not a proof flag.
     pub fn affine_form_source(&self) -> Option<&crate::CurvePointAffineForm2> {
-        self.as_recursive_projective()?.affine_form_source()
+        self.as_selected_fiber()
+            .and_then(|parameter| parameter.affine_form_source())
+            .or_else(|| self.as_recursive_projective()?.affine_form_source())
     }
     /// Evaluates `(x_scale*t + x_offset, y_scale*t + y_offset)` while retaining
     /// the parameter's selected authority. No finite source interval is implied.

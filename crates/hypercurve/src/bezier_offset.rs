@@ -1852,11 +1852,12 @@ struct BezierSelectedFiberRepresentations2 {
     projective: OnceLock<BezierRecursiveProjectiveParameter2>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct BezierAlgebraicSelectedFiberParameterData2 {
     authority: BezierAlgebraicSelectedFiberAuthority2,
     root: IsolatedRootInterval,
     representations: Arc<BezierSelectedFiberRepresentations2>,
+    affine_form: Option<Arc<crate::CurvePointAffineForm2>>,
 }
 
 impl PartialEq for BezierAlgebraicSelectedFiberParameterData2 {

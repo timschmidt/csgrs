@@ -9,27 +9,93 @@ pub(super) fn canonical_affine_form_definition(
     mut form: crate::CurvePointAffineForm2,
 ) -> crate::CurvePointAffineForm2 {
     loop {
-        let CurvePointData2::Similarity(image) = &form.source().0 else {
+        if let CurvePointData2::Similarity(image) = &form.source().0 {
+            if !CurveContext::STRICT.accepts_retained_policy(image.data.policy) {
+                return form;
+            }
+            let [a, b, c] = form.coefficients();
+            let (m00, m01, m10, m11, tx, ty) = image.data.transform.affine_components();
+            form = image.data.source.affine_form(
+                Real::dot2_refs([a, b], [m00, m10]),
+                Real::dot2_refs([a, b], [m01, m11]),
+                Real::dot2_refs([a, b], [tx, ty]) + c,
+            );
+            continue;
+        }
+        // A scalar fiber image may itself be lifted to an affine point before
+        // another line chart consumes it. Flatten that exact recipe at both
+        // construction and replay; otherwise loading alone changes archives.
+        let CurvePointData2::AnalyticParallel(point) = &form.source().0 else {
             return form;
         };
-        if !CurveContext::STRICT.accepts_retained_policy(image.data.policy) {
+        let Some((parallel, parameter)) = point.native_parallel_evaluation() else {
+            return form;
+        };
+        let Some(source) = parameter
+            .as_selected_fiber()
+            .and_then(|value| value.affine_form_source())
+        else {
+            return form;
+        };
+        if parallel.distance().zero_status() != ZeroKnowledge::Zero {
             return form;
         }
-        let [a, b, c] = form.coefficients();
-        let (m00, m01, m10, m11, tx, ty) = image.data.transform.affine_components();
-        form = image.data.source.affine_form(
-            Real::dot2_refs([a, b], [m00, m10]),
-            Real::dot2_refs([a, b], [m01, m11]),
-            Real::dot2_refs([a, b], [tx, ty]) + c,
-        );
+        let BezierParallelSource2::Rational(curve) = parallel.source() else {
+            return form;
+        };
+        let Ok(basis) = curve.homogeneous_power_basis() else {
+            return form;
+        };
+        let Ok(Some((scale, offset))) = affine_image_coefficients(
+            &basis.x_numerator,
+            &basis.y_numerator,
+            &basis.weight,
+            form.coefficients(),
+        ) else {
+            return form;
+        };
+        let [a, b, c] = source.coefficients();
+        form = source
+            .source()
+            .affine_form(&scale * a, &scale * b, &scale * c + offset);
     }
+}
+
+fn affine_image_coefficients(
+    x: &[Real],
+    y: &[Real],
+    w: &[Real],
+    [a, b, c]: &[Real; 3],
+) -> CurveResult<Option<(Real, Real)>> {
+    let zero = Real::zero();
+    if w.is_empty()
+        || w.iter()
+            .skip(1)
+            .any(|v| v.zero_status() != ZeroKnowledge::Zero)
+    {
+        return Ok(None);
+    }
+    let coefficient = |i| {
+        Real::dot2_refs(
+            [a, b],
+            [x.get(i).unwrap_or(&zero), y.get(i).unwrap_or(&zero)],
+        )
+    };
+    if (2..x.len().max(y.len())).any(|i| coefficient(i).zero_status() != ZeroKnowledge::Zero) {
+        return Ok(None);
+    }
+    Ok(Some((
+        (coefficient(1) / &w[0])?,
+        (coefficient(0) / &w[0])? + c,
+    )))
 }
 
 pub(crate) fn point_affine_form_parameter(
     source: &CurvePoint2,
-    [a, b, c]: &[Real; 3],
+    coefficients: &[Real; 3],
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurveParameter2>> {
+    let [a, b, c] = coefficients;
     if a.zero_status() == ZeroKnowledge::Zero && b.zero_status() == ZeroKnowledge::Zero {
         return Ok(Classification::Decided(c.clone().into()));
     }
@@ -47,25 +113,9 @@ pub(crate) fn point_affine_form_parameter(
                   w: &[Real],
                   parameter: &CurveParameter2|
      -> CurveResult<Option<Classification<CurveParameter2>>> {
-        let zero = Real::zero();
-        if w.is_empty()
-            || w.iter()
-                .skip(1)
-                .any(|v| v.zero_status() != ZeroKnowledge::Zero)
-        {
+        let Some((scale, offset)) = affine_image_coefficients(x, y, w, coefficients)? else {
             return Ok(None);
-        }
-        let coefficient = |i| {
-            Real::dot2_refs(
-                [a, b],
-                [x.get(i).unwrap_or(&zero), y.get(i).unwrap_or(&zero)],
-            )
         };
-        if (2..x.len().max(y.len())).any(|i| coefficient(i).zero_status() != ZeroKnowledge::Zero) {
-            return Ok(None);
-        }
-        let scale = (coefficient(1) / &w[0])?;
-        let offset = (coefficient(0) / &w[0])? + c;
         if scale.zero_status() == ZeroKnowledge::Zero {
             return Ok(Some(Classification::Decided(offset.into())));
         }
@@ -78,7 +128,15 @@ pub(crate) fn point_affine_form_parameter(
     };
     match &source.0 {
         CurvePointData2::Polynomial(point) => {
-            return point.affine_parameter(&[a.clone(), b.clone(), c.clone()], policy);
+            return Ok(point
+                .affine_parameter(&[a.clone(), b.clone(), c.clone()], policy)?
+                .map(|parameter| {
+                    parameter.with_selected_fiber_affine_form(source.affine_form(
+                        a.clone(),
+                        b.clone(),
+                        c.clone(),
+                    ))
+                }));
         }
         CurvePointData2::Algebraic(point) => {
             if let Some((x, y, w)) = point.retained_coordinate_polynomials() {

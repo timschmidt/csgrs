@@ -4,9 +4,12 @@ The additive `PolynomialFiber` planar-point record stores a bivariate equation,
 the selected first parameter, the second-coordinate interval and an optional
 exact root witness. Replay checks the singleton in that same selected field;
 there is no serialized certainty or trusted root-count flag. Retained-chord
-endpoints consume this point record through the public model loader. General
-selected scalar-image persistence still requires owner support. Input admission
-charges both stored polynomial degrees, every coefficient and every row header, including
+endpoints consume this point record through the public model loader. Mixed
+affine scalar images of these points now use the existing `AffineForm` record,
+retaining the original point and coefficients through scalar charts and spatial
+planar-image replay. General rational-image persistence still requires owner
+support. Input admission charges both stored polynomial degrees, every
+coefficient and every row header, including
 empty rows, before scalar decoding. Whole implicit-branch archives,
 their spatial images and surface correspondences still require implementation.
 
@@ -102,10 +105,12 @@ maps, split/reflection and forged-record rejection are covered in the
 - `AffineForm { point, coefficients }` supplies a retained planar point and
   `a*x + b*y + c`. The point definition contains authored coordinates, a rational
   or regular parallel source with its parameter, correlated rational coordinate
-  polynomials in one selected parameter, a strict-compatible similarity, or a
-  unique intersection of two exact supporting lines.
-  Every selected reference must name an earlier node. Replay reconstructs the
-  source and shared parameter field; it does not trust precomputed coordinates.
+  polynomials in one selected parameter, a checked `PolynomialFiber`, a
+  strict-compatible similarity, or a unique intersection of two exact supporting
+  lines. Nested affine lifts of a selected-fiber affine form compose into the
+  original source recipe during construction and replay, preserving deterministic
+  bytes. Every selected reference must name an earlier node. Replay reconstructs
+  the source and shared parameter field; it does not trust precomputed coordinates.
 
 The encoder interns root and chart records by their exact serialized contents.
 An identity chart references its root directly. This also handles inverse

@@ -144,9 +144,14 @@ impl PolynomialPoint2 {
                 policy,
             );
         }
-        // Signing a mixed form already uses the correlated fiber. Retaining
-        // the form as a new scalar needs a checked local image relation.
-        Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        Ok(self
+            .fiber
+            .rational_image_in_retained_field(
+                &BivariatePolynomial::new(vec![vec![c.clone(), b.clone()], vec![a.clone()]]),
+                &BivariatePolynomial::new(vec![vec![Real::one()]]),
+                policy,
+            )?
+            .map(CurveParameter2::from_selected_fiber))
     }
 
     pub(crate) fn bounds(&self, steps: usize, policy: &CurveContext) -> Classification<Aabb2> {
