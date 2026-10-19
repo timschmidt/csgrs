@@ -79,10 +79,7 @@ impl ArenaModelBuilder {
             // radii and independent axes already prove regularity and whose
             // exact parameter period is known. Endpoint agreement alone would
             // also admit constant or self-intersecting spline carriers.
-            if !matches!(
-                curve_ref.kind(),
-                Curve3Kind::CircleArc | Curve3Kind::EllipseArc | Curve3Kind::Rotation
-            ) {
+            if !curve_ref.has_regular_angular_period() {
                 return Err(BuildError::UnsupportedClosedEdge(curve_ref.kind()));
             }
             require_real_equal(

@@ -36,7 +36,8 @@ impl Curve3 {
     /// selected source through an exact affine rotation. Independently selected
     /// angular parameters currently return `UnsupportedSelectedEvaluation`.
     /// This carrier does not require independent center or radius coordinates.
-    /// Model transforms support certified similarities, including reflection.
+    /// Similarity transforms retain this native family. General invertible
+    /// affine transforms retain an `AffineImage` of the complete source orbit.
     /// Bounds enclose the complete circular orbit, even for a partial turn.
     /// Vector derivatives require an origin with stored scalar coordinates;
     /// otherwise `derivative_at` returns `UnrepresentablePoint`.

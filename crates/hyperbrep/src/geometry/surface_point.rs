@@ -2,6 +2,9 @@
 
 use super::*;
 
+mod rational;
+pub(super) use rational::RationalSurfacePoint;
+
 impl Surface {
     /// Evaluates a joint UV point, retaining its exact source when necessary.
     ///
@@ -10,9 +13,12 @@ impl Surface {
     /// root or fiber selector. Its spatial coordinates need not be available as
     /// independent scalars. Coordinate and linear-form queries reuse that source.
     ///
+    /// Rational Bézier and NURBS tensors, and extrusions of native rational
+    /// profiles, retain joint rational images with checked denominators. NURBS
+    /// queries retain the original knot chart, including internal knot ownership.
     /// Closed and lower-bounded domains are checked before evaluation; periodic
-    /// axes accept every real parameter. Selected nonlinear surface images
-    /// currently return [`GeometryError::UnsupportedSelectedEvaluation`].
+    /// axes accept every real parameter. Selected angular images and other
+    /// unavailable fields return a typed blocker.
     ///
     /// ```
     /// use hyperbrep::{Surface, Point3, Vector3};
@@ -58,6 +64,16 @@ impl Surface {
                     self.clone(),
                     parameter.clone(),
                 )),
+                SurfaceGeometry::RationalBezier(_)
+                | SurfaceGeometry::Nurbs(_)
+                | SurfaceGeometry::Extrusion(_) => {
+                    let image = RationalSurfacePoint::new(self, parameter)?;
+                    Ok(GeometricPoint3::from_rational_surface_image(
+                        self.clone(),
+                        parameter.clone(),
+                        image,
+                    ))
+                }
                 _ => Err(GeometryError::UnsupportedSelectedEvaluation),
             }
         })

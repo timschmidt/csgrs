@@ -729,10 +729,20 @@ It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
 
 Selected geometry archive coverage and remaining replay limits are documented
-in [Archive version 10](docs/SELECTED_ARCHIVE.md).
+in [Archive version 12](docs/SELECTED_ARCHIVE.md).
 
 Conic inverse and curve/surface contact queries preserve distant authored
 angular charts and distinct full-period seam parameters. Retained Boolean
 contacts reuse proven native preimages across periodic charts. Oblique torus
 band workflows exercise subdivision, reflection, exact rescaling, replay and
 complementary reconstruction; broader arbitrary-angle completion remains open.
+
+Selected joint UV evaluation supports planes, positive-weight Bézier/NURBS
+tensor patches and extrusions of native line/Bézier/NURBS profiles. Returned
+`GeometricPoint3` values retain their source and selectors for exact comparisons,
+conservative bounds, affine transforms, sweep origins and checked replay.
+`Curve3::affine_image` preserves an original spatial curve under an invertible
+affine matrix, including sheared retained rotation curves. Archive 12 is a
+breaking format; previous versions are rejected without compatibility adapters.
+Selected angular/general procedural evaluation and complete surface-section
+arrangements remain open. See the [capability and evidence record](docs/evidence/2026-10-19-rational-surface-evaluation/README.md).

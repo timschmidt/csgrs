@@ -333,6 +333,8 @@ pub enum CurveError {
     },
     /// A NURBS homogeneous denominator is exactly zero at an evaluation parameter.
     ZeroNurbsDenominator,
+    /// A rational query has a zero denominator at its original retained point.
+    ZeroRationalPointDenominator,
     /// A circular arc start/end pair does not lie on a common supplied circle.
     RadiusMismatch,
     /// Circular-arc endpoint/orientation evidence does not define a valid finite sweep.
@@ -516,6 +518,9 @@ impl fmt::Display for CurveError {
             }
             Self::NonFiniteProjectionPoint => write!(f, "finite projection point is not finite"),
             Self::Topology(message) => write!(f, "topology operation failed: {message}"),
+            Self::ZeroRationalPointDenominator => {
+                write!(f, "rational point query has a zero denominator")
+            }
             Self::Real(message) => write!(f, "Real operation failed: {message}"),
         }
     }

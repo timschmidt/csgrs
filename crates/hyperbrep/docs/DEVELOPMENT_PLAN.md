@@ -1268,6 +1268,17 @@ uses a generic sweep origin and has no legacy decoder. Follow the
 for source-bound nonlinear maps, complete selected section restrictions and
 branch/event persistence. Work-package and publication gates remain open.
 
+The [rational surface evaluation increment](evidence/2026-10-19-rational-surface-evaluation/README.md) extends this boundary
+to positive-weight Bézier/NURBS tensor patches and native rational-profile
+extrusions. Hypercurve owns original-source rational queries; Hypersolve owns
+polynomial/basis arithmetic; HyperBRep retains surface/UV authority, prepared
+coordinate maps and exact spatial composition. General affine images of retained
+rotation curves preserve the full shear/sweep/replay fixture. Archive 12 adds
+that curve carrier and rejects earlier versions. Continue with complete selected
+section restrictions and branch/event replay, retaining the original complete
+interior-loop success assertion. Selected angular images, general procedural
+profiles, full resource bounds and release/push gates remain open.
+
 Apply [research gates G2–G5](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)
 before making practical-completeness claims. ESOLID and exact quadric work
 establish useful precedents with specific domains; recent numerical tracing

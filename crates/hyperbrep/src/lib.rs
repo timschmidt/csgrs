@@ -48,16 +48,17 @@ pub use construction::{ConstructionError, LoftSection, RationalBezierSweepFrame,
 pub use context::OperationContext;
 pub use error::{GeometryError, GeometryResult, NonConicalGeneratorReason};
 pub use geometry::{
-    Axis, CircularArcGeometry, ConeBranch, ConeGeometry, ConicalRevolution, ConicalRevolutionChart,
-    Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceComponents,
-    CurveSurfaceContactKind, CurveSurfaceIntersection, CurveSurfacePoint, CylinderGeometry,
-    GeometricPoint3, MaterializedSurfacePcurve, NurbsCurveGeometry, ParameterDomain, Pcurve,
-    PlanarCurveGeometry, RationalBezierCurveGeometry, RotationCurveGeometry, Surface,
-    SurfaceBounds, SurfaceDomain, SurfaceIntersectionComponents, SurfaceIntersectionCurve,
-    SurfaceIntersectionLine, SurfaceIntersectionOperand, SurfaceIntersectionParameterRay,
-    SurfaceIntersectionPcurve, SurfaceIntersectionRay, SurfaceIsoAxis, SurfaceKind,
-    SurfaceParameterDomain, SurfacePartials, SurfacePcurveCorrespondence,
-    SurfaceSurfaceIntersection, TorusGeometry, TranslationCurveGeometry,
+    AffineCurveGeometry, Axis, CircularArcGeometry, ConeBranch, ConeGeometry, ConicalRevolution,
+    ConicalRevolutionChart, Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation,
+    CurveSurfaceComponents, CurveSurfaceContactKind, CurveSurfaceIntersection, CurveSurfacePoint,
+    CylinderGeometry, GeometricPoint3, MaterializedSurfacePcurve, NurbsCurveGeometry,
+    ParameterDomain, Pcurve, PlanarCurveGeometry, RationalBezierCurveGeometry,
+    RotationCurveGeometry, Surface, SurfaceBounds, SurfaceDomain, SurfaceIntersectionComponents,
+    SurfaceIntersectionCurve, SurfaceIntersectionLine, SurfaceIntersectionOperand,
+    SurfaceIntersectionParameterRay, SurfaceIntersectionPcurve, SurfaceIntersectionRay,
+    SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePartials,
+    SurfacePcurveCorrespondence, SurfaceSurfaceIntersection, TorusGeometry,
+    TranslationCurveGeometry,
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};

@@ -99,6 +99,8 @@ pub enum GeometryError {
     UnrepresentablePoint,
     /// The carrier cannot yet evaluate a retained parameter without a scalar view.
     UnsupportedSelectedEvaluation,
+    /// A spline basis could not be constructed under its exact coefficient contract.
+    SplineBasisSubstitution(hypersolve::BsplineKnotSpanSubstitutionStatus),
     /// The requested intersection family combination is unsupported.
     UnsupportedIntersection,
     /// Exact measurement is not implemented for this validated geometry family.
@@ -214,6 +216,9 @@ impl fmt::Display for GeometryError {
             Self::PointNotOnCurve => formatter.write_str("point is not on the finite curve"),
             Self::PointNotOnSurface => formatter.write_str("point is not on the surface carrier"),
             Self::PlanarCurve(error) => write!(formatter, "planar curve operation failed: {error}"),
+            Self::SplineBasisSubstitution(status) => {
+                write!(formatter, "spline basis substitution failed: {status:?}")
+            }
             Self::PlanarCurveConstruction(error) => {
                 write!(formatter, "planar curve construction failed: {error}")
             }

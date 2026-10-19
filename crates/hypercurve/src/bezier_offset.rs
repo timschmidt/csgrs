@@ -31,6 +31,7 @@ mod parallel_construction;
 mod parallel_pair_sets;
 #[path = "curve_parameter_component.rs"]
 mod parameter_component;
+mod rational_form;
 mod recursive_field;
 use recursive_field::foreign_embedding_projective_point;
 #[cfg(test)]
@@ -55,6 +56,7 @@ use parameter_component::{
     retain_finite_parallel_components,
 };
 pub(crate) use parameter_component::{CurveParameterComponent2, CurveParameterComponentSelection2};
+pub(crate) use rational_form::*;
 pub(crate) use recursive_quadratic::*;
 use represented::*;
 use selected_dense::*;

@@ -114,6 +114,9 @@ impl Record for Vertex {
 
 #[derive(Deserialize)]
 pub(super) enum Curve {
+    AffineImage {
+        source: Box<Curve>,
+    },
     Rotation {
         origin: SpatialPoint,
     },
@@ -139,6 +142,10 @@ pub(super) enum Curve {
 impl Record for Curve {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::AffineImage { source } => {
+                budget.record()?;
+                source.admit(budget)
+            }
             Self::Rotation { origin } | Self::Translation { origin } => {
                 budget.record()?;
                 origin.admit(budget)

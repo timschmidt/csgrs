@@ -20,6 +20,26 @@ pub(crate) struct PolynomialPoint2 {
 }
 
 impl PolynomialPoint2 {
+    pub(crate) fn polynomial_sign(
+        &self,
+        polynomial: &BivariatePolynomial,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<hyperreal::RealSign>> {
+        self.fiber.predicate_sign(polynomial, policy)
+    }
+
+    pub(crate) fn rational_parameter(
+        &self,
+        numerator: &BivariatePolynomial,
+        denominator: &BivariatePolynomial,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveParameter2>> {
+        Ok(self
+            .fiber
+            .rational_image_in_retained_field(numerator, denominator, policy)?
+            .map(CurveParameter2::from_selected_fiber))
+    }
+
     pub(crate) fn from_fiber(
         equation: BivariatePolynomial,
         base: BezierParameter2,

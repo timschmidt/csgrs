@@ -2809,6 +2809,52 @@
       "validation": "All-feature release BRep/IO suites pass 751 tests in 79 batches, with no failures or ignored tests. The public boundary preserves represented values across all nine surface families and retains joint selected UVs on planes. Five shared public functions pass natively and through four actual zero-import Wasmtime exports: mixed polynomial fibers, independent plane/linear identities, exact near-coincidence, shears/reflections, translation/rotation edges, three cold archive replays, selected section pcurve images, finite/periodic domains, hostile selectors/frames, nested predecode limits and strict/approximate/strict plus zero-budget refusal/recovery. A source-lifetime unit test verifies owned surfaces are released without cycles. Affected all-target/all-feature BRep/IO Clippy and rustdoc with warnings denied, fuzz-target compilation and formatting pass. All 230 preserved archive payloads match after the declared version-11 migration; deterministic bytes and exact geometry are checked independently within each revision. Three new archive files reproduce one identical transformed sweep model. The complete interior-loop section success assertion still fails with UnsupportedIntersection on baseline and candidate and remains unchanged.",
       "cost_evidence": "Three alternating CPU-0 pinned pairs for six complete preserved workflows and three absolute processes for four new workflows retain first and three repeated fresh-input invocations. Every invocation includes assertions, materialization, validation and replay. Twelve median latency ratios span 0.961869 to 0.989768; 18 of 36 paired rows increase Rust allocation calls and 0 increase requested bytes. All adverse samples remain. Maximum process RSS is 24636 KiB; the matched executable changes by +75536 bytes. Shared-host timings establish no speedup. Requested Rust allocation traffic is not live heap and excludes foreign allocators. New successful selected plane images have no prior successful baseline. The represented-family and source-lifetime unit matrix has no separate allocation campaign. The archive translation record is boxed to avoid enlarging every raw curve record; no new cache is introduced. Per complete invocation, allocation calls rise by 5,632 for primitives (0.2144%), 4,126 for clipped_and_voids (0.0567%) and 1,378 for profile_families (0.1213%); the other three workflows keep their allocation counts. Requested bytes decrease in four workflows and stay unchanged in two. This measured tradeoff is retained for the new exact composition capability. See the complete per-case deltas in cost-analysis.json.",
       "limits": "Surface::point_at admits retained plane images and preserves all represented surface evaluators. Selected nonlinear surface images remain UnsupportedSelectedEvaluation after exact domain checks; joint rational tensor/procedural maps need source-bound owner authority. Point bounds inherit Hypercurve's existing representation limits, including the separate exterior affine-point issue. Selected whole-section restriction, whole polynomial-branch/event persistence, general sections/trim arrangements and the original complete interior-loop target remain open. Archive 11 deliberately rejects previous versions and changes translation origins; no compatibility decoder or API overload exists. Source consumers do not establish installed distribution or production binding readiness. Solver counters and archive quotas do not bound total work, live heap, stack or cancellation. Runtime fuzz/ASan/lexicase, formal/coverage, MSRV, installed distributions, full workflows and push gates remain unqualified. All 28 work packages remain open/in-progress. The consumed eaa0cae54 exception does not authorize publishing this increment."
+    },
+    {
+      "id": "rational-surface-evaluation-2026-10-19",
+      "work_packages": [
+        "WP02",
+        "WP05a",
+        "WP05b",
+        "WP06",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Retain joint rational B\u00e9zier/NURBS/extrusion surface points, exact source-bound rational queries and affine images of retained rotation curves through model composition and archive 12 replay.",
+      "sources": [
+        "../src/geometry/surface_point/rational.rs",
+        "../src/geometry/affine_image.rs",
+        "../src/geometry/point.rs",
+        "../../hypercurve/src/curve_point/rational.rs",
+        "../../hypercurve/src/bezier_offset/rational_form.rs",
+        "../../hypersolve/src/curve_substitution/basis.rs",
+        "../tests/support/rational_surface_evaluation.rs",
+        "../tests/support/affine_curve_images.rs"
+      ],
+      "evidence": "evidence/2026-10-19-rational-surface-evaluation/manifest.json",
+      "validation": "All-feature release BRep/IO suites pass 757 tests in 81 batches, with no failures or ignored tests. Focused Hypersolve basis/field and Hypercurve rational-query, selected-point/fiber and work-budget regressions pass; counts and commands are in test-summary.json. All-target/all-feature Clippy for Hypersolve, Hypercurve, BRep and IO, rustdoc with warnings denied, BRep fuzz-target compilation and formatting pass. Twelve shared public acceptance functions run in ten native groups and ten actual zero-import Wasmtime exports. Coverage includes rational B\u00e9zier/NURBS tensors with weighted and unweighted joint UVs, native line/B\u00e9zier/NURBS extrusions, both NURBS spans, internal/final knots and shifted original knot coordinates, independent field identities, exact poles and 1e-12 separation, affine rotation/translation edge composition, source lifetime, strict/approximate/strict and budget refusal/recovery, malformed archives and nested predecode admission. All 233 prior archive payloads match byte-for-byte after only the declared version-header migration; 22 new archive files retain 13 distinct payloads. Semantic assertions, validation and cold replay are checked separately. The original full interior-loop success assertion still fails with UnsupportedIntersection on baseline and candidate and remains unchanged.",
+      "cost_evidence": "Three alternating CPU-0 pinned process pairs each measure six complete preserved workflows and three unchanged plane/pcurve workflows; three absolute processes measure ten new acceptance groups. Every invocation retains assertions, materialization, required validation and replay, with first and three repeated fresh-input phases. Median paired latency ratios range from 0.979957 to 1.039940; 0 of 54 paired rows increase Rust allocation calls and 18 increase requested bytes. Maximum measured process RSS is 24844 KiB. The matched executable changes by +218456 bytes; the plane/pcurve cost executable changes by +380160 bytes. The three prior plane/pcurve recipes request 680, 48 and 48 additional Rust allocation bytes per invocation respectively, with unchanged allocation counts. All adverse rows are retained. Shared-host timings establish no speedup; requested allocation traffic is not live heap and excludes foreign allocators. New successful contracts have no previous successful timing baseline. The prior domains/admission recipe is excluded only from matched costs because its candidate assertions expand the successful contract; complete original correctness recipes and drivers are retained. Per-point prepared rational maps add owned coefficient storage; no global cache is added. Source lifetime and scalar-basis units have no separate matched allocation campaign.",
+      "limits": "Selected angular surfaces, general retained procedural extrusion profiles, full selected section restrictions and branch/event persistence, general section/trim arrangements and the original interior-loop target remain open. Explicit affine curve images preserve supported source operations, with typed coefficient/intersection limitations; native conic model transforms retain their previous metric restriction. An attempted automatic native-conic fallback was rejected because a transformed cylinder returned success but cold replay rejected its plane/curve image agreement. Archive 12 rejects versions through 11 without a compatibility decoder. Existing source-bound scalar/solver counters, fixed basis precision and archive quotas do not bound total work, live heap, stack or cancellation. Source-path native/WASM validation does not establish installed distributions or published bindings. Runtime fuzz/ASan/lexicase, formal proofs, measured coverage, MSRV, full release/workflow and push gates remain unqualified. All 28 work packages remain open/in-progress. The eaa0cae54 push exception is already consumed; this increment is not pushed."
     }
   ],
   "work_packages": [
@@ -2983,6 +3029,7 @@
     }
   ],
   "next_actions": [
+    "Continue WP05a/WP05b from evidence/2026-10-19-rational-surface-evaluation/next-domains.md. Joint rational tensor/extrusion point images now survive affine rotation/translation edge composition and archive 12 replay. Full selected section restrictions, branch/event graphs and the unchanged interior-loop success target remain open. Preserve the native-conic cold-replay blocker before enabling automatic conic affine model transport, all prior fixtures and adverse cost evidence.",
     "Continue WP05a/WP05b from evidence/2026-10-19-surface-evaluation/next-domains.md. Plane UV images now retain joint source evidence; nonlinear rational/tensor/procedural images, selected whole-section restrictions and complete branch/event replay remain required. Preserve the original interior-loop success assertion, all prior exact fixtures, archive migrations and adverse cost evidence.",
     "Continue WP05a/WP05b from evidence/2026-10-19-selected-fiber-images/manifest.json and next-domains.md. Preserve the original complete interior-loop section, all mixed affine point/scalar-chart/transform/archive recipes, independently derived image identities, poles, budgets and every adverse cost. Next retain rational planar maps with source and denominator/regularity authority, selected BRep pcurve evaluation/materialization and both original surface charts. Reuse the existing planar spatial lift for plane/tensor sections; general patch pairs need further spatial images. Complete branch/event replay and section/trim consumers. Do not count a scalar image or a passing archive as a completed section. All work-package and publication gates remain open.",
     "Continue WP05a/WP05b from evidence/2026-10-19-polynomial-branches/manifest.json and next-domains.md. Preserve the original complete BRep interior-loop probe, native branch/point and public archive recipes, exact shared source charts, resource refusal/recovery, baseline curve failures and every adverse cost. Extend selected rational functions, regular derivative and image evidence, spatial/dual-chart correspondence, whole-branch replay, component processing and trim arrangements in their owning layers before claiming section completion. This prerequisite closes no work package or publication gate.",

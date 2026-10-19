@@ -13,6 +13,7 @@ use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 use crate::error::{GeometryError, GeometryResult};
 use crate::{Parameter, ParameterRange};
 
+mod affine_image;
 mod analytic;
 mod axial_lines;
 mod conical_revolution;
@@ -30,6 +31,8 @@ mod spline;
 mod surface_point;
 mod transform;
 mod translation;
+pub(crate) use affine_image::AffineCurve3;
+pub use affine_image::AffineCurveGeometry;
 pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
 pub use conical_revolution::{ConeBranch, ConicalRevolution, ConicalRevolutionChart};
 use curve_plane::{
@@ -129,6 +132,8 @@ impl ParameterDomain {
 /// Supported exact spatial curve family.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Curve3Kind {
+    /// Invertible affine image of a retained spatial curve.
+    AffineImage,
     /// Circular orbit of a retained point around an authored unit axis.
     Rotation,
     /// Straight sweep of a retained point through an authored displacement.
@@ -384,6 +389,7 @@ struct Curve3Data {
 
 #[derive(Debug)]
 enum CurveGeometry3 {
+    AffineImage(Box<AffineCurve3>),
     Rotation(Box<RotationCurve3>),
     Translation(Box<TranslationCurve3>),
     PlanarImage(Box<PlanarCurve3>),
@@ -396,6 +402,7 @@ enum CurveGeometry3 {
 
 #[derive(Clone, Debug)]
 pub(crate) enum Curve3ExactData {
+    AffineImage(Box<AffineCurve3>),
     Rotation(Box<RotationCurve3>),
     Translation(Box<TranslationCurve3>),
     PlanarImage(Box<PlanarCurve3>),
@@ -718,6 +725,7 @@ impl Curve3 {
     /// Returns the curve family.
     pub fn kind(&self) -> Curve3Kind {
         match &self.data.geometry {
+            CurveGeometry3::AffineImage(_) => Curve3Kind::AffineImage,
             CurveGeometry3::Rotation(_) => Curve3Kind::Rotation,
             CurveGeometry3::Translation(_) => Curve3Kind::Translation,
             CurveGeometry3::PlanarImage(_) => Curve3Kind::PlanarImage,
@@ -808,6 +816,7 @@ impl Curve3 {
             }
             CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => Ok(None),
@@ -834,6 +843,7 @@ impl Curve3 {
     pub fn bounds(&self) -> GeometryResult<Aabb> {
         crate::context::strict(|| {
             crate::cache::get_or_try_init(&self.data.bounds, || match &self.data.geometry {
+                CurveGeometry3::AffineImage(image) => image.bounds(),
                 CurveGeometry3::Rotation(rotation) => rotation.bounds(),
                 CurveGeometry3::Translation(line) => line.bounds(),
                 CurveGeometry3::PlanarImage(image) => image.bounds(),
@@ -908,6 +918,7 @@ impl Curve3 {
             CurveGeometry3::Nurbs(curve) => Some(curve.control_points.iter().collect::<Vec<_>>()),
             CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => None,
@@ -987,6 +998,11 @@ impl Curve3 {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             match &self.data.geometry {
+                CurveGeometry3::AffineImage(image) => image
+                    .point_at(&Parameter::from_real(parameter.clone()))?
+                    .try_coordinates()
+                    .cloned()
+                    .ok_or(GeometryError::UnrepresentablePoint),
                 CurveGeometry3::Rotation(rotation) => rotation
                     .point_at(parameter)?
                     .try_coordinates()
@@ -1066,6 +1082,9 @@ impl Curve3 {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             let vector = match &self.data.geometry {
+                CurveGeometry3::AffineImage(image) => image
+                    .transform
+                    .transform_direction3(image.source.derivative_at(parameter, order)?.vector()),
                 CurveGeometry3::Rotation(rotation) => rotation.derivative_at(parameter, order)?,
                 CurveGeometry3::Translation(line) => {
                     if order == 1 {
@@ -1132,6 +1151,7 @@ impl Curve3 {
             | CurveGeometry3::Nurbs(_)
             | CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => None,
@@ -1174,6 +1194,7 @@ impl Curve3 {
             }
             CurveGeometry3::RationalBezier(_)
             | CurveGeometry3::Nurbs(_)
+            | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => Ok(None),
@@ -1182,6 +1203,7 @@ impl Curve3 {
 
     pub(crate) fn exact_data(&self) -> Curve3ExactData {
         match &self.data.geometry {
+            CurveGeometry3::AffineImage(image) => Curve3ExactData::AffineImage(image.clone()),
             CurveGeometry3::Rotation(rotation) => Curve3ExactData::Rotation(rotation.clone()),
             CurveGeometry3::Translation(line) => Curve3ExactData::Translation(line.clone()),
             CurveGeometry3::PlanarImage(image) => Curve3ExactData::PlanarImage(image.clone()),
@@ -1228,6 +1250,9 @@ impl Curve3 {
 
     pub(crate) fn from_exact_data(data: Curve3ExactData) -> GeometryResult<Self> {
         match data {
+            Curve3ExactData::AffineImage(image) => {
+                Self::affine_image(image.source, image.transform)
+            }
             Curve3ExactData::Rotation(rotation) => Self::from_rotation(*rotation),
             Curve3ExactData::Translation(line) => Self::translation(line.origin, line.displacement),
             Curve3ExactData::PlanarImage(image) => Self::from_planar_image(*image),
@@ -1295,6 +1320,9 @@ impl Curve3 {
     /// Returns the same geometric image with reversed parameter direction.
     pub fn reversed(&self) -> GeometryResult<Self> {
         crate::context::strict(|| match &self.data.geometry {
+            CurveGeometry3::AffineImage(image) => {
+                Self::affine_image(image.source.reversed()?, image.transform.clone())
+            }
             CurveGeometry3::Rotation(rotation) => rotation.reversed(),
             CurveGeometry3::Translation(line) => {
                 Self::translation(line.point_at(&Real::one())?, -line.displacement.clone())
@@ -1350,6 +1378,19 @@ impl Curve3 {
     /// interval; NURBS and conic halves retain their native source intervals.
     pub fn split_at(&self, parameter: &Real) -> GeometryResult<(Self, Self)> {
         crate::context::strict(|| {
+            if let CurveGeometry3::AffineImage(image) = &self.data.geometry {
+                let (left, right) = image.source.split_at(parameter)?;
+                let wrap = |source: Self| -> GeometryResult<Self> {
+                    let same = source.has_certified_same_parameterization(&image.source);
+                    let curve = Self::affine_image(source, image.transform.clone())?;
+                    Ok(if same {
+                        curve.retaining_parameterization_of(self)
+                    } else {
+                        curve
+                    })
+                };
+                return Ok((wrap(left)?, wrap(right)?));
+            }
             if self.domain().try_real_endpoints().is_none()
                 && let CurveGeometry3::PlanarImage(image) = &self.data.geometry
             {
@@ -1373,6 +1414,7 @@ impl Curve3 {
             }
             require_interior_parameter(&self.domain().represented_domain()?, parameter)?;
             match &self.data.geometry {
+                CurveGeometry3::AffineImage(_) => unreachable!("affine split delegates above"),
                 CurveGeometry3::Rotation(rotation) => Ok((
                     rotation
                         .restricted(rotation.domain.start(), parameter)?
@@ -1475,6 +1517,16 @@ impl Curve3 {
                 return Ok(self.clone());
             }
             match &self.data.geometry {
+                CurveGeometry3::AffineImage(image) => {
+                    let source = image.source.subcurve(start, end)?;
+                    let same = source.has_certified_same_parameterization(&image.source);
+                    let curve = Self::affine_image(source, image.transform.clone())?;
+                    Ok(if same {
+                        curve.retaining_parameterization_of(self)
+                    } else {
+                        curve
+                    })
+                }
                 CurveGeometry3::Rotation(rotation) => rotation.restricted(start, end),
                 CurveGeometry3::Translation(line) => line.restricted(start, end),
                 CurveGeometry3::PlanarImage(image) => image.restricted(start, end),
@@ -1550,6 +1602,7 @@ impl Curve3 {
     /// remain an explicit unsupported result, never an incomplete finite set.
     pub fn parameters_of(&self, point: &Point3) -> GeometryResult<CurveParameterLocation> {
         crate::context::strict(|| match &self.data.geometry {
+            CurveGeometry3::AffineImage(image) => image.parameters_of(point),
             CurveGeometry3::Rotation(_) | CurveGeometry3::Translation(_) => {
                 Err(GeometryError::UnsupportedParameterLocation)
             }
@@ -1575,7 +1628,13 @@ impl Curve3 {
     ) -> GeometryResult<Self> {
         let transform = metric.matrix();
         match &self.data.geometry {
-            CurveGeometry3::Rotation(rotation) => rotation.transformed(metric),
+            CurveGeometry3::AffineImage(_) => Self::affine_image(self.clone(), transform.clone()),
+            CurveGeometry3::Rotation(rotation) => match rotation.transformed(metric) {
+                Err(GeometryError::UnsupportedTransform) => {
+                    Self::affine_image(self.clone(), transform.clone())
+                }
+                result => result,
+            },
             CurveGeometry3::Translation(line) => Self::translation(
                 line.origin.transformed(transform)?,
                 transform.transform_direction3(&line.displacement),
@@ -3955,13 +4014,13 @@ impl Surface {
         let rotate_vector =
             |vector: &Vector3| rotate_vector_about_axis(vector, &surface.axis, angle);
         match surface.profile.exact_data() {
-            Curve3ExactData::Rotation(_) | Curve3ExactData::Translation(_) => {
-                surface.profile.transformed(&rotation_transform(
-                    &surface.axis_origin,
-                    &surface.axis,
-                    angle,
-                ))
-            }
+            Curve3ExactData::AffineImage(_)
+            | Curve3ExactData::Rotation(_)
+            | Curve3ExactData::Translation(_) => surface.profile.transformed(&rotation_transform(
+                &surface.axis_origin,
+                &surface.axis,
+                angle,
+            )),
             Curve3ExactData::PlanarImage(mut image) => {
                 image.origin = rotate_point(&image.origin);
                 image.u = rotate_vector(&image.u);
@@ -5266,7 +5325,8 @@ pub(crate) fn project_curve_to_plane_frame(
                 start, end, center, clockwise,
             )?)))
         }
-        Curve3ExactData::Rotation(_)
+        Curve3ExactData::AffineImage(_)
+        | Curve3ExactData::Rotation(_)
         | Curve3ExactData::Translation(_)
         | Curve3ExactData::EllipseArc(_)
         | Curve3ExactData::PlanarImage(_) => Ok(None),
@@ -5456,6 +5516,7 @@ fn linear_section_pcurve_carriers(
         }
         CurveGeometry3::CircleArc(_)
         | CurveGeometry3::EllipseArc(_)
+        | CurveGeometry3::AffineImage(_)
         | CurveGeometry3::Rotation(_)
         | CurveGeometry3::Translation(_)
         | CurveGeometry3::PlanarImage(_) => Ok(None),
@@ -6612,7 +6673,8 @@ fn project_revolution_meridian(
         Curve3ExactData::Line(line) => vec![line.start, line.end],
         Curve3ExactData::RationalBezier { control_points, .. }
         | Curve3ExactData::Nurbs { control_points, .. } => control_points,
-        Curve3ExactData::Rotation(_)
+        Curve3ExactData::AffineImage(_)
+        | Curve3ExactData::Rotation(_)
         | Curve3ExactData::Translation(_)
         | Curve3ExactData::EllipseArc(_)
         | Curve3ExactData::PlanarImage(_) => {
@@ -7242,6 +7304,7 @@ fn curve_is_strictly_on_one_plane_side(
         }
         CurveGeometry3::CircleArc(_)
         | CurveGeometry3::EllipseArc(_)
+        | CurveGeometry3::AffineImage(_)
         | CurveGeometry3::Rotation(_)
         | CurveGeometry3::Translation(_)
         | CurveGeometry3::PlanarImage(_) => Ok(false),
@@ -9716,6 +9779,7 @@ fn split_ellipse_arc(
         Curve3Kind::Line
         | Curve3Kind::RationalBezier
         | Curve3Kind::Nurbs
+        | Curve3Kind::AffineImage
         | Curve3Kind::Rotation
         | Curve3Kind::Translation
         | Curve3Kind::PlanarImage => {

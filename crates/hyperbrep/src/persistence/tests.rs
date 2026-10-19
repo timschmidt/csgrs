@@ -149,7 +149,7 @@ fn raw_import_rejects_invalid_references_during_validation() {
 #[test]
 fn raw_import_handles_deep_untrusted_json_on_a_growing_stack() {
     let mut json = String::from(
-        r#"{"version":11,"selection":{"parameters":[],"point_sources":[],"pcurve_sources":[]},"vertices":[],"curves":[],"pcurves":[],"surfaces":[],"edges":[],"edge_uses":[],"wires":[],"faces":[],"shells":[],"solids":[],"ignored":"#,
+        r#"{"version":12,"selection":{"parameters":[],"point_sources":[],"pcurve_sources":[]},"vertices":[],"curves":[],"pcurves":[],"surfaces":[],"edges":[],"edge_uses":[],"wires":[],"faces":[],"shells":[],"solids":[],"ignored":"#,
     );
     for _ in 0..512 {
         json.push('[');

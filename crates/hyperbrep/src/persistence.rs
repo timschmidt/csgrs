@@ -28,7 +28,7 @@ use planar_points::RawPlanarPoint;
 use selection::{GraphEncoder, RawParameter, RawSelectionGraph, RawVertex, SelectionGraph};
 use spatial_points::{RawSpatialPoint, RawSurfacePoint};
 
-const FORMAT_VERSION: u32 = 11;
+const FORMAT_VERSION: u32 = 12;
 
 /// Failure while encoding, decoding, or validating an exact model.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -573,6 +573,7 @@ struct RawModelData {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawCurve3 {
+    AffineImage(Box<RawAffineCurve3>),
     Rotation(Box<RawRotationCurve3>),
     Translation(Box<RawTranslationCurve3>),
     PlanarImage(Box<RawPlanarCurve3>),
@@ -588,6 +589,12 @@ enum RawCurve3 {
         knots: Vec<Real>,
     },
     EllipseArc(Box<RawEllipseArc3>),
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct RawAffineCurve3 {
+    source: RawCurve3,
+    transform: [[Real; 4]; 4],
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -903,6 +910,10 @@ fn raw_curve3(
     graph: &mut GraphEncoder,
 ) -> Result<RawCurve3, PersistenceError> {
     Ok(match curve {
+        Curve3ExactData::AffineImage(image) => RawCurve3::AffineImage(Box::new(RawAffineCurve3 {
+            source: raw_curve3(image.source.exact_data(), graph)?,
+            transform: image.transform.0,
+        })),
         Curve3ExactData::Rotation(rotation) => RawCurve3::Rotation(Box::new(RawRotationCurve3 {
             origin: graph.spatial_point(&rotation.origin)?,
             axis_origin: point_array(&rotation.axis_origin),
@@ -979,6 +990,13 @@ fn raw_curve3(
 
 fn curve3(curve: RawCurve3, graph: &SelectionGraph) -> Result<Curve3, PersistenceError> {
     let data = match curve {
+        RawCurve3::AffineImage(image) => {
+            let RawAffineCurve3 { source, transform } = *image;
+            return Ok(Curve3::affine_image(
+                curve3(source, graph)?,
+                crate::Matrix4::new(transform),
+            )?);
+        }
         RawCurve3::Rotation(rotation) => {
             let origin = graph.spatial_point(rotation.origin)?;
             let [start, end] = rotation.domain;

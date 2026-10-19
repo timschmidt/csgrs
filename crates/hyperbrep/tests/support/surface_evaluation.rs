@@ -281,10 +281,20 @@ pub fn selected_domains_and_archive_admission() {
     .unwrap();
     let extrusion = Surface::extrusion(profile.clone(), Vector3::z()).unwrap();
     let revolution = Surface::revolution(profile, Point3::origin(), Vector3::z()).unwrap();
-    assert!(matches!(
-        extrusion.point_at(&selected_uv(q(1, 2), 1.into())),
-        Err(GeometryError::UnsupportedSelectedEvaluation)
-    ));
+    let extrusion_point = extrusion.point_at(&selected_uv(q(1, 2), 1.into())).unwrap();
+    assert!(extrusion_point.surface_source().is_some());
+    assert_eq!(
+        extrusion_point
+            .compare_linear_form(&Vector3::x(), &q(3, 2))
+            .unwrap(),
+        Ordering::Equal
+    );
+    assert_eq!(
+        extrusion_point
+            .compare_linear_form(&Vector3::y(), &0.into())
+            .unwrap(),
+        Ordering::Equal
+    );
     assert!(matches!(
         extrusion.point_at(&selected_uv(2.into(), 1.into())),
         Err(GeometryError::SurfaceParameterOutsideDomain)
@@ -317,12 +327,21 @@ pub fn selected_domains_and_archive_admission() {
     .unwrap();
     for surface in [bezier, nurbs] {
         for x in [Real::zero(), Real::one()] {
-            let uv = selected_uv(x, q(1, 2));
+            let uv = selected_uv(x.clone(), q(1, 2));
             assert!(uv.coordinates().is_none());
-            assert!(matches!(
-                surface.point_at(&uv),
-                Err(GeometryError::UnsupportedSelectedEvaluation)
-            ));
+            let image = surface.point_at(&uv).unwrap();
+            assert_eq!(image.surface_source().unwrap().1, &uv);
+            // The original net is S(u,v)=(v,u,uv), including both closed u endpoints.
+            assert_eq!(
+                image.compare_linear_form(&Vector3::y(), &x).unwrap(),
+                Ordering::Equal
+            );
+            assert_eq!(
+                image
+                    .compare_linear_form(&Vector3::new([-x, 0.into(), 1.into()]), &0.into())
+                    .unwrap(),
+                Ordering::Equal
+            );
         }
         assert!(matches!(
             surface.point_at(&selected_uv(-q(1, 1_000_000_000_000), q(1, 2))),
@@ -340,7 +359,7 @@ pub fn selected_domains_and_archive_admission() {
         .unwrap();
     let model = builder.finish().unwrap();
     let raw: serde_json::Value = serde_json::from_str(&model.to_json().unwrap()).unwrap();
-    assert_eq!(raw["version"], 11);
+    assert_eq!(raw["version"], 12);
     let mut old = raw.clone();
     old["version"] = 10.into();
     assert!(matches!(

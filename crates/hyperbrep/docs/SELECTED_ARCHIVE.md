@@ -1,4 +1,4 @@
-# Selected geometry in archive version 11
+# Selected geometry in archive version 12
 
 The additive `PolynomialFiber` planar-point record stores a bivariate equation,
 the selected first parameter, the second-coordinate interval and an optional
@@ -13,8 +13,8 @@ coefficient and every row header, including
 empty rows, before scalar decoding. Whole implicit-branch archives,
 their spatial images and surface correspondences still require implementation.
 
-Version 10 retains authored coordinates and selected curve images in the same
-model. It replaces version 9; there is no migration reader.
+Version 12 retains authored coordinates and selected curve images in the same
+model. It rejects versions through 11; there is no migration reader.
 `RawModel::from_json(json, &limits)` admits input syntax and record structure
 under explicit `ArchiveLimits`, checks the format version before decoding exact
 scalar data and rejects trailing input.
@@ -405,12 +405,26 @@ and reversal replay cold with independently checked UV images. The same models
 retain their spatial selected point through transform/replay. That pcurve increment introduced no new schema; whole polynomial branches and arbitrary generated rational curve
 carriers remain separate persistence targets. See the [evaluation record](evidence/2026-10-19-pcurve-evaluation/README.md).
 
-
-Version 11 deliberately rejects version 10 and earlier. The old translation
-`source`/`parameter` pair is replaced by a generic `origin`; there is no legacy
-decoder. Plane images preserve joint polynomial-fiber and selected rational UV
+Version 11 introduced a generic translation `origin` in place of the earlier
+`source`/`parameter` pair. Plane images preserve joint polynomial-fiber and selected rational UV
 evidence through point queries, affine transforms, sweeps and cold replay.
-This is a point-image capability, not whole surface-intersection branch or
-nonlinear surface-image persistence. Existing payloads are compared after only
-the declared schema migration, alongside unchanged exact geometric assertions.
+That increment covered plane point images; nonlinear surface images and whole
+surface-intersection branches remained open. Existing payloads were compared
+after only the declared schema migration, alongside unchanged exact geometric assertions.
 See the [surface archive evidence](evidence/2026-10-19-surface-evaluation/README.md).
+
+Version 12 adds `AffineImage { source, transform }` to spatial curves. The source
+is the complete embedded spatial curve definition and `transform` is an exact
+4×4 affine matrix. Nested record/geometry/degree limits apply before scalar
+decoding. Checked reconstruction proves the matrix affine and nonsingular,
+rebuilds the source, and composes nested image matrices. No proof bit, sampled
+point or prepared rational surface coefficient map is serialized.
+
+Selected rational Bézier/NURBS tensor points and native rational-profile
+extrusion points use the existing `SurfaceImage { source, parameter }` record.
+Replay checks original weights, domains, knot-span ownership and joint selectors
+and rebuilds coefficient maps. Affine-transformed rotation edges retain this
+point authority through their embedded source. Versions through 11 are rejected;
+there is no legacy decoder. The preserved archive corpus comparison permits
+only the top-level 11→12 header change and requires all other bytes to match.
+See the [rational surface and affine curve evidence](evidence/2026-10-19-rational-surface-evaluation/README.md).

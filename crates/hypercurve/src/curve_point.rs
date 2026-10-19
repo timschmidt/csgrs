@@ -9,8 +9,10 @@ use hypersolve::AlgebraicRootRepresentation;
 
 mod affine;
 mod definition;
+mod rational;
 pub use affine::CurvePointAffineForm2;
 pub use definition::CurvePointDefinition2;
+pub use rational::CurvePointRationalForm2;
 
 /// An exact affine point with shared scalar or selected geometric evidence.
 ///

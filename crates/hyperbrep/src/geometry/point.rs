@@ -28,8 +28,9 @@ pub enum Axis {
 /// meaningful when no independent [`Real`] coordinates are stored. Exact
 /// predicates reuse this evidence; a bounding box never replaces the point.
 /// The source geometry owns no reference back to this point or its model.
-/// Plane images likewise retain the entire joint UV point and source surface;
-/// they never reconstruct independent coordinate roots.
+/// Surface images likewise retain the entire joint UV point and source surface;
+/// rational coordinate queries pull back into that joint source. They never
+/// reconstruct independent coordinate roots.
 #[derive(Clone, Debug)]
 pub struct GeometricPoint3 {
     data: PointData3,
@@ -46,6 +47,7 @@ enum PointData3 {
 struct SurfacePointImage3 {
     surface: Surface,
     parameter: CurvePoint2,
+    rational: Option<Box<super::surface_point::RationalSurfacePoint>>,
 }
 
 struct PlanarPointView<'a> {
@@ -131,7 +133,25 @@ impl GeometricPoint3 {
 
     pub(super) fn from_surface_image(surface: Surface, parameter: CurvePoint2) -> Self {
         Self {
-            data: PointData3::SurfaceImage(Arc::new(SurfacePointImage3 { surface, parameter })),
+            data: PointData3::SurfaceImage(Arc::new(SurfacePointImage3 {
+                surface,
+                parameter,
+                rational: None,
+            })),
+        }
+    }
+
+    pub(super) fn from_rational_surface_image(
+        surface: Surface,
+        parameter: CurvePoint2,
+        rational: super::surface_point::RationalSurfacePoint,
+    ) -> Self {
+        Self {
+            data: PointData3::SurfaceImage(Arc::new(SurfacePointImage3 {
+                surface,
+                parameter,
+                rational: Some(Box::new(rational)),
+            })),
         }
     }
 
@@ -200,6 +220,12 @@ impl GeometricPoint3 {
                     }
                 };
             }
+            if self.rational_surface_source().is_some() || other.rational_surface_source().is_some()
+            {
+                return Ok(self
+                    .rational_coordinate(axis)?
+                    .compare(&other.rational_coordinate(axis)?)?);
+            }
             if self.planar_source().is_some() || other.planar_source().is_some() {
                 return Ok(self
                     .affine_coordinate(axis)?
@@ -221,6 +247,9 @@ impl GeometricPoint3 {
     /// box as the point. Unresolved proof work returns a typed error.
     pub fn compare_linear_form(&self, direction: &Vector3, rhs: &Real) -> GeometryResult<Ordering> {
         crate::context::strict(|| {
+            if let Some((image, uv)) = self.rational_surface_source() {
+                return Ok(image.linear_form(uv, direction)?.compare_to_real(rhs)?);
+            }
             if let Some(frame) = self.planar_source() {
                 return Ok(frame
                     .point
@@ -260,6 +289,12 @@ impl GeometricPoint3 {
         crate::context::strict(|| {
             if let Some(point) = self.try_coordinates() {
                 return Ok(Aabb::new(point.clone(), point.clone()));
+            }
+            if self.rational_surface_source().is_some() {
+                let (x0, x1) = self.rational_coordinate(Axis::X)?.bounds()?;
+                let (y0, y1) = self.rational_coordinate(Axis::Y)?.bounds()?;
+                let (z0, z1) = self.rational_coordinate(Axis::Z)?.bounds()?;
+                return Ok(Aabb::new(Point3::new(x0, y0, z0), Point3::new(x1, y1, z1)));
             }
             if let Some(frame) = self.planar_source() {
                 let bounds = frame.point.bounds()?;
@@ -329,6 +364,35 @@ impl GeometricPoint3 {
             }
             PointData3::Authored(_) => None,
         }
+    }
+
+    fn rational_surface_source(
+        &self,
+    ) -> Option<(&super::surface_point::RationalSurfacePoint, &CurvePoint2)> {
+        let PointData3::SurfaceImage(image) = &self.data else {
+            return None;
+        };
+        image.rational.as_deref().map(|map| (map, &image.parameter))
+    }
+
+    fn rational_coordinate(
+        &self,
+        axis: Axis,
+    ) -> GeometryResult<hypercurve::CurvePointRationalForm2> {
+        if let Some((image, uv)) = self.rational_surface_source() {
+            let index = match axis {
+                Axis::X => 0,
+                Axis::Y => 1,
+                Axis::Z => 2,
+            };
+            return image.coordinate(uv, index);
+        }
+        let affine = self.affine_coordinate(axis)?;
+        let [a, b, c] = affine.coefficients();
+        Ok(affine.source().rational_form(
+            hypersolve::BivariatePolynomial::new(vec![vec![c.clone(), b.clone()], vec![a.clone()]]),
+            hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
+        )?)
     }
 
     fn affine_coordinate(&self, axis: Axis) -> GeometryResult<CurvePointAffineForm2> {
@@ -416,6 +480,9 @@ impl Curve3 {
     /// # Ok::<(), hyperbrep::GeometryError>(())
     /// ```
     pub fn point_at(&self, parameter: &Parameter) -> GeometryResult<GeometricPoint3> {
+        if let CurveGeometry3::AffineImage(image) = &self.data.geometry {
+            return crate::context::strict(|| image.point_at(parameter));
+        }
         if let CurveGeometry3::Rotation(rotation) = &self.data.geometry {
             return crate::context::strict(|| {
                 if !self.domain().contains(parameter)? {
@@ -524,6 +591,7 @@ impl Curve3 {
             )?,
             CurveGeometry3::CircleArc(_)
             | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
             | CurveGeometry3::PlanarImage(_) => {
@@ -555,23 +623,40 @@ mod tests {
             .curve_parameter()
             .affine_point(1.into(), 0.into(), 0.into(), 1.into())
             .unwrap();
-        let surface = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
-        let weak = Arc::downgrade(&surface.data);
-        let point = surface.point_at(&uv).unwrap();
-        assert!(point.try_coordinates().is_none());
-        drop(surface);
-        assert!(weak.upgrade().is_some());
-        let alias = point.clone();
-        drop(point);
-        assert!(weak.upgrade().is_some());
-        assert_eq!(
-            alias
-                .compare_linear_form(&Vector3::z(), &Real::zero())
-                .unwrap(),
-            Ordering::Equal
-        );
-        drop(alias);
-        assert!(weak.upgrade().is_none());
+        for surface in [
+            Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap(),
+            Surface::rational_bezier(
+                vec![
+                    vec![Point3::origin(), Point3::new(2.into(), 0.into(), 0.into())],
+                    vec![
+                        Point3::new(0.into(), 1.into(), 0.into()),
+                        Point3::new(2.into(), 1.into(), 0.into()),
+                    ],
+                ],
+                vec![
+                    vec![Real::one(), Real::from(2)],
+                    vec![Real::one(), Real::from(2)],
+                ],
+            )
+            .unwrap(),
+        ] {
+            let weak = Arc::downgrade(&surface.data);
+            let point = surface.point_at(&uv).unwrap();
+            assert!(point.try_coordinates().is_none());
+            drop(surface);
+            assert!(weak.upgrade().is_some());
+            let alias = point.clone();
+            drop(point);
+            assert!(weak.upgrade().is_some());
+            assert_eq!(
+                alias
+                    .compare_linear_form(&Vector3::z(), &Real::zero())
+                    .unwrap(),
+                Ordering::Equal
+            );
+            drop(alias);
+            assert!(weak.upgrade().is_none());
+        }
     }
 
     #[test]

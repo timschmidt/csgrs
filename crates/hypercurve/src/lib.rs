@@ -195,7 +195,9 @@ pub use curve_path_intersection::{
     CurvePathIntersectionTopology2, CurvePathSplit2,
 };
 pub(crate) use curve_point::CurvePointData2;
-pub use curve_point::{CurvePoint2, CurvePointAffineForm2, CurvePointDefinition2};
+pub use curve_point::{
+    CurvePoint2, CurvePointAffineForm2, CurvePointDefinition2, CurvePointRationalForm2,
+};
 pub use curve_region_boolean::{
     CurveRegionBooleanOperand2, CurveRegionBooleanResults2, CurveRegionCarrier2,
     CurveRegionIntersectionBlocker2, CurveRegionIntersectionContact2,

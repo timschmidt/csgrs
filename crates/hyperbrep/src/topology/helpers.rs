@@ -297,7 +297,7 @@ pub(super) fn rational_bezier_weights_proportional(
 
 pub(super) fn translated_curve(curve: &Curve3, offset: &Vector3) -> Result<Curve3, BuildError> {
     match curve.exact_data() {
-        Curve3ExactData::Rotation(_) => {
+        Curve3ExactData::AffineImage(_) | Curve3ExactData::Rotation(_) => {
             Ok(curve.transformed(&Matrix4::affine_translation(offset.0.clone()))?)
         }
         Curve3ExactData::Translation(line) => Ok(Curve3::translation(
@@ -1509,6 +1509,20 @@ pub(super) fn curve_parameterizations_equal(
         return Ok(false);
     }
     match (actual.exact_data(), expected.exact_data()) {
+        (Curve3ExactData::AffineImage(actual), Curve3ExactData::AffineImage(expected)) => {
+            for (left, right) in actual
+                .transform
+                .0
+                .iter()
+                .flatten()
+                .zip(expected.transform.0.iter().flatten())
+            {
+                if !real_values_equal(left, right)? {
+                    return Ok(false);
+                }
+            }
+            curve_parameterizations_equal(&actual.source, &expected.source)
+        }
         (Curve3ExactData::Rotation(actual), Curve3ExactData::Rotation(expected)) => {
             if !actual.origin.coincides_with(&expected.origin)?
                 || !points_equal(&actual.axis_origin, &expected.axis_origin)?
@@ -2264,12 +2278,27 @@ pub(crate) fn compare_curve3_exact_data(
         Curve3ExactData::PlanarImage(_) => 5,
         Curve3ExactData::Translation(_) => 6,
         Curve3ExactData::Rotation(_) => 7,
+        Curve3ExactData::AffineImage(_) => 8,
     };
     let family = rank(left).cmp(&rank(right));
     if family != std::cmp::Ordering::Equal {
         return Ok(family);
     }
     match (left, right) {
+        (Curve3ExactData::AffineImage(left), Curve3ExactData::AffineImage(right)) => {
+            let order =
+                compare_curve3_exact_data(&left.source.exact_data(), &right.source.exact_data())?;
+            if order != std::cmp::Ordering::Equal {
+                return Ok(order);
+            }
+            for (left, right) in left.transform.0.iter().zip(&right.transform.0) {
+                let order = compare_real_slices(left, right)?;
+                if order != std::cmp::Ordering::Equal {
+                    return Ok(order);
+                }
+            }
+            Ok(std::cmp::Ordering::Equal)
+        }
         (Curve3ExactData::Rotation(left), Curve3ExactData::Rotation(right)) => {
             for axis in [crate::Axis::X, crate::Axis::Y, crate::Axis::Z] {
                 let order = left.origin.compare_coordinate(&right.origin, axis)?;

@@ -269,7 +269,7 @@ selected-point enclosures with the existing conservative curve bounds.
 
 The [topology qualification](evidence/2026-10-15-selected-topology/README.md)
 covers shared-edge splits, repeated edits, rational/NURBS charts, reflections
-and retained solid queries. [Archive version 11](SELECTED_ARCHIVE.md) retains
+and retained solid queries. [Archive version 12](SELECTED_ARCHIVE.md) retains
 selected roots, flattened charts, spatial curve images and authored pcurve
 restrictions. Independent replay covers the selected sheet fixtures and exact
 planar area, every cuboid edge alone or together (including shear/reflection),
@@ -291,8 +291,8 @@ source intervals keep their chart. Straight axial sweeps use `Curve3::translatio
 to preserve a selected origin. Hypercurve owns scalar-chart, affine-point and
 point-definition replay; BRep owns the spatial frame and complete extrusion
 image proof. Coordinate pcurve maps preserve selected UV corners through edge
-splits and reflection. Archive version 11 records these definitions and rejects
-version 9 without an adapter. General recursive selected fields remain outside
+splits and reflection. Archive version 12 records these definitions and rejects
+versions through 11 without an adapter. General recursive selected fields remain outside
 the supported replay domain.
 
 Independent planar spline image validation compares the complete lifted pcurve
@@ -876,7 +876,7 @@ spans and plane projections preserve selected parameters; iso/retained mappings
 reuse their source authority. Planar procedural projections currently require a
 similarity of the source chart. Face classification accepts the retained UV
 point directly; coordinate algorithms explicitly request an optional view.
-Selected nonlinear surface evaluation and full selected section restriction remain
+Selected angular/procedural surface images and full selected section restriction remain
 open boundaries, documented in the [evaluation record](evidence/2026-10-19-pcurve-evaluation/README.md).
 `Surface::point_at(&hypercurve::CurvePoint2)` returns `GeometricPoint3`.
 `geometry/surface_point.rs` validates retained UV domains; plane evaluation stores
@@ -884,7 +884,7 @@ the immutable surface and the joint UV point directly. Spatial affine-form
 queries share the planar owner's proofs with curve images. Point transforms map
 the source plane frame without changing the UV selector. The private represented
 surface evaluator remains the common coefficient path. Endpoint image validation
-consumes retained pcurve and surface points directly. Archive 11 persists surface
+consumes retained pcurve and surface points directly. Archive 12 persists surface
 point definitions and generic translation/rotation origins through
 `persistence/spatial_points.rs`; nested shape admission precedes scalar decoding.
 See the [surface evaluation record](evidence/2026-10-19-surface-evaluation/README.md).
@@ -1534,3 +1534,42 @@ primitive/path fast paths keep their existing carriers. `revolve_curve_region`
 uses the unified region's material components and hole ownership, including
 empty input. The [admission record](evidence/2026-10-18-procedural-revolution/README.md)
 limits this proof to its supported domain; general shell embedding remains open.
+
+## Rational surface points and affine curve images
+
+`Surface::point_at` admits selected joint UV points on positive-weight rational
+Bézier and finite NURBS tensor patches, and extrusions of native line/Bézier/NURBS
+profiles. The source surface and entire UV point remain replay authority.
+`geometry/surface_point/rational.rs` derives homogeneous coordinate polynomials;
+Hypercurve's `CurvePointRationalForm2` evaluates their signs, comparisons and
+bounds in the retained joint field. Original denominators are checked before
+any cancellation. Hypersolve owns Bernstein and original-knot B-spline basis
+conversion and homogeneous recursive-field evaluation. NURBS span ownership is
+right-sided at internal knots and includes the final endpoint. Basis conversion
+uses an explicit -512 precision floor and preserves undecided/invalid statuses.
+
+Derived coefficient maps are immutable and point-owned. The point retains its
+source surface, with no back reference or global cache. Transforms rebuild the
+maps from the transformed source and unchanged UV selector. Bounds are exact
+conservative enclosures, not promised-width approximations or topology proofs.
+Selected angular surfaces and general retained procedural extrusion profiles
+remain unsupported. Full section restrictions and branch/event graphs remain
+open independently of point evaluation.
+
+`Curve3::affine_image` retains any spatial source under a certified nonsingular
+affine matrix. Its `AffineImage` family has a borrowed `affine_geometry` view;
+repeated images compose matrices instead of wrapper chains. Evaluation,
+derivatives, bounds, inverse location, reversal and restriction delegate to the
+source with its typed limitations. Regular angular closed edges remain regular
+under the invertible map. General transforms of retained rotations use this
+carrier when their native metric path is unavailable. Native conic model transforms keep their existing
+metric restriction until complete face-image and replay proofs are available.
+Coefficient-only and unsupported surface-intersection algorithms remain typed
+blockers; an affine image is not mislabeled as a circle or rotation.
+
+Archive 12 stores the complete source curve and matrix and admits nested source
+metadata before decoding scalars. Rational surface maps are recomputed from
+source definitions during replay. Versions through 11 are deliberately rejected,
+without an adapter. Source-path native/WASM consumers and preserved complete
+workflows are recorded in the [admission evidence](evidence/2026-10-19-rational-surface-evaluation/README.md). Installed
+distributions, full release/push gates and complete BRep modeling remain open.

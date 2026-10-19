@@ -10,6 +10,30 @@ use crate::curve_resultant::{
     BivariatePolynomial, CurveResultantParameter, divide_bivariate_polynomial_exact,
 };
 
+/// Composes a polynomial with two polynomial coordinate maps.
+///
+/// Returns `polynomial(first(s,t), second(s,t))`. The two maps share the same
+/// variables; no elimination or independent-root reconstruction is involved.
+/// Ragged and empty grids retain their ordinary zero-coefficient meaning.
+pub fn bivariate_compose(
+    polynomial: &BivariatePolynomial,
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+) -> BivariatePolynomial {
+    let mut result = BivariatePolynomial::new(Vec::new());
+    for row in polynomial.coefficients.iter().rev() {
+        let mut value = BivariatePolynomial::new(Vec::new());
+        for coefficient in row.iter().rev() {
+            value = bivariate_add(
+                &bivariate_multiply(&value, second),
+                &BivariatePolynomial::new(vec![vec![coefficient.clone()]]),
+            );
+        }
+        result = bivariate_add(&bivariate_multiply(&result, first), &value);
+    }
+    result
+}
+
 /// Swaps the two parameters of a bivariate polynomial.
 pub fn bivariate_swap_parameters(polynomial: &BivariatePolynomial) -> BivariatePolynomial {
     let first_count = polynomial
