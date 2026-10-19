@@ -59,6 +59,53 @@ jobs:
       - name: Run optimized workflow probes
         run: cargo bench --locked -p hyperspatial --benches
 
+  representations:
+    name: Scalar representations and caches
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal --component clippy
+      - name: Exercise scalar configurations
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: bash crates/hyperspatial/scripts/representation-checks.sh
+
+  directed:
+    name: Directed cases and ASan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust and fuzz driver
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup toolchain install nightly --profile minimal
+          cargo +stable install --locked cargo-fuzz --version 0.13.2
+      - name: Select costly valid cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py
+      - name: Mutate and replay with address sanitizer
+        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus
+      - name: Retain campaign evidence and failure inputs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: hyperspatial-directed-evidence
+          path: |
+            target/hyperspatial-directed/
+            target/hyperspatial-asan/
+            crates/hyperspatial/fuzz/artifacts/
+          retention-days: 30
+
   wasm:
     name: WASM library build
     runs-on: ubuntu-latest
@@ -69,11 +116,15 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Rust and WASM target
-        run: rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+        run: rustup toolchain install stable --profile minimal --component clippy --target wasm32-unknown-unknown
       - name: Check native library on WASM
         env:
           RUSTUP_TOOLCHAIN: stable
         run: cargo check --locked -p hyperspatial --lib --all-features --target wasm32-unknown-unknown
+      - name: Lint native library on WASM
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: cargo clippy --locked -p hyperspatial --lib --all-features --target wasm32-unknown-unknown -- -D warnings
 
   coverage:
     name: Production coverage

@@ -15,6 +15,8 @@ publish = false
 
 [features]
 default = []
+# Optional native diagnostics; no alternative numeric backend.
+dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit/dispatch-trace", "hyperlattice/hyperreal-dispatch-trace"]
 
 [dependencies]
 hyperreal = { version = "0.13.1", path = "../hyperreal" }
@@ -22,8 +24,10 @@ hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
 hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
 
 [dev-dependencies]
+hyperreal = { version = "0.13.1", path = "../hyperreal", features = ["serde"] }
 proptest = "1.7.0"
 map_3d = "=0.1.7"
+serde_json = "=1.0.149"
 
 [[bench]]
 name = "forward_local"
@@ -32,3 +36,7 @@ harness = false
 [[bench]]
 name = "inverse"
 harness = false
+
+[[example]]
+name = "e1_probe"
+required-features = ["dispatch-trace"]

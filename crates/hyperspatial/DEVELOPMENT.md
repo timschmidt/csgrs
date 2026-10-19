@@ -17,6 +17,11 @@ and [closest-point inverse admission](docs/admission/e1-inverse.md).
 Dedicated stable/MSRV CI, native WASM compilation, production coverage,
 source-consumer checks and workspace adversarial/benchmark integration are
 recorded in the [testing admission](docs/admission/testing.md).
+The [directed-testing extension](docs/admission/e1-directed-testing.md) adds
+the shared 22-class scalar inventory, 484 ordered pairs, cache-layout checks,
+per-family lexicase selection, native dispatch observations and ASan campaigns.
+These extend E1 evidence; they do not close infinite-domain coverage or prove
+native scalar work/heap bounds.
 
 Design constraints confirmed in this planning session: **production numerical
 scalars are `hyperreal::Real` or types backed by it**, and **external crates are

@@ -2874,6 +2874,7 @@ dependencies = [
  "hyperreal",
  "map_3d",
  "proptest",
+ "serde_json",
 ]
 
 [[package]]

@@ -12,12 +12,20 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 hyperspatial = { path = ".." }
+hyperreal = { path = "../../hyperreal" }
 hyperlattice = { path = "../../hyperlattice" }
 hyperlimit = { path = "../../hyperlimit", default-features = false, features = ["std"] }
 
 [[bin]]
 name = "forward_local"
 path = "fuzz_targets/forward_local.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normal_offset"
+path = "fuzz_targets/normal_offset.rs"
 test = false
 doc = false
 bench = false

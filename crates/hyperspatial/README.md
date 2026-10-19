@@ -86,11 +86,15 @@ ingress requires an explicit `InputProvenance`; missing uncertainty stays unknow
   production coverage, source-consumer and fuzz checks.
 - [Closest-point inverse admission](docs/admission/e1-inverse.md): inverse
   selection, exact equations, independent fixtures and qualified oracle results.
+- [Representation and directed-testing admission](docs/admission/e1-directed-testing.md):
+  22 scalar recipes, 484 ordered pairs, cache configurations, dispatch traces
+  and sanitized campaigns.
 
 From the repository root:
 
 ```sh
 bash crates/hyperspatial/scripts/checks.sh
+bash crates/hyperspatial/scripts/representation-checks.sh
 python3 crates/hyperspatial/scripts/coverage.py
 bash scripts/bench-reports.sh hyperspatial
 ```
@@ -102,6 +106,9 @@ from library and integration tests. It enforces a 95% line floor; branch
 coverage and the 100% target remain open. The WASM build does not establish a
 JavaScript binding or runtime consumer. Fuzz instructions are in
 [fuzz/README.md](fuzz/README.md).
+The optional `dispatch-trace` feature enables native Hyper-stack diagnostics;
+it introduces no alternate numerical implementation. JSON and representation
+serialization support used by the development probes are dev dependencies.
 
 All changes follow the workspace [properties](../../properties.md) and
 [admission protocol](../../docs/admission.md). The package uses the repository's
