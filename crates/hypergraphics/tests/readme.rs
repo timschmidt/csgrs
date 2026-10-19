@@ -22,7 +22,7 @@ fn readme_quickstart_matches_the_runnable_example() {
 #[test]
 fn readme_release_metadata_matches_the_manifest() {
     assert!(
-        README.contains(&format!("version = \"{}\"", env!("CARGO_PKG_VERSION"))),
+        README.contains(&format!("hypergraphics {}", env!("CARGO_PKG_VERSION"))),
         "README must show the current package version"
     );
     assert!(

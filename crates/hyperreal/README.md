@@ -289,20 +289,16 @@ rustdoc.
 | `cached-f64-approx` | no | Retains selected `f64` views across exact-rational clones. |
 | `dispatch-trace` | no | Records internal dispatch and rational-growth counters for development. |
 
-With the optional expression language:
-
-```toml
-[dependencies]
-hyperreal = { version = "0.13.1", features = ["simple"] }
-```
+Enable the optional expression language with the `simple` feature in the
+source checkout.
 
 The user-facing `Simple` API is `FromStr`, `Simple::evaluate`, and
 `Simple::value`. Its grammar exposes the corresponding arithmetic,
 elementary, stable, polynomial, probability, and special-function `Real`
-operations. Run expressions with:
+operations. Run expressions from the monorepo root with:
 
 ```sh
-cargo run --features simple -- "(sqrt (/ 49 64))"
+printf '%s\n' '(sqrt (/ 49 64))' | cargo run -p hyperreal --features simple
 ```
 
 With `serde`, use `Real::to_json`, `from_json`, `to_bytes`, and `from_bytes`.

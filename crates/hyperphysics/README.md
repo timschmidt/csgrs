@@ -32,9 +32,11 @@ This README describes crate version `0.3.0`.
 
 ## Install
 
-```toml
-[dependencies]
-hyperphysics = "0.3.0"
+The examples below target `hyperphysics 0.3.0` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+
+```sh
+cargo run -p hyperphysics --example basic
 ```
 
 There are no default features. `dispatch-trace` forwards exact-dispatch
@@ -75,7 +77,7 @@ fn main() -> hyperphysics::PhysicsResult<()> {
 Run it with:
 
 ```sh
-cargo run --example basic
+cargo run -p hyperphysics --example basic
 ```
 
 ## Ownership and evidence

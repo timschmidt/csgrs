@@ -56,22 +56,14 @@ policy outside this crate.
 
 ## Quick start
 
-Create a project and add the crate:
+The examples below target `hyperlimit 0.4.1` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
 
 ```sh
-cargo new exact-predicates
-cd exact-predicates
-cargo add hyperlimit
+cargo run -p hyperlimit --example readme_quickstart
 ```
 
-Equivalent manifest entry:
-
-```toml
-[dependencies]
-hyperlimit = "0.4.1"
-```
-
-Replace `src/main.rs` with:
+The checked-in example is:
 
 <!-- quickstart:start -->
 ```rust
@@ -89,7 +81,7 @@ fn main() {
 ```
 <!-- quickstart:end -->
 
-Run it with `cargo run`. The same source is checked in as
+The same source is checked in as
 [`examples/readme_quickstart.rs`](examples/readme_quickstart.rs), compiled by
 the test suite, and compared with this README block.
 

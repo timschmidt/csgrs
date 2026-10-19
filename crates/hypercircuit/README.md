@@ -86,18 +86,18 @@ Ownership is deliberately separated:
 
 ## Installation
 
-The circuit and simulation core has no default features:
+The examples below target `hypercircuit 0.3.0` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
 
-```toml
-[dependencies]
-hypercircuit = "0.3.0"
+```sh
+cargo run -p hypercircuit --example basic
 ```
 
-Enable PCB authoring and semantic interchange as needed:
+The circuit and simulation core has no default features. Enable PCB authoring
+and semantic interchange with `layout` and `interchange`; from the monorepo root:
 
-```toml
-[dependencies]
-hypercircuit = { version = "0.3.0", features = ["layout", "interchange"] }
+```sh
+cargo check -p hypercircuit --features layout,interchange
 ```
 
 ## Quick start
@@ -143,7 +143,7 @@ fn main() -> CircuitResult<()> {
 Run the repository copy with:
 
 ```sh
-cargo run --example basic
+cargo run -p hypercircuit --example basic
 ```
 
 The example uses an explicit stamp to make the MNA boundary visible. Most

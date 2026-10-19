@@ -53,9 +53,11 @@ arrangement from winding; authoring does not require orientation hints.
 
 ## Install
 
-```toml
-[dependencies]
-hypercurve = "0.3.1"
+The examples below target `hypercurve 0.3.1` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+
+```sh
+cargo run -p hypercurve --example basic
 ```
 
 Hyperreal, Hypersolve, and Hyperlimit are mandatory parts of the exact kernel;
@@ -103,7 +105,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 Run the checked copy:
 
 ```sh
-cargo run --example basic
+cargo run -p hypercurve --example basic
 ```
 
 ## How the model fits together

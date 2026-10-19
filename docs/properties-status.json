@@ -28621,6 +28621,262 @@
     "checkpoint": "docs/evidence/2026-10-19-release-path-validation/checkpoint-v1.json",
     "next_change_contract": "docs/evidence/2026-10-19-release-path-validation/next-change-contract-v1.md",
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/release-path-validation-20261019-v1/external-evidence/artifact-expectations-v1.json.gz"
+  },
+  "source_installation_admission": {
+    "classification": "Admitted source-checkout installation guidance; public distribution remains open.",
+    "baseline_revision": "9543d9dce99d79d51ff363c0f0dd080e1baf4441",
+    "owner": "Distribution documentation and README metadata assertions.",
+    "properties": [
+      "P25",
+      "P28",
+      "P29",
+      "P30",
+      "P35",
+      "P36",
+      "P37",
+      "P39"
+    ],
+    "changed_readmes": 18,
+    "changed_metadata_assertions": 3,
+    "unchanged_primary_examples_executed": 17,
+    "additional_existing_examples_executed": [
+      "hypertri/cdt",
+      "hypertri/nd"
+    ],
+    "readme_metadata_suites": 16,
+    "final_markdown_metadata_suites": 5,
+    "passed_test_executions": 54,
+    "test_results": {
+      "source-installation-ffi-tests-run": [
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-final-hypergraphics-readme-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-final-hyperlattice-readme-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-final-hyperlimit-readme-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-final-hyperreal-readme-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-final-hypertri-readme-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hypercircuit-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hypercurve-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hyperdrc-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hyperevolution-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hypergraphics-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hyperlattice-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hyperlimit-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hypermesh-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hyperpack-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hyperparts-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hyperpath-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hyperphysics-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hyperreal-metadata-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hyperreal-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hypersdf-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hypersolve-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "source-installation-hypertri-readme-tests-run": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    "command_count": 88,
+    "warnings": [],
+    "simple_cli_stdout": "#1: 7/8 = 0.875\n",
+    "initial_simple_semantic_failure": {
+      "corrected_stdout": "#1: 7/8 = 0.875",
+      "independent_expected_decimal": "0.875",
+      "independent_expected_fraction": "7/8",
+      "native_source_changed": false,
+      "original_exit_code": 0,
+      "original_expression_consumed": false,
+      "original_stdout": "",
+      "passed": true,
+      "source_cli_reads_stdin": true
+    },
+    "drc_help_executed": true,
+    "renderer_only_configuration_checked": true,
+    "circuit_layout_interchange_checked": true,
+    "ffi_release_static_and_dynamic_libraries_built": true,
+    "ffi_unit_tests_executed": true,
+    "real_ffi_consumers_passed": 3,
+    "strict_clippy_passed": true,
+    "formatting_passed": true,
+    "updated_local_links_valid": true,
+    "preexisting_unresolved_links": {
+      "crates/hyperbrep/README.md::../HYPERBREP_REBUILD_PLAN.md": "Pre-existing missing link outside the installation correction."
+    },
+    "rust_examples_and_semantic_assertions_unchanged": true,
+    "metadata_migration": "Three assertions now check the current package name/version in source instructions instead of an unavailable registry manifest snippet. README/example byte equality, other metadata and semantic assertions are retained.",
+    "late_documentation_only_edit": {
+      "affected_readmes": [
+        "hyperlattice",
+        "hyperlimit",
+        "hypertri",
+        "hypergraphics",
+        "hyperreal"
+      ],
+      "only_markdown_changed_since_full_matrix": true,
+      "reason": "Remove leftover standalone cargo run instructions, scope advanced triangulation commands to their crate directory, and supply calculator input on stdin instead of ignored argv.",
+      "rust_examples_and_tests_unchanged_since_matrix": true,
+      "source_pins_after_sha256": "c49ebfe36e46d23afa7bbc6acf4c5c6f29c3de06637eb5930a4d12b94f0660fe",
+      "source_pins_before_sha256": "c29f45845f363509d5739b99a96458987700560e833e49cad09ea51815876e62"
+    },
+    "production_implementation_changed": false,
+    "bindings_abi_changed": false,
+    "dependency_feature_or_policy_changes": false,
+    "new_runtime_implementation_admitted": false,
+    "hypervoxel_deferred_by_user": true,
+    "hypervoxel_built_or_packaged": false,
+    "full_runtime_corpus_rerun": false,
+    "current_readme_contents_packaged": false,
+    "public_distribution_complete": false,
+    "full_ci_complete": false,
+    "full_plan_complete": false,
+    "historical_artifact_reaudit": false,
+    "performance_claimed": false,
+    "all_adverse_results_retained": true,
+    "source_example_execution_method": "Cargo builds the exact documented package/example/configuration; independently copied executables run under the separate 60-second limit. Build paths may be reused by Cargo; every executed frozen copy remains retained.",
+    "artifact_volume": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs",
+    "disk_b_allowance_gib": null,
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "storage_baselines_reset": false,
+    "next": "Continue complete consumer/release and provenance obligations. Repackage changed README contents before a current-archive claim. The public version/dependency blockers and deferred Hypervoxel packaging closure remain open; source instructions do not establish a public install.",
+    "parent_revision": "9543d9dce99d79d51ff363c0f0dd080e1baf4441",
+    "review": "docs/evidence/2026-10-19-source-installation-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-source-installation-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/source-installation-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz"
   }
 },
   "status_meanings": {

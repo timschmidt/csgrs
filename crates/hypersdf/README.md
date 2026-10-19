@@ -31,9 +31,11 @@ This README describes crate version `0.2.0`.
 
 ## Install
 
-```toml
-[dependencies]
-hypersdf = "0.2.0"
+The examples below target `hypersdf 0.2.0` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+
+```sh
+cargo run -p hypersdf --example basic
 ```
 
 There are no default features. Enable `hypervoxel-adapter` only when
@@ -82,7 +84,7 @@ fn main() {
 Run the checked copy:
 
 ```sh
-cargo run --example basic
+cargo run -p hypersdf --example basic
 ```
 
 ## Field and evidence model

@@ -35,9 +35,11 @@ This README describes crate version `0.3.0`.
 
 ## Install
 
-```toml
-[dependencies]
-hyperpath = "0.3.0"
+The examples below target `hyperpath 0.3.0` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+
+```sh
+cargo run -p hyperpath --example basic
 ```
 
 There are no default features. `dispatch-trace` enables exact-predicate
@@ -83,7 +85,7 @@ fn main() -> Result<(), String> {
 Run it with:
 
 ```sh
-cargo run --example basic
+cargo run -p hyperpath --example basic
 ```
 
 ## Ownership and workflow

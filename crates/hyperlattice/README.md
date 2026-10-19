@@ -56,22 +56,14 @@ Hyperreal for convenience.
 
 ## Quick start
 
-Create a project and add the crate:
+The examples below target `hyperlattice 0.6.1` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
 
 ```sh
-cargo new exact-linear-algebra
-cd exact-linear-algebra
-cargo add hyperlattice
+cargo run -p hyperlattice --example readme_quickstart
 ```
 
-Equivalent manifest entry:
-
-```toml
-[dependencies]
-hyperlattice = "0.6.1"
-```
-
-Replace `src/main.rs` with:
+The checked-in example is:
 
 <!-- quickstart:start -->
 ```rust
@@ -94,7 +86,7 @@ fn main() -> hyperlattice::BlasResult<()> {
 ```
 <!-- quickstart:end -->
 
-Run it with `cargo run`. The same source is checked in as
+The same source is checked in as
 [`examples/readme_quickstart.rs`](examples/readme_quickstart.rs), compiled by
 the test suite, and compared with the README block.
 

@@ -59,15 +59,14 @@ with the default `exact` feature.
 
 ## Quick start
 
-Create a project and add the crate:
+The examples below target `hypergraphics 0.1.0` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
 
 ```sh
-cargo new exact-scene
-cd exact-scene
-cargo add hypergraphics
+cargo run -p hypergraphics --example readme_quickstart
 ```
 
-Replace `src/main.rs` with this complete example:
+The checked-in example is:
 
 <!-- quickstart:start -->
 ```rust
@@ -96,12 +95,6 @@ fn main() -> hypergraphics::Result<()> {
 }
 ```
 <!-- quickstart:end -->
-
-Run it with:
-
-```sh
-cargo run
-```
 
 It prints:
 
@@ -230,11 +223,11 @@ indices used by the mesh layout.
 | `exact` | yes | Enables Hyperreal/Hypercurve geometry, exact queries, certified curve adapters, triangulation, scene helpers, and `ExactCamera`. |
 | `dispatch-trace` | no | Enables lower-stack predicate/scalar tracing for development and benchmarks; also enables `exact`. |
 
-Renderer-only applications can avoid the exact geometry dependencies:
+Renderer-only applications can avoid the exact geometry dependencies by
+disabling default features. Check that configuration from the monorepo root:
 
-```toml
-[dependencies]
-hypergraphics = { version = "0.1.0", default-features = false }
+```sh
+cargo check -p hypergraphics --no-default-features
 ```
 
 That configuration retains `Primitive`, `Color3`, `RenderVertex64`, `Viewport`,

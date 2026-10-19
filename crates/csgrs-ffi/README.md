@@ -23,18 +23,19 @@ The public C declarations live in [`include/csgrs.h`](include/csgrs.h).
 
 ## Build and link
 
-Build the dynamic and static libraries from the crate checkout:
+This README describes `csgrs-ffi 0.1.0` in the
+[CSGRS source checkout](../../readme.md). Build the dynamic and static libraries
+from the monorepo root:
 
 ```sh
-cargo build --release --locked
+cargo build -p csgrs-ffi --release --locked
 ```
 
-Repository development uses the same sibling checkout layout as CSGRS: place
-`csgrs-ffi`, `csgrs`, and the Hyper geometry crates beside one another. Published
-packages use the matching version requirements from `Cargo.toml`.
+The crate lives in `crates/csgrs-ffi/`; its dependencies use the matching
+monorepo sources. Current source APIs are not a claim of registry availability.
 
 The artifacts are named `libcsgrs_ffi` on Unix-like targets. Include
-`include/csgrs.h`, link the library appropriate for the target, and keep
+`crates/csgrs-ffi/include/csgrs.h` from the monorepo root, link the library appropriate for the target, and keep
 the Rust dynamic library discoverable at runtime when using the shared form.
 
 ## API shape
@@ -105,8 +106,8 @@ finite region projections, and curve-to-solid operations.
 ## Validation and license
 
 ```sh
-cargo test --locked
-cargo clippy --locked --all-targets -- -D warnings
+cargo test -p csgrs-ffi --locked
+cargo clippy -p csgrs-ffi --locked --all-targets -- -D warnings
 ```
 
 Binding smoke tests in the

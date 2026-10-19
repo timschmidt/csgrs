@@ -34,9 +34,11 @@ This README describes crate version `0.3.1`.
 
 ## Install
 
-```toml
-[dependencies]
-hypersolve = "0.3.1"
+The examples below target `hypersolve 0.3.1` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+
+```sh
+cargo run -p hypersolve --example basic
 ```
 
 Hypersolve has no default features. `dispatch-trace` is for exact-dispatch
@@ -81,7 +83,7 @@ fn main() {
 Run it with:
 
 ```sh
-cargo run --example basic
+cargo run -p hypersolve --example basic
 ```
 
 ## Solver model

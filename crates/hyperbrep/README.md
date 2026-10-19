@@ -442,10 +442,11 @@ The current design and certified operation boundary are recorded in
 ## Example
 
 The runnable [`examples/basic.rs`](examples/basic.rs) constructs and measures
-one exact cuboid:
+one exact cuboid with `hyperbrep 0.2.0` from the
+[CSGRS source checkout](../../readme.md). Run it from the monorepo root:
 
 ```sh
-cargo run --example basic
+cargo run -p hyperbrep --example basic
 ```
 
 The essential construction flow is:
@@ -463,6 +464,8 @@ let exact_volume = model.solid_volume(solid)?;
 ```
 
 ## Development checks
+
+Run these commands from `crates/hyperbrep/`:
 
 ```sh
 cargo fmt --all -- --check

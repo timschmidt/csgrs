@@ -51,14 +51,14 @@ vertex arena.
 
 ## Quick start
 
-For sibling Hyper checkouts:
+The examples below target `hypermesh 0.1.0` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
 
-```toml
-[dependencies]
-hypermesh = { path = "../hypermesh" }
+```sh
+cargo run -p hypermesh --example basic
 ```
 
-Replace `src/main.rs` with:
+The checked-in example is:
 
 <!-- quickstart:start -->
 ```rust

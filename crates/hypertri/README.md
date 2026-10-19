@@ -59,22 +59,14 @@ float to its exact represented value before topology is decided.
 
 ## Quick start
 
-Enable the polygon triangulator:
+The examples below target `hypertri 0.4.1` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
 
 ```sh
-cargo new exact-triangulation
-cd exact-triangulation
-cargo add hypertri --features earcut
+cargo run -p hypertri --example basic --no-default-features --features earcut
 ```
 
-Equivalent manifest entry:
-
-```toml
-[dependencies]
-hypertri = { version = "0.4.1", default-features = false, features = ["earcut"] }
-```
-
-Replace `src/main.rs` with:
+The checked-in example is:
 
 <!-- quickstart:start -->
 ```rust
@@ -95,7 +87,7 @@ fn main() -> hypertri::Result<()> {
 ```
 <!-- quickstart:end -->
 
-Run it with `cargo run`. The same source is
+The same source is
 [`examples/basic.rs`](examples/basic.rs); the test suite compiles it and checks
 that it remains identical to this README block.
 
@@ -250,7 +242,7 @@ application uses.
 
 ## Common workflows
 
-The checked-in examples cover each algorithm family:
+From `crates/hypertri/`, the checked-in examples cover each algorithm family:
 
 ```sh
 cargo run --example basic --features earcut

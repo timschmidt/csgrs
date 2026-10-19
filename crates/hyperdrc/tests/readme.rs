@@ -17,7 +17,7 @@ fn readme_quickstart_matches_the_runnable_example() {
 
 #[test]
 fn readme_release_metadata_matches_the_manifest() {
-    assert!(README.contains("hyperdrc = \"0.3.0\""));
+    assert!(README.contains(&format!("hyperdrc {}", env!("CARGO_PKG_VERSION"))));
     for heading in [
         "## What HyperDRC is for",
         "## Primary types",

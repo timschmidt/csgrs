@@ -30,9 +30,11 @@ This README describes crate version `0.3.0`.
 
 ## Install
 
-```toml
-[dependencies]
-hyperpack = "0.3.0"
+The examples below target `hyperpack 0.3.0` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+
+```sh
+cargo run -p hyperpack --example basic
 ```
 
 There are no default features. `dispatch-trace` forwards Hyperreal’s
@@ -67,7 +69,7 @@ fn main() -> hyperpack::PackResult<()> {
 Run it with:
 
 ```sh
-cargo run --example basic
+cargo run -p hyperpack --example basic
 ```
 
 For placements supplied by another optimizer, construct `StockPlacement1`,

@@ -97,19 +97,21 @@ crate's own project rather than a source-file blob:
 
 ## Installation
 
-Install the command-line tool:
+The examples below target `hyperdrc 0.3.0` in the
+[CSGRS source checkout](../../readme.md). From the monorepo root, run:
 
 ```sh
-cargo install hyperdrc --version 0.3.0
-hyperdrc --help
+cargo run -p hyperdrc --example basic
 ```
 
-Or add the library to a Rust project:
+Run the command-line help from the same checkout:
 
-```toml
-[dependencies]
-hyperdrc = "0.3.0"
+```sh
+cargo run -p hyperdrc -- --help
 ```
+
+For the command-line examples below, replace `hyperdrc` with
+`cargo run -p hyperdrc --` when running from the source checkout.
 
 ## Quick start
 
@@ -147,7 +149,7 @@ fn main() {
 Run the repository copy with:
 
 ```sh
-cargo run --example basic
+cargo run -p hyperdrc --example basic
 ```
 
 Native authoring systems can use `ReadinessRunner` to share the same coverage
