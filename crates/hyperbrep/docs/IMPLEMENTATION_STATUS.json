@@ -2681,6 +2681,48 @@
       "validation": "Six shared groups (three solver, two curve, one BRep) pass natively and in actual zero-import WebAssembly. They verify exact local coefficient identities, both axis conventions, saturation and poles, selected conjugates, mixed affine coordinates, strict/approximate/strict reuse, promotion refusal/recovery and complete BRep edge/scalar-chart/transform/archive replay. Three internal curve tests also pass, including near-pole refinement and retained-source lifetime without a reference cycle. Final all-feature release suites pass 988 solver and 732 BRep/IO tests. The curve suite records 2538 passed, 2 failed and 33 ignored tests across 65 batches. Both failures reproduce on clean 76238cec8: oblique-fillet certainty and the exterior parameter recursive-projective view. Their assertions remain unchanged. Affected all-feature/all-target Clippy and rustdoc deny warnings; BRep fuzz-target compilation and formatting pass. Five preserved assertion-bearing workflows pass on baseline and candidate, including 227 byte-identical BRep archives; the new recipe emits three checked transformed archives. The original mixed affine-form success assertion now passes. The complete original interior-loop surface-section success assertion still fails with UnsupportedIntersection; it is not credited as a completed section.",
       "cost_evidence": "Nine CPU-pinned processes retain three alternating baseline/candidate pairs for five preserved workflows (three complete BRep modeling recipes, polynomial branches and the existing local/global polynomial-image APIs), plus three absolute processes for six new workflows. First and three repeated fresh-input calls retain all assertions, validation and output materialization. The ten matched median phase ratios range 0.984839 to 1.041885; 0 of 30 paired rows increase counted Rust allocation calls and 6 increase requested bytes. Each byte increase is 344 bytes per complete polynomial-branch invocation (about 0.0091% of baseline request traffic); the other preserved workflows have identical allocation calls and requested bytes. The legacy local/global projection recipe retains adverse first/repeated median latency ratios 1.041885/1.010552. Maximum measured process RSS is 23952 KiB. The matched native executable grows by 32336 bytes; all native/WASM artifact sizes and hashes are recorded. All unfavorable samples remain in cost-analysis.json and the raw record. The public Curve2/CurvePoint2/definition layouts remain identical to baseline; optional affine provenance adds one pointer to internal selected-fiber parameter data. Requested allocation traffic excludes foreign allocator internals and is not live heap. Shared-host timings and finite layouts establish neither a general speedup nor a total resource bound. New successful operations have no prior successful-work timing baseline.",
       "limits": "This is an exact selected-scalar and replay extension, not a completed general BRep section. The public solver enumerates local rational images; its caller must exclude poles and select the image of the retained source. The curve extension selects that image and exposes mixed affine forms of admitted PolynomialFiber points. General source-bound rational planar/spatial maps, branch derivatives and regularity, dual surface charts, filled arrangements, trim/material topology and whole-branch replay remain open. The underlying finite-fiber solver still rejects unsupported vertical/nullified components, generic repeated factors and whole boundary components. General rational-map persistence remains unsupported; the existing AffineForm archive covers the implemented affine source recipes. Existing degree caps, refinement/promotion counters and archive admission limits do not bound total arithmetic, coefficient growth, live heap, stack or cancellation latency. Runtime fuzz/ASan/lexicase, formal/coverage, MSRV, installed distributions, production bindings and the full pre-push matrix remain unqualified. All 28 work packages remain open/in-progress. The consumed eaa0cae54 push exception does not authorize publishing this increment."
+    },
+    {
+      "id": "selected-pcurve-maps-2026-10-19",
+      "work_packages": [
+        "WP05a",
+        "WP05b",
+        "WP06",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Retain materialized pcurve spatial parameters and selected retained/iso source charts through exact queries and checked archives.",
+      "sources": [
+        "../src/geometry.rs",
+        "../../hypercurve/src/bezier_split.rs",
+        "../src/geometry/selected_pcurves.rs",
+        "../tests/support/pcurve_parameters.rs"
+      ],
+      "evidence": "evidence/2026-10-19-selected-pcurve-maps/manifest.json",
+      "validation": "All-feature release BRep/IO suites pass 739 tests in 77 batches, with no failures or ignored tests. Five internal groups cover selected retained/iso materialization, affine charts, reversal, restriction, domain errors, angular seams and checked archives. Two shared public groups pass natively and in actual zero-import Wasmtime, including mixed selected fibers, transforms, three cold replays, strict/approximate/strict scopes, success with zero counted solver work and recovery after promotion exhaustion. The owner selected-fiber tests, affected Hypercurve/BRep/IO all-target/all-feature Clippy and rustdoc with warnings denied, BRep fuzz-target compilation and formatting pass. Six preserved complete workflows emit 230 byte-identical archives; four new archives replay. The original complete biquadratic interior-loop section success assertion still fails with UnsupportedIntersection on baseline and candidate. It remains an open target.",
+      "cost_evidence": "Nine CPU-0 pinned processes retain three alternating baseline/candidate pairs for six preserved completed workflows and three absolute processes for two new workflows. First and three repeated fresh-input invocations include assertions, materialization, validation and replay. Twelve median latency ratios span 0.986411 to 1.044232; 0 of 36 matched rows increase Rust allocation calls and 0 increase requested bytes. All adverse rows and raw samples remain. Maximum process RSS is 24564 KiB; the matched executable changes by +6832 bytes. No new stored fields or cache are introduced. Requested Rust allocation traffic is not live heap and excludes foreign allocators. Shared-host timings establish no speedup; newly successful contracts have no successful baseline. Selected iso replay has native correctness coverage without a separate allocation campaign.",
+      "limits": "This completes selected materialized parameter maps and the declared internal selected retained/iso pcurve constructions, not general sections or face arrangements. SurfaceIntersectionPcurve::point_at still requires represented coordinates; Surface::point_at and full section restriction also need retained-image migration. Angular interior selected images remain explicitly unsupported when coordinates are unavailable. Generic exterior affine-point bounds, arbitrary rational maps, implicit-branch derivatives/regularity, whole-branch/event archives, dual-chart section graphs and general patch intersections remain open. Existing solver counters, degree and archive limits do not bound total work, live heap, stack or cancellation. Runtime fuzz/ASan/lexicase, formal/coverage, MSRV, installed distributions, production bindings and full workflow/push gates are unqualified. Source consumers are not released packages. All 28 work packages remain open/in-progress. No new push is authorized by the consumed eaa0cae54 exception."
     }
   ],
   "work_packages": [

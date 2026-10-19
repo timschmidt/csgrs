@@ -128,25 +128,23 @@ impl ArenaModel {
                             crate::error::classified(contact.second().parameter())
                                 .map_err(GeometryError::from)?,
                         )?;
-                        let first_parameter = first_parameter
-                            .scalar()
-                            .ok_or(GeometryError::UnrepresentableParameter)?;
-                        let second_parameter = second_parameter
-                            .scalar()
-                            .ok_or(GeometryError::UnrepresentableParameter)?;
                         let first_spatial =
-                            materialized[first_index].spatial_parameter_at(first_parameter)?;
+                            materialized[first_index].spatial_parameter_at(&first_parameter)?;
                         if !ordered[first_index]
                             .intersection
                             .curve()
                             .domain()
-                            .contains_real(&first_spatial)?
+                            .contains(&first_spatial)?
                         {
                             return Err(GeometryError::UnsupportedIntersection.into());
                         }
                         insert_exact_split_parameter(
                             &mut split_parameters[second_index],
-                            materialized[second_index].spatial_parameter_at(second_parameter)?,
+                            materialized[second_index]
+                                .spatial_parameter_at(&second_parameter)?
+                                .try_real()
+                                .cloned()
+                                .ok_or(GeometryError::UnrepresentableParameter)?,
                         )?;
                     }
                 }

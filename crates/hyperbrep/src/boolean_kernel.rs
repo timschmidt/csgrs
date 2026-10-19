@@ -4341,7 +4341,11 @@ fn retained_spatial_parameter(
             }
         }
     }
-    carrier.spatial_parameter_at(parameter)
+    carrier
+        .spatial_parameter_at(&parameter.clone().into())?
+        .try_real()
+        .cloned()
+        .ok_or(GeometryError::UnrepresentableParameter)
 }
 
 fn model_boundary_contacts(
@@ -7628,7 +7632,12 @@ mod tests {
                 + curve_domain.end().scalar().unwrap())
                 / Real::from(2))
             .unwrap();
-            let spatial_parameter = materialized.spatial_parameter_at(&curve_parameter).unwrap();
+            let spatial_parameter = materialized
+                .spatial_parameter_at(&curve_parameter.clone().into())
+                .unwrap()
+                .try_real()
+                .unwrap()
+                .clone();
             let retained_point = pcurve.point_at(&spatial_parameter).unwrap();
             let materialized_point = materialized
                 .curve()

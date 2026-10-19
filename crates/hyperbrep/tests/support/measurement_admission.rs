@@ -70,7 +70,7 @@ pub fn planar_spline_incidence_does_not_require_low_degree_root_solving() {
                 .unwrap();
             assert!(
                 curve
-                    .point_at(&pcurve.spatial_parameter_at(&middle).unwrap().into())
+                    .point_at(&pcurve.spatial_parameter_at(&middle.into()).unwrap())
                     .unwrap()
                     .coincides_with(&point.into())
                     .unwrap()

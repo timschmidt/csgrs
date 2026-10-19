@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
-Status: implementation blueprint. Updated 2026-10-19 for selected-fiber
-images, upstream `dbe99e3cc` and concurrent development ownership.
+Status: implementation blueprint. Updated 2026-10-19 for selected pcurve
+parameter maps, upstream `dbe99e3cc` and concurrent development ownership.
 
 The [procedural solid-revolution increment](evidence/2026-10-18-procedural-revolution/README.md)
 advances WP02/WP07/WP09/WP13 by consuming retained latitude generators in closed
@@ -1229,9 +1229,22 @@ replay remain prerequisites to the original interior-loop section. The next
 record describes an affine projection domain for general height equations that
 can reuse BRep's existing planar spatial lift. General rational maps, further
 regularity/derivative support and patch-pair spatial images remain later work.
-Follow the current
+Follow the associated
 [next domains](evidence/2026-10-19-selected-fiber-images/next-domains.md) before
 claiming a complete section or trim arrangement. No work package is closed.
+
+The [selected pcurve parameter-map increment](evidence/2026-10-19-selected-pcurve-maps/README.md)
+now maps native pcurve parameters to retained spatial `Parameter` values with
+strict domain checks, including selected endpoints. Retained and iso mappings
+materialize selected restrictions with checked archive replay. Hypercurve owns
+the borrowed scalar-enclosure view; BRep uses a native degree-one spline to keep
+selected iso charts unchanged. Existing represented carriers remain preserved.
+The API break is direct: `spatial_parameter_at(&CurveParameter2) -> Parameter`
+and pcurve `subcurve(&Parameter, &Parameter)`. Consumers needing stored scalar
+views explicitly request them. General retained pcurve/surface evaluation,
+whole-branch/event replay and complete section topology remain open; follow the
+[current next domains](evidence/2026-10-19-selected-pcurve-maps/next-domains.md).
+No work package or release gate is closed by this increment.
 
 Apply [research gates G2–G5](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)
 before making practical-completeness claims. ESOLID and exact quadric work

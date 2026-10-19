@@ -159,7 +159,7 @@ mod tests {
             v: Vector3::y(),
         };
         let mapping = SurfaceIntersectionPcurve::plane_projection(curve, &plane)
-            .subcurve(&q(1, 4), &q(3, 4))
+            .subcurve(&q(1, 4).into(), &q(3, 4).into())
             .unwrap();
         for (mapping, reversed) in [
             (mapping.clone(), false),
@@ -185,7 +185,9 @@ mod tests {
                 }
                 .unwrap();
                 assert_eq!(
-                    Parameter::from_real(pcurve.spatial_parameter_at(&t).unwrap())
+                    pcurve
+                        .spatial_parameter_at(&t.clone().into())
+                        .unwrap()
                         .compare(&expected.into())
                         .unwrap(),
                     Ordering::Equal

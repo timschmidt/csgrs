@@ -602,7 +602,9 @@ pub fn parallel_plane_contacts_preserve_reversal_frame_and_tangency() {
             ] {
                 let expected = ((&t - &start) / (&end - &start)).unwrap();
                 assert_eq!(
-                    Parameter::from_real(pcurve.spatial_parameter_at(&t).unwrap())
+                    pcurve
+                        .spatial_parameter_at(&t.clone().into())
+                        .unwrap()
                         .compare(&expected.into())
                         .unwrap(),
                     Ordering::Equal

@@ -230,6 +230,20 @@ impl CurveParameter2 {
         }
     }
 
+    /// Borrows a certified closed enclosure in this parameter's scalar chart.
+    ///
+    /// Represented values return the value at both ends. Selected scalar
+    /// authorities return their stored isolating bounds without refinement or
+    /// conversion to independent roots. The enclosure never replaces the exact
+    /// parameter and promises no particular width. `None` means a geometric
+    /// parameter has no scalar view; its owning curve must first supply a chart.
+    pub fn scalar_bounds(&self) -> Option<(&Real, &Real)> {
+        match &self.data {
+            CurveParameterData2::Scalar(scalar) => Some(scalar.isolating_bounds()),
+            _ => self.scalar().map(|value| (value, value)),
+        }
+    }
+
     /// Returns true for a compact local cut on an algebraic cusp semicircle.
     pub const fn is_algebraic_cusp(&self) -> bool {
         matches!(self.data, CurveParameterData2::AlgebraicCusp { .. })

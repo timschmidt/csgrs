@@ -81,6 +81,15 @@ filled arrangements, tensor-surface images, both section charts or whole
 implicit-branch archives. The original
 public biquadratic interior-loop section still reports `UnsupportedIntersection`.
 
+Materialized pcurve correspondence now accepts retained `CurveParameter2`
+values and returns spatial `Parameter` values, with strict domain membership.
+Selected retained/iso mappings preserve restrictions, reversal and checked
+archive replay; selected iso carriers use degree-one splines in the original
+chart. Represented iso carriers retain native lines. Angular selected interior
+queries still fail typed when their coordinates are unavailable. The complete
+section evaluator and surface UV evaluator remain separate open boundaries.
+See the [parameter-map evidence](evidence/2026-10-19-selected-pcurve-maps/README.md).
+
 ## Spatial curve carriers
 
 Procedural analytic-parallel pcurves replay quadratic/cubic/homogeneous rational

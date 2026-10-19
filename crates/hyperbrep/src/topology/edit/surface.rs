@@ -179,7 +179,8 @@ impl ArenaModel {
         let mut halves = Vec::with_capacity(2);
         for (range_start, range_end) in ranges {
             let spatial = curve.subcurve(range_start, range_end)?;
-            let retained = pcurve.subcurve(range_start, range_end)?;
+            let retained =
+                pcurve.subcurve(&range_start.clone().into(), &range_end.clone().into())?;
             let materialized = retained.materialize()?;
             let forward_pcurve = Pcurve::new(materialized.curve().clone());
             let reverse_pcurve = forward_pcurve.reversed()?;
@@ -464,7 +465,8 @@ impl ArenaModel {
         let mut halves = Vec::with_capacity(2);
         for (range_start, range_end) in ranges {
             let spatial = curve.subcurve(range_start, range_end)?;
-            let retained = pcurve.subcurve(range_start, range_end)?;
+            let retained =
+                pcurve.subcurve(&range_start.clone().into(), &range_end.clone().into())?;
             let materialized = retained.materialize()?;
             let forward_pcurve = Pcurve::new(materialized.curve().clone());
             let reverse_pcurve = forward_pcurve.reversed()?;
@@ -732,7 +734,8 @@ impl ArenaModel {
         let mut halves = Vec::with_capacity(2);
         for (range_start, range_end) in ranges {
             let spatial = curve.subcurve(range_start, range_end)?;
-            let retained = pcurve.subcurve(range_start, range_end)?;
+            let retained =
+                pcurve.subcurve(&range_start.clone().into(), &range_end.clone().into())?;
             let materialized = retained.materialize()?;
             let forward_pcurve = Pcurve::new(materialized.curve().clone());
             let reverse_pcurve = forward_pcurve.reversed()?;

@@ -385,3 +385,10 @@ cold validation reconstructs the single-cover shell and positive-radius simple
 profile, including selected cavity endpoints. Existing native images keep their
 encoding; the [solid-revolution evidence](evidence/2026-10-18-procedural-revolution/README.md)
 records replay and the unchanged procedural STEP boundary.
+
+Selected iso pcurves now use a degree-one native NURBS source with the original
+coordinate as its knot parameter and an exact `SourceRange` restriction.
+Certified scalar bounds choose only a finite source support. They never replace
+the selected endpoints. This reuses the existing archive schema and cold
+validation; arbitrary generated rational fragments and whole implicit branches
+are not thereby admitted. See the [parameter-map record](evidence/2026-10-19-selected-pcurve-maps/README.md).

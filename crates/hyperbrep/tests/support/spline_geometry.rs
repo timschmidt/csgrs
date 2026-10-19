@@ -148,13 +148,13 @@ pub fn planar_pcurves_prove_whole_image_and_retain_parameter_correspondence() {
                 native.start().scalar().unwrap(),
                 native.end().scalar().unwrap(),
             ] {
-                let parameter = projected.spatial_parameter_at(t).unwrap();
+                let parameter = projected.spatial_parameter_at(&t.clone().into()).unwrap();
                 let uv = projected.curve().point_at(&t.clone().into()).unwrap();
                 let uv = uv.coordinates().unwrap();
                 let on_plane = plane
                     .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
                     .unwrap();
-                let on_curve = curve.point_at(&Parameter::from_real(parameter)).unwrap();
+                let on_curve = curve.point_at(&parameter).unwrap();
                 assert!(on_curve.coincides_with(&on_plane.into()).unwrap());
             }
         }

@@ -23,6 +23,8 @@ mod planar_image;
 mod planes;
 mod point;
 mod rotation;
+#[cfg(test)]
+mod selected_pcurves;
 mod spline;
 mod transform;
 mod translation;
@@ -2506,7 +2508,9 @@ impl SurfaceIntersectionPcurve {
     pub(crate) fn materializes_native_line(&self) -> bool {
         match &self.mapping {
             SurfaceIntersectionPcurveMapping::TensorIsoU { .. }
-            | SurfaceIntersectionPcurveMapping::TensorIsoV { .. } => true,
+            | SurfaceIntersectionPcurveMapping::TensorIsoV { .. } => {
+                self.domain.try_real_endpoints().is_some()
+            }
             SurfaceIntersectionPcurveMapping::PlaneProjection { spatial, .. } => {
                 spatial.kind() == Curve3Kind::Line
             }
@@ -2688,13 +2692,14 @@ impl SurfaceIntersectionPcurve {
 
     /// Restricts this exact surface-parameter mapping without changing its
     /// authoritative spatial-curve parameterization.
-    pub fn subcurve(&self, start: &Real, end: &Real) -> GeometryResult<Self> {
+    /// Selected endpoints keep their defining relation and source chart.
+    pub fn subcurve(&self, start: &Parameter, end: &Parameter) -> GeometryResult<Self> {
         crate::context::strict(|| {
-            if !self.domain.contains_real(start)? || !self.domain.contains_real(end)? {
+            if !self.domain.contains(start)? || !self.domain.contains(end)? {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
             Ok(Self {
-                domain: ParameterDomain::new(start.clone(), end.clone())?.into(),
+                domain: ParameterRange::new(start.clone(), end.clone())?,
                 source_scale: self.source_scale.clone(),
                 source_offset: self.source_offset.clone(),
                 mapping: self.mapping.clone(),
@@ -2726,6 +2731,9 @@ impl SurfaceIntersectionPcurve {
     /// explicitly unsupported.
     pub fn materialize(&self) -> GeometryResult<MaterializedSurfacePcurve> {
         crate::context::strict(|| {
+            if let Some(carrier) = self.materialize_selected_chart()? {
+                return Ok(carrier);
+            }
             if let SurfaceIntersectionPcurveMapping::PlaneProjection {
                 spatial,
                 origin,
@@ -2859,9 +2867,21 @@ impl SurfaceIntersectionPcurve {
                             .scalar_endpoints()
                             .ok_or(GeometryError::UnsupportedPcurveContour)?;
                         if boundaries.is_empty() {
-                            boundaries.push(carrier.spatial_parameter_at(start)?);
+                            boundaries.push(
+                                carrier
+                                    .spatial_parameter_at(&start.clone().into())?
+                                    .try_real()
+                                    .cloned()
+                                    .ok_or(GeometryError::UnrepresentableParameter)?,
+                            );
                         }
-                        boundaries.push(carrier.spatial_parameter_at(end)?);
+                        boundaries.push(
+                            carrier
+                                .spatial_parameter_at(&end.clone().into())?
+                                .try_real()
+                                .cloned()
+                                .ok_or(GeometryError::UnrepresentableParameter)?,
+                        );
                         curves.push(carrier.curve);
                     }
                     materialized_surface_pcurve_from_matching_domains(
@@ -2891,6 +2911,91 @@ impl SurfaceIntersectionPcurve {
                 }
             }
         })
+    }
+
+    /// A selected interval keeps its source chart: dividing its endpoints to
+    /// force a unit interval would discard their common root authority.
+    fn materialize_selected_chart(&self) -> GeometryResult<Option<MaterializedSurfacePcurve>> {
+        if !matches!(
+            self.mapping,
+            SurfaceIntersectionPcurveMapping::RetainedCurve { .. }
+                | SurfaceIntersectionPcurveMapping::TensorIsoU { .. }
+                | SurfaceIntersectionPcurveMapping::TensorIsoV { .. }
+        ) {
+            return Ok(None);
+        }
+        let selected = self.domain.try_real_endpoints().is_none()
+            || matches!(&self.mapping, SurfaceIntersectionPcurveMapping::RetainedCurve { curve }
+                if curve.parameter_domain().scalar_endpoints().is_none());
+        if !selected {
+            return Ok(None);
+        }
+        let range = self
+            .domain
+            .affine_image(&self.source_scale, &self.source_offset)?;
+        let range = hypercurve::CurveParameterRange2::try_new(
+            range.start().curve_parameter(),
+            range.end().curve_parameter(),
+        )?;
+        let curve = match &self.mapping {
+            SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
+                let domain = curve.parameter_domain();
+                if range.start().compare(domain.start())? == Ordering::Equal
+                    && range.end().compare(domain.end())? == Ordering::Equal
+                {
+                    curve.clone()
+                } else {
+                    curve.restrict_source(range)?
+                }
+            }
+            SurfaceIntersectionPcurveMapping::TensorIsoU { constant }
+            | SurfaceIntersectionPcurveMapping::TensorIsoV { constant } => {
+                let constant = constant
+                    .compact_pi_laurent()
+                    .unwrap_or_else(|| constant.clone());
+                let point = |t| match &self.mapping {
+                    SurfaceIntersectionPcurveMapping::TensorIsoU { .. } => {
+                        CurvePoint2::new(constant.clone(), t)
+                    }
+                    _ => CurvePoint2::new(t, constant.clone()),
+                };
+                // Enclosures choose a finite authored support, never the
+                // retained endpoints. A degree-one spline has the original
+                // source coordinate as its knot parameter, including exterior
+                // values, without another normalized selected-root chart.
+                // Hypercurve checks the exact restriction; SourceRange replays it.
+                let lower = range
+                    .start()
+                    .scalar_bounds()
+                    .ok_or(GeometryError::UnrepresentableParameter)?
+                    .0
+                    .clone();
+                let upper = range
+                    .end()
+                    .scalar_bounds()
+                    .ok_or(GeometryError::UnrepresentableParameter)?
+                    .1
+                    .clone();
+                let span = &upper - &lower;
+                require_positive(&span, GeometryError::InvalidParameterDomain)?;
+                Curve2::from(hypercurve::NurbsCurve2::try_new(
+                    1,
+                    vec![point(lower.clone()), point(upper.clone())],
+                    vec![Real::one(); 2],
+                    vec![lower.clone(), lower, upper.clone(), upper],
+                )?)
+                .restrict_source(range)?
+            }
+            _ => return Ok(None),
+        };
+        let scale = (Real::one() / &self.source_scale).map_err(GeometryError::Numeric)?;
+        orient_affine_surface_pcurve(
+            curve,
+            scale.clone(),
+            -&self.source_offset * scale,
+            &self.domain,
+        )
+        .map(Some)
     }
 
     fn reparameterized_subcurve(
@@ -3046,45 +3151,55 @@ impl MaterializedSurfacePcurve {
         &self.correspondence
     }
 
-    /// Maps one pcurve parameter to the authoritative spatial-curve parameter.
-    pub fn spatial_parameter_at(&self, parameter: &Real) -> GeometryResult<Real> {
-        crate::context::strict(|| match &self.correspondence {
-            SurfacePcurveCorrespondence::Affine { scale, offset } => Ok(scale * parameter + offset),
-            SurfacePcurveCorrespondence::AngularSweep {
-                spatial_start,
-                spatial_end,
-            } => {
-                // A periodic seam has two parameter identities even though
-                // its endpoint coordinates agree. Preserve the selected end
-                // before recovering an angle from the point's position.
-                let domain = self.curve.parameter_domain();
-                let (start, end) = domain
-                    .scalar_endpoints()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
-                if decided_order(compare_reals(parameter, start, crate::STRICT_PREDICATES))?
-                    == Ordering::Equal
-                {
-                    return Ok(spatial_start.clone());
+    /// Maps an incident pcurve parameter to the authoritative spatial parameter.
+    ///
+    /// Affine correspondence retains selected roots and their source evidence.
+    /// Out-of-domain queries fail before applying the map. Angular endpoints
+    /// preserve the two seam identities; an interior angular image still needs
+    /// represented coordinates and otherwise fails with a typed blocker.
+    pub fn spatial_parameter_at(
+        &self,
+        parameter: &hypercurve::CurveParameter2,
+    ) -> GeometryResult<Parameter> {
+        crate::context::strict(|| {
+            let domain = self.curve.parameter_domain();
+            if parameter.compare(domain.start())? == Ordering::Less
+                || parameter.compare(domain.end())? == Ordering::Greater
+            {
+                return Err(GeometryError::ParameterOutsideDomain);
+            }
+            match &self.correspondence {
+                SurfacePcurveCorrespondence::Affine { scale, offset } => {
+                    Parameter::from_curve(parameter)?.affine_image(scale, offset)
                 }
-                if decided_order(compare_reals(parameter, end, crate::STRICT_PREDICATES))?
-                    == Ordering::Equal
-                {
-                    return Ok(spatial_end.clone());
-                }
-                let Some(CurveGeometry2::CircularArc(arc)) = self.curve.geometry() else {
-                    return Err(GeometryError::UnsupportedPcurveContour);
-                };
-                let point = self.curve.point_at(&parameter.clone().into())?;
-                let point = point
-                    .coordinates()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
-                let fraction = match crate::error::classified(arc.sweep_fraction(point))? {
-                    Classification::Decided(fraction) => fraction,
-                    Classification::Uncertain(reason) => {
-                        return Err(GeometryError::PlanarClassificationUnresolved(reason));
+                SurfacePcurveCorrespondence::AngularSweep {
+                    spatial_start,
+                    spatial_end,
+                } => {
+                    // A periodic seam has two parameter identities even though
+                    // its endpoint coordinates agree. Preserve the selected end
+                    // before recovering an angle from the point's position.
+                    if parameter.compare(domain.start())? == Ordering::Equal {
+                        return Ok(spatial_start.clone().into());
                     }
-                };
-                Ok(spatial_start + (spatial_end - spatial_start) * fraction)
+                    if parameter.compare(domain.end())? == Ordering::Equal {
+                        return Ok(spatial_end.clone().into());
+                    }
+                    let Some(CurveGeometry2::CircularArc(arc)) = self.curve.geometry() else {
+                        return Err(GeometryError::UnsupportedPcurveContour);
+                    };
+                    let point = self.curve.point_at(parameter)?;
+                    let point = point
+                        .coordinates()
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?;
+                    let fraction = match crate::error::classified(arc.sweep_fraction(point))? {
+                        Classification::Decided(fraction) => fraction,
+                        Classification::Uncertain(reason) => {
+                            return Err(GeometryError::PlanarClassificationUnresolved(reason));
+                        }
+                    };
+                    Ok((spatial_start + (spatial_end - spatial_start) * fraction).into())
+                }
             }
         })
     }
@@ -7872,8 +7987,16 @@ fn clip_linear_tensor_section(
         let Some((pcurve_start, pcurve_end)) = fragment.represented_parameter_range() else {
             return Err(GeometryError::UnrepresentableParameter);
         };
-        let spatial_start = materialized.spatial_parameter_at(&pcurve_start)?;
-        let spatial_end = materialized.spatial_parameter_at(&pcurve_end)?;
+        let spatial_start = materialized
+            .spatial_parameter_at(&pcurve_start.into())?
+            .try_real()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        let spatial_end = materialized
+            .spatial_parameter_at(&pcurve_end.into())?
+            .try_real()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
         if let Some((_, previous_end)) = intervals.last_mut()
             && decided_order(compare_reals(
                 previous_end,
@@ -11403,8 +11526,11 @@ mod tests {
                 .unwrap();
             assert_eq!(local.len(), 1);
             let spatial_parameter = carrier
-                .spatial_parameter_at(local[0].try_real().unwrap())
-                .unwrap();
+                .spatial_parameter_at(&local[0].curve_parameter())
+                .unwrap()
+                .try_real()
+                .unwrap()
+                .clone();
             assert_eq!(
                 hyperlimit::compare_reals(&spatial_parameter, &expected, crate::STRICT_PREDICATES)
                     .value(),
@@ -11449,7 +11575,12 @@ mod tests {
             for (local, expected) in [(Real::zero(), Real::zero()), (Real::one(), Real::tau())] {
                 assert_eq!(
                     hyperlimit::compare_reals(
-                        &carrier.spatial_parameter_at(&local).unwrap(),
+                        &carrier
+                            .spatial_parameter_at(&local.clone().into())
+                            .unwrap()
+                            .try_real()
+                            .unwrap()
+                            .clone(),
                         &expected,
                         crate::STRICT_PREDICATES
                     )
@@ -11467,7 +11598,7 @@ mod tests {
         ))
         .unwrap();
         let restricted = source
-            .subcurve(&q(1, 4), &q(3, 4))
+            .subcurve(&q(1, 4).into(), &q(3, 4).into())
             .unwrap()
             .reversed()
             .unwrap();
@@ -11480,7 +11611,12 @@ mod tests {
         for (local, expected_parameter, expected_x) in
             [(r(0), q(1, 4), r(3)), (r(1), q(3, 4), r(1))]
         {
-            let spatial_parameter = carrier.spatial_parameter_at(&local).unwrap();
+            let spatial_parameter = carrier
+                .spatial_parameter_at(&local.clone().into())
+                .unwrap()
+                .try_real()
+                .unwrap()
+                .clone();
             assert_eq!(
                 hyperlimit::compare_reals(
                     &spatial_parameter,
@@ -11519,7 +11655,7 @@ mod tests {
             r(0),
         );
         let restricted = source
-            .subcurve(&q(1, 4), &q(3, 4))
+            .subcurve(&q(1, 4).into(), &q(3, 4).into())
             .unwrap()
             .reversed()
             .unwrap();
@@ -11532,7 +11668,12 @@ mod tests {
         for (local, expected_parameter, expected_x) in
             [(r(0), q(1, 4), q(3, 4)), (r(1), q(3, 4), q(1, 4))]
         {
-            let spatial_parameter = carrier.spatial_parameter_at(&local).unwrap();
+            let spatial_parameter = carrier
+                .spatial_parameter_at(&local.clone().into())
+                .unwrap()
+                .try_real()
+                .unwrap()
+                .clone();
             assert_eq!(
                 hyperlimit::compare_reals(
                     &spatial_parameter,
@@ -15284,7 +15425,12 @@ mod tests {
         assert_eq!(carriers.len(), 2);
         for carrier in &carriers {
             for local in [Real::zero(), Real::one()] {
-                let spatial_parameter = carrier.spatial_parameter_at(&local).unwrap();
+                let spatial_parameter = carrier
+                    .spatial_parameter_at(&local.clone().into())
+                    .unwrap()
+                    .try_real()
+                    .unwrap()
+                    .clone();
                 let materialized = carrier
                     .curve
                     .point_at(&local.clone().into())
@@ -15338,8 +15484,18 @@ mod tests {
                     .represented_parameter_range()
                     .expect("linear region contacts have represented parameters");
                 retained_ranges.push((
-                    carrier.spatial_parameter_at(&local_start).unwrap(),
-                    carrier.spatial_parameter_at(&local_end).unwrap(),
+                    carrier
+                        .spatial_parameter_at(&local_start.into())
+                        .unwrap()
+                        .try_real()
+                        .unwrap()
+                        .clone(),
+                    carrier
+                        .spatial_parameter_at(&local_end.into())
+                        .unwrap()
+                        .try_real()
+                        .unwrap()
+                        .clone(),
                 ));
             }
         }
