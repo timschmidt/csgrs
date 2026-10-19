@@ -1336,8 +1336,12 @@ fn main() {
         };
         black_box(curve.curve().point_at(black_box(&midpoint_parameter)))
             .expect("benchmark exact rational-quartic section evaluation");
-        black_box(curve.first_pcurve().point_at(black_box(&midpoint)))
-            .expect("benchmark exact rational-quadratic graph evaluation");
+        black_box(
+            curve
+                .first_pcurve()
+                .point_at(black_box(&midpoint_parameter)),
+        )
+        .expect("benchmark exact rational-quadratic graph evaluation");
         checksum += 1;
         black_box(curve);
     }
@@ -1373,8 +1377,12 @@ fn main() {
         };
         black_box(curve.curve().point_at(black_box(&midpoint_parameter)))
             .expect("benchmark exact native rational-quartic section evaluation");
-        black_box(curve.first_pcurve().point_at(black_box(&midpoint)))
-            .expect("benchmark exact native rational-quadratic graph evaluation");
+        black_box(
+            curve
+                .first_pcurve()
+                .point_at(black_box(&midpoint_parameter)),
+        )
+        .expect("benchmark exact native rational-quadratic graph evaluation");
         checksum += 1;
         black_box(curve);
     }
@@ -1419,8 +1427,12 @@ fn main() {
         for branch in &branches {
             black_box(branch.curve().point_at(black_box(&midpoint_parameter)))
                 .expect("benchmark bounded rational-quartic branch evaluation");
-            black_box(branch.first_pcurve().point_at(black_box(&midpoint)))
-                .expect("benchmark bounded rational-quadratic branch evaluation");
+            black_box(
+                branch
+                    .first_pcurve()
+                    .point_at(black_box(&midpoint_parameter)),
+            )
+            .expect("benchmark bounded rational-quadratic branch evaluation");
             checksum += 1;
         }
         black_box(branches);

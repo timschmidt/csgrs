@@ -121,6 +121,11 @@ fn verify_selected_mapping(mapping: &SurfaceIntersectionPcurve) {
                 .coincides_with(&materialized.curve().point_at(local).unwrap())
                 .unwrap()
         );
+        assert!(
+            expected
+                .coincides_with(&mapping.point_at(spatial).unwrap())
+                .unwrap()
+        );
     }
     let mut builder = crate::ModelBuilder::new();
     builder
@@ -252,5 +257,226 @@ fn materialized_parameter_map_checks_domain() {
             mapping.spatial_parameter_at(&Real::from(outside).into()),
             Err(GeometryError::ParameterOutsideDomain)
         ));
+    }
+}
+
+#[test]
+fn projected_selected_planar_images_keep_the_source_chart() {
+    let source = retained().materialize().unwrap().curve().clone();
+    let origin = Point3::new(1.into(), 2.into(), 3.into());
+    let spatial = Curve3::planar_image(
+        source.clone(),
+        origin.clone(),
+        Vector3::x() * Real::from(2),
+        Vector3::y() * Real::from(2),
+    )
+    .unwrap();
+    // The target coordinates are (-2*y, 2*x) in the original source chart.
+    let target = PlaneSurface {
+        origin,
+        u: -Vector3::y(),
+        v: Vector3::x(),
+    };
+    let mapping = SurfaceIntersectionPcurve::plane_projection(spatial.clone(), &target);
+    for reversed in [false, true] {
+        let current = if reversed {
+            mapping.reversed().unwrap()
+        } else {
+            mapping.clone()
+        };
+        let expected = if reversed {
+            vec![source.end(), source.start()]
+        } else {
+            vec![source.start(), source.end()]
+        };
+        for (parameter, point) in [current.domain.start(), current.domain.end()]
+            .into_iter()
+            .zip(expected)
+        {
+            let image = current.point_at(parameter).unwrap();
+            assert_eq!(
+                image
+                    .affine_form(1.into(), 0.into(), 0.into())
+                    .compare(&point.affine_form(0.into(), (-2).into(), 0.into()))
+                    .unwrap(),
+                Ordering::Equal
+            );
+            assert_eq!(
+                image
+                    .affine_form(0.into(), 1.into(), 0.into())
+                    .compare(&point.affine_form(2.into(), 0.into(), 0.into()))
+                    .unwrap(),
+                Ordering::Equal
+            );
+            let chord = Curve2::try_line(image, CurvePoint2::from_values(10, 10).into()).unwrap();
+            let mut builder = crate::ModelBuilder::new();
+            builder.pcurve(crate::Pcurve::new(chord)).unwrap();
+            let json = builder.finish().unwrap().to_json().unwrap();
+            assert_eq!(
+                crate::RawModel::from_json(&json, &crate::ArchiveLimits::default())
+                    .unwrap()
+                    .validate()
+                    .unwrap()
+                    .to_json()
+                    .unwrap(),
+                json
+            );
+        }
+        assert!(matches!(
+            current.point_at(&Real::from(100).into()),
+            Err(GeometryError::ParameterOutsideDomain)
+        ));
+    }
+}
+
+#[test]
+fn unavailable_and_selected_angular_images_remain_typed() {
+    let parameter = Parameter::from_curve(&selected()).unwrap();
+    assert!(matches!(
+        SurfaceIntersectionPcurve::unsupported(ParameterRange::unit()).point_at(&parameter),
+        Err(GeometryError::UnsupportedIntersection)
+    ));
+    let plane = PlaneSurface {
+        origin: Point3::origin(),
+        u: Vector3::x(),
+        v: Vector3::y(),
+    };
+    let circle = Curve3::circle_arc(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        2.into(),
+        0.into(),
+        Real::tau(),
+    )
+    .unwrap();
+    let mapping = SurfaceIntersectionPcurve::plane_projection(circle, &plane);
+    assert!(matches!(
+        mapping.point_at(&parameter),
+        Err(GeometryError::UnsupportedSelectedEvaluation)
+    ));
+    for t in [Real::zero(), Real::tau()] {
+        assert!(
+            mapping
+                .point_at(&t.into())
+                .unwrap()
+                .coincides_with(&CurvePoint2::from_values(2, 0).into())
+                .unwrap()
+        );
+    }
+}
+
+#[test]
+fn selected_linear_sections_use_all_native_spans_and_axis_charts() {
+    // Two unequal knot spans represent (t+2,0,0), t in [-2,7].
+    let profile = Curve3::nurbs(
+        1,
+        [0, 5, 9]
+            .map(|x| Point3::new(x.into(), 0.into(), 0.into()))
+            .to_vec(),
+        vec![Real::one(); 3],
+        vec![(-2).into(), (-2).into(), 3.into(), 7.into(), 7.into()],
+    )
+    .unwrap();
+    let plane = PlaneSurface {
+        origin: Point3::origin(),
+        u: Vector3::from_xyz(1.into(), 0.into(), 1.into()),
+        v: Vector3::y(),
+    };
+    for axis in [TensorAxis::U, TensorAxis::V] {
+        // denominator -1 gives -x; the retained scale -2 and offset 5 give 2t+9.
+        let mapping = SurfaceIntersectionPcurve::linear_plane_section(
+            profile.clone(),
+            &plane,
+            (-1).into(),
+            axis,
+            (-2).into(),
+            5.into(),
+        );
+        for shift in [0, 4] {
+            let source = selected()
+                .affine_image(&Real::one(), &Real::from(shift))
+                .unwrap();
+            let expected = match axis {
+                TensorAxis::U => source
+                    .affine_point(1.into(), 0.into(), 2.into(), 9.into())
+                    .unwrap(),
+                TensorAxis::V => source
+                    .affine_point(2.into(), 9.into(), 1.into(), 0.into())
+                    .unwrap(),
+            };
+            for reverse in [false, true] {
+                let (current, parameter) = if reverse {
+                    (
+                        mapping.reversed().unwrap(),
+                        source.affine_image(&(-1).into(), &5.into()).unwrap(),
+                    )
+                } else {
+                    (mapping.clone(), source.clone())
+                };
+                let parameter = Parameter::from_curve(&parameter).unwrap();
+                assert!(
+                    current
+                        .point_at(&parameter)
+                        .unwrap()
+                        .coincides_with(&expected)
+                        .unwrap()
+                );
+                assert!(
+                    current
+                        .subcurve(current.domain().start(), &parameter)
+                        .unwrap()
+                        .point_at(&parameter)
+                        .unwrap()
+                        .coincides_with(&expected)
+                        .unwrap()
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn face_classification_consumes_retained_pcurve_images() {
+    let vertices = [(0, 0), (1, 0), (1, 1), (0, 1)];
+    let boundary = hypercurve::CurvePath2::try_new(
+        (0..4)
+            .map(|i| {
+                let (x, y) = vertices[i];
+                let (a, b) = vertices[(i + 1) % 4];
+                Curve2::from(
+                    LineSeg2::try_new(
+                        CurvePoint2::from_values(x, y),
+                        CurvePoint2::from_values(a, b),
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect(),
+    )
+    .unwrap();
+    let (model, face) = crate::construction::planar_face(
+        &boundary,
+        &[],
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+    )
+    .unwrap();
+    let parameter = Parameter::from_curve(&selected()).unwrap();
+    for (constant, expected) in [
+        (q(1, 2), hypercurve::ContourPointLocation::Inside),
+        (Real::zero(), hypercurve::ContourPointLocation::Boundary),
+        (Real::from(2), hypercurve::ContourPointLocation::Outside),
+    ] {
+        let mapping = SurfaceIntersectionPcurve::tensor_iso_v(ParameterRange::unit(), constant);
+        let point = mapping.point_at(&parameter).unwrap();
+        assert!(point.coordinates().is_none());
+        assert_eq!(
+            model
+                .classify_surface_parameter_on_face(face, &point)
+                .unwrap(),
+            Classification::Decided(expected)
+        );
     }
 }

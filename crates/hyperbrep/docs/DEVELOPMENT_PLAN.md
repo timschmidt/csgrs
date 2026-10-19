@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
-Status: implementation blueprint. Updated 2026-10-19 for selected pcurve
-parameter maps, upstream `dbe99e3cc` and concurrent development ownership.
+Status: implementation blueprint. Updated 2026-10-19 for retained pcurve
+evaluation, upstream `dbe99e3cc` and concurrent development ownership.
 
 The [procedural solid-revolution increment](evidence/2026-10-18-procedural-revolution/README.md)
 advances WP02/WP07/WP09/WP13 by consuming retained latitude generators in closed
@@ -1243,7 +1243,18 @@ The API break is direct: `spatial_parameter_at(&CurveParameter2) -> Parameter`
 and pcurve `subcurve(&Parameter, &Parameter)`. Consumers needing stored scalar
 views explicitly request them. General retained pcurve/surface evaluation,
 whole-branch/event replay and complete section topology remain open; follow the
-[current next domains](evidence/2026-10-19-selected-pcurve-maps/next-domains.md).
+[associated next domains](evidence/2026-10-19-selected-pcurve-maps/next-domains.md).
+No work package or release gate is closed by this increment.
+
+The [retained pcurve evaluation increment](evidence/2026-10-19-pcurve-evaluation/README.md)
+now evaluates selected spatial parameters into retained UV images, with direct
+caller migration and no legacy overload. Native rational sections/projections,
+retained/iso mappings and admitted planar-source similarity projections preserve
+source evidence through queries and point-graph replay. Face classification
+consumes the retained UV point directly. `geometry/pcurve.rs` owns these maps;
+Hypercurve retains scalar and point proof authority. General `Surface::point_at`
+UV images, whole-section selected restriction and branch/event persistence remain
+required next steps. Follow the [current next domains](evidence/2026-10-19-pcurve-evaluation/next-domains.md).
 No work package or release gate is closed by this increment.
 
 Apply [research gates G2–G5](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)

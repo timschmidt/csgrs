@@ -2723,6 +2723,49 @@
       "validation": "All-feature release BRep/IO suites pass 739 tests in 77 batches, with no failures or ignored tests. Five internal groups cover selected retained/iso materialization, affine charts, reversal, restriction, domain errors, angular seams and checked archives. Two shared public groups pass natively and in actual zero-import Wasmtime, including mixed selected fibers, transforms, three cold replays, strict/approximate/strict scopes, success with zero counted solver work and recovery after promotion exhaustion. The owner selected-fiber tests, affected Hypercurve/BRep/IO all-target/all-feature Clippy and rustdoc with warnings denied, BRep fuzz-target compilation and formatting pass. Six preserved complete workflows emit 230 byte-identical archives; four new archives replay. The original complete biquadratic interior-loop section success assertion still fails with UnsupportedIntersection on baseline and candidate. It remains an open target.",
       "cost_evidence": "Nine CPU-0 pinned processes retain three alternating baseline/candidate pairs for six preserved completed workflows and three absolute processes for two new workflows. First and three repeated fresh-input invocations include assertions, materialization, validation and replay. Twelve median latency ratios span 0.986411 to 1.044232; 0 of 36 matched rows increase Rust allocation calls and 0 increase requested bytes. All adverse rows and raw samples remain. Maximum process RSS is 24564 KiB; the matched executable changes by +6832 bytes. No new stored fields or cache are introduced. Requested Rust allocation traffic is not live heap and excludes foreign allocators. Shared-host timings establish no speedup; newly successful contracts have no successful baseline. Selected iso replay has native correctness coverage without a separate allocation campaign.",
       "limits": "This completes selected materialized parameter maps and the declared internal selected retained/iso pcurve constructions, not general sections or face arrangements. SurfaceIntersectionPcurve::point_at still requires represented coordinates; Surface::point_at and full section restriction also need retained-image migration. Angular interior selected images remain explicitly unsupported when coordinates are unavailable. Generic exterior affine-point bounds, arbitrary rational maps, implicit-branch derivatives/regularity, whole-branch/event archives, dual-chart section graphs and general patch intersections remain open. Existing solver counters, degree and archive limits do not bound total work, live heap, stack or cancellation. Runtime fuzz/ASan/lexicase, formal/coverage, MSRV, installed distributions, production bindings and full workflow/push gates are unqualified. Source consumers are not released packages. All 28 work packages remain open/in-progress. No new push is authorized by the consumed eaa0cae54 exception."
+    },
+    {
+      "id": "pcurve-evaluation-2026-10-19",
+      "work_packages": [
+        "WP02",
+        "WP05a",
+        "WP05b",
+        "WP06",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Retain selected parameters and UV images through pcurve evaluation, exact face classification and checked point-graph replay.",
+      "sources": [
+        "../src/geometry/pcurve.rs",
+        "../src/geometry/selected_pcurves.rs",
+        "../src/topology/query.rs",
+        "../tests/support/pcurve_evaluation.rs"
+      ],
+      "evidence": "evidence/2026-10-19-pcurve-evaluation/manifest.json",
+      "validation": "All-feature release BRep/IO suites pass 745 tests in 78 batches, with no failures or ignored tests. Nine internal groups cover retained/iso images, planar lifts, angular blockers, both axes and unequal exterior NURBS knot spans, reversal/restriction and retained face classification. Two shared public groups pass natively and in actual zero-import Wasmtime: independently derived selected UV images on cubic extrusion/plane sections, rational Bezier and NURBS sources, reversal, restriction, three cold archive replays, translation/replay, strict/approximate/strict certainty and refusal/recovery after a zero solver-work allowance. Affected all-target/all-feature BRep/IO Clippy and rustdoc with warnings denied, BRep fuzz-target compilation and formatting pass. Six preserved complete workflows emit 230 byte-identical archives; six new image models replay. The original complete biquadratic interior-loop section success assertion still fails with UnsupportedIntersection on baseline and candidate. It remains an open target.",
+      "cost_evidence": "Nine CPU-0 pinned processes retain three alternating baseline/candidate pairs for six completed preserved workflows and three absolute processes for two new workflows. First and three repeated fresh-input invocations include assertions, materialization, validation and replay. Twelve median latency ratios span 0.979598 to 1.067086; 6 of 36 matched rows increase Rust allocation calls and 6 increase requested bytes. All adverse rows and raw samples remain. Maximum process RSS is 24336 KiB; the matched executable changes by -1576 bytes. No new stored fields or cache are introduced. Requested Rust allocation traffic is not live heap and excludes foreign allocators. Shared-host timings establish no speedup; newly successful selected evaluation has no successful baseline. The broader private mapping matrix has native correctness coverage without a separate allocation campaign. All six allocation/byte increases belong to clipped_and_voids: +17,408 allocation calls and +1,271,040 requested bytes per complete invocation (about 0.24% and 0.25% of the baseline). The other five preserved workflows retain their counts. This measured cost is retained for the new exact composition capability, not presented as an optimization.",
+      "limits": "The admitted evaluation domain retains existing represented paths and adds native selected retained/iso, rational plane-projection and linear-section images, plus planar lifts whose projected source chart admits a similarity. Selected angular images and general procedural non-similarity projection remain typed blockers. Generic exterior affine-point bounds remain a separate owner limitation. Surface::point_at still requires represented UV coordinates. General joint UV surface images, selected whole-section restriction, whole polynomial-branch/event replay, general sections/face arrangements and the full interior-loop target remain open. Selected linear-section queries construct the existing rational span carriers per query; no general cost bound or new cache is claimed. Solver counters, degree and archive limits do not bound total work, live heap, stack or cancellation. Runtime fuzz/ASan/lexicase, formal/coverage, MSRV, installed distributions, production bindings and full workflow/push gates remain unqualified. Source consumers are not released packages. All 28 work packages remain open/in-progress. The consumed eaa0cae54 exception does not authorize publishing this increment."
     }
   ],
   "work_packages": [

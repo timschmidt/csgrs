@@ -72,7 +72,9 @@ fn check_traces(graph: &boolean::SolidIntersectionGraph) -> usize {
                     (pair.first_face(), trace.first_pcurve()),
                     (pair.second_face(), trace.second_pcurve()),
                 ] {
-                    let uv = pcurve.point_at(&parameter).unwrap();
+                    let uv = pcurve.point_at(&parameter.clone().into()).unwrap();
+                    let uv = uv.coordinates().expect("represented axial pcurve fixture");
+                    let uv = hyperbrep::Point2::new(uv.x().clone(), uv.y().clone());
                     assert_eq!(
                         hyperlimit::point3_equal(
                             point.try_coordinates().unwrap(),

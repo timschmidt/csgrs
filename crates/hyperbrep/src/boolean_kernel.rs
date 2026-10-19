@@ -1189,25 +1189,45 @@ fn iso_v_constants(
 ) -> Result<Option<(Real, Real)>, GeometryError> {
     let mut constants = None;
     for curve in curves {
-        let start = curve.curve().domain().represented_start()?;
-        let end = curve.curve().domain().represented_end()?;
-        let first_start = curve.first_pcurve().point_at(start)?;
-        let first_end = curve.first_pcurve().point_at(end)?;
-        let second_start = curve.second_pcurve().point_at(start)?;
-        let second_end = curve.second_pcurve().point_at(end)?;
-        if exact_order(&first_start.y, &first_end.y)? != Ordering::Equal
-            || exact_order(&second_start.y, &second_end.y)? != Ordering::Equal
+        let start = curve.curve().domain().start();
+        let end = curve.curve().domain().end();
+        let first_start = curve
+            .first_pcurve()
+            .point_at(start)?
+            .coordinates()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentablePoint)?;
+        let first_end = curve
+            .first_pcurve()
+            .point_at(end)?
+            .coordinates()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentablePoint)?;
+        let second_start = curve
+            .second_pcurve()
+            .point_at(start)?
+            .coordinates()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentablePoint)?;
+        let second_end = curve
+            .second_pcurve()
+            .point_at(end)?
+            .coordinates()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentablePoint)?;
+        if exact_order(first_start.y(), first_end.y())? != Ordering::Equal
+            || exact_order(second_start.y(), second_end.y())? != Ordering::Equal
         {
             return Ok(None);
         }
         if let Some((first, second)) = &constants {
-            if exact_order(&first_start.y, first)? != Ordering::Equal
-                || exact_order(&second_start.y, second)? != Ordering::Equal
+            if exact_order(first_start.y(), first)? != Ordering::Equal
+                || exact_order(second_start.y(), second)? != Ordering::Equal
             {
                 return Ok(None);
             }
         } else {
-            constants = Some((first_start.y.clone(), second_start.y.clone()));
+            constants = Some((first_start.y().clone(), second_start.y().clone()));
         }
     }
     Ok(constants)
@@ -1822,7 +1842,7 @@ fn face_interior_parameter_witnesses(
     }
     let mut witnesses = Vec::new();
     for candidate in candidates {
-        match model.classify_surface_parameter_on_face(face, &candidate)? {
+        match model.classify_surface_parameter_on_face(face, &candidate.clone().into())? {
             Classification::Decided(ContourPointLocation::Inside) => {
                 let parameter = crate::Point2::new(candidate.x().clone(), candidate.y().clone());
                 witnesses.push((surface.point_at(&parameter)?, parameter));
@@ -3938,8 +3958,7 @@ fn push_contained_face_curve_fragments(
             + fragment.curve().domain().represented_end()?)
             / Real::from(2))
         .map_err(GeometryError::Numeric)?;
-        let parameter = fragment.first_pcurve().point_at(&midpoint)?;
-        let parameter = hypercurve::Point2::new(parameter.x, parameter.y);
+        let parameter = fragment.first_pcurve().point_at(&midpoint.into())?;
         match contained_model.classify_surface_parameter_on_face(contained_face, &parameter)? {
             Classification::Decided(ContourPointLocation::Inside) => {}
             Classification::Decided(
@@ -7638,7 +7657,10 @@ mod tests {
                 .try_real()
                 .unwrap()
                 .clone();
-            let retained_point = pcurve.point_at(&spatial_parameter).unwrap();
+            let retained_point = pcurve
+                .point_at(&Real::clone(&spatial_parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap();
             let materialized_point = materialized
                 .curve()
                 .point_at(&curve_parameter.clone().into())
@@ -7671,10 +7693,22 @@ mod tests {
         .unwrap();
         let spatial = fragment.curve().evaluate_real(&parameter).unwrap();
         let first = first_surface
-            .point_at(&fragment.first_pcurve().point_at(&parameter).unwrap())
+            .point_at(
+                &fragment
+                    .first_pcurve()
+                    .point_at(&Real::clone(&parameter).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
+                    .unwrap(),
+            )
             .unwrap();
         let second = second_surface
-            .point_at(&fragment.second_pcurve().point_at(&parameter).unwrap())
+            .point_at(
+                &fragment
+                    .second_pcurve()
+                    .point_at(&Real::clone(&parameter).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
+                    .unwrap(),
+            )
             .unwrap();
         assert_eq!(
             point3_equal(&spatial, &first, crate::STRICT_PREDICATES).value(),

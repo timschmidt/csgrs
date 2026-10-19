@@ -1097,7 +1097,7 @@ impl ArenaModel {
         let parameter_v =
             ((&dv * &uu - &du * &uv) / determinant).map_err(GeometryError::Numeric)?;
         let point = CurvePoint2::new(parameter_u, parameter_v);
-        self.classify_surface_parameter_on_face(face, &point)
+        self.classify_surface_parameter_on_face(face, &point.into())
     }
 
     pub(crate) fn face_contours(&self, face: FaceId) -> Result<&[Contour2], GeometryError> {
@@ -1172,7 +1172,7 @@ impl ArenaModel {
     pub(crate) fn classify_surface_parameter_on_face(
         &self,
         face: FaceId,
-        point: &CurvePoint2,
+        point: &hypercurve::CurvePoint2,
     ) -> Result<Classification<ContourPointLocation>, GeometryError> {
         let face = self.face(face).expect("validated face ID");
         let FaceBoundary::Trimmed { outer, inner } = &face.boundary else {
@@ -1180,7 +1180,7 @@ impl ArenaModel {
         };
         match crate::error::classified(
             self.build_model_wire_curve_path(*outer)?
-                .classify_point(&point.clone().into()),
+                .classify_point(point),
         )
         .map_err(GeometryError::from)?
         {
@@ -1198,7 +1198,7 @@ impl ArenaModel {
         for wire in inner {
             match crate::error::classified(
                 self.build_model_wire_curve_path(*wire)?
-                    .classify_point(&point.clone().into()),
+                    .classify_point(point),
             )
             .map_err(GeometryError::from)?
             {

@@ -679,8 +679,8 @@ fuzz_target!(|bytes: &[u8]| {
     if let Ok(SurfaceSurfaceIntersection::Curve(curve)) = tensor.intersect_surface(&plane) {
         let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
         let _ = curve.curve().point_at(&parameter.clone().into());
-        let _ = curve.first_pcurve().point_at(&parameter);
-        let _ = curve.second_pcurve().point_at(&parameter);
+        let _ = curve.first_pcurve().point_at(&parameter.clone().into());
+        let _ = curve.second_pcurve().point_at(&parameter.clone().into());
     }
     let Ok(curved_translation_tensor) = Surface::rational_bezier(
         vec![
@@ -767,8 +767,8 @@ fuzz_target!(|bytes: &[u8]| {
     {
         let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
         let _ = curve.curve().point_at(&parameter.clone().into());
-        let _ = curve.first_pcurve().point_at(&parameter);
-        let _ = curve.second_pcurve().point_at(&parameter);
+        let _ = curve.first_pcurve().point_at(&parameter.clone().into());
+        let _ = curve.second_pcurve().point_at(&parameter.clone().into());
         if matches!(section_offset, 1 | 3) {
             let patch = if use_native_nurbs {
                 builder::nurbs_patch(
@@ -879,8 +879,8 @@ fuzz_target!(|bytes: &[u8]| {
     let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
     for curve in &retained {
         let _ = curve.curve().point_at(&parameter.clone().into());
-        let _ = curve.first_pcurve().point_at(&parameter);
-        let _ = curve.second_pcurve().point_at(&parameter);
+        let _ = curve.first_pcurve().point_at(&parameter.clone().into());
+        let _ = curve.second_pcurve().point_at(&parameter.clone().into());
     }
     if bytes[2] % 5 < 3 && !retained.is_empty() {
         let Ok(patch) =
@@ -1697,8 +1697,8 @@ fuzz_target!(|bytes: &[u8]| {
                 && let Ok(parameter) = (start + end) / Real::from(2)
             {
                 let _ = fragment.curve().point_at(&parameter.clone().into());
-                let _ = fragment.first_pcurve().point_at(&parameter);
-                let _ = fragment.second_pcurve().point_at(&parameter);
+                let _ = fragment.first_pcurve().point_at(&parameter.clone().into());
+                let _ = fragment.second_pcurve().point_at(&parameter.clone().into());
             }
             // Selected domains still exercise the topology edit even when a
             // represented midpoint is unavailable to the sampling queries.
@@ -1771,8 +1771,8 @@ fuzz_target!(|bytes: &[u8]| {
     {
         let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
         let _ = curve.curve().point_at(&parameter.clone().into());
-        let _ = curve.first_pcurve().point_at(&parameter);
-        let _ = curve.second_pcurve().point_at(&parameter);
+        let _ = curve.first_pcurve().point_at(&parameter.clone().into());
+        let _ = curve.second_pcurve().point_at(&parameter.clone().into());
     }
 
     let Ok(ruled) = Surface::extrusion(

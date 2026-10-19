@@ -474,8 +474,16 @@ fn periodic_iso_lifts_retain_images_across_distant_signed_charts() {
                 actual.curve().domain().represented_start().unwrap(),
                 actual.curve().domain().represented_end().unwrap(),
             ] {
-                let a = actual.first_pcurve().point_at(parameter).unwrap();
-                let b = expected.first_pcurve().point_at(parameter).unwrap();
+                let a = actual
+                    .first_pcurve()
+                    .point_at(&Real::clone(parameter).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
+                    .unwrap();
+                let b = expected
+                    .first_pcurve()
+                    .point_at(&Real::clone(parameter).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
+                    .unwrap();
                 assert_eq!(
                     compare_reals(&a.x, &b.x, crate::STRICT_PREDICATES).value(),
                     Some(Ordering::Equal)

@@ -869,6 +869,15 @@ conventions. `SurfaceIntersectionPcurve::materialize` exposes one exact
 Hypercurve `Curve2` plus the affine map from its public parameter back to the
 spatial fragment parameter. Topology transfer therefore needs neither inverse
 fitting nor an assumed identity parameterization.
+`SurfaceIntersectionPcurve::point_at(&Parameter)` returns a retained Hypercurve
+`CurvePoint2`, with exact domain checks and no coordinate reconstruction.
+`geometry/pcurve.rs` owns evaluation and correspondence. Native rational section
+spans and plane projections preserve selected parameters; iso/retained mappings
+reuse their source authority. Planar procedural projections currently require a
+similarity of the source chart. Face classification accepts the retained UV
+point directly; coordinate algorithms explicitly request an optional view.
+General retained surface evaluation and full selected section restriction remain
+open boundaries, documented in the [evaluation record](evidence/2026-10-19-pcurve-evaluation/README.md).
 Retained pcurves may run in either source direction; materialization preserves
 that affine direction exactly for lines, rational Béziers, and NURBS curves.
 For an authored-frame-aligned coaxial sphere/cylinder pair, each intersection

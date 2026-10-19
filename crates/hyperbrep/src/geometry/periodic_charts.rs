@@ -180,7 +180,13 @@ mod tests {
                                     - curve.domain().represented_start().unwrap())
                                     * (Real::from(n) / Real::from(8)).unwrap();
                             let actual = target
-                                .point_at(&trace.pcurve(operand).point_at(&t).unwrap())
+                                .point_at(
+                                    &trace
+                                        .pcurve(operand)
+                                        .point_at(&Real::clone(&t).into())
+                                        .map(crate::geometry::represented_test_surface_parameter)
+                                        .unwrap(),
+                                )
                                 .unwrap();
                             assert_eq!(
                                 point3_equal(

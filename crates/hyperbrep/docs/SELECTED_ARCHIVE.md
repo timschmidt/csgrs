@@ -392,3 +392,10 @@ Certified scalar bounds choose only a finite source support. They never replace
 the selected endpoints. This reuses the existing archive schema and cold
 validation; arbitrary generated rational fragments and whole implicit branches
 are not thereby admitted. See the [parameter-map record](evidence/2026-10-19-selected-pcurve-maps/README.md).
+
+Selected section UV evaluations now feed exact chord endpoint definitions in the
+existing retained point graph. Rational Bezier/NURBS section roots, restrictions
+and reversal replay cold with independently checked UV images. The same models
+retain their spatial selected point through transform/replay. No new schema is
+introduced; whole polynomial branches and arbitrary generated rational curve
+carriers remain separate persistence targets. See the [evaluation record](evidence/2026-10-19-pcurve-evaluation/README.md).

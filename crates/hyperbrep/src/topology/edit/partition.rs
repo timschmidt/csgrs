@@ -260,8 +260,7 @@ impl ArenaModel {
                             + curve.domain().represented_end()?)
                             / Real::from(2))
                         .map_err(GeometryError::Numeric)?;
-                        let parameter = segment.pcurve(operand).point_at(&midpoint)?;
-                        let witness = CurvePoint2::new(parameter.x, parameter.y);
+                        let witness = segment.pcurve(operand).point_at(&midpoint.into())?;
                         let mut interior_candidates = Vec::with_capacity(candidates.len());
                         for (index, candidate) in candidates {
                             match staged.classify_surface_parameter_on_face(candidate, &witness)? {

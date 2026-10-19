@@ -90,6 +90,15 @@ queries still fail typed when their coordinates are unavailable. The complete
 section evaluator and surface UV evaluator remain separate open boundaries.
 See the [parameter-map evidence](evidence/2026-10-19-selected-pcurve-maps/README.md).
 
+Retained pcurve `point_at` accepts `Parameter` and returns
+`hypercurve::CurvePoint2`, preserving selected UV images. Native rational
+sections/projections, retained/iso charts and admitted planar-lift similarity
+charts support exact queries and point-graph replay. The face classifier accepts
+these images directly; periodic coordinate arithmetic explicitly requests a
+stored view. Selected angular and general procedural non-similarity projections
+remain typed blockers. `Surface::point_at` still needs retained joint-UV migration.
+See the [evaluation evidence](evidence/2026-10-19-pcurve-evaluation/README.md).
+
 ## Spatial curve carriers
 
 Procedural analytic-parallel pcurves replay quadratic/cubic/homogeneous rational

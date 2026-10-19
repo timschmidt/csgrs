@@ -28,15 +28,21 @@ pub(super) fn axial_support_traces(
         }
         let a = trace
             .pcurve(operand)
-            .point_at(trace.curve().domain().represented_start()?)?;
+            .point_at(trace.curve().domain().start())?
+            .coordinates()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentablePoint)?;
         let b = trace
             .pcurve(operand)
-            .point_at(trace.curve().domain().represented_end()?)?;
-        if exact_order(&a.x, &b.x)? != Ordering::Equal {
+            .point_at(trace.curve().domain().end())?
+            .coordinates()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentablePoint)?;
+        if exact_order(a.x(), b.x())? != Ordering::Equal {
             result.push(trace);
             continue;
         }
-        let a = crate::Point2::new(a.x.clone(), bounds.min_y().clone());
+        let a = crate::Point2::new(a.x().clone(), bounds.min_y().clone());
         let b = crate::Point2::new(a.x.clone(), bounds.max_y().clone());
         let curve = Curve3::line(surface.point_at(&a)?, surface.point_at(&b)?)?;
         let pcurve = crate::Pcurve::new(Curve2::from(LineSeg2::try_new(
@@ -95,21 +101,29 @@ pub(super) fn disjoint_iso_traces(
         if !pcurve.is_iso_parameter_line() {
             return Ok(None);
         }
-        let a = pcurve.point_at(trace.curve().domain().represented_start()?)?;
-        let b = pcurve.point_at(trace.curve().domain().represented_end()?)?;
-        if exact_order(&a.x, &b.x)? == Ordering::Equal {
+        let a = pcurve
+            .point_at(trace.curve().domain().start())?
+            .coordinates()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentablePoint)?;
+        let b = pcurve
+            .point_at(trace.curve().domain().end())?
+            .coordinates()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentablePoint)?;
+        if exact_order(a.x(), b.x())? == Ordering::Equal {
             Ok(Some((
                 true,
-                a.x,
-                exact_min(&a.y, &b.y)?,
-                exact_max(&a.y, &b.y)?,
+                a.x().clone(),
+                exact_min(a.y(), b.y())?,
+                exact_max(a.y(), b.y())?,
             )))
-        } else if exact_order(&a.y, &b.y)? == Ordering::Equal {
+        } else if exact_order(a.y(), b.y())? == Ordering::Equal {
             Ok(Some((
                 false,
-                a.y,
-                exact_min(&a.x, &b.x)?,
-                exact_max(&a.x, &b.x)?,
+                a.y().clone(),
+                exact_min(a.x(), b.x())?,
+                exact_max(a.x(), b.x())?,
             )))
         } else {
             Ok(None)
@@ -125,9 +139,21 @@ pub(super) fn disjoint_iso_traces(
         let domain = trace.curve().domain();
         let a = trace
             .pcurve(operand)
-            .point_at(domain.represented_start()?)?;
-        let b = trace.pcurve(operand).point_at(domain.represented_end()?)?;
-        let (a, b) = if u_constant { (a.y, b.y) } else { (a.x, b.x) };
+            .point_at(domain.start())?
+            .coordinates()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentablePoint)?;
+        let b = trace
+            .pcurve(operand)
+            .point_at(domain.end())?
+            .coordinates()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentablePoint)?;
+        let (a, b) = if u_constant {
+            (a.y().clone(), b.y().clone())
+        } else {
+            (a.x().clone(), b.x().clone())
+        };
         let scale = ((domain.represented_end()? - domain.represented_start()?) / (&b - &a))
             .map_err(GeometryError::Numeric)?;
         let first = domain.represented_start()? + (lower - &a) * &scale;
@@ -200,19 +226,27 @@ pub(super) fn periodic_face_trace_lifts(
             return Err(GeometryError::PlanarClassificationUnresolved(reason));
         }
     };
-    let start = pcurve.point_at(intersection.curve().domain().represented_start()?)?;
-    let end = pcurve.point_at(intersection.curve().domain().represented_end()?)?;
+    let start = pcurve
+        .point_at(intersection.curve().domain().start())?
+        .coordinates()
+        .cloned()
+        .ok_or(GeometryError::UnrepresentablePoint)?;
+    let end = pcurve
+        .point_at(intersection.curve().domain().end())?
+        .coordinates()
+        .cloned()
+        .ok_or(GeometryError::UnrepresentablePoint)?;
     let u = periodic_offsets(
         surface.domain().u(),
-        &start.x,
-        &end.x,
+        start.x(),
+        end.x(),
         bounds.min_x(),
         bounds.max_x(),
     )?;
     let v = periodic_offsets(
         surface.domain().v(),
-        &start.y,
-        &end.y,
+        start.y(),
+        end.y(),
         bounds.min_y(),
         bounds.max_y(),
     )?;

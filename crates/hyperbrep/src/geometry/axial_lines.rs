@@ -111,7 +111,10 @@ mod tests {
                 (first, trace.first_pcurve()),
                 (second, trace.second_pcurve()),
             ] {
-                let uv = pcurve.point_at(&parameter).unwrap();
+                let uv = pcurve
+                    .point_at(&Real::clone(&parameter).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
+                    .unwrap();
                 assert_eq!(
                     point3_equal(
                         &point,
