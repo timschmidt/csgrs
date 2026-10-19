@@ -1,4 +1,17 @@
 impl Computable {
+    pub(crate) fn inverse_isometric_latitude(self, log_axis_ratio: Self) -> Self {
+        let exact_sign = self.exact_sign().map_or(ExactSignCache::Invalid, ExactSignCache::Valid);
+        let signal = self.signal.clone().or_else(|| log_axis_ratio.signal.clone());
+        Self {
+            internal: Arc::new(Node::new(
+                Approximation::InverseIsometricLatitude { psi: self, log_axis_ratio },
+                BoundCache::Invalid,
+                exact_sign,
+            )),
+            signal,
+        }
+    }
+
     pub(super) fn square_operand(&self) -> Option<&Computable> {
         match &self.internal.approximation {
             Approximation::Square(child) => Some(child),

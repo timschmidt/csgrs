@@ -781,7 +781,13 @@ fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
         ),
         (
             "CoscSmall",
-            computable_from_internal(serde_json::json!({ "CoscSmall": child })),
+            computable_from_internal(serde_json::json!({ "CoscSmall": child.clone() })),
+        ),
+        (
+            "InverseIsometricLatitude",
+            computable_from_internal(serde_json::json!({ "InverseIsometricLatitude": {
+                "psi": child, "log_axis_ratio": one
+            }})),
         ),
     ]
 }
@@ -844,7 +850,7 @@ fn every_private_class_survives_json_and_cbor_without_cache_state() {
 fn every_computable_node_and_shared_constant_variant_round_trips_and_evaluates() {
     use hyperreal::Computable;
 
-    const NODE_NAMES: [&str; 60] = [
+    const NODE_NAMES: [&str; 61] = [
         "Int",
         "One",
         "Constant",
@@ -905,6 +911,7 @@ fn every_computable_node_and_shared_constant_variant_round_trips_and_evaluates()
         "NthRoot",
         "SincSmall",
         "CoscSmall",
+        "InverseIsometricLatitude",
     ];
     const SHARED_CONSTANT_NAMES: [&str; 18] = [
         "E",

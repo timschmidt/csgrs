@@ -101,6 +101,9 @@ impl Approximation {
             ),
             SincSmall(c) => sinc_small(signal, c, p),
             CoscSmall(c) => cosc_small(signal, c, p),
+            InverseIsometricLatitude { psi, log_axis_ratio } => {
+                inverse_isometric_latitude(signal, psi, log_axis_ratio, p)
+            }
         }
     }
 }

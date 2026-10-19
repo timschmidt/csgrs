@@ -196,6 +196,13 @@ pub(super) enum Approximation {
     // Keep new variants after NthRoot to preserve every existing binary index.
     SincSmall(Computable),
     CoscSmall(Computable),
+    // Unique inverse of ellipsoidal isometric latitude. Store the logarithm
+    // of b/a: exp(2*log_axis_ratio) is positive for every finite payload,
+    // including after serde replay. Append to preserve existing enum indices.
+    InverseIsometricLatitude {
+        psi: Computable,
+        log_axis_ratio: Computable,
+    },
 }
 
 #[cfg(feature = "serde")]

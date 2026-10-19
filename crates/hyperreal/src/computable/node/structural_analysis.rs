@@ -1181,6 +1181,7 @@ impl Computable {
                 | Approximation::PrescaledAsinh(child)
                 | Approximation::AtanhDirect(child)
                 | Approximation::PrescaledAtanh(child)
+                | Approximation::InverseIsometricLatitude { psi: child, .. }
                 | Approximation::Expm1(child) => Some(child.exact_sign()),
                 Approximation::PrescaledExp(_) => Some(Some(Sign::Plus)),
                 Approximation::Negate(_)

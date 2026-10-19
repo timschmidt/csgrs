@@ -45,3 +45,7 @@ required-features = ["dispatch-trace"]
 [[bench]]
 name = "mercator"
 harness = false
+
+[[bench]]
+name = "inverse_isometric"
+harness = false

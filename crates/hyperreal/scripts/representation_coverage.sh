@@ -12,7 +12,8 @@ run_matrix() {
     echo "Representation configuration: ${label}"
     HYPERREAL_EXPECT_F32_CACHE="${expected_f32}" \
         HYPERREAL_EXPECT_EXACT_CLONE_CACHE="${expected_exact_clone}" \
-        cargo test --no-default-features "$@" --test real_representations --quiet
+        cargo test --no-default-features "$@" --test real_representations \
+            --test inverse_isometric_latitude --quiet
 }
 
 run_matrix absent absent "no primitive caches"

@@ -26,6 +26,7 @@ include!("arithmetic/quadratic_tower_sign.rs");
 include!("arithmetic/linear_algebra.rs");
 include!("arithmetic/inversion.rs");
 include!("arithmetic/elementary_functions.rs");
+include!("arithmetic/isometric_latitude.rs");
 include!("arithmetic/structural_helpers.rs");
 include!("arithmetic/format_parse.rs");
 include!("arithmetic/add_sub.rs");

@@ -154,6 +154,10 @@ impl Computable {
                 {
                     NodeComparison::One((&left.p, &right.p))
                 }
+                (
+                    Approximation::InverseIsometricLatitude { psi: l, log_axis_ratio: lr },
+                    Approximation::InverseIsometricLatitude { psi: r, log_axis_ratio: rr },
+                ) => NodeComparison::Two((l, r), (lr, rr)),
                 _ => NodeComparison::Decided(false),
             }
         }

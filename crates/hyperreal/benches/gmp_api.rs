@@ -194,6 +194,43 @@ fn gmp_standard_normal_quantile(probability: Float) -> Float {
     gmp_sqrt_two() * gmp_erfinv(erf_argument)
 }
 
+// Independent benchmark oracle: direct latitude bisection at 256 working
+// bits, then a 128-bit result. This is a rounded value, not Hyperreal's
+// retained exact equation or certificate; timings cannot compare those claims.
+fn gmp_inverse_isometric_latitude(psi: Float, axis_ratio: Float) -> Float {
+    let psi = Float::with_val(256, psi);
+    let square = Float::with_val(256, axis_ratio).square();
+    let oblate = square < 1;
+    let eccentricity = (Float::with_val(256, 1) - square).abs().sqrt();
+    let mut hi: Float = Float::with_val(256, Constant::Pi) / 2;
+    let mut lo = -hi.clone();
+    for _ in 0..160 {
+        let midpoint: Float = Float::with_val(256, &lo + &hi) / 2;
+        let argument = Float::with_val(256, &eccentricity * midpoint.clone().sin());
+        let correction = Float::with_val(
+            256,
+            &eccentricity
+                * if oblate {
+                    argument.atanh()
+                } else {
+                    argument.atan()
+                },
+        );
+        let value = if oblate {
+            midpoint.clone().tan().asinh() - correction
+        } else {
+            midpoint.clone().tan().asinh() + correction
+        };
+        if value < psi {
+            lo = midpoint;
+        } else {
+            hi = midpoint;
+        }
+    }
+    let midpoint: Float = (lo + hi) / 2;
+    Float::with_val(GMP_PRECISION, midpoint)
+}
+
 fn gmp_hermite_probabilists(n: usize, x: &Float) -> Float {
     if n == 0 {
         return gmp(1.0);
@@ -662,6 +699,57 @@ fn bench_real_arithmetic_api(c: &mut Criterion) {
 
 fn bench_real_elementary_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_real_elementary_api");
+
+    // Force evaluated output on both sides. The existing general helper times
+    // lazy Real construction; that would not exercise this inverse solver.
+    let isometric_input = real(0.5);
+    let isometric_axis = real(0.6);
+    let oracle = gmp_inverse_isometric_latitude(gmp(0.5), gmp(0.6));
+    let expected = oracle.to_rational().unwrap();
+    let expected = Real::new(
+        Rational::from_bigint_fraction(
+            expected.numer().to_string().parse().unwrap(),
+            expected.denom().to_string().parse().unwrap(),
+        )
+        .unwrap(),
+    );
+    let actual = isometric_input
+        .clone()
+        .inverse_isometric_latitude(&isometric_axis)
+        .unwrap();
+    let [lo, hi] = (&actual - &expected)
+        .certified_rational_interval(-144)
+        .unwrap();
+    let error = Rational::fraction(1, 2)
+        .unwrap()
+        .powi(BigInt::from(124))
+        .unwrap();
+    assert!(lo >= -error.clone() && hi <= error);
+    group.bench_function(
+        BenchmarkId::new("hyperreal_evaluated_p128", "inverse_isometric_latitude"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(isometric_input.clone())
+                        .inverse_isometric_latitude(black_box(&isometric_axis))
+                        .unwrap()
+                        .certified_rational_interval(-128)
+                        .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(
+        BenchmarkId::new("mpfr256_bisection_to128", "inverse_isometric_latitude"),
+        |b| {
+            b.iter(|| {
+                black_box(gmp_inverse_isometric_latitude(
+                    black_box(gmp(0.5)),
+                    black_box(gmp(0.6)),
+                ))
+            })
+        },
+    );
 
     macro_rules! unary_result {
         ($name:literal, $input:expr, $hyper:ident, $gmp:ident) => {

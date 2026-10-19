@@ -52,6 +52,30 @@ let projection = SphericalMercator::web_mercator(
 let projected = projection.project(&origin, &mut context)?;
 let geographic = projection.unproject(&projected, &mut context)?;
 assert_eq!(geographic.height().as_metres(), &Real::zero());
+
+// The scalar prerequisite for ellipsoidal Mercator is also available.
+// For b/a=3/5 and sin(phi)=3/5, psi=ln(2)-(4/5)*atanh(12/25).
+let ratio = (Real::from(3) / Real::from(5))?;
+let psi = Real::from(2).ln()? - (Real::from(4) / Real::from(5))?
+    * (Real::from(12) / Real::from(25))?.atanh()?;
+let phi = psi.inverse_isometric_latitude(&ratio)?;
+let latitude = Latitude::new(Angle::radians(phi.clone()), &mut context)?;
+let tolerance: Real = "1e-30".parse()?;
+let tolerance = tolerance.exact_rational().unwrap();
+let [lo, hi] = (phi.sin() - ratio).certified_rational_interval(-128).unwrap();
+assert!(lo >= -tolerance.clone() && hi <= tolerance);
+let oblate = Arc::new(Ellipsoid::from_axes(
+    Length::metres(5.into()), Length::metres(3.into()), &mut context,
+)?);
+let recovered = GeodeticPosition::new(
+    latitude, origin.longitude().clone(), Length::metres(Real::zero()), oblate,
+    origin.reference().clone(),
+    InputProvenance::new("inverse equation example", InputAccuracy::ExactModel), &mut context,
+)?;
+let recovered_ecef = recovered.to_ecef(&mut context)?;
+let recovered_frame = LocalFrame::new(&recovered, LocalAxes::Enu, &mut context)?;
+assert_eq!(recovered_frame.to_local_position(&recovered_ecef, &mut context)?
+    .receipt().certainty(), Certainty::Exact);
 # Ok::<(), hyperspatial::Error>(())
 ```
 
@@ -105,6 +129,8 @@ ingress requires an explicit `InputProvenance`; missing uncertainty stays unknow
   and sanitized campaigns.
 - [Spherical Mercator admission](docs/admission/e2-mercator.md): projection
   domains, source identities, independent fixtures and development evidence.
+- [Inverse-isometric scalar admission](../hyperreal/docs/admission-inverse-isometric-latitude.md):
+  native oblate/prolate inversion, independent MPFR checks and Earth/local composition.
 
 From the repository root:
 

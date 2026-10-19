@@ -22,15 +22,23 @@ def main():
     parser.add_argument("--output", type=Path, default=ROOT / "target/hyperspatial-asan")
     parser.add_argument("--selected-corpus", type=Path)
     parser.add_argument("--mercator-corpus", type=Path)
+    parser.add_argument("--isometric-corpus", type=Path)
     parser.add_argument("--seconds", type=int, default=60)
+    parser.add_argument("--isometric-seconds", type=int, default=900,
+                        help="inverse campaign budget; its full seed replay is more expensive")
+    parser.add_argument("--targets", nargs="+",
+                        choices=("forward_local", "normal_offset", "mercator", "inverse_isometric"),
+                        default=("forward_local", "normal_offset", "mercator", "inverse_isometric"))
     parser.add_argument("--seed", type=int, default=20261018)
     parser.add_argument("--toolchain", default="nightly")
     args = parser.parse_args()
-    if args.seconds < 1:
+    if args.seconds < 1 or args.isometric_seconds < 1:
         parser.error("positive campaign duration required")
     args.output.mkdir(parents=True, exist_ok=True)
     report = {
-        "seed": args.seed, "sanitizer": "address", "max_seconds_per_campaign": args.seconds,
+        "seed": args.seed, "sanitizer": "address",
+        "campaign_seconds": {target: args.isometric_seconds if target == "inverse_isometric" else args.seconds
+                             for target in args.targets},
         "seconds_per_input": 10, "rss_limit_mib": 2048, "max_input_bytes": 6,
         "compiler": subprocess.check_output(["rustc", "+" + args.toolchain, "-vV"], text=True),
         "cargo_fuzz": subprocess.check_output(["cargo", "+" + args.toolchain, "fuzz", "--version"], text=True),
@@ -38,14 +46,16 @@ def main():
         "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted((CRATE / "src").glob("*.rs")) +
                           sorted((CRATE / "fuzz/fuzz_targets").glob("*.rs")) +
-                          [CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "fuzz/Cargo.lock",
+                          [CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "dev/inverse_isometric.rs", CRATE / "fuzz/Cargo.lock",
                            Path(__file__).resolve(),
-                           ROOT / "crates/hyperreal/tests/support/representations.rs"]},
+                           ROOT / "crates/hyperreal/tests/support/representations.rs"] +
+                          sorted((ROOT / "crates/hyperreal/src").rglob("*.rs"))},
         "limitations": "External timeout/RSS containment, not native resource bounds. Counter/feature coverage is for the instrumented binary, not production line/branch coverage.",
         "campaigns": [],
     }
     failed = False
-    for target in ("forward_local", "normal_offset", "mercator"):
+    for target in args.targets:
+        seconds = report["campaign_seconds"][target]
         corpus = args.output / (target + "-corpus")
         corpus.mkdir(exist_ok=True)
         if target == "forward_local":
@@ -55,14 +65,15 @@ def main():
         else:
             seeds = [bytes([family, (family + 7) % 22, 0, 0, 0, flags])
                      for family in range(22) for flags in (0, 3)]
-            selected = args.selected_corpus if target == "normal_offset" else args.mercator_corpus
+            selected = {"normal_offset": args.selected_corpus, "mercator": args.mercator_corpus,
+                        "inverse_isometric": args.isometric_corpus}[target]
             if selected:
                 seeds += [p.read_bytes() for p in sorted(selected.iterdir()) if p.is_file()]
         for seed in seeds:
             (corpus / seed.hex()).write_bytes(seed)
         command = ["cargo", "+" + args.toolchain, "fuzz", "run", target,
                    "--fuzz-dir", "crates/hyperspatial/fuzz", "--sanitizer", "address", str(corpus),
-                   "--", f"-max_total_time={args.seconds}", "-timeout=10", "-rss_limit_mb=2048",
+                   "--", f"-max_total_time={seconds}", "-timeout=10", "-rss_limit_mb=2048",
                    "-max_len=6", f"-seed={args.seed}"]
         campaign = {"target": target, "command": command, "input_corpus": snapshot(corpus)}
         artifact_dir = CRATE / "fuzz/artifacts" / target
@@ -71,7 +82,7 @@ def main():
         with (args.output / (target + ".log")).open("w") as log:
             try:
                 result = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
-                                        timeout=1200 + args.seconds)
+                                        timeout=1200 + seconds)
                 campaign["returncode"] = result.returncode
             except subprocess.TimeoutExpired:
                 campaign["returncode"] = "outer_timeout"

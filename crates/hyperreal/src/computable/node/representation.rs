@@ -174,6 +174,7 @@ impl Node {
             | Approximation::AtanRational(_)
             | Approximation::PrescaledAtan(_)
             | Approximation::AtanDeferred(_)
+            | Approximation::InverseIsometricLatitude { .. }
             | Approximation::AcosPositive(_)
             | Approximation::AcosPositiveRational(_)
             | Approximation::AcosNegativeRational(_) => true,

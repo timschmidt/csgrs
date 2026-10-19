@@ -69,6 +69,7 @@ hyperspatial() {
   bench hyperspatial --bench forward_local
   bench hyperspatial --bench inverse
   bench hyperspatial --bench mercator
+  bench hyperspatial --bench inverse_isometric
 }
 
 crates=("$@")
