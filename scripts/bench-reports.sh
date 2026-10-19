@@ -74,6 +74,7 @@ hyperspatial() {
   bench hyperspatial --bench transverse_mercator
   bench hyperreal --bench elliptic_integrals
   bench hyperreal --bench legendre_integrals
+  bench hyperreal --bench bounded_parameter_encodings --features serde
 }
 
 crates=("$@")

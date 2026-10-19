@@ -74,7 +74,7 @@ if args.report:
     report.update(native_elliptic_coverage(export, root))
     check_native_elliptic_coverage(report)
     check_native_function_coverage(report)
-    for label in ("native_atan2", "native_atan_deferred"):
+    for label in ("native_atan2", "native_atan_deferred", "native_parameter_ring"):
         for path, digest in report[label]["source_sha256"].items():
             if hashlib.sha256((root / path).read_bytes()).hexdigest() != digest:
                 raise SystemExit(f"Measured production source changed: {path}")

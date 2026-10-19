@@ -34,7 +34,7 @@ arguments = ["cargo", "test", "--locked", "-p", "hyperspatial", "--all-features"
 native_arguments = ["cargo", "test", "--locked", "-p", "hyperreal", "--no-default-features",
                     "--features", "serde,dispatch-trace"]
 commands = [arguments,
-            native_arguments + ["--test", "inverse_isometric_latitude", "--test", "negative_exp_tail", "--test", "elliptic_integrals", "--test", "legendre_integrals", "--test", "inverse_legendre", "--test", "jacobi", "--test", "jacobi_prepared", "--test", "atan2_right_half_plane"],
+            native_arguments + ["--test", "inverse_isometric_latitude", "--test", "negative_exp_tail", "--test", "elliptic_integrals", "--test", "legendre_integrals", "--test", "inverse_legendre", "--test", "jacobi", "--test", "jacobi_prepared", "--test", "atan2_right_half_plane", "--test", "bounded_parameter_encodings"],
             native_arguments + ["--lib"],
             ["cargo", "test", "--locked", "-p", "hyperlattice", "--all-features", "--test", "complex_jacobi", "--test", "jacobi_epsilon", "--test", "complex_atanh"]]
 with tempfile.TemporaryDirectory(prefix="profiles-", dir=target) as profiles:

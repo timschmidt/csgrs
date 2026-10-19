@@ -15,6 +15,7 @@ def native_source_groups(root):
         if label == "native_jacobi":
             sources.append(root / "crates/hyperreal/src/computable/node/log_argument.rs")
         groups[label] = sources
+    groups["native_parameter_domain"] = [root / "crates/hyperreal/src/computable/node/ring_native_domain.rs"]
     groups["native_complex_elementary"] = [root / "crates/hyperlattice/src/complex/elementary.rs"]
     groups["native_complex_jacobi"] = [root / "crates/hyperlattice/src/complex/jacobi.rs"]
     groups["native_square_quotient"] = [root / "crates/hyperreal/src/computable/node/shared_square_quotient.rs"]
@@ -55,13 +56,17 @@ def check_native_elliptic_coverage(groups):
     # Keep the existing Carlson floor independent: new lines cannot mask a
     # regression in its denominator. Each later family gets its own floor.
     for label in ("native_elliptic", "native_legendre", "native_inverse_legendre", "native_jacobi",
-                  "native_complex_jacobi", "native_square_quotient", "native_relations", "native_complex_elementary"):
+                  "native_complex_jacobi", "native_square_quotient", "native_relations", "native_complex_elementary", "native_parameter_domain"):
         if groups[label]["totals"]["lines"]["percent"] < 95:
             raise SystemExit(f"{label} production line coverage is below the 95% gate")
 
 
 def native_function_ranges(root):
     selectors = {
+        "native_parameter_ring": [
+            ("crates/hyperreal/src/computable/node/ring_polynomial.rs", "    fn multiply(", "    fn reduce_root_squares("),
+            ("crates/hyperreal/src/computable/node/ring_quotient.rs", "    fn expand_quotient_uncached(", "    fn invert_admitted_quotient("),
+        ],
         "native_atan2": [
             ("crates/hyperreal/src/real/arithmetic/elementary_functions.rs", "    pub fn atan2(", "    /// Checked counterpart"),
             ("crates/hyperreal/src/real/arithmetic/elementary_functions.rs", "    pub fn try_atan2(", "    /// The hyperbolic sine"),
@@ -127,7 +132,7 @@ def count_function_lines(annotated, groups, root):
 
 
 def check_native_function_coverage(report):
-    for label in ("native_atan2", "native_atan_deferred"):
+    for label in ("native_atan2", "native_atan_deferred", "native_parameter_ring"):
         group = report[label]
         if (not group["files"] or any(not row["count"] for rows in group["files"].values() for row in rows)
                 or group["physical_executable_lines"]["percent"] < 95):

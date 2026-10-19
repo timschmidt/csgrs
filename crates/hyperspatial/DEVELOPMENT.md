@@ -54,6 +54,15 @@ cancellation fixes. Its [verification record](verification/2026-10-19-e2-complex
 records passing stable/MSRV checks, four cache configurations, twelve independent
 coverage floors and actual sanitizer mutation. Thompson/Lee inversion remains
 open after this prerequisite.
+The next prerequisite preserves exact bounded parameter encodings through
+cold JSON/CBOR replay across all 22 scalar families. Hyperreal's optional
+root-completion proof follows its original native strategy within the same
+remaining proof budget. The [scalar admission](../hyperreal/docs/admission-bounded-parameter-encodings.md),
+[spatial contract](docs/admission/e2-parameter-encodings.md) and
+[verification record](verification/2026-10-19-e2-parameter-encodings/README.md)
+record 1,496 generated downstream workflows, stable/MSRV and four-cache
+checks, fourteen independent coverage floors and actual ASan mutation.
+This increment does not add a Thompson map or inverse.
 See the [spherical Mercator admission](docs/admission/e2-mercator.md),
 the [forward/local admission](docs/admission/e1-native.md)
 and [closest-point inverse admission](docs/admission/e1-inverse.md).
@@ -227,6 +236,15 @@ cuts and propagates unresolved membership as typed exhaustion. Its
 independent oracle and required acceptance. The
 [verification record](verification/2026-10-19-e2-complex-atanh/README.md)
 records the completed checks and remaining resource limits.
+Bounded parameter payloads now replay their exact source identities after
+serialization: `r = sqrt(m/(1-m))`, `a = v/sqrt(1-v*v)` and `tau = asin(u)`
+decode as `1/(1+r*r) = 1-m`, `a/sqrt(1+a*a) = v` and `sin(tau) = u` on their
+declared domains. Finite raw fields therefore encode admissible parameter
+ranges without trusting serialized validation flags. The
+[encoding admission](docs/admission/e2-parameter-encodings.md) records the
+required sign/domain proofs and subsequent geodesy/local-frame consumption.
+These identities are prerequisites; they do not certify a continuation chart
+or its inverse.
 Other references are
 [DLMF integral relations](https://dlmf.nist.gov/19.25),
 [Jacobi computation](https://dlmf.nist.gov/22.20), and

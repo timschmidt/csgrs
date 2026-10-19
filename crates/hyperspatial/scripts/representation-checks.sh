@@ -20,7 +20,7 @@ run_matrix() {
     HYPERREAL_EXPECT_F32_CACHE="$expected_f32" \
         HYPERREAL_EXPECT_EXACT_CLONE_CACHE="$expected_clone" \
         cargo test --locked -p hyperspatial --tests "$@"
-    cargo test --locked -p hyperreal --test jacobi --test jacobi_prepared --test atan2_right_half_plane --features serde "$@"
+    cargo test --locked -p hyperreal --test jacobi --test jacobi_prepared --test atan2_right_half_plane --test bounded_parameter_encodings --features serde "$@"
     cargo test --locked -p hyperlattice --test complex_jacobi --test jacobi_epsilon --test complex_atanh --features serde "$@"
     cargo test --locked -p hyperlimit --test real_representations --features serde "$@"
     cargo clippy --locked -p hyperspatial --all-targets "$@" -- -D warnings

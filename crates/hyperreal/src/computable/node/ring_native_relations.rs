@@ -6,6 +6,7 @@
 struct NativeRingRelation {
     power: usize,
     value: RingQuotient,
+    root_sign: Option<RealSign>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -13,9 +14,81 @@ enum NativeReduction {
     Quotient,
     Roots,
     ZeroResidual,
+    SignedZeroResidual,
 }
 
 impl<'a> RingRecognition<'a> {
+    // Merge admitted monomials while collapsing rational root squares. No
+    // retained monomial exceeds the existing degree cap, even when an
+    // unreduced product would exceed it. All visits and products are charged.
+    fn multiply_native_root_terms(
+        &mut self,
+        a: &[u8],
+        b: &[u8],
+        mut coefficient: Rational,
+    ) -> Option<(Vec<u8>, Rational)> {
+        self.charge()?;
+        if !Self::coefficient_fits(&coefficient) {
+            return None;
+        }
+        let (mut i, mut j) = (0, 0);
+        let mut result = Vec::with_capacity((a.len() + b.len()).min(self.degree_limit()));
+        while i < a.len() || j < b.len() {
+            self.charge()?;
+            let atom = match (a.get(i), b.get(j)) {
+                (Some(x), Some(y)) => (*x).min(*y),
+                (Some(x), None) | (None, Some(x)) => *x,
+                (None, None) => unreachable!("at least one factor remains"),
+            };
+            let mut count = 0;
+            while a.get(i) == Some(&atom) {
+                self.charge()?;
+                i += 1;
+                count += 1;
+            }
+            while b.get(j) == Some(&atom) {
+                self.charge()?;
+                j += 1;
+                count += 1;
+            }
+            let index = usize::from(atom);
+            let square = if count >= 2
+                && matches!(
+                    self.atoms[index].internal.approximation,
+                    Approximation::Sqrt(_)
+                        | Approximation::Constant(SharedConstant::Sqrt2 | SharedConstant::Sqrt3)
+                ) {
+                self.relations[index].as_ref().and_then(|relation| {
+                    if relation.power != 2 || relation.value.denominator.is_some() {
+                        return None;
+                    }
+                    match relation.value.numerator.terms.as_slice() {
+                        [] => Some(Rational::zero()),
+                        [(term, value)] if term.is_empty() => Some(value.clone()),
+                        _ => None,
+                    }
+                })
+            } else {
+                None
+            };
+            if let Some(square) = square {
+                for _ in 0..count / 2 {
+                    self.charge()?;
+                    coefficient *= &square;
+                    if !Self::coefficient_fits(&coefficient) {
+                        return None;
+                    }
+                }
+                count %= 2;
+            }
+            if result.len() + count > self.degree_limit() {
+                return None;
+            }
+            result.extend(std::iter::repeat_n(atom, count));
+        }
+        Some((result, coefficient))
+    }
+
     fn scalar_product_shape(&mut self, value: &Computable, depth: usize) -> Option<bool> {
         self.charge()?;
         if depth == 0 {
@@ -38,6 +111,10 @@ impl<'a> RingRecognition<'a> {
             | Approximation::JacobiSn(_)
             | Approximation::JacobiCn(_)
             | Approximation::JacobiDn(_) => Some(false),
+            Approximation::Sqrt(_)
+            | Approximation::Constant(SharedConstant::Sqrt2 | SharedConstant::Sqrt3) => {
+                Some(!self.root_completion)
+            }
             _ => Some(true),
         }
     }
@@ -60,7 +137,12 @@ impl<'a> RingRecognition<'a> {
         // functions or roots. A declined relation leaves this atom opaque.
         let relation = self
             .native_square_relation(&value, depth)
-            .map(|value| NativeRingRelation { power: 2, value })
+            .map(|value| NativeRingRelation {
+                power: 2,
+                value,
+                root_sign: None,
+            })
+            .or_else(|| self.completed_root_relation(&value, depth))
             .or_else(|| self.native_inverse_exp_relation(&value));
         self.root_relation_seen |= relation.is_some()
             && matches!(
@@ -75,6 +157,7 @@ impl<'a> RingRecognition<'a> {
         let index = self.atoms.len() as u8;
         self.atoms.push(value);
         self.relations.push(relation);
+        self.native_signs.push(None);
         Some(RingPolynomial {
             terms: vec![(vec![index], Rational::one())],
         })
@@ -125,6 +208,7 @@ impl<'a> RingRecognition<'a> {
             // The admitted exponential syntax proves the denominator positive.
             return Some(NativeRingRelation {
                 power: 1,
+                root_sign: None,
                 value: RingQuotient {
                     numerator: Self::constant(scale)?,
                     denominator: Some(RingPolynomial {
@@ -290,9 +374,7 @@ impl<'a> RingRecognition<'a> {
                     Some(RealSign::Zero) => return None,
                     Some(RealSign::Positive | RealSign::Negative) => {}
                     None => {
-                        if self.project_quotient(&quotient)?.is_zero() {
-                            return None;
-                        }
+                        self.admitted_quotient_nonzero(&quotient)?;
                     }
                 }
                 if quotient.numerator.terms.is_empty() {

@@ -329,6 +329,24 @@ assert_eq!(ellipsoid.receipt().certainty(), Certainty::Exact);
 # Ok::<(), hyperspatial::Error>(())
 ```
 
+
+Bounded parameter encodings also preserve exact native values through their
+algebraic inverses. The scalar normalizer can replay the principal-root domain
+proofs without a floating-point round trip. For example:
+
+```rust
+use hyperspatial::*;
+let v = (Real::pi() / (Real::one() + Real::pi()))?;
+let a = (&v / (Real::one() - &v * &v).sqrt()?)?;
+let decoded = (&a / (Real::one() + &a * &a).sqrt()?)?;
+assert_eq!((decoded - v).exact_rational_normal_form(), Real::zero().exact_rational());
+# Ok::<(), hyperspatial::Error>(())
+```
+
+This scalar prerequisite does not yet implement Thompson/Lee inversion or
+ellipsoidal Transverse Mercator. Unknown domain signs or exhausted proof budgets
+remain unresolved; exact identities are never accepted by numerical closeness.
+
 From the repository root:
 
 ```sh

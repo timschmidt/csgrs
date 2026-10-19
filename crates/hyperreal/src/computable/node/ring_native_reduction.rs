@@ -78,7 +78,10 @@ impl RingRecognition<'_> {
         mode: NativeReduction,
     ) -> Option<RingQuotient> {
         let roots_only = mode == NativeReduction::Roots;
-        let zero_only = mode == NativeReduction::ZeroResidual;
+        let zero_only = matches!(
+            mode,
+            NativeReduction::ZeroResidual | NativeReduction::SignedZeroResidual
+        );
         let mut numerator = value.numerator;
         let mut denominator = value
             .denominator
@@ -222,6 +225,12 @@ impl RingRecognition<'_> {
             }
         }
         if zero_only {
+            if mode == NativeReduction::SignedZeroResidual
+                && !numerator.terms.is_empty()
+                && self.prove_zero_by_nonnegative_squares(&numerator).is_some()
+            {
+                return Some(RingQuotient::polynomial(RingPolynomial::default()));
+            }
             // Only the zero claim survives multiplying/dividing a residual
             // by proved-nonzero factors. Never expose its rescaled nonzero
             // value as the value of the original expression.

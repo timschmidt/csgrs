@@ -33,7 +33,8 @@ bench = false
 [dependencies]
 libfuzzer-sys = "0.4"
 hyperspatial = { path = ".." }
-hyperreal = { path = "../../hyperreal" }
+hyperreal = { path = "../../hyperreal", features = ["serde"] }
+serde_json = "=1.0.149"
 hyperlattice = { path = "../../hyperlattice" }
 hyperlimit = { path = "../../hyperlimit", default-features = false, features = ["std"] }
 
@@ -96,6 +97,13 @@ bench = false
 [[bin]]
 name = "complex_atanh"
 path = "fuzz_targets/complex_atanh.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "parameter_encodings"
+path = "fuzz_targets/parameter_encodings.rs"
 test = false
 doc = false
 bench = false

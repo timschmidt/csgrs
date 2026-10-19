@@ -112,3 +112,8 @@ harness = false
 [[bench]]
 name = "real_representations"
 harness = false
+
+[[bench]]
+name = "bounded_parameter_encodings"
+harness = false
+required-features = ["serde"]

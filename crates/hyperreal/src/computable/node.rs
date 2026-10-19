@@ -45,6 +45,8 @@ include!("node/ring_quotient.rs");
 include!("node/ring_native_relations.rs");
 include!("node/ring_native_reduction.rs");
 include!("node/ring_native_projection.rs");
+include!("node/ring_native_domain.rs");
+include!("node/ring_native_sign_tests.rs");
 include!("node/ring_parameter_atoms.rs");
 include!("node/ring_jacobi_relations_tests.rs");
 include!("node/ring_quotient_reduction.rs");

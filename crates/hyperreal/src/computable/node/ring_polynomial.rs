@@ -24,6 +24,10 @@ struct RingRecognition<'a> {
     // A separate optional attempt admits triangular native square relations.
     // Ordinary ring and quotient recognition retain their original limits.
     native_relations: bool,
+    // Root-branch completion follows the original native strategy and uses
+    // only its remaining node and operation budget.
+    root_completion: bool,
+    native_signs: Vec<Option<RealSign>>,
     relations: Vec<Option<NativeRingRelation>>,
     root_relation_seen: bool,
     jacobi_bases: Vec<(Computable, bool)>,
@@ -49,6 +53,8 @@ impl<'a> RingRecognition<'a> {
             root_squares: false,
             root_square_used: false,
             native_relations: false,
+            root_completion: false,
+            native_signs: Vec::new(),
             relations: Vec::new(),
             root_relation_seen: false,
             jacobi_bases: Vec::new(),
@@ -159,6 +165,11 @@ impl<'a> RingRecognition<'a> {
         for (a, x) in &left.terms {
             for (b, y) in &right.terms {
                 self.charge()?;
+                if self.native_relations && self.root_completion && self.root_relation_seen {
+                    let (monomial, coefficient) = self.multiply_native_root_terms(a, b, x * y)?;
+                    self.insert(&mut result, monomial, coefficient)?;
+                    continue;
+                }
                 if a.len() + b.len() > self.degree_limit() {
                     return None;
                 }

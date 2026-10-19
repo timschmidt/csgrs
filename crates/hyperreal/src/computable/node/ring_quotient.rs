@@ -276,9 +276,7 @@ impl<'a> RingRecognition<'a> {
                     Some(RealSign::Zero) => return None,
                     Some(RealSign::Positive | RealSign::Negative) => {}
                     None => {
-                        if self.project_quotient(&quotient)?.is_zero() {
-                            return None;
-                        }
+                        self.admitted_quotient_nonzero(&quotient)?;
                     }
                 }
                 if quotient.numerator.terms.is_empty() {

@@ -55,8 +55,7 @@ cases, 44 spherical projection cases, 44 inverse-scalar cases, 44 ellipsoidal
 projection cases, 176 transverse cases, 176 elliptic cases, and any cases
 selected by the directed driver. The inverse-Legendre target adds 176 cases
 covering the same 22 families, four regimes, and cold/warm inputs. The Jacobi
-target adds another 176 seeds with the same family/regime/warming layout. All nine
-targets use ASan, a 10-second per-input timeout, and a 2048 MiB RSS limit.
+target adds another 176 seeds with the same family/regime/warming layout. All targets use ASan, a 10-second per-input timeout, and a 2048 MiB RSS limit.
 The existing forward/local, normal-offset and spherical projection targets
 have a 60-second libFuzzer budget. The inverse scalar, ellipsoidal projection,
 transverse chart, elliptic prerequisites and inverse integrals each have 900
@@ -81,3 +80,15 @@ tool configuration under `target/hyperspatial-directed` and
 The [directed-testing admission](../docs/admission/e1-directed-testing.md) records
 actual executed evidence and remaining limits. A build alone establishes
 neither an ASan campaign nor coverage.
+
+
+The `parameter_encodings` target replays native bounded parameter, meridian and
+time encodings through JSON, then checks exact ECEF and anchored ENU/NED
+composition with qualified input receipts. Its 176 initial seeds span the 22
+scalar families, four regimes and cold/display-warmed states; mutations also
+vary parameter/meridian family pairs, signs, exact boundary offsets and closed
+time endpoints. Run the cost-directed search with `--workload parameter_encodings`
+and pass its corpus to `fuzz-smoke.py --encodings-corpus PATH`. The target uses
+the standard 60-second campaign, ten-second input and 2,048 MiB RSS limits.
+These are external campaign controls, not new native work or heap guarantees.
+Serialization dependencies remain confined to this development workspace.

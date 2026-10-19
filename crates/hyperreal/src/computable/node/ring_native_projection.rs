@@ -1,6 +1,32 @@
 // Candidate generation and sufficient exact-zero proofs; no numeric guesses.
-impl RingRecognition<'_> {
+impl<'a> RingRecognition<'a> {
+    fn recognize_native(&mut self, value: &'a Computable) -> Option<Rational> {
+        self.collect_parameter_atoms(value)?;
+        let quotient = self.expand_quotient(value, Self::MAX_DEPTH)?;
+        self.project_native_relations(quotient)
+    }
+
+    fn begin_root_completion(&mut self) -> Option<()> {
+        self.charge()?;
+        self.atoms.clear();
+        self.quotients.clear();
+        self.relations.clear();
+        self.native_signs.clear();
+        self.jacobi_bases.clear();
+        self.parameter_atoms.clear();
+        self.root_relation_seen = false;
+        self.root_completion = true;
+        // Strategy-local IDs cannot survive the changed atom decomposition.
+        // Resource counters and cancellation remain those of the same query.
+        Some(())
+    }
+
     fn project_native_relations(&mut self, value: RingQuotient) -> Option<Rational> {
+        let zero_mode = if self.root_completion {
+            NativeReduction::SignedZeroResidual
+        } else {
+            NativeReduction::ZeroResidual
+        };
         // Jacobi's initial values (sn=0, cn=dn=1) suggest the rational
         // constant of a norm identity without expanding its common factors.
         // Other atoms take the arbitrary value 1 for this PROPOSAL only.
@@ -15,10 +41,8 @@ impl RingRecognition<'_> {
                 .scale(denominator, -candidate.clone())
                 .and_then(|negative| self.add(value.numerator.clone(), negative));
             if let Some(residual) = residual
-                && let Some(reduced) = self.reduce_native_relation_proof(
-                    RingQuotient::polynomial(residual),
-                    NativeReduction::ZeroResidual,
-                )
+                && let Some(reduced) =
+                    self.reduce_native_relation_proof(RingQuotient::polynomial(residual), zero_mode)
                 && self.project_quotient(&reduced).is_some_and(|r| r.is_zero())
             {
                 return Some(candidate);
@@ -32,10 +56,8 @@ impl RingRecognition<'_> {
         if let Some(reduced) = self.reduce_native_relations(value) {
             return self.project_quotient(&reduced);
         }
-        let reduced = self.reduce_native_relation_proof(
-            RingQuotient::polynomial(numerator),
-            NativeReduction::ZeroResidual,
-        )?;
+        let reduced =
+            self.reduce_native_relation_proof(RingQuotient::polynomial(numerator), zero_mode)?;
         self.project_quotient(&reduced).filter(Rational::is_zero)
     }
 
@@ -48,6 +70,74 @@ impl RingRecognition<'_> {
         self.charge()?;
         let candidate = numerator * denominator.inverse().ok()?;
         Self::coefficient_fits(&candidate).then_some(candidate)
+    }
+
+    // P,Q >= 0 and P²=Q² imply P=Q, including P=Q=0. Retained exact
+    // signs partition this residual as P-Q; an unresolved term declines.
+    // Squaring is only a sufficient zero proof, never a value rewrite.
+    fn split_nonnegative_terms(
+        &mut self,
+        value: &RingPolynomial,
+    ) -> Option<(RingPolynomial, RingPolynomial)> {
+        let mut positive = RingPolynomial::default();
+        let mut negative = RingPolynomial::default();
+        for (monomial, coefficient) in &value.terms {
+            self.charge()?;
+            let mut sign = public_sign(coefficient.sign());
+            for &atom in monomial {
+                match self.native_atom_sign(usize::from(atom))? {
+                    RealSign::Zero => {
+                        sign = RealSign::Zero;
+                        break;
+                    }
+                    RealSign::Negative => {
+                        sign = match sign {
+                            RealSign::Negative => RealSign::Positive,
+                            RealSign::Positive => RealSign::Negative,
+                            RealSign::Zero => RealSign::Zero,
+                        }
+                    }
+                    RealSign::Positive => {}
+                }
+            }
+            match sign {
+                RealSign::Positive => {
+                    self.insert(&mut positive, monomial.clone(), coefficient.clone())?
+                }
+                RealSign::Negative => {
+                    self.insert(&mut negative, monomial.clone(), -coefficient.clone())?
+                }
+                RealSign::Zero => {}
+            }
+        }
+        Some((positive, negative))
+    }
+
+    fn prove_zero_by_nonnegative_squares(&mut self, value: &RingPolynomial) -> Option<()> {
+        let (mut positive, mut negative) = self.split_nonnegative_terms(value)?;
+        if positive.terms.len() > 1 && negative.terms.len() > 1 {
+            // Formal exact division proves P=R*Q (or Q=R*P). R=1 is
+            // sufficient even when the discarded common polynomial vanishes;
+            // no inverse or nonzero fact about that factor is published.
+            let quotient = self
+                .divide_exact_polynomial(&positive, &negative)
+                .or_else(|| self.divide_exact_polynomial(&negative, &positive));
+            if let Some(quotient) = quotient {
+                let residual = self.add(quotient, Self::constant(Rational::from(-1))?)?;
+                (positive, negative) = self.split_nonnegative_terms(&residual)?;
+            }
+        }
+        let positive = self.multiply(&positive, &positive)?;
+        let negative = self.multiply(&negative, &negative)?;
+        let negative = self.scale(negative, Rational::from(-1))?;
+        let norm = self.add(positive, negative)?;
+        // The plain mode forbids recursive square-sign attempts and consumes
+        // the same remaining work budget and admitted atom identities.
+        self.reduce_native_relation_proof(
+            RingQuotient::polynomial(norm),
+            NativeReduction::ZeroResidual,
+        )
+        .map(|_| ())
     }
 
     fn native_initial_assignment(&mut self, value: &RingPolynomial) -> Option<Rational> {
@@ -137,9 +227,10 @@ impl Computable {
     pub(crate) fn bounded_native_relation_rational(&self) -> Option<Rational> {
         let mut recognition = RingRecognition::new(self);
         recognition.native_relations = true;
-        recognition.collect_parameter_atoms(self)?;
-        let quotient = recognition.expand_quotient(self, RingRecognition::MAX_DEPTH)?;
-        let rational = recognition.project_native_relations(quotient)?;
+        let rational = recognition.recognize_native(self).or_else(|| {
+            recognition.begin_root_completion()?;
+            recognition.recognize_native(self)
+        })?;
         if should_stop(&self.signal) {
             return None;
         }

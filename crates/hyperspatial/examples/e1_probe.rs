@@ -37,6 +37,9 @@ mod jacobi;
 #[path = "../dev/jacobi_epsilon.rs"]
 mod jacobi_epsilon;
 
+#[path = "../dev/parameter_encodings.rs"]
+mod parameter_encodings;
+
 fn main() {
     let encoded = std::env::args()
         .nth(1)
@@ -64,6 +67,7 @@ fn main() {
         "complex_jacobi" => complex_jacobi::exercise(data),
         "jacobi_epsilon" => jacobi_epsilon::exercise(data),
         "complex_atanh" => complex_atanh::exercise(data),
+        "parameter_encodings" => parameter_encodings::exercise(data),
         _ => panic!("unknown workload {workload}"),
     });
     let evaluation_ns = start.elapsed().as_nanos();
