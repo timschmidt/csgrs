@@ -146,12 +146,26 @@ fn endpoint_proofs_reject_undefined_rational_arithmetic_children() {
 }
 
 #[test]
-fn endpoint_proofs_do_not_erase_unresolved_domain_obligations() {
-    // The rational-only domain proof deliberately does not cancel opaque
-    // atoms. Keep this unresolved case alongside the rejected rational one.
+fn endpoint_import_rejects_symbolically_zero_denominators() {
+    // Retain the original regression: its reciprocal is undefined whether
+    // the opaque sine denotes a real value or has an invalid stored range.
     let sine = node("PrescaledSin", leaf(1, 1));
     let denominator = node("Add", json!([sine, node("Negate", sine.clone())]));
     let invalid = node("Inverse", denominator);
+    let hidden = node("Multiply", json!([leaf(0, 1), invalid]));
+    assert!(serde_json::from_value::<Computable>(hidden.clone()).is_err());
+    for kind in ["AcoshNearOne", "AcoshDirect"] {
+        let argument = node("Add", json!([hidden, leaf(1, 1)]));
+        assert!(serde_json::from_value::<Computable>(node(kind, argument)).is_err());
+    }
+}
+
+#[test]
+fn endpoint_proofs_do_not_erase_unresolved_domain_obligations() {
+    // sqrt(-atan(1)) is undefined but is not a rational-domain contradiction
+    // recognized by this bounded proof. Conditional cancellation may refute
+    // an outer domain; it must never certify this child or an endpoint value.
+    let invalid = node("Sqrt", node("Negate", node("AtanRational", q(1, 1))));
     let hidden = node("Multiply", json!([leaf(0, 1), invalid]));
     let value: Computable = serde_json::from_value(hidden.clone()).unwrap();
     // General graph admission still accepts this undefined expression. Its

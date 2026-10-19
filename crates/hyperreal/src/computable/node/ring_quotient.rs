@@ -248,6 +248,38 @@ impl<'a> RingRecognition<'a> {
 }
 
 impl Computable {
+    // A conditional identity can refute an imported domain even when an
+    // opaque atom's own domain is unknown: either a dependency is undefined,
+    // or all dependencies are real and the projected argument is invalid.
+    // Keep this rejection-only. Publishing the conditional rational or its
+    // sign would turn an assumed domain into a certificate of a real value.
+    #[cfg(feature = "serde")]
+    fn bounded_domain_contradiction(&self, invalid: impl FnOnce(&Rational) -> bool) -> bool {
+        // The caller already tried exact leaves and defined rational forms.
+        // Every other non-arithmetic root expands to one opaque atom, which
+        // cannot project to a rational. Avoid allocating that doomed attempt.
+        if !matches!(
+            self.internal.approximation,
+            Approximation::Add(..)
+                | Approximation::Multiply(..)
+                | Approximation::Square(..)
+                | Approximation::Negate(..)
+                | Approximation::Offset(..)
+                | Approximation::LinearCombination3(..)
+                | Approximation::Inverse(..)
+        ) {
+            return false;
+        }
+        let mut recognition = RingRecognition::new(self);
+        let Some(quotient) = recognition.expand_quotient(self, RingRecognition::MAX_DEPTH) else {
+            return false;
+        };
+        let Some(rational) = recognition.project_quotient(&quotient) else {
+            return false;
+        };
+        !should_stop(&self.signal) && invalid(&rational)
+    }
+
     pub(crate) fn bounded_quotient_rational(&self) -> Option<Rational> {
         self.bounded_quotient_projection(false, false)
     }

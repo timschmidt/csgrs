@@ -41,6 +41,57 @@ mod ring_quotient_tests {
     }
 
     #[test]
+    #[cfg(feature = "serde")]
+    fn domain_contradictions_never_publish_conditional_facts() {
+        let atom = raw(Approximation::Sqrt(raw(Approximation::Negate(raw(
+            Approximation::AtanRational(Rational::one()),
+        )))));
+        let value = raw(Approximation::Multiply(Computable::zero(), atom.clone()));
+        // If the atom denotes a real, this product is zero. That condition
+        // suffices to reject its reciprocal, but does not define the product.
+        assert!(value.bounded_domain_contradiction(Rational::is_zero));
+        assert!(!value.bounded_domain_contradiction(|r| r.sign() == Sign::Minus));
+        assert_unproved(&value);
+        assert_unproved(&atom);
+        assert_eq!(value.bounded_defined_rational(), None);
+        assert_unproved(&value);
+
+        let distinct = raw(Approximation::Add(Computable::pi(), Computable::one()));
+        assert!(!distinct.bounded_domain_contradiction(|_| true));
+        assert_unproved(&distinct);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn domain_contradiction_limits_and_abort_preserve_facts_and_recover() {
+        let atom = raw(Approximation::PrescaledSin(Computable::rational(
+            Rational::fraction(1, 2).unwrap(),
+        )));
+        let mut value = raw(Approximation::Add(
+            atom.clone(),
+            raw(Approximation::Negate(atom.clone())),
+        ));
+        let mut deep = value.clone();
+        for _ in 0..RingRecognition::MAX_DEPTH {
+            deep = raw(Approximation::Negate(deep));
+        }
+        assert!(!deep.bounded_domain_contradiction(Rational::is_zero));
+        assert_unproved(&deep);
+        assert_unproved(&value);
+        let signal = Arc::new(AtomicBool::new(true));
+        value.abort(signal.clone());
+        assert!(!value.bounded_domain_contradiction(Rational::is_zero));
+        assert_unproved(&value);
+        signal.store(false, std::sync::atomic::Ordering::Relaxed);
+        for precision in [-8, -64, -8] {
+            assert_eq!(atom.sign_until(precision), Some(RealSign::Positive));
+            assert!(value.bounded_domain_contradiction(Rational::is_zero));
+            assert_unproved(&value);
+            assert_eq!(atom.immediate_sign(), Some(RealSign::Positive));
+        }
+    }
+
+    #[test]
     fn quotient_reuse_requires_a_real_nonzero_proof_and_can_recover() {
         let denominator = positive_denominator();
         let value = inverse_identity(&denominator);
@@ -221,7 +272,10 @@ mod ring_quotient_tests {
                 raw(Approximation::Add(left, right)),
                 raw(Approximation::Negate(eighth_power.clone())),
             ));
-            assert_eq!(difference.bounded_quotient_rational(), Some(Rational::zero()));
+            assert_eq!(
+                difference.bounded_quotient_rational(),
+                Some(Rational::zero())
+            );
             assert!(product.cached().is_none());
             assert!(difference.cached().is_none());
         }

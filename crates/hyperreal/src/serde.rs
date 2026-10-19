@@ -23,9 +23,11 @@ impl Real {
     /// equality is undecided returns [`Problem::UnknownCertificate`]. A supplied
     /// payload is preserved only after proving its relationship to the class.
     /// Known domain and kernel-range violations, including bounded rational
-    /// arithmetic arguments, return [`Problem::ParseError`] before an outer
-    /// scale or identity can hide them. Opaque expressions and expressions that
-    /// exceed the rational recognizer's budget are not fully domain-validated.
+    /// arithmetic arguments and symbolic domain contradictions, return
+    /// [`Problem::ParseError`] before an outer scale or identity can hide them.
+    /// Conditional algebraic identities are used only to reject invalid inputs,
+    /// never to certify their values. General expression domains and expressions
+    /// exceeding the bounded recognizer's budget are not fully validated.
     pub fn from_json(json: &str) -> Result<Self, Problem> {
         serde_json::from_str::<RealWire>(json)
             .map_err(|_| Problem::ParseError)?

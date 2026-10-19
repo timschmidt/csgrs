@@ -86,6 +86,35 @@ fn an_undefined_arithmetic_import_cannot_publish_a_model() {
 
 #[test]
 #[cfg(feature = "svg-io")]
+fn a_symbolically_undefined_import_cannot_publish_a_model() {
+    // pi - pi is zero independently of any numerical refinement.
+    let pi = r#"{"internal":{"Constant":"Pi"}}"#;
+    let graph = format!(
+        r#"{{"internal":{{"Inverse":{{"internal":{{"Add":[{pi},{{"internal":{{"Negate":{pi}}}}}]}}}}}}}}"#
+    );
+    for rational in [
+        r#"{"sign":0,"numerator":[],"denominator":[1]}"#,
+        r#"{"sign":1,"numerator":[1],"denominator":[1]}"#,
+    ] {
+        let wire =
+            format!(r#"{{"rational":{rational},"class":"Irrational","computable":{graph}}}"#);
+        let mut constructed = false;
+        let result = csgrs::Real::from_json(&wire)
+            .map_err(ValidationError::from)
+            .and_then(|side| {
+                constructed = true;
+                csgrs::solid::cube(side)
+            });
+        assert!(!constructed);
+        assert!(matches!(
+            result,
+            Err(ValidationError::Scalar(Problem::ParseError))
+        ));
+    }
+}
+
+#[test]
+#[cfg(feature = "svg-io")]
 fn svg_import_retains_the_typed_scalar_failure() {
     use csgrs::io::{IoError, svg::import_svg};
     use std::fmt::Write;

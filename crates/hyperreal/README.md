@@ -390,10 +390,17 @@ Such invalid graphs previously accepted, or reported as `UnknownCertificate`,
 now return `ParseError`. Valid graphs retain their wire representation.
 This optional proof uses the existing limits of 512 nodes, depth 64, 8192
 operations and 4096 coefficient bits; existing exact-leaf checks still apply
-to larger leaves. Both operands are checked even under a zero factor. An
-opaque operand or exhausted proof budget leaves the domain unproved; acceptance
-does not certify an arbitrary graph's domain. General expression domains,
-kernel ranges and whole-input resource limits remain incomplete.
+to larger leaves. Both operands are checked even under a zero factor.
+When these proofs decline, a separate attempt uses the same bounded algebra
+to reject symbolic domain contradictions, such as `inverse(x - x)`. Either a
+dependency is undefined, or every dependency is real and the denominator is
+zero; neither case defines a reciprocal. This conditional proof publishes no
+value or sign and cannot certify a cancelled dependency. A conditional value
+inside the requested domain does not establish validity. The attempt also
+retains the existing limits of 32 atoms, 64 terms and polynomial degree 8.
+An inconclusive or exhausted proof leaves the domain unproved; acceptance does
+not certify an arbitrary graph's domain. General expression domains, kernel
+ranges and whole-input resource limits remain incomplete.
 Inverse-cosine endpoint facts distinguish `acos(1) = acosh(1) = 0`; an imported
 `acosh` node needs evidence about its argument before claiming a positive sign.
 The native rational reader recognizes these exact endpoints so later arithmetic

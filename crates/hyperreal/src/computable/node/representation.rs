@@ -7,9 +7,11 @@
 /// With `serde`, decoding rejects out-of-domain exact rational arguments to
 /// partial functions and known violations of stored kernel parameter ranges.
 /// This includes defined rational arithmetic recognized by the bounded shared
-/// evaluator. An opaque expression or an exhausted recognition budget leaves
-/// the domain unproved; decoding does not validate arbitrary expression domains
-/// or refine an operand to decide them. Valid expression graphs are preserved.
+/// evaluator, and symbolic identities that contradict a required domain.
+/// Conditional identities can reject a graph but never certify its value.
+/// An inconclusive proof leaves the domain unproved; decoding does not validate
+/// arbitrary expression domains or refine an operand to decide them. Valid
+/// expression graphs are preserved.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg(not(verus_keep_ghost))]
@@ -63,14 +65,25 @@ impl<'de> Deserialize<'de> for Node {
 
 #[cfg(all(feature = "serde", not(verus_keep_ghost)))]
 impl Node {
-    fn serialized_rational_argument(value: &Computable) -> Option<Rational> {
+    fn serialized_argument_violates(
+        value: &Computable,
+        invalid: impl Fn(&Rational) -> bool,
+    ) -> bool {
         // Preserve existing exact proofs, including large rational leaves.
         // The bounded fallback checks every operand and inverse denominator;
         // unlike general algebraic cancellation, it never erases an opaque
         // child's unresolved domain obligation, even under a zero factor.
-        value
+        if let Some(rational) = value
             .exact_rational()
             .or_else(|| value.bounded_defined_rational())
+        {
+            return invalid(&rational);
+        }
+        // For rejection only, assume opaque dependencies denote reals and
+        // ask whether the existing quotient proof contradicts the domain.
+        // No conditional value/sign is published, including when it happens
+        // to satisfy this domain: that does not prove its dependencies valid.
+        value.bounded_domain_contradiction(invalid)
     }
 
     fn check_serialized_kernel_parameters(
@@ -91,9 +104,11 @@ impl Node {
                     || Computable::exact_rational_half_pi_shortcut_magnitude(r).is_none()
             }
             Approximation::SincSmall(argument) | Approximation::CoscSmall(argument) => {
-                if let Some(rational) = Self::serialized_rational_argument(argument) {
+                if Self::serialized_argument_violates(argument, |rational| {
                     let limit = Rational::fraction(3, 4).expect("nonzero constant denominator");
                     rational.compare_magnitude(&limit) == Ordering::Greater
+                }) {
+                    true
                 } else if let Approximation::Constant(constant) = &argument.internal.approximation {
                     // A certified MSD >= 0 proves |x| >= 1 > 3/4. Inspect only
                     // these trusted constants; do not refine an untrusted
@@ -127,13 +142,13 @@ impl Node {
         let outside_positive_unit = |r: &Rational| r.sign() == Sign::Minus || r > &Rational::one();
         let invalid = match approximation {
             Approximation::Inverse(value) | Approximation::PrescaledCot(value) => {
-                Self::serialized_rational_argument(value).is_some_and(|r| r.sign() == Sign::NoSign)
+                Self::serialized_argument_violates(value, |r| r.sign() == Sign::NoSign)
             }
             Approximation::Sqrt(value) | Approximation::NthRoot(value, _) => {
-                Self::serialized_rational_argument(value).is_some_and(|r| r.sign() == Sign::Minus)
+                Self::serialized_argument_violates(value, |r| r.sign() == Sign::Minus)
             }
             Approximation::PrescaledLn(value) => {
-                Self::serialized_rational_argument(value).is_some_and(|r| r <= -Rational::one())
+                Self::serialized_argument_violates(value, |r| r <= &-Rational::one())
             }
             // These variants store x for ln(1+x), not the logarithm's input.
             Approximation::PrescaledLnRational(r)
@@ -141,24 +156,27 @@ impl Node {
             Approximation::IntegralAtan(denominator) => denominator.is_zero(),
             Approximation::AsinRational(r) => outside_closed_unit(r),
             Approximation::PrescaledAsin(value) | Approximation::AsinDeferred(value) => {
-                Self::serialized_rational_argument(value).is_some_and(|r| outside_closed_unit(&r))
+                Self::serialized_argument_violates(value, outside_closed_unit)
             }
             // Both rational endpoint variants store an absolute argument.
             Approximation::AcosPositiveRational(r) | Approximation::AcosNegativeRational(r) => {
                 outside_positive_unit(r)
             }
             Approximation::AcosPositive(value) => {
-                Self::serialized_rational_argument(value).is_some_and(|r| outside_positive_unit(&r))
+                Self::serialized_argument_violates(value, outside_positive_unit)
             }
             Approximation::AtanhRational(r) => outside_open_unit(r),
             Approximation::PrescaledAtanh(value) | Approximation::AtanhDirect(value) => {
-                Self::serialized_rational_argument(value).is_some_and(|r| outside_open_unit(&r))
+                Self::serialized_argument_violates(value, outside_open_unit)
             }
             Approximation::AcoshNearOne(value) | Approximation::AcoshDirect(value) => {
-                Self::serialized_rational_argument(value).is_some_and(|r| r < Rational::one())
+                Self::serialized_argument_violates(value, |r| r < &Rational::one())
             }
-            Approximation::NormalQuantile(data) => Self::serialized_rational_argument(&data.p)
-                .is_some_and(|r| r.sign() != Sign::Plus || r >= Rational::one()),
+            Approximation::NormalQuantile(data) => {
+                Self::serialized_argument_violates(&data.p, |r| {
+                    r.sign() != Sign::Plus || r >= &Rational::one()
+                })
+            }
             _ => false,
         };
         if invalid {

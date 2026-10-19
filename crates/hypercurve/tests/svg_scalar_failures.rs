@@ -40,11 +40,18 @@ fn exact_svg_rejects_a_coordinate_without_its_required_scalar_payload() {
 fn exact_svg_rejects_undefined_scalar_graphs_before_publishing_a_path() {
     // CBOR Real records with rational=1 and class=Irrational. The respective
     // graphs include Sqrt(-1), Inverse(0), Inverse(1 + (-1)), and a zero
-    // product hiding that last inverse. None denotes a real coordinate.
+    // product hiding that last inverse, and Inverse(pi - pi). None denotes
+    // a real coordinate.
     for invalid in [
         b"\xa3\x68rational\xa3\x64sign\x01\x69numerator\x81\x01\
             \x6bdenominator\x81\x01\x65class\x6aIrrational\x6acomputable\
             \xa1\x68internal\xa1\x64Sqrt\xa1\x68internal\xa1\x63Int\x82\x20\x81\x01"
+            .as_slice(),
+        b"\xa3\x68rational\xa3\x64sign\x01\x69numerator\x81\x01\
+            \x6bdenominator\x81\x01\x65class\x6aIrrational\x6acomputable\
+            \xa1\x68internal\xa1\x67Inverse\xa1\x68internal\xa1\x63Add\x82\
+            \xa1\x68internal\xa1\x68Constant\x62Pi\
+            \xa1\x68internal\xa1\x66Negate\xa1\x68internal\xa1\x68Constant\x62Pi"
             .as_slice(),
         b"\xa3\x68rational\xa3\x64sign\x01\x69numerator\x81\x01\
             \x6bdenominator\x81\x01\x65class\x6aIrrational\x6acomputable\

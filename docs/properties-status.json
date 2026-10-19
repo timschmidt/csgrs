@@ -19753,6 +19753,250 @@
     "artifact_expectations": "/run/media/tim/Disk B/csgrs/domain-admission-20261018-v1/external-evidence/artifact-expectations-v1.json.gz",
     "runtime_admitted": true,
     "general_speedup_claimed": false
+  },
+  "symbolic_domain_contradictions": {
+    "decision": "Retain bounded symbolic domain contradiction checks without publishing conditional values or signs.",
+    "admitted_scope": "Reject symbolic algebraic contradictions of required domains through native and Real import, preserving valid graph bytes and existing exact proofs. Conditional proofs publish no value or sign.",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1095
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 940
+      }
+    },
+    "debug_units_passed": 818,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-solid_cache": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "cost": {
+      "matched_rows": 17,
+      "iterations_per_row": 100000,
+      "pairs": 5,
+      "all_completed_contract_assertions_passed": true,
+      "candidate_over_parent_median_latency": {
+        "named-root-cbor": 1.0184823488642385,
+        "named-root-json": 1.0090457537578983,
+        "opaque-add-fresh": 0.9848297754067382,
+        "opaque-add-warm": 0.9680391633714466,
+        "opaque-root-cbor": 0.9800876491003284,
+        "opaque-root-json": 0.9864305811720953,
+        "radical-add-fresh": 1.0180781037161468,
+        "radical-add-warm": 0.9898778983303034,
+        "rational-add": 1.0199381392018323,
+        "rational-cbor": 1.021164266470053,
+        "rational-json": 1.0355298643788533,
+        "small-atanh-cbor": 1.0211324150751933,
+        "small-atanh-json": 0.9775884256472395,
+        "trig-add-fresh": 0.9848020760565739,
+        "trig-add-warm": 0.9491935139643335,
+        "trig-cbor": 0.9999587867521627,
+        "trig-json": 1.0112755784603045
+      },
+      "allocation_counts_and_bytes_identical": true,
+      "executables_bytes": {
+        "candidate": 6779392,
+        "parent": 6772648
+      },
+      "matched_builds": "Parent and candidate direct rustc all-feature builds with identical compiler flags and dependency paths; parent verified against sealed E87 artifacts. Full Cargo correctness qualified separately.",
+      "interpretation": "Limited matched completed-work measurements, with every slower row retained; no general speedup claim. Correctness takes priority over measured cost.",
+      "raw_evidence": "/run/media/tim/Disk B/csgrs/symbolic-domain-admission-20261018-v1/ordinary-cost-v2/result-v1.json",
+      "first_candidate_adverse_results": "/run/media/tim/Disk B/csgrs/symbolic-domain-admission-20261018-v1/ordinary-cost-v1/result-v1.json",
+      "first_candidate_observation": "Six extra allocations per opaque import and slower import rows. Final candidate skips opaque roots that cannot project to a rational; both complete five-pair measurements retained.",
+      "general_speedup_claimed": false
+    },
+    "remaining_limitations": [
+      "General expression domain/range validity remains unproved; sqrt(-atan(1)) still demonstrates an unknown obligation. The conditional proof cannot certify its zero product or an acosh endpoint. Existing general facts and unchecked construction still need domain ownership work.",
+      "Per-attempt recognizer limits are not complete parser, graph-allocation, structural-matcher, retained-memory or total-work bounds. Hostile tests remain externally contained.",
+      "Native unchecked partial-function construction preconditions are unchanged.",
+      "Finite tests do not establish exhaustive correctness, formal verification, coverage targets or the full ordinary-workload corpus.",
+      "Real foreign-language consumers, clean shipped-distribution validation, full geometry/DRC runtime gates and the complete properties plan remain open.",
+      "Historical missing artifacts were neither reaudited nor recovered."
+    ],
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 149,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "all_adverse_results_retained": true,
+    "next": "Continue native domain obligations and ordinary strict completion, then complete user-path and release validation.",
+    "parent_revision": "d9d946bc88fd657323741053df720fe207173122",
+    "review": "docs/evidence/2026-10-18-symbolic-domain-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-symbolic-domain-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs/symbolic-domain-admission-20261018-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "runtime_admitted": true,
+    "general_speedup_claimed": false
   }
 },
   "status_meanings": {
