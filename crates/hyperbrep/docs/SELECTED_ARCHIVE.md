@@ -148,6 +148,14 @@ no image certificate. Similarities inside affine point-query definitions are
 composed when authored and replayed so both encodings use the same recipe.
 Version 10 is an intentional schema break, not a byte-preserving optimization.
 
+The [selected-patch correction](evidence/2026-10-18-selected-surface-patches/README.md)
+preserves existing pcurve definitions unless analytic-arc export canonicalizes
+an incident spatial vertex. This prevents reproduced growth during cold planar
+replay. Schema 10 remains unchanged, but fresh scalar expression encodings may
+change; exact coefficients, topology/source records, deterministic repeats and
+all observed size/time regressions are audited separately. This is a correctness
+repair, not a byte-preserving performance change.
+
 Load order is selected roots/charts, authored pcurve sources, detached spatial
 point sources, model spatial curves, then point images and topology. Pcurve
 sources cannot refer to spatial sources or other pcurve restrictions, so the

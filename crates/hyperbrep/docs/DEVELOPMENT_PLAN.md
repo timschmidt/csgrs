@@ -3,6 +3,16 @@
 Status: implementation blueprint. Updated 2026-10-18 for upstream
 `dbe99e3cc` and concurrent development ownership.
 
+The [selected surface-patch increment](evidence/2026-10-18-selected-surface-patches/README.md)
+advances WP02/WP09/WP13 with public planar faces and finite extrusion patches
+whose endpoints retain selected parameters. Ordinary builder admission proves
+complete coordinate boundary images. Holes, reversal, affine transforms, selected
+contact splits and cold replay consume the result. A reproduced nonorthogonal
+archive-growth bug is corrected by preserving unchanged pcurve definitions;
+first-export expression changes and their adverse size/time costs are explicitly
+audited. General embedding, revolution latitude generators and CAD closure
+remain open; no complete work package or release gate is closed.
+
 The [planar lift increment](evidence/2026-10-18-planar-curve-lift/README.md)
 advances WP02/WP07/WP08/WP13 with retained planar spatial curves, complete
 source/frame/chart agreement, native replay and original nonlinear parallel-cap

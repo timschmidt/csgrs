@@ -18,6 +18,8 @@ use crate::{
     ValidationReport, VertexId,
 };
 
+mod patches;
+
 /// Failure while constructing a conventional solid.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ConstructionError {
@@ -300,7 +302,9 @@ pub fn cuboid(min: Point3, max: Point3) -> Result<(ArenaModel, SolidId), Constru
 /// The outer [`CurvePath2`] is normalized counterclockwise and every hole is
 /// normalized clockwise. Complete path simplicity, pairwise non-contact, hole
 /// containment, and non-nesting are certified by Hypercurve before topology is
-/// authored. Line, rational Bézier, and non-periodic NURBS carriers retain
+/// authored. Procedural parallels and source restrictions retain their exact
+/// definitions and selected endpoints when no native image is available.
+/// Line, rational Bézier, and non-periodic NURBS carriers retain
 /// their native persistent families and domains; other exact path families
 /// are promoted without approximation to persistent rational Bézier or NURBS
 /// carriers. The returned model contains one validated open shell and no
@@ -342,8 +346,10 @@ pub fn planar_face(
 /// The profile parameter is retained as `u`; `v_start` and `v_end` are
 /// strictly ordered signed coefficients of `direction`. The two profile edges
 /// retain the profile's exact curve family and native domain, while the two
-/// connector edges are exact lines. The returned model contains one validated
-/// open shell and no solid.
+/// connector edges are exact lines. Selected profile endpoints retain their
+/// source parameters and spatial points; coordinate correspondences certify
+/// each complete boundary image without materializing those endpoints. The
+/// returned model contains one validated open shell and no solid.
 pub fn extrusion_patch(
     profile: Curve3,
     direction: Vector3,
@@ -352,6 +358,9 @@ pub fn extrusion_patch(
 ) -> Result<(ArenaModel, FaceId), ConstructionError> {
     crate::context::strict(|| {
         let v_domain = ParameterDomain::new(v_start, v_end)?;
+        if profile.domain().try_real_endpoints().is_none() {
+            return patches::retained_extrusion_patch(profile, direction, v_domain);
+        }
         let u_start = profile.domain().represented_start()?.clone();
         let u_end = profile.domain().represented_end()?.clone();
         let surface = Surface::extrusion(profile.clone(), direction.clone())?;
@@ -4073,7 +4082,7 @@ fn planar_curve_correspondence(
 }
 
 fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, ConstructionError> {
-    if curve.analytic_parallel().is_some() {
+    if curve.analytic_parallel().is_some() || curve.source_restriction().is_some() {
         let crate::geometry::SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
             return Err(ConstructionError::UnsupportedPlanarProfile);
         };
@@ -4129,34 +4138,35 @@ fn add_planar_path_wire(
     surface: &Surface,
 ) -> Result<crate::WireId, ConstructionError> {
     let curves = persistent_planar_curves(path.curves())?;
+    let spatial_curves = curves
+        .iter()
+        .map(|curve| lift_planar_pcurve(curve, surface))
+        .collect::<Result<Vec<_>, _>>()?;
     let points = curves
         .iter()
-        .map(|curve| {
+        .zip(&spatial_curves)
+        .map(|(curve, spatial)| {
             let start = curve.start();
             let represented;
             let point = if let Some(point) = start.coordinates() {
                 point
-            } else {
-                represented = crate::geometry::represented_curve_point(
-                    curve,
-                    curve
-                        .parameter_endpoints()
-                        .0
-                        .scalar()
-                        .ok_or(GeometryError::UnrepresentableParameter)?,
-                )?;
+            } else if let Some(parameter) = curve.parameter_endpoints().0.scalar() {
+                represented = crate::geometry::represented_curve_point(curve, parameter)?;
                 &represented
+            } else {
+                return spatial.point_at(spatial.domain().start());
             };
-            surface.point_at(&Point2::new(point.x().clone(), point.y().clone()))
+            surface
+                .point_at(&Point2::new(point.x().clone(), point.y().clone()))
+                .map(Into::into)
         })
         .collect::<Result<Vec<_>, _>>()?;
     let vertices = points
         .into_iter()
-        .map(|point| builder.vertex((point).into()))
+        .map(|point| builder.vertex(point))
         .collect::<Result<Vec<_>, _>>()?;
     let mut uses = Vec::with_capacity(curves.len());
-    for (index, pcurve) in curves.into_iter().enumerate() {
-        let spatial = lift_planar_pcurve(&pcurve, surface)?;
+    for (index, (pcurve, spatial)) in curves.into_iter().zip(spatial_curves).enumerate() {
         let domain = spatial.domain().clone();
         let curve = builder.curve(spatial)?;
         let edge = builder.edge(
@@ -4179,10 +4189,10 @@ fn validate_simple_curve_path(
     if profile
         .curves()
         .iter()
-        .any(|curve| curve.analytic_parallel().is_some())
+        .any(|curve| curve.geometry().is_none())
     {
         // Hypercurve owns regularity, intrinsic span injectivity and all
-        // inter-span contacts for retained procedural loops.
+        // inter-span contacts for retained procedural and selected loops.
         profile
             .simple_loop_orientation()
             .map_err(GeometryError::from)?;

@@ -19,7 +19,9 @@ pub fn cuboid(min: Point3, max: Point3) -> Result<BodySet, ConstructionError> {
 /// The outer [`CurvePath2`] is normalized counterclockwise and every hole is
 /// normalized clockwise. Complete path simplicity, pairwise non-contact, hole
 /// containment, and non-nesting are certified by Hypercurve before topology is
-/// authored. Line, rational Bézier, and non-periodic NURBS carriers retain
+/// authored. Procedural parallels and source restrictions retain their exact
+/// definitions and selected endpoints when no native image is available.
+/// Line, rational Bézier, and non-periodic NURBS carriers retain
 /// their native persistent families and domains; other exact path families
 /// are promoted without approximation to persistent rational Bézier or NURBS
 /// carriers. The returned model contains one validated open shell and no
@@ -43,8 +45,10 @@ pub fn planar_face(
 /// The profile parameter is retained as `u`; `v_start` and `v_end` are
 /// strictly ordered signed coefficients of `direction`. The two profile edges
 /// retain the profile's exact curve family and native domain, while the two
-/// connector edges are exact lines. The returned model contains one validated
-/// open shell and no solid.
+/// connector edges are exact lines. Selected profile endpoints retain their
+/// source parameters and spatial points; coordinate correspondences certify
+/// each complete boundary image without materializing those endpoints. The
+/// returned model contains one validated open shell and no solid.
 pub fn extrusion_patch(
     profile: Curve3,
     direction: Vector3,

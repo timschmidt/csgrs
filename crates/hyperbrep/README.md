@@ -226,10 +226,14 @@ The clean-break implementation currently provides:
 - validated open-shell `builder::planar_face` construction from exact
   `CurvePath2` outer and hole loops in any nondegenerate authored plane frame,
   with Hypercurve-owned simplicity/nesting proof and exact persistent
-  promotion of conic and polynomial spline boundaries;
+  promotion of conic and polynomial spline boundaries; procedural parallels
+  and source restrictions also retain selected endpoints, support holes and
+  edge subdivision, and survive affine transforms and exact native replay;
 - validated open-shell `builder::extrusion_patch` construction for any exact
   profile family, retaining the profile's native `u` domain and strictly
-  ordered finite sweep-coefficient bounds without direct arena manipulation;
+  ordered finite sweep-coefficient bounds, including selected profile domains
+  with retained connector origins and complete coordinate image proofs; see the
+  [selected-patch evidence](docs/evidence/2026-10-18-selected-surface-patches/README.md);
 - validated open-shell `builder::revolution_patch` construction with native
   meridian domains, exact latitude circles, complete profile/axis-clearance
   certification, and an explicit sub-period angular contract so complete

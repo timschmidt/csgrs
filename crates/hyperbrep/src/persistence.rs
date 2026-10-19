@@ -263,6 +263,7 @@ impl ArenaModel {
                 .curves()
                 .map(|(_, curve)| raw_curve3(curve.exact_data(), &mut graph))
                 .collect::<Result<Vec<_>, _>>()?;
+            let mut canonicalized_vertices = vec![false; vertices.len()];
             // Split analytic arcs may retain an exact endpoint-incidence proof
             // whose two independently serialized expressions do not replay as a
             // scalar equality. Publish the trusted curve evaluation as the
@@ -289,6 +290,8 @@ impl ArenaModel {
                             .ok_or(crate::GeometryError::UnrepresentableParameter)?,
                     )?,
                 ));
+                canonicalized_vertices[edge.start().index()] = true;
+                canonicalized_vertices[edge.end().index()] = true;
             }
             let mut pcurves = self
                 .pcurves()
@@ -321,23 +324,34 @@ impl ArenaModel {
                 let edge = self
                     .edge(edge_use.edge())
                     .expect("trusted edge use references a validated edge");
-                let (start, end) = match edge_use.direction() {
+                let (start_id, end_id) = match edge_use.direction() {
                     Direction::Forward => (edge.start(), edge.end()),
                     Direction::Reversed => (edge.end(), edge.start()),
                 };
-                // Project the coordinates actually emitted above. Analytic
-                // endpoint canonicalization may replace equal runtime
-                // expressions; mixing both representations changes the next
-                // archive and can obstruct independent incidence replay.
+                // Only changed analytic endpoints need a new planar image.
+                // Preserve every other pcurve's exact definition: projecting
+                // its unchanged spatial vertex reconstructs an equal scalar
+                // expression whose form can depend on warm proof caches.
+                // Repeating that reconstruction after import can grow the
+                // archive despite unchanged geometry and topology.
+                if !canonicalized_vertices[start_id.index()]
+                    && !canonicalized_vertices[end_id.index()]
+                {
+                    continue;
+                }
                 let (RawVertex::Coordinates(start), RawVertex::Coordinates(end)) =
-                    (&vertices[start.index()], &vertices[end.index()])
+                    (&vertices[start_id.index()], &vertices[end_id.index()])
                 else {
                     continue;
                 };
-                let start = project_raw_plane_point(start, origin, u, v)?;
-                let end = project_raw_plane_point(end, origin, u, v)?;
-                set_raw_pcurve_start(&mut pcurves[pcurve_index], start);
-                set_raw_pcurve_end(&mut pcurves[pcurve_index], end);
+                if canonicalized_vertices[start_id.index()] {
+                    let start = project_raw_plane_point(start, origin, u, v)?;
+                    set_raw_pcurve_start(&mut pcurves[pcurve_index], start);
+                }
+                if canonicalized_vertices[end_id.index()] {
+                    let end = project_raw_plane_point(end, origin, u, v)?;
+                    set_raw_pcurve_end(&mut pcurves[pcurve_index], end);
+                }
             }
             let mut surfaces = self
                 .surfaces()
