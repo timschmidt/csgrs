@@ -177,7 +177,9 @@ impl Record for Curve {
 
 #[derive(Deserialize)]
 pub(super) enum Pcurve {
-    PolynomialBranch(IgnoredAny),
+    PolynomialBranch {
+        maps: RationalMaps,
+    },
     Chord {
         start: Box<PlanarPoint>,
         end: Box<PlanarPoint>,
@@ -206,6 +208,7 @@ pub(super) enum Pcurve {
 impl Record for Pcurve {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::PolynomialBranch { maps } => maps.admit(budget),
             Self::Chord { start, end } => {
                 budget.record()?;
                 start.admit(budget)?;
@@ -224,10 +227,7 @@ impl Record for Pcurve {
                 budget.record()?;
                 source.admit(budget)
             }
-            Self::PolynomialBranch(_)
-            | Self::SourceRange(_)
-            | Self::Line(_)
-            | Self::CircularArc(_) => Ok(()),
+            Self::SourceRange(_) | Self::Line(_) | Self::CircularArc(_) => Ok(()),
             Self::RationalBezier {
                 homogeneous_controls,
             } => {
@@ -403,8 +403,73 @@ impl Record for Selection {
     }
 }
 
+pub(super) struct RationalMaps {
+    count: usize,
+    degree: usize,
+    elements: usize,
+}
+impl<'de> Deserialize<'de> for RationalMaps {
+    fn deserialize<D: Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
+        struct Counter;
+        impl<'de> Visitor<'de> for Counter {
+            type Value = RationalMaps;
+            fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                f.write_str("an array of rational maps")
+            }
+            fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+                let mut summary = RationalMaps {
+                    count: 0,
+                    degree: 0,
+                    elements: 0,
+                };
+                while let Some(map) = seq.next_element::<RationalMap>()? {
+                    summary.count += 1;
+                    for polynomial in map.numerators.into_iter().chain([map.denominator]) {
+                        summary.degree = summary
+                            .degree
+                            .max(polynomial.rows.saturating_sub(1))
+                            .max(polynomial.columns.saturating_sub(1));
+                        summary.elements += polynomial.entries();
+                    }
+                }
+                Ok(summary)
+            }
+        }
+        decoder.deserialize_seq(Counter)
+    }
+}
+impl Record for RationalMaps {
+    fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
+        for _ in 0..self.count {
+            budget.record()?;
+        }
+        budget.degree(self.degree)?;
+        budget.geometry(self.elements)
+    }
+}
+
+#[derive(Deserialize)]
+pub(super) struct RationalMap {
+    numerators: [Rows; 2],
+    denominator: Rows,
+}
+impl Record for RationalMap {
+    fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
+        for polynomial in self.numerators.into_iter().chain([self.denominator]) {
+            budget.degree(polynomial.rows.saturating_sub(1))?;
+            budget.degree(polynomial.columns.saturating_sub(1))?;
+            budget.geometry(polynomial.entries())?;
+        }
+        Ok(())
+    }
+}
+
 #[derive(Deserialize)]
 pub(super) enum PlanarPoint {
+    RationalImage {
+        source: Box<PlanarPoint>,
+        map: RationalMap,
+    },
     Coordinates(IgnoredAny),
     PolynomialFiber {
         equation: Rows,
@@ -431,6 +496,11 @@ pub(super) enum PlanarPoint {
 impl Record for PlanarPoint {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::RationalImage { source, map } => {
+                budget.record()?;
+                source.admit(budget)?;
+                map.admit(budget)
+            }
             Self::Coordinates(_) => Ok(()),
             Self::PolynomialFiber { equation } => {
                 budget.degree(equation.rows.saturating_sub(1))?;

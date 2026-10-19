@@ -48,6 +48,29 @@ pub(crate) fn represented_curve_point(curve: &Curve2, t: &Real) -> GeometryResul
 }
 
 impl Curve3 {
+    /// Restricts a retained planar image without rebasing its source chart.
+    /// Selected endpoints remain selected; affine images share the same path.
+    /// Other native families use their existing [`Self::subcurve`] operation.
+    pub fn restrict_source(&self, range: ParameterRange) -> GeometryResult<Self> {
+        crate::context::strict(|| {
+            if !self.domain().contains(range.start())? || !self.domain().contains(range.end())? {
+                return Err(GeometryError::ParameterOutsideDomain);
+            }
+            match &self.data.geometry {
+                CurveGeometry3::PlanarImage(image) => {
+                    Self::from_planar_image(image.restricted_to(&range)?)
+                        .map(|curve| curve.retaining_parameterization_of(self))
+                }
+                CurveGeometry3::AffineImage(image) => Self::affine_image(
+                    image.source.restrict_source(range)?,
+                    image.transform.clone(),
+                )
+                .map(|curve| curve.retaining_parameterization_of(self)),
+                _ => Err(GeometryError::UnsupportedSelectedEvaluation),
+            }
+        })
+    }
+
     /// Lifts an exact planar source through an injective affine plane frame.
     ///
     /// Represented endpoint intervals use the unit chart. Selected intervals
@@ -149,6 +172,8 @@ impl PlanarCurve3 {
             let a = a.source_restriction().map_or(a, |(source, _, _)| source);
             let b = b.source_restriction().map_or(b, |(source, _, _)| source);
             a == b
+                || matches!((a.polynomial_branch(), b.polynomial_branch()),
+                    (Some(a), Some(b)) if a.has_same_parameterization(b))
                 || matches!((a.analytic_parallel(), b.analytic_parallel()),
                 (Some(a), Some(b)) if a.parallel() == b.parallel())
         };

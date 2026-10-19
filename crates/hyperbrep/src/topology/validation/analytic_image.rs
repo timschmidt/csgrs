@@ -198,9 +198,9 @@ impl ArenaModelBuilder {
         else {
             return Err(BuildError::EdgeUseSupportMismatch);
         };
-        let (Some(start), Some(end)) =
-            (edge.domain.start().try_real(), edge.domain.end().try_real())
-        else {
+        if pcurve.curve().polynomial_branch().is_some()
+            || edge.domain.try_real_endpoints().is_none()
+        {
             let Curve3ExactData::PlanarImage(actual) = curve.exact_data() else {
                 return Err(BuildError::EdgeUseSupportMismatch);
             };
@@ -223,6 +223,10 @@ impl ArenaModelBuilder {
                 Err(BuildError::EdgeUseSupportMismatch)
             };
         };
+        let (start, end) = edge
+            .domain
+            .try_real_endpoints()
+            .expect("represented endpoints checked above");
         let expected = Curve3::from_planar_image(crate::geometry::PlanarCurve3 {
             source: pcurve.curve().clone(),
             origin,

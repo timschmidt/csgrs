@@ -393,6 +393,12 @@ impl ArenaModelBuilder {
                 CurveFamily2::RationalBezier,
                 SurfaceKind::RationalBezier,
                 ParameterCorrespondence::Affine { .. },
+            )
+            | (
+                Curve3Kind::PlanarImage,
+                CurveFamily2::ImplicitPolynomial,
+                SurfaceKind::RationalBezier,
+                ParameterCorrespondence::Affine { .. },
             ) => {
                 self.validate_rational_tensor_graph_image(curve, edge, edge_use, pcurve, surface)?;
             }

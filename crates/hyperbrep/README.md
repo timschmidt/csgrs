@@ -729,7 +729,7 @@ It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
 
 Selected geometry archive coverage and remaining replay limits are documented
-in [Archive version 13](docs/SELECTED_ARCHIVE.md).
+in [Archive version 14](docs/SELECTED_ARCHIVE.md).
 
 Conic inverse and curve/surface contact queries preserve distant authored
 angular charts and distinct full-period seam parameters. Retained Boolean
@@ -743,10 +743,10 @@ tensor patches and extrusions of native line/Bézier/NURBS profiles. Returned
 conservative bounds, affine transforms, sweep origins and checked replay.
 `Curve3::affine_image` preserves an original spatial curve under an invertible
 affine matrix, including sheared retained rotation curves.
-Selected angular/general procedural evaluation and complete surface-section
+Selected angular/general procedural evaluation and general surface-section
 arrangements remain open. See the [capability and evidence record](docs/evidence/2026-10-19-rational-surface-evaluation/README.md).
 
-Archive 13 retains whole native polynomial branches, selected restrictions,
+Archive 14 retains whole native polynomial branches, selected restrictions,
 reversal, similarities and spatial planar lifts. Shared exact equations,
 rectangles and construction/evaluation controls reconstruct the complete source
 graph before branch selection; serialized connectivity is never trusted.
@@ -755,3 +755,27 @@ Previous formats are rejected without compatibility adapters.
 before decoding scalars; it is not a total-work or heap bound. This persistence
 extension does not complete general surface sections or trim arrangements.
 See the [branch replay record](docs/evidence/2026-10-19-polynomial-branch-replay/README.md).
+
+Plane/rational-Bézier sections now use a complete polynomial decomposition of
+the whole UV rectangle. Interior loops, isolated contacts, cusps, crossings and
+disconnected branches retain their selected source charts, spatial curves and
+both pcurves. A strict control-net test resolves one-sided empty sections and
+coplanar containment. Nonempty polynomial sections require a certified injective
+projection into the plane; a normalized Jacobian interval proof admits nonlinear
+weighted images. Folded images, general NURBS sections and the solver's vertical,
+repeated or boundary-component cases remain explicit frontiers.
+
+`SurfaceSurfaceIntersection::Point`, `Points` and mixed-component points carry
+`GeometricPoint3`; use its exact queries or `try_coordinates()` for the narrower
+represented-coordinate view. `SurfaceIntersectionCurve::restrict_source` keeps
+selected trim endpoints and the original shared parameterization. Whole-image
+model validation checks the defining polynomial identity, including after
+affine transport and cold replay. Hypercurve proves equivalent rational images
+by exact divisibility of their coordinate residuals by the retained equation.
+Archive 14 replays ordered rational images with their original pole guards. These sections do not
+yet complete general surface intersections, derivatives at singular events,
+trim arrangements or solid Booleans on those arrangements. Solver degree and
+refinement controls are distinct from total work, memory and cancellation limits.
+
+The [plane/tensor section evidence](docs/evidence/2026-10-19-plane-tensor-sections/README.md)
+records the admitted domain, preserved corpus, independent checks and costs.

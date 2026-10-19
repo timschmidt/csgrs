@@ -20,6 +20,11 @@ pub enum CurvePointDefinition2 {
         parameter: BezierParameter2,
         root: hypersolve::IsolatedRootInterval,
     },
+    /// A rational plane image with its original denominator guard.
+    RationalImage {
+        source: CurvePoint2,
+        map: crate::RationalMap2,
+    },
     /// A rational curve evaluated at a retained parameter.
     Rational {
         source: RationalBezier2,
@@ -145,6 +150,7 @@ impl CurvePointDefinition2 {
     pub fn into_point(self) -> ExactCurveResult<CurvePoint2> {
         crate::policy::resolve_certified_operation(&CurveContext::STRICT, |policy| match self {
             Self::Coordinates(point) => Ok(point.into()),
+            Self::RationalImage { source, map } => source.rational_image(&map),
             Self::PolynomialFiber {
                 equation,
                 parameter,

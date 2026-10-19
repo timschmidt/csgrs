@@ -2901,6 +2901,54 @@
       "validation": "All-feature release BRep/IO suites pass 762 tests in 82 batches, with no failures or ignored tests. Focused solver topology and curve polynomial/rational/selected-field/work-budget regressions pass; the eight polynomial owner groups also pass in debug mode. All-target/all-feature Clippy for the four affected crates, warning-denied rustdoc, BRep fuzz-target compilation and formatting pass. Five shared complete public recipes pass natively and as five actual zero-import Wasmtime exports. They cover both full circle branches, selected cubic restrictions, splits/reversals/similarities, affine spatial lifts, repeated cold replay, singular incidence, algebraic events, disconnected components, exact 1e-12 loops, independent coordinate/field/plane identities, subsequent translation sweeps, malformed sources/selectors/ranges/controls and predecode limits, strict/approximate/strict and budget refusal/recovery. All 255 previous archive payloads match after only the declared version-13 migration; 15 new archive records retain 12 distinct payloads. Exact geometry, required model validation and deterministic bytes are checked separately. The original whole-branch export and two owner-composition probes fail on baseline and pass on candidate. The unchanged complete interior-loop surface-section success assertion still fails with UnsupportedIntersection on both revisions.",
       "cost_evidence": "Three alternating CPU-0 pinned process pairs retain all twenty previously successful workflows (six modeling/branch, four plane/pcurve and ten rational-surface/affine recipes), with first and three repeated fresh-input calls. Three absolute processes run all five new branch-replay groups. All assertions, materialization, required validation and replay remain inside measured calls. The forty median paired latency ratios range 0.887667 to 1.063365; 36 of 120 paired rows increase counted Rust allocation calls and 36 increase requested bytes. The six affected workflows add 1\u201312 Rust allocation calls and 18\u2013216 requested bytes per complete invocation; the other fourteen retain identical counters. Adverse profile_families first/repeated ratios are 1.063365/1.061363, and polynomial_branches ratios are 1.057161/1.054948. Maximum observed process RSS is 25288 KiB. Matched executable byte changes are {'preserved': 189680, 'prior': 259904, 'surface': 262496}. All adverse rows, native/WASM sizes and hashes are retained. Shared-host timings establish no speedup; Rust requested allocation traffic is not live heap and excludes foreign allocator internals. New successful branch replay has no prior successful timing baseline. Source controls add retained configuration storage; reconstructed polynomial sources are shared per archive definition.",
       "limits": "Whole polynomial branch replay does not complete general surface sections, dual-surface correspondence, derivative/image proofs or trim arrangements. The original interior-loop target remains open. Selected angular surfaces, general retained procedural extrusion profiles and the prior native-conic affine cold-replay blocker remain separate limitations. Archive 13 rejects formats through 12 without a compatibility decoder. The new solver_steps admission limit bounds each declared refinement/depth control individually; it does not sum solver work or bound heap, stack or cancellation. Existing total-resource gaps remain disclosed with external time containment. Source-path native/WASM projects do not establish installed distributions or production bindings. Runtime fuzz/ASan/lexicase, formal proofs, measured coverage, MSRV, full release/workflow and push gates remain unqualified. All 28 work packages remain open/in-progress. The eaa0cae54 push exception is consumed; this increment is not pushed."
+    },
+    {
+      "id": "plane-tensor-sections-2026-10-19",
+      "work_packages": [
+        "WP02",
+        "WP05a",
+        "WP05b",
+        "WP06",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P4",
+        "P5",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Construct complete admitted plane/rational-Bezier sections with joint rational images, both pcurves, whole-image validation through affine replay, selected contacts and archive 14.",
+      "sources": [
+        "../src/geometry/plane_tensor.rs",
+        "../src/geometry/planar_image.rs",
+        "../src/topology/validation/tensor.rs",
+        "../src/persistence/polynomial.rs",
+        "../src/persistence/planar_points.rs",
+        "../src/persistence/admission/shapes.rs",
+        "../../hypersolve/src/bivariate_arithmetic.rs",
+        "../../hypercurve/src/rational_map.rs",
+        "../../hypercurve/src/polynomial_curve.rs",
+        "../../hypercurve/src/polynomial_point.rs",
+        "../tests/support/plane_tensor_sections.rs"
+      ],
+      "evidence": "evidence/2026-10-19-plane-tensor-sections/manifest.json",
+      "validation": "All-feature release BRep/IO suites pass 769 tests in 83 batches, with no failures or ignored tests. Focused solver topology, homogeneous arithmetic and curve polynomial/rational/selected-field/work-budget regressions pass, including five rational-map owner tests. All-target/all-feature Clippy for the four affected crates, warning-denied rustdoc, BRep fuzz-target compilation and formatting pass. Seven shared public section recipes pass natively and as seven actual zero-import Wasmtime exports. They cover the unchanged full 3x3 interior-circle fixture, nonlinear weighted images, selected restriction, reversal, noncircular cubic/cusp/node sections, rational and nonrational isolated contacts, disconnected and mixed-dimensional sets, exact 1e-12 loops, empty and contained sets, original pole guards, malformed replay/admission limits, strict/approximate/strict and budget refusal/recovery, and typed solver/image frontiers. Both pcurve images are independently revalidated over the whole branch after cold replay and after affine transport plus replay. A surface with matching endpoints and a different interior is rejected. The models contain geometry, edges and pcurves; they are not closed solids or trimmed faces. All 270 previous archive payloads match after only the declared version-14 migration; 35 new archive records retain 33 distinct payloads. Exact geometric assertions, required model/image validation and deterministic bytes are checked separately. The byte-preserved standalone interior-loop success assertion fails on the clean baseline with UnsupportedIntersection and passes on the candidate; its shared copy differs only by rustfmt formatting. Strengthened downstream tests reproduced an affine-replay whole-image proof failure before the owner fix; no new Unknown or weaker assertion replaces those successes.",
+      "cost_evidence": "Three alternating CPU-0 pinned process pairs retain all twenty-five previously successful workflows: six modeling/branch, four plane/pcurve, ten rational-surface/affine and five polynomial-replay recipes. First and three repeated fresh-input calls retain assertions, materialization, required validation and replay. Three absolute processes run six new section groups; the unchanged original fixture runs for correctness but is excluded from cost rows because it prints its full Debug result. The fifty median paired latency ratios range 0.984841 to 1.824178; 16 exceed the 10% review marker. 36 of 150 paired rows increase counted Rust allocation calls and 114 increase requested bytes. Maximum observed process RSS in the initial set is 24736 KiB. Matched executable byte changes are {'preserved': 251496, 'prior': 235952, 'surface': 236280, 'branches': 235272}. All adverse rows, native/WASM sizes and hashes are retained. Shared-host timings establish no speedup or significance; requested allocation traffic is not live heap and excludes foreign allocator internals. New successful sections have no prior successful timing baseline. The active-total-degree composition and no-map/definition-equality fast paths preserve native source queries while avoiding unnecessary rational-expression growth; the sixteen-image exact owner chain is a finite composition test, not a general resource bound. A predeclared fixed confirmation ran three additional alternating pairs for all twenty-five preserved workflows on CPU 10, using the same binaries and complete calls. Its fifty median ratios range 0.948329 to 1.562860, with 5 phases above the 10% review marker and maximum process RSS 25056 KiB. Every outcome, iteration count, allocation count and requested-byte count matches the original same-side samples. Both sets remain separate; neither replaces adverse observations in the other. Sampled CPU frequencies varied, but these observations do not establish a cause for the timing changes. Slower common phases include primitive repeated calls, clipped/void first calls and joint-form first calls. This is retained as a certified completion extension; stable latency non-regression and any general speedup remain unqualified. Controlled performance follow-up is required before either claim.",
+      "limits": "The new complete section domain is plane/rational-Bezier over the entire native rectangle when the finite-fiber solver and whole-box injectivity certificate succeed. Vertical/repeated/boundary components, noninjective or insufficiently certified projections, general NURBS and surface/surface sections, implicit derivative/event queries, trimmed arrangements and their curved solid Booleans remain open. Selected angular/procedural evaluation and the prior native-conic affine cold-replay blocker remain separate limitations. Archive 14 rejects formats through 13 without a compatibility decoder; old bytes require the declared header and empty-map migration. Individual solver controls and metadata limits are not total-work, coefficient-growth, heap, stack or cancellation bounds; external time containment is retained. Source-path native/WASM projects do not establish installed distributions or production bindings. Runtime fuzz/ASan/lexicase, formal proofs, measured coverage, MSRV, full release/workflow and push gates remain unqualified. All 28 work packages remain open/in-progress. The eaa0cae54 push exception is consumed; this increment is not pushed."
     }
   ],
   "work_packages": [
@@ -3075,6 +3123,7 @@
     }
   ],
   "next_actions": [
+    "Continue WP05a/WP05b/WP06 from evidence/2026-10-19-plane-tensor-sections/next-domains.md. The original full interior-loop plane/tensor target now succeeds with both pcurves and whole-image validation through affine replay. Preserve that success corpus while extending implicit differential/event queries, complete dual-chart trim arrangements and spatial image certificates. General curved solid Booleans and total-resource/release gates remain open.",
     "Continue WP05a/WP05b/WP06 from evidence/2026-10-19-polynomial-branch-replay/next-domains.md. Whole polynomial branches now replay with shared source graphs and original controls. Complete dual-chart surface sections, domain-image/derivative evidence and event incidence before arrangements; preserve the unchanged complete interior-loop success target and every existing full fixture.",
     "Continue WP05a/WP05b from evidence/2026-10-19-rational-surface-evaluation/next-domains.md. Joint rational tensor/extrusion point images now survive affine rotation/translation edge composition and archive 12 replay. Full selected section restrictions, branch/event graphs and the unchanged interior-loop success target remain open. Preserve the native-conic cold-replay blocker before enabling automatic conic affine model transport, all prior fixtures and adverse cost evidence.",
     "Continue WP05a/WP05b from evidence/2026-10-19-surface-evaluation/next-domains.md. Plane UV images now retain joint source evidence; nonlinear rational/tensor/procedural images, selected whole-section restrictions and complete branch/event replay remain required. Preserve the original interior-loop success assertion, all prior exact fixtures, archive migrations and adverse cost evidence.",

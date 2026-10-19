@@ -1,5 +1,6 @@
 //! Whole polynomial branch definitions; connectivity is always reconstructed.
 
+use super::planar_points::RawRationalMap;
 use super::*;
 use hypercurve::{PolynomialCurveBranch2, PolynomialCurveSet2, Similarity2};
 use hypersolve::AlgebraicFiberRootIsolationConfig;
@@ -110,6 +111,7 @@ pub(super) struct RawPolynomialBranch {
     range: [RawParameter; 2],
     reversed: bool,
     transform: Option<[Real; 6]>,
+    maps: Vec<RawRationalMap>,
 }
 
 impl GraphEncoder {
@@ -136,6 +138,11 @@ impl GraphEncoder {
                 self.curve_parameter(range.end())?,
             ],
             reversed: branch.is_reversed(),
+            maps: branch
+                .rational_maps()
+                .iter()
+                .map(RawRationalMap::from_map)
+                .collect(),
             transform: branch.image_transform().map(|map| {
                 let (a, b, c, d, x, y) = map.affine_components();
                 [
@@ -185,6 +192,11 @@ impl RawPolynomialBranch {
         let mut curve = curve
             .subcurve(graph.curve_parameter(start)?, graph.curve_parameter(end)?)
             .map_err(GeometryError::from)?;
+        for map in self.maps {
+            curve = curve
+                .rational_image(&map.into_map())
+                .map_err(GeometryError::from)?;
+        }
         if let Some([a, b, c, d, x, y]) = self.transform {
             let transform =
                 Similarity2::try_from_real_affine(a, b, c, d, x, y).map_err(GeometryError::from)?;

@@ -79,6 +79,8 @@ mod polynomial_spline;
 mod prepared;
 mod rational_bezier;
 mod rational_bezier_general;
+mod rational_map;
+pub use rational_map::RationalMap2;
 #[cfg(test)]
 mod rational_bezier_tests;
 mod reconstruct;

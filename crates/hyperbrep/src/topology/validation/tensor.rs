@@ -11,6 +11,11 @@ impl ArenaModelBuilder {
         pcurve: &Pcurve,
         surface: &Surface,
     ) -> Result<(), BuildError> {
+        if let Some((scale, offset)) = edge_use.parameter_correspondence.affine_coefficients()
+            && surface.certifies_polynomial_section_image(curve, pcurve.curve(), scale, offset)?
+        {
+            return Ok(());
+        }
         if self.validate_affine_bilinear_inverse_pcurve(curve, edge, edge_use, pcurve, surface)? {
             return Ok(());
         }

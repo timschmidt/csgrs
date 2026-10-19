@@ -3,7 +3,7 @@
 use super::*;
 
 mod rational;
-pub(super) use rational::RationalSurfacePoint;
+pub(super) use rational::{RationalSurfacePoint, tensor_coefficients};
 
 impl Surface {
     /// Evaluates a joint UV point, retaining its exact source when necessary.

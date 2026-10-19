@@ -8846,8 +8846,11 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
                 Classification::Decided(value) => value,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            return point
-                .coordinate_parameter(axis)
+            let coordinate = match point.coordinate_parameter(axis, policy)? {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            return coordinate
                 .cmp_by_refinement(&other, policy)
                 .map(|order| order.map(|order| if reverse { order.reverse() } else { order }));
         }

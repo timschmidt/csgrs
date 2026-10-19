@@ -48,6 +48,7 @@ pub struct PolynomialCurveBranch2 {
     pub(super) range: CurveParameterRange2,
     endpoints: [CurvePoint2; 2],
     transform: Option<Similarity2>,
+    maps: Vec<crate::RationalMap2>,
     pub(super) reversed: bool,
 }
 
@@ -135,6 +136,7 @@ impl PolynomialCurveSet2 {
                         events[slab + 1].1[arc.right_root()].clone(),
                     ],
                     transform: None,
+                    maps: Vec::new(),
                     reversed: false,
                 }));
             }
@@ -201,6 +203,76 @@ impl PolynomialCurveBranch2 {
     pub fn image_transform(&self) -> Option<&Similarity2> {
         self.transform.as_ref()
     }
+    /// Ordered rational images applied before the final similarity.
+    pub fn rational_maps(&self) -> &[crate::RationalMap2] {
+        &self.maps
+    }
+
+    /// A sufficient whole-source parameterization certificate. Restrictions
+    /// and traversal flags do not change the source-coordinate evaluation map;
+    /// callers must separately check their requested parameter domains.
+    /// Equal definitions take the cheap path. Otherwise, exact divisibility by
+    /// the retained source equation proves equality of both rational images.
+    /// Failure to obtain that sufficient certificate returns false; it does
+    /// not prove distinct images. Composition has no additional total-work or
+    /// coefficient-size bound.
+    pub fn has_same_parameterization(&self, other: &Self) -> bool {
+        if self.slab != other.slab
+            || self.root != other.root
+            || !(self.shares_source(other) || self.source == other.source)
+        {
+            return false;
+        }
+        if self.maps == other.maps && self.transform == other.transform {
+            return true;
+        }
+        use hypersolve::bivariate_arithmetic::{bivariate_multiply, bivariate_subtract};
+        for axis in 0..2 {
+            let (Some((a, b)), Some((c, d))) =
+                (self.coordinate_form(axis), other.coordinate_form(axis))
+            else {
+                return false;
+            };
+            let residual =
+                bivariate_subtract(&bivariate_multiply(&a, &d), &bivariate_multiply(&c, &b));
+            // Every original denominator was certified over the whole source
+            // box at construction. Cross multiplication therefore preserves
+            // the domain, including removable factors retained by each map.
+            if hypersolve::divide_bivariate_polynomial_exact(&residual, self.topology().equation())
+                .is_none()
+            {
+                return false;
+            }
+        }
+        true
+    }
+
+    fn coordinate_form(
+        &self,
+        axis: usize,
+    ) -> Option<(
+        hypersolve::BivariatePolynomial,
+        hypersolve::BivariatePolynomial,
+    )> {
+        use hypersolve::BivariatePolynomial;
+        let numerator = if axis == 0 {
+            vec![Vec::new(), vec![Real::one()]]
+        } else {
+            vec![vec![Real::zero(), Real::one()]]
+        };
+        let mut pair = (
+            BivariatePolynomial::new(numerator),
+            BivariatePolynomial::new(vec![vec![Real::one()]]),
+        );
+        if let Some(transform) = &self.transform {
+            pair = crate::RationalMap2::from_similarity(transform).pullback(&pair.0, &pair.1)?;
+        }
+        for map in self.maps.iter().rev() {
+            pair = map.pullback(&pair.0, &pair.1)?;
+        }
+        Some(pair)
+    }
+
     /// Whether two branches retain the same topology allocation.
     pub fn shares_source(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.source, &other.source)
@@ -273,18 +345,25 @@ impl PolynomialCurveBranch2 {
         let point = points
             .pop()
             .ok_or_else(|| invalid(CurveError::InvalidBezierAlgebraicParameter))?;
-        Ok(self.map_point(point, policy))
+        self.map_point(point, policy)
     }
 
-    fn map_point(&self, point: CurvePoint2, policy: &CurveContext) -> CurvePoint2 {
-        match &self.transform {
+    fn map_point(
+        &self,
+        mut point: CurvePoint2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurvePoint2> {
+        for map in &self.maps {
+            point = point.rational_image(map)?;
+        }
+        Ok(match &self.transform {
             Some(transform) => CurvePoint2::from(BezierSimilarityPoint2::new(
                 point,
                 transform.clone(),
                 policy,
             )),
             None => point,
-        }
+        })
     }
 
     pub(super) fn reversed(&self) -> Self {
@@ -329,9 +408,16 @@ impl PolynomialCurveBranch2 {
     pub(super) fn bounds(&self) -> ExactCurveResult<Aabb2> {
         // The entire certified rectangle is conservative for every restriction.
         let domain = self.topology().domain();
+        let mut bounds = Aabb2::new_unchecked(
+            Point2::new(domain.first[0].clone(), domain.second[0].clone()),
+            Point2::new(domain.first[1].clone(), domain.second[1].clone()),
+        );
+        for map in &self.maps {
+            bounds = map.bounds(&bounds)?;
+        }
         let mut corners = Vec::with_capacity(4);
-        for x in &domain.first {
-            for y in &domain.second {
+        for x in [bounds.min().x(), bounds.max().x()] {
+            for y in [bounds.min().y(), bounds.max().y()] {
                 let point = Point2::new(x.clone(), y.clone());
                 corners.push(
                     self.transform
@@ -345,6 +431,29 @@ impl PolynomialCurveBranch2 {
 }
 
 impl Curve2 {
+    /// Maps a polynomial branch through rational coordinates, retaining its
+    /// source parameter chart and original pole guards. The whole source box
+    /// must certify a nonzero denominator; other carriers report a blocker.
+    /// Injectivity is a separate claim, checked by callers that require it.
+    pub fn rational_image(&self, map: &crate::RationalMap2) -> ExactCurveResult<Self> {
+        let source = self
+            .polynomial_branch()
+            .ok_or_else(|| blocked(UncertaintyReason::Unsupported))?;
+        map.bounds(&source.bounds()?)?;
+        let mut branch = source.clone();
+        if let Some(transform) = branch.transform.take() {
+            branch
+                .maps
+                .push(crate::RationalMap2::from_similarity(&transform));
+        }
+        branch.maps.push(map.clone());
+        branch.endpoints = [
+            source.endpoints[0].rational_image(map)?,
+            source.endpoints[1].rational_image(map)?,
+        ];
+        Ok(Self::from_polynomial_branch(branch))
+    }
+
     /// Borrows a retained polynomial branch and its source/root identity.
     pub fn polynomial_branch(&self) -> Option<&PolynomialCurveBranch2> {
         match &self.data.carrier {

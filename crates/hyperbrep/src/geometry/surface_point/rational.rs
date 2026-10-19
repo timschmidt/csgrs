@@ -24,22 +24,7 @@ impl RationalSurfacePoint {
         uv: &hypercurve::CurvePoint2,
     ) -> GeometryResult<Self> {
         let coefficients = match &surface.data.geometry {
-            SurfaceGeometry::RationalBezier(surface) => {
-                let map = |component| {
-                    tensor_bernstein(
-                        &surface
-                            .homogeneous_controls()
-                            .iter()
-                            .map(|row| {
-                                row.iter()
-                                    .map(|p| homogeneous_component(p, component))
-                                    .collect()
-                            })
-                            .collect::<Vec<_>>(),
-                    )
-                };
-                [map(0), map(1), map(2), map(3)]
-            }
+            SurfaceGeometry::RationalBezier(surface) => tensor_coefficients(surface),
             SurfaceGeometry::Nurbs(surface) => {
                 let u_span = selected_span(
                     uv,
@@ -122,6 +107,24 @@ impl RationalSurfacePoint {
         );
         Ok(uv.rational_form(numerator, self.weight.clone())?)
     }
+}
+
+pub(in crate::geometry) fn tensor_coefficients(
+    surface: &RationalBezierSurface,
+) -> [BivariatePolynomial; 4] {
+    std::array::from_fn(|component| {
+        tensor_bernstein(
+            &surface
+                .homogeneous_controls()
+                .iter()
+                .map(|row| {
+                    row.iter()
+                        .map(|point| homogeneous_component(point, component))
+                        .collect()
+                })
+                .collect::<Vec<_>>(),
+        )
+    })
 }
 
 fn homogeneous_component(point: &HomogeneousPoint3, component: usize) -> Real {

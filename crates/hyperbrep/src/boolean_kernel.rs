@@ -3208,10 +3208,23 @@ fn trim_face_pair_intersection(
         && face_is_boundaryless(second_model, second_face)
     {
         return match intersection {
-            SurfaceSurfaceIntersection::Point(point) => {
-                Ok(FacePairTrim::PointContact(point.as_ref().clone()))
-            }
-            SurfaceSurfaceIntersection::Points(points) => Ok(point_contacts_trim(points.clone())),
+            SurfaceSurfaceIntersection::Point(point) => Ok(FacePairTrim::PointContact(
+                point
+                    .try_coordinates()
+                    .ok_or(GeometryError::UnsupportedSelectedEvaluation)?
+                    .clone(),
+            )),
+            SurfaceSurfaceIntersection::Points(points) => Ok(point_contacts_trim(
+                points
+                    .iter()
+                    .map(|point| {
+                        point
+                            .try_coordinates()
+                            .cloned()
+                            .ok_or(GeometryError::UnsupportedSelectedEvaluation)
+                    })
+                    .collect::<Result<Vec<_>, _>>()?,
+            )),
             SurfaceSurfaceIntersection::Curve(curve) => {
                 Ok(FacePairTrim::SurfaceCurveFragments(vec![
                     curve.as_ref().clone(),
@@ -3289,12 +3302,28 @@ fn trim_face_pair_intersection(
         );
     }
     if let SurfaceSurfaceIntersection::Point(point) = intersection {
-        return trim_point_contact(first_model, first_face, second_model, second_face, point);
+        return trim_point_contact(
+            first_model,
+            first_face,
+            second_model,
+            second_face,
+            point
+                .try_coordinates()
+                .ok_or(GeometryError::UnsupportedSelectedEvaluation)?,
+        );
     }
     if let SurfaceSurfaceIntersection::Points(points) = intersection {
         let mut retained = Vec::new();
         for point in points {
-            match trim_point_contact(first_model, first_face, second_model, second_face, point)? {
+            match trim_point_contact(
+                first_model,
+                first_face,
+                second_model,
+                second_face,
+                point
+                    .try_coordinates()
+                    .ok_or(GeometryError::UnsupportedSelectedEvaluation)?,
+            )? {
                 FacePairTrim::PointContact(point) => retained.push(point),
                 FacePairTrim::NoContact => {}
                 FacePairTrim::Unresolved(reason) => {
@@ -4053,7 +4082,15 @@ fn trim_intersection_components(
 
     let mut point_contacts = Vec::new();
     for point in components.points() {
-        match trim_point_contact(first_model, first_face, second_model, second_face, point)? {
+        match trim_point_contact(
+            first_model,
+            first_face,
+            second_model,
+            second_face,
+            point
+                .try_coordinates()
+                .ok_or(GeometryError::UnsupportedSelectedEvaluation)?,
+        )? {
             FacePairTrim::PointContact(point) => point_contacts.push(point),
             FacePairTrim::NoContact => {}
             FacePairTrim::Unresolved(reason) => return Ok(FacePairTrim::Unresolved(reason)),
@@ -14889,7 +14926,7 @@ mod tests {
                 matches!(
                     pair.relation(),
                     FacePairRelation::Exact(SurfaceSurfaceIntersection::Point(point))
-                        if **point == p(0, 0, 6)
+                        if point.try_coordinates() == Some(&p(0, 0, 6))
                 )
             })
             .collect::<Vec<_>>();
@@ -15126,8 +15163,11 @@ mod tests {
         .unwrap();
         let section =
             SurfaceIntersectionCurve::from_iso_v_pcurves(circle, Real::zero(), Real::zero());
-        let components =
-            crate::SurfaceIntersectionComponents::new(vec![p(0, 0, 2)], Vec::new(), vec![section]);
+        let components = crate::SurfaceIntersectionComponents::new(
+            vec![p(0, 0, 2).into()],
+            Vec::new(),
+            vec![section],
+        );
 
         let FacePairTrim::Components {
             point_contacts,

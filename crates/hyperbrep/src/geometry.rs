@@ -22,6 +22,7 @@ mod location;
 mod pcurve;
 mod periodic_charts;
 mod planar_image;
+mod plane_tensor;
 mod planes;
 mod point;
 mod rotation;
@@ -1963,9 +1964,9 @@ pub enum SurfaceSurfaceIntersection {
     /// exactly contained in the other surface's carrier.
     ContainedSurface(SurfaceIntersectionOperand),
     /// The surfaces touch at one exact point.
-    Point(Box<Point3>),
+    Point(Box<GeometricPoint3>),
     /// The surfaces meet at multiple isolated exact points.
-    Points(Vec<Point3>),
+    Points(Vec<GeometricPoint3>),
     /// Two planes meet in an unbounded exact line.
     Line(Box<SurfaceIntersectionLine>),
     /// The surfaces meet in multiple unbounded exact lines.
@@ -1983,8 +1984,8 @@ pub enum SurfaceSurfaceIntersection {
     /// Two finite carriers meet in one exact curve with retained parameter
     /// images on both surfaces.
     Curve(Box<SurfaceIntersectionCurve>),
-    /// Two finite carriers meet in multiple disjoint exact curves with
-    /// retained parameter images on both surfaces.
+    /// Two finite carriers meet in exact branches with retained parameter
+    /// images on both surfaces. Branches may share singular or event endpoints.
     Curves(Vec<SurfaceIntersectionCurve>),
     /// The surfaces meet in exact components of more than one dimension.
     Components(Box<SurfaceIntersectionComponents>),
@@ -1998,14 +1999,14 @@ pub enum SurfaceSurfaceIntersection {
 /// relations produced by [`Surface::intersect_surface`].
 #[derive(Clone, Debug)]
 pub struct SurfaceIntersectionComponents {
-    points: Vec<Point3>,
+    points: Vec<GeometricPoint3>,
     curves: Vec<Curve3>,
     surface_curves: Vec<SurfaceIntersectionCurve>,
 }
 
 impl SurfaceIntersectionComponents {
     pub(crate) fn new(
-        points: Vec<Point3>,
+        points: Vec<GeometricPoint3>,
         curves: Vec<Curve3>,
         surface_curves: Vec<SurfaceIntersectionCurve>,
     ) -> Self {
@@ -2023,7 +2024,7 @@ impl SurfaceIntersectionComponents {
     }
 
     /// Returns the isolated exact point components.
-    pub fn points(&self) -> &[Point3] {
+    pub fn points(&self) -> &[GeometricPoint3] {
         &self.points
     }
 
@@ -2467,6 +2468,35 @@ impl SurfaceIntersectionCurve {
             SurfaceIntersectionOperand::First => &self.first_boundary_contacts.end,
             SurfaceIntersectionOperand::Second => &self.second_boundary_contacts.end,
         }
+    }
+
+    /// Restricts a retained planar section in its original common parameter
+    /// chart, including selected endpoints. No coordinate reconstruction or
+    /// unit-interval rebasing occurs. Other spatial families remain typed.
+    pub fn restrict_source(&self, range: ParameterRange) -> GeometryResult<Self> {
+        crate::context::strict(|| {
+            let curve = self.curve.restrict_source(range.clone())?;
+            let start = range.start().compare(self.curve.domain().start())? == Ordering::Equal;
+            let end = range.end().compare(self.curve.domain().end())? == Ordering::Equal;
+            let contacts = |source: &SurfaceIntersectionBoundaryContacts| {
+                SurfaceIntersectionBoundaryContacts {
+                    start: if start {
+                        source.start.clone()
+                    } else {
+                        Vec::new()
+                    },
+                    end: if end { source.end.clone() } else { Vec::new() },
+                }
+            };
+            Ok(Self {
+                curve,
+                first_pcurve: self.first_pcurve.subcurve(range.start(), range.end())?,
+                second_pcurve: self.second_pcurve.subcurve(range.start(), range.end())?,
+                image_certificates: self.image_certificates,
+                first_boundary_contacts: contacts(&self.first_boundary_contacts),
+                second_boundary_contacts: contacts(&self.second_boundary_contacts),
+            })
+        })
     }
 
     /// Restricts the spatial curve and both exact pcurve mappings to one
@@ -4303,6 +4333,16 @@ impl Surface {
     }
 
     /// Intersects this surface with another supported surface.
+    ///
+    /// Rational Bézier/plane sections include complete interior loops,
+    /// isolated points and singular branches when the homogeneous pullback is
+    /// admitted by Hypersolve's default finite-fiber topology controls and a
+    /// whole-rectangle injectivity proof certifies its planar spatial image.
+    /// Both pcurves keep the original source parameters. Folded images and
+    /// unsupported vertical, repeated or boundary components fail typed;
+    /// no incomplete trace is returned as a complete section. The configured
+    /// solver work context participates where instrumented, but these limits
+    /// do not bound all coefficient growth, heap use, elapsed time or cancellation.
     pub fn intersect_surface(&self, other: &Self) -> GeometryResult<SurfaceSurfaceIntersection> {
         crate::context::strict(|| match (&self.data.geometry, &other.data.geometry) {
             (SurfaceGeometry::Plane(first), SurfaceGeometry::Plane(second)) => {
@@ -5769,7 +5809,10 @@ fn intersect_plane_rational_bezier_surface(
             Err(error) => return Err(error),
         }
     }
-    intersect_plane_rational_bilinear(plane, surface)
+    match intersect_plane_rational_bilinear(plane, surface) {
+        Err(GeometryError::UnsupportedIntersection) => plane_tensor::intersect(plane, surface),
+        result => result,
+    }
 }
 
 fn intersect_plane_rational_bilinear(
@@ -5866,7 +5909,7 @@ fn sign_definite_bilinear_boundary_intersection(
                 .position(|zero| *zero)
                 .expect("one sign-definite bilinear zero");
             Ok(Some(SurfaceSurfaceIntersection::Point(Box::new(
-                bilinear_corner(surface, index),
+                (bilinear_corner(surface, index)).into(),
             ))))
         }
         2 if zeros[0] && zeros[1] => Ok(Some(SurfaceSurfaceIntersection::Curve(Box::new(
@@ -5886,7 +5929,7 @@ fn sign_definite_bilinear_boundary_intersection(
                 .iter()
                 .enumerate()
                 .filter(|(_, zero)| **zero)
-                .map(|(index, _)| bilinear_corner(surface, index))
+                .map(|(index, _)| bilinear_corner(surface, index).into())
                 .collect(),
         ))),
         3 => {
@@ -6646,7 +6689,7 @@ fn intersect_plane_revolution(
     }
     if let Some(point) = singular {
         if sections.is_empty() {
-            return Ok(SurfaceSurfaceIntersection::Point(Box::new(point)));
+            return Ok(SurfaceSurfaceIntersection::Point(Box::new((point).into())));
         }
         return Err(GeometryError::UnsupportedIntersection);
     }
@@ -7549,7 +7592,7 @@ fn intersect_plane_sphere(
                 crate::STRICT_PREDICATES,
             ))? == Ordering::Equal
             {
-                return Ok(SurfaceSurfaceIntersection::Point(Box::new(center)));
+                return Ok(SurfaceSurfaceIntersection::Point(Box::new((center).into())));
             }
             let radius = (radius_squared - distance_squared)
                 .sqrt()
@@ -7791,7 +7834,7 @@ fn intersect_plane_cone(
     ))? {
         Ordering::Less => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => Ok(SurfaceSurfaceIntersection::Point(Box::new(
-            cone.apex.clone(),
+            (cone.apex.clone()).into(),
         ))),
         Ordering::Greater => {
             let (v, radius) = cone_section_parameters(cone, &axial_height)?;
@@ -7870,7 +7913,7 @@ fn intersect_plane_torus(
                     let projection_scale = (center_separation / normal.norm_squared())
                         .map_err(GeometryError::Numeric)?;
                     return Ok(SurfaceSurfaceIntersection::Point(Box::new(
-                        torus.center.clone() - normal.clone() * projection_scale,
+                        (torus.center.clone() - normal.clone() * projection_scale).into(),
                     )));
                 }
                 Ordering::Less => {}
@@ -8239,7 +8282,7 @@ fn intersect_coaxial_sphere_cone(
     }
     if has_apex && slant_parameters.is_empty() {
         return Ok(SurfaceSurfaceIntersection::Point(Box::new(
-            cone.apex.clone(),
+            (cone.apex.clone()).into(),
         )));
     }
     if slant_parameters.is_empty() {
@@ -8281,7 +8324,7 @@ fn intersect_coaxial_sphere_cone(
     }
     if has_apex {
         return Ok(SurfaceSurfaceIntersection::Components(Box::new(
-            SurfaceIntersectionComponents::new(vec![cone.apex.clone()], circles, retained),
+            SurfaceIntersectionComponents::new(vec![cone.apex.clone().into()], circles, retained),
         )));
     }
     if retain_pcurves {
@@ -8426,7 +8469,7 @@ fn intersect_coaxial_cones(
     }
     if first_order == Ordering::Equal || second_order == Ordering::Equal {
         return Ok(SurfaceSurfaceIntersection::Point(Box::new(
-            first.apex.clone(),
+            (first.apex.clone()).into(),
         )));
     }
 
@@ -8469,7 +8512,7 @@ fn intersect_counteroriented_coaxial_cones(
     }
     if axial_order == Ordering::Equal {
         return Ok(SurfaceSurfaceIntersection::Point(Box::new(
-            first.apex.clone(),
+            (first.apex.clone()).into(),
         )));
     }
 
@@ -9153,7 +9196,7 @@ fn intersect_spheres(
         crate::STRICT_PREDICATES,
     ))? {
         Ordering::Less => Ok(SurfaceSurfaceIntersection::None),
-        Ordering::Equal => Ok(SurfaceSurfaceIntersection::Point(Box::new(center))),
+        Ordering::Equal => Ok(SurfaceSurfaceIntersection::Point(Box::new((center).into()))),
         Ordering::Greater => {
             let radius = circle_radius_squared
                 .sqrt()
@@ -11884,7 +11927,12 @@ mod tests {
         else {
             panic!("a transverse revolution-axis contact must retain its singular point");
         };
-        assert_points_equal(&point, &Point3::origin());
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
 
         let coincident_profile = Surface::revolution(
             Curve3::line(p(2, 0, 0), p(4, 0, 0)).unwrap(),
@@ -14382,7 +14430,7 @@ mod tests {
         else {
             panic!("one zero Bernstein corner must be one exact point");
         };
-        assert_eq!(*single_corner, p(0, 0, 0));
+        assert_eq!(single_corner.try_coordinates().unwrap(), &p(0, 0, 0));
 
         let opposite_corners = boundary_surface([[0, 1], [1, 0]]);
         let SurfaceSurfaceIntersection::Points(points) =
@@ -14390,13 +14438,28 @@ mod tests {
         else {
             panic!("opposite zero Bernstein corners must be two exact points");
         };
-        assert_eq!(points, vec![p(0, 0, 0), p(2, 2, 0)]);
+        assert_eq!(
+            points
+                .iter()
+                .map(|p| p.try_coordinates().unwrap())
+                .collect::<Vec<_>>(),
+            vec![&p(0, 0, 0), &p(2, 2, 0)]
+        );
         let SurfaceSurfaceIntersection::Points(swapped_points) =
             plane.intersect_surface(&opposite_corners).unwrap()
         else {
             panic!("multiple exact points must survive operand reversal");
         };
-        assert_eq!(swapped_points, points);
+        assert_eq!(
+            swapped_points
+                .iter()
+                .map(|p| p.try_coordinates().unwrap())
+                .collect::<Vec<_>>(),
+            points
+                .iter()
+                .map(|p| p.try_coordinates().unwrap())
+                .collect::<Vec<_>>()
+        );
 
         let SurfaceSurfaceIntersection::Curve(boundary_edge) = boundary_surface([[0, 0], [1, 1]])
             .intersect_surface(&plane)
@@ -15890,7 +15953,12 @@ mod tests {
         else {
             panic!("apex plane must retain the singular point");
         };
-        assert_points_equal(&point, &Point3::origin());
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
         let below = Surface::plane(p(0, 0, -1), Vector3::x(), Vector3::y()).unwrap();
         assert!(matches!(
             cone.intersect_surface(&below).unwrap(),
@@ -16179,7 +16247,12 @@ mod tests {
         else {
             panic!("an outer-radius axial plane must retain the exact tangent point");
         };
-        assert_points_equal(&point, &p(4, 0, 0));
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &p(4, 0, 0),
+        );
         let oblique = Surface::plane(
             Point3::origin(),
             Vector3::x(),
@@ -16573,7 +16646,12 @@ mod tests {
         else {
             panic!("the lower coaxial sphere must retain its isolated apex contact");
         };
-        assert_points_equal(&point, &Point3::origin());
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
 
         let mixed_dimension =
             Surface::sphere(p(0, 0, 5), Vector3::x(), Vector3::y(), Vector3::z(), r(5)).unwrap();
@@ -16583,7 +16661,12 @@ mod tests {
             panic!("apex-plus-circle contact must retain both exact dimensions");
         };
         assert_eq!(components.points().len(), 1);
-        assert_points_equal(&components.points()[0], &Point3::origin());
+        assert_points_equal(
+            components.points()[0]
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
         assert!(components.curves().is_empty());
         assert_eq!(components.surface_curves().len(), 1);
         let mixed_circle = &components.surface_curves()[0];
@@ -16670,7 +16753,12 @@ mod tests {
         assert_eq!(rotated.points().len(), 1);
         assert_eq!(rotated.curves().len(), 1);
         assert!(rotated.surface_curves().is_empty());
-        assert_points_equal(&rotated.points()[0], &Point3::origin());
+        assert_points_equal(
+            rotated.points()[0]
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
         assert_points_equal(
             &rotated.curves()[0].start().unwrap(),
             &Point3::new(q(24, 5), Real::zero(), q(32, 5)),
@@ -16950,7 +17038,12 @@ mod tests {
         else {
             panic!("different coaxial angles with one apex must meet at that apex");
         };
-        assert_points_equal(&point, &Point3::origin());
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
 
         let same_geometry_rotated = Surface::cone(
             Point3::origin(),
@@ -17078,7 +17171,12 @@ mod tests {
         else {
             panic!("opposite cones with one apex must meet at that apex");
         };
-        assert_points_equal(&point, &Point3::origin());
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
         let opening_away = Surface::cone(
             Point3::new(Real::zero(), Real::zero(), q(-5, 2)),
             Vector3::x(),
@@ -18053,7 +18151,12 @@ mod tests {
         else {
             panic!("tangent plane must produce one point");
         };
-        assert_points_equal(&point, &p(0, 0, 2));
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &p(0, 0, 2),
+        );
         let disjoint_plane = Surface::plane(p(0, 0, 3), Vector3::x(), Vector3::y()).unwrap();
         assert!(matches!(
             sphere.intersect_surface(&disjoint_plane).unwrap(),
@@ -18176,7 +18279,12 @@ mod tests {
         else {
             panic!("tangent spheres must produce one point");
         };
-        assert_points_equal(&point, &p(2, 0, 0));
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &p(2, 0, 0),
+        );
         assert!(matches!(
             sphere.intersect_surface(&sphere).unwrap(),
             SurfaceSurfaceIntersection::Coincident

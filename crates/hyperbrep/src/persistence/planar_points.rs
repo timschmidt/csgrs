@@ -5,8 +5,34 @@ use super::*;
 use hypercurve::{CurvePointDefinition2, HomogeneousControl2, Similarity2};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct RawRationalMap {
+    numerators: [Vec<Vec<Real>>; 2],
+    denominator: Vec<Vec<Real>>,
+}
+
+impl RawRationalMap {
+    pub(super) fn from_map(map: &hypercurve::RationalMap2) -> Self {
+        Self {
+            numerators: map.numerators().clone().map(|p| p.coefficients),
+            denominator: map.denominator().coefficients.clone(),
+        }
+    }
+    pub(super) fn into_map(self) -> hypercurve::RationalMap2 {
+        hypercurve::RationalMap2::new(
+            self.numerators.map(hypersolve::BivariatePolynomial::new),
+            hypersolve::BivariatePolynomial::new(self.denominator),
+        )
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub(super) enum RawPlanarPoint {
     Coordinates([Real; 2]),
+    RationalImage {
+        source: Box<RawPlanarPoint>,
+        map: RawRationalMap,
+    },
     PolynomialFiber {
         equation: Vec<Vec<Real>>,
         parameter: RawParameter,
@@ -44,6 +70,10 @@ impl GraphEncoder {
         point: &hypercurve::CurvePoint2,
     ) -> Result<RawPlanarPoint, PersistenceError> {
         Ok(match point.definition().map_err(GeometryError::from)? {
+            CurvePointDefinition2::RationalImage { source, map } => RawPlanarPoint::RationalImage {
+                source: Box::new(self.planar_point(&source)?),
+                map: RawRationalMap::from_map(&map),
+            },
             CurvePointDefinition2::PolynomialFiber {
                 equation,
                 parameter,
@@ -114,6 +144,10 @@ impl SelectionGraph {
         raw: RawPlanarPoint,
     ) -> Result<hypercurve::CurvePoint2, PersistenceError> {
         let definition = match raw {
+            RawPlanarPoint::RationalImage { source, map } => CurvePointDefinition2::RationalImage {
+                source: self.planar_point(*source)?,
+                map: map.into_map(),
+            },
             RawPlanarPoint::PolynomialFiber {
                 equation,
                 parameter,

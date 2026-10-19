@@ -34,6 +34,67 @@ pub fn bivariate_compose(
     result
 }
 
+/// Returns `w^degree * polynomial(x/w, y/w)` as a polynomial.
+///
+/// The maps share one pair of source variables. `None` means the supplied
+/// homogenizing degree is too small or its storage length overflows. This
+/// arithmetic operation proves neither that `w` is nonzero nor injectivity;
+/// callers must retain and check the original denominator guards. Degree is
+/// a storage dimension, not a bound on coefficient size or total work.
+pub fn bivariate_homogeneous_compose(
+    polynomial: &BivariatePolynomial,
+    x: &BivariatePolynomial,
+    y: &BivariatePolynomial,
+    w: &BivariatePolynomial,
+    degree: usize,
+) -> Option<BivariatePolynomial> {
+    let powers = |value: &BivariatePolynomial| {
+        let mut powers = Vec::new();
+        powers.try_reserve_exact(degree.checked_add(1)?).ok()?;
+        powers.push(BivariatePolynomial::new(vec![vec![Real::one()]]));
+        for i in 0..degree {
+            powers.push(bivariate_multiply(&powers[i], value));
+        }
+        Some(powers)
+    };
+    let xs = powers(x)?;
+    let ys = powers(y)?;
+    let ws = powers(w)?;
+    let mut result = BivariatePolynomial::new(Vec::new());
+    for (i, row) in polynomial.coefficients.iter().enumerate() {
+        for (j, coefficient) in row.iter().enumerate() {
+            if coefficient.definitely_zero() {
+                continue;
+            }
+            let k = degree.checked_sub(i.checked_add(j)?)?;
+            let term = bivariate_scale(
+                bivariate_multiply(&bivariate_multiply(xs.get(i)?, ys.get(j)?), &ws[k]),
+                coefficient,
+            );
+            result = bivariate_add(&result, &term);
+        }
+    }
+    Some(result)
+}
+
+/// Highest total power `i + j` of a coefficient not known to be zero.
+///
+/// Empty and zero polynomials return `Some(0)`. `None` denotes integer
+/// overflow. Unlike the sum of stored axis degrees, this is the degree needed
+/// for homogeneous composition; over-homogenizing inserts avoidable powers
+/// of the denominator at every subsequent rational image.
+pub fn bivariate_active_total_degree(polynomial: &BivariatePolynomial) -> Option<usize> {
+    let mut degree = 0;
+    for (i, row) in polynomial.coefficients.iter().enumerate() {
+        for (j, coefficient) in row.iter().enumerate() {
+            if !coefficient.definitely_zero() {
+                degree = degree.max(i.checked_add(j)?);
+            }
+        }
+    }
+    Some(degree)
+}
+
 /// Swaps the two parameters of a bivariate polynomial.
 pub fn bivariate_swap_parameters(polynomial: &BivariatePolynomial) -> BivariatePolynomial {
     let first_count = polynomial
@@ -839,5 +900,25 @@ mod tests {
             evaluate(&p, &s, &(Real::one() - &t))
         );
         assert_eq!(polynomial_derivative(&[r(1), r(2), r(3)]), vec![r(2), r(6)]);
+    }
+    #[test]
+    fn homogeneous_composition_uses_active_total_degree() {
+        let circle =
+            BivariatePolynomial::new(vec![vec![r(-1), r(0), r(1)], vec![r(0)], vec![r(1)]]);
+        assert_eq!(bivariate_active_total_degree(&circle), Some(2));
+        assert_eq!(bivariate_storage_bidegree_sum(&circle), 4);
+        let x = BivariatePolynomial::new(vec![vec![r(0)], vec![r(1)]]);
+        let y = BivariatePolynomial::new(vec![vec![r(0), r(1)]]);
+        let w = BivariatePolynomial::new(vec![vec![r(1)], vec![r(1)]]);
+        let image = bivariate_homogeneous_compose(&circle, &x, &y, &w, 2).unwrap();
+        // u^2+v^2-(1+u)^2 = v^2-1-2u, including at w=0.
+        for (u, v) in [(-3, 2), (-1, 7), (0, 0), (1, 2), (2, -3)] {
+            assert_eq!(evaluate(&image, &r(u), &r(v)), r(v * v - 1 - 2 * u));
+        }
+        assert!(bivariate_homogeneous_compose(&circle, &x, &y, &w, 1).is_none());
+        assert_eq!(
+            bivariate_active_total_degree(&BivariatePolynomial::new(vec![vec![r(0); 7]; 9])),
+            Some(0)
+        );
     }
 }

@@ -1,4 +1,4 @@
-# Selected geometry in archive version 13
+# Selected geometry in archive version 14
 
 The additive `PolynomialFiber` planar-point record stores a bivariate equation,
 the selected first parameter, the second-coordinate interval and an optional
@@ -7,15 +7,18 @@ there is no serialized certainty or trusted root-count flag. Retained-chord
 endpoints consume this point record through the public model loader. Mixed
 affine scalar images of these points now use the existing `AffineForm` record,
 retaining the original point and coefficients through scalar charts and spatial
-planar-image replay. General rational-image persistence still requires owner
-support. Input admission charges both stored polynomial degrees, every
+planar-image replay. `RationalImage { source, map }` retains ordered rational plane images of
+polynomial points. The map stores two numerator polynomials and its original
+shared denominator. Replay checks every original denominator at the same joint
+source before accepting the image; cancellation never removes a pole. Input admission charges both stored polynomial degrees, every
 coefficient and every row header, including
-empty rows, before scalar decoding. Whole polynomial branches and their spatial
-planar images use the shared source definitions described below. Complete
-surface-section correspondences and trim arrangements remain separate work.
+empty rows, before scalar decoding. Whole polynomial branches and their spatial planar images use the shared source
+definitions described below. Plane/tensor section curves retain both pcurves
+through these carriers. A saved model does not serialize a complete intersection
+query result or certify a trim arrangement.
 
-Version 13 retains authored coordinates and selected curve images in the same
-model. It rejects versions through 12; there is no migration reader.
+Version 14 retains authored coordinates and selected curve images in the same
+model. It rejects versions through 13; there is no migration reader.
 `RawModel::from_json(json, &limits)` admits input syntax and record structure
 under explicit `ArchiveLimits`, checks the format version before decoding exact
 scalar data and rejects trailing input.
@@ -31,9 +34,9 @@ The caller passes `ArchiveLimits` explicitly. Its defaults and units are:
 | `input_bytes` | 16 MiB | All UTF-8 bytes, including whitespace and ignored fields |
 | `nesting_depth` | 1,024 | Simultaneously open JSON objects and arrays |
 | `tokens` | 1,000,000 | Opening containers, quoted strings (including keys), and primitive lexemes |
-| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve and polynomial sources, inline extrusion/revolution profiles, planar-image sources, translation/rotation origins, affine-form point definitions and analytic-parallel sources |
+| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve and polynomial sources, inline extrusion/revolution profiles, planar-image sources, rational maps and their nested point sources, translation/rotation origins, affine-form point definitions and analytic-parallel sources |
 | `degree` | 256 | Each declared NURBS axis degree, inferred Bezier axis degree, stored polynomial axis degree, or declared polynomial decomposition axis/projection degree limit |
-| `geometry_elements` | 1,000,000 | Aggregate controls (including polynomial parallel sources), weights, knots, root/point/branch-source coefficients, and tensor or polynomial row headers |
+| `geometry_elements` | 1,000,000 | Aggregate controls (including polynomial parallel sources), weights, knots, root/point/branch-source and rational-map coefficients, and tensor or polynomial row headers |
 | `solver_steps` | 1,024 | Each declared polynomial-source refinement-round, fiber subdivision-depth or fiber refinement-step limit, considered individually |
 | `topology_references` | 1,000,000 | Aggregate wire edge uses, face inner wires, shell faces and solid void shells |
 
@@ -140,21 +143,31 @@ one reconstructed source; definitions with different controls remain distinct.
 Input admission charges stored dimensions, every row and coefficient, and each
 declared control before scalar reconstruction.
 
-`PolynomialBranch { source, slab, root, range, reversed, transform }` pcurves
+`PolynomialBranch { source, slab, root, range, reversed, transform, maps }` pcurves
 reference that collection. Replay first runs Hypersolve's complete decomposition
 from the equation, rectangle and original controls, then builds Hypercurve's
 native branches. It checks the slab/root indices and ascending source range,
-applies an optional exact similarity and restores traversal. Branches,
+applies every rational map in order, then an optional exact similarity, and
+restores traversal. `maps` is required even when empty. Each map must certify a
+nonzero original denominator over the current conservative source box before
+replay can publish a finite branch. This proves a finite parametrized image,
+not injectivity; complete surface-section construction separately checks its
+spatial image certificate. Branches,
 restrictions and planar lifts share the reconstructed source. No event graph,
 sampled contour, connectivity or certainty flag is accepted as trusted input.
 Zero equations, invalid rectangles, exhausted construction controls, invalid
 indices/ranges and invalid similarities retain typed failures. Loading alone
 does not prove a valid face or solid; model validation remains required.
 
-This is a breaking format. Prior corpus comparisons permit only the 12→13
-version header and a new empty `polynomial_sources` collection; all other bytes
-must match. Exact geometry, topology and replay are checked independently of
-deterministic bytes. See the [whole-branch replay evidence](evidence/2026-10-19-polynomial-branch-replay/README.md).
+This is a breaking format. The 13→14 corpus migration changes only the version
+header and appends `maps: []` to each existing polynomial-branch definition.
+All other old bytes must match. New rational maps have independent semantic,
+guard, composition and deterministic replay tests. The [section evidence](evidence/2026-10-19-plane-tensor-sections/README.md)
+records full-image validation after affine transport and cold replay as well as
+the exact corpus migration. There is no compatibility
+reader. The earlier 12→13 migration added only the version header and empty
+`polynomial_sources` collection; its [whole-branch replay evidence](evidence/2026-10-19-polynomial-branch-replay/README.md)
+remains unchanged.
 
 Pcurves also retain `AnalyticParallel { source, distance, range, reversed }`.
 The source is a polynomial quadratic/cubic control array or homogeneous rational

@@ -17,6 +17,7 @@ use crate::{
 pub(crate) struct PolynomialPoint2 {
     base: BezierParameter2,
     fiber: BezierAlgebraicSelectedFiberParameter2,
+    maps: Vec<std::sync::Arc<crate::RationalMap2>>,
 }
 
 impl PolynomialPoint2 {
@@ -25,7 +26,31 @@ impl PolynomialPoint2 {
         polynomial: &BivariatePolynomial,
         policy: &CurveContext,
     ) -> CurveResult<Classification<hyperreal::RealSign>> {
-        self.fiber.predicate_sign(polynomial, policy)
+        if self.maps.is_empty() {
+            return self.fiber.predicate_sign(polynomial, policy);
+        }
+        let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let Some((numerator, denominator)) = self.pullback(polynomial, &one) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let sign = match self.fiber.predicate_sign(&denominator, policy)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if sign == hyperreal::RealSign::Zero {
+            return Err(CurveError::ZeroRationalPointDenominator);
+        }
+        Ok(self.fiber.predicate_sign(&numerator, policy)?.map(|value| {
+            if sign == hyperreal::RealSign::Negative {
+                match value {
+                    hyperreal::RealSign::Positive => hyperreal::RealSign::Negative,
+                    hyperreal::RealSign::Negative => hyperreal::RealSign::Positive,
+                    value => value,
+                }
+            } else {
+                value
+            }
+        }))
     }
 
     pub(crate) fn rational_parameter(
@@ -34,9 +59,18 @@ impl PolynomialPoint2 {
         denominator: &BivariatePolynomial,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveParameter2>> {
+        if self.maps.is_empty() {
+            return Ok(self
+                .fiber
+                .rational_image_in_retained_field(numerator, denominator, policy)?
+                .map(CurveParameter2::from_selected_fiber));
+        }
+        let Some((numerator, denominator)) = self.pullback(numerator, denominator) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
         Ok(self
             .fiber
-            .rational_image_in_retained_field(numerator, denominator, policy)?
+            .rational_image_in_retained_field(&numerator, &denominator, policy)?
             .map(CurveParameter2::from_selected_fiber))
     }
 
@@ -77,12 +111,21 @@ impl PolynomialPoint2 {
                 CurvePoint2(CurvePointData2::Polynomial(std::sync::Arc::new(Self {
                     base: base.clone(),
                     fiber,
+                    maps: Vec::new(),
                 })))
             })
             .collect())
     }
 
     pub(crate) fn definition(&self) -> crate::CurvePointDefinition2 {
+        if !self.maps.is_empty() {
+            let mut source = self.clone();
+            let map = source.maps.pop().expect("nonempty map chain");
+            return crate::CurvePointDefinition2::RationalImage {
+                source: CurvePoint2(CurvePointData2::Polynomial(std::sync::Arc::new(source))),
+                map: (*map).clone(),
+            };
+        }
         crate::CurvePointDefinition2::PolynomialFiber {
             equation: self.fiber.defining_fiber().0.clone(),
             parameter: self.base.clone(),
@@ -90,7 +133,44 @@ impl PolynomialPoint2 {
         }
     }
 
-    pub(crate) fn coordinate_parameter(&self, axis: Axis2) -> CurveParameter2 {
+    pub(crate) fn mapped(&self, map: &crate::RationalMap2) -> CurvePoint2 {
+        let mut point = self.clone();
+        point.maps.push(std::sync::Arc::new(map.clone()));
+        CurvePoint2(CurvePointData2::Polynomial(std::sync::Arc::new(point)))
+    }
+
+    fn pullback(
+        &self,
+        numerator: &BivariatePolynomial,
+        denominator: &BivariatePolynomial,
+    ) -> Option<(BivariatePolynomial, BivariatePolynomial)> {
+        let mut pair = (numerator.clone(), denominator.clone());
+        for map in self.maps.iter().rev() {
+            pair = map.pullback(&pair.0, &pair.1)?;
+        }
+        Some(pair)
+    }
+
+    pub(crate) fn coordinate_parameter(
+        &self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveParameter2>> {
+        if self.maps.is_empty() {
+            return Ok(Classification::Decided(self.source_coordinate(axis)));
+        }
+        let polynomial = match axis {
+            Axis2::X => BivariatePolynomial::new(vec![vec![Real::zero()], vec![Real::one()]]),
+            Axis2::Y => BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]),
+        };
+        self.rational_parameter(
+            &polynomial,
+            &BivariatePolynomial::new(vec![vec![Real::one()]]),
+            policy,
+        )
+    }
+
+    fn source_coordinate(&self, axis: Axis2) -> CurveParameter2 {
         match axis {
             Axis2::X => self.base.clone().into(),
             Axis2::Y => CurveParameter2::from_selected_fiber(self.fiber.clone()),
@@ -104,18 +184,17 @@ impl PolynomialPoint2 {
         value: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Ordering>> {
-        self.fiber
-            .predicate_sign(
-                &BivariatePolynomial::new(vec![vec![-value.clone(), b.clone()], vec![a.clone()]]),
-                policy,
-            )
-            .map(|sign| {
-                sign.map(|sign| match sign {
-                    hyperreal::RealSign::Negative => Ordering::Less,
-                    hyperreal::RealSign::Zero => Ordering::Equal,
-                    hyperreal::RealSign::Positive => Ordering::Greater,
-                })
+        self.polynomial_sign(
+            &BivariatePolynomial::new(vec![vec![-value.clone(), b.clone()], vec![a.clone()]]),
+            policy,
+        )
+        .map(|sign| {
+            sign.map(|sign| match sign {
+                hyperreal::RealSign::Negative => Ordering::Less,
+                hyperreal::RealSign::Zero => Ordering::Equal,
+                hyperreal::RealSign::Positive => Ordering::Greater,
             })
+        })
     }
 
     pub(crate) fn circle_residual_sign(
@@ -125,7 +204,7 @@ impl PolynomialPoint2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<hyperreal::RealSign>> {
         let two = Real::from(2);
-        self.fiber.predicate_sign(
+        self.polynomial_sign(
             &BivariatePolynomial::new(vec![
                 vec![
                     center.x() * center.x() + center.y() * center.y() - radius_squared,
@@ -144,21 +223,28 @@ impl PolynomialPoint2 {
         [a, b, c]: &[Real; 3],
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveParameter2>> {
+        if !self.maps.is_empty() {
+            return self.rational_parameter(
+                &BivariatePolynomial::new(vec![vec![c.clone(), b.clone()], vec![a.clone()]]),
+                &BivariatePolynomial::new(vec![vec![Real::one()]]),
+                policy,
+            );
+        }
         if a.definitely_zero() {
             if b.definitely_zero() {
                 return Ok(Classification::Decided(c.clone().into()));
             }
             return self
-                .coordinate_parameter(Axis2::Y)
+                .source_coordinate(Axis2::Y)
                 .affine_image_unbounded(b, c, policy);
         }
         if b.definitely_zero() {
             return self
-                .coordinate_parameter(Axis2::X)
+                .source_coordinate(Axis2::X)
                 .affine_image_unbounded(a, c, policy);
         }
         if let BezierParameter2::Exact(base) = &self.base {
-            return self.coordinate_parameter(Axis2::Y).affine_image_unbounded(
+            return self.source_coordinate(Axis2::Y).affine_image_unbounded(
                 b,
                 &(a * base + c),
                 policy,
@@ -191,9 +277,16 @@ impl PolynomialPoint2 {
             Err(_) => return Classification::Uncertain(UncertaintyReason::Predicate),
         };
         let (bottom, top) = fiber.isolating_bounds();
-        Classification::Decided(Aabb2::new_unchecked(
+        let mut bounds = Aabb2::new_unchecked(
             Point2::new(lower.clone(), bottom.clone()),
             Point2::new(upper.clone(), top.clone()),
-        ))
+        );
+        for map in &self.maps {
+            let Ok(image) = map.bounds(&bounds) else {
+                return Classification::Uncertain(UncertaintyReason::Predicate);
+            };
+            bounds = image;
+        }
+        Classification::Decided(bounds)
     }
 }
