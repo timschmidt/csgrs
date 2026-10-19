@@ -28,6 +28,7 @@ This README describes crate version `0.3.1`.
 | `LineSeg2`, `CircularArc2`, `Segment2` | Native line/arc primitives and their common enum |
 | `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, `RationalBezier2` | Polynomial and rational Bézier carriers |
 | `PolynomialSplineCurve2`, `NurbsCurve2` | Validated B-spline and NURBS curves |
+| `PolynomialCurveSet2`, `PolynomialCurveBranch2` | Complete solver-certified polynomial zero sets as native graph branches and isolated points |
 | `Curve2` | Shared exact curve carrier with borrowed operations |
 | `CurveNativeSegment2` | Proof of a complete oriented line/arc image, borrowing the original curve |
 | `CurveNativeImage2` | Complete native curve image, retaining its source and selected-root authority |
@@ -40,6 +41,20 @@ This README describes crate version `0.3.1`.
 
 `CurveRegion2` is the sole public filled-region carrier. Native line/arc
 specializations remain private fast paths inside the unified kernel.
+
+`PolynomialCurveSet2::from_topology()` consumes a complete
+`hypersolve::bivariate_topology::BivariateCurveTopology`. Its `Curve2` branches
+retain the equation, projection slab, ordered fiber root and selected event
+endpoints. Evaluation, subdivision, reversal, conservative bounds and similarity
+transforms keep the original first-coordinate parameter chart and shared source.
+`CurvePointDefinition2::PolynomialFiber` replays the selected base and fiber
+together; untrusted singleton claims are checked. Isolated points remain separate
+from branches. This collection does not establish winding or a filled region.
+General derivatives, rational Bézier promotion, filled arrangements, and branch
+archive replay remain unsupported. Mixed affine forms can be signed in the local
+fiber; constructing their scalar parameter is restricted when both coefficients
+are nonzero and the base parameter is algebraic. Fiber subdivision/refinement
+limits and instrumented work budgets are not total-work or heap-byte bounds.
 
 `CurvePoint2::definition()` retains supported rational/parallel source images,
 correlated coordinate expressions, similarities and intersections of exact

@@ -262,9 +262,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
                 | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
                 | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-                | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
-                    None
-                }
+                | CurvePoint2(
+                    CurvePointData2::Similarity(_)
+                    | CurvePointData2::Endpoint(_)
+                    | CurvePointData2::Polynomial(_),
+                ) => None,
             };
             if let Some(classification) = direct {
                 match classification {
@@ -280,6 +282,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
                 let bounds = match endpoint {
+                    CurvePoint2(CurvePointData2::Polynomial(point)) => {
+                        point.bounds(refinement_steps, &self.data.policy)
+                    }
                     CurvePoint2(CurvePointData2::Endpoint(point)) => {
                         point.bounds(refinement_steps, &self.data.policy)
                     }
@@ -382,7 +387,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
             | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
+            | CurvePoint2(
+                CurvePointData2::Similarity(_)
+                | CurvePointData2::Endpoint(_)
+                | CurvePointData2::Polynomial(_),
+            ) => None,
         };
         match direct {
             Some(decided @ Classification::Decided(_)) => Ok(decided),
@@ -1154,7 +1163,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             | CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
             | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+            | CurvePoint2(
+                CurvePointData2::Similarity(_)
+                | CurvePointData2::Endpoint(_)
+                | CurvePointData2::Polynomial(_),
+            ) => {
                 return Ok(None);
             }
         };

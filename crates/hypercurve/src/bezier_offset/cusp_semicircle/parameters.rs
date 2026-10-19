@@ -4186,7 +4186,11 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 | CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
                 | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
                 | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-                | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)),
+                | CurvePoint2(
+                    CurvePointData2::Similarity(_)
+                    | CurvePointData2::Endpoint(_)
+                    | CurvePointData2::Polynomial(_),
+                ),
             )
             | None => None,
         })

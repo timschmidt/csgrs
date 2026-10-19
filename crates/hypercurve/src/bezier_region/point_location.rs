@@ -110,7 +110,11 @@ pub(crate) fn classify_point_evidence_against_retained_loop(
         | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
         | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
         | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-        | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
+        | CurvePoint2(
+            CurvePointData2::Similarity(_)
+            | CurvePointData2::Endpoint(_)
+            | CurvePointData2::Polynomial(_),
+        ) => None,
     };
     match direct {
         Some(decided @ Classification::Decided(_)) => Ok(decided),

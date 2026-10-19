@@ -61,6 +61,20 @@ authority. This is partial solver-work accounting: scalar precision, complete
 geometry work, memory, deadlines, cancellation and worker allocations are not
 covered. See the [operation-scope contract](ARCHITECTURE.md#operation-scopes).
 
+## Planar polynomial branch prerequisite
+
+Hypercurve consumes complete admitted rational bivariate zero-set graphs as
+native branches and separate isolated points. Branches retain selected source
+endpoints and ordered fiber identity through evaluation, subdivision, reversal
+and similarity; bounds conservatively enclose the full source rectangle.
+Correlated point definitions replay through the existing selected-fiber owner.
+The BRep archive accepts these definitions in retained-chord endpoints, charges
+both equation degrees and coefficient/row entries, and rejects forged singletons.
+See the [finite evidence](evidence/2026-10-19-polynomial-branches/README.md).
+This does not supply general derivatives, filled arrangements, tensor-surface
+images, both section charts or whole implicit-branch archives. The original
+public biquadratic interior-loop section still reports `UnsupportedIntersection`.
+
 ## Spatial curve carriers
 
 Procedural analytic-parallel pcurves replay quadratic/cubic/homogeneous rational

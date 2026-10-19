@@ -77,6 +77,9 @@ pub(crate) fn point_affine_form_parameter(
         ))
     };
     match &source.0 {
+        CurvePointData2::Polynomial(point) => {
+            return point.affine_parameter(&[a.clone(), b.clone(), c.clone()], policy);
+        }
         CurvePointData2::Algebraic(point) => {
             if let Some((x, y, w)) = point.retained_coordinate_polynomials() {
                 let parameter = match point.source_parameter(policy)? {
@@ -209,6 +212,7 @@ pub(crate) fn point_affine_form_order_to_real(
         ));
     }
     match &point.0 {
+        CurvePointData2::Polynomial(point) => point.affine_order(a, b, value, policy),
         CurvePointData2::Exact(point) => Ok(compare_reals(
             &Real::dot2_refs([a, b], [point.x(), point.y()]),
             value,

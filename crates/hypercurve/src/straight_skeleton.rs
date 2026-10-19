@@ -55,7 +55,9 @@ impl CurveFamily2 {
                 StraightSkeletonCurveFamilySupport2::CertifiedLineOrCircularArc
             }
             Self::PolynomialBSpline => StraightSkeletonCurveFamilySupport2::CertifiedLineImage,
-            Self::AnalyticParallel => StraightSkeletonCurveFamilySupport2::Unsupported,
+            Self::AnalyticParallel | Self::ImplicitPolynomial => {
+                StraightSkeletonCurveFamilySupport2::Unsupported
+            }
         }
     }
 }

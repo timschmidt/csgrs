@@ -391,6 +391,9 @@ impl Curve2 {
     }
 
     pub(crate) fn source_traversal_is_reversed(&self) -> bool {
+        if let Some(branch) = self.polynomial_branch() {
+            return branch.reversed;
+        }
         self.source_range().map_or_else(
             || {
                 self.retained_fragment()
@@ -434,6 +437,13 @@ impl Curve2 {
         end: CurveParameter2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        if let Some(branch) = self.polynomial_branch() {
+            return branch
+                .restricted(start, end, policy)
+                .map(Self::from_polynomial_branch)
+                .map_err(|error| error.with_operation(CurveOperation2::Subdivision));
+        }
+
         if self.geometry().is_some()
             && let (Some(BezierParameter2::Exact(start)), Some(BezierParameter2::Exact(end))) =
                 (start.as_bezier_parameter(), end.as_bezier_parameter())
@@ -491,7 +501,9 @@ impl Curve2 {
     pub(super) fn source_range(&self) -> Option<&CurveSourceRange2> {
         match &self.data.carrier {
             CurveCarrier2::SourceRange(range) => Some(range),
-            CurveCarrier2::Native(_) | CurveCarrier2::Restricted(_) => None,
+            CurveCarrier2::Native(_)
+            | CurveCarrier2::Restricted(_)
+            | CurveCarrier2::Polynomial(_) => None,
         }
     }
 

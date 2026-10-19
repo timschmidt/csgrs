@@ -205,6 +205,8 @@ point_from_evidence! {
 pub(crate) enum CurvePointData2 {
     /// The contact point is represented directly by [`Real`](crate::Real) coordinates.
     Exact(Point2),
+    /// A correlated point selected on a rational polynomial plane curve.
+    Polynomial(std::sync::Arc<crate::polynomial_point::PolynomialPoint2>),
     /// The contact point is retained as exact algebraic point evidence.
     ///
     /// A retained rational-expression status may defer coordinate images
@@ -255,6 +257,10 @@ impl CurvePoint2 {
             (Self(CurvePointData2::Algebraic(first)), Self(CurvePointData2::Algebraic(second))) => {
                 first.shares_storage(second)
             }
+            (
+                Self(CurvePointData2::Polynomial(first)),
+                Self(CurvePointData2::Polynomial(second)),
+            ) => std::sync::Arc::ptr_eq(first, second),
             (
                 Self(CurvePointData2::AlgebraicChordPair(_)),
                 Self(CurvePointData2::AlgebraicChordPair(_)),
@@ -368,6 +374,33 @@ impl CurvePoint2 {
             return Classification::Decided(equal);
         }
         match (self, other) {
+            (Self(CurvePointData2::Polynomial(_)), _)
+            | (_, Self(CurvePointData2::Polynomial(_))) => {
+                let orders = [Axis2::X, Axis2::Y].map(|axis| {
+                    crate::bezier_offset::algebraic_chord_point_coordinate_order(
+                        self, other, axis, policy,
+                    )
+                });
+                if orders.iter().any(|order| {
+                    matches!(
+                        order,
+                        Ok(Classification::Decided(
+                            std::cmp::Ordering::Less | std::cmp::Ordering::Greater
+                        ))
+                    )
+                }) {
+                    Classification::Decided(false)
+                } else if orders.iter().all(|order| {
+                    matches!(
+                        order,
+                        Ok(Classification::Decided(std::cmp::Ordering::Equal))
+                    )
+                }) {
+                    Classification::Decided(true)
+                } else {
+                    Classification::Uncertain(UncertaintyReason::Predicate)
+                }
+            }
             (Self(CurvePointData2::Endpoint(_)), _) | (_, Self(CurvePointData2::Endpoint(_))) => {
                 unreachable!("endpoint projections handled above")
             }

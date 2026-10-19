@@ -1500,6 +1500,7 @@ impl BezierParallel2 {
         };
         let CurvePoint2(CurvePointData2::Algebraic(point)) = point else {
             return match point {
+                CurvePoint2(CurvePointData2::Polynomial(_)) => retained(point, visitor),
                 CurvePoint2(CurvePointData2::Endpoint(endpoint)) => {
                     match endpoint.resolve(policy)? {
                         Classification::Decided(Some(point)) => self

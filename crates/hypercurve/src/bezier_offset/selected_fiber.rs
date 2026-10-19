@@ -108,6 +108,86 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
 }
 
 impl BezierAlgebraicSelectedFiberParameter2 {
+    /// Imports checked singleton fibers while sharing their defining equation
+    /// and selected coefficient field. Serialized root-count flags alone are
+    /// never admission evidence.
+    pub(crate) fn from_checked_roots(
+        incidence: BivariatePolynomial,
+        retained_parameter: BezierAlgebraicParameter2,
+        roots: &[IsolatedRootInterval],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<Self>>> {
+        let root = parameter_representation(&retained_parameter, policy);
+        let mut refiner = match hypersolve::AlgebraicFiberRootRefiner::try_new(
+            &incidence,
+            CurveResultantParameter::First,
+            &root,
+            policy.predicate_policy(),
+        ) {
+            Ok(refiner) => refiner,
+            Err(report) => {
+                if matches!(
+                    report.status,
+                    AlgebraicFiberRootIsolationStatus::InvalidEvidence
+                        | AlgebraicFiberRootIsolationStatus::InvalidInterval
+                        | AlgebraicFiberRootIsolationStatus::NoRoots
+                        | AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber
+                ) {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                return Ok(Classification::Uncertain(
+                    if report.status == AlgebraicFiberRootIsolationStatus::BudgetExhausted {
+                        UncertaintyReason::BudgetExhausted
+                    } else {
+                        UncertaintyReason::Predicate
+                    },
+                ));
+            }
+        };
+        let authority =
+            BezierAlgebraicSelectedFiberAuthority2::new(incidence, retained_parameter, policy);
+        let mut parameters = Vec::with_capacity(roots.len());
+        for root in roots {
+            let mut report = refiner.refine(root, 0);
+            if matches!(
+                report.status,
+                AlgebraicFiberRootIsolationStatus::InvalidEvidence
+                    | AlgebraicFiberRootIsolationStatus::InvalidInterval
+                    | AlgebraicFiberRootIsolationStatus::NoRoots
+                    | AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber
+            ) {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            if report.status != AlgebraicFiberRootIsolationStatus::Isolated
+                || report.certainty != PredicateCertainty::Exact
+            {
+                return Ok(Classification::Uncertain(
+                    if report.status == AlgebraicFiberRootIsolationStatus::BudgetExhausted {
+                        UncertaintyReason::BudgetExhausted
+                    } else {
+                        UncertaintyReason::Predicate
+                    },
+                ));
+            }
+            parameters.push(
+                authority.parameter(
+                    report
+                        .intervals
+                        .pop()
+                        .ok_or(CurveError::InvalidBezierAlgebraicParameter)?,
+                ),
+            );
+        }
+        Ok(Classification::Decided(parameters))
+    }
+
+    pub(crate) fn defining_fiber(&self) -> (&BivariatePolynomial, &BezierAlgebraicParameter2) {
+        (
+            &self.data.authority.data.incidence,
+            &self.data.authority.data.retained_parameter,
+        )
+    }
+
     pub(super) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
         if !policy.accepts_retained_policy(self.data.authority.data.policy) {
             return Err(CurveError::Topology(
@@ -117,7 +197,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         Ok(())
     }
 
-    pub(super) fn root(&self) -> &IsolatedRootInterval {
+    pub(crate) fn root(&self) -> &IsolatedRootInterval {
         &self.data.root
     }
 

@@ -3083,7 +3083,11 @@ impl<'a> CurveCornerChain2<'a> {
             | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
             | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
+            | CurvePoint2(
+                CurvePointData2::Similarity(_)
+                | CurvePointData2::Endpoint(_)
+                | CurvePointData2::Polynomial(_),
+            ) => None,
         };
         let represented_previous = exact_point(&previous_cut.point);
         let represented_next = exact_point(&next_cut.point);

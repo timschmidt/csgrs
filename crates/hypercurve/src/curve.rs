@@ -1,5 +1,9 @@
 //! Top-level exact curve carriers.
 
+#[path = "polynomial_curve.rs"]
+mod polynomial_curve;
+pub use polynomial_curve::{PolynomialCurveBranch2, PolynomialCurveSet2};
+
 #[path = "curve_evaluation.rs"]
 pub(crate) mod curve_evaluation;
 
@@ -73,6 +77,8 @@ pub enum CurveFamily2 {
     Nurbs,
     /// Exact analytic parallel of a supported source curve.
     AnalyticParallel,
+    /// Selected branch of an implicit bivariate polynomial.
+    ImplicitPolynomial,
 }
 
 /// Exact derivative vector of a planar curve with respect to its public parameter.
@@ -382,6 +388,7 @@ enum CurveCarrier2 {
     Native(CurveGeometry2),
     Restricted(Box<CurveRestrictedCarrier2>),
     SourceRange(Box<CurveSourceRange2>),
+    Polynomial(Box<PolynomialCurveBranch2>),
 }
 
 #[derive(Debug)]
@@ -759,12 +766,17 @@ impl Curve2 {
     pub fn geometry(&self) -> Option<&CurveGeometry2> {
         match &self.data.carrier {
             CurveCarrier2::Native(geometry) => Some(geometry),
-            CurveCarrier2::Restricted(_) | CurveCarrier2::SourceRange(_) => None,
+            CurveCarrier2::Restricted(_)
+            | CurveCarrier2::SourceRange(_)
+            | CurveCarrier2::Polynomial(_) => None,
         }
     }
 
     /// Returns the curve family, including generated analytic parallels.
     pub fn family(&self) -> CurveFamily2 {
+        if self.polynomial_branch().is_some() {
+            return CurveFamily2::ImplicitPolynomial;
+        }
         if let Some(range) = self.source_range() {
             return range.source.family();
         }
@@ -806,6 +818,9 @@ impl Curve2 {
     }
 
     fn endpoint(&self, start: bool) -> CurvePoint2 {
+        if let Some(branch) = self.polynomial_branch() {
+            return branch.endpoint(start);
+        }
         if let Some(range) = self.source_range() {
             return range.endpoints[usize::from(start == range.reversed)].clone();
         }
@@ -844,7 +859,9 @@ impl Curve2 {
 
     pub(crate) fn retained_fragment(&self) -> Option<&crate::BezierSplitFragment2> {
         match &self.data.carrier {
-            CurveCarrier2::Native(_) | CurveCarrier2::SourceRange(_) => None,
+            CurveCarrier2::Native(_)
+            | CurveCarrier2::SourceRange(_)
+            | CurveCarrier2::Polynomial(_) => None,
             CurveCarrier2::Restricted(carrier) => Some(&carrier.fragment),
         }
     }
@@ -897,6 +914,9 @@ impl Curve2 {
 
     /// Returns the shared exact domain in the retained carrier's parameter chart.
     pub fn parameter_domain(&self) -> &crate::CurveParameterRange2 {
+        if let Some(branch) = self.polynomial_branch() {
+            return &branch.range;
+        }
         if let Some(range) = self.source_range() {
             return &range.range;
         }
@@ -972,6 +992,9 @@ impl Curve2 {
     }
 
     pub(crate) fn reversed_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
+        if let Some(branch) = self.polynomial_branch() {
+            return Ok(Self::from_polynomial_branch(branch.reversed()));
+        }
         if self.source_range().is_some() {
             return self
                 .reverse_source_range(policy)
@@ -1072,6 +1095,12 @@ impl Curve2 {
         transform: &Similarity2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        if let Some(branch) = self.polynomial_branch() {
+            return Ok(Self::from_polynomial_branch(
+                branch.transformed(transform, policy),
+            ));
+        }
+
         if self.source_range().is_some() {
             return self
                 .transform_source_range(transform, policy)
@@ -3400,6 +3429,9 @@ impl NativeBezierFragment2 {
 }
 
 fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
+    if let Some(branch) = curve.polynomial_branch() {
+        return branch.bounds();
+    }
     let policy = crate::CurveContext::STRICT;
     if let Some(spans) = curve.restricted_source_spans(&policy, CurveOperation2::NativeTopology)? {
         let mut bounds = decided_bounds(

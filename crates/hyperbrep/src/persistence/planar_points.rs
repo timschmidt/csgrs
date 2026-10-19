@@ -7,6 +7,12 @@ use hypercurve::{CurvePointDefinition2, HomogeneousControl2, Similarity2};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(super) enum RawPlanarPoint {
     Coordinates([Real; 2]),
+    PolynomialFiber {
+        equation: Vec<Vec<Real>>,
+        parameter: RawParameter,
+        interval: [Real; 2],
+        exact_root: Option<Real>,
+    },
     Rational {
         homogeneous_controls: Vec<[Real; 3]>,
         parameter: RawParameter,
@@ -38,6 +44,16 @@ impl GraphEncoder {
         point: &hypercurve::CurvePoint2,
     ) -> Result<RawPlanarPoint, PersistenceError> {
         Ok(match point.definition().map_err(GeometryError::from)? {
+            CurvePointDefinition2::PolynomialFiber {
+                equation,
+                parameter,
+                root,
+            } => RawPlanarPoint::PolynomialFiber {
+                equation: equation.coefficients,
+                parameter: self.curve_parameter(&parameter.into())?,
+                interval: [root.lower, root.upper],
+                exact_root: root.exact_root,
+            },
             CurvePointDefinition2::Coordinates(point) => {
                 RawPlanarPoint::Coordinates(curve_point_array(&point))
             }
@@ -98,6 +114,21 @@ impl SelectionGraph {
         raw: RawPlanarPoint,
     ) -> Result<hypercurve::CurvePoint2, PersistenceError> {
         let definition = match raw {
+            RawPlanarPoint::PolynomialFiber {
+                equation,
+                parameter,
+                interval: [lower, upper],
+                exact_root,
+            } => CurvePointDefinition2::PolynomialFiber {
+                equation: hypersolve::BivariatePolynomial::new(equation),
+                parameter: self.bezier_parameter(parameter)?,
+                root: hypersolve::IsolatedRootInterval {
+                    lower,
+                    upper,
+                    exact_root,
+                    distinct_root_count: 1,
+                },
+            },
             RawPlanarPoint::Coordinates(point) => {
                 CurvePointDefinition2::Coordinates(curve_point2(point))
             }
@@ -156,5 +187,88 @@ impl SelectionGraph {
             }
         };
         Ok(definition.into_point().map_err(GeometryError::from)?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn polynomial_fiber_archive_replays_and_rejects_forged_witnesses() {
+        let base = hypercurve::BezierParameter2::Algebraic(
+            hypercurve::BezierAlgebraicParameter2::try_isolate(
+                hypercurve::BezierParameterPolynomial::try_new_power_basis(vec![
+                    (-2).into(),
+                    0.into(),
+                    1.into(),
+                ])
+                .unwrap(),
+                hypercurve::BezierParameterInterval::try_new(1.into(), 2.into()).unwrap(),
+            )
+            .unwrap(),
+        );
+        let point = CurvePointDefinition2::PolynomialFiber {
+            equation: hypersolve::BivariatePolynomial::new(vec![
+                vec![0.into(), 0.into(), 0.into(), 1.into()],
+                vec![(-1).into()],
+            ]),
+            parameter: base,
+            root: hypersolve::IsolatedRootInterval {
+                lower: 1.into(),
+                upper: (Real::from(3) / Real::from(2)).unwrap(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+        }
+        .into_point()
+        .unwrap();
+        let mut encoder = GraphEncoder::default();
+        let raw = encoder.planar_point(&point).unwrap();
+        let bytes = serde_json::to_string(&raw).unwrap();
+        let graph_bytes = serde_json::to_string(&encoder.finish()).unwrap();
+        let graph = SelectionGraph::validate(serde_json::from_str(&graph_bytes).unwrap()).unwrap();
+        let replay = graph
+            .planar_point(serde_json::from_str(&bytes).unwrap())
+            .unwrap();
+        assert!(point.coincides_with(&replay).unwrap());
+        let mut encoder = GraphEncoder::default();
+        assert_eq!(
+            bytes,
+            serde_json::to_string(&encoder.planar_point(&replay).unwrap()).unwrap()
+        );
+        assert_eq!(
+            graph_bytes,
+            serde_json::to_string(&encoder.finish()).unwrap()
+        );
+        let RawPlanarPoint::PolynomialFiber {
+            equation,
+            parameter,
+            interval,
+            ..
+        } = raw
+        else {
+            panic!("native polynomial point evidence was discarded")
+        };
+        assert!(
+            graph
+                .planar_point(RawPlanarPoint::PolynomialFiber {
+                    equation: equation.clone(),
+                    parameter: parameter.clone(),
+                    interval,
+                    exact_root: Some(Real::one()),
+                })
+                .is_err()
+        );
+        assert!(
+            graph
+                .planar_point(RawPlanarPoint::PolynomialFiber {
+                    equation,
+                    parameter,
+                    interval: [3.into(), 4.into()],
+                    exact_root: None,
+                })
+                .is_err()
+        );
     }
 }

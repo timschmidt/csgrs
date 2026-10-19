@@ -5178,7 +5178,11 @@ fn strict_common_retained_line_unit_tangent(
         | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
         | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
         | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-        | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
+        | CurvePoint2(
+            CurvePointData2::Similarity(_)
+            | CurvePointData2::Endpoint(_)
+            | CurvePointData2::Polynomial(_),
+        ) => None,
     };
     let constant_axis = match parameter_axis.axis {
         Axis2::X => Axis2::Y,
@@ -8814,6 +8818,22 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
     if first.shares_storage(second) {
         return Ok(Classification::Decided(std::cmp::Ordering::Equal));
     }
+    for (candidate, other, reverse) in [(first, second, false), (second, first, true)] {
+        if let CurvePointData2::Polynomial(point) = &candidate.0 {
+            let (a, b) = match axis {
+                Axis2::X => (Real::one(), Real::zero()),
+                Axis2::Y => (Real::zero(), Real::one()),
+            };
+            let other = match point_affine_form_parameter(other, &[a, b, Real::zero()], policy)? {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            return point
+                .coordinate_parameter(axis)
+                .cmp_by_refinement(&other, policy)
+                .map(|order| order.map(|order| if reverse { order.reverse() } else { order }));
+        }
+    }
     // A cardinal support already owns one coordinate of its intersection.
     // Reuse that endpoint for every point family before refining or promoting
     // the intersection's independent Cartesian coordinates.
@@ -9236,10 +9256,24 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         | (_, CurvePoint2(CurvePointData2::AlgebraicChordParallel(_)))
         | (CurvePoint2(CurvePointData2::AnalyticParallel(_)), _)
         | (_, CurvePoint2(CurvePointData2::AnalyticParallel(_)))
-        | (CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)), _)
-        | (_, CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_))) => Ok(
-            algebraic_chord_point_coordinate_order_fallback(first, second, axis, policy),
-        ),
+        | (
+            CurvePoint2(
+                CurvePointData2::Similarity(_)
+                | CurvePointData2::Endpoint(_)
+                | CurvePointData2::Polynomial(_),
+            ),
+            _,
+        )
+        | (
+            _,
+            CurvePoint2(
+                CurvePointData2::Similarity(_)
+                | CurvePointData2::Endpoint(_)
+                | CurvePointData2::Polynomial(_),
+            ),
+        ) => Ok(algebraic_chord_point_coordinate_order_fallback(
+            first, second, axis, policy,
+        )),
     }
 }
 
@@ -9466,7 +9500,11 @@ fn algebraic_axis_point_coordinates(
         | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
         | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
         | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-        | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+        | CurvePoint2(
+            CurvePointData2::Similarity(_)
+            | CurvePointData2::Endpoint(_)
+            | CurvePointData2::Polynomial(_),
+        ) => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
     };
@@ -9534,7 +9572,11 @@ fn algebraic_chord_point_coordinate_representation(
         | CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
         | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
         | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-        | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
+        | CurvePoint2(
+            CurvePointData2::Similarity(_)
+            | CurvePointData2::Endpoint(_)
+            | CurvePointData2::Polynomial(_),
+        ) => None,
     }
 }
 
@@ -9751,6 +9793,7 @@ fn represented_chord_direction_speed(
     chord.validate_policy(policy)?;
     #[cfg(feature = "dispatch-trace")]
     let evidence_kind = |point: &CurvePoint2| match point {
+        CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
         CurvePoint2(CurvePointData2::Exact(_)) => "exact",
         CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
         CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "chord-pair",
@@ -11003,6 +11046,9 @@ fn algebraic_chord_endpoint_bounds_refined_impl(
     local_only: bool,
 ) -> Classification<Aabb2> {
     let composite = match endpoint {
+        CurvePoint2(CurvePointData2::Polynomial(point)) => {
+            Some(point.bounds(refinement_steps, policy))
+        }
         CurvePoint2(CurvePointData2::Endpoint(point)) => {
             Some(point.bounds(refinement_steps, policy))
         }
@@ -11225,6 +11271,9 @@ pub(crate) fn retained_point_circle_incidence_sign(
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     match point {
+        CurvePoint2(CurvePointData2::Polynomial(point)) => {
+            return point.circle_residual_sign(center, radius_squared, policy);
+        }
         CurvePoint2(CurvePointData2::Exact(point)) => {
             return Ok(
                 real_sign(&(point.distance_squared(center) - radius_squared), policy).map_or(
@@ -12283,6 +12332,15 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
     coefficient_y: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<std::cmp::Ordering>> {
+    if let CurvePoint2(CurvePointData2::Polynomial(point)) = point {
+        return point.affine_order(
+            coefficient_x,
+            coefficient_y,
+            &(coefficient_x * origin.x() + coefficient_y * origin.y()),
+            policy,
+        );
+    }
+
     if let CurvePoint2(CurvePointData2::AlgebraicCuspChord(point)) = point {
         let value = coefficient_x * origin.x() + coefficient_y * origin.y();
         return point.linear_order_to_real(coefficient_x, coefficient_y, &value, policy);
@@ -12584,7 +12642,11 @@ fn algebraic_chord_endpoint_images(
             | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
             | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_))
+            | CurvePoint2(
+                CurvePointData2::Similarity(_)
+                    | CurvePointData2::Endpoint(_)
+                    | CurvePointData2::Polynomial(_)
+            )
     ) || matches!(
         end,
         CurvePoint2(CurvePointData2::AlgebraicChordPair(_))
@@ -12592,7 +12654,11 @@ fn algebraic_chord_endpoint_images(
             | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
             | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_))
+            | CurvePoint2(
+                CurvePointData2::Similarity(_)
+                    | CurvePointData2::Endpoint(_)
+                    | CurvePointData2::Polynomial(_)
+            )
     ) {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     }
@@ -12606,7 +12672,11 @@ fn algebraic_chord_endpoint_images(
         | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
         | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
         | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-        | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+        | CurvePoint2(
+            CurvePointData2::Similarity(_)
+            | CurvePointData2::Endpoint(_)
+            | CurvePointData2::Polynomial(_),
+        ) => {
             unreachable!("correlated chord endpoints return before algebraic image normalization")
         }
     };
@@ -12962,7 +13032,11 @@ impl BezierAlgebraicChordSupportPredicate2 {
             | CurvePoint2(CurvePointData2::Algebraic(_))
             | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
+            | CurvePoint2(
+                CurvePointData2::Similarity(_)
+                | CurvePointData2::Endpoint(_)
+                | CurvePointData2::Polynomial(_),
+            ) => None,
         };
         let retained_side_was_uncertain = if let Some(side) = retained_side {
             match side? {
@@ -13023,7 +13097,11 @@ impl BezierAlgebraicChordSupportPredicate2 {
                 CurvePoint2(CurvePointData2::AnalyticParallel(_)) => {
                     return chord.oriented_side_by_refinement(point, policy);
                 }
-                CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+                CurvePoint2(
+                    CurvePointData2::Similarity(_)
+                    | CurvePointData2::Endpoint(_)
+                    | CurvePointData2::Polynomial(_),
+                ) => {
                     return chord.oriented_side_by_refinement(point, policy);
                 }
             },
@@ -13042,7 +13120,9 @@ impl BezierAlgebraicChordSupportPredicate2 {
                     CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
                         | CurvePoint2(CurvePointData2::AnalyticParallel(_))
                         | CurvePoint2(
-                            CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)
+                            CurvePointData2::Similarity(_)
+                                | CurvePointData2::Endpoint(_)
+                                | CurvePointData2::Polynomial(_)
                         )
                 ) {
                     return chord.oriented_side_by_refinement(point, policy);
@@ -13062,7 +13142,11 @@ impl BezierAlgebraicChordSupportPredicate2 {
                     | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
                     | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
                     | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-                    | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+                    | CurvePoint2(
+                        CurvePointData2::Similarity(_)
+                        | CurvePointData2::Endpoint(_)
+                        | CurvePointData2::Polynomial(_),
+                    ) => {
                         unreachable!("correlated chord points return before image normalization")
                     }
                 };
@@ -13300,6 +13384,9 @@ impl BezierSimilarityPoint2 {
             ));
         }
         let source = match &self.data.source {
+            CurvePoint2(CurvePointData2::Polynomial(_)) => {
+                return Ok(Classification::Decided(None));
+            }
             CurvePoint2(CurvePointData2::Endpoint(endpoint)) => match endpoint.resolve(policy)? {
                 Classification::Decided(Some(point)) => point,
                 Classification::Decided(None) => return Ok(Classification::Decided(None)),

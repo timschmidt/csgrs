@@ -319,6 +319,9 @@ impl Record for Selection {
 #[derive(Deserialize)]
 pub(super) enum PlanarPoint {
     Coordinates(IgnoredAny),
+    PolynomialFiber {
+        equation: Rows,
+    },
     Rational {
         homogeneous_controls: Count,
     },
@@ -342,6 +345,11 @@ impl Record for PlanarPoint {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
             Self::Coordinates(_) => Ok(()),
+            Self::PolynomialFiber { equation } => {
+                budget.degree(equation.rows.saturating_sub(1))?;
+                budget.degree(equation.columns.saturating_sub(1))?;
+                budget.geometry(equation.entries())
+            }
             Self::Rational {
                 homogeneous_controls,
             } => {

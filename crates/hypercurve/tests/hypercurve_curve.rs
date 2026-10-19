@@ -164,7 +164,7 @@ fn linear_family_curve(family: CurveFamily2, vertical: bool) -> Curve2 {
         (p(-2, 0), p(-1, 0), p(0, 0))
     };
     match family {
-        CurveFamily2::AnalyticParallel => {
+        CurveFamily2::AnalyticParallel | CurveFamily2::ImplicitPolynomial => {
             panic!("this fixture enumerates authored native families")
         }
         CurveFamily2::Line => Curve2::from(LineSeg2::try_new(start, end).unwrap()),

@@ -27,6 +27,9 @@ impl Curve2 {
         side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurvePoint2> {
+        if let Some(branch) = self.polynomial_branch() {
+            return branch.point_at(parameter, policy);
+        }
         if self.source_range().is_some() {
             return self
                 .source_range_point_at(parameter, side, policy)
@@ -42,7 +45,13 @@ impl Curve2 {
         }
 
         let family = self.family();
-        let fragment = self.retained_fragment().expect("retained curve");
+        let fragment = self.retained_fragment().ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Evaluation,
+                self.family(),
+                UncertaintyReason::Unsupported,
+            )
+        })?;
         let scalar_circle_parameter;
         let parameter = if matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
             && let Some(BezierParameter2::Exact(value)) = parameter.as_bezier_parameter()
@@ -186,7 +195,13 @@ impl Curve2 {
                 UncertaintyReason::Unsupported,
             )
         };
-        let fragment = self.retained_fragment().expect("retained curve");
+        let fragment = self.retained_fragment().ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Evaluation,
+                self.family(),
+                UncertaintyReason::Unsupported,
+            )
+        })?;
         if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
             chord
                 .validate_policy(policy)

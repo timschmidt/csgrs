@@ -89,6 +89,7 @@ impl BezierAlgebraicChord2 {
                             ) => {
                                 let kind = |point: &CurvePoint2| {
                                     match point {
+CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
                                         CurvePoint2(CurvePointData2::Exact(_)) => {
                                             "exact"
                                         }
@@ -2257,6 +2258,7 @@ impl BezierAlgebraicChord2 {
         if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
             let caller = std::panic::Location::caller();
             let kind = |point: &CurvePoint2| match point {
+                CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
                 CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                 CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",
@@ -2693,6 +2695,7 @@ impl BezierAlgebraicChord2 {
                 start.data.policy == end.data.policy,
             );
             let kind = |point: &CurvePoint2| match point {
+                CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
                 CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                 CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",
@@ -2784,6 +2787,7 @@ impl BezierAlgebraicChord2 {
             if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
                 let caller = std::panic::Location::caller();
                 let kind = |point: &CurvePoint2| match point {
+                    CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
                     CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                     CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                     CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",

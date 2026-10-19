@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
-Status: implementation blueprint. Updated 2026-10-18 for upstream
-`dbe99e3cc` and concurrent development ownership.
+Status: implementation blueprint. Updated 2026-10-19 for native polynomial
+branches, upstream `dbe99e3cc` and concurrent development ownership.
 
 The [procedural solid-revolution increment](evidence/2026-10-18-procedural-revolution/README.md)
 advances WP02/WP07/WP09/WP13 by consuming retained latitude generators in closed
@@ -1201,13 +1201,22 @@ projection/event fibers and proves branch adjacency with root-free connection
 strips, including interior loops and singular incidence. Its tests replay
 independent slice counts and retained exclusions, and exercise subsequent
 source-bound rational slices. Vertical/nullified components, generic repeated
-factors and whole boundary components still fail typed. This finite graph
-is not yet a Hypercurve branch carrier or a BRep section: the original public
-biquadratic interior-loop probe remains unsupported. Follow its
-[next domains](evidence/2026-10-19-bivariate-cell-prototype/next-domains.md) for
-retained planar branches, spatial/dual-chart maps, surface guards, trimming,
-component processing, persistence and full resource qualification. WP05a is
-in progress; its complete gate and G3/G4 remain open.
+factors and whole boundary components still fail typed. This finite graph now
+feeds the native branch carrier described below. The original public
+biquadratic interior-loop section remains unsupported. WP05a is in progress;
+its complete gate and G3/G4 remain open.
+
+The [native polynomial-branch increment](evidence/2026-10-19-polynomial-branches/README.md)
+now consumes that graph as `PolynomialCurveSet2`, native `Curve2` branches and
+isolated `CurvePoint2` values. Selected fiber evaluation, subdivision, reversal,
+similarity, conservative bounds and point-definition replay retain the original
+chart and shared equation. BRep's public archive admits these point definitions
+as retained-chord endpoints with degree/element accounting and checked singleton
+replay. The public surface section remains unsupported. Follow the new
+[next domains](evidence/2026-10-19-polynomial-branches/next-domains.md) for selected
+rational functions, regular derivatives/maps, spatial/dual-chart images,
+whole-branch replay, components and arrangements. General filled topology and
+all complete work-package/release gates remain open.
 
 Apply [research gates G2–G5](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)
 before making practical-completeness claims. ESOLID and exact quadric work

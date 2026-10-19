@@ -28,11 +28,11 @@ pub struct ArchiveLimits {
     /// analytic-parallel sources count as additional geometry records.
     pub records: usize,
     /// Largest authored spline/root degree (Bezier control count minus one).
-    /// Tensor Bezier extents use row count and maximum row width. Trailing
-    /// zero coefficients are not simplified to reduce the charged root degree.
+    /// Tensor Bezier and bivariate fiber extents use row count and maximum row
+    /// width. Trailing zero coefficients are not simplified to reduce degree.
     pub degree: usize,
     /// Total variable geometry-array entries: controls, weights, knots, root
-    /// coefficients, analytic-parallel source controls, and tensor row headers.
+    /// coefficients, analytic-parallel source controls, and tensor/fiber row headers.
     /// A control point counts once, including polynomial parallel controls.
     /// Empty tensor rows still count; fixed analytic coordinate fields do not.
     pub geometry_elements: usize,

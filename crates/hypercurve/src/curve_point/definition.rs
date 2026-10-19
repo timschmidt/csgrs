@@ -12,6 +12,14 @@ use crate::{
 pub enum CurvePointDefinition2 {
     /// Authored exact coordinates.
     Coordinates(Point2),
+    /// A singleton of `equation(parameter, y) = 0`, retaining the selected
+    /// first parameter and the exact second-coordinate isolator together.
+    /// Replay checks the equation and singleton; root-count flags are untrusted.
+    PolynomialFiber {
+        equation: hypersolve::BivariatePolynomial,
+        parameter: BezierParameter2,
+        root: hypersolve::IsolatedRootInterval,
+    },
     /// A rational curve evaluated at a retained parameter.
     Rational {
         source: RationalBezier2,
@@ -61,6 +69,7 @@ impl CurvePoint2 {
         };
         match &self.0 {
             CurvePointData2::Exact(point) => Ok(CurvePointDefinition2::Coordinates(point.clone())),
+            CurvePointData2::Polynomial(point) => Ok(point.definition()),
             CurvePointData2::Algebraic(point) => {
                 if let Some((source, parameter)) = point.native_curve_evaluation() {
                     return Ok(CurvePointDefinition2::Rational {
@@ -136,6 +145,23 @@ impl CurvePointDefinition2 {
     pub fn into_point(self) -> ExactCurveResult<CurvePoint2> {
         crate::policy::resolve_certified_operation(&CurveContext::STRICT, |policy| match self {
             Self::Coordinates(point) => Ok(point.into()),
+            Self::PolynomialFiber {
+                equation,
+                parameter,
+                root,
+            } => {
+                let mut points = crate::polynomial_point::PolynomialPoint2::from_fiber(
+                    equation,
+                    parameter,
+                    &[root],
+                )?;
+                points.pop().ok_or_else(|| {
+                    ExactCurveError::invalid_unattributed(
+                        CurveOperation2::Construction,
+                        crate::CurveError::InvalidCurveParameter,
+                    )
+                })
+            }
             Self::Rational { source, parameter } => crate::curve::curve_evaluation::rational_point(
                 &source,
                 &parameter,

@@ -570,6 +570,7 @@ pub(super) fn recursive_projective_point_source(
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierRecursiveProjectivePointSource2>>> {
     let source = match point {
+        CurvePoint2(CurvePointData2::Polynomial(_)) => None,
         CurvePoint2(CurvePointData2::Endpoint(endpoint)) => {
             return match endpoint.resolve(policy)? {
                 Classification::Decided(Some(point)) => {
@@ -697,6 +698,9 @@ pub(super) fn recursive_projective_evidence_denominator_sign(
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     match point {
+        CurvePoint2(CurvePointData2::Polynomial(_)) => {
+            Ok(Classification::Decided(RealSign::Positive))
+        }
         CurvePoint2(CurvePointData2::Endpoint(endpoint)) => match endpoint.resolve(policy)? {
             Classification::Decided(Some(point)) => {
                 recursive_projective_evidence_denominator_sign(&point, policy)
@@ -1247,6 +1251,7 @@ pub(super) fn represented_projective_evidence_points(
                 #[cfg(test)]
                 if std::env::var_os("HYPERCURVE_DEBUG_RATIONAL_BLOCKER").is_some() {
                     let kind = match point {
+                        CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
                         CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                         CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                         CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",

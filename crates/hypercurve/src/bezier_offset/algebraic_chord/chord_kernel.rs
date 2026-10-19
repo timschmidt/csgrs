@@ -1826,7 +1826,11 @@ impl BezierAlgebraicChord2 {
             | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
             | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
+            | CurvePoint2(
+                CurvePointData2::Similarity(_)
+                | CurvePointData2::Endpoint(_)
+                | CurvePointData2::Polynomial(_),
+            ) => None,
         };
         if let Some(point) = represented_point {
             return Ok(
@@ -2059,20 +2063,22 @@ impl BezierAlgebraicChord2 {
                 | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
                 | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
                 | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-                | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
-                    algebraic_chord_point_linear_order_to_exact(
-                        endpoint,
-                        line.start(),
-                        &coefficient_x,
-                        &coefficient_y,
-                        policy,
-                    )?
-                    .map(|order| match order {
-                        std::cmp::Ordering::Less => crate::classify::LineSide::Right,
-                        std::cmp::Ordering::Equal => crate::classify::LineSide::On,
-                        std::cmp::Ordering::Greater => crate::classify::LineSide::Left,
-                    })
-                }
+                | CurvePoint2(
+                    CurvePointData2::Similarity(_)
+                    | CurvePointData2::Endpoint(_)
+                    | CurvePointData2::Polynomial(_),
+                ) => algebraic_chord_point_linear_order_to_exact(
+                    endpoint,
+                    line.start(),
+                    &coefficient_x,
+                    &coefficient_y,
+                    policy,
+                )?
+                .map(|order| match order {
+                    std::cmp::Ordering::Less => crate::classify::LineSide::Right,
+                    std::cmp::Ordering::Equal => crate::classify::LineSide::On,
+                    std::cmp::Ordering::Greater => crate::classify::LineSide::Left,
+                }),
             };
             match side {
                 Classification::Decided(crate::classify::LineSide::On) => {}

@@ -74,6 +74,7 @@ mod offset;
 mod parallel_kernel_tests;
 mod point;
 mod policy;
+mod polynomial_point;
 mod polynomial_spline;
 mod prepared;
 mod rational_bezier;
@@ -176,6 +177,7 @@ pub use curve::{
     Curve2, CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, CurveDerivative2,
     CurveFamily2, CurveFillet2, CurveFilletContact2, CurveGeometry2, CurveLoopOrientation2,
     CurveParameterSide2, CurvePath2, CurveSpanRange2, CurveVector2, NativeBezierFragment2,
+    PolynomialCurveBranch2, PolynomialCurveSet2,
 };
 pub(crate) use curve_intersection::CurveIntersectionCandidates2;
 pub use curve_intersection::{

@@ -411,7 +411,7 @@ fn family_curve(
     let linear_control1 = affine_control(&start, &end, 1, 3, 0);
     let linear_control2 = affine_control(&start, &end, 2, 3, 0);
     match family {
-        CurveFamily2::AnalyticParallel => {
+        CurveFamily2::AnalyticParallel | CurveFamily2::ImplicitPolynomial => {
             panic!("the authored benchmark factory requires a native family")
         }
         CurveFamily2::Line => line(start, end),

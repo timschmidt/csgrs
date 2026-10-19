@@ -1,5 +1,15 @@
 # Selected geometry in archive version 10
 
+The additive `PolynomialFiber` planar-point record stores a bivariate equation,
+the selected first parameter, the second-coordinate interval and an optional
+exact root witness. Replay checks the singleton in that same selected field;
+there is no serialized certainty or trusted root-count flag. Retained-chord
+endpoints consume this point record through the public model loader. General
+selected scalar-image persistence still requires owner support. Input admission
+charges both stored polynomial degrees, every coefficient and every row header, including
+empty rows, before scalar decoding. Whole implicit-branch archives,
+their spatial images and surface correspondences still require implementation.
+
 Version 10 retains authored coordinates and selected curve images in the same
 model. It replaces version 9; there is no migration reader.
 `RawModel::from_json(json, &limits)` admits input syntax and record structure
