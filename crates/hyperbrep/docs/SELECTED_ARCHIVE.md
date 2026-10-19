@@ -349,3 +349,10 @@ This supports the feasibility of replaying selected-root definitions. Our
 flattened chart graph and immutable source sharing are implementation choices
 built on Hypercurve's existing authority, not algorithms or performance claims
 attributed to CGAL. No external kernel is used in production.
+
+Full procedural revolutions reuse schema 10's existing PlanarImage, Rotation,
+selected graph and Coordinate records. No constructor certificate is persisted:
+cold validation reconstructs the single-cover shell and positive-radius simple
+profile, including selected cavity endpoints. Existing native images keep their
+encoding; the [solid-revolution evidence](evidence/2026-10-18-procedural-revolution/README.md)
+records replay and the unchanged procedural STEP boundary.

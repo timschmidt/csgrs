@@ -432,15 +432,22 @@ impl CertifiedRevolutionBoundary {
         }
     }
 
-    fn start(&self) -> Result<CurvePoint2, GeometryError> {
+    fn start(&self) -> hypercurve::CurvePoint2 {
         match self {
-            Self::Native(contour) => Ok(contour.segments()[0].start().clone()),
-            Self::Curved(path) => path
-                .start()
-                .coordinates()
-                .cloned()
-                .ok_or(GeometryError::UnsupportedPcurveContour),
+            Self::Native(contour) => contour.segments()[0].start().clone().into(),
+            Self::Curved(path) => path.start(),
         }
+    }
+
+    fn classify_retained_point(
+        &self,
+        point: &hypercurve::CurvePoint2,
+    ) -> Result<Classification<ContourPointLocation>, GeometryError> {
+        if let Some(coordinates) = point.coordinates() {
+            return self.classify_point(coordinates);
+        }
+        crate::error::classified(self.as_curve_path()?.classify_point(point))
+            .map_err(GeometryError::from)
     }
 
     fn as_curve_path(&self) -> Result<CurvePath2, GeometryError> {

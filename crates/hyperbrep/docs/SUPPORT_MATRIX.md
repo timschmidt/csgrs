@@ -193,7 +193,8 @@ domain. General nonuniform analytic promotion remains open. See the
 | `torus` | 4×4 periodic native-circle grid | Yes | `2*pi²*R*r²` | Analytic implicit test | Certified similarity / exact |
 | `revolve` / `revolve_region` | Four periodic cells per off-axis polygon edge; inward cavity shells | Exact line-profile integral | Exact first-moment theorem with hole subtraction | Exact radial/profile test | Certified similarity / exact |
 | `revolve_contour` / `revolve_contour_region` | Four periodic cells per native line/arc profile segment; inward line/arc cavity shells | Exact line/circular-arc profile integral | Exact contour x-first-moment theorem with hole subtraction | Exact radial/line-arc profile test | Certified similarity / exact |
-| `revolve_path` / `revolve_path_region` | Four periodic cells per exact `CurvePath2` carrier; retained Bézier/B-spline/NURBS meridians, exact clamped knot-span partition of single periodic spline carriers, and curved cavity shells | Line/arc and certified monotone rational line-image faces exact; general curved spline faces explicitly unsupported | Exact for polynomial-equivalent, rational-quadratic, exact degree-elevated conic, arbitrary-degree at-most-quadratic-weight, and nonuniform rational line-image moments; cubic-or-higher weight-degree rational moments explicitly unsupported | Exact radial/curved-path test | Certified similarity / exact |
+| `revolve_path` / `revolve_path_region` | Four periodic cells per exact `CurvePath2` carrier; retained Bézier/B-spline/NURBS and supported procedural meridians with selected latitudes, exact clamped knot-span partition of single periodic spline carriers, and curved cavity shells | Line/arc and certified monotone rational line-image faces exact; general curved spline faces explicitly unsupported | Exact for polynomial-equivalent, rational-quadratic, exact degree-elevated conic, arbitrary-degree at-most-quadratic-weight, and nonuniform rational line-image moments; cubic-or-higher weight-degree rational moments explicitly unsupported | Exact radial/curved-path test | Certified similarity / exact |
+| `revolve_curve_region` | Unified region winding/holes; one solid per material component; canonical empty stays empty; native line/arc fast path and retained procedural/selected profiles | Existing per-family measurements only | Existing moments when available; unsupported integrals do not prevent solid admission | Exact radial/profile classification including cavities | Certified similarity / exact |
 | `sweep` / `sweep_region` | Exact affine image of a polygonal linear-path sweep | Yes | Exact determinant-scaled prism volume | Exact inverse-frame profile test | Affine / exact |
 | `sweep_curve` / `sweep_curve_region` | Fixed-frame polygon or through-hole region swept along an affine-progress rational Bézier path / native tensor translation sides and inner cap wires | Caps only | Exact material-region area × signed plane progress | Exact progress inversion and outer-minus-hole profile test | Affine / exact |
 | `sweep_moving_frame` / `sweep_moving_frame_region` | Explicit shared-weight rational Bézier origin/axis frame / native tensor sides and inner cap wires | Caps only | Exact material-region area × signed plane progress × integrated frame-area law | Exact moving inverse-frame profile test | Affine / exact |
@@ -1086,3 +1087,12 @@ solids and broad revolution exchange remain open. Irrational subdivision
 vertices can be valid natively while unencodable in this exact STEP subset.
 Total-work/heap/cancellation admission, general Boolean closure and actual
 package/binding release remain separate gates.
+
+Full procedural revolutions require a simple profile with strictly positive
+radial bounds, a common meridian plane, and exact similarity projection into its
+radial/axial chart. Ordinary cold admission proves rectangular multiplicity-one
+coverage of each complete source domain through one turn and reconstructs the
+closed profile. Selected point comparisons also establish cavity nesting. This
+is a product-shell proof; arbitrary curved-shell admission, general revolution
+Booleans and procedural STEP encoding remain open. See the
+[finite qualification](evidence/2026-10-18-procedural-revolution/README.md).

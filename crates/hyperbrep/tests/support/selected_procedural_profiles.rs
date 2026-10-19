@@ -8,7 +8,7 @@ use std::cmp::Ordering;
 
 #[allow(dead_code)]
 #[path = "parallel_profile_extrusion.rs"]
-mod original;
+pub(super) mod original;
 
 fn q(n: i32, d: i32) -> Real {
     (Real::from(n) / Real::from(d)).unwrap()

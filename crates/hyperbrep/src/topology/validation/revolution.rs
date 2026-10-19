@@ -119,6 +119,9 @@ impl ArenaModelBuilder {
             axis_origin.get_or_insert_with(|| this_origin.clone());
             axis.get_or_insert_with(|| this_axis.clone());
             let profile_curve = Curve3::from_exact_data(*profile)?;
+            if profile_curve.kind() == Curve3Kind::PlanarImage {
+                return self.certified_retained_revolution_shell(shell, orientation);
+            }
             let mut to_profile_point = |point: &Point3,
                                         require_positive: bool|
              -> Result<Option<CurvePoint2>, BuildError> {

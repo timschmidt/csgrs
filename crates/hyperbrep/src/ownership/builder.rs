@@ -318,10 +318,12 @@ pub fn revolve_contour(profile: &Contour2) -> Result<BodySet, ConstructionError>
 /// Revolves one exact closed curved path around the z axis.
 ///
 /// Profile `x` is radius and must remain strictly positive. Every authored
-/// line, circular arc, Bézier, polynomial B-spline, or finite NURBS carrier is
-/// retained as the meridian of four periodic revolution faces. The preflight
+/// line, circular arc, Bézier, polynomial B-spline, finite NURBS, or supported
+/// procedural carrier is retained in four periodic revolution faces. Selected
+/// endpoints retain source-bound meridians and rotation latitudes. The preflight
 /// requires a complete exact simple-loop and orientation certificate; it never
-/// flattens the path to manufacture one.
+/// flattens the path to manufacture one. Retained procedural profiles use a
+/// product-shell proof independent of optional area and volume measurements.
 pub fn revolve_path(profile: &CurvePath2) -> Result<BodySet, ConstructionError> {
     let (model, solids) = crate::construction::revolve_path(profile)?;
     Ok(BodySet::from_parts(model, vec![solids]))
@@ -338,6 +340,19 @@ pub fn revolve_path_region(
 ) -> Result<BodySet, ConstructionError> {
     let (model, solids) = crate::construction::revolve_path_region(outer, holes)?;
     Ok(BodySet::from_parts(model, vec![solids]))
+}
+
+/// Revolves the exact material of a unified radial/axial curve region about z.
+///
+/// Winding and hole ownership come from Hypercurve. Each material component
+/// becomes a solid, and canonical empty input returns an empty body set.
+/// Every nonempty loop needs a certified simple boundary and strictly positive
+/// radial bounds. Procedural parallels and selected endpoints retain their
+/// exact carriers and source charts; no area formula is required for admission.
+/// Unavailable volume integrals remain a typed measurement failure.
+pub fn revolve_curve_region(region: &CurveRegion2) -> Result<BodySet, ConstructionError> {
+    let (model, solids) = crate::construction::revolve_curve_region(region)?;
+    Ok(BodySet::from_parts(model, solids))
 }
 
 /// Revolves one exact line/arc region with inward profile cavities.

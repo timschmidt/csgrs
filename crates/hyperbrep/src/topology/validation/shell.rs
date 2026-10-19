@@ -194,7 +194,7 @@ impl ArenaModelBuilder {
                     || !classification_is_inside(
                         outer_revolution
                             .profile
-                            .classify_point(&void.profile.start()?)?,
+                            .classify_retained_point(&void.profile.start())?,
                     )?
                 {
                     return Err(BuildError::VoidShellOutside(*void_shell));
@@ -206,8 +206,11 @@ impl ArenaModelBuilder {
                     let (first_shell, first) = &revolution_voids[first_index];
                     let (second_shell, second) = &revolution_voids[second_index];
                     let boundaries_intersect = first.intersects(second)?;
-                    let nested = classification_is_inside(first.classify_point(&second.start()?)?)?
-                        || classification_is_inside(second.classify_point(&first.start()?)?)?;
+                    let nested =
+                        classification_is_inside(first.classify_retained_point(&second.start())?)?
+                            || classification_is_inside(
+                                second.classify_retained_point(&first.start())?,
+                            )?;
                     if boundaries_intersect || nested {
                         return Err(BuildError::IntersectingVoidShells {
                             first: *first_shell,

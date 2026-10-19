@@ -219,6 +219,14 @@ The clean-break implementation currently provides:
   shared knot seams;
 - exact `builder::revolve_region` cavities as inward periodic shells with
   first-moment subtraction and radial/profile material classification;
+- exact `builder::revolve_curve_region` construction from the unified filled
+  region, including holes, disconnected components and empty results. Supported
+  procedural paths and selected endpoints also flow through `revolve_path` and
+  `revolve_path_region`, retaining meridians and rotation latitudes. Ordinary
+  solid admission checks a complete single-turn face cover and the simple
+  positive-radius profile. Similarities, reflection, shared-edge splitting and
+  cold native replay consume the result; unavailable measurements remain typed.
+  [Scope and evidence](docs/evidence/2026-10-18-procedural-revolution/README.md).
 - exact `builder::sphere_with_voids` construction with inward complete-sphere
   cavities, strict nesting, exact volume, and material classification;
 - validated open-shell `builder::{rational_bezier_patch, nurbs_patch}`

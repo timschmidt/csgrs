@@ -3,6 +3,15 @@
 Status: implementation blueprint. Updated 2026-10-18 for upstream
 `dbe99e3cc` and concurrent development ownership.
 
+The [procedural solid-revolution increment](evidence/2026-10-18-procedural-revolution/README.md)
+advances WP02/WP07/WP09/WP13 by consuming retained latitude generators in closed
+solids. Unified regions include holes, components and empty results. Ordinary
+admission replays a complete product-shell proof independently of optional
+metrics. Selected edge splits, similarities/reflections and native replay remain
+composable; general surface intersections, face arrangements, curved Booleans,
+fillets and shelling remain implementation priorities. All 28 work packages
+remain incomplete, and production release/pre-push gates remain separate.
+
 The [selected revolution increment](evidence/2026-10-18-selected-revolution/README.md)
 advances WP02/WP03/WP09/WP13 with retained circular orbits, selected meridian
 endpoints and ordinary complete image/axis-clearance admission. Reflected

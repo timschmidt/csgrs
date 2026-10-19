@@ -1501,3 +1501,17 @@ Before a supported non-similarity transform of a certified prism, exact
 extrusion representation over the actual angular trims. Its equation and pcurves
 are unchanged, preserving the original axial-shear domain. Other unsupported
 analytic affine images still fail explicitly; no fitting or tolerance is used.
+
+### Retained full revolutions
+
+`construction/revolution.rs` connects retained planar meridians and exact
+rotation latitudes across four angular cells. Point-ordered source chords use
+Hypercurve's complete scalar-chart proof before becoming surface coordinates.
+`validation/retained_revolution.rs` replays the face rectangles, single-cover
+angular/profile grid, common meridian plane and exact projected profile. Curve
+simplicity and winding plus strictly positive radial bounds prove the product
+shell's embedding. Area/volume formulas are separate optional queries. Native
+primitive/path fast paths keep their existing carriers. `revolve_curve_region`
+uses the unified region's material components and hole ownership, including
+empty input. The [admission record](evidence/2026-10-18-procedural-revolution/README.md)
+limits this proof to its supported domain; general shell embedding remains open.

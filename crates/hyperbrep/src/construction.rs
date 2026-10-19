@@ -19,6 +19,8 @@ use crate::{
 };
 
 mod patches;
+mod revolution;
+pub(crate) use revolution::revolve_curve_region;
 
 /// Failure while constructing a conventional solid.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -33,7 +35,7 @@ pub enum ConstructionError {
     DegenerateProfile,
     /// A radial/axial revolution profile reaches or crosses its axis.
     ProfileCrossesRevolutionAxis,
-    /// A curved revolution profile lacks a required exact topology or integral certificate.
+    /// A curved revolution profile lacks a required exact topology or image certificate.
     UnsupportedRevolutionProfile,
     /// A planar path lacks a required exact simplicity, intersection, or persistence certificate.
     UnsupportedPlanarProfile,
@@ -204,7 +206,7 @@ impl fmt::Display for ConstructionError {
                 formatter.write_str("revolution profile must stay strictly off the axis")
             }
             Self::UnsupportedRevolutionProfile => formatter.write_str(
-                "curved revolution profile lacks a required exact topology or integral certificate",
+                "curved revolution profile lacks a required exact topology or image certificate",
             ),
             Self::UnsupportedPlanarProfile => formatter.write_str(
                 "planar path lacks a required exact simplicity, intersection, or persistence certificate",
@@ -2655,10 +2657,12 @@ pub fn revolve_contour(profile: &Contour2) -> Result<(ArenaModel, SolidId), Cons
 /// Revolves one exact closed curved path around the z axis.
 ///
 /// Profile `x` is radius and must remain strictly positive. Every authored
-/// line, circular arc, Bézier, polynomial B-spline, or finite NURBS carrier is
-/// retained as the meridian of four periodic revolution faces. The preflight
+/// line, circular arc, Bézier, polynomial B-spline, finite NURBS, or supported
+/// procedural carrier is retained in four periodic revolution faces. Selected
+/// endpoints retain source-bound meridians and rotation latitudes. The preflight
 /// requires a complete exact simple-loop and orientation certificate; it never
-/// flattens the path to manufacture one.
+/// flattens the path to manufacture one. Retained procedural profiles use a
+/// product-shell proof independent of optional area and volume measurements.
 pub fn revolve_path(profile: &CurvePath2) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let profile = normalize_revolution_path(profile)?;
@@ -2689,22 +2693,7 @@ pub fn revolve_path_region(
             .map(normalize_revolution_path)
             .collect::<Result<Vec<_>, _>>()?;
         let mut builder = ArenaModelBuilder::new();
-        let outer_shell = add_normalized_curve_path_revolution_shell(
-            &mut builder,
-            &outer,
-            ShellDirection::Outward,
-        )?;
-        let voids = holes
-            .iter()
-            .map(|hole| {
-                add_normalized_curve_path_revolution_shell(
-                    &mut builder,
-                    hole,
-                    ShellDirection::Inward,
-                )
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-        let solid = builder.solid(outer_shell, voids)?;
+        let solid = revolution::add_normalized_region(&mut builder, &outer, &holes)?;
         Ok((builder.finish()?, solid))
     })
 }
@@ -3738,13 +3727,6 @@ fn curve_location_is(
     .is_eq())
 }
 
-fn required_curve_path_signed_area(
-    path: &CurvePath2,
-    unsupported: ConstructionError,
-) -> Result<Real, ConstructionError> {
-    optional_curve_path_signed_area(path)?.ok_or(unsupported)
-}
-
 fn optional_curve_path_signed_area(path: &CurvePath2) -> Result<Option<Real>, ConstructionError> {
     Ok(resolve_planar_classification(
         crate::error::classified(
@@ -4320,24 +4302,27 @@ fn normalize_revolution_path(profile: &CurvePath2) -> Result<CurvePath2, Constru
             );
         }
     }
-    let signed_area =
-        required_curve_path_signed_area(&profile, ConstructionError::UnsupportedRevolutionProfile)?;
-    match compare_reals(&signed_area, &Real::zero(), crate::STRICT_PREDICATES) {
-        PredicateOutcome::Decided {
-            value: std::cmp::Ordering::Greater,
-            ..
-        } => Ok(profile),
-        PredicateOutcome::Decided {
-            value: std::cmp::Ordering::Less,
-            ..
-        } => profile
+    let orientation = match optional_curve_path_signed_area(&profile)? {
+        Some(area) => decided_construction_order(compare_reals(
+            &area,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))?,
+        None => match profile
+            .simple_loop_orientation()
+            .map_err(GeometryError::from)?
+        {
+            hypercurve::CurveLoopOrientation2::Counterclockwise => std::cmp::Ordering::Greater,
+            hypercurve::CurveLoopOrientation2::Clockwise => std::cmp::Ordering::Less,
+        },
+    };
+    match orientation {
+        std::cmp::Ordering::Greater => Ok(profile),
+        std::cmp::Ordering::Less => profile
             .reversed()
             .map_err(GeometryError::from)
             .map_err(Into::into),
-        PredicateOutcome::Decided { .. } => Err(ConstructionError::DegenerateProfile),
-        PredicateOutcome::Unknown { needed, stage } => {
-            Err(BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into())
-        }
+        std::cmp::Ordering::Equal => Err(ConstructionError::DegenerateProfile),
     }
 }
 
@@ -4518,6 +4503,13 @@ fn add_normalized_curve_path_revolution_shell(
     profile: &CurvePath2,
     direction: ShellDirection,
 ) -> Result<crate::ShellId, ConstructionError> {
+    if profile
+        .curves()
+        .iter()
+        .any(|curve| curve.geometry().is_none())
+    {
+        return revolution::add_retained_revolution_shell(builder, profile, direction);
+    }
     let curves = profile.curves();
     let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let angles = (0..4)

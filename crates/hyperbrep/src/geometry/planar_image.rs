@@ -262,7 +262,7 @@ impl PlanarCurve3 {
     /// Preserve the owner's chart and return its exact map to the target
     /// spatial interval. A procedural planar image needs a certified similarity
     /// in parameter space; arbitrary affine source images remain unsupported.
-    pub(super) fn materialize_plane_projection(
+    pub(crate) fn materialize_plane_projection(
         &self,
         origin: &Point3,
         u: &Vector3,

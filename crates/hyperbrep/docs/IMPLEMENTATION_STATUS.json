@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_on": "2026-10-18",
+  "updated_on": "2026-10-19",
   "plan": "DEVELOPMENT_PLAN.md",
   "research": "ALGORITHM_RESEARCH.md",
   "property_ledger": "../../../docs/properties-status.json",
@@ -2463,6 +2463,49 @@
       "validation": "Eight shared public groups and one internal face-admission regression extend the retained corpus. BRep/IO release suites pass 707 all-feature and 699 minimal-feature tests. Affected all-target strict Clippy, warning-denied rustdoc, fuzz-target compilation and formatting pass. Source-path native consumers execute 115 groups plus eight original exchange workflows; actual zero-import WASM executes 253 groups, including all nine original exports. All 610 prior native archives re-encode byte-identically; 159 STEP inputs import 173 bodies and replay. The 785-file inventory has 408 distinct contents; text controls are inventory-only. All 308 fresh baseline/candidate pairs remain byte-identical, with no coefficient encoding migration. Every export recipe repeats deterministically; 22 new rotation/revolution archive files (12 distinct encodings) also replay stably. The initial copied-consumer root error is retained and corrected; its mis-scoped baseline result is excluded.",
       "cost_evidence": "Three alternating pairs cover 99 preserved semantic rows; eight new groups have three absolute trials. All 63 processes pass their assertions. Observed time ratios range 0.786806 to 1.271032; 5 exceed the 10% review marker and 2 increase allocation calls or requested bytes. All adverse observations are retained. Shared-host instrumented samples and process RSS establish neither a general speedup nor internal work/heap bounds.",
       "limits": "Finite retained circular orbits and selected open revolution sheets, with complete boundary-image and profile-axis-clearance proofs. No general rank-two surface regularity, embedding, solid closure or new STEP claim. Independent selected angular/axial parameters, retained vector derivatives, general affine orbit transport and inverse/intersection families remain typed frontiers. Schema 10 gains an additive Rotation record; existing corpus bytes are preserved, with no compatibility reader. Total work, retained heap, coefficient growth, cancellation, runtime fuzz/ASan/lexicase, formal coverage, MSRV, installed distributions and production binding gates remain open. All 28 work packages remain open/in-progress. Full pre-push qualification remains required; the consumed eaa0 one-time exception does not authorize publishing this increment."
+    },
+    {
+      "id": "procedural-revolution-2026-10-18",
+      "work_packages": [
+        "WP02",
+        "WP07",
+        "WP09",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P3",
+        "P6",
+        "P8",
+        "P9",
+        "P11",
+        "P13",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Construct and independently admit complete solid revolutions of retained procedural and Boolean-selected profiles. Add filled-region revolution with holes, disconnected components and empty results while preserving native carriers.",
+      "sources": [
+        "../src/construction/revolution.rs",
+        "../src/topology/validation/retained_revolution.rs",
+        "../src/topology/validation/shell.rs",
+        "../src/ownership/builder.rs"
+      ],
+      "evidence": "evidence/2026-10-18-procedural-revolution/manifest.json",
+      "validation": "Nine shared public BRep groups, one internal duplicate/gap rejection and one public IO boundary group extend the corpus. BRep/IO release suites pass 718 all-feature and 710 minimal-feature tests. Both affected all-target strict Clippy configurations, warning-denied rustdoc, fuzz-target compilation and formatting pass. Source-path consumers execute 23 preserved groups on the baseline and 33 on the candidate; actual zero-import WASM executes all 33 candidate groups. This is the affected boundary corpus, not a rerun of the entire prior 253-group WASM inventory. All 654 historical native archives re-encode byte-identically; 159 STEP files import 173 bodies and replay. The 829-file historical inventory has 420 distinct contents; text controls are inventory-only. All 49 fresh baseline/candidate native pairs are byte-identical. 22 new solid archive files (13 distinct contents) repeat deterministically and cold-replay. No scalar encoding or schema migration is introduced.",
+      "cost_evidence": "Three alternating pairs cover 12 preserved completed workflows and three absolute processes cover two new construction/replay workflows, each with a first call and three repeated fresh-input calls. All 21 processes pass their assertions. The 24 matched phase ratios range 0.819853 to 1.030648; 0 exceed the 10% review marker and 3 increase allocation calls or requested bytes. All adverse samples, RSS and binary/artifact sizes are retained. Instrumented shared-host samples establish neither a general speedup nor internal work/heap bounds. The complete new selected-cap recipe takes 9.150s on its first call and 8.868s per repeated call, with 9.456/9.460 GB of cumulative requested allocation respectively. Peak process RSS across all trials is 23.57 MiB. Requested allocation is traffic, not simultaneous live memory. This expensive recipe and the 1158.4s repeated archive comparison remain explicit resource follow-ups; no cause or optimization is established.",
+      "limits": "Only complete-turn shells from simple, strictly positive-radius profiles with replayable scalar charts and a common similarity-projectable meridian plane are added. Exact procedural metrics can remain unavailable. General curved solid Booleans, partial/axis-touching revolutions, independent selected angular/axial fields, arbitrary affine transport, procedural STEP, whole-operation work/heap/coefficient/cancellation bounds, runtime fuzz/ASan/lexicase, formal coverage, MSRV, installed distributions and production binding gates remain open. All 28 work packages remain open/in-progress. Full pre-push qualification remains required; the consumed eaa0 one-time exception does not authorize publishing this increment."
     }
   ],
   "work_packages": [
@@ -2637,6 +2680,7 @@
     }
   ],
   "next_actions": [
+    "Preserve evidence/2026-10-18-procedural-revolution/manifest.json and all earlier original profiles, archives and adverse costs. Continue its next-domains.md: selected angular/axial fields, partial and singular revolutions, general surface arrangements/Booleans, metrics, STEP, resource bounds and shipped consumers. Complete positive-radius procedural revolutions do not close any work package or waive full pre-push qualification.",
     "Preserve evidence/2026-10-18-selected-revolution/manifest.json and every earlier corpus/artifact/cost record. Follow its next-domains.md for selected angular/axial fields, complete contact/arrangement/regularity/embedding proofs and further modeling/STEP continuation. Finite retained rotation support does not close general CAD, resource or delivery gates.",
     "Retain evidence/2026-10-18-prepush-fixtures/manifest.json. Future proof extensions must keep newly certified original fixtures and independently unresolved controls. Complete the final pre-push matrix and resolve required failures before publishing unless the user explicitly authorizes an exception; focused checks do not waive AGENTS.md.",
     "Use evidence/2026-10-18-selected-procedural-profiles/manifest.json as the current finite baseline. Preserve all 238 WASM groups, 450 migrated prior artifacts and 27 new repeated archives, 24 prism/81 continuation outcomes, seven original full profiles and every adverse cost. Retain the rejected scalar-fact candidate and upstream-only reproduction; do not waive native facts or replace the schema audit with approximate geometry comparisons.",
