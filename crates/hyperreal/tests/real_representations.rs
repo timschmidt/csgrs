@@ -786,8 +786,22 @@ fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
         (
             "InverseIsometricLatitude",
             computable_from_internal(serde_json::json!({ "InverseIsometricLatitude": {
-                "psi": child, "log_axis_ratio": one
+                "psi": child.clone(), "log_axis_ratio": one
             }})),
+        ),
+        (
+            "EllipticRf",
+            computable_from_internal(serde_json::json!({ "EllipticRf": [
+                child.clone(), serialized_computable(&Computable::zero()),
+                serialized_computable(&Computable::zero())
+            ] })),
+        ),
+        (
+            "EllipticRd",
+            computable_from_internal(serde_json::json!({ "EllipticRd": [
+                child, serialized_computable(&Computable::zero()),
+                serialized_computable(&Computable::zero())
+            ] })),
         ),
     ]
 }
@@ -850,7 +864,7 @@ fn every_private_class_survives_json_and_cbor_without_cache_state() {
 fn every_computable_node_and_shared_constant_variant_round_trips_and_evaluates() {
     use hyperreal::Computable;
 
-    const NODE_NAMES: [&str; 61] = [
+    const NODE_NAMES: [&str; 63] = [
         "Int",
         "One",
         "Constant",
@@ -912,6 +926,8 @@ fn every_computable_node_and_shared_constant_variant_round_trips_and_evaluates()
         "SincSmall",
         "CoscSmall",
         "InverseIsometricLatitude",
+        "EllipticRf",
+        "EllipticRd",
     ];
     const SHARED_CONSTANT_NAMES: [&str; 18] = [
         "E",

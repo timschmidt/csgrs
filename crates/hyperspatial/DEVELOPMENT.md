@@ -23,6 +23,10 @@ E2 also provides the exact spherical transverse chart and UTM angular zone
 selection, with retained inverse relations and explicit pole conventions. The
 [transverse admission](docs/admission/e2-transverse.md) records this prerequisite.
 Ellipsoidal Transverse Mercator/UTM and geodesic measurements remain open within E2.
+Native Carlson RF/RD elliptic integrals are an additional scalar prerequisite
+for exact rectification, with [scalar admission](../hyperreal/docs/admission-elliptic-integrals.md).
+They do not yet provide Jacobi functions, Thompson/Lee rectification or a
+complete ellipsoidal transverse projection.
 See the [spherical Mercator admission](docs/admission/e2-mercator.md),
 the [forward/local admission](docs/admission/e1-native.md)
 and [closest-point inverse admission](docs/admission/e1-inverse.md).
@@ -157,6 +161,18 @@ zone/hemisphere selection with special areas. Ellipsoidal conformal-latitude
 conversion can reuse the native isometric scalar. Rectification still needs
 its own finite-model or certified-remainder contract; the spherical chart and
 zone selector do not supply ellipsoidal projected coordinates.
+
+The exact rectification path now starts with native Carlson RF/RD integrals.
+Next, admit stable complete/incomplete Legendre combinations and Jacobi
+functions with retained periods, branch choices and inverse relations, then
+the Thompson/Lee mapping and its certified inverse. References are
+[DLMF integral relations](https://dlmf.nist.gov/19.25),
+[Jacobi computation](https://dlmf.nist.gov/22.20), and
+[Karney's exact and series formulations](https://arxiv.org/abs/1002.1417).
+The native scalar prerequisite does not supply those remaining algorithms.
+If a finite Krueger model is also admitted, its forward and inverse contracts
+must be explicit: independently truncated forward/inverse series are not exact
+inverses of one finite forward map.
 
 Admit Transverse Mercator series only with a stated finite-model contract or
 certified remainder bounds relative to the ideal projection. Exact scalar

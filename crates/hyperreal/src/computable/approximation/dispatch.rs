@@ -104,6 +104,8 @@ impl Approximation {
             InverseIsometricLatitude { psi, log_axis_ratio } => {
                 inverse_isometric_latitude(signal, psi, log_axis_ratio, p)
             }
+            EllipticRf(arguments) => elliptic_carlson(signal, arguments, false, p),
+            EllipticRd(arguments) => elliptic_carlson(signal, arguments, true, p),
         }
     }
 }

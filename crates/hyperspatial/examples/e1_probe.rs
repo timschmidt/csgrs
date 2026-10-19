@@ -23,6 +23,9 @@ mod ellipsoidal_mercator;
 #[path = "../dev/transverse_mercator.rs"]
 mod transverse_mercator;
 
+#[path = "../dev/elliptic.rs"]
+mod elliptic;
+
 fn main() {
     let encoded = std::env::args()
         .nth(1)
@@ -44,6 +47,7 @@ fn main() {
         "ellipsoidal_mercator" => ellipsoidal_mercator::exercise(data),
         "transverse_mercator" => transverse_mercator::exercise(data),
         "inverse_isometric" => inverse_isometric::exercise(data),
+        "elliptic" => elliptic::exercise(data),
         _ => panic!("unknown workload {workload}"),
     });
     let evaluation_ns = start.elapsed().as_nanos();

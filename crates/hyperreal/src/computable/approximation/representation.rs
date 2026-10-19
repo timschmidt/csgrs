@@ -203,6 +203,11 @@ pub(super) enum Approximation {
         psi: Computable,
         log_axis_ratio: Computable,
     },
+    // Append for binary serde compatibility. Domain-safe payload is
+    // [sqrt(x), ln(y), ln(z)] after the optional zero is permuted to x.
+    // Boxing preserves the size of the common expression variants.
+    EllipticRf(Box<[Computable; 3]>),
+    EllipticRd(Box<[Computable; 3]>),
 }
 
 #[cfg(feature = "serde")]

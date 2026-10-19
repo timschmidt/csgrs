@@ -19,6 +19,7 @@ include!("approximation/logarithms.rs");
 include!("approximation/inverse_trig.rs");
 include!("approximation/inverse_hyperbolic.rs");
 include!("approximation/inverse_isometric_latitude.rs");
+include!("approximation/elliptic_integrals.rs");
 include!("approximation/statistics.rs");
 
 #[cfg(test)]
@@ -32,6 +33,10 @@ mod precision_tests;
 #[cfg(test)]
 #[path = "approximation/exp_tail_tests.rs"]
 mod exp_tail_tests;
+
+#[cfg(test)]
+#[path = "approximation/elliptic_tests.rs"]
+mod elliptic_tests;
 
 #[cfg(test)]
 mod chudnovsky_pi_tests {

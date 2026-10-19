@@ -17,6 +17,13 @@ hyperlattice = { path = "../../hyperlattice" }
 hyperlimit = { path = "../../hyperlimit", default-features = false, features = ["std"] }
 
 [[bin]]
+name = "elliptic"
+path = "fuzz_targets/elliptic.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "forward_local"
 path = "fuzz_targets/forward_local.rs"
 test = false

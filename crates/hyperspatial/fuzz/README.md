@@ -17,6 +17,11 @@ inverse and consumes it in geodetic/ECEF/local operations. The
 `ellipsoidal_mercator` target exercises the prepared ellipsoidal projection
 with the same 22-family inventory, independent oblate/prolate/spherical
 northings, fresh inverse arithmetic, retained relation replay, and local use.
+The `transverse_mercator` target exercises the spherical transverse chart,
+huge-coordinate inverses, pole/edge conventions and angular UTM selection.
+The `elliptic` target checks the native RF/RD prerequisites with ordinary,
+one-zero, extreme-scale and near-singular inputs, independent identities and
+consumption of their outputs in ellipsoid/ECEF construction.
 
 From the repository root:
 
@@ -26,7 +31,9 @@ python3 crates/hyperspatial/scripts/directed.py
 python3 crates/hyperspatial/scripts/directed.py --workload mercator --output target/hyperspatial-directed-mercator
 python3 crates/hyperspatial/scripts/directed.py --workload inverse_isometric --output target/hyperspatial-directed-isometric
 python3 crates/hyperspatial/scripts/directed.py --workload ellipsoidal_mercator --output target/hyperspatial-directed-ellipsoidal
-python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus
+python3 crates/hyperspatial/scripts/directed.py --workload transverse_mercator --output target/hyperspatial-directed-transverse
+python3 crates/hyperspatial/scripts/directed.py --workload elliptic --output target/hyperspatial-directed-elliptic
+python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus --transverse-corpus target/hyperspatial-directed-transverse/corpus --elliptic-corpus target/hyperspatial-directed-elliptic/corpus
 ```
 
 Retain every crash/timeout and its minimized counterpart, then promote the
@@ -37,11 +44,13 @@ therefore part of the campaign command. Install nightly Rust and the pinned
 development tool with `cargo install --locked cargo-fuzz --version 0.13.2`.
 The smoke driver supplies 918 initial forward/local cases, 44 normal-offset
 cases, 44 spherical projection cases, 44 inverse-scalar cases, 44 ellipsoidal
-projection cases, and any cases selected by the directed driver. All five
+projection cases, 176 transverse cases, 176 elliptic cases, and any cases
+selected by the directed driver. All seven
 targets use ASan, a 10-second per-input timeout, and a 2048 MiB RSS limit.
 The existing forward/local, normal-offset and spherical projection targets
-have a 60-second libFuzzer budget. The inverse scalar and ellipsoidal projection
-each have 900 seconds because replaying the full seeds is more expensive.
+have a 60-second libFuzzer budget. The inverse scalar, ellipsoidal projection,
+transverse chart and elliptic prerequisites each have 900 seconds because
+replaying their full seeds is more expensive.
 `--targets` permits focused reruns without changing any target's seed set. Initialization can consume or extend the time budget; the raw log
 distinguishes corpus replay from mutation and any newly discovered paths.
 

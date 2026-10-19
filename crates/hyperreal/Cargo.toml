@@ -60,6 +60,10 @@ name = "borrowed_ops"
 harness = false
 
 [[bench]]
+name = "elliptic_integrals"
+harness = false
+
+[[bench]]
 name = "dispatch_trace"
 harness = false
 required-features = ["dispatch-trace"]

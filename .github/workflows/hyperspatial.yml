@@ -58,6 +58,10 @@ jobs:
         run: bash crates/hyperspatial/scripts/checks.sh
       - name: Run optimized workflow probes
         run: cargo bench --locked -p hyperspatial --benches
+      - name: Verify native elliptic integrals and run completion-checked references
+        run: |
+          cargo test --locked -p hyperreal --test elliptic_integrals --features serde
+          cargo bench --locked -p hyperreal --bench elliptic_integrals
 
   representations:
     name: Scalar representations and caches
@@ -78,7 +82,7 @@ jobs:
   directed:
     name: Directed cases and ASan
     runs-on: ubuntu-latest
-    timeout-minutes: 85
+    timeout-minutes: 105
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -109,8 +113,12 @@ jobs:
         env:
           RUSTUP_TOOLCHAIN: stable
         run: python3 crates/hyperspatial/scripts/directed.py --workload transverse_mercator --output target/hyperspatial-directed-transverse
+      - name: Select elliptic cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload elliptic --output target/hyperspatial-directed-elliptic
       - name: Mutate and replay with address sanitizer
-        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus --transverse-corpus target/hyperspatial-directed-transverse/corpus
+        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus --transverse-corpus target/hyperspatial-directed-transverse/corpus --elliptic-corpus target/hyperspatial-directed-elliptic/corpus
       - name: Retain campaign evidence and failure inputs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -122,6 +130,7 @@ jobs:
             target/hyperspatial-directed-isometric/
             target/hyperspatial-directed-ellipsoidal/
             target/hyperspatial-directed-transverse/
+            target/hyperspatial-directed-elliptic/
             target/hyperspatial-asan/
             crates/hyperspatial/fuzz/artifacts/
           retention-days: 30

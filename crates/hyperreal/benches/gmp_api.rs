@@ -700,6 +700,38 @@ fn bench_real_arithmetic_api(c: &mut Criterion) {
 fn bench_real_elementary_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_real_elementary_api");
 
+    // Carlson circular limits RF(0,1,1)=pi/2 and RD(0,1,1)=3*pi/4.
+    // Both native rows force refinement. MPFR evaluates the independent
+    // circular identity, not a general Carlson implementation; the standalone
+    // elliptic_integrals bench additionally compares noncircular RF with AGM.
+    for (name, second) in [("elliptic_rf", false), ("elliptic_rd", true)] {
+        let native = || {
+            if second {
+                Real::elliptic_rd(&Real::zero(), &Real::one(), &Real::one())
+            } else {
+                Real::elliptic_rf(&Real::zero(), &Real::one(), &Real::one())
+            }
+            .unwrap()
+        };
+        let oracle = || -> Float {
+            Float::with_val(GMP_PRECISION, Constant::Pi) * if second { 3 } else { 1 }
+                / if second { 4 } else { 2 }
+        };
+        let expected = oracle().to_rational().unwrap();
+        let expected: Real = expected.to_string().parse().unwrap();
+        let [lo, hi] = (native() - expected)
+            .certified_rational_interval(-144)
+            .unwrap();
+        let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+        assert!(lo >= -tolerance.clone() && hi <= tolerance);
+        group.bench_function(BenchmarkId::new("hyperreal_evaluated_p128", name), |b| {
+            b.iter(|| black_box(native().certified_rational_interval(-128).unwrap()))
+        });
+        group.bench_function(BenchmarkId::new("mpfr_circular_identity", name), |b| {
+            b.iter(|| black_box(oracle()))
+        });
+    }
+
     // Force evaluated output on both sides. The existing general helper times
     // lazy Real construction; that would not exercise this inverse solver.
     let isometric_input = real(0.5);

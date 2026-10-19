@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--isometric-corpus", type=Path)
     parser.add_argument("--ellipsoidal-corpus", type=Path)
     parser.add_argument("--transverse-corpus", type=Path)
+    parser.add_argument("--elliptic-corpus", type=Path)
     parser.add_argument("--seconds", type=int, default=60)
     parser.add_argument("--isometric-seconds", type=int, default=900,
                         help="inverse campaign budget; its full seed replay is more expensive")
@@ -32,18 +33,20 @@ def main():
                         help="ellipsoidal projection budget, including full seed replay")
     parser.add_argument("--transverse-seconds", type=int, default=900,
                         help="transverse chart budget, including full seed replay")
+    parser.add_argument("--elliptic-seconds", type=int, default=900,
+                        help="native elliptic prerequisite budget, including full seed replay")
     parser.add_argument("--targets", nargs="+",
-                        choices=("forward_local", "normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator", "transverse_mercator"),
-                        default=("forward_local", "normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator", "transverse_mercator"))
+                        choices=("forward_local", "normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator", "transverse_mercator", "elliptic"),
+                        default=("forward_local", "normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator", "transverse_mercator", "elliptic"))
     parser.add_argument("--seed", type=int, default=20261018)
     parser.add_argument("--toolchain", default="nightly")
     args = parser.parse_args()
-    if min(args.seconds, args.isometric_seconds, args.ellipsoidal_seconds, args.transverse_seconds) < 1:
+    if min(args.seconds, args.isometric_seconds, args.ellipsoidal_seconds, args.transverse_seconds, args.elliptic_seconds) < 1:
         parser.error("positive campaign duration required")
     args.output.mkdir(parents=True, exist_ok=True)
     report = {
         "seed": args.seed, "sanitizer": "address",
-        "campaign_seconds": {target: {"inverse_isometric": args.isometric_seconds, "ellipsoidal_mercator": args.ellipsoidal_seconds, "transverse_mercator": args.transverse_seconds}.get(target, args.seconds)
+        "campaign_seconds": {target: {"inverse_isometric": args.isometric_seconds, "ellipsoidal_mercator": args.ellipsoidal_seconds, "transverse_mercator": args.transverse_seconds, "elliptic": args.elliptic_seconds}.get(target, args.seconds)
                              for target in args.targets},
         "seconds_per_input": 10, "rss_limit_mib": 2048, "max_input_bytes": 6,
         "compiler": subprocess.check_output(["rustc", "+" + args.toolchain, "-vV"], text=True),
@@ -52,7 +55,7 @@ def main():
         "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted((CRATE / "src").glob("*.rs")) +
                           sorted((CRATE / "fuzz/fuzz_targets").glob("*.rs")) +
-                          [CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "dev/ellipsoidal_mercator.rs", CRATE / "dev/inverse_isometric.rs", CRATE / "dev/transverse_mercator.rs", CRATE / "fuzz/Cargo.lock",
+                          [CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "dev/ellipsoidal_mercator.rs", CRATE / "dev/inverse_isometric.rs", CRATE / "dev/transverse_mercator.rs", CRATE / "dev/elliptic.rs", CRATE / "fuzz/Cargo.lock",
                            Path(__file__).resolve(),
                            ROOT / "crates/hyperreal/tests/support/representations.rs"] +
                           sorted((ROOT / "crates/hyperreal/src").rglob("*.rs"))},
@@ -71,13 +74,14 @@ def main():
         else:
             seeds = [bytes([family, (family + 7) % 22, 0, 0, 0, flags])
                      for family in range(22) for flags in (0, 3)]
-            if target == "transverse_mercator":
+            if target in ("transverse_mercator", "elliptic"):
                 seeds = [bytes([family, (family + 7) % 22, 127, 39, mode, flags])
                          for family in range(22) for mode in range(4) for flags in (0, 4)]
             selected = {"normal_offset": args.selected_corpus, "mercator": args.mercator_corpus,
                         "inverse_isometric": args.isometric_corpus,
                         "ellipsoidal_mercator": args.ellipsoidal_corpus,
-                        "transverse_mercator": args.transverse_corpus}[target]
+                        "transverse_mercator": args.transverse_corpus,
+                        "elliptic": args.elliptic_corpus}[target]
             if selected:
                 seeds += [p.read_bytes() for p in sorted(selected.iterdir()) if p.is_file()]
         for seed in seeds:

@@ -22,7 +22,7 @@ run cargo test --test adversarial_deep
 run cargo test --test adversarial_extrusions
 run cargo test --test adversarial_stress
 run cargo test --test adversarial_fixtures
-run cargo test --locked -p hyperspatial --test adversarial --test representations --test dispatch --test inverse --test oracles --test mercator --test projection_oracles --test projection_dispatch --test isometric_dispatch --test ellipsoidal_mercator --test ellipsoidal_dispatch
+run cargo test --locked -p hyperspatial --test adversarial --test representations --test dispatch --test inverse --test oracles --test mercator --test projection_oracles --test projection_dispatch --test isometric_dispatch --test ellipsoidal_mercator --test ellipsoidal_dispatch --test transverse_mercator --test transverse_representations --test utm --test elliptic_representations
 
 feature_sets=(
   "curve"

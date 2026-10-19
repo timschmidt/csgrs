@@ -29,6 +29,7 @@ include!("node/exp_relation_reuse.rs");
 include!("node/exp_trig.rs");
 include!("node/logarithms.rs");
 include!("node/roots_inverse_hyperbolic.rs");
+include!("node/elliptic_integrals.rs");
 include!("node/algebra.rs");
 include!("node/ring_polynomial.rs");
 include!("node/ring_polynomial_tests.rs");
