@@ -9,6 +9,7 @@ use std::sync::{
 
 use hyperlattice::{Aabb as ExactAabb, HomogeneousPoint3, Matrix4, Point3, Real, Vector3, Vector4};
 
+use crate::ConstructionEvidence;
 use crate::context::{CertaintyFact, DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
@@ -116,6 +117,7 @@ pub struct TriangleMesh {
     /// Triangle indices. Use `Arc::make_mut` for edits; retained identities hold weak references.
     pub triangles: Arc<[Triangle]>,
     pub(crate) facts: Arc<TriangleMeshFacts>,
+    construction: ConstructionEvidence,
 }
 
 impl PartialEq for TriangleMesh {
@@ -125,14 +127,37 @@ impl PartialEq for TriangleMesh {
 }
 
 impl TriangleMesh {
-    /// Creates an owned triangle mesh.
+    /// Creates geometry with untracked preceding construction history.
+    /// Use [`Self::from_construction`] to explicitly start a declared-coordinate
+    /// claim or carry evidence at a construction boundary.
     pub fn new(positions: Vec<Point3>, triangles: Vec<Triangle>) -> Self {
         Self::from_shared_positions(positions.into(), triangles)
+    }
+
+    /// Creates a new construction claim with the supplied qualifications.
+    /// This is an explicit source boundary, not proof of preceding intent.
+    /// Derived operations must combine every parent's evidence and their actual
+    /// consumed certainty. For existing meshes use the monotone
+    /// [`Self::with_inherited_construction`] instead.
+    pub fn from_construction(
+        positions: Vec<Point3>,
+        triangles: Vec<Triangle>,
+        evidence: ConstructionEvidence,
+    ) -> Self {
+        Self::from_shared_construction(positions.into(), triangles, evidence)
     }
 
     pub(crate) fn from_shared_positions(
         positions: Arc<[Point3]>,
         triangles: Vec<Triangle>,
+    ) -> Self {
+        Self::from_shared_construction(positions, triangles, ConstructionEvidence::UNTRACKED)
+    }
+
+    pub(crate) fn from_shared_construction(
+        positions: Arc<[Point3]>,
+        triangles: Vec<Triangle>,
+        construction: ConstructionEvidence,
     ) -> Self {
         let triangles = Arc::<[Triangle]>::from(triangles);
         let facts = Arc::new(TriangleMeshFacts::new(&positions, &triangles));
@@ -140,7 +165,26 @@ impl TriangleMesh {
             positions,
             triangles,
             facts,
+            construction,
         }
+    }
+
+    /// Construction qualifications bound to the current geometry buffers.
+    /// Replacing or editing either buffer exposes missing history and retains
+    /// every previously known qualification. Validation cannot clear it.
+    pub fn construction_evidence(&self) -> ConstructionEvidence {
+        if self.geometry_facts().is_some() {
+            self.construction
+        } else {
+            self.construction.after_buffer_mutation()
+        }
+    }
+
+    /// Monotonically add dependency qualifications without changing geometry
+    /// or local topology facts. This cannot certify a previously untracked mesh.
+    pub fn with_inherited_construction(mut self, evidence: ConstructionEvidence) -> Self {
+        self.construction = self.construction_evidence().combine(evidence);
+        self
     }
 
     fn position_facts(&self) -> Option<&TriangleMeshFacts> {
@@ -480,12 +524,18 @@ impl TriangleMesh {
                 ))
             })
             .collect::<Option<Vec<_>>>()?;
-        Some(Self::new(positions, self.triangles.to_vec()))
+        Some(Self::from_construction(
+            positions,
+            self.triangles.to_vec(),
+            self.construction_evidence().with_coordinate_projection(),
+        ))
     }
 
     /// Returns the retained exact convex hull of this mesh's native positions.
     pub fn convex_hull(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<Self>> {
-        crate::convex_hull(context, &self.positions)
+        crate::convex_hull(context, &self.positions).map(|outcome| {
+            outcome.map(|mesh| mesh.with_inherited_construction(self.construction_evidence()))
+        })
     }
 
     /// Returns policy-certified bounds when the native rows form one complete
@@ -686,7 +736,12 @@ impl TriangleMesh {
             }
             positions
         };
-        let transformed = Self::new(positions, self.triangles.to_vec());
+        let transformed = Self::from_construction(
+            positions,
+            self.triangles.to_vec(),
+            self.construction_evidence()
+                .with_predicate_certainty(decisions.certainty()),
+        );
         let preserves_valid_pwn = matches!(
             matrix_facts.transform_kind,
             hyperlattice::Matrix4TransformKind::Identity
@@ -708,12 +763,13 @@ impl TriangleMesh {
     /// The returned mesh owns its derived index buffer; callers that need it
     /// repeatedly retain the returned value explicitly.
     pub fn reversed_winding(&self) -> Self {
-        let mesh = Self::from_shared_positions(
+        let mesh = Self::from_shared_construction(
             Arc::clone(&self.positions),
             self.triangles
                 .iter()
                 .map(|triangle| Triangle::new(triangle.v2, triangle.v1, triangle.v0))
                 .collect(),
+            self.construction_evidence(),
         );
         if let Some(certainty) = self
             .geometry_facts()
@@ -849,7 +905,7 @@ impl TriangleMesh {
             }
             triangles = refined;
         }
-        let mesh = Self::new(positions, triangles);
+        let mesh = Self::from_construction(positions, triangles, self.construction_evidence());
         if let Some(certainty) = self
             .geometry_facts()
             .and_then(|facts| facts.valid_pwn.certainty())
@@ -1183,7 +1239,11 @@ impl TriangleMesh {
             smooth_positions_once(&positions, &mut scratch, &adjacency, lambda);
             std::mem::swap(&mut positions, &mut scratch);
         }
-        Ok(Self::new(positions, self.triangles.to_vec()))
+        Ok(Self::from_construction(
+            positions,
+            self.triangles.to_vec(),
+            self.construction_evidence(),
+        ))
     }
 
     /// Applies alternating Laplacian shrink and inflation passes.
@@ -1206,7 +1266,11 @@ impl TriangleMesh {
             smooth_positions_once(&positions, &mut scratch, &adjacency, mu);
             std::mem::swap(&mut positions, &mut scratch);
         }
-        Ok(Self::new(positions, self.triangles.to_vec()))
+        Ok(Self::from_construction(
+            positions,
+            self.triangles.to_vec(),
+            self.construction_evidence(),
+        ))
     }
 }
 
@@ -1244,6 +1308,21 @@ pub struct TriangleMeshRef<'a> {
 }
 
 impl<'a> TriangleMeshRef<'a> {
+    /// Construction summary of the owner, when this view still names both of
+    /// its buffers. Bare slices expose missing preceding source history.
+    pub fn construction_evidence(self) -> ConstructionEvidence {
+        match self.native {
+            Some(native)
+                if std::ptr::eq(self.positions, native.positions.as_ref())
+                    && std::ptr::eq(self.triangles, native.triangles.as_ref()) =>
+            {
+                native.construction_evidence()
+            }
+            Some(native) => native.construction_evidence().after_buffer_mutation(),
+            None => ConstructionEvidence::UNTRACKED,
+        }
+    }
+
     /// Borrows position and triangle slices without retained native facts.
     pub const fn new(positions: &'a [Point3], triangles: &'a [Triangle]) -> Self {
         Self {

@@ -43,6 +43,7 @@ pub(in crate::solid) enum DistributionParameters {
 struct MeshStorage {
     positions: Arc<[Point3]>,
     triangles: Arc<[Triangle]>,
+    construction: hypermesh::ConstructionEvidence,
 }
 
 impl MeshStorage {
@@ -50,12 +51,14 @@ impl MeshStorage {
         Self {
             positions: Arc::clone(&mesh.positions),
             triangles: Arc::clone(&mesh.triangles),
+            construction: mesh.construction_evidence(),
         }
     }
 
     fn matches(&self, mesh: &TriangleMesh) -> bool {
         Arc::ptr_eq(&self.positions, &mesh.positions)
             && Arc::ptr_eq(&self.triangles, &mesh.triangles)
+            && self.construction == mesh.construction_evidence()
     }
 }
 

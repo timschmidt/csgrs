@@ -81,7 +81,11 @@ impl TriangleMesh {
                 Triangle::new(base + triangle.v0, base + triangle.v1, base + triangle.v2)
             }));
         }
-        let result = Self::new(positions, triangles);
+        let evidence = meshes.iter().fold(
+            crate::ConstructionEvidence::DECLARED_COORDINATES,
+            |evidence, mesh| evidence.combine(mesh.construction_evidence()),
+        );
+        let result = Self::from_construction(positions, triangles, evidence);
         if !result.triangles.is_empty()
             && let Some(certainty) = pwn_certainty
         {

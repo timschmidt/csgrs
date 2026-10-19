@@ -73,8 +73,8 @@ impl MinkowskiOptions<'_> {
 /// empty identity is applied. A successful result is reusable closed-PWN geometry
 /// (or canonical empty), not a claim about an intended analytic surface.
 ///
-/// The receipt covers decisions consumed by this operation. Bare input meshes
-/// do not carry the provenance of earlier approximate modeling operations.
+/// The receipt covers decisions consumed by this operation. The native mesh
+/// additionally retains the construction qualifications of both operands.
 pub fn minkowski_sum(
     context: &MeshContext,
     left: &TriangleMesh,
@@ -96,16 +96,23 @@ pub fn minkowski_sum_with_options(
 ) -> HypermeshResult<MeshOutcome<TriangleMesh>> {
     options.check_cancelled()?;
     let decisions = DecisionContext::new(context);
+    let evidence = left
+        .construction_evidence()
+        .combine(right.construction_evidence());
     let left = prepare_source(context, &decisions, left, 0)?;
     let right = prepare_source(context, &decisions, right, 1)?;
     if left.triangles.is_empty() || right.triangles.is_empty() {
         options.check_cancelled()?;
-        return Ok(decisions.finish(empty()));
+        return Ok(decisions.finish(empty().with_inherited_construction(
+            evidence.with_predicate_certainty(decisions.certainty()),
+        )));
     }
     let left = convex_cells(context, &decisions, left, options)?;
     if left.is_empty() {
         options.check_cancelled()?;
-        return Ok(decisions.finish(empty()));
+        return Ok(decisions.finish(empty().with_inherited_construction(
+            evidence.with_predicate_certainty(decisions.certainty()),
+        )));
     }
     let right = convex_cells(context, &decisions, right, options)?;
     let count = product(left.len(), right.len(), "Minkowski convex pairs")?;
@@ -136,7 +143,10 @@ pub fn minkowski_sum_with_options(
     }
     let result = accumulated.unwrap_or_else(empty);
     options.check_cancelled()?;
-    Ok(decisions.finish(result))
+    Ok(decisions.finish(
+        result
+            .with_inherited_construction(evidence.with_predicate_certainty(decisions.certainty())),
+    ))
 }
 
 /// Computes `conv({a+b | a in left, b in right})` for stored point sets.
@@ -155,11 +165,20 @@ pub fn minkowski_hull(
     } else {
         pair_hull(&decisions, left, right, &MinkowskiOptions::default())?
     };
-    Ok(decisions.finish(result))
+    Ok(decisions.finish(
+        result.with_inherited_construction(
+            crate::ConstructionEvidence::DECLARED_COORDINATES
+                .with_predicate_certainty(decisions.certainty()),
+        ),
+    ))
 }
 
 fn empty() -> TriangleMesh {
-    TriangleMesh::new(Vec::new(), Vec::new())
+    TriangleMesh::from_construction(
+        Vec::new(),
+        Vec::new(),
+        crate::ConstructionEvidence::DECLARED_COORDINATES,
+    )
 }
 
 fn check_limit(resource: &'static str, required: usize, limit: usize) -> HypermeshResult<()> {
@@ -197,7 +216,7 @@ fn prepare_source(
     mesh_index: usize,
 ) -> HypermeshResult<TriangleMesh> {
     if mesh.positions.is_empty() && mesh.triangles.is_empty() {
-        return Ok(empty());
+        return Ok(mesh.clone());
     }
     let mut mapping = reserved(mesh.positions.len(), "Minkowski source indices")?;
     mapping.resize(mesh.positions.len(), usize::MAX);
@@ -230,7 +249,7 @@ fn prepare_source(
             let [a, b, c] = triangle.indices().map(|index| mapping[index]);
             Triangle::new(a, b, c)
         }));
-        TriangleMesh::new(positions, triangles)
+        TriangleMesh::from_construction(positions, triangles, mesh.construction_evidence())
     };
     decisions.absorb(source.validate_closed_pwn(context)?.certainty);
     Ok(source)

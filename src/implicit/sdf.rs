@@ -306,7 +306,7 @@ fn sample_indexed(
             samples.into_grid_report(preview_grid, metric_status),
         ));
     }
-    Ok(decisions.finish((output.mesh, diagnostics)))
+    Ok(decisions.finish((decisions.qualify_mesh(output.mesh), diagnostics)))
 }
 
 #[derive(Clone, Debug)]

@@ -247,7 +247,7 @@ fn one_program_reuses_the_arrangement_for_all_builtin_results() {
         );
     }
     let mut globally_used = vec![false; outcome.value.vertices.len()];
-    for result in &outcome.value.results {
+    for result in outcome.value.results.iter() {
         for &vertex in result.triangles.iter().flatten() {
             globally_used[vertex as usize] = true;
         }

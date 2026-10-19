@@ -470,6 +470,13 @@ explicit tessellation choices; CSGRS has no global tolerance setting.
 
 ### Solid operations and queries
 
+Native meshes retain a [construction evidence summary](docs/construction-evidence.md)
+separately from operation-local certainty and topology proofs. It survives
+extraction, transforms, Boolean composition and empty results. Raw buffer and
+plain format imports expose missing history; bound binary STL artifacts retain
+the summary through in-process export/import. The guide describes mutation,
+the Boolean batch API migration, bindings, and remaining proof-replay limits.
+
 `solid::SolidExt` supplies fluent native operations:
 
 - `try_union`, `try_difference`, `try_intersection`, and `try_xor` use

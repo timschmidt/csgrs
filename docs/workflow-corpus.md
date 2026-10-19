@@ -14,6 +14,7 @@ original difficult fixtures.
 | Empty results | Valid-set identities, disconnected and symbolic operands, invalid operands paired with empty, subsequent operations | [empty_composition.rs](../tests/empty_composition.rs) |
 | Transformed primitives | Exact scaling, translation, rotation and reflection; volume and topology; finite projective transforms and typed unbounded/invalid/undecided outcomes | [transform_failures.rs](../tests/transform_failures.rs) |
 | Profile extrusion with a hole | Rational line profiles, including a translation beyond binary64 range; exact area and volume, manifoldness, native diagnostics | [exact_linear_modeling.rs](../tests/exact_linear_modeling.rs) |
+| Construction evidence through interchange | Twelve exact/qualified hull pipelines, including the original tiny outside point; local proofs, inherited qualifications and binary32 endpoint semantics checked independently | [construction_evidence.rs](../tests/construction_evidence.rs) |
 
 ## Transformed box domain
 

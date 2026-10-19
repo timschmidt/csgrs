@@ -35,7 +35,13 @@ pub fn boolean(
     let arrangement =
         build_surface_arrangement(&decisions, &soup.polygons, soup.source_vertex_count)?;
     crate::trace_dispatch!("boolean", "surface-arranged");
-    let output = arrangement.materialize_program(&decisions, &soup.polygons, program)?;
+    let evidence = meshes.iter().fold(
+        crate::ConstructionEvidence::DECLARED_COORDINATES,
+        |evidence, mesh| evidence.combine(mesh.construction_evidence()),
+    );
+    let output = arrangement
+        .materialize_program(&decisions, &soup.polygons, program)?
+        .with_inherited_construction(evidence);
     crate::trace_dispatch!("boolean", "output-certified");
     crate::trace_dispatch!("boolean", "complete");
     Ok(decisions.finish(output))

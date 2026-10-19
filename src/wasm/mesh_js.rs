@@ -86,6 +86,24 @@ impl From<TriangleMesh> for MeshJs {
 #[wasm_bindgen]
 #[allow(clippy::missing_const_for_fn)]
 impl MeshJs {
+    /// Construction qualifications remain queryable after outcome extraction.
+    #[wasm_bindgen(getter, js_name = constructionEvidence)]
+    pub fn construction_evidence(&self) -> super::context_js::ConstructionEvidenceJs {
+        super::context_js::ConstructionEvidenceJs {
+            inner: self.inner.construction_evidence(),
+        }
+    }
+
+    /// Export immutable bytes with a bound construction receipt. Plain byte
+    /// extraction alone cannot preserve that receipt through reimport.
+    #[cfg(feature = "stl-io")]
+    #[wasm_bindgen(js_name = toStlBinaryArtifact)]
+    pub fn to_stl_binary_artifact(&self) -> Result<BinaryStlArtifactJs, JsValue> {
+        crate::io::stl::to_stl_binary_artifact(&self.inner, "mesh")
+            .map(|inner| BinaryStlArtifactJs { inner })
+            .map_err(|error| io_error(error, "STL"))
+    }
+
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         solid::empty().into()
@@ -766,6 +784,39 @@ impl MeshJs {
         )
         .map_err(geometry_error)?
         .into())
+    }
+}
+
+/// In-process binary32 STL artifact; the bytes and source receipt are immutable.
+#[cfg(feature = "stl-io")]
+#[wasm_bindgen]
+pub struct BinaryStlArtifactJs {
+    inner: crate::io::stl::BinaryStlArtifact,
+}
+
+#[cfg(feature = "stl-io")]
+#[wasm_bindgen]
+#[allow(clippy::missing_const_for_fn)]
+impl BinaryStlArtifactJs {
+    /// Returns a copy; editing it cannot alter the bound artifact.
+    #[wasm_bindgen(getter)]
+    pub fn bytes(&self) -> Vec<u8> {
+        self.inner.bytes().to_vec()
+    }
+
+    #[wasm_bindgen(getter, js_name = constructionEvidence)]
+    pub fn construction_evidence(&self) -> super::context_js::ConstructionEvidenceJs {
+        super::context_js::ConstructionEvidenceJs {
+            inner: self.inner.construction_evidence(),
+        }
+    }
+
+    #[wasm_bindgen(js_name = intoMesh)]
+    pub fn into_mesh(self) -> Result<MeshJs, JsValue> {
+        self.inner
+            .import()
+            .map(MeshJs::from)
+            .map_err(|error| io_error(error, "STL"))
     }
 }
 

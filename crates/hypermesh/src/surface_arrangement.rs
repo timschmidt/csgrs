@@ -4325,10 +4325,12 @@ fn materialize_surface_outputs(
             });
         }
     }
-    Ok(BooleanMeshBatch {
+    Ok(BooleanMeshBatch::from_construction(
         vertices,
-        results: outputs,
-    })
+        outputs,
+        crate::ConstructionEvidence::DECLARED_COORDINATES
+            .with_predicate_certainty(decisions.certainty()),
+    ))
 }
 
 fn certify_selected_surface_output(

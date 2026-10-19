@@ -336,7 +336,11 @@ fn tetrahedral_isosurface(
             }
         }
     }
-    Ok(TriangleMesh::new(positions, triangles))
+    Ok(TriangleMesh::from_construction(
+        positions,
+        triangles,
+        hypermesh::ConstructionEvidence::DECLARED_COORDINATES.with_sampling(),
+    ))
 }
 
 // ------------  Specific minimal‑surface flavours  --------------------

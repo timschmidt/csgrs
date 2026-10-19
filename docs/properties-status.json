@@ -28396,6 +28396,126 @@
     "checkpoint": "docs/evidence/2026-10-19-construction-provenance-observation/checkpoint-v1.json",
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/construction-provenance-observation-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
     "general_speedup_claimed": false
+  },
+  "construction_evidence_admission": {
+    "classification": "admitted qualified native mesh construction summary",
+    "decision": "Retain construction qualifications across supported native/modeling composition and bound in-process binary STL artifacts.",
+    "owner": "Hypermesh native carriers and constructors; CSGRS propagation/cache keys and format/ABI boundaries.",
+    "properties": [
+      "P4",
+      "P9",
+      "P19",
+      "P20",
+      "P25",
+      "P26",
+      "P30",
+      "P35",
+      "P36",
+      "P37",
+      "P39"
+    ],
+    "input_domain": "Supported TriangleMesh and BooleanMeshBatch operations; explicit declared-coordinate source claims, raw untracked ingress, exact and approximate construction, empty composition, native mutation/views, sampled/projection boundaries. The original twelve E98 rational/symbolic hull pipelines retain strict 512-bit local policy and the -2^-1200 outside point.",
+    "baseline_reproduced_before_edit": true,
+    "original_pipeline_replay_cases": 12,
+    "new_pipeline_cases": 12,
+    "new_control_tests": 6,
+    "baseline_geometry_and_bytes_preserved": true,
+    "actual_approximate_pipeline_cases": 8,
+    "exact_pipeline_controls": 4,
+    "claim_dimensions": {
+      "fidelity": "Sampling and coordinate projection are distinct flags. STL uses the existing binary32 conversion/nondegeneracy contract. No new analytic fidelity or error bound is claimed.",
+      "numerical": "Local MeshCertainty/GeometryCertainty remain operation-local; the monotone native summary separately records actual consumed approximate decisions or missing history.",
+      "topological": "Existing strict PWN and required manifold checks describe the resulting current mesh. They do not certify an earlier intended hull."
+    },
+    "api_migration": "BooleanMeshBatch vertices/results are Arc slices with private weak witnesses. Raw literals become BooleanMeshBatch::new; mutable access uses Arc::make_mut. Geometry equality and malformed-carrier validation retain their semantics. TriangleMesh::new exposes untracked history; from_construction explicitly begins a declared-coordinate claim.",
+    "passed_test_executions": 1708,
+    "test_count_note": "Counts include overlapping feature configurations and repeated focused cases, not distinct new capabilities.",
+    "strict_workflow_audits": {
+      "default": {
+        "audited_outputs": 945,
+        "certified_pairs": 45,
+        "controls": 5,
+        "log_sha256": "7fc2b7a7ee67fd19437c85c954e8bbeb31a6d96def150e48192c675719b7c43c",
+        "open_cells": 58800
+      },
+      "minimal": {
+        "audited_outputs": 945,
+        "certified_pairs": 45,
+        "controls": 5,
+        "log_sha256": "e6374eccb590bd799c7f1b0eda5d6988fbddf532552db87f30450374a5410e97",
+        "open_cells": 58800
+      },
+      "optional": {
+        "audited_outputs": 945,
+        "certified_pairs": 45,
+        "controls": 5,
+        "log_sha256": "7fc2b7a7ee67fd19437c85c954e8bbeb31a6d96def150e48192c675719b7c43c",
+        "open_cells": 58800
+      }
+    },
+    "ffi_consumers_passed": 30,
+    "validation": [
+      "Native Hypermesh complete library/integration tests.",
+      "Root minimal, default and curve,stl-io,sdf,metaballs,wasm,attributed library/integration tests; eighteen focused construction cases run in separate processes.",
+      "Hyperphysics, Hypergraphics and csgrs-ffi downstream tests.",
+      "Strict Clippy for affected native/root/downstream configurations, native fuzz bins and Hypermesh UI demo.",
+      "Affected docs/doctests, workspace formatting, public guide compiled and run.",
+      "Rust 1.95 all-target checks for minimal/default/optional root and native/FFI; no runtime-floor claim.",
+      "Real C/C++/Python consumers and generated WASM JavaScript/TypeScript consumers; matching WASM Clippy.",
+      "Original E98 probe replayed without source changes, matching prior stdout and STL hashes; fixed matched overhead samples and mutation memory probe."
+    ],
+    "msrv_runtime_executed": false,
+    "wasm_node_containment": "Node uses --disable-wasm-trap-handler and --max-old-space-size=512 under the unchanged 8 GiB child address-space limit; pinned wasm-bindgen 0.2.126 and TypeScript 5.7.3.",
+    "late_documentation_only_edit": "docs/construction-evidence.md resource disclosure",
+    "limitations": [
+      "The summary is not a replayable proof, complete dependency graph, scalar-parameter history, or per-boundary source map. Full P19 remains open.",
+      "Bare curve lineage is untracked. Unsupported evidence routes expose missing history; no wrapper conversion certifies earlier intent.",
+      "Boolean into_triangle_meshes still discards per-triangle TriangleSource mappings; the summary does not replace them.",
+      "Persistent proof-preserving interchange is not implemented. Bare STL cannot encode distinctions between histories with identical bytes.",
+      "C ABI constructors remain strict; no approximate-policy constructor or bound STL C ABI was added.",
+      "Weak identity witnesses can retain old backing allocations until their carriers are dropped. Existing total-work, heap and cancellation limits are not completed by this change.",
+      "Clean shipped distribution, full pre-push CI and broader release qualification remain open. No push or release performed.",
+      "Historical missing artifacts remain unreaudited; their preservation is not claimed."
+    ],
+    "production_implementation_changed": true,
+    "runtime_admitted": true,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "full_ci_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "all_adverse_results_retained": true,
+    "general_speedup_claimed": false,
+    "next": "Preserve this mesh-summary contract while extending missing lineage and boundary-source evidence, ordinary strict workload completion, and the clean shipped consumer/release path.",
+    "failed_commands": {
+      "construction-evidence-admission-check-v1-native-check": 101,
+      "construction-evidence-admission-check-v2-model-check": 101,
+      "construction-evidence-admission-check-v3-model-check": 101,
+      "construction-evidence-admission-cost-baseline-v1-baseline-cost-v1-compile": 1,
+      "construction-evidence-admission-qualification-v2-fuzz-check": 101,
+      "construction-evidence-admission-wasm-consumers-v1-script": 2
+    },
+    "failed_attempts": [
+      "Native check v1 found old Vec iteration consumers after the BooleanMeshBatch Arc migration; consumers were corrected without changing malformed-carrier assertions.",
+      "Model check v2 found the new JS STL wrapper omitted the format argument to io_error; the format-specific mapping was restored.",
+      "Model check v3 required a const exported getter; the existing wasm-bindgen lint exemption style was applied. All affected checks were rerun on the final code.",
+      "Qualification v1 stopped after a successful downstream build because the artifact key omitted the package name; parsing retained Cargo JSON reproduces the collision. Version 2 labels standalone downstream packages separately and completes all remaining checks. A versioned harness also executes every original combined-feature downstream test with package-bound artifact keys. No production or test source changed.",
+      "The original nested fuzz check could not download autocfg 1.5.1 in the preserved offline registry. The unchanged nested lockfiles were supplied from existing local archives in a private checksum-verified registry; no shared registry mutation, lock update or network access was needed.",
+      "The new TypeScript client used fromStl rather than the existing fromSTL export. The unchanged assertions were rerun through the complete WASM script after that one-name correction. The failed generated package is retained; its first preservation helper encountered overlay metadata and a second version preserved all regular package files with the marker recorded separately.",
+      "Cost probe v1 did not compile because Real does not implement From<usize>. Version 2 converts i % 3 to u8 with a checked conversion; the values, fixtures, assertions and budgets are unchanged. No result samples existed before this correction."
+    ],
+    "preparation_record_note": "Initial check helpers reused the prepared-check-matrix-v1 filename; its retained contents describe v4. Versioned helpers, source pins, per-command protocols, closed overlays and raw failed command logs retain the preceding attempts.",
+    "storage_baselines_reset": false,
+    "artifact_volume": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs",
+    "disk_b_allowance_gib": null,
+    "disk_b_quota_mode": "User authorized available artifact volume capacity; no retained-artifact quota.",
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "parent_revision": "9283ae9251d095a9b7c00ca3ee9fea6763b49686",
+    "review": "docs/evidence/2026-10-19-construction-evidence-admission/review-v1.json",
+    "cost_review": "docs/evidence/2026-10-19-construction-evidence-admission/cost-review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-construction-evidence-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/construction-evidence-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz"
   }
 },
   "status_meanings": {

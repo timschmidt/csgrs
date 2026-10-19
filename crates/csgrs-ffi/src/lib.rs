@@ -62,6 +62,42 @@ pub enum CsgrsScalarFamily {
     Real = 4,
 }
 
+/// Construction summary. Each field is 0 or 1; unknown history cannot be
+/// certified by interpreting `approximate_512_consumed == 0` alone.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct CsgrsConstructionEvidence {
+    pub source_history_missing: u8,
+    pub approximate_512_consumed: u8,
+    pub coordinates_projected: u8,
+    pub source_sampled: u8,
+    pub buffers_changed: u8,
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn csgrs_triangle_mesh_construction_evidence(
+    mesh: *const CsgrsTriangleMesh,
+    out: *mut CsgrsConstructionEvidence,
+) -> CsgrsStatus {
+    ffi_status(|| {
+        let mesh = unsafe { ptr_ref(mesh) }?;
+        let evidence = match &mesh.inner {
+            TriangleMeshKind::F32(mesh) => mesh.native().construction_evidence(),
+            TriangleMeshKind::F64(mesh) => mesh.native().construction_evidence(),
+            TriangleMeshKind::I128(mesh) => mesh.native().construction_evidence(),
+            TriangleMeshKind::Real(mesh) => mesh.native().construction_evidence(),
+        };
+        *unsafe { out_ptr(out) }? = CsgrsConstructionEvidence {
+            source_history_missing: u8::from(evidence.source_history_missing()),
+            approximate_512_consumed: u8::from(evidence.approximate_512_consumed()),
+            coordinates_projected: u8::from(evidence.coordinates_projected()),
+            source_sampled: u8::from(evidence.source_sampled()),
+            buffers_changed: u8::from(evidence.buffers_changed()),
+        };
+        Ok(())
+    })
+}
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CsgrsI128 {

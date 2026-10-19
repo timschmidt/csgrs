@@ -47,3 +47,10 @@ cp tests/wasm/mesh_errors.ts "${wasm_bindings_dir}/mesh_errors.ts"
     --module Node16 --moduleResolution Node16 --outDir "${wasm_bindings_dir}" \
     "${wasm_bindings_dir}/mesh_errors.ts"
 node "${wasm_bindings_dir}/mesh_errors.js"
+
+# Retain native construction qualifications through extraction and bound STL artifacts.
+cp tests/wasm/construction_evidence.ts "${wasm_bindings_dir}/construction_evidence.ts"
+"${tsc_bin}" --strict --target ES2020 --lib ES2020,DOM,ESNext.Disposable \
+    --module Node16 --moduleResolution Node16 --outDir "${wasm_bindings_dir}" \
+    "${wasm_bindings_dir}/construction_evidence.ts"
+node "${wasm_bindings_dir}/construction_evidence.js"

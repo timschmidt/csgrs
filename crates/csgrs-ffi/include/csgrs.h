@@ -36,6 +36,20 @@ typedef struct csgrs_real_t csgrs_real_t;
 typedef struct csgrs_triangle_mesh_t csgrs_triangle_mesh_t;
 typedef struct csgrs_curve_region_t csgrs_curve_region_t;
 
+/* Independent of local certainty, topology and geometric fidelity. Fields are
+   0 or 1. A false approximate flag does not certify missing source history. */
+typedef struct csgrs_construction_evidence_t {
+  uint8_t source_history_missing;
+  uint8_t approximate_512_consumed;
+  uint8_t coordinates_projected;
+  uint8_t source_sampled;
+  uint8_t buffers_changed;
+} csgrs_construction_evidence_t;
+
+/* Accepts any valid mesh family. Failure leaves the output untouched. */
+csgrs_status_t csgrs_triangle_mesh_construction_evidence(
+    const csgrs_triangle_mesh_t *mesh, csgrs_construction_evidence_t *out);
+
 typedef struct csgrs_i128_t {
   int64_t hi;
   uint64_t lo;

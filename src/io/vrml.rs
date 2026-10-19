@@ -108,7 +108,8 @@ pub fn from_vrml_with_context(
                 .into(),
         });
     }
-    let mesh = TriangleMesh::new(flattened.positions, native_triangles);
+    let mesh =
+        decisions.qualify_mesh(TriangleMesh::new(flattened.positions, native_triangles));
 
     Ok(decisions.finish(VrmlMeshImport {
         mesh,

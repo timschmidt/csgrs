@@ -16,6 +16,33 @@ fn unresolved_zero() -> Real {
 }
 
 #[test]
+fn actual_approximate_mesh_evidence_survives_js_outcome_extraction() {
+    let cube = solid::cube(Real::one()).unwrap();
+    let mut points = cube.positions.to_vec();
+    points.push(Point3::new(unresolved_zero(), 0.into(), 0.into()));
+    let hull = hypermesh::convex_hull(
+        &csgrs::GeometryContext::APPROXIMATE_512.mesh_context(),
+        &points,
+    )
+    .unwrap();
+    assert_eq!(
+        hull.certainty,
+        hypermesh::MeshCertainty::Approximate512Consumed
+    );
+    let mesh = GeometryMeshResultJs::from(GeometryOutcome {
+        value: hull.value,
+        certainty: GeometryCertainty::Approximate512Consumed,
+    })
+    .into_mesh();
+    let evidence = mesh.construction_evidence();
+    assert!(evidence.approximate_512_consumed());
+    assert_eq!(
+        evidence.predicate_certainty(),
+        Some(GeometryCertaintyJs::Approximate512Consumed)
+    );
+}
+
+#[test]
 fn named_receipts_preserve_both_certainty_values() {
     for certainty in [
         GeometryCertainty::Certified,

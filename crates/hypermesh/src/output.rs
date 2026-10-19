@@ -1,10 +1,11 @@
 //! Compact exact Boolean output carriers and topology evidence.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use hyperlattice::Point3;
 
+use crate::ConstructionEvidence;
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::mesh::{Triangle, TriangleMesh};
 
@@ -37,19 +38,73 @@ pub struct BooleanMeshResult {
 ///
 /// Every result indexes the same compact vertex arena, so requesting several
 /// expressions does not duplicate exact coordinate storage.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct BooleanMeshBatch {
-    /// Exact vertices used by at least one requested result.
-    pub vertices: Vec<Point3>,
-    /// Requested results in program-root order.
-    pub results: Vec<BooleanMeshResult>,
+    /// Exact vertices used by at least one requested result. Use `Arc::make_mut`
+    /// to edit; doing so invalidates the retained construction identity.
+    pub vertices: Arc<[Point3]>,
+    /// Requested results in program-root order. Use `Arc::make_mut` to edit.
+    pub results: Arc<[BooleanMeshResult]>,
+    source_vertices: Weak<[Point3]>,
+    source_results: Weak<[BooleanMeshResult]>,
+    construction: ConstructionEvidence,
+}
+
+impl Default for BooleanMeshBatch {
+    fn default() -> Self {
+        Self::new(Vec::new(), Vec::new())
+    }
+}
+
+impl PartialEq for BooleanMeshBatch {
+    fn eq(&self, other: &Self) -> bool {
+        self.vertices == other.vertices && self.results == other.results
+    }
 }
 
 impl BooleanMeshBatch {
+    /// Constructs a raw batch with untracked source history. Carrier validation
+    /// is deferred to [`Self::validate`] or [`Self::into_triangle_meshes`].
+    pub fn new(vertices: Vec<Point3>, results: Vec<BooleanMeshResult>) -> Self {
+        Self::from_construction(vertices, results, ConstructionEvidence::UNTRACKED)
+    }
+
+    pub(crate) fn from_construction(
+        vertices: Vec<Point3>,
+        results: Vec<BooleanMeshResult>,
+        construction: ConstructionEvidence,
+    ) -> Self {
+        let vertices: Arc<[Point3]> = vertices.into();
+        let results: Arc<[BooleanMeshResult]> = results.into();
+        Self {
+            source_vertices: Arc::downgrade(&vertices),
+            source_results: Arc::downgrade(&results),
+            vertices,
+            results,
+            construction,
+        }
+    }
+
+    /// Retained qualifications, with missing history exposed after buffer edits.
+    pub fn construction_evidence(&self) -> ConstructionEvidence {
+        if std::ptr::eq(self.source_vertices.as_ptr(), Arc::as_ptr(&self.vertices))
+            && std::ptr::eq(self.source_results.as_ptr(), Arc::as_ptr(&self.results))
+        {
+            self.construction
+        } else {
+            self.construction.after_buffer_mutation()
+        }
+    }
+
+    pub(crate) fn with_inherited_construction(mut self, evidence: ConstructionEvidence) -> Self {
+        self.construction = self.construction_evidence().combine(evidence);
+        self
+    }
+
     /// Checks carrier dimensions and compact indices without evaluating any
     /// geometric predicates.
     pub fn validate(&self) -> HypermeshResult<()> {
-        for result in &self.results {
+        for result in self.results.iter() {
             if result.triangles.len() != result.sources.len() {
                 return Err(HypermeshError::TriangleSourceCountMismatch {
                     triangles: result.triangles.len(),
@@ -76,8 +131,9 @@ impl BooleanMeshBatch {
     /// Empty results have neither positions nor triangles, so they remain
     /// canonical empty geometry even when other batch rows use vertices.
     ///
-    /// Source provenance remains available only on this batch and is discarded
-    /// by this explicit carrier conversion.
+    /// Construction qualifications survive this conversion, including empty
+    /// rows. Per-triangle source mappings remain available only on the batch;
+    /// this summary is not a replacement for those mappings.
     pub fn into_triangle_meshes(self) -> HypermeshResult<Vec<TriangleMesh>> {
         self.validate()?;
         for (output, result) in self.results.iter().enumerate() {
@@ -86,16 +142,21 @@ impl BooleanMeshBatch {
             }
         }
 
-        let positions: Arc<[Point3]> = self.vertices.into();
+        let evidence = self.construction_evidence();
+        let positions = self.vertices;
         let mut meshes = Vec::new();
         meshes.try_reserve_exact(self.results.len()).map_err(|_| {
             HypermeshError::CapacityOverflow {
                 operation: "Boolean triangle mesh results",
             }
         })?;
-        for result in self.results {
+        for result in self.results.iter() {
             if result.triangles.is_empty() {
-                meshes.push(TriangleMesh::new(Vec::new(), Vec::new()));
+                meshes.push(TriangleMesh::from_construction(
+                    Vec::new(),
+                    Vec::new(),
+                    evidence,
+                ));
                 continue;
             }
             let mut triangles = Vec::new();
@@ -107,12 +168,13 @@ impl BooleanMeshBatch {
             triangles.extend(
                 result
                     .triangles
-                    .into_iter()
-                    .map(|[a, b, c]| Triangle::new(a as usize, b as usize, c as usize)),
+                    .iter()
+                    .map(|&[a, b, c]| Triangle::new(a as usize, b as usize, c as usize)),
             );
-            meshes.push(TriangleMesh::from_shared_positions(
+            meshes.push(TriangleMesh::from_shared_construction(
                 Arc::clone(&positions),
                 triangles,
+                evidence,
             ));
         }
         Ok(meshes)
@@ -219,14 +281,14 @@ mod tests {
             triangle: 0,
             orientation: 1,
         };
-        let batch = BooleanMeshBatch {
-            vertices: vec![
+        let batch = BooleanMeshBatch::new(
+            vec![
                 point(0, 0, 0),
                 point(1, 0, 0),
                 point(0, 1, 0),
                 point(0, 0, 1),
             ],
-            results: vec![
+            vec![
                 BooleanMeshResult {
                     triangles: vec![[0, 1, 2]],
                     sources: vec![source],
@@ -238,7 +300,7 @@ mod tests {
                     exterior_inside: false,
                 },
             ],
-        };
+        );
         let meshes = batch.into_triangle_meshes().unwrap();
         assert!(Arc::ptr_eq(&meshes[0].positions, &meshes[1].positions));
         assert_eq!(meshes[0].triangles[0], Triangle::new(0, 1, 2));
@@ -254,19 +316,16 @@ mod tests {
             exterior_inside,
         };
         assert_eq!(
-            BooleanMeshBatch {
-                vertices: vertices.clone(),
-                results: vec![result(Vec::new(), Vec::new(), true)],
-            }
-            .into_triangle_meshes()
-            .unwrap_err(),
+            BooleanMeshBatch::new(vertices.clone(), vec![result(Vec::new(), Vec::new(), true)],)
+                .into_triangle_meshes()
+                .unwrap_err(),
             HypermeshError::UnboundedBooleanOutput { output: 0 }
         );
         assert_eq!(
-            BooleanMeshBatch {
-                vertices: vertices.clone(),
-                results: vec![result(vec![[0, 1, 2]], Vec::new(), false)],
-            }
+            BooleanMeshBatch::new(
+                vertices.clone(),
+                vec![result(vec![[0, 1, 2]], Vec::new(), false)],
+            )
             .into_triangle_meshes()
             .unwrap_err(),
             HypermeshError::TriangleSourceCountMismatch {
@@ -275,14 +334,14 @@ mod tests {
             }
         );
         assert_eq!(
-            BooleanMeshBatch {
+            BooleanMeshBatch::new(
                 vertices,
-                results: vec![result(
+                vec![result(
                     vec![[0, 1, 3]],
                     vec![TriangleSource::default()],
                     false,
                 )],
-            }
+            )
             .into_triangle_meshes()
             .unwrap_err(),
             HypermeshError::VertexIndexOutOfBounds {

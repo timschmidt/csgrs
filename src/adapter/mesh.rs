@@ -244,13 +244,7 @@ where
     }
 
     pub fn inverse(&self) -> Self {
-        let triangles = self
-            .inner
-            .triangles
-            .iter()
-            .map(|triangle| Triangle::new(triangle.v2, triangle.v1, triangle.v0))
-            .collect();
-        Self::from_native(TriangleMesh::new(self.inner.positions.to_vec(), triangles))
+        Self::from_native(self.inner.reversed_winding())
     }
 
     pub fn center(&self) -> AdapterResult<Self> {

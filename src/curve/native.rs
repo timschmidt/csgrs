@@ -2219,7 +2219,7 @@ pub fn try_triangulate(
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let mesh = try_triangulate_with(input, &decisions)?;
-    Ok(decisions.finish(mesh))
+    Ok(decisions.finish_mesh(mesh))
 }
 
 fn try_triangulate_with(
@@ -2261,6 +2261,11 @@ fn try_modeling_profiles_with(
     if let Some(profiles) = exact {
         return Ok(profiles);
     }
+    decisions.record_construction(
+        hypermesh::ConstructionEvidence::UNTRACKED
+            .with_sampling()
+            .with_coordinate_projection(),
+    );
     let quantized_contour = |ring: &FinitePolyline2| -> Result<Contour2, ValidationError> {
         let coordinates = ring
             .points()
@@ -2303,6 +2308,11 @@ fn try_finite_profiles_with(
     input: &CurveRegion2,
     decisions: &GeometryDecisions,
 ) -> Result<Vec<FiniteRegionProfile2>, ValidationError> {
+    decisions.record_construction(
+        hypermesh::ConstructionEvidence::UNTRACKED
+            .with_sampling()
+            .with_coordinate_projection(),
+    );
     let options = FiniteProjectionOptions::try_new(1.0e-3)
         .expect("positive finite projection tolerance");
     let profiles =
@@ -2338,7 +2348,7 @@ pub fn try_extrude_vector(
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let mesh = try_extrude_vector_with(region, direction, &decisions)?;
-    Ok(decisions.finish(mesh))
+    Ok(decisions.finish_mesh(mesh))
 }
 
 fn try_extrude_vector_with(
@@ -2456,7 +2466,7 @@ fn validate_surface_mesh(
             .map_err(|error| ValidationError::Geometry(error.to_string()))?,
     );
     if valid {
-        Ok(mesh)
+        Ok(decisions.qualify_mesh(mesh))
     } else {
         Err(ValidationError::Geometry(
             "triangulation emitted duplicate, invalid, or degenerate triangles".into(),
@@ -2470,14 +2480,14 @@ fn validate_closed_mesh(
     decisions: &GeometryDecisions,
 ) -> Result<TriangleMesh, ValidationError> {
     if allow_empty && mesh.triangles.is_empty() {
-        return Ok(mesh);
+        return Ok(decisions.qualify_mesh(mesh));
     }
     let closed = decisions.consume_mesh(
         mesh.is_closed_manifold_geometry(decisions.mesh_context())
             .map_err(|error| ValidationError::Geometry(error.to_string()))?,
     );
     if closed {
-        Ok(mesh)
+        Ok(decisions.qualify_mesh(mesh))
     } else {
         Err(ValidationError::Geometry(
             "operation did not produce a unique nondegenerate closed manifold".into(),
@@ -2711,7 +2721,7 @@ pub fn revolve(
         region.is_empty(),
         &decisions,
     )?;
-    Ok(decisions.finish(mesh))
+    Ok(decisions.finish_mesh(mesh))
 }
 
 /// Sweeps a native filled region along a 3D point path.
@@ -2874,7 +2884,7 @@ pub fn try_sweep(
         region.is_empty(),
         &decisions,
     )?;
-    Ok(decisions.finish(mesh))
+    Ok(decisions.finish_mesh(mesh))
 }
 
 /// Extrudes while varying twist and terminal XY scale.
@@ -2997,7 +3007,7 @@ pub fn extrude_twisted(
         input.is_empty(),
         &decisions,
     )?;
-    Ok(decisions.finish(mesh))
+    Ok(decisions.finish_mesh(mesh))
 }
 
 /// Filled contours sampled from Hypersdf's normalized inverse-square field.

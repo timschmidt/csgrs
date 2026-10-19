@@ -4,7 +4,8 @@
 //! predicate policy, change precision, cache errors, or certify geometry.
 //! Context-sensitive entries retain both the selected [`crate::GeometryContext`]
 //! and the result's certainty. A warm approximate entry cannot answer a strict
-//! request. Source meshes are keyed by shared position/index storage identity;
+//! request. Source meshes are keyed by shared position/index storage identity
+//! and construction qualifications;
 //! primitive parameters and slice heights use structural scalar equality.
 //!
 //! Budgets count entries, **not bytes**: an entry can retain arbitrarily large

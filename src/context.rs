@@ -53,7 +53,11 @@ pub enum GeometryCertainty {
     Approximate512Consumed,
 }
 
-/// Completed CSG value paired with aggregate predicate certainty.
+/// Completed CSG value paired with operation-local predicate certainty.
+///
+/// For meshes, inherited construction qualifications are separately queryable
+/// through [`hypermesh::TriangleMesh::construction_evidence`]. A certified local
+/// receipt does not clear an earlier approximate construction or missing history.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct GeometryOutcome<T> {
     /// Completed value.
@@ -93,6 +97,7 @@ pub(crate) struct GeometryDecisions {
     context: GeometryContext,
     mesh_context: MeshContext,
     certainty: Cell<GeometryCertainty>,
+    construction: Cell<hypermesh::ConstructionEvidence>,
 }
 
 #[allow(dead_code)]
@@ -102,6 +107,7 @@ impl GeometryDecisions {
             context: *context,
             mesh_context: context.mesh_context(),
             certainty: Cell::new(GeometryCertainty::Certified),
+            construction: Cell::new(hypermesh::ConstructionEvidence::DECLARED_COORDINATES),
         }
     }
 
@@ -119,6 +125,31 @@ impl GeometryDecisions {
 
     pub(crate) const fn finish<T>(&self, value: T) -> GeometryOutcome<T> {
         GeometryOutcome::new(value, self.certainty.get())
+    }
+
+    pub(crate) fn record_construction(&self, evidence: hypermesh::ConstructionEvidence) {
+        self.construction
+            .set(self.construction.get().combine(evidence));
+    }
+
+    pub(crate) fn qualify_mesh(
+        &self,
+        mesh: hypermesh::TriangleMesh,
+    ) -> hypermesh::TriangleMesh {
+        let certainty = match self.certainty.get() {
+            GeometryCertainty::Certified => MeshCertainty::Certified,
+            GeometryCertainty::Approximate512Consumed => MeshCertainty::Approximate512Consumed,
+        };
+        mesh.with_inherited_construction(
+            self.construction.get().with_predicate_certainty(certainty),
+        )
+    }
+
+    pub(crate) fn finish_mesh(
+        &self,
+        mesh: hypermesh::TriangleMesh,
+    ) -> GeometryOutcome<hypermesh::TriangleMesh> {
+        self.finish(self.qualify_mesh(mesh))
     }
 
     pub(crate) fn observe(&self, certainty: GeometryCertainty) {

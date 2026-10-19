@@ -35,6 +35,55 @@ impl From<hypercurve::CurveCertainty> for GeometryCertaintyJs {
     }
 }
 
+/// Native construction qualifications, independent of operation-local certainty.
+/// A missing predicate certainty means source history is unavailable. Projection
+/// and sampling flags are separate and supply no geometric error bound.
+#[wasm_bindgen]
+pub struct ConstructionEvidenceJs {
+    pub(crate) inner: hypermesh::ConstructionEvidence,
+}
+
+#[wasm_bindgen]
+#[allow(clippy::missing_const_for_fn)]
+impl ConstructionEvidenceJs {
+    #[wasm_bindgen(getter, js_name = sourceHistoryMissing)]
+    pub fn source_history_missing(&self) -> bool {
+        self.inner.source_history_missing()
+    }
+
+    #[wasm_bindgen(getter, js_name = approximate512Consumed)]
+    pub fn approximate_512_consumed(&self) -> bool {
+        self.inner.approximate_512_consumed()
+    }
+
+    #[wasm_bindgen(getter, js_name = coordinatesProjected)]
+    pub fn coordinates_projected(&self) -> bool {
+        self.inner.coordinates_projected()
+    }
+
+    #[wasm_bindgen(getter, js_name = sourceSampled)]
+    pub fn source_sampled(&self) -> bool {
+        self.inner.source_sampled()
+    }
+
+    #[wasm_bindgen(getter, js_name = buffersChanged)]
+    pub fn buffers_changed(&self) -> bool {
+        self.inner.buffers_changed()
+    }
+
+    #[wasm_bindgen(getter, js_name = predicateCertainty)]
+    pub fn predicate_certainty(&self) -> Option<GeometryCertaintyJs> {
+        self.inner
+            .predicate_certainty()
+            .map(|certainty| match certainty {
+                hypermesh::MeshCertainty::Certified => GeometryCertaintyJs::Certified,
+                hypermesh::MeshCertainty::Approximate512Consumed => {
+                    GeometryCertaintyJs::Approximate512Consumed
+                },
+            })
+    }
+}
+
 /// Outcome of a point query, separate from its predicate certainty.
 #[wasm_bindgen]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

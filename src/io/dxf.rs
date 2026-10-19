@@ -164,6 +164,9 @@ pub fn from_dxf_with_context(
                 append_polygon(points)?;
             },
             EntityType::Circle(circle) => {
+                decisions.record_construction(
+                    hypermesh::ConstructionEvidence::UNTRACKED.with_sampling(),
+                );
                 if circle.thickness != 0.0 {
                     return Err(IoError::Unsupported {
                         format: "DXF",
@@ -260,7 +263,11 @@ pub fn from_dxf_with_context(
             },
         }
     }
-    Ok(decisions.finish(TriangleMesh::new(positions, triangles)))
+    Ok(decisions.finish_mesh(
+        TriangleMesh::new(positions, triangles).with_inherited_construction(
+            hypermesh::ConstructionEvidence::UNTRACKED.with_coordinate_projection(),
+        ),
+    ))
 }
 
 fn point_from_wcs(point: dxf::Point) -> Result<Point3, IoError> {

@@ -29,6 +29,14 @@ MeshPtr = ctypes.POINTER(_MeshHandle)
 CurveRegionPtr = ctypes.POINTER(_CurveRegionHandle)
 
 
+class ConstructionEvidence(ctypes.Structure):
+    """Native summary; false approximate alone does not certify missing history."""
+    _fields_ = [(name, ctypes.c_uint8) for name in (
+        "source_history_missing", "approximate_512_consumed", "coordinates_projected",
+        "source_sampled", "buffers_changed",
+    )]
+
+
 class I128(ctypes.Structure):
     _fields_ = [("hi", ctypes.c_int64), ("lo", ctypes.c_uint64)]
 
@@ -465,6 +473,11 @@ class TriangleMesh:
     def inverse(self): return self._unary("inverse")
     def center(self): return self._unary("center")
     def floating(self): return self._unary("float")
+
+    def construction_evidence(self):
+        out = ConstructionEvidence()
+        _call("csgrs_triangle_mesh_construction_evidence", self.ptr, ctypes.byref(out))
+        return out
 
     def _unary(self, op):
         out = MeshPtr()

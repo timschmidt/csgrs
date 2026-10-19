@@ -103,7 +103,7 @@ fn assert_translated_batch_equivalent(
     assert_eq!(actual.vertices.len(), expected.vertices.len(), "{label}");
 
     let mut vertex_map = Vec::with_capacity(actual.vertices.len());
-    for point in &actual.vertices {
+    for point in actual.vertices.iter() {
         let translated = [
             &point.x - &offsets[0],
             &point.y - &offsets[1],
@@ -128,7 +128,12 @@ fn assert_translated_batch_equivalent(
         vertex_map.push(matches[0]);
     }
 
-    for (output, (actual, expected)) in actual.results.iter().zip(&expected.results).enumerate() {
+    for (output, (actual, expected)) in actual
+        .results
+        .iter()
+        .zip(expected.results.iter())
+        .enumerate()
+    {
         assert_eq!(
             actual.exterior_inside, expected.exterior_inside,
             "{label} output {output}"

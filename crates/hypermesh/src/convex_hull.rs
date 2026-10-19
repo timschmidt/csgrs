@@ -590,7 +590,12 @@ fn compact_hull(
             )
         })
         .collect();
-    Ok(TriangleMesh::new(positions, triangles).with_valid_pwn_certainty(certainty))
+    Ok(TriangleMesh::from_construction(
+        positions,
+        triangles,
+        crate::ConstructionEvidence::DECLARED_COORDINATES.with_predicate_certainty(certainty),
+    )
+    .with_valid_pwn_certainty(certainty))
 }
 
 #[cfg(test)]

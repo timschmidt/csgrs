@@ -146,7 +146,9 @@ pub fn from_gltf(bytes: &[u8]) -> Result<GltfMeshImport, IoError> {
         let _ = normal;
         native_triangles.push(Triangle::new(a, b, c));
     }
-    let mesh = TriangleMesh::new(positions, native_triangles);
+    let mesh = TriangleMesh::new(positions, native_triangles).with_inherited_construction(
+        hypermesh::ConstructionEvidence::UNTRACKED.with_coordinate_projection(),
+    );
 
     Ok(GltfMeshImport {
         mesh,

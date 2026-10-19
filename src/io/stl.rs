@@ -4,7 +4,7 @@ use crate::io::{
     IoError, decimal_f64, finite_f32, finite_f64, finite_triangle_normal, single_line_metadata,
 };
 use hyperlattice::{Point3, Real};
-use hypermesh::{Triangle, TriangleMesh};
+use hypermesh::{ConstructionEvidence, Triangle, TriangleMesh};
 use std::cell::RefCell;
 use std::io::Cursor;
 use std::sync::Arc;
@@ -18,6 +18,59 @@ struct CachedBinaryStl {
 
 thread_local! {
     static BINARY_STL_CACHE: RefCell<Vec<CachedBinaryStl>> = const { RefCell::new(Vec::new()) };
+}
+
+/// Immutable binary STL bytes bound to their source construction qualifications.
+///
+/// Coordinates were projected by the STL exporter to binary32; the exporter
+/// proves nondegenerate encoded triangles, not manifoldness or a geometric
+/// error bound. The receipt is an in-process summary, not a serializable proof.
+/// There is intentionally no constructor accepting arbitrary bytes and a flag.
+#[derive(Clone, Debug)]
+pub struct BinaryStlArtifact {
+    bytes: Arc<[u8]>,
+    source: ConstructionEvidence,
+}
+
+impl BinaryStlArtifact {
+    /// Borrow the encoded geometry without changing the bound artifact.
+    pub fn bytes(&self) -> &[u8] {
+        &self.bytes
+    }
+
+    /// Qualifications of the authoritative source before export.
+    pub const fn source_construction_evidence(&self) -> ConstructionEvidence {
+        self.source
+    }
+
+    /// Qualifications of the encoded geometry, including binary32 projection.
+    pub const fn construction_evidence(&self) -> ConstructionEvidence {
+        self.source.with_coordinate_projection()
+    }
+
+    /// Validate and import these exact bytes while retaining their bound summary.
+    /// The topology proof concerns the parsed geometry only.
+    pub fn import(&self) -> Result<TriangleMesh, IoError> {
+        from_stl_with_construction(self.bytes(), self.construction_evidence())
+    }
+
+    /// Extract plain bytes, explicitly discarding the bound source receipt.
+    pub fn into_bytes(self) -> Vec<u8> {
+        self.bytes.to_vec()
+    }
+}
+
+/// Export binary32 STL while retaining a bound source construction summary.
+/// Geometry bytes are identical to [`to_stl_binary`]. The native source remains
+/// authoritative and unchanged; the artifact does not assert lossless export.
+pub fn to_stl_binary_artifact(
+    mesh: &TriangleMesh,
+    name: &str,
+) -> Result<BinaryStlArtifact, IoError> {
+    Ok(BinaryStlArtifact {
+        bytes: to_stl_binary(mesh, name)?.into(),
+        source: mesh.construction_evidence(),
+    })
 }
 
 fn triangle_points(mesh: &TriangleMesh, triangle: &Triangle) -> Result<[Point3; 3], IoError> {
@@ -85,6 +138,8 @@ pub fn to_stl_ascii(mesh: &TriangleMesh, name: &str) -> Result<String, IoError> 
 /// is certified nondegenerate under the strict native policy before complete
 /// bytes are published or cached. Open triangle surfaces remain exportable;
 /// closed topology and fidelity before projection are separate claims.
+/// Plain bytes omit construction history. Use [`to_stl_binary_artifact`] when
+/// the next operation must retain a bound source summary.
 pub fn to_stl_binary(mesh: &TriangleMesh, name: &str) -> Result<Vec<u8>, IoError> {
     use stl_io::{Normal, Triangle as StlTriangle, Vertex, write_stl};
 
@@ -174,6 +229,16 @@ pub fn to_stl_binary(mesh: &TriangleMesh, name: &str) -> Result<Vec<u8>, IoError
 /// or analytic surface. Invalid topology returns [`IoError::Construction`] with
 /// the native mesh error preserved as its cause; parsing errors remain IO errors.
 pub fn from_stl(data: &[u8]) -> Result<TriangleMesh, IoError> {
+    from_stl_with_construction(
+        data,
+        ConstructionEvidence::UNTRACKED.with_coordinate_projection(),
+    )
+}
+
+fn from_stl_with_construction(
+    data: &[u8],
+    evidence: ConstructionEvidence,
+) -> Result<TriangleMesh, IoError> {
     let mut cursor = Cursor::new(data);
     let indexed = stl_io::read_stl(&mut cursor)?;
     let positions = indexed
@@ -201,7 +266,7 @@ pub fn from_stl(data: &[u8]) -> Result<TriangleMesh, IoError> {
             face.vertices[2],
         ));
     }
-    let mesh = TriangleMesh::new(positions, triangles);
+    let mesh = TriangleMesh::from_construction(positions, triangles, evidence);
     if !(mesh.positions.is_empty() && mesh.triangles.is_empty()) {
         mesh.validate_closed_pwn(&crate::GeometryContext::STRICT.mesh_context())
             .map_err(|error| IoError::Construction {

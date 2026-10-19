@@ -246,7 +246,13 @@ fn surface_nets_impl(
     builder.transform_positions_to_world();
     builder.validate_triangles(&decisions)?;
     let active_cell_count = builder.active_cells.len();
-    let mesh = TriangleMesh::new(builder.positions, builder.triangles);
+    let mesh = TriangleMesh::from_construction(
+        builder.positions,
+        builder.triangles,
+        crate::ConstructionEvidence::DECLARED_COORDINATES
+            .with_sampling()
+            .with_predicate_certainty(decisions.certainty()),
+    );
     Ok(decisions.finish(SurfaceNetsOutput {
         mesh,
         active_cell_count,

@@ -186,6 +186,11 @@ public:
   TriangleMesh inverse() const { return unary(Traits::mesh_inverse); }
   TriangleMesh center() const { return unary(Traits::mesh_center); }
   TriangleMesh floating() const { return unary(Traits::mesh_float); }
+  csgrs_construction_evidence_t construction_evidence() const {
+    csgrs_construction_evidence_t out{};
+    check(csgrs_triangle_mesh_construction_evidence(handle_, &out));
+    return out;
+  }
   std::optional<aabb_type> bounding_box() const {
     aabb_type out{};
     const auto status = Traits::mesh_bounding_box(handle_, &out);

@@ -36,7 +36,9 @@ pub enum MeshCertainty {
     Approximate512Consumed,
 }
 
-/// A completed value paired with its aggregate predicate certainty.
+/// A completed value paired with its operation-local predicate certainty.
+/// Native meshes and Boolean batches additionally retain their construction
+/// qualifications; a certified local receipt does not certify preceding intent.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MeshOutcome<T> {
     /// Completed operation value.

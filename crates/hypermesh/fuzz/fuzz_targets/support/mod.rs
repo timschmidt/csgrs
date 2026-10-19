@@ -262,7 +262,7 @@ pub fn volume_numerator(vertices: &[Point3], result: &BooleanMeshResult) -> Real
 
 pub fn validate_batch(batch: &BooleanMeshBatch) {
     batch.validate().unwrap();
-    for result in &batch.results {
+    for result in batch.results.iter() {
         assert!(
             result
                 .sources
@@ -271,7 +271,7 @@ pub fn validate_batch(batch: &BooleanMeshBatch) {
         );
         assert!(boolean_mesh_closure_evidence(result).has_no_boundary());
         let mesh = TriangleMesh::new(
-            batch.vertices.clone(),
+            batch.vertices.to_vec(),
             result
                 .triangles
                 .iter()

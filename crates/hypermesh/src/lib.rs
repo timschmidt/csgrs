@@ -28,6 +28,7 @@
 mod trace;
 pub(crate) use trace::trace_dispatch;
 mod boolean;
+mod construction;
 pub mod context;
 mod storage_hash;
 mod surface_arrangement;
@@ -53,6 +54,7 @@ pub mod winding;
 
 pub use boolean::boolean;
 pub use bvh::{ExactBvh, ExactPointBvh, PolygonBounds};
+pub use construction::ConstructionEvidence;
 pub use context::{MeshCertainty, MeshContext, MeshOutcome};
 pub use convex_hull::{
     convex_hull, convex_hull_with_coplanar_groups, convex_hull_with_retained_facts,

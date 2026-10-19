@@ -69,7 +69,7 @@ pub mod solid;
 pub mod voxels;
 
 pub use context::{GeometryCertainty, GeometryContext, GeometryOutcome};
-pub use hypermesh::TriangleMesh;
+pub use hypermesh::{ConstructionEvidence, TriangleMesh};
 pub use hyperreal::Real;
 
 pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =

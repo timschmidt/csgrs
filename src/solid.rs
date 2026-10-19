@@ -124,12 +124,13 @@ fn indexed(
     positions: Vec<Point3>,
     triangles: impl IntoIterator<Item = [usize; 3]>,
 ) -> TriangleMesh {
-    TriangleMesh::new(
+    TriangleMesh::from_construction(
         positions,
         triangles
             .into_iter()
             .map(|[a, b, c]| Triangle::new(a, b, c))
             .collect(),
+        hypermesh::ConstructionEvidence::DECLARED_COORDINATES,
     )
 }
 
@@ -142,7 +143,11 @@ fn indexed_convex(
 
 /// Empty native triangle geometry.
 pub fn empty() -> TriangleMesh {
-    TriangleMesh::new(Vec::new(), Vec::new())
+    TriangleMesh::from_construction(
+        Vec::new(),
+        Vec::new(),
+        hypermesh::ConstructionEvidence::DECLARED_COORDINATES,
+    )
 }
 
 /// Axis-aligned cube with its minimum corner at the origin.
@@ -290,7 +295,11 @@ fn sphere_uncached(
             slot(longitude, stacks),
         ]);
     }
-    Ok(indexed_convex(positions, triangles))
+    Ok(
+        indexed_convex(positions, triangles).with_inherited_construction(
+            hypermesh::ConstructionEvidence::DECLARED_COORDINATES.with_sampling(),
+        ),
+    )
 }
 
 /// Tessellated cylinder along +Z.
@@ -458,7 +467,11 @@ fn frustum_between_uncached(
             (true, true) => {},
         }
     }
-    Ok(indexed_convex(positions, triangles))
+    Ok(
+        indexed_convex(positions, triangles).with_inherited_construction(
+            hypermesh::ConstructionEvidence::DECLARED_COORDINATES.with_sampling(),
+        ),
+    )
 }
 
 /// Regular octahedron centered at the origin.
@@ -748,7 +761,9 @@ pub fn arrow(
             });
         },
     }
-    Ok(indexed(positions, triangles))
+    Ok(indexed(positions, triangles).with_inherited_construction(
+        hypermesh::ConstructionEvidence::DECLARED_COORDINATES.with_sampling(),
+    ))
 }
 
 /// Tessellated torus around the Z axis.
@@ -821,7 +836,9 @@ fn torus_uncached(
             triangles.push([a, c, d]);
         }
     }
-    Ok(indexed(positions, triangles))
+    Ok(indexed(positions, triangles).with_inherited_construction(
+        hypermesh::ConstructionEvidence::DECLARED_COORDINATES.with_sampling(),
+    ))
 }
 
 /// Extruded teardrop solid.
@@ -842,7 +859,7 @@ pub fn teardrop_cylinder(
     )?);
     let mesh =
         decisions.consume_geometry(crate::curve::try_extrude(&profile, height, context)?);
-    Ok(decisions.finish(mesh))
+    Ok(decisions.finish_mesh(mesh))
 }
 
 /// Extruded involute spur gear.
@@ -869,7 +886,7 @@ pub fn spur_gear_involute(
     )?);
     let mesh =
         decisions.consume_geometry(crate::curve::try_extrude(&profile, thickness, context)?);
-    Ok(decisions.finish(mesh))
+    Ok(decisions.finish_mesh(mesh))
 }
 
 /// Extruded cycloidal spur gear.
@@ -894,7 +911,7 @@ pub fn spur_gear_cycloid(
     )?);
     let mesh =
         decisions.consume_geometry(crate::curve::try_extrude(&profile, thickness, context)?);
-    Ok(decisions.finish(mesh))
+    Ok(decisions.finish_mesh(mesh))
 }
 
 /// Twisted extrusion of an involute gear region.
@@ -930,7 +947,7 @@ pub fn helical_involute_gear(
         slices,
         context,
     )?);
-    Ok(decisions.finish(mesh))
+    Ok(decisions.finish_mesh(mesh))
 }
 
 /// Builds native triangle geometry from simple planar polygon index rows.
@@ -985,7 +1002,11 @@ pub fn polyhedron_with_context(
             Triangle::new(face[triangle[0]], face[triangle[1]], face[triangle[2]])
         }));
     }
-    Ok(decisions.finish(TriangleMesh::new(positions, triangles)))
+    Ok(decisions.finish_mesh(TriangleMesh::from_construction(
+        positions,
+        triangles,
+        hypermesh::ConstructionEvidence::DECLARED_COORDINATES,
+    )))
 }
 
 fn triangulate_planar_ring(
@@ -1102,10 +1123,14 @@ pub fn boolean_with_context(
     context: &GeometryContext,
 ) -> HypermeshResult<GeometryOutcome<TriangleMesh>> {
     let decisions = GeometryDecisions::new(context);
+    decisions.record_construction(
+        left.construction_evidence()
+            .combine(right.construction_evidence()),
+    );
     let left_empty = left.positions.is_empty() && left.triangles.is_empty();
     let right_empty = right.positions.is_empty() && right.triangles.is_empty();
     let outcome = match (left_empty, right_empty) {
-        (true, true) => return Ok(decisions.finish(empty())),
+        (true, true) => return Ok(decisions.finish_mesh(empty())),
         (false, false) => hypermesh::boolean(
             decisions.mesh_context(),
             &[left.as_ref(), right.as_ref()],
@@ -1164,7 +1189,7 @@ pub fn boolean_with_context(
         .ok_or(hypermesh::HypermeshError::InvalidBooleanProgram {
             reason: "one CSG Boolean operation produced no result row",
         })?;
-    Ok(decisions.finish(mesh))
+    Ok(decisions.finish_mesh(mesh))
 }
 
 /// Applies a homogeneous transform and returns native geometry.
@@ -1193,7 +1218,7 @@ pub fn try_transform_with_context(
         orientation == RealSign::Negative,
         &decisions,
     )?;
-    Ok(decisions.finish(transformed))
+    Ok(decisions.finish_mesh(transformed))
 }
 
 fn try_transform_with_known_orientation(
@@ -1247,7 +1272,7 @@ pub fn try_rotate_with_context(
         y,
         z,
     )?);
-    Ok(decisions.finish(rotated))
+    Ok(decisions.finish_mesh(rotated))
 }
 
 /// Rotates native geometry by Euler angles in degrees.
@@ -1299,7 +1324,7 @@ pub fn try_scale_with_context(
         reverse_winding,
         &decisions,
     )?;
-    Ok(decisions.finish(scaled))
+    Ok(decisions.finish_mesh(scaled))
 }
 
 /// Scales native geometry independently along each axis.
@@ -1331,7 +1356,7 @@ pub fn try_mirror_with_context(
     let matrix = decisions.consume_mesh(plane.reflection_matrix(decisions.mesh_context())?);
     // A valid plane reflection always reverses orientation.
     let mirrored = try_transform_with_known_orientation(mesh, &matrix, true, &decisions)?;
-    Ok(decisions.finish(mirrored))
+    Ok(decisions.finish_mesh(mirrored))
 }
 
 /// Reflects native geometry across a plane.
@@ -1744,7 +1769,7 @@ pub fn try_center_with_context(
     let Some(bounds) =
         decisions.consume_geometry(try_bounding_box_with_context(mesh, context)?)
     else {
-        return Ok(decisions.finish(mesh.clone()));
+        return Ok(decisions.finish_mesh(mesh.clone()));
     };
     let two = Real::from(2_u8);
     let x = -((&bounds.mins.x + &bounds.maxs.x) / &two)?;
@@ -1756,7 +1781,7 @@ pub fn try_center_with_context(
         false,
         &decisions,
     )?;
-    Ok(decisions.finish(centered))
+    Ok(decisions.finish_mesh(centered))
 }
 
 /// Translates the center of the exact bounds to the origin.
@@ -1778,7 +1803,7 @@ pub fn try_float_with_context(
     let Some(bounds) =
         decisions.consume_geometry(try_bounding_box_with_context(mesh, context)?)
     else {
-        return Ok(decisions.finish(mesh.clone()));
+        return Ok(decisions.finish_mesh(mesh.clone()));
     };
     let floated = try_transform_with_known_orientation(
         mesh,
@@ -1786,7 +1811,7 @@ pub fn try_float_with_context(
         false,
         &decisions,
     )?;
-    Ok(decisions.finish(floated))
+    Ok(decisions.finish_mesh(floated))
 }
 
 /// Translates the minimum Z bound to zero.
@@ -1908,6 +1933,7 @@ pub fn distribute_linear_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
+    decisions.record_construction(mesh.construction_evidence());
     let parameters = DistributionParameters::Linear {
         count,
         direction: direction.clone(),
@@ -1927,7 +1953,7 @@ pub fn distribute_linear_with_context(
         RealSign::Negative => return Err(ValidationError::InvalidArguments),
     }
     if empty_source || count == 0 {
-        return Ok(decisions.finish(empty()));
+        return Ok(decisions.finish_mesh(empty()));
     }
     let mut copies = distribution_buffer(mesh, count)?;
     let step = direction.normalize_checked()? * spacing;
@@ -1940,7 +1966,7 @@ pub fn distribute_linear_with_context(
             &decisions,
         )?);
     }
-    let result = decisions.finish(union_copies(copies, &decisions)?);
+    let result = decisions.finish_mesh(union_copies(copies, &decisions)?);
     retain_distribution(mesh, parameters, context, &result);
     Ok(result)
 }
@@ -1969,6 +1995,7 @@ pub fn distribute_grid_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
+    decisions.record_construction(mesh.construction_evidence());
     let parameters = DistributionParameters::Grid {
         rows,
         columns,
@@ -1979,7 +2006,7 @@ pub fn distribute_grid_with_context(
         return Ok(result);
     }
     if validate_distribution_source(mesh, &decisions)? || rows == 0 || columns == 0 {
-        return Ok(decisions.finish(empty()));
+        return Ok(decisions.finish_mesh(empty()));
     }
     let count = rows
         .checked_mul(columns)
@@ -1999,7 +2026,7 @@ pub fn distribute_grid_with_context(
             )?);
         }
     }
-    let result = decisions.finish(union_copies(copies, &decisions)?);
+    let result = decisions.finish_mesh(union_copies(copies, &decisions)?);
     retain_distribution(mesh, parameters, context, &result);
     Ok(result)
 }
@@ -2035,6 +2062,7 @@ pub fn distribute_arc_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
+    decisions.record_construction(mesh.construction_evidence());
     let parameters = DistributionParameters::Arc {
         count,
         radius: radius.clone(),
@@ -2045,7 +2073,7 @@ pub fn distribute_arc_with_context(
         return Ok(result);
     }
     if validate_distribution_source(mesh, &decisions)? || count == 0 {
-        return Ok(decisions.finish(empty()));
+        return Ok(decisions.finish_mesh(empty()));
     }
     let mut copies = distribution_buffer(mesh, count)?;
     let start = start_angle_degrees.to_radians();
@@ -2071,7 +2099,7 @@ pub fn distribute_arc_with_context(
             &decisions,
         )?);
     }
-    let result = decisions.finish(union_copies(copies, &decisions)?);
+    let result = decisions.finish_mesh(union_copies(copies, &decisions)?);
     retain_distribution(mesh, parameters, context, &result);
     Ok(result)
 }
@@ -2368,7 +2396,7 @@ pub fn convex_hull_with_context(
 ) -> HypermeshResult<GeometryOutcome<TriangleMesh>> {
     let decisions = GeometryDecisions::new(context);
     let hull = decisions.consume_mesh(mesh.convex_hull(decisions.mesh_context())?);
-    Ok(decisions.finish(hull))
+    Ok(decisions.finish_mesh(hull))
 }
 
 /// Regularized Minkowski sum of the represented bounded closed-PWN solids.
@@ -2412,7 +2440,7 @@ pub fn minkowski_sum_with_options(
         right,
         options,
     )?);
-    Ok(decisions.finish(sum))
+    Ok(decisions.finish_mesh(sum))
 }
 
 /// Convex hull of pairwise stored-position sums, explicitly ignoring triangles.
@@ -2435,12 +2463,16 @@ pub fn minkowski_hull_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
+    decisions.record_construction(
+        left.construction_evidence()
+            .combine(right.construction_evidence()),
+    );
     let hull = decisions.consume_mesh(hypermesh::minkowski_hull(
         decisions.mesh_context(),
         &left.positions,
         &right.positions,
     )?);
-    Ok(decisions.finish(hull))
+    Ok(decisions.finish_mesh(hull))
 }
 
 /// Lofts corresponding simple planar point loops into closed PWN geometry.
@@ -2563,9 +2595,13 @@ pub fn loft_with_context(
             triangles.push(Triangle::new(second[0], second[1], second[2]));
         }
     }
-    let mesh = TriangleMesh::new(positions, triangles);
+    let mesh = TriangleMesh::from_construction(
+        positions,
+        triangles,
+        hypermesh::ConstructionEvidence::DECLARED_COORDINATES,
+    );
     decisions.consume_mesh(mesh.validate_closed_pwn(decisions.mesh_context())?);
-    Ok(decisions.finish(mesh))
+    Ok(decisions.finish_mesh(mesh))
 }
 
 /// Fluent CSG grammar implemented directly for native Hypermesh geometry.

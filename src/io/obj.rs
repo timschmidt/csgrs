@@ -120,7 +120,7 @@ pub fn from_obj_with_context<R: BufRead>(
             _ => {},
         }
     }
-    Ok(decisions.finish(TriangleMesh::new(positions, triangles)))
+    Ok(decisions.finish_mesh(TriangleMesh::new(positions, triangles)))
 }
 
 /// Imports OBJ geometry with an optional per-position authored-normal sidecar.
@@ -231,7 +231,7 @@ pub fn from_obj_attributed_with_context<R: BufRead>(
         }
     }
 
-    let geometry = TriangleMesh::new(positions, triangles);
+    let geometry = decisions.qualify_mesh(TriangleMesh::new(positions, triangles));
     let metadata = vec![(); geometry.triangles.len()];
     let attributed = crate::AttributedMesh::with_authored_normals(
         geometry,
