@@ -52,9 +52,7 @@ fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
 
 // Approximate atan(c) for |c| <= 1/2.
 fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
-    // Kernel precondition: |c| is small. Larger atan inputs are reduced by
-    // subtraction of atan(1/2) or the reciprocal identity before reaching here.
-    // Reduce the argument before evaluating the series.
+    // This coarse result is valid for every finite real c: |atan(c)| < pi/2 < 2.
     if p >= 1 {
         return Zero::zero();
     }
@@ -63,6 +61,25 @@ fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
     let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
     let op_prec = calc_precision - 3;
     let op_appr = c.approx_signal(signal, op_prec);
+    // A stored PrescaledAtan tag is not a range certificate. The working
+    // sample has error at most one, so reserve that unit when proving |c| <= 1/2.
+    if op_appr.magnitude().bits()
+        > u64::try_from(-op_prec - 1).expect("atan series scale is positive")
+    {
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+        if let Some(rational) = c.exact_rational() {
+            return atan_rational(signal, &rational, p);
+        }
+        // The ordinary reducer can select this same kernel from a valid
+        // coarse sample near 1/2. Two half-angle steps instead guarantee a
+        // strictly smaller argument, even at such cache-rounding boundaries.
+        return c
+            .clone()
+            .atan_with_half_angle_reduction()
+            .approx_signal(signal, p);
+    }
     let op_squared = scale(&op_appr * &op_appr, op_prec);
 
     // Borrowed magnitude checks matter here because tiny inverse-trig benches
@@ -316,8 +333,8 @@ fn asin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
         } else {
             r.clone()
         };
-        let residual = (Rational::one() - magnitude.clone())
-            / (Rational::one() + magnitude.clone());
+        let residual =
+            (Rational::one() - magnitude.clone()) / (Rational::one() + magnitude.clone());
         if residual > Rational::fraction(1, 4).expect("nonzero denominator") {
             // The generic acos residual branch has its own adaptive error
             // schedule. Preserve the former expression-level approximation
@@ -328,8 +345,7 @@ fn asin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
                 "asin",
                 "generic-rational-acos-complement"
             );
-            let half_pi = Computable::pi()
-                .multiply(Computable::rational(HALF_RATIONAL.clone()));
+            let half_pi = Computable::pi().multiply(Computable::rational(HALF_RATIONAL.clone()));
             let reduced = half_pi.add(Computable::rational(magnitude).acos().negate());
             let result = reduced.approx_signal(signal, p);
             return if sign == Sign::Minus { -result } else { result };
@@ -398,7 +414,9 @@ fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
     // Reuse the series' own operand sample as its domain proof. With
     // k = -op_prec-3, bits(|a|) <= k implies |a| <= 2^k-1; including the
     // one-unit sample error gives |c| <= 1/8. No preliminary sample is needed.
-    if op_appr.magnitude().bits() > u64::try_from(-op_prec - 3).expect("tiny-series scale is positive") {
+    if op_appr.magnitude().bits()
+        > u64::try_from(-op_prec - 3).expect("tiny-series scale is positive")
+    {
         if should_stop(signal) {
             return Zero::zero();
         }

@@ -23,7 +23,11 @@ impl Computable {
             _ => ExactSignCache::Valid(Sign::Plus),
         };
         Self {
-            internal: Arc::new(Node::new(Approximation::Sqrt(child), BoundCache::Invalid, exact_sign)),
+            internal: Arc::new(Node::new(
+                Approximation::Sqrt(child),
+                BoundCache::Invalid,
+                exact_sign,
+            )),
             signal: None,
         }
     }
@@ -120,7 +124,11 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Arc::new(Node::new(Approximation::Sqrt(self), BoundCache::Invalid, exact_sign)),
+            internal: Arc::new(Node::new(
+                Approximation::Sqrt(self),
+                BoundCache::Invalid,
+                exact_sign,
+            )),
             signal: None,
         }
     }
@@ -146,7 +154,11 @@ impl Computable {
         // atan(1/n) kernel used by pi and atan reduction constants. Passing the
         // denominator as an integer keeps the series loop division-only.
         Self {
-            internal: Arc::new(Node::new(Approximation::IntegralAtan(n), BoundCache::Invalid, ExactSignCache::Invalid)),
+            internal: Arc::new(Node::new(
+                Approximation::IntegralAtan(n),
+                BoundCache::Invalid,
+                ExactSignCache::Invalid,
+            )),
             signal: None,
         }
     }
@@ -158,7 +170,11 @@ impl Computable {
         // same range reductions directly in the approximation kernel.
         crate::trace_dispatch!("computable", "constructor", "atan-rational-deferred");
         Self {
-            internal: Arc::new(Node::new(Approximation::AtanRational(rational), BoundCache::Invalid, ExactSignCache::Invalid)),
+            internal: Arc::new(Node::new(
+                Approximation::AtanRational(rational),
+                BoundCache::Invalid,
+                ExactSignCache::Invalid,
+            )),
             signal: None,
         }
     }
@@ -184,7 +200,11 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "asin-rational-deferred");
         let sign = rational.sign();
         Self {
-            internal: Arc::new(Node::new(Approximation::AsinRational(rational), BoundCache::Invalid, ExactSignCache::Valid(sign))),
+            internal: Arc::new(Node::new(
+                Approximation::AsinRational(rational),
+                BoundCache::Invalid,
+                ExactSignCache::Valid(sign),
+            )),
             signal: None,
         }
     }
@@ -200,11 +220,9 @@ impl Computable {
                 scale.clone()
             };
             if magnitude == Rational::fraction(1, 35).expect("thirty-five is nonzero") {
-                let argument = Rational::fraction(
-                    if scale.sign() == Sign::Minus { -1 } else { 1 },
-                    6,
-                )
-                .expect("six is nonzero");
+                let argument =
+                    Rational::fraction(if scale.sign() == Sign::Minus { -1 } else { 1 }, 6)
+                        .expect("six is nonzero");
                 crate::trace_dispatch!("computable", "atan", "quadratic-surd-asin-anchor");
                 return Self::asin_rational_deferred(argument);
             }
@@ -284,7 +302,11 @@ impl Computable {
             if msd < -1 {
                 crate::trace_dispatch!("computable", "atan", "structural-small-prescaled");
                 return Self {
-                    internal: Arc::new(Node::new(Approximation::PrescaledAtan(self), BoundCache::Invalid, ExactSignCache::Invalid)),
+                    internal: Arc::new(Node::new(
+                        Approximation::PrescaledAtan(self),
+                        BoundCache::Invalid,
+                        ExactSignCache::Invalid,
+                    )),
                     signal: None,
                 };
             }
@@ -301,7 +323,11 @@ impl Computable {
             // |approx(-4)| <= 7 and its one-unit error prove |self| <= 1/2.
             crate::trace_dispatch!("computable", "atan", "rough-small-prescaled");
             return Self {
-                internal: Arc::new(Node::new(Approximation::PrescaledAtan(self), BoundCache::Invalid, ExactSignCache::Invalid)),
+                internal: Arc::new(Node::new(
+                    Approximation::PrescaledAtan(self),
+                    BoundCache::Invalid,
+                    ExactSignCache::Invalid,
+                )),
                 signal: None,
             };
         }
@@ -362,11 +388,7 @@ impl Computable {
     ///
     /// Returns `None` rather than treating an unresolved sign as an axis value.
     #[inline]
-    pub fn try_atan2_until(
-        self,
-        x: Computable,
-        min_precision: Precision,
-    ) -> Option<Computable> {
+    pub fn try_atan2_until(self, x: Computable, min_precision: Precision) -> Option<Computable> {
         let y_sign = self.structural_facts().sign.map(private_sign);
         let x_sign = x.structural_facts().sign.map(private_sign);
         match (y_sign, x_sign) {
@@ -396,8 +418,7 @@ impl Computable {
                 Some(self.multiply(x.inverse()).atan())
             }
             Some(Sign::Minus) => {
-                let y_sign =
-                    y_sign.or_else(|| self.sign_until(min_precision).map(private_sign))?;
+                let y_sign = y_sign.or_else(|| self.sign_until(min_precision).map(private_sign))?;
                 let base = self.multiply(x.inverse()).atan();
                 match y_sign {
                     Sign::NoSign => {
@@ -415,8 +436,7 @@ impl Computable {
                 }
             }
             Some(Sign::NoSign) => {
-                let y_sign =
-                    y_sign.or_else(|| self.sign_until(min_precision).map(private_sign))?;
+                let y_sign = y_sign.or_else(|| self.sign_until(min_precision).map(private_sign))?;
                 match y_sign {
                     Sign::NoSign => Some(Self::zero()),
                     Sign::Plus => Some(Self::pi().shift_right(1)),
@@ -436,8 +456,22 @@ impl Computable {
     }
 
     fn atan2_half_angle(y: Computable, x: Computable) -> Computable {
+        Self::atan2_half_angle_argument(y, x).atan().shift_left(1)
+    }
+
+    fn atan2_half_angle_argument(y: Computable, x: Computable) -> Computable {
         let radius = x.clone().square().add(y.clone().square()).sqrt();
-        y.multiply(radius.add(x).inverse()).atan().shift_left(1)
+        y.multiply(radius.add(x).inverse())
+    }
+
+    pub(crate) fn atan_with_half_angle_reduction(self) -> Computable {
+        // For theta = atan(self), each step maps tan(theta) to tan(theta/2).
+        // Since |theta| < pi/2, two steps give an argument of magnitude
+        // below tan(pi/8) = sqrt(2)-1 < 1/2. Both denominators are positive,
+        // and the factor four retains the native approximation error budget.
+        let half = Self::atan2_half_angle_argument(self, Self::one());
+        let quarter = Self::atan2_half_angle_argument(half, Self::one());
+        quarter.atan().shift_left(2)
     }
 
     /// Inverse sine of this number.
@@ -767,5 +801,4 @@ impl Computable {
             .is_some_and(|msd| msd <= -4)
             || self.approx_signal(signal, -8).magnitude() <= &BigUint::from(31_u8)
     }
-
 }

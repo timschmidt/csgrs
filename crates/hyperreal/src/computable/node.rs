@@ -57,3 +57,4 @@ include!("node/exact_sign_cache_tests.rs");
 include!("node/trig_range_proof_tests.rs");
 include!("node/asinh_range_tests.rs");
 include!("node/log_rational_range_tests.rs");
+include!("node/atan_range_tests.rs");

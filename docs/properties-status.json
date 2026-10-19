@@ -3,7 +3,7 @@
   "base_revision": "0c5508b89",
   "scope": "All 39 properties, all 14 known open targets, and crate-specific future work remain in scope. Inventory and documentation alone do not prove implementation.",
   "current_work": {
-  "updated_on": "2026-10-18",
+  "updated_on": "2026-10-19",
   "existing_worktree_changes_in_scope": true,
   "accepted_cache_contract": "Warming may strengthen Unknown into Certified and reuse prior higher-precision proofs; it must never contradict or weaken an available certificate.",
   "main_scalar_api": {
@@ -21343,6 +21343,1618 @@
     "review": "docs/evidence/2026-10-18-log-rational-admission/review-v1.json",
     "checkpoint": "docs/evidence/2026-10-18-log-rational-admission/checkpoint-v1.json",
     "artifact_expectations": "/run/media/tim/Disk B/csgrs/log-rational-admission-20261018-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "runtime_admitted": true,
+    "general_speedup_claimed": false
+  },
+  "atan_kernel_ranges": {
+    "decision": "Retain imported arctangent range checks and shared native half-angle reduction.",
+    "admitted_scope": "PrescaledAtan establishes |child| <= 1/2 before entering the Taylor series. Outside the proven range, exact leaves reuse rational atan reduction; other children use the shared half-angle argument twice. Stored graphs, wire representation, value, evidence and following arithmetic are preserved.",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1109
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 948
+      }
+    },
+    "debug_units_passed": 826,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-solid_cache": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "ordinary_cost": {
+      "candidate_over_parent_median_latency": {
+        "named-root-cbor": 0.9974030115218554,
+        "named-root-json": 0.9928745564501349,
+        "opaque-add-fresh": 1.0402881997441251,
+        "opaque-add-warm": 0.9867032297518538,
+        "opaque-root-cbor": 0.9823819137414836,
+        "opaque-root-json": 1.0233410558733615,
+        "radical-add-fresh": 0.983663998552526,
+        "radical-add-warm": 0.9768598647797887,
+        "rational-add": 1.0223236398453315,
+        "rational-cbor": 0.9757888350442322,
+        "rational-json": 1.0149634522852495,
+        "small-atanh-cbor": 0.9892003344509298,
+        "small-atanh-json": 0.9966452004622731,
+        "trig-add-fresh": 1.045099539411407,
+        "trig-add-warm": 0.950327759565806,
+        "trig-cbor": 1.0054401009478178,
+        "trig-json": 1.0323832868867013
+      },
+      "binary_bytes": {
+        "candidate": 6783104,
+        "parent": 6781632
+      },
+      "allocation_deltas_first_pair": {
+        "named-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "named-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-add": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "allocation_deltas_stable_across_all_five_pairs": true,
+      "all_allocation_and_byte_metrics_identical": true,
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "native_atan_cost": {
+      "candidate_over_parent_median_latency": {
+        "computable-atan-half-rational-s-1-cold--128": 1.0039411935622884,
+        "computable-atan-half-rational-s-1-cold--32": 0.9725372528707942,
+        "computable-atan-half-rational-s-1-cold-0": 1.016371295983663,
+        "computable-atan-half-rational-s-1-warm--128": 1.0410257626609425,
+        "computable-atan-half-rational-s-1-warm--32": 0.978524288868423,
+        "computable-atan-half-rational-s-1-warm-0": 0.8090960205699701,
+        "computable-atan-half-rational-s1-cold--128": 1.0117706611353894,
+        "computable-atan-half-rational-s1-cold--32": 1.0300953531292036,
+        "computable-atan-half-rational-s1-cold-0": 0.9333734024685753,
+        "computable-atan-half-rational-s1-warm--128": 0.9943124431148302,
+        "computable-atan-half-rational-s1-warm--32": 0.9854749452809578,
+        "computable-atan-half-rational-s1-warm-0": 0.9274749212713396,
+        "computable-atan-small-rational-s-1-cold--128": 1.0066958838910096,
+        "computable-atan-small-rational-s-1-cold--32": 1.0190822665960788,
+        "computable-atan-small-rational-s-1-cold-0": 1.0266527667755272,
+        "computable-atan-small-rational-s-1-warm--128": 1.002783547343469,
+        "computable-atan-small-rational-s-1-warm--32": 1.012202267123455,
+        "computable-atan-small-rational-s-1-warm-0": 1.029279580640845,
+        "computable-atan-small-rational-s1-cold--128": 0.9968622157872229,
+        "computable-atan-small-rational-s1-cold--32": 0.9963798145507959,
+        "computable-atan-small-rational-s1-cold-0": 0.9868013011882635,
+        "computable-atan-small-rational-s1-warm--128": 1.0057638659401633,
+        "computable-atan-small-rational-s1-warm--32": 1.0289809386565356,
+        "computable-atan-small-rational-s1-warm-0": 1.0151654155132388,
+        "computable-atan-small-surd-s-1-cold--128": 1.0209199081786733,
+        "computable-atan-small-surd-s-1-cold--32": 1.0253992070100608,
+        "computable-atan-small-surd-s-1-cold-0": 1.0276567796482752,
+        "computable-atan-small-surd-s-1-warm--128": 1.006424242899057,
+        "computable-atan-small-surd-s-1-warm--32": 0.9955447102631073,
+        "computable-atan-small-surd-s-1-warm-0": 1.0399412247018616,
+        "computable-atan-small-surd-s1-cold--128": 1.0094592005470617,
+        "computable-atan-small-surd-s1-cold--32": 1.022126231133098,
+        "computable-atan-small-surd-s1-cold-0": 1.0168836839813862,
+        "computable-atan-small-surd-s1-warm--128": 0.9970949599491812,
+        "computable-atan-small-surd-s1-warm--32": 1.001925969028779,
+        "computable-atan-small-surd-s1-warm-0": 1.0083265214534147,
+        "imported-leaf-atan-half-rational-s-1-cold--128": 0.8376224290090993,
+        "imported-leaf-atan-half-rational-s-1-cold--32": 0.9149770908510144,
+        "imported-leaf-atan-half-rational-s-1-cold-0": 1.298801079343785,
+        "imported-leaf-atan-half-rational-s-1-warm--128": 1.009319653630547,
+        "imported-leaf-atan-half-rational-s-1-warm--32": 0.9940671501737477,
+        "imported-leaf-atan-half-rational-s-1-warm-0": 0.9727572986858851,
+        "imported-leaf-atan-half-rational-s1-cold--128": 0.8598434698455094,
+        "imported-leaf-atan-half-rational-s1-cold--32": 0.872459771589732,
+        "imported-leaf-atan-half-rational-s1-cold-0": 1.1310735663479587,
+        "imported-leaf-atan-half-rational-s1-warm--128": 1.0332339342221095,
+        "imported-leaf-atan-half-rational-s1-warm--32": 0.9979254209158249,
+        "imported-leaf-atan-half-rational-s1-warm-0": 0.9843376923198558,
+        "imported-leaf-atan-small-rational-s-1-cold--128": 1.0020991249823266,
+        "imported-leaf-atan-small-rational-s-1-cold--32": 0.9784991489108131,
+        "imported-leaf-atan-small-rational-s-1-cold-0": 1.0014730866273558,
+        "imported-leaf-atan-small-rational-s-1-warm--128": 1.0109542261482447,
+        "imported-leaf-atan-small-rational-s-1-warm--32": 1.0261785467014621,
+        "imported-leaf-atan-small-rational-s-1-warm-0": 1.001642794001455,
+        "imported-leaf-atan-small-rational-s1-cold--128": 0.9934338918136302,
+        "imported-leaf-atan-small-rational-s1-cold--32": 0.9804712937051531,
+        "imported-leaf-atan-small-rational-s1-cold-0": 0.9785601465488559,
+        "imported-leaf-atan-small-rational-s1-warm--128": 1.0001152728893534,
+        "imported-leaf-atan-small-rational-s1-warm--32": 1.0226973590379906,
+        "imported-leaf-atan-small-rational-s1-warm-0": 1.005966065022154,
+        "imported-leaf-atan-small-surd-s-1-cold--128": 1.0203741448364718,
+        "imported-leaf-atan-small-surd-s-1-cold--32": 1.0075921204877996,
+        "imported-leaf-atan-small-surd-s-1-cold-0": 0.9969511210296833,
+        "imported-leaf-atan-small-surd-s-1-warm--128": 1.0057470818027199,
+        "imported-leaf-atan-small-surd-s-1-warm--32": 1.0039434862716614,
+        "imported-leaf-atan-small-surd-s-1-warm-0": 1.0122621265357135,
+        "imported-leaf-atan-small-surd-s1-cold--128": 0.9956634725362167,
+        "imported-leaf-atan-small-surd-s1-cold--32": 0.9936902629781396,
+        "imported-leaf-atan-small-surd-s1-cold-0": 0.9990181698858924,
+        "imported-leaf-atan-small-surd-s1-warm--128": 1.0504891394461946,
+        "imported-leaf-atan-small-surd-s1-warm--32": 1.001465123945416,
+        "imported-leaf-atan-small-surd-s1-warm-0": 1.022144814153284,
+        "imported-sum-atan-half-rational-s-1-cold--128": 4.853489142887085,
+        "imported-sum-atan-half-rational-s-1-cold--32": 11.6697463772161,
+        "imported-sum-atan-half-rational-s-1-cold-0": 26.87315339397433,
+        "imported-sum-atan-half-rational-s-1-warm--128": 1.0013545835236202,
+        "imported-sum-atan-half-rational-s-1-warm--32": 1.0227174970663526,
+        "imported-sum-atan-half-rational-s-1-warm-0": 0.9963330238509491,
+        "imported-sum-atan-half-rational-s1-cold--128": 3.670512923616656,
+        "imported-sum-atan-half-rational-s1-cold--32": 8.887749040726543,
+        "imported-sum-atan-half-rational-s1-cold-0": 19.45642428701161,
+        "imported-sum-atan-half-rational-s1-warm--128": 1.0311571101969812,
+        "imported-sum-atan-half-rational-s1-warm--32": 1.0065794044208694,
+        "imported-sum-atan-half-rational-s1-warm-0": 0.9543736458382756,
+        "imported-sum-atan-small-rational-s-1-cold--128": 1.0098873833354762,
+        "imported-sum-atan-small-rational-s-1-cold--32": 0.9954509028608548,
+        "imported-sum-atan-small-rational-s-1-cold-0": 1.0080092435333108,
+        "imported-sum-atan-small-rational-s-1-warm--128": 1.0124910986329836,
+        "imported-sum-atan-small-rational-s-1-warm--32": 1.0158524643227362,
+        "imported-sum-atan-small-rational-s-1-warm-0": 1.0057321889894857,
+        "imported-sum-atan-small-rational-s1-cold--128": 0.9836258763478999,
+        "imported-sum-atan-small-rational-s1-cold--32": 0.9930824043817364,
+        "imported-sum-atan-small-rational-s1-cold-0": 0.9896512850371114,
+        "imported-sum-atan-small-rational-s1-warm--128": 0.9997693833310272,
+        "imported-sum-atan-small-rational-s1-warm--32": 0.9986382733305832,
+        "imported-sum-atan-small-rational-s1-warm-0": 1.005327099831441,
+        "imported-sum-atan-small-surd-s-1-cold--128": 1.0129030654516444,
+        "imported-sum-atan-small-surd-s-1-cold--32": 0.969035162478739,
+        "imported-sum-atan-small-surd-s-1-cold-0": 0.9980663801538555,
+        "imported-sum-atan-small-surd-s-1-warm--128": 1.0050374489421356,
+        "imported-sum-atan-small-surd-s-1-warm--32": 1.0080206684859587,
+        "imported-sum-atan-small-surd-s-1-warm-0": 0.9941007987208048,
+        "imported-sum-atan-small-surd-s1-cold--128": 1.0036148772618285,
+        "imported-sum-atan-small-surd-s1-cold--32": 0.981342430581997,
+        "imported-sum-atan-small-surd-s1-cold-0": 0.9741084474340577,
+        "imported-sum-atan-small-surd-s1-warm--128": 0.9995324426365559,
+        "imported-sum-atan-small-surd-s1-warm--32": 1.0066651936956843,
+        "imported-sum-atan-small-surd-s1-warm-0": 0.9999204904151195,
+        "real-atan-half-rational-s-1-cold--128": 1.0058208355989433,
+        "real-atan-half-rational-s-1-cold--32": 1.0219493501287382,
+        "real-atan-half-rational-s-1-cold-0": 1.0669329428546013,
+        "real-atan-half-rational-s-1-warm--128": 1.0109924284656875,
+        "real-atan-half-rational-s-1-warm--32": 1.0574723605507963,
+        "real-atan-half-rational-s-1-warm-0": 1.0050410275981458,
+        "real-atan-half-rational-s1-cold--128": 1.012250232222747,
+        "real-atan-half-rational-s1-cold--32": 1.0467793816849567,
+        "real-atan-half-rational-s1-cold-0": 1.0201921920080763,
+        "real-atan-half-rational-s1-warm--128": 1.019692880685686,
+        "real-atan-half-rational-s1-warm--32": 0.9969134434446938,
+        "real-atan-half-rational-s1-warm-0": 0.9947166960641151,
+        "real-atan-small-rational-s-1-cold--128": 1.0280558938327546,
+        "real-atan-small-rational-s-1-cold--32": 1.0477997223038942,
+        "real-atan-small-rational-s-1-cold-0": 1.053330646607661,
+        "real-atan-small-rational-s-1-warm--128": 0.9935700072580955,
+        "real-atan-small-rational-s-1-warm--32": 0.9913859899679093,
+        "real-atan-small-rational-s-1-warm-0": 0.9956810783976515,
+        "real-atan-small-rational-s1-cold--128": 1.0160685992891982,
+        "real-atan-small-rational-s1-cold--32": 1.0382034367905497,
+        "real-atan-small-rational-s1-cold-0": 1.0369396342199695,
+        "real-atan-small-rational-s1-warm--128": 0.9901432179579668,
+        "real-atan-small-rational-s1-warm--32": 1.0223774217229835,
+        "real-atan-small-rational-s1-warm-0": 1.0020340730618003,
+        "real-atan-small-surd-s-1-cold--128": 1.0262243300904172,
+        "real-atan-small-surd-s-1-cold--32": 1.0244438498662016,
+        "real-atan-small-surd-s-1-cold-0": 1.0066926531795644,
+        "real-atan-small-surd-s-1-warm--128": 0.9535194990341166,
+        "real-atan-small-surd-s-1-warm--32": 0.941896394082989,
+        "real-atan-small-surd-s-1-warm-0": 0.9934874167753251,
+        "real-atan-small-surd-s1-cold--128": 1.0073636932831052,
+        "real-atan-small-surd-s1-cold--32": 1.002120811276116,
+        "real-atan-small-surd-s1-cold-0": 1.006797243902148,
+        "real-atan-small-surd-s1-warm--128": 0.9540508727606798,
+        "real-atan-small-surd-s1-warm--32": 0.9528352132553864,
+        "real-atan-small-surd-s1-warm-0": 0.9945149343881342
+      },
+      "binary_bytes": {
+        "candidate": 7031472,
+        "parent": 7030024
+      },
+      "allocation_deltas_first_pair": {
+        "computable-atan-half-rational-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-half-rational-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-half-rational-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-half-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-half-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-half-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-half-rational-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-half-rational-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-half-rational-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-half-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-half-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-half-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-small-surd-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-half-rational-s-1-cold--128": {
+          "allocations": 1250000,
+          "allocated_bytes": 25680000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 504
+        },
+        "imported-leaf-atan-half-rational-s-1-cold--32": {
+          "allocations": 440000,
+          "allocated_bytes": 12640000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 512
+        },
+        "imported-leaf-atan-half-rational-s-1-cold-0": {
+          "allocations": 140000,
+          "allocated_bytes": 5920000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 528
+        },
+        "imported-leaf-atan-half-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-half-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-half-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-half-rational-s1-cold--128": {
+          "allocations": 1200000,
+          "allocated_bytes": 20960000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 32
+        },
+        "imported-leaf-atan-half-rational-s1-cold--32": {
+          "allocations": 390000,
+          "allocated_bytes": 7920000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 40
+        },
+        "imported-leaf-atan-half-rational-s1-cold-0": {
+          "allocations": 80000,
+          "allocated_bytes": 1120000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 48
+        },
+        "imported-leaf-atan-half-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-half-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-half-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-leaf-atan-small-surd-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-half-rational-s-1-cold--128": {
+          "allocations": 7240000,
+          "allocated_bytes": 320480000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 3312
+        },
+        "imported-sum-atan-half-rational-s-1-cold--32": {
+          "allocations": 7400001,
+          "allocated_bytes": 312000032,
+          "retained_bytes": 32,
+          "peak_extra_bytes": 3216
+        },
+        "imported-sum-atan-half-rational-s-1-cold-0": {
+          "allocations": 7060029,
+          "allocated_bytes": 302081336,
+          "retained_bytes": 2176,
+          "peak_extra_bytes": 5232
+        },
+        "imported-sum-atan-half-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-half-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-half-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-half-rational-s1-cold--128": {
+          "allocations": 5310000,
+          "allocated_bytes": 196960000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 3016
+        },
+        "imported-sum-atan-half-rational-s1-cold--32": {
+          "allocations": 5470000,
+          "allocated_bytes": 188800000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 2888
+        },
+        "imported-sum-atan-half-rational-s1-cold-0": {
+          "allocations": 5140004,
+          "allocated_bytes": 178960320,
+          "retained_bytes": 320,
+          "peak_extra_bytes": 3072
+        },
+        "imported-sum-atan-half-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-half-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-half-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-sum-atan-small-surd-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-half-rational-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-half-rational-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-half-rational-s-1-cold-0": {
+          "allocations": -6,
+          "allocated_bytes": -240,
+          "retained_bytes": -240,
+          "peak_extra_bytes": -240
+        },
+        "real-atan-half-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-half-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-half-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-half-rational-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-half-rational-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-half-rational-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-half-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-half-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-half-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-rational-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-small-surd-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "allocation_deltas_stable_across_all_five_pairs": true,
+      "all_allocation_and_byte_metrics_identical": false,
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "cost_interpretation": {
+      "all_unfavorable_samples_retained": true,
+      "claim": "Correctness and completed-domain extension; no general speedup claim.",
+      "measurement_limitations": [
+        "Finite single-host measurements with five alternating pairs; timing changes are not causal attribution.",
+        "The counted Rust allocator covers the measured implementation allocations; this is not a process-wide heap bound.",
+        "Former parent timeout completion is reported separately from matched successful cost rows."
+      ],
+      "native": {
+        "all_completed_output_assertions_passed": true,
+        "all_slower_rows_retained_in_raw_result": true,
+        "allocation_deltas_stable_across_pairs": true,
+        "binary_bytes": {
+          "candidate": 7031472,
+          "parent": 7030024
+        },
+        "binary_bytes_delta": 1448,
+        "changed_allocator_metrics_first_pair": {
+          "imported-leaf-atan-half-rational-s-1-cold--128": {
+            "allocated_bytes": 25680000,
+            "allocations": 1250000,
+            "frees": 1250000,
+            "peak_extra_bytes": 504,
+            "retained_bytes": 0
+          },
+          "imported-leaf-atan-half-rational-s-1-cold--32": {
+            "allocated_bytes": 12640000,
+            "allocations": 440000,
+            "frees": 440000,
+            "peak_extra_bytes": 512,
+            "retained_bytes": 0
+          },
+          "imported-leaf-atan-half-rational-s-1-cold-0": {
+            "allocated_bytes": 5920000,
+            "allocations": 140000,
+            "frees": 140000,
+            "peak_extra_bytes": 528,
+            "retained_bytes": 0
+          },
+          "imported-leaf-atan-half-rational-s1-cold--128": {
+            "allocated_bytes": 20960000,
+            "allocations": 1200000,
+            "frees": 1200000,
+            "peak_extra_bytes": 32,
+            "retained_bytes": 0
+          },
+          "imported-leaf-atan-half-rational-s1-cold--32": {
+            "allocated_bytes": 7920000,
+            "allocations": 390000,
+            "frees": 390000,
+            "peak_extra_bytes": 40,
+            "retained_bytes": 0
+          },
+          "imported-leaf-atan-half-rational-s1-cold-0": {
+            "allocated_bytes": 1120000,
+            "allocations": 80000,
+            "frees": 80000,
+            "peak_extra_bytes": 48,
+            "retained_bytes": 0
+          },
+          "imported-sum-atan-half-rational-s-1-cold--128": {
+            "allocated_bytes": 320480000,
+            "allocations": 7240000,
+            "frees": 7240000,
+            "peak_extra_bytes": 3312,
+            "retained_bytes": 0
+          },
+          "imported-sum-atan-half-rational-s-1-cold--32": {
+            "allocated_bytes": 312000032,
+            "allocations": 7400001,
+            "frees": 7400000,
+            "peak_extra_bytes": 3216,
+            "retained_bytes": 32
+          },
+          "imported-sum-atan-half-rational-s-1-cold-0": {
+            "allocated_bytes": 302081336,
+            "allocations": 7060029,
+            "frees": 7059994,
+            "peak_extra_bytes": 5232,
+            "retained_bytes": 2176
+          },
+          "imported-sum-atan-half-rational-s1-cold--128": {
+            "allocated_bytes": 196960000,
+            "allocations": 5310000,
+            "frees": 5310000,
+            "peak_extra_bytes": 3016,
+            "retained_bytes": 0
+          },
+          "imported-sum-atan-half-rational-s1-cold--32": {
+            "allocated_bytes": 188800000,
+            "allocations": 5470000,
+            "frees": 5470000,
+            "peak_extra_bytes": 2888,
+            "retained_bytes": 0
+          },
+          "imported-sum-atan-half-rational-s1-cold-0": {
+            "allocated_bytes": 178960320,
+            "allocations": 5140004,
+            "frees": 5140000,
+            "peak_extra_bytes": 3072,
+            "retained_bytes": 320
+          },
+          "real-atan-half-rational-s-1-cold-0": {
+            "allocated_bytes": -240,
+            "allocations": -6,
+            "frees": 0,
+            "peak_extra_bytes": -240,
+            "retained_bytes": -240
+          }
+        },
+        "iterations_per_row": 10000,
+        "maximum_added_allocated_bytes_per_iteration": 32048.0,
+        "maximum_added_allocation_calls_per_iteration": 740.0001,
+        "maximum_added_peak_bytes_per_row": 5232,
+        "median_latency_ratio_range": [
+          0.8090960205699701,
+          26.87315339397433
+        ],
+        "pairs": 5,
+        "result_sha256": "684c35c628e593ec52b4758241d6cbf45eae4ee53ad90910e509dd135c24a5f1",
+        "rows": 144,
+        "rows_with_changed_allocator_metrics": 13,
+        "slower_rows": 89,
+        "slowest_ratios": {
+          "imported-leaf-atan-half-rational-s-1-cold-0": 1.298801079343785,
+          "imported-leaf-atan-half-rational-s1-cold-0": 1.1310735663479587,
+          "imported-sum-atan-half-rational-s-1-cold--128": 4.853489142887085,
+          "imported-sum-atan-half-rational-s-1-cold--32": 11.6697463772161,
+          "imported-sum-atan-half-rational-s-1-cold-0": 26.87315339397433,
+          "imported-sum-atan-half-rational-s1-cold--128": 3.670512923616656,
+          "imported-sum-atan-half-rational-s1-cold--32": 8.887749040726543,
+          "imported-sum-atan-half-rational-s1-cold-0": 19.45642428701161,
+          "real-atan-half-rational-s-1-cold-0": 1.0669329428546013,
+          "real-atan-half-rational-s-1-warm--32": 1.0574723605507963
+        }
+      },
+      "ordinary": {
+        "all_completed_output_assertions_passed": true,
+        "all_slower_rows_retained_in_raw_result": true,
+        "allocation_deltas_stable_across_pairs": true,
+        "binary_bytes": {
+          "candidate": 6783104,
+          "parent": 6781632
+        },
+        "binary_bytes_delta": 1472,
+        "changed_allocator_metrics_first_pair": {},
+        "iterations_per_row": 100000,
+        "maximum_added_allocated_bytes_per_iteration": 0.0,
+        "maximum_added_allocation_calls_per_iteration": 0.0,
+        "maximum_added_peak_bytes_per_row": 0,
+        "median_latency_ratio_range": [
+          0.950327759565806,
+          1.045099539411407
+        ],
+        "pairs": 5,
+        "result_sha256": "c3df6757efe4118ff6c294bcb660c8f0e1ae2587eca91fad5868b36bdd59e29a",
+        "rows": 17,
+        "rows_with_changed_allocator_metrics": 0,
+        "slower_rows": 7,
+        "slowest_ratios": {
+          "named-root-cbor": 0.9974030115218554,
+          "named-root-json": 0.9928745564501349,
+          "opaque-add-fresh": 1.0402881997441251,
+          "opaque-root-json": 1.0233410558733615,
+          "rational-add": 1.0223236398453315,
+          "rational-json": 1.0149634522852495,
+          "small-atanh-json": 0.9966452004622731,
+          "trig-add-fresh": 1.045099539411407,
+          "trig-cbor": 1.0054401009478178,
+          "trig-json": 1.0323832868867013
+        }
+      },
+      "resources": {
+        "disk_b_free_bytes": 208677269504,
+        "free_bytes": 74409672704,
+        "host_available_bytes": 108892160000,
+        "log_bytes": 145292473,
+        "new_volume_free_bytes": 1995119824896,
+        "tmp_free_bytes": 67262349312
+      }
+    },
+    "cost_retention": {
+      "additional_native_costs": "Six cold generic half-boundary rows are 3.67x to 26.87x slower. Counted allocations rise by up to 740.0001 calls and 32048 bytes per iteration, including process-local constant warmup; maximum additional peak-live bytes are 5232. Six imported rational-leaf rows also allocate more. The remaining changed allocation row is a reduction in a public Real row. Raw per-row and all five paired measurements are retained.",
+      "all_unfavorable_samples_retained": true,
+      "cold_generic_half_boundary_rows": {
+        "imported-sum-atan-half-rational-s-1-cold--128": {
+          "median_nanoseconds_per_query": {
+            "candidate": 42218.9038,
+            "parent": 8698.6707
+          },
+          "ratio": 4.853489142887085
+        },
+        "imported-sum-atan-half-rational-s-1-cold--32": {
+          "median_nanoseconds_per_query": {
+            "candidate": 37106.9659,
+            "parent": 3179.7577
+          },
+          "ratio": 11.6697463772161
+        },
+        "imported-sum-atan-half-rational-s-1-cold-0": {
+          "median_nanoseconds_per_query": {
+            "candidate": 34771.7402,
+            "parent": 1293.9211
+          },
+          "ratio": 26.87315339397433
+        },
+        "imported-sum-atan-half-rational-s1-cold--128": {
+          "median_nanoseconds_per_query": {
+            "candidate": 31976.2452,
+            "parent": 8711.6558
+          },
+          "ratio": 3.670512923616656
+        },
+        "imported-sum-atan-half-rational-s1-cold--32": {
+          "median_nanoseconds_per_query": {
+            "candidate": 27668.32,
+            "parent": 3113.0852
+          },
+          "ratio": 8.887749040726543
+        },
+        "imported-sum-atan-half-rational-s1-cold-0": {
+          "median_nanoseconds_per_query": {
+            "candidate": 25026.2674,
+            "parent": 1286.2727
+          },
+          "ratio": 19.45642428701161
+        }
+      },
+      "cost_interpretation": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/atan-kernel-admission-20261019-v1/cost-interpretation-v1.json",
+      "cost_interpretation_sha256": "fb6e4d4abf56c96182bf999f33b2ba19ceee27c2eaf80134334f11adf14a0c3d",
+      "decision": "Retain the correctness extension with its measured cold boundary fallback costs.",
+      "executable_growth_bytes": {
+        "native": 1448,
+        "ordinary": 1472
+      },
+      "future_work": "Reduce the boundary fallback cost using shared native evidence while preserving the newly admitted range, cache, wire, cancellation-recovery and enclosure contracts. Correctness gaps remain ahead of performance work.",
+      "general_speedup_claimed": false,
+      "governing_priority": "Exactness and supported completion precede performance and memory.",
+      "ordinary_allocator_metrics_identical": true,
+      "ordinary_median_latency_ratios": [
+        0.950327759565806,
+        1.045099539411407
+      ],
+      "reason": "Imported atan(2) completes with independent enclosure checks where the exact parent hit the original external timeout. The shared evaluator now requires a valid series-range proof and makes strict reduction progress. All unchanged supported validation workflows and matched successful cost rows still complete under their original containment limits."
+    },
+    "remaining_limitations": [
+      "General expression domains, other private kernel ranges and typed native evaluation/cancellation remain open.",
+      "The isolated fallible-evaluation prototype remains unadmitted.",
+      "External time/address-space containment does not establish internal work, heap, expression-growth or cancellation contracts.",
+      "Finite tests and matched measurements do not establish exhaustive correctness, formal verification, coverage targets or the complete useful-workload corpus.",
+      "Clean shipped-distribution and foreign consumers, full CI/DRC gates and the full properties plan remain open.",
+      "Historical missing evidence was neither reaudited nor recovered."
+    ],
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": null,
+    "disk_b_quota_mode": "User authorized available artifact volume capacity; no retained-artifact quota.",
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "all_adverse_results_retained": true,
+    "next": "Continue scalar domain/evidence ownership and ordinary strict completion, then complete the shipped user path and release validation.",
+    "parent_revision": "fd32065ac1f6c3073bae1f7a50c769a12c147524",
+    "review": "docs/evidence/2026-10-19-atan-kernel-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-atan-kernel-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/atan-kernel-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
     "runtime_admitted": true,
     "general_speedup_claimed": false
   }
