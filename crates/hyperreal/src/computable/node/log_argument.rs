@@ -70,6 +70,11 @@ impl Computable {
             _ => None,
         }?;
         if result.exact_rational().is_some_and(|r| !fits(&r)) { return None; }
+        if should_stop(&self.signal) { return None; }
+        // Every admitted branch proves exp(self)>0, including the cached
+        // residual enclosure above. Retain that proof on the reconstructed
+        // argument so its inverse can consume it without fresh refinement.
+        result.internal.facts.replace_exact_sign(ExactSignCache::Valid(Sign::Plus));
         Some(result)
     }
 }

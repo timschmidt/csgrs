@@ -41,7 +41,7 @@ belongs to an exact or explicitly uncertain predicate.
 
 | Type | Purpose |
 | --- | --- |
-| `Complex` | Exact complex arithmetic and integer powers. |
+| `Complex` | Exact complex arithmetic, integer powers and Jacobi sn/cn/dn for real m < 1. |
 | `Vector2`, `Vector3`, `Vector4` | Fixed-size exact vectors with dot, norm, interpolation, and checked normalization operations. |
 | `Point2`, `Point3` | Affine points kept distinct from displacement vectors. |
 | `Matrix3`, `Matrix4` | Fixed-size exact matrices, transforms, determinants, and checked inverses. |
@@ -53,6 +53,13 @@ belongs to an exact or explicitly uncertain predicate.
 
 `Rational`, `Real`, and their principal structural types are re-exported from
 Hyperreal for convenience.
+
+The workspace's `Complex::jacobi_sncndn(&m)` continues native real Jacobi
+functions to complex arguments, including negative real parameters. Known
+poles fail with `DivideByZero`; an unproved denominator fails with `UnknownZero`.
+The components retain `Real` expressions and exact norm relations. Complex dn
+can be zero or negative. See the [admission](docs/admission-complex-jacobi.md)
+for the domain and verification contract. This addition has not been published.
 
 ## Quick start
 

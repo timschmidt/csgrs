@@ -68,6 +68,11 @@ that every input finishes within a fixed resource budget.
 
 ## Acceptance and consumers
 
+The later [mean-enclosure admission](admission-carlson-mean-enclosure.md)
+adds a tighter whole-integral RF bound and an amortized stopping-check schedule
+after a complex Jacobi sanitizer timeout. It retains the original integral,
+input domain, directed rounding and output-width requirement.
+
 `tests/elliptic_integrals.rs` checks diagonal identities, circular limits,
 negative/divergent/undecided domains, permutation symmetry, homogeneity, the
 independent cyclic RD identity, refinement order, cancellation recovery,

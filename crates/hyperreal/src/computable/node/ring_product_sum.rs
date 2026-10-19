@@ -92,11 +92,11 @@ impl<'a> RingRecognition<'a> {
             degree = degree.max(term.len());
         }
         product.degree += degree;
-        if product.degree > Self::MAX_DEGREE {
+        if product.degree > self.degree_limit() {
             return None;
         }
         // Every retained nonconstant factor has degree at least one, so
-        // each product retains at most MAX_DEGREE bounded polynomials.
+        // each product retains at most degree_limit() bounded polynomials.
         product.factors.push(polynomial);
         Some(())
     }

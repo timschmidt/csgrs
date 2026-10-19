@@ -47,3 +47,7 @@ harness = false
 name = "api_dispatch_trace"
 harness = false
 required-features = ["hyperreal-dispatch-trace"]
+
+[[bench]]
+name = "complex_jacobi"
+harness = false

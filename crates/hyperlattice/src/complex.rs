@@ -8,6 +8,8 @@ use crate::{
     BlasResult, CheckedBlasResult, ExactRationalKind, Problem, Real, RealKernelExt, ZeroKnowledge,
 };
 
+mod jacobi;
+
 /// Complex scalar with real and imaginary components.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Complex {

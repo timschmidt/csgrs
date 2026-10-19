@@ -27,9 +27,17 @@ Native Carlson RF/RD elliptic integrals are an additional scalar prerequisite
 for exact rectification, with [scalar admission](../hyperreal/docs/admission-elliptic-integrals.md).
 Native Legendre F/E, their continuous inverses and shared real Jacobi sn/cn/dn
 now supply further scalar prerequisites. The [Jacobi admission](../hyperreal/docs/admission-jacobi.md)
-records retained square-sum relations and positive dn. Complex continuation,
-Thompson/Lee rectification and a complete ellipsoidal transverse projection
-remain open.
+records retained square-sum relations and positive dn. Hyperlattice now provides
+complex Jacobi continuation for admitted real m < 1, with explicit pole errors
+and exact relations reusable by strict spatial consumers. Its
+[complex admission](../hyperlattice/docs/admission-complex-jacobi.md) and
+[scalar relation admission](../hyperreal/docs/admission-jacobi-rational-relations.md)
+record the construction and proof budgets. The
+[verification record](verification/2026-10-19-e2-complex-jacobi/README.md)
+records passing stable/MSRV checks, all four cache configurations, eight
+independent coverage gates, directed selection and the completed ASan campaign.
+Thompson/Lee rectification and a complete ellipsoidal transverse
+projection remain open.
 See the [spherical Mercator admission](docs/admission/e2-mercator.md),
 the [forward/local admission](docs/admission/e1-native.md)
 and [closest-point inverse admission](docs/admission/e1-inverse.md).
@@ -177,8 +185,23 @@ now shares that amplitude, reduces its periods with a certified quotient,
 and retains unit/elliptic square relations and the positive dn branch. Its
 [admission](../hyperreal/docs/admission-jacobi.md) records the real parameter
 domain and bounded relation recognition; [verification](verification/2026-10-19-e2-jacobi/README.md)
-records executed evidence and limits. Next, admit complex continuation, then the
-Thompson/Lee mapping and its certified inverse. References are
+records executed evidence and limits. Hyperlattice's `Complex::jacobi_sncndn`
+continues these functions using complementary and reciprocal modulus
+transformations, including negative parameters and finite quarter-period
+points. An independent MPFR Taylor-ODE oracle supplies development comparisons;
+native scalar relation proofs let ordinary complex arithmetic preserve unit
+and elliptic norms. The [spatial testing contract](docs/admission/e2-complex-jacobi.md)
+requires those norms to remain consumable as geodetic inputs. Complex
+parameters and m=1 are outside this increment. Next, admit the Thompson/Lee
+mapping and its certified inverse. Its rectification uses Jacobi's epsilon
+function, whose argument differs from the amplitude accepted by incomplete
+Legendre E. The real axis can compose E with the retained Jacobi amplitude;
+complex continuation must preserve quasi-periods, finite quarter-period
+values and pole diagnostics. The two intermediate-map inversions need
+certified enclosures and a named chart or sheet; convergence of ordinary
+complex Newton iteration alone is insufficient. See
+[Jacobi epsilon and its addition law](https://dlmf.nist.gov/22.16.ii).
+Other references are
 [DLMF integral relations](https://dlmf.nist.gov/19.25),
 [Jacobi computation](https://dlmf.nist.gov/22.20), and
 [Karney's exact and series formulations](https://arxiv.org/abs/1002.1417).

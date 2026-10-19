@@ -108,6 +108,22 @@ impl Real {
     /// reduce pairs of the built-in `sqrt(2)` and `sqrt(3)` atoms to 2 and 3.
     /// Other atoms remain opaque. Every scan and coefficient reduction consumes
     /// work; inverse-domain obligations and cancellation remain enforced.
+    /// A final attempt can use matching native Jacobi square relations,
+    /// square roots with nonnegative radicand evidence, and exact inverse
+    /// exponential relations. Its degree limit is 12; the other outer limits
+    /// also cover derived arithmetic parsing and substitution. Logarithm
+    /// replay and exponential matching have separate bounded helper budgets.
+    /// Rational relations clear the same proved-nonzero factor on both sides
+    /// of a quotient. A proposed rational constant is accepted only when its
+    /// complete residual has an exact zero proof. At most 32 parameter
+    /// quotients may remain opaque after their inverse domains are checked.
+    /// Derived atoms and parameter-basis choices live only for this query;
+    /// no refinement occurs and a declined attempt supplies no negative fact.
+    /// A completed final-attempt rational proof is retained in the existing
+    /// exact-reduction cache for subsequent arithmetic; the original
+    /// expression and its serialized form remain unchanged. This proof cache
+    /// shares the owning node's lifetime and is distinct from the temporary
+    /// per-query polynomial memoization described above.
     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
         if let Some(rational) = self.exact_rational() {
             return Some(rational);
@@ -117,7 +133,8 @@ impl Real {
             .bounded_laurent_rational(64)
             .or_else(|| computable.bounded_ring_rational())
             .or_else(|| computable.bounded_quotient_rational())
-            .or_else(|| computable.bounded_root_square_rational())?;
+            .or_else(|| computable.bounded_root_square_rational())
+            .or_else(|| computable.bounded_native_relation_rational())?;
         Some(rational * &self.rational)
     }
 

@@ -68,6 +68,16 @@ impl<'a> RingRecognition<'a> {
                 if self.same_polynomial(&d, &e)? {
                     (self.add(a.numerator, b.numerator)?, Some(d))
                 } else {
+                    if self.native_relations {
+                        if let Some(factor) = self.divide_exact_polynomial(&e, &d) {
+                            let left = self.multiply(&a.numerator, &factor)?;
+                            return Some(RingQuotient::new(self.add(left, b.numerator)?, Some(e)));
+                        }
+                        if let Some(factor) = self.divide_exact_polynomial(&d, &e) {
+                            let right = self.multiply(&b.numerator, &factor)?;
+                            return Some(RingQuotient::new(self.add(a.numerator, right)?, Some(d)));
+                        }
+                    }
                     let left = self.multiply(&a.numerator, &e)?;
                     let right = self.multiply(&b.numerator, &d)?;
                     let numerator = self.add(left, right)?;
@@ -82,6 +92,26 @@ impl<'a> RingRecognition<'a> {
     }
 
     fn quotient_multiply(&mut self, a: &RingQuotient, b: &RingQuotient) -> Option<RingQuotient> {
+        if self.native_relations && (a.denominator.is_some() || b.denominator.is_some()) {
+            let (mut a, mut b) = (a.clone(), b.clone());
+            if let Some(denominator) = &b.denominator
+                && let Some(reduced) = self.divide_exact_polynomial(&a.numerator, denominator)
+            {
+                a.numerator = reduced;
+                b.denominator = None;
+            }
+            if let Some(denominator) = &a.denominator
+                && let Some(reduced) = self.divide_exact_polynomial(&b.numerator, denominator)
+            {
+                b.numerator = reduced;
+                a.denominator = None;
+            }
+            return self.quotient_multiply_admitted(&a, &b);
+        }
+        self.quotient_multiply_admitted(a, b)
+    }
+
+    fn quotient_multiply_admitted(&mut self, a: &RingQuotient, b: &RingQuotient) -> Option<RingQuotient> {
         let numerator = self.multiply(&a.numerator, &b.numerator)?;
         if numerator.terms.is_empty() {
             return Some(RingQuotient::polynomial(numerator));
@@ -155,6 +185,11 @@ impl<'a> RingRecognition<'a> {
             None if node_available && depth > 1 => self.recover_quotient(value, depth)?,
             None => return None,
         };
+        let quotient = if self.root_relation_seen
+            && matches!(value.internal.approximation, Approximation::Square(_) | Approximation::Multiply(..))
+        {
+            self.reduce_native_relation_proof(quotient, NativeReduction::Roots)?
+        } else { quotient };
         // At most MAX_NODES entries: each miss consumes a node before it can
         // succeed. Failed or partial expansions are never inserted.
         self.quotients.insert(identity, quotient.clone());
@@ -166,6 +201,21 @@ impl<'a> RingRecognition<'a> {
         value: &'a Computable,
         depth: usize,
     ) -> Option<RingQuotient> {
+        if self.native_relations && let Some(rational) = value.retained_rational_reduction() {
+            self.charge()?;
+            self.nodes_left = self.nodes_left.checked_sub(1)?;
+            return Self::constant(rational).map(RingQuotient::polynomial);
+        }
+        if self.native_relations
+            && (self.is_parameter_atom(value)?
+                || matches!(value.internal.approximation, Approximation::Multiply(..) | Approximation::Square(_))
+                    && self.scalar_product_shape(value, 8)?)
+        {
+            self.charge()?;
+            self.nodes_left = self.nodes_left.checked_sub(1)?;
+            return self.native_relation_atom(std::borrow::Cow::Borrowed(value), depth - 1)
+                .map(RingQuotient::polynomial);
+        }
         // Reuse the polynomial leaf/atom admission, with its own single node
         // charge, for every representation without rational arithmetic here.
         if !matches!(
@@ -234,16 +284,54 @@ impl<'a> RingRecognition<'a> {
                 if quotient.numerator.terms.is_empty() {
                     return None;
                 }
-                Some(RingQuotient {
-                    numerator: match quotient.denominator {
-                        Some(denominator) => denominator,
-                        None => Self::constant(Rational::one())?,
-                    },
-                    denominator: Some(quotient.numerator),
-                })
+                self.invert_admitted_quotient(quotient)
             }
             _ => unreachable!("non-arithmetic forms were handled by polynomial admission"),
         }
+    }
+
+    fn invert_admitted_quotient(&mut self, quotient: RingQuotient) -> Option<RingQuotient> {
+        if self.native_relations
+            && let Some(reciprocal) = self.reciprocal_quadratic_polynomial(&quotient.numerator)
+        {
+            let numerator = match &quotient.denominator {
+                Some(denominator) => self.multiply(&reciprocal,denominator)?,
+                None => reciprocal,
+            };
+            return Some(RingQuotient::polynomial(numerator));
+        }
+        // Both callers have already proved this value nonzero and expanded
+        // every inverse it contains. A retained r²=N/H permits 1/r=r*H/N;
+        // N is nonzero because r and H have nonzero witnesses.
+        if self.native_relations && quotient.denominator.is_none()
+            && let [(monomial, coefficient)] = quotient.numerator.terms.as_slice()
+            && let [atom] = monomial.as_slice()
+        {
+            self.charge()?;
+            let index = usize::from(*atom);
+            if matches!(self.atoms[index].internal.approximation,
+                Approximation::Sqrt(_) | Approximation::Constant(SharedConstant::Sqrt2 | SharedConstant::Sqrt3))
+                && let Some(relation) = self.relations[index].clone()
+            {
+                let root = RingPolynomial { terms: vec![(vec![*atom], Rational::one())] };
+                let numerator = match relation.value.denominator {
+                    Some(denominator) => self.multiply(&root, &denominator)?,
+                    None => root,
+                };
+                let denominator = self.scale(relation.value.numerator, coefficient.clone())?;
+                // The root's radicand can itself lie in an admitted quadratic
+                // field. Compact that already nonzero denominator before
+                // repeated component squares raise its polynomial degree.
+                if let Some(reciprocal) = self.reciprocal_quadratic_polynomial(&denominator) {
+                    return self.multiply(&numerator, &reciprocal).map(RingQuotient::polynomial);
+                }
+                return Some(RingQuotient::new(numerator, Some(denominator)));
+            }
+        }
+        Some(RingQuotient {
+            numerator: quotient.denominator.unwrap_or(Self::constant(Rational::one())?),
+            denominator: Some(quotient.numerator),
+        })
     }
 }
 

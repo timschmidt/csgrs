@@ -534,6 +534,12 @@ impl Computable {
 
     /// Cosine of this number.
     pub fn cos(self) -> Computable {
+        if self.immediate_sign() == Some(RealSign::Zero) {
+            crate::trace_dispatch!("computable", "cos", "retained-zero-one");
+            let mut result = Self::one();
+            result.signal = self.signal;
+            return result;
+        }
         if let Approximation::Negate(argument) = &self.internal.approximation {
             crate::trace_dispatch!("computable", "cos", "negative-even-rewrite");
             return argument.clone().cos();
@@ -629,6 +635,12 @@ impl Computable {
 
     /// Sine of this number.
     pub fn sin(self) -> Computable {
+        if self.immediate_sign() == Some(RealSign::Zero) {
+            crate::trace_dispatch!("computable", "sin", "retained-zero");
+            let mut result = Self::zero();
+            result.signal = self.signal;
+            return result;
+        }
         if let Approximation::Negate(argument) = &self.internal.approximation {
             crate::trace_dispatch!("computable", "sin", "negative-odd-rewrite");
             return argument.clone().sin().negate();

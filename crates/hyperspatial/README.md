@@ -214,6 +214,29 @@ exact unit and elliptic norm relations. Mathematical equality uses certificates;
 `Real` structural equality does not promise one canonical expression for a value.
 They do not yet supply the ellipsoidal transverse coordinate operation.
 
+Complex continuation is available from the workspace's `hyperlattice` crate.
+Add that native crate as a direct dependency when using `Complex`:
+
+```rust
+use hyperlattice::Complex;
+use hyperspatial::Real;
+
+let parameter: Real = "-3".parse()?;
+let argument = Complex::new("0.25".parse()?, "0.125".parse()?);
+let (sn, cn, dn) = argument.jacobi_sncndn(&parameter)?;
+let norm = &sn * &sn + &cn * &cn;
+assert!(norm.re.exact_rational_normal_form().unwrap().is_one());
+assert!(norm.im.exact_rational_normal_form().unwrap().is_zero());
+assert!(dn.re.certified_rational_interval(-128).is_some());
+assert!(dn.im.certified_rational_interval(-128).is_some());
+# Ok::<(), hyperspatial::Error>(())
+```
+
+The parameter remains real and less than one. Complex `dn` can vanish or be
+negative; known poles return `DivideByZero` and unresolved denominators return
+`UnknownZero`. All six components remain native exact expressions. These
+workspace additions are not a published-crate availability claim.
+
 Ellipsoidal Transverse Mercator/UTM, geodesics, datum operations,
 serialization, celestial/observer transformations
 and ephemerides remain under development.
@@ -250,7 +273,13 @@ ingress requires an explicit `InputProvenance`; missing uncertainty stays unknow
   Jacobi amplitude, inverse E, retained relations and certified root enclosures.
 - [Jacobi admission](../hyperreal/docs/admission-jacobi.md): shared sn/cn/dn,
   positive branch, certified period reduction and exact norm relations.
-
+- [Complex Jacobi admission](../hyperlattice/docs/admission-complex-jacobi.md):
+  continuation, finite quarter-period points, poles and independent ODE checks.
+- [Rational relation admission](../hyperreal/docs/admission-jacobi-rational-relations.md):
+  bounded exact proofs and consumption of their retained certificates.
+- [Complex spatial testing](docs/admission/e2-complex-jacobi.md): all 484 ordered
+  scalar pairs at each parameter sign, regime/cache cases, separate coverage
+  floors and retained directed/sanitizer regressions.
 - [Ellipsoidal Mercator admission](docs/admission/e2-ellipsoidal.md): exact inverse
   relations, open latitude evidence, shared projection rules and validation.
 

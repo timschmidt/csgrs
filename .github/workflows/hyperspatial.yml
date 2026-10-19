@@ -36,8 +36,9 @@ jobs:
   checks:
     name: Native checks (${{ matrix.toolchain }})
     runs-on: ubuntu-latest
-    # Full debug-profile spatial matrices include the Jacobi pair corpus.
-    timeout-minutes: 90
+    # Full unoptimized spatial matrices include both signs of the complex
+    # Jacobi pair corpus, followed by native and benchmark checks.
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
@@ -62,10 +63,13 @@ jobs:
       - name: Verify native elliptic integrals and run completion-checked references
         run: |
           cargo test --locked -p hyperreal --test elliptic_integrals --test legendre_integrals --test inverse_legendre --test jacobi --features serde
+          cargo test --locked -p hyperlattice --test complex_jacobi --all-features
+          cargo test --locked -p hyperlimit --test real_representations --all-features
           cargo bench --locked -p hyperreal --bench elliptic_integrals
           cargo bench --locked -p hyperreal --bench legendre_integrals
           cargo bench --locked -p hyperreal --bench inverse_legendre
           cargo bench --locked -p hyperreal --bench jacobi
+          cargo bench --locked -p hyperlattice --bench complex_jacobi
 
   representations:
     name: Scalar representations and caches
@@ -87,7 +91,7 @@ jobs:
   directed:
     name: Directed cases and ASan
     runs-on: ubuntu-latest
-    timeout-minutes: 155
+    timeout-minutes: 185
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -130,8 +134,12 @@ jobs:
         env:
           RUSTUP_TOOLCHAIN: stable
         run: python3 crates/hyperspatial/scripts/directed.py --workload jacobi --output target/hyperspatial-directed-jacobi
+      - name: Select complex Jacobi cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload complex_jacobi --output target/hyperspatial-directed-complex-jacobi
       - name: Mutate and replay with address sanitizer
-        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus --transverse-corpus target/hyperspatial-directed-transverse/corpus --elliptic-corpus target/hyperspatial-directed-elliptic/corpus --inverse-legendre-corpus target/hyperspatial-directed-inverse-legendre/corpus --jacobi-corpus target/hyperspatial-directed-jacobi/corpus
+        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus --transverse-corpus target/hyperspatial-directed-transverse/corpus --elliptic-corpus target/hyperspatial-directed-elliptic/corpus --inverse-legendre-corpus target/hyperspatial-directed-inverse-legendre/corpus --jacobi-corpus target/hyperspatial-directed-jacobi/corpus --complex-jacobi-corpus target/hyperspatial-directed-complex-jacobi/corpus
       - name: Retain campaign evidence and failure inputs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -146,6 +154,7 @@ jobs:
             target/hyperspatial-directed-elliptic/
             target/hyperspatial-directed-inverse-legendre/
             target/hyperspatial-directed-jacobi/
+            target/hyperspatial-directed-complex-jacobi/
             target/hyperspatial-asan/
             crates/hyperspatial/fuzz/artifacts/
           retention-days: 30
@@ -173,9 +182,9 @@ jobs:
   coverage:
     name: Production coverage
     runs-on: ubuntu-latest
-    # Instrumentation covers elliptic/Jacobi refinement and the full spatial
-    # pair corpus as well as the existing cases.
-    timeout-minutes: 90
+    # Instrumentation also covers complex continuation, its exact proof
+    # helpers and the full scalar-pair spatial corpus.
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -186,6 +195,11 @@ jobs:
       - name: Measure production coverage
         env:
           RUSTUP_TOOLCHAIN: stable
+          # Run the full corpus with the same profile as the cache matrix.
+          # Native checks separately retain unoptimized debug execution.
+          CARGO_PROFILE_TEST_OPT_LEVEL: "1"
+          CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: "true"
+          CARGO_PROFILE_TEST_OVERFLOW_CHECKS: "true"
         run: |
           python3 crates/hyperspatial/scripts/coverage-gates.py
           python3 crates/hyperspatial/scripts/coverage.py

@@ -43,7 +43,9 @@ mod jacobi_node_tests {
         assert!(value.retained_log_argument(&mut 64).is_none());
         residual.approx(-32);
         let cached = residual.cached();
-        assert!(value.retained_log_argument(&mut 64).is_some());
+        let recovered = value.retained_log_argument(&mut 64).unwrap();
+        assert_eq!(recovered.immediate_sign(), Some(RealSign::Positive),
+            "logarithm replay must carry its proven positive domain into an inverse");
         assert_eq!(cached, residual.cached(), "recognition never requests digits");
         let signal = Arc::new(std::sync::atomic::AtomicBool::new(true));
         let mut aborted = ln;

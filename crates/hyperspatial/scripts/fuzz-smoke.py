@@ -28,6 +28,7 @@ def main():
     parser.add_argument("--elliptic-corpus", type=Path)
     parser.add_argument("--inverse-legendre-corpus", type=Path)
     parser.add_argument("--jacobi-corpus", type=Path)
+    parser.add_argument("--complex-jacobi-corpus", type=Path)
     parser.add_argument("--seconds", type=int, default=60)
     parser.add_argument("--isometric-seconds", type=int, default=900,
                         help="inverse campaign budget; its full seed replay is more expensive")
@@ -41,18 +42,20 @@ def main():
                         help="inverse integral budget, including full seed replay")
     parser.add_argument("--jacobi-seconds", type=int, default=1800,
                         help="Jacobi budget, including full seed replay and mutations")
+    parser.add_argument("--complex-jacobi-seconds", type=int, default=1800,
+                        help="complex continuation budget, including full seed replay and mutations")
     parser.add_argument("--targets", nargs="+",
-                        choices=("forward_local", "normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator", "transverse_mercator", "elliptic", "inverse_legendre", "jacobi"),
-                        default=("forward_local", "normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator", "transverse_mercator", "elliptic", "inverse_legendre", "jacobi"))
+                        choices=("forward_local", "normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator", "transverse_mercator", "elliptic", "inverse_legendre", "jacobi", "complex_jacobi"),
+                        default=("forward_local", "normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator", "transverse_mercator", "elliptic", "inverse_legendre", "jacobi", "complex_jacobi"))
     parser.add_argument("--seed", type=int, default=20261018)
     parser.add_argument("--toolchain", default="nightly")
     args = parser.parse_args()
-    if min(args.seconds, args.isometric_seconds, args.ellipsoidal_seconds, args.transverse_seconds, args.elliptic_seconds, args.inverse_legendre_seconds, args.jacobi_seconds) < 1:
+    if min(args.seconds, args.isometric_seconds, args.ellipsoidal_seconds, args.transverse_seconds, args.elliptic_seconds, args.inverse_legendre_seconds, args.jacobi_seconds, args.complex_jacobi_seconds) < 1:
         parser.error("positive campaign duration required")
     args.output.mkdir(parents=True, exist_ok=True)
     report = {
         "seed": args.seed, "sanitizer": "address",
-        "campaign_seconds": {target: {"inverse_isometric": args.isometric_seconds, "ellipsoidal_mercator": args.ellipsoidal_seconds, "transverse_mercator": args.transverse_seconds, "elliptic": args.elliptic_seconds, "inverse_legendre": args.inverse_legendre_seconds, "jacobi": args.jacobi_seconds}.get(target, args.seconds)
+        "campaign_seconds": {target: {"inverse_isometric": args.isometric_seconds, "ellipsoidal_mercator": args.ellipsoidal_seconds, "transverse_mercator": args.transverse_seconds, "elliptic": args.elliptic_seconds, "inverse_legendre": args.inverse_legendre_seconds, "jacobi": args.jacobi_seconds, "complex_jacobi": args.complex_jacobi_seconds}.get(target, args.seconds)
                              for target in args.targets},
         "seconds_per_input": 10, "rss_limit_mib": 2048, "max_input_bytes": 6,
         "compiler": subprocess.check_output(["rustc", "+" + args.toolchain, "-vV"], text=True),
@@ -61,10 +64,11 @@ def main():
         "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted((CRATE / "src").glob("*.rs")) +
                           sorted((CRATE / "fuzz/fuzz_targets").glob("*.rs")) +
-                          [CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "dev/ellipsoidal_mercator.rs", CRATE / "dev/inverse_isometric.rs", CRATE / "dev/transverse_mercator.rs", CRATE / "dev/elliptic.rs", CRATE / "dev/inverse_legendre.rs", CRATE / "dev/jacobi.rs", CRATE / "fuzz/Cargo.lock",
+                          [CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "dev/ellipsoidal_mercator.rs", CRATE / "dev/inverse_isometric.rs", CRATE / "dev/transverse_mercator.rs", CRATE / "dev/elliptic.rs", CRATE / "dev/inverse_legendre.rs", CRATE / "dev/jacobi.rs", CRATE / "dev/complex_jacobi.rs", CRATE / "fuzz/Cargo.lock",
                            Path(__file__).resolve(),
                            ROOT / "crates/hyperreal/tests/support/representations.rs"] +
-                          sorted((ROOT / "crates/hyperreal/src").rglob("*.rs"))},
+                          sorted((ROOT / "crates/hyperreal/src").rglob("*.rs")) +
+                          sorted((ROOT / "crates/hyperlattice/src").rglob("*.rs"))},
         "limitations": "External timeout/RSS containment, not native resource bounds. Counter/feature coverage is for the instrumented binary, not production line/branch coverage.",
         "campaigns": [],
     }
@@ -80,15 +84,24 @@ def main():
         else:
             seeds = [bytes([family, (family + 7) % 22, 0, 0, 0, flags])
                      for family in range(22) for flags in (0, 3)]
-            if target in ("transverse_mercator", "elliptic", "inverse_legendre", "jacobi"):
+            if target in ("transverse_mercator", "elliptic", "inverse_legendre", "jacobi", "complex_jacobi"):
                 seeds = [bytes([family, (family + 7) % 22, 127, 39, mode, flags])
                          for family in range(22) for mode in range(4) for flags in (0, 4)]
+            if target == "complex_jacobi":
+                # Keep minimized and original failures alongside the full domain.
+                seeds += [bytes(data) for data in ([7, 19, 2, 2, 0, 0],
+                                                  [21, 6, 127, 39, 1, 4],
+                                                  [21, 6, 0, 0, 1, 4],
+                                                  [12, 12, 66, 201, 7, 1],
+                                                  [0, 120, 113, 108, 1, 0],
+                                                  [0, 10, 0, 0, 1, 0])]
             selected = {"normal_offset": args.selected_corpus, "mercator": args.mercator_corpus,
                         "inverse_isometric": args.isometric_corpus,
                         "ellipsoidal_mercator": args.ellipsoidal_corpus,
                         "transverse_mercator": args.transverse_corpus,
                         "elliptic": args.elliptic_corpus,
-                        "inverse_legendre": args.inverse_legendre_corpus, "jacobi": args.jacobi_corpus}[target]
+                        "inverse_legendre": args.inverse_legendre_corpus, "jacobi": args.jacobi_corpus,
+                        "complex_jacobi": args.complex_jacobi_corpus}[target]
             if selected:
                 seeds += [p.read_bytes() for p in sorted(selected.iterdir()) if p.is_file()]
         for seed in seeds:

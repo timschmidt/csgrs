@@ -41,6 +41,7 @@ with tempfile.TemporaryDirectory(prefix="hyperspatial-consumer-") as temporary:
         '[package]\nname = "hyperspatial-source-consumer"\nversion = "0.0.0"\n'
         'edition = "2024"\n[workspace]\n[dependencies]\n'
         f'hyperspatial = {{ path = {json.dumps(str(crate))} }}\n'
+        f'hyperlattice = {{ path = {json.dumps(str(root / "crates/hyperlattice"))} }}\n'
     )
     shutil.copyfile(root / "Cargo.lock", consumer / "Cargo.lock")
     environment = os.environ.copy()

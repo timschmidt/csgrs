@@ -11,44 +11,40 @@ import hashlib
 import json
 from pathlib import Path
 
-from coverage_common import native_elliptic_coverage, check_native_elliptic_coverage
+from coverage_common import native_elliptic_coverage, check_native_elliptic_coverage, native_source_groups
 
 root = Path(__file__).resolve().parents[3]
-files = [{"filename": str(root / "crates/hyperreal/src" / part / name),
-          "summary": {metric: {"count": 50, "covered": 50}
+sources = native_source_groups(root)
+files = [{"filename": str(path),
+          "summary": {metric: {"count": 10000, "covered": 10000}
                       for metric in ("lines", "regions", "functions")}}
-         for name in ("elliptic_integrals.rs", "legendre_integrals.rs", "inverse_legendre.rs", "jacobi.rs")
-         for part in ("computable/approximation", "computable/node", "real/arithmetic")]
-files.append({"filename": str(root / "crates/hyperreal/src/computable/node/log_argument.rs"),
-              "summary": {metric: {"count": 50, "covered": 50}
-                          for metric in ("lines", "regions", "functions")}})
+         for paths in sources.values() for path in paths]
 export = {"data": [{"files": files}]}
 check_native_elliptic_coverage(native_elliptic_coverage(export, root))
-groups = [(0, 3, "native_elliptic"), (3, 3, "native_legendre"),
-          (6, 3, "native_inverse_legendre"), (9, 4, "native_jacobi")]
-for start, count, label in groups:
+for label, paths in sources.items():
     masked = copy.deepcopy(export)
-    for offset, count, covered in [(0, 51, 46), (1, 50, 45), (2, 50, 45)]:
-        masked["data"][0]["files"][start + offset]["summary"]["lines"] = {
-            "count": count, "covered": covered}
-    assert 100 * (136 + 150) / (151 + 150) >= 95
+    for file in masked["data"][0]["files"]:
+        if Path(file["filename"]) in paths:
+            file["summary"]["lines"] = {"count": 100, "covered": 94}
+    combined = [f["summary"]["lines"] for f in masked["data"][0]["files"]]
+    assert 100 * sum(row["covered"] for row in combined) / sum(row["count"] for row in combined) >= 95
     try:
         check_native_elliptic_coverage(native_elliptic_coverage(masked, root))
     except SystemExit as error:
         assert label in str(error)
     else:
         raise AssertionError("combined coverage masked a failing independent floor")
-for start, count, label in groups:
-    for offset in range(count):
+    for path in paths:
         missing = copy.deepcopy(export)
-        missing["data"][0]["files"].pop(start + offset)
+        missing["data"][0]["files"] = [file for file in missing["data"][0]["files"]
+                                      if file["filename"] != str(path)]
         try:
             native_elliptic_coverage(missing, root)
         except SystemExit as error:
             assert f"every {label}" in str(error)
         else:
             raise AssertionError("missing source was accepted")
-print("Independent Carlson/Legendre/inverse/Jacobi coverage floors and missing-file regression passed")
+print("Independent native coverage floors and missing-file regressions passed")
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--report", type=Path)
@@ -65,7 +61,7 @@ if args.report:
             if hashlib.sha256((base / path).read_bytes()).hexdigest() != digest:
                 raise SystemExit(f"Measured production source changed: {path}")
     measured = {}
-    for label in ("native_elliptic", "native_legendre", "native_inverse_legendre", "native_jacobi"):
+    for label in sources:
         group = report.get(label, {})
         if set(group.get("files", {})) != set(group.get("source_sha256", {})):
             raise SystemExit(f"Incomplete source hashes for {label}")
@@ -84,4 +80,4 @@ if args.report:
                            "tests_reexecuted": False,
                            "source": "unchanged LLVM per-file measurements; independent group floors"}
     args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
-    print("Retained measurements pass all six independent line gates")
+    print("Retained measurements pass all independent line gates")
