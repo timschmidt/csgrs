@@ -70,6 +70,7 @@ hyperspatial() {
   bench hyperspatial --bench inverse
   bench hyperspatial --bench mercator
   bench hyperspatial --bench inverse_isometric
+  bench hyperspatial --bench ellipsoidal_mercator
 }
 
 crates=("$@")

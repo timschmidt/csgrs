@@ -17,6 +17,9 @@ mod mercator;
 #[path = "../dev/inverse_isometric.rs"]
 mod inverse_isometric;
 
+#[path = "../dev/ellipsoidal_mercator.rs"]
+mod ellipsoidal_mercator;
+
 fn main() {
     let encoded = std::env::args()
         .nth(1)
@@ -35,6 +38,7 @@ fn main() {
     let result = dispatch_trace::with_recording(|| match workload.as_str() {
         "normal_offset" => normal_offset::exercise(data),
         "mercator" => mercator::exercise(data),
+        "ellipsoidal_mercator" => ellipsoidal_mercator::exercise(data),
         "inverse_isometric" => inverse_isometric::exercise(data),
         _ => panic!("unknown workload {workload}"),
     });

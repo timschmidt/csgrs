@@ -293,6 +293,8 @@ pub enum GeodeticSource {
     Input,
     /// Inverse of retained spherical/pseudo-Mercator coordinates and parameters.
     SphericalMercator(Arc<crate::ProjectedPosition<crate::SphericalMercator>>),
+    /// Inverse of retained ellipsoidal Mercator coordinates and parameters.
+    EllipsoidalMercator(Arc<crate::ProjectedPosition<crate::EllipsoidalMercator>>),
     /// Closest-point inverse of the retained Cartesian position.
     EcefClosest {
         /// Original Cartesian source, including frame, epoch and qualification.

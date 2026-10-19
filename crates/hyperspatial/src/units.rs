@@ -49,9 +49,58 @@ impl Length {
 pub struct Latitude {
     angle: Angle,
     receipt: Receipt,
+    // Only the native inverse constructor creates this relation. Its equation
+    // proves the open range even when a bounded comparison cannot resolve a pole.
+    isometric: Option<(Real, Real)>,
 }
 
 impl Latitude {
+    pub(crate) fn inverse_isometric(
+        psi: Real,
+        axis_ratio: Real,
+        parent: Receipt,
+        context: &mut Context,
+    ) -> Result<Self> {
+        context.checkpoint()?;
+        let angle = Angle::radians(psi.clone().inverse_isometric_latitude(&axis_ratio)?);
+        let receipt = context.receipt(
+            "inverse isometric latitude: open domain",
+            vec![parent],
+            Vec::new(),
+            None,
+        )?;
+        Ok(Self {
+            angle,
+            receipt,
+            isometric: Some((psi, axis_ratio)),
+        })
+    }
+
+    pub(crate) fn has_open_domain(&self) -> bool {
+        self.isometric.is_some()
+    }
+
+    pub(crate) fn isometric_for(&self, axis_ratio: &Real) -> Option<&Real> {
+        self.isometric
+            .as_ref()
+            .and_then(|(psi, ratio)| (ratio == axis_ratio).then_some(psi))
+    }
+
+    pub(crate) fn retained(
+        original: &Self,
+        parent: Receipt,
+        context: &mut Context,
+    ) -> Result<Self> {
+        let mut latitude = original.clone();
+        latitude.receipt = context.receipt(
+            "retained latitude",
+            vec![parent, original.receipt.clone()],
+            Vec::new(),
+            None,
+        )?;
+        Ok(latitude)
+    }
+
     pub(crate) fn derived(angle: Angle, parent: Receipt, context: &mut Context) -> Result<Self> {
         let mut latitude = Self::new(angle, context)?;
         latitude.receipt = context.receipt(
@@ -84,7 +133,11 @@ impl Latitude {
             return Err(Error::InvalidInput("latitude outside [-pi/2, pi/2]"));
         }
         let receipt = context.receipt("latitude domain", Vec::new(), decisions, None)?;
-        Ok(Self { angle, receipt })
+        Ok(Self {
+            angle,
+            receipt,
+            isometric: None,
+        })
     }
     /// Validated angle (its validation certainty is in the receipt).
     pub fn angle(&self) -> &Angle {

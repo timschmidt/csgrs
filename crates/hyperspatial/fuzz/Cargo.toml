@@ -43,3 +43,10 @@ path = "fuzz_targets/mercator.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "ellipsoidal_mercator"
+path = "fuzz_targets/ellipsoidal_mercator.rs"
+test = false
+doc = false
+bench = false

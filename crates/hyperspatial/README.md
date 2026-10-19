@@ -8,7 +8,8 @@ ephemerides.
 
 The first implementation provides exact angular/length units, validated
 spherical/oblate/prolate ellipsoids, geodetic/ECEF conversion, and anchored
-ENU/NED position/vector transforms, plus spherical/pseudo-Mercator projections.
+ENU/NED position/vector transforms, plus spherical/pseudo-Mercator and
+ellipsoidal Mercator projections.
 Reference identity, coordinate epoch,
 source construction and predicate evidence survive supported compositions.
 The package is unpublished; the development plan is still in progress.
@@ -53,7 +54,7 @@ let projected = projection.project(&origin, &mut context)?;
 let geographic = projection.unproject(&projected, &mut context)?;
 assert_eq!(geographic.height().as_metres(), &Real::zero());
 
-// The scalar prerequisite for ellipsoidal Mercator is also available.
+// The native inverse scalar and ellipsoidal Mercator share the exact equation.
 // For b/a=3/5 and sin(phi)=3/5, psi=ln(2)-(4/5)*atanh(12/25).
 let ratio = (Real::from(3) / Real::from(5))?;
 let psi = Real::from(2).ln()? - (Real::from(4) / Real::from(5))?
@@ -72,6 +73,17 @@ let recovered = GeodeticPosition::new(
     origin.reference().clone(),
     InputProvenance::new("inverse equation example", InputAccuracy::ExactModel), &mut context,
 )?;
+let ellipsoidal = EllipsoidalMercator::new(
+    recovered.ellipsoid().clone(), recovered.reference().clone(),
+    MercatorParameters::greenwich(LongitudePolicy::Unrolled), &mut context,
+)?;
+let projected = ellipsoidal.project(&recovered, &mut context)?;
+// Fresh projected ingress exercises the inverse rather than source replay.
+let fresh = ellipsoidal.position(
+    projected.coordinates().clone(),
+    InputProvenance::new("exact projection example", InputAccuracy::ExactModel), &mut context,
+)?;
+let recovered = ellipsoidal.unproject(&fresh, &mut context)?;
 let recovered_ecef = recovered.to_ecef(&mut context)?;
 let recovered_frame = LocalFrame::new(&recovered, LocalAxes::Enu, &mut context)?;
 assert_eq!(recovered_frame.to_local_position(&recovered_ecef, &mut context)?
@@ -96,6 +108,11 @@ origin. Longitude policy explicitly preserves turns, rejects outside the
 principal strip, or wraps relative to the central meridian. Poles return a
 typed singularity; Web tile clipping is not implicit. Prepared projections
 retain their identity, model, source coordinates and certainty through inversion.
+`EllipsoidalMercator` uses both axes and supports oblate, spherical and prolate
+surfaces. Its inverse retains an exact refinable equation and an open-latitude
+proof, including for very large finite northings. Cloning the `Latitude` retains
+that relation; extracting its scalar and reconstructing it requires new domain
+validation. A relation is reused only for the same represented axis ratio.
 `Angle` and `Length` equality follows `Real` structural equality. Use native
 certified scalar comparisons when mathematical equality of different expressions
 is required.
@@ -104,7 +121,7 @@ is required.
 not scalar heap-byte or wall-clock bounds. Cancellation is cooperative between
 native calls and cannot change the meaning of an already returned coordinate.
 
-Ellipsoidal Mercator, Transverse Mercator/UTM, geodesics, datum operations,
+Transverse Mercator/UTM, geodesics, datum operations,
 serialization, celestial/observer transformations
 and ephemerides remain under development.
 No physical accuracy is inferred from exact evaluation of a model. Raw Cartesian
@@ -131,6 +148,9 @@ ingress requires an explicit `InputProvenance`; missing uncertainty stays unknow
   domains, source identities, independent fixtures and development evidence.
 - [Inverse-isometric scalar admission](../hyperreal/docs/admission-inverse-isometric-latitude.md):
   native oblate/prolate inversion, independent MPFR checks and Earth/local composition.
+
+- [Ellipsoidal Mercator admission](docs/admission/e2-ellipsoidal.md): exact inverse
+  relations, open latitude evidence, shared projection rules and validation.
 
 From the repository root:
 

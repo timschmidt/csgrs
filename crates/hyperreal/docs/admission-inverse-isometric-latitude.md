@@ -204,9 +204,8 @@ in the first target's inventory. It is not a new geometry failure. The extended
 campaign used nightly Rust 1.101.0 (`8006091eb`, 2026-10-17), cargo-fuzz 0.13.2,
 ASan and seed `20261018`. Hosted execution and artifact upload remain untested.
 
-Ellipsoidal Mercator's prepared projection API is still the next E2 change.
-It must retain the inverse equation's open latitude range as construction
-evidence: re-proving that range numerically near a pole can be Unknown at a
+The subsequent [ellipsoidal Mercator API](../../hyperspatial/docs/admission/e2-ellipsoidal.md)
+retains the inverse equation's open latitude range as construction evidence: re-proving that range numerically near a pole can be Unknown at a
 fixed predicate budget even though the scalar is well-defined. The huge-input
 scalar enclosure tests do not claim strict completion of every subsequent
 geospatial predicate. Transverse Mercator/UTM, geodesics, E3–E4 and A1–A5 remain

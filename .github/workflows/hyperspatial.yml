@@ -78,7 +78,7 @@ jobs:
   directed:
     name: Directed cases and ASan
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 65
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -101,8 +101,12 @@ jobs:
         env:
           RUSTUP_TOOLCHAIN: stable
         run: python3 crates/hyperspatial/scripts/directed.py --workload inverse_isometric --output target/hyperspatial-directed-isometric
+      - name: Select ellipsoidal projection cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload ellipsoidal_mercator --output target/hyperspatial-directed-ellipsoidal
       - name: Mutate and replay with address sanitizer
-        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus
+        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus
       - name: Retain campaign evidence and failure inputs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -112,6 +116,7 @@ jobs:
             target/hyperspatial-directed/
             target/hyperspatial-directed-mercator/
             target/hyperspatial-directed-isometric/
+            target/hyperspatial-directed-ellipsoidal/
             target/hyperspatial-asan/
             crates/hyperspatial/fuzz/artifacts/
           retention-days: 30

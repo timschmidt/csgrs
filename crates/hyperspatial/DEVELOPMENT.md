@@ -11,13 +11,15 @@ and reference-frame model to Earth orientation, celestial coordinates,
 observers, and ephemerides. Implementation is incremental; the full plan remains
 active. E1 provides units, validated ellipsoids, forward and closest-point
 inverse geodetic/ECEF operations, atomic batches and anchored ENU/NED transforms
-with retained evidence. E2 begins with spherical/pseudo-Mercator and explicit
+with retained evidence. E2 provides spherical/pseudo-Mercator and ellipsoidal Mercator with explicit
 longitude policies; its remaining projection/geodesic work, E3–E4 and A1–A5
 remain planned. Further testing/admission work is open.
-The next E2 prerequisite is a native, refinable inverse-isometric-latitude
-scalar in Hyperreal, with independent MPFR checks and downstream ECEF/local
-composition; its [admission record](../hyperreal/docs/admission-inverse-isometric-latitude.md)
-distinguishes that scalar from the still-open ellipsoidal projection API.
+The native, refinable inverse-isometric-latitude scalar in Hyperreal supplies
+the ellipsoidal projection inverse; its
+[scalar admission](../hyperreal/docs/admission-inverse-isometric-latitude.md)
+and [projection admission](docs/admission/e2-ellipsoidal.md) distinguish the
+scalar proof from coordinate identity, range evidence and downstream composition.
+Transverse Mercator/UTM and geodesic measurements remain open within E2.
 See the [spherical Mercator admission](docs/admission/e2-mercator.md),
 the [forward/local admission](docs/admission/e1-native.md)
 and [closest-point inverse admission](docs/admission/e1-inverse.md).

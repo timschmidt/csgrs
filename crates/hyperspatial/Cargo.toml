@@ -49,3 +49,7 @@ harness = false
 [[bench]]
 name = "inverse_isometric"
 harness = false
+
+[[bench]]
+name = "ellipsoidal_mercator"
+harness = false

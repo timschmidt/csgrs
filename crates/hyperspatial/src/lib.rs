@@ -3,15 +3,18 @@
 #![warn(missing_docs)]
 
 mod context;
+mod ellipsoidal_mercator;
 mod error;
 mod evidence;
 mod geodesy;
 mod inverse;
 mod local;
 mod mercator;
+mod mercator_common;
 mod units;
 
 pub use context::{Context, Limits};
+pub use ellipsoidal_mercator::EllipsoidalMercator;
 pub use error::{Error, Result};
 pub use evidence::{Decision, InputAccuracy, InputProvenance, Receipt};
 pub use geodesy::{

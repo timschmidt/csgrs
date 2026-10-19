@@ -12,6 +12,11 @@ The `mercator` target uses the same scalar inventory for independently
 parameterized latitudes and longitudes, all three longitude policies, false
 origins, scales, signed heights and oblate/prolate/spherical source ellipsoids.
 It checks fresh inverse/forward arithmetic and downstream ECEF/local use.
+The `inverse_isometric` target independently parameterizes the native scalar
+inverse and consumes it in geodetic/ECEF/local operations. The
+`ellipsoidal_mercator` target exercises the prepared ellipsoidal projection
+with the same 22-family inventory, independent oblate/prolate/spherical
+northings, fresh inverse arithmetic, retained relation replay, and local use.
 
 From the repository root:
 
@@ -19,7 +24,9 @@ From the repository root:
 cargo check --locked --manifest-path crates/hyperspatial/fuzz/Cargo.toml --bins
 python3 crates/hyperspatial/scripts/directed.py
 python3 crates/hyperspatial/scripts/directed.py --workload mercator --output target/hyperspatial-directed-mercator
-python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus
+python3 crates/hyperspatial/scripts/directed.py --workload inverse_isometric --output target/hyperspatial-directed-isometric
+python3 crates/hyperspatial/scripts/directed.py --workload ellipsoidal_mercator --output target/hyperspatial-directed-ellipsoidal
+python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus
 ```
 
 Retain every crash/timeout and its minimized counterpart, then promote the
@@ -29,10 +36,13 @@ inside a scalar call remain unbounded. The libFuzzer containment flags are
 therefore part of the campaign command. Install nightly Rust and the pinned
 development tool with `cargo install --locked cargo-fuzz --version 0.13.2`.
 The smoke driver supplies 918 initial forward/local cases, 44 normal-offset
-cases, 44 projection cases, and any cases selected by the directed driver.
-All three targets use ASan,
-a 60-second libFuzzer time budget, a 10-second per-input timeout, and a 2048 MiB
-RSS limit. Initialization can consume or extend the time budget; the raw log
+cases, 44 spherical projection cases, 44 inverse-scalar cases, 44 ellipsoidal
+projection cases, and any cases selected by the directed driver. All five
+targets use ASan, a 10-second per-input timeout, and a 2048 MiB RSS limit.
+The existing forward/local, normal-offset and spherical projection targets
+have a 60-second libFuzzer budget. The inverse scalar and ellipsoidal projection
+each have 900 seconds because replaying the full seeds is more expensive.
+`--targets` permits focused reruns without changing any target's seed set. Initialization can consume or extend the time budget; the raw log
 distinguishes corpus replay from mutation and any newly discovered paths.
 
 The directed driver runs two generations of four candidates in each of 22

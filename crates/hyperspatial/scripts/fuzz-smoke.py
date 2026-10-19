@@ -23,21 +23,24 @@ def main():
     parser.add_argument("--selected-corpus", type=Path)
     parser.add_argument("--mercator-corpus", type=Path)
     parser.add_argument("--isometric-corpus", type=Path)
+    parser.add_argument("--ellipsoidal-corpus", type=Path)
     parser.add_argument("--seconds", type=int, default=60)
     parser.add_argument("--isometric-seconds", type=int, default=900,
                         help="inverse campaign budget; its full seed replay is more expensive")
+    parser.add_argument("--ellipsoidal-seconds", type=int, default=900,
+                        help="ellipsoidal projection budget, including full seed replay")
     parser.add_argument("--targets", nargs="+",
-                        choices=("forward_local", "normal_offset", "mercator", "inverse_isometric"),
-                        default=("forward_local", "normal_offset", "mercator", "inverse_isometric"))
+                        choices=("forward_local", "normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator"),
+                        default=("forward_local", "normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator"))
     parser.add_argument("--seed", type=int, default=20261018)
     parser.add_argument("--toolchain", default="nightly")
     args = parser.parse_args()
-    if args.seconds < 1 or args.isometric_seconds < 1:
+    if min(args.seconds, args.isometric_seconds, args.ellipsoidal_seconds) < 1:
         parser.error("positive campaign duration required")
     args.output.mkdir(parents=True, exist_ok=True)
     report = {
         "seed": args.seed, "sanitizer": "address",
-        "campaign_seconds": {target: args.isometric_seconds if target == "inverse_isometric" else args.seconds
+        "campaign_seconds": {target: {"inverse_isometric": args.isometric_seconds, "ellipsoidal_mercator": args.ellipsoidal_seconds}.get(target, args.seconds)
                              for target in args.targets},
         "seconds_per_input": 10, "rss_limit_mib": 2048, "max_input_bytes": 6,
         "compiler": subprocess.check_output(["rustc", "+" + args.toolchain, "-vV"], text=True),
@@ -46,7 +49,7 @@ def main():
         "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted((CRATE / "src").glob("*.rs")) +
                           sorted((CRATE / "fuzz/fuzz_targets").glob("*.rs")) +
-                          [CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "dev/inverse_isometric.rs", CRATE / "fuzz/Cargo.lock",
+                          [CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "dev/ellipsoidal_mercator.rs", CRATE / "dev/inverse_isometric.rs", CRATE / "fuzz/Cargo.lock",
                            Path(__file__).resolve(),
                            ROOT / "crates/hyperreal/tests/support/representations.rs"] +
                           sorted((ROOT / "crates/hyperreal/src").rglob("*.rs"))},
@@ -66,7 +69,8 @@ def main():
             seeds = [bytes([family, (family + 7) % 22, 0, 0, 0, flags])
                      for family in range(22) for flags in (0, 3)]
             selected = {"normal_offset": args.selected_corpus, "mercator": args.mercator_corpus,
-                        "inverse_isometric": args.isometric_corpus}[target]
+                        "inverse_isometric": args.isometric_corpus,
+                        "ellipsoidal_mercator": args.ellipsoidal_corpus}[target]
             if selected:
                 seeds += [p.read_bytes() for p in sorted(selected.iterdir()) if p.is_file()]
         for seed in seeds:
