@@ -175,6 +175,16 @@ impl PolynomialCurveSet2 {
 }
 
 impl PolynomialCurveBranch2 {
+    /// Controls for subsequent selected-fiber evaluation, retained on replay.
+    pub fn evaluation_config(&self) -> AlgebraicFiberRootIsolationConfig {
+        self.source.fiber_config
+    }
+
+    /// Whether traversal runs from the upper to the lower source parameter.
+    pub const fn is_reversed(&self) -> bool {
+        self.reversed
+    }
+
     /// Complete source graph, shared by all restrictions and images.
     pub fn topology(&self) -> &BivariateCurveTopology {
         &self.source.topology

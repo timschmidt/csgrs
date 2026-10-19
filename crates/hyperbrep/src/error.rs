@@ -19,6 +19,8 @@ pub enum NonConicalGeneratorReason {
 /// Failure while constructing or evaluating exact geometry.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum GeometryError {
+    /// A complete polynomial-curve graph could not be reconstructed.
+    PolynomialTopology(hypersolve::bivariate_topology::BivariateTopologyError),
     /// A closed parameter interval was empty or reversed.
     InvalidParameterDomain,
     /// A requested parameter lies outside the curve's exact domain.
@@ -129,6 +131,12 @@ pub enum GeometryError {
 impl fmt::Display for GeometryError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::PolynomialTopology(status) => {
+                write!(
+                    formatter,
+                    "polynomial topology reconstruction failed: {status:?}"
+                )
+            }
             Self::InvalidParameterDomain => formatter.write_str("invalid parameter domain"),
             Self::ParameterOutsideDomain => {
                 formatter.write_str("parameter lies outside the exact curve domain")

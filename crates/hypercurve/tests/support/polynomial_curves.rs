@@ -1,7 +1,7 @@
 use hypercurve::{
     Axis2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, CurveFamily2, CurveParameter2, CurvePoint2, CurvePointDefinition2,
-    Point2, PolynomialCurveSet2, Real, Similarity2,
+    BezierParameterPolynomial, CurveFamily2, CurveParameter2, CurveParameterRange2, CurvePoint2,
+    CurvePointDefinition2, Point2, PolynomialCurveSet2, Real, Similarity2,
 };
 use hypersolve::bivariate_topology::{
     BivariateCurveDomain, BivariateTopologyConfig, decompose_bivariate_curve,
@@ -205,6 +205,115 @@ pub fn similarity_and_point_replay_keep_source_chart() {
     for _ in 0..3 {
         let again = image.point_at(&q(1, 2).into()).unwrap();
         assert!(again.coincides_with(&selected).unwrap());
+    }
+}
+
+pub fn every_similarity_branch_keeps_exact_coordinate_comparisons() {
+    let set = circle();
+    let transform = Similarity2::try_from_real_affine(
+        3.into(),
+        (-4).into(),
+        4.into(),
+        3.into(),
+        2.into(),
+        (-1).into(),
+    )
+    .unwrap();
+    let delta = (Real::one() / Real::from(1_000_000_000_000_u64)).unwrap();
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+        hypercurve::PredicatePolicy::STRICT,
+    ] {
+        let outcome = hypercurve::evaluate_under(policy, || {
+            for (side, source) in set.curves().iter().enumerate() {
+                let (left, right) = source.split_at(q(1, 2).into()).unwrap();
+                for curve in [source.clone(), source.reversed().unwrap(), left, right] {
+                    let image = curve.transform_similarity(&transform).unwrap();
+                    let point = image.point_at(&q(1, 2).into()).unwrap();
+                    // Independently evaluated (3x-4y+2, 4x+3y-1).
+                    let (x, y) = if side == 0 {
+                        (q(5, 2), q(7, 4))
+                    } else {
+                        (q(1, 2), q(13, 4))
+                    };
+                    let expected = p(x.clone(), y.clone());
+                    for (a, b) in [(&point, &expected), (&expected, &point)] {
+                        assert!(a.coincides_with(b).unwrap());
+                        for axis in [Axis2::X, Axis2::Y] {
+                            assert_eq!(a.compare_coordinate(b, axis).unwrap(), Ordering::Equal);
+                        }
+                    }
+                    for (nearby, axis) in [
+                        (p(&x + &delta, y.clone()), Axis2::X),
+                        (p(x, &y + &delta), Axis2::Y),
+                    ] {
+                        assert!(!point.coincides_with(&nearby).unwrap());
+                        assert!(!nearby.coincides_with(&point).unwrap());
+                        assert_eq!(
+                            point.compare_coordinate(&nearby, axis).unwrap(),
+                            Ordering::Less
+                        );
+                        assert_eq!(
+                            nearby.compare_coordinate(&point, axis).unwrap(),
+                            Ordering::Greater
+                        );
+                    }
+                }
+            }
+        });
+        assert_eq!(outcome.certainty(), hypercurve::CurveCertainty::Certified);
+    }
+}
+
+pub fn public_source_restrictions_keep_polynomial_bounds_and_traversal() {
+    let circle = circle();
+    let cubic = set(
+        vec![
+            vec![0.into(), 0.into(), 0.into(), 1.into()],
+            vec![(-1).into()],
+        ],
+        [1.into(), 2.into()],
+        [0.into(), 2.into()],
+    );
+    let cases: [(&hypercurve::Curve2, CurveParameter2, CurveParameter2); 3] = [
+        (&circle.curves()[0], q(3, 8).into(), q(5, 8).into()),
+        (&circle.curves()[1], q(3, 8).into(), q(5, 8).into()),
+        (&cubic.curves()[0], Real::one().into(), square_root_two()),
+    ];
+    for (source, start, end) in cases {
+        for source in [source.clone(), source.reversed().unwrap()] {
+            let range = CurveParameterRange2::try_new(start.clone(), end.clone()).unwrap();
+            let restricted = source.restrict_source(range.clone()).unwrap();
+            let branch = restricted.polynomial_branch().unwrap();
+            assert!(branch.shares_source(source.polynomial_branch().unwrap()));
+            assert_eq!(
+                branch.is_reversed(),
+                source.polynomial_branch().unwrap().is_reversed()
+            );
+            assert_eq!(restricted.parameter_domain(), &range);
+            assert!(restricted.source_restriction().is_none());
+            restricted.bounds().unwrap();
+            restricted.reversed().unwrap().bounds().unwrap();
+            for parameter in [&start, &end] {
+                assert!(
+                    restricted
+                        .point_at(parameter)
+                        .unwrap()
+                        .coincides_with(&source.point_at(parameter).unwrap())
+                        .unwrap()
+                );
+            }
+            let expected_start = if branch.is_reversed() { &end } else { &start };
+            assert!(
+                restricted
+                    .start()
+                    .coincides_with(&source.point_at(expected_start).unwrap())
+                    .unwrap()
+            );
+            let outside = CurveParameterRange2::try_new(Real::zero().into(), end.clone()).unwrap();
+            assert!(restricted.restrict_source(outside).is_err());
+        }
     }
 }
 

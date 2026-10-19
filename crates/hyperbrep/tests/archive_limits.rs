@@ -194,10 +194,10 @@ fn admission_does_not_replace_json_or_version_validation() {
     let limits = ArchiveLimits::default();
     for invalid in [
         "{".to_owned(),
-        r#"{"version":12,"bad":"\q"}"#.to_owned(),
-        r#"{"version":12,"bad":[true false]}"#.to_owned(),
+        r#"{"version":13,"bad":"\q"}"#.to_owned(),
+        r#"{"version":13,"bad":[true false]}"#.to_owned(),
         source() + " false",
-        r#"{"version":12}"#.to_owned(),
+        r#"{"version":13}"#.to_owned(),
     ] {
         assert!(matches!(
             RawModel::from_json(&invalid, &limits),

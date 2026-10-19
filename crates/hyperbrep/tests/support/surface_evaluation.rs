@@ -359,7 +359,7 @@ pub fn selected_domains_and_archive_admission() {
         .unwrap();
     let model = builder.finish().unwrap();
     let raw: serde_json::Value = serde_json::from_str(&model.to_json().unwrap()).unwrap();
-    assert_eq!(raw["version"], 12);
+    assert_eq!(raw["version"], 13);
     let mut old = raw.clone();
     old["version"] = 10.into();
     assert!(matches!(

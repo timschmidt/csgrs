@@ -309,6 +309,35 @@ impl CurvePoint2 {
         }
     }
 
+    pub(crate) fn same_point_by_coordinate_evidence(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
+        let orders = [Axis2::X, Axis2::Y].map(|axis| {
+            crate::bezier_offset::algebraic_chord_point_coordinate_order(self, other, axis, policy)
+        });
+        if orders.iter().any(|order| {
+            matches!(
+                order,
+                Ok(Classification::Decided(
+                    std::cmp::Ordering::Less | std::cmp::Ordering::Greater
+                ))
+            )
+        }) {
+            Classification::Decided(false)
+        } else if orders.iter().all(|order| {
+            matches!(
+                order,
+                Ok(Classification::Decided(std::cmp::Ordering::Equal))
+            )
+        }) {
+            Classification::Decided(true)
+        } else {
+            Classification::Uncertain(UncertaintyReason::Predicate)
+        }
+    }
+
     /// Compares two retained affine points without materializing an algebraic
     /// coordinate or sampling either isolating interval.
     ///
@@ -378,30 +407,7 @@ impl CurvePoint2 {
         match (self, other) {
             (Self(CurvePointData2::Polynomial(_)), _)
             | (_, Self(CurvePointData2::Polynomial(_))) => {
-                let orders = [Axis2::X, Axis2::Y].map(|axis| {
-                    crate::bezier_offset::algebraic_chord_point_coordinate_order(
-                        self, other, axis, policy,
-                    )
-                });
-                if orders.iter().any(|order| {
-                    matches!(
-                        order,
-                        Ok(Classification::Decided(
-                            std::cmp::Ordering::Less | std::cmp::Ordering::Greater
-                        ))
-                    )
-                }) {
-                    Classification::Decided(false)
-                } else if orders.iter().all(|order| {
-                    matches!(
-                        order,
-                        Ok(Classification::Decided(std::cmp::Ordering::Equal))
-                    )
-                }) {
-                    Classification::Decided(true)
-                } else {
-                    Classification::Uncertain(UncertaintyReason::Predicate)
-                }
+                self.same_point_by_coordinate_evidence(other, policy)
             }
             (Self(CurvePointData2::Endpoint(_)), _) | (_, Self(CurvePointData2::Endpoint(_))) => {
                 unreachable!("endpoint projections handled above")

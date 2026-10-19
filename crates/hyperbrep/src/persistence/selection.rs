@@ -53,15 +53,17 @@ pub(super) struct RawSelectionGraph {
     parameters: Vec<RawSelection>,
     point_sources: Vec<RawCurve3>,
     pcurve_sources: Vec<RawPcurve>,
+    pub(super) polynomial_sources: Vec<RawPolynomialSource>,
 }
 
 /// References are inserted in traversal order; hash iteration never affects bytes.
 #[derive(Default)]
 pub(super) struct GraphEncoder {
-    raw: RawSelectionGraph,
+    pub(super) raw: RawSelectionGraph,
     selections: HashMap<String, usize>,
     point_sources: HashMap<usize, RawPointSource>,
     pcurve_sources: HashMap<String, usize>,
+    pub(super) polynomial_sources: HashMap<String, usize>,
 }
 
 impl GraphEncoder {
@@ -183,6 +185,9 @@ impl GraphEncoder {
     }
 
     pub(super) fn pcurve(&mut self, curve: &Curve2) -> Result<RawPcurve, PersistenceError> {
+        if let Some(branch) = curve.polynomial_branch() {
+            return self.polynomial_branch(curve, branch);
+        }
         if curve.family() == CurveFamily2::Line
             && curve.geometry().is_none()
             && curve.source_restriction().is_none()
@@ -230,6 +235,7 @@ pub(super) struct SelectionGraph {
     parameters: Vec<hypercurve::CurveParameter2>,
     point_sources: Vec<Curve3>,
     pub(super) pcurve_sources: Vec<Curve2>,
+    pub(super) polynomial_sources: Vec<hypercurve::PolynomialCurveSet2>,
 }
 
 impl SelectionGraph {
@@ -238,6 +244,11 @@ impl SelectionGraph {
             parameters: Vec::with_capacity(raw.parameters.len()),
             point_sources: Vec::new(),
             pcurve_sources: Vec::new(),
+            polynomial_sources: raw
+                .polynomial_sources
+                .into_iter()
+                .map(RawPolynomialSource::into_curves)
+                .collect::<Result<_, _>>()?,
         };
         let mut roots = Vec::with_capacity(raw.parameters.len());
         for selection in raw.parameters {
@@ -288,7 +299,7 @@ impl SelectionGraph {
             roots.push(is_root);
         }
         for raw in raw.pcurve_sources {
-            // Sources are authored geometry, never nested restrictions.
+            // Source records cannot be nested restrictions.
             if let RawPcurve::SourceRange { source, .. } = raw {
                 return Err(PersistenceError::InvalidReference {
                     kind: "authored pcurve source",

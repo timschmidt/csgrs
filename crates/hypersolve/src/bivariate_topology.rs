@@ -223,12 +223,21 @@ impl BivariateConnectionStrip {
 pub struct BivariateCurveTopology {
     equation: BivariatePolynomial,
     domain: BivariateCurveDomain,
+    config: BivariateTopologyConfig,
     projection: Vec<Real>,
     events: Vec<BivariateCurveFiber>,
     slabs: Vec<BivariateCurveSlab>,
 }
 
 impl BivariateCurveTopology {
+    /// Construction controls retained for checked source replay.
+    ///
+    /// These limits describe the successful decomposition, not a certificate
+    /// that an untrusted graph can bypass reconstruction or resource admission.
+    pub const fn config(&self) -> BivariateTopologyConfig {
+        self.config
+    }
+
     /// Original equation with coefficients normalized exactly to rationals.
     pub fn equation(&self) -> &BivariatePolynomial {
         &self.equation
@@ -507,6 +516,7 @@ fn decompose(
     Ok(BivariateCurveTopology {
         equation,
         domain,
+        config,
         projection,
         events,
         slabs,

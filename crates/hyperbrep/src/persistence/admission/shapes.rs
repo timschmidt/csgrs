@@ -177,6 +177,7 @@ impl Record for Curve {
 
 #[derive(Deserialize)]
 pub(super) enum Pcurve {
+    PolynomialBranch(IgnoredAny),
     Chord {
         start: Box<PlanarPoint>,
         end: Box<PlanarPoint>,
@@ -223,7 +224,10 @@ impl Record for Pcurve {
                 budget.record()?;
                 source.admit(budget)
             }
-            Self::SourceRange(_) | Self::Line(_) | Self::CircularArc(_) => Ok(()),
+            Self::PolynomialBranch(_)
+            | Self::SourceRange(_)
+            | Self::Line(_)
+            | Self::CircularArc(_) => Ok(()),
             Self::RationalBezier {
                 homogeneous_controls,
             } => {
@@ -246,6 +250,47 @@ impl Record for Pcurve {
                 budget.geometry(homogeneous_controls.0 + knots.0)
             }
         }
+    }
+}
+
+#[derive(Deserialize)]
+pub(super) struct PolynomialSource {
+    equation: Rows,
+    construction: PolynomialConstruction,
+    evaluation: FiberControls,
+}
+
+#[derive(Deserialize)]
+struct PolynomialConstruction {
+    max_axis_degree: usize,
+    max_projection_degree: usize,
+    max_refinement_rounds: usize,
+    fiber: FiberControls,
+}
+
+#[derive(Deserialize)]
+struct FiberControls {
+    max_subdivision_depth: usize,
+    refinement_steps: usize,
+}
+
+impl FiberControls {
+    fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
+        budget.solver_steps(self.max_subdivision_depth)?;
+        budget.solver_steps(self.refinement_steps)
+    }
+}
+
+impl Record for PolynomialSource {
+    fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
+        budget.degree(self.equation.rows.saturating_sub(1))?;
+        budget.degree(self.equation.columns.saturating_sub(1))?;
+        budget.geometry(self.equation.entries())?;
+        budget.degree(self.construction.max_axis_degree)?;
+        budget.degree(self.construction.max_projection_degree)?;
+        budget.solver_steps(self.construction.max_refinement_rounds)?;
+        self.construction.fiber.admit(budget)?;
+        self.evaluation.admit(budget)
     }
 }
 

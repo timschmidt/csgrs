@@ -97,6 +97,14 @@ impl Budget<'_> {
         self.check(ArchiveResource::Degree, degree, self.limits.degree)
     }
 
+    fn solver_steps<E: Error>(&mut self, steps: usize) -> Result<(), E> {
+        self.check(
+            ArchiveResource::SolverSteps,
+            steps,
+            self.limits.solver_steps,
+        )
+    }
+
     fn geometry<E: Error>(&mut self, amount: usize) -> Result<(), E> {
         self.geometry_elements += amount;
         self.check(
@@ -177,6 +185,7 @@ enum Field {
     Parameters,
     PointSources,
     PcurveSources,
+    PolynomialSources,
     #[serde(other)]
     Ignore,
 }
@@ -252,6 +261,9 @@ impl<'de> Visitor<'de> for Graph<'_, '_> {
                 }
                 Field::PcurveSources => {
                     map.next_value_seed(Records::<Pcurve>(self.0, PhantomData))?
+                }
+                Field::PolynomialSources => {
+                    map.next_value_seed(Records::<shapes::PolynomialSource>(self.0, PhantomData))?
                 }
                 _ => {
                     map.next_value::<IgnoredAny>()?;

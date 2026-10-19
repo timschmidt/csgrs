@@ -8822,6 +8822,21 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         return Ok(Classification::Decided(std::cmp::Ordering::Equal));
     }
     for (candidate, other, reverse) in [(first, second, false), (second, first, true)] {
+        if let CurvePointData2::Similarity(image) = &candidate.0
+            && matches!(image.data.source.0, CurvePointData2::Polynomial(_))
+            && let Some(other) = other.coordinates()
+        {
+            // Pull the coordinate through the image into the original joint
+            // field. An equal image need not have a singleton coordinate box.
+            let (a, b, value) = match axis {
+                Axis2::X => (Real::one(), Real::zero(), other.x()),
+                Axis2::Y => (Real::zero(), Real::one(), other.y()),
+            };
+            return point_affine_form_order_to_real(candidate, &a, &b, value, policy)
+                .map(|order| order.map(|order| if reverse { order.reverse() } else { order }));
+        }
+    }
+    for (candidate, other, reverse) in [(first, second, false), (second, first, true)] {
         if let CurvePointData2::Polynomial(point) = &candidate.0 {
             let (a, b) = match axis {
                 Axis2::X => (Real::one(), Real::zero()),
@@ -13497,6 +13512,12 @@ impl BezierSimilarityPoint2 {
     ) -> Classification<bool> {
         if !policy.accepts_retained_policy(self.data.policy) {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
+        }
+        if matches!(self.data.source.0, CurvePointData2::Polynomial(_))
+            && other.coordinates().is_some()
+        {
+            return CurvePoint2::from(self.clone())
+                .same_point_by_coordinate_evidence(other, policy);
         }
         if let CurvePoint2(CurvePointData2::Similarity(other)) = other
             && policy.accepts_retained_policy(other.data.policy)

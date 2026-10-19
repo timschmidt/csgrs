@@ -7,7 +7,7 @@ use super::PersistenceError;
 /// Caller-selected bounds checked before exact scalar/geometry deserialization.
 ///
 /// Syntax limits count the borrowed input, including unknown fields. Record
-/// limits inspect version 11 metadata without decoding coordinate values.
+/// limits inspect version 13 metadata without decoding coordinate values.
 /// They do not bound scalar arithmetic, allocations during scalar
 /// reconstruction, geometry validation, elapsed time, or native stack usage.
 /// Increasing a limit permits retry without changing exact geometry semantics.
@@ -30,7 +30,12 @@ pub struct ArchiveLimits {
     /// Largest authored spline/root degree (Bezier control count minus one).
     /// Tensor Bezier and bivariate fiber extents use row count and maximum row
     /// width. Trailing zero coefficients are not simplified to reduce degree.
+    /// Declared polynomial construction axis/projection degree limits also count.
     pub degree: usize,
+    /// Maximum individual declared polynomial construction/evaluation control:
+    /// subdivision depth, refinement rounds, or fiber refinement steps.
+    /// This does not bound their combined work, arithmetic, or allocation.
+    pub solver_steps: usize,
     /// Total variable geometry-array entries: controls, weights, knots, root
     /// coefficients, analytic-parallel source controls, and tensor/fiber row headers.
     /// A control point counts once, including polynomial parallel controls.
@@ -43,7 +48,8 @@ pub struct ArchiveLimits {
 
 impl Default for ArchiveLimits {
     /// Allows 16 MiB, 1,024 nested containers, 1,000,000 syntax tokens,
-    /// 250,000 records, degree 256, and 1,000,000 geometry elements and
+    /// 250,000 records, degree 256, individual solver controls of 1,024,
+    /// and 1,000,000 geometry elements and
     /// variable topology references each.
     /// These are input-admission defaults, not a safe stack or runtime guarantee.
     fn default() -> Self {
@@ -53,6 +59,7 @@ impl Default for ArchiveLimits {
             tokens: 1_000_000,
             records: 250_000,
             degree: 256,
+            solver_steps: 1024,
             geometry_elements: 1_000_000,
             topology_references: 1_000_000,
         }
@@ -72,6 +79,8 @@ pub enum ArchiveResource {
     Records,
     /// Authored spline or root degree.
     Degree,
+    /// An individual declared solver refinement or subdivision control.
+    SolverSteps,
     /// Controls, weights, knots, root coefficients and tensor row headers.
     GeometryElements,
     /// Variable topology-list entries.

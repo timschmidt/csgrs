@@ -22,13 +22,15 @@ pub use limits::{ArchiveLimitExceeded, ArchiveLimits, ArchiveResource};
 mod parallel;
 use parallel::{RawParallelPcurve, raw_parallel_source};
 mod planar_points;
+mod polynomial;
+use polynomial::{RawPolynomialBranch, RawPolynomialSource};
 mod selection;
 mod spatial_points;
 use planar_points::RawPlanarPoint;
 use selection::{GraphEncoder, RawParameter, RawSelectionGraph, RawVertex, SelectionGraph};
 use spatial_points::{RawSpatialPoint, RawSurfacePoint};
 
-const FORMAT_VERSION: u32 = 12;
+const FORMAT_VERSION: u32 = 13;
 
 /// Failure while encoding, decoding, or validating an exact model.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -643,6 +645,7 @@ struct RawEllipseArc3 {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawPcurve {
+    PolynomialBranch(Box<RawPolynomialBranch>),
     Chord {
         start: Box<RawPlanarPoint>,
         end: Box<RawPlanarPoint>,
@@ -699,7 +702,8 @@ fn set_raw_pcurve_start(curve: &mut RawPcurve, start: [Real; 2]) {
         }
         RawPcurve::QuadraticBezier(points) => points[0] = start,
         RawPcurve::CubicBezier(points) => points[0] = start,
-        RawPcurve::Nurbs { .. }
+        RawPcurve::PolynomialBranch(_)
+        | RawPcurve::Nurbs { .. }
         | RawPcurve::Chord { .. }
         | RawPcurve::SourceRange { .. }
         | RawPcurve::AnalyticParallel(_) => {}
@@ -725,7 +729,8 @@ fn set_raw_pcurve_end(curve: &mut RawPcurve, end: [Real; 2]) {
         }
         RawPcurve::QuadraticBezier(points) => points[2] = end,
         RawPcurve::CubicBezier(points) => points[3] = end,
-        RawPcurve::Nurbs { .. }
+        RawPcurve::PolynomialBranch(_)
+        | RawPcurve::Nurbs { .. }
         | RawPcurve::Chord { .. }
         | RawPcurve::SourceRange { .. }
         | RawPcurve::AnalyticParallel(_) => {}
@@ -1377,6 +1382,7 @@ fn shell_id(index: usize) -> ShellId {
 
 fn pcurve(raw: RawPcurve, graph: &SelectionGraph) -> Result<Curve2, PersistenceError> {
     match raw {
+        RawPcurve::PolynomialBranch(branch) => branch.into_curve(graph),
         RawPcurve::Chord { start, end } => Ok(Curve2::try_line(
             graph.planar_point(*start)?,
             graph.planar_point(*end)?,

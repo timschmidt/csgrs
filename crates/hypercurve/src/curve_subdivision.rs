@@ -170,7 +170,7 @@ impl Curve2 {
     /// reconstructed under strict predicates. Authored curves retain their
     /// source range; generated supports reuse their retained restriction authority.
     pub fn restrict_source(&self, range: CurveParameterRange2) -> ExactCurveResult<Self> {
-        if self.retained_fragment().is_some() {
+        if self.retained_fragment().is_some() || self.polynomial_branch().is_some() {
             return self.subcurve_at_parameters(
                 range.start().clone(),
                 range.end().clone(),

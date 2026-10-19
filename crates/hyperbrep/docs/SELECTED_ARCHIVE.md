@@ -1,4 +1,4 @@
-# Selected geometry in archive version 12
+# Selected geometry in archive version 13
 
 The additive `PolynomialFiber` planar-point record stores a bivariate equation,
 the selected first parameter, the second-coordinate interval and an optional
@@ -10,11 +10,12 @@ retaining the original point and coefficients through scalar charts and spatial
 planar-image replay. General rational-image persistence still requires owner
 support. Input admission charges both stored polynomial degrees, every
 coefficient and every row header, including
-empty rows, before scalar decoding. Whole implicit-branch archives,
-their spatial images and surface correspondences still require implementation.
+empty rows, before scalar decoding. Whole polynomial branches and their spatial
+planar images use the shared source definitions described below. Complete
+surface-section correspondences and trim arrangements remain separate work.
 
-Version 12 retains authored coordinates and selected curve images in the same
-model. It rejects versions through 11; there is no migration reader.
+Version 13 retains authored coordinates and selected curve images in the same
+model. It rejects versions through 12; there is no migration reader.
 `RawModel::from_json(json, &limits)` admits input syntax and record structure
 under explicit `ArchiveLimits`, checks the format version before decoding exact
 scalar data and rejects trailing input.
@@ -30,9 +31,10 @@ The caller passes `ArchiveLimits` explicitly. Its defaults and units are:
 | `input_bytes` | 16 MiB | All UTF-8 bytes, including whitespace and ignored fields |
 | `nesting_depth` | 1,024 | Simultaneously open JSON objects and arrays |
 | `tokens` | 1,000,000 | Opening containers, quoted strings (including keys), and primitive lexemes |
-| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve sources, inline extrusion/revolution profiles, planar-image sources, translation/rotation origins, affine-form point definitions and analytic-parallel sources |
-| `degree` | 256 | Each declared NURBS axis degree, inferred Bezier axis degree, selected-root polynomial storage degree, or correlated point-expression polynomial degree |
-| `geometry_elements` | 1,000,000 | Aggregate controls (including polynomial parallel sources), weights, knots, root and correlated point-expression coefficients, and tensor row headers |
+| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve and polynomial sources, inline extrusion/revolution profiles, planar-image sources, translation/rotation origins, affine-form point definitions and analytic-parallel sources |
+| `degree` | 256 | Each declared NURBS axis degree, inferred Bezier axis degree, stored polynomial axis degree, or declared polynomial decomposition axis/projection degree limit |
+| `geometry_elements` | 1,000,000 | Aggregate controls (including polynomial parallel sources), weights, knots, root/point/branch-source coefficients, and tensor or polynomial row headers |
+| `solver_steps` | 1,024 | Each declared polynomial-source refinement-round, fiber subdivision-depth or fiber refinement-step limit, considered individually |
 | `topology_references` | 1,000,000 | Aggregate wire edge uses, face inner wires, shell faces and solid void shells |
 
 Byte admission runs first. A constant-storage iterative scan then counts depth
@@ -70,7 +72,8 @@ The one-argument API is removed; callers select their limits directly.
 
 These limits do not bound coefficient reconstruction, geometry work, aggregate
 allocations, elapsed time or native stack use. A small scalar expression can
-demand substantial work. Metadata parsing and error reporting may allocate;
+demand substantial work. In particular, `solver_steps` does not sum controls or
+bound total solver work, live heap or cancellation. Metadata parsing and error reporting may allocate;
 only the initial syntax scanner has an allocation-free claim. Native
 `serde_stacker` remains in the decoder, and configurable depth alone does not
 prove a safe WASM call stack. See the [syntax admission evidence](evidence/2026-10-15-archive-admission/README.md)
@@ -126,6 +129,32 @@ iteration never determines output order. This is deterministic representation
 ordering, not a canonical form for all mathematically equivalent polynomials.
 Refinement caches, scalar reconstruction caches, addresses and trusted flags
 are excluded.
+
+`selection.polynomial_sources` is required, including when empty. Each record
+contains an exact bivariate `equation`, rectangular `domain`, `construction`
+controls and `evaluation` controls. Construction retains
+`BivariateTopologyConfig`: axis/projection degree limits, refinement rounds and
+fiber controls. Evaluation retains the separate
+`AlgebraicFiberRootIsolationConfig`. Equal serialized source definitions share
+one reconstructed source; definitions with different controls remain distinct.
+Input admission charges stored dimensions, every row and coefficient, and each
+declared control before scalar reconstruction.
+
+`PolynomialBranch { source, slab, root, range, reversed, transform }` pcurves
+reference that collection. Replay first runs Hypersolve's complete decomposition
+from the equation, rectangle and original controls, then builds Hypercurve's
+native branches. It checks the slab/root indices and ascending source range,
+applies an optional exact similarity and restores traversal. Branches,
+restrictions and planar lifts share the reconstructed source. No event graph,
+sampled contour, connectivity or certainty flag is accepted as trusted input.
+Zero equations, invalid rectangles, exhausted construction controls, invalid
+indices/ranges and invalid similarities retain typed failures. Loading alone
+does not prove a valid face or solid; model validation remains required.
+
+This is a breaking format. Prior corpus comparisons permit only the 12→13
+version header and a new empty `polynomial_sources` collection; all other bytes
+must match. Exact geometry, topology and replay are checked independently of
+deterministic bytes. See the [whole-branch replay evidence](evidence/2026-10-19-polynomial-branch-replay/README.md).
 
 Pcurves also retain `AnalyticParallel { source, distance, range, reversed }`.
 The source is a polynomial quadratic/cubic control array or homogeneous rational
@@ -396,14 +425,16 @@ Selected iso pcurves now use a degree-one native NURBS source with the original
 coordinate as its knot parameter and an exact `SourceRange` restriction.
 Certified scalar bounds choose only a finite source support. They never replace
 the selected endpoints. This reuses the existing archive schema and cold
-validation; arbitrary generated rational fragments and whole implicit branches
-are not thereby admitted. See the [parameter-map record](evidence/2026-10-19-selected-pcurve-maps/README.md).
+validation; that increment did not admit arbitrary generated rational fragments
+or whole implicit branches. Version 13 adds the polynomial branch records above.
+See the [parameter-map record](evidence/2026-10-19-selected-pcurve-maps/README.md).
 
 Selected section UV evaluations now feed exact chord endpoint definitions in the
 existing retained point graph. Rational Bezier/NURBS section roots, restrictions
 and reversal replay cold with independently checked UV images. The same models
-retain their spatial selected point through transform/replay. That pcurve increment introduced no new schema; whole polynomial branches and arbitrary generated rational curve
-carriers remain separate persistence targets. See the [evaluation record](evidence/2026-10-19-pcurve-evaluation/README.md).
+retain their spatial selected point through transform/replay. That pcurve increment introduced no new schema.
+Arbitrary generated rational curve carriers remain a separate persistence target.
+See the [evaluation record](evidence/2026-10-19-pcurve-evaluation/README.md).
 
 Version 11 introduced a generic translation `origin` in place of the earlier
 `source`/`parameter` pair. Plane images preserve joint polynomial-fiber and selected rational UV
@@ -413,7 +444,7 @@ surface-intersection branches remained open. Existing payloads were compared
 after only the declared schema migration, alongside unchanged exact geometric assertions.
 See the [surface archive evidence](evidence/2026-10-19-surface-evaluation/README.md).
 
-Version 12 adds `AffineImage { source, transform }` to spatial curves. The source
+Version 12 added `AffineImage { source, transform }` to spatial curves. The source
 is the complete embedded spatial curve definition and `transform` is an exact
 4×4 affine matrix. Nested record/geometry/degree limits apply before scalar
 decoding. Checked reconstruction proves the matrix affine and nonsingular,
@@ -424,7 +455,7 @@ Selected rational Bézier/NURBS tensor points and native rational-profile
 extrusion points use the existing `SurfaceImage { source, parameter }` record.
 Replay checks original weights, domains, knot-span ownership and joint selectors
 and rebuilds coefficient maps. Affine-transformed rotation edges retain this
-point authority through their embedded source. Versions through 11 are rejected;
-there is no legacy decoder. The preserved archive corpus comparison permits
-only the top-level 11→12 header change and requires all other bytes to match.
+point authority through their embedded source. That increment rejected versions
+through 11 without a legacy decoder. Its preserved archive corpus comparison
+permitted only the top-level 11→12 header change and required all other bytes to match.
 See the [rational surface and affine curve evidence](evidence/2026-10-19-rational-surface-evaluation/README.md).

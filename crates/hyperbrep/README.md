@@ -729,7 +729,7 @@ It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
 
 Selected geometry archive coverage and remaining replay limits are documented
-in [Archive version 12](docs/SELECTED_ARCHIVE.md).
+in [Archive version 13](docs/SELECTED_ARCHIVE.md).
 
 Conic inverse and curve/surface contact queries preserve distant authored
 angular charts and distinct full-period seam parameters. Retained Boolean
@@ -742,7 +742,16 @@ tensor patches and extrusions of native line/Bézier/NURBS profiles. Returned
 `GeometricPoint3` values retain their source and selectors for exact comparisons,
 conservative bounds, affine transforms, sweep origins and checked replay.
 `Curve3::affine_image` preserves an original spatial curve under an invertible
-affine matrix, including sheared retained rotation curves. Archive 12 is a
-breaking format; previous versions are rejected without compatibility adapters.
+affine matrix, including sheared retained rotation curves.
 Selected angular/general procedural evaluation and complete surface-section
 arrangements remain open. See the [capability and evidence record](docs/evidence/2026-10-19-rational-surface-evaluation/README.md).
+
+Archive 13 retains whole native polynomial branches, selected restrictions,
+reversal, similarities and spatial planar lifts. Shared exact equations,
+rectangles and construction/evaluation controls reconstruct the complete source
+graph before branch selection; serialized connectivity is never trusted.
+Previous formats are rejected without compatibility adapters.
+`ArchiveLimits::solver_steps` admits each declared refinement/depth control
+before decoding scalars; it is not a total-work or heap bound. This persistence
+extension does not complete general surface sections or trim arrangements.
+See the [branch replay record](docs/evidence/2026-10-19-polynomial-branch-replay/README.md).
