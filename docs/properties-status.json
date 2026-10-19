@@ -28345,6 +28345,57 @@
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/strict-boolean-workflows-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
     "runtime_admitted": false,
     "general_speedup_claimed": false
+  },
+  "construction_provenance_observation": {
+    "classification": "Verified missing end-to-end construction evidence; later operation-local topology certificates are valid for their stated claims.",
+    "owner": "Native geometry construction evidence and modeling composition, with explicit format and binding boundaries. Keep mutable topology-proof caches separate.",
+    "decision": "Retain the reproduced counterexample and use it as a non-negotiable acceptance case for construction-evidence work. Do not fix this by downgrading valid strict topology proofs, changing policies, increasing the modeling refinement budget, or deleting the source point.",
+    "original_eight_cases_preserved": true,
+    "final_cases": 12,
+    "approximate_source_cases": 8,
+    "outside_point_cases": 4,
+    "source_intent_counterexample": {
+      "independent_delayed_sign_proofs": 4,
+      "mathematical_argument": "The hull of [0,1]^3 with this point adds a pyramid whose base is the unit square at x=0 and whose altitude is 2^-1200. Its volume is 2^-1200/3 > 0. Translation and union with the face-adjacent unit cube preserve this missing positive volume before format projection.",
+      "modeling_policy_precision_changed": false,
+      "observed_output": "The approximate hull is the unexpanded cube, and the union has exact volume two. Every output vertex is bounded by the expected box and every facet lies on its outer planes; strict PWN and manifold checks pass.",
+      "point": "(sin(e)^2 + cos(e)^2 - 1 - 2^-1200, 0, 0) = (-2^-1200, 0, 0)",
+      "proof_runs_after_full_pipeline": true,
+      "qualification": "Approximate policy consumption is reported correctly by the hull. The defect is missing construction provenance downstream, not an alleged false local topology certificate or a claim that approximate policy must compute the exact original hull.",
+      "sign_precision_bits": 1400
+    },
+    "format_contract": {
+      "binary32_projection_preserves_integral_fixture": true,
+      "bytes_per_output": 1084,
+      "exact_and_approximate_histories_have_identical_bytes": true,
+      "fractional_geometry_changes": true,
+      "fractional_left_parsed": "13981013/4194304",
+      "fractional_left_source": "10/3",
+      "fractional_right_parsed": "11184811/2097152",
+      "fractional_right_source": "16/3",
+      "fractional_sha256": "2d8e0dfa38bd3b44b5b71682a714479504c5ea54246523a90b4ace4112468762",
+      "integral_sha256": "f1e756bdf748c8af5b76325302adb8eaa9c2b136d47969dafdc10eca926ea1ac",
+      "no_self_authenticating_provenance_in_stl": true
+    },
+    "validation_scope": "Current root library built by Cargo with stl-io only; one corrected probe compile and eight fresh pipelines, followed by the expanded final probe compile and twelve fresh pipelines. The original eight stdout rows and STL hashes match exactly. No production source edit or broad CI/runtime/binding rerun.",
+    "limitations": [
+      "This is a finite diagnostic, not a production repair, exhaustive provenance audit or proof of every public entry point.",
+      "Box plane/volume checks and native topology checks support the observed geometry; the corpus here is focused on receipt scope, not a new universal independent mesh oracle.",
+      "The 1400-bit point proof is diagnostic evidence obtained after pipeline completion; it is not credited to any earlier local operation.",
+      "No whole-history artifact recovery, internal resource bound, binding runtime or shipped-distribution claim is made."
+    ],
+    "next": "Implement separate, geometry-bound construction evidence in the owning native carrier and propagate it through modeling, materialization, format and binding paths. Admit the change only against the concrete follow-up contract and preserved certified corpus.",
+    "production_implementation_changed": false,
+    "runtime_admitted": false,
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "parent_revision": "3e1bc0282a013940c8d4600066e2ca90841f26d9",
+    "observations": "docs/evidence/2026-10-19-construction-provenance-observation/observations-v1.json",
+    "next_change_contract": "docs/evidence/2026-10-19-construction-provenance-observation/next-change-contract-v1.md",
+    "checkpoint": "docs/evidence/2026-10-19-construction-provenance-observation/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/construction-provenance-observation-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "general_speedup_claimed": false
   }
 },
   "status_meanings": {
