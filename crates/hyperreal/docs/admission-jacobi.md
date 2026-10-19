@@ -90,3 +90,14 @@ are recorded in the [Jacobi verification record](../../hyperspatial/verification
 
 Complex Jacobi continuation, ellipsoidal Transverse Mercator/UTM, geodesics,
 and the remaining E1–E4/A1–A5 requirements stay open.
+
+## Shared epsilon output
+
+`Real::jacobi_sncndn_epsilon` extends the same admitted real domain with
+E(am(u|m)|m). It owns the shared amplitude and retains the existing separate
+APIs. The [epsilon admission](../../hyperlattice/docs/admission-jacobi-epsilon.md)
+records the failing sanitizer workload, serialized-equivalence requirement,
+cancellation and exact downstream relations. No precision or campaign budget
+is relaxed. The [epsilon verification record](../../hyperspatial/verification/2026-10-19-e2-jacobi-epsilon/README.md)
+records passing stable/MSRV tests, independent coverage floors, all four cache
+configurations, exact serialized equivalence and actual sanitizer mutations.

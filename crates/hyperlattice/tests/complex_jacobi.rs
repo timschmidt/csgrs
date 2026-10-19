@@ -319,6 +319,7 @@ fn independent_complex_ode_enclosures() {
             support::complex_jacobi_oracle::compare(
                 &Complex::new(re.parse().unwrap(), im.parse().unwrap()),
                 &parameter.parse().unwrap(),
+                false,
             );
         }
     }

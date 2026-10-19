@@ -33,9 +33,9 @@ arguments = ["cargo", "test", "--locked", "-p", "hyperspatial", "--all-features"
 native_arguments = ["cargo", "test", "--locked", "-p", "hyperreal", "--no-default-features",
                     "--features", "serde,dispatch-trace"]
 commands = [arguments,
-            native_arguments + ["--test", "inverse_isometric_latitude", "--test", "negative_exp_tail", "--test", "elliptic_integrals", "--test", "legendre_integrals", "--test", "inverse_legendre", "--test", "jacobi"],
+            native_arguments + ["--test", "inverse_isometric_latitude", "--test", "negative_exp_tail", "--test", "elliptic_integrals", "--test", "legendre_integrals", "--test", "inverse_legendre", "--test", "jacobi", "--test", "jacobi_prepared"],
             native_arguments + ["--lib"],
-            ["cargo", "test", "--locked", "-p", "hyperlattice", "--all-features", "--test", "complex_jacobi"]]
+            ["cargo", "test", "--locked", "-p", "hyperlattice", "--all-features", "--test", "complex_jacobi", "--test", "jacobi_epsilon"]]
 with tempfile.TemporaryDirectory(prefix="profiles-", dir=target) as profiles:
     environment["LLVM_PROFILE_FILE"] = str(Path(profiles) / "%p-%m.profraw")
     executables = set()

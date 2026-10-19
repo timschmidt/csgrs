@@ -51,3 +51,7 @@ required-features = ["hyperreal-dispatch-trace"]
 [[bench]]
 name = "complex_jacobi"
 harness = false
+
+[[bench]]
+name = "jacobi_epsilon"
+harness = false

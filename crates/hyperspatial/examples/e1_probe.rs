@@ -32,6 +32,8 @@ mod complex_jacobi;
 mod inverse_legendre;
 #[path = "../dev/jacobi.rs"]
 mod jacobi;
+#[path = "../dev/jacobi_epsilon.rs"]
+mod jacobi_epsilon;
 
 fn main() {
     let encoded = std::env::args()
@@ -58,6 +60,7 @@ fn main() {
         "inverse_legendre" => inverse_legendre::exercise(data),
         "jacobi" => jacobi::exercise(data),
         "complex_jacobi" => complex_jacobi::exercise(data),
+        "jacobi_epsilon" => jacobi_epsilon::exercise(data),
         _ => panic!("unknown workload {workload}"),
     });
     let evaluation_ns = start.elapsed().as_nanos();

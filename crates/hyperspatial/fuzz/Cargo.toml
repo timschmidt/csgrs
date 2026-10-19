@@ -10,6 +10,13 @@ cargo-fuzz = true
 [workspace]
 
 [[bin]]
+name = "jacobi_epsilon"
+path = "fuzz_targets/jacobi_epsilon.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "complex_jacobi"
 path = "fuzz_targets/complex_jacobi.rs"
 test = false

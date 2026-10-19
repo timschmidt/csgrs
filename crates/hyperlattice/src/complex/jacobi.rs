@@ -1,6 +1,69 @@
 use super::Complex;
 use crate::{BlasResult, Problem, Real, RealKernelExt, RealSign};
 
+// Shared imaginary transformation for the triplet and epsilon. The
+// reciprocal branch keeps every real evaluation inside its admitted m<1
+// domain, and the one denominator includes removable quarter-period points.
+struct ImaginaryJacobi {
+    sn: Real,
+    cn: Real,
+    dn: Real,
+    inverse: Real,
+    epsilon_vertical: Option<Real>,
+}
+
+impl ImaginaryJacobi {
+    fn new(
+        y: Real,
+        parameter: &Real,
+        real_sn: &Real,
+        real_cn: &Real,
+        sign: RealSign,
+        with_epsilon: bool,
+    ) -> BlasResult<Self> {
+        let complement = Real::one() - parameter;
+        let (argument, transformed_parameter, scale) = if sign == RealSign::Positive {
+            (y, complement.clone(), Real::one())
+        } else {
+            let scale = complement.clone().sqrt()?;
+            (y * &scale, complement.clone().inverse()?, scale)
+        };
+        let (s, c, d, epsilon_vertical) = if with_epsilon {
+            let (s, c, d, epsilon) = argument
+                .clone()
+                .jacobi_sncndn_epsilon(&transformed_parameter)?;
+            (s, c, d, Some(&scale * (&argument - epsilon)))
+        } else {
+            let (s, c, d) = argument.jacobi_sncndn(&transformed_parameter)?;
+            (s, c, d, None)
+        };
+        let inverse_scale = if sign == RealSign::Positive {
+            Real::one()
+        } else {
+            scale.clone().inverse()?
+        };
+        let denominator = if sign == RealSign::Positive {
+            &c * &c + parameter * (real_sn * real_sn) * (&s * &s)
+        } else {
+            // This nonnegative sum equals complementary cn²+m*sn(x)²*sn(y)².
+            &c * &c + (-parameter / complement)? * (real_cn * real_cn) * (&s * &s)
+        };
+        let inverse = denominator.inverse()?;
+        let (sn, cn, dn) = if sign == RealSign::Positive {
+            (s, c, d)
+        } else {
+            (s * inverse_scale, d, c)
+        };
+        Ok(Self {
+            sn,
+            cn,
+            dn,
+            inverse,
+            epsilon_vertical,
+        })
+    }
+}
+
 impl Complex {
     /// Jacobi's `(sn(z|m), cn(z|m), dn(z|m))` for a real parameter `m < 1`.
     ///
@@ -17,8 +80,6 @@ impl Complex {
     /// contracts apply; this operation adds no total-work or heap-byte bound.
     pub fn jacobi_sncndn(self, parameter: &Real) -> BlasResult<(Self, Self, Self)> {
         crate::trace_dispatch!("hyperlattice_complex", "method", "jacobi-sncndn");
-        // This validates m even at z=0, and preserves the native amplitude
-        // identities on the real axis.
         let (sn, cn, dn) = self.re.jacobi_sncndn(parameter)?;
         if self.im.definitely_zero() {
             return Ok((Self::from(sn), Self::from(cn), Self::from(dn)));
@@ -36,50 +97,65 @@ impl Complex {
                 Self::one(),
             ));
         }
-
-        let complement = Real::one() - parameter;
-        let (s, c, d, inverse_scale) = if sign == RealSign::Positive {
-            let (s, c, d) = self.im.jacobi_sncndn(&complement)?;
-            (s, c, d, Real::one())
-        } else {
-            // Reciprocal modulus for the complementary parameter h=1-m>1:
-            // sn(y|h)=sn(sqrt(h)y|1/h)/sqrt(h), cn(y|h)=dn(...),
-            // dn(y|h)=cn(...). Do not form singular intermediate quotients.
-            let scale = complement.clone().sqrt()?;
-            let reciprocal_parameter = complement.clone().inverse()?;
-            let (s, c, d) = (self.im * &scale).jacobi_sncndn(&reciprocal_parameter)?;
-            (s, c, d, scale.inverse()?)
-        };
-        let denominator = if sign == RealSign::Positive {
-            &c * &c + parameter * (&sn * &sn) * (&s * &s)
-        } else {
-            // Equivalent to d²+(m/h)sn²s², but a nonnegative sum avoids
-            // cancellation. Its zeros are c=0 and cn=0.
-            &c * &c + (-parameter / complement)? * (&cn * &cn) * (&s * &s)
-        };
-        let inverse = denominator.inverse()?;
-        let imaginary_sine = &s * inverse_scale;
-        let (complementary_cn, complementary_dn) = if sign == RealSign::Positive {
-            (c, d)
-        } else {
-            (d, c)
-        };
+        let imaginary = ImaginaryJacobi::new(self.im, parameter, &sn, &cn, sign, false)?;
         let components = [
             (
-                &sn * &complementary_dn,
-                &cn * &dn * &imaginary_sine * &complementary_cn,
+                &sn * &imaginary.dn,
+                &cn * &dn * &imaginary.sn * &imaginary.cn,
             ),
             (
-                &cn * &complementary_cn,
-                -(&sn * &dn * &imaginary_sine * &complementary_dn),
+                &cn * &imaginary.cn,
+                -(&sn * &dn * &imaginary.sn * &imaginary.dn),
             ),
             (
-                &dn * &complementary_cn * &complementary_dn,
-                -(parameter * &sn * &cn * &imaginary_sine),
+                &dn * &imaginary.cn * &imaginary.dn,
+                -(parameter * &sn * &cn * &imaginary.sn),
             ),
         ];
-        let [sn, cn, dn] =
-            components.map(|(re, im)| Self::new(re.mul_cached(&inverse), im.mul_cached(&inverse)));
+        let [sn, cn, dn] = components.map(|(re, im)| {
+            Self::new(
+                re.mul_cached(&imaginary.inverse),
+                im.mul_cached(&imaginary.inverse),
+            )
+        });
         Ok((sn, cn, dn))
+    }
+
+    /// Jacobi's epsilon, the meromorphic primitive of `dn(z|m)²` with
+    /// `epsilon(0|m)=0`, for an admitted real squared modulus `m < 1`.
+    ///
+    /// The real axis uses [`Real::jacobi_epsilon`]. Complex continuation
+    /// preserves its additive quasi-periods and finite quarter-period values.
+    /// The argument is a Jacobi argument, not a Legendre amplitude. Negative
+    /// parameters are supported; `epsilon(z|0)=z`.
+    ///
+    /// Parameter, pole, precision and cancellation errors are those of
+    /// [`Self::jacobi_sncndn`]. Values remain exact native expressions; the
+    /// operation adds no total-work, retained-heap or wall-time bound.
+    pub fn jacobi_epsilon(self, parameter: &Real) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_complex", "method", "jacobi-epsilon");
+        // Validate the parameter even when z=0. Retain the unwrapped real
+        // composition and its defining inverse relation on the real axis.
+        if self.im.definitely_zero() {
+            return Ok(Self::from(self.re.jacobi_epsilon(parameter)?));
+        }
+        // Preserve parameter validation before the zero-parameter identity.
+        (Real::one() - parameter).ln()?;
+        let sign = parameter
+            .certified_sign_until(Real::PARTIAL_CMP_MIN_PRECISION)
+            .sign()
+            .ok_or(Problem::Exhausted)?;
+        if sign == RealSign::Zero {
+            return Ok(self);
+        }
+        let (sn, cn, dn, real_epsilon) = self.re.jacobi_sncndn_epsilon(parameter)?;
+        let imaginary = ImaginaryJacobi::new(self.im, parameter, &sn, &cn, sign, true)?;
+        let re = parameter * &sn * &cn * &dn * (&imaginary.sn * &imaginary.sn);
+        let im = (&dn * &dn) * &imaginary.sn * &imaginary.cn * &imaginary.dn;
+        Ok(Self::new(
+            real_epsilon + re.mul_cached(&imaginary.inverse),
+            imaginary.epsilon_vertical.expect("epsilon was requested")
+                + im.mul_cached(&imaginary.inverse),
+        ))
     }
 }

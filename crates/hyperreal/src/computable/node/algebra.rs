@@ -1382,6 +1382,10 @@ impl Computable {
 
     /// Multiply this number by some other number.
     pub fn multiply(self, other: Computable) -> Computable {
+        if let Some(result) = self.shared_square_quotient(&other) {
+            crate::trace_dispatch!("computable", "multiply", "shared-square-quotient");
+            return result;
+        }
         if self.jacobi_square_product(&other) {
             return self.square();
         }

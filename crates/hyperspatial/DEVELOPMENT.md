@@ -36,8 +36,15 @@ record the construction and proof budgets. The
 [verification record](verification/2026-10-19-e2-complex-jacobi/README.md)
 records passing stable/MSRV checks, all four cache configurations, eight
 independent coverage gates, directed selection and the completed ASan campaign.
-Thompson/Lee rectification and a complete ellipsoidal transverse
-projection remain open.
+Native real and complex Jacobi epsilon preserve
+quasi-periods, finite quarter-period values and pole diagnostics. Its
+[admission](../hyperlattice/docs/admission-jacobi-epsilon.md) and
+[spatial consumer contract](docs/admission/e2-jacobi-epsilon.md) record the
+independent ODE oracle and scalar endpoint/quotient fixes. The
+[verification record](verification/2026-10-19-e2-jacobi-epsilon/README.md)
+records passing stable/MSRV checks, four cache configurations, nine independent
+coverage gates and actual sanitizer mutation after seed replay. Thompson/Lee mapping and its selected
+inverse maps, and a complete ellipsoidal transverse projection, remain open.
 See the [spherical Mercator admission](docs/admission/e2-mercator.md),
 the [forward/local admission](docs/admission/e1-native.md)
 and [closest-point inverse admission](docs/admission/e1-inverse.md).
@@ -192,12 +199,15 @@ points. An independent MPFR Taylor-ODE oracle supplies development comparisons;
 native scalar relation proofs let ordinary complex arithmetic preserve unit
 and elliptic norms. The [spatial testing contract](docs/admission/e2-complex-jacobi.md)
 requires those norms to remain consumable as geodetic inputs. Complex
-parameters and m=1 are outside this increment. Next, admit the Thompson/Lee
-mapping and its certified inverse. Its rectification uses Jacobi's epsilon
-function, whose argument differs from the amplitude accepted by incomplete
-Legendre E. The real axis can compose E with the retained Jacobi amplitude;
-complex continuation must preserve quasi-periods, finite quarter-period
-values and pole diagnostics. The two intermediate-map inversions need
+parameters and m=1 are outside this increment. Native `jacobi_epsilon` now
+composes E with the retained unwrapped amplitude on the real axis; its complex
+continuation preserves quasi-periods, finite quarter-period values and pole
+diagnostics. Its argument differs from the amplitude accepted by incomplete
+Legendre E. The [epsilon admission](../hyperlattice/docs/admission-jacobi-epsilon.md)
+records the construction and independent ODE reference; the
+[verification record](verification/2026-10-19-e2-jacobi-epsilon/README.md)
+records completed acceptance and retained slow inputs. Next, admit the Thompson/Lee mapping and its certified
+inverse. The two intermediate-map inversions need
 certified enclosures and a named chart or sheet; convergence of ordinary
 complex Newton iteration alone is insufficient. See
 [Jacobi epsilon and its addition law](https://dlmf.nist.gov/22.16.ii).

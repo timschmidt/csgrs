@@ -23,6 +23,76 @@ fn close(actual: &Real, expected: &Real, bits: i32) {
 }
 
 #[test]
+fn exact_quarter_amplitudes_retain_complete_integral_relations() {
+    let half_pi = (Real::pi() / Real::from(2)).unwrap();
+    for text in ["0.5", "-3", "0"] {
+        let m: Real = text.parse().unwrap();
+        for count in [-7, -2, -1, 0, 1, 2, 7]
+            .map(Real::from)
+            .into_iter()
+            .chain(["1e30".parse().unwrap()])
+        {
+            let amplitude = &count * &half_pi;
+            for second in [false, true] {
+                let (value, complete) = if second {
+                    (
+                        amplitude.clone().elliptic_e(&m).unwrap(),
+                        Real::elliptic_e_complete(&m).unwrap(),
+                    )
+                } else {
+                    (
+                        amplitude.clone().elliptic_f(&m).unwrap(),
+                        Real::elliptic_k(&m).unwrap(),
+                    )
+                };
+                assert_eq!(
+                    (value - &count * complete).exact_rational_normal_form(),
+                    Some(Rational::zero()),
+                    "{text}, count {count}, second {second}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn quarter_endpoint_reduction_retains_cancellation_and_distinct_offsets() {
+    let parameter: Real = "0.5".parse().unwrap();
+    let quarter = (Real::pi() / Real::from(2)).unwrap();
+    for second in [false, true] {
+        let evaluate = |argument: Real| {
+            if second {
+                argument.elliptic_e(&parameter)
+            } else {
+                argument.elliptic_f(&parameter)
+            }
+        };
+        let signal = Arc::new(AtomicBool::new(false));
+        let mut argument = quarter.clone();
+        argument.abort(signal.clone());
+        let value = evaluate(argument).unwrap();
+        signal.store(true, Ordering::Relaxed);
+        assert!(value.certified_rational_interval(-128).is_none());
+        signal.store(false, Ordering::Relaxed);
+        close(&value, &evaluate(quarter.clone()).unwrap(), 256);
+        let delta: Real = "1e-60".parse().unwrap();
+        for direction in [-1, 1] {
+            let nearby = evaluate(&quarter + Real::from(direction) * &delta).unwrap();
+            // The integral is strictly increasing for m<1. These tiny
+            // displacements must not be treated as the symbolic endpoint.
+            assert_eq!(
+                (nearby - &value).certified_sign_until(-512).sign(),
+                Some(if direction < 0 {
+                    RealSign::Negative
+                } else {
+                    RealSign::Positive
+                }),
+            );
+        }
+    }
+}
+
+#[test]
 fn circular_identities_and_parameter_domain() {
     let zero = Real::zero();
     let half_pi = (Real::pi() / Real::from(2)).unwrap();

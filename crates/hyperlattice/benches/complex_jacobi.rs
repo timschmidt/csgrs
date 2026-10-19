@@ -14,8 +14,8 @@ fn main() {
     for text in ["0.5", "-3", "0"] {
         let argument = Complex::new("0.125".parse().unwrap(), "0.0625".parse().unwrap());
         let m: Real = text.parse().unwrap();
-        oracle::compare(&argument, &m);
-        let reference = oracle::reference(&argument, &m);
+        oracle::compare(&argument, &m, false);
+        let reference = oracle::reference(&argument, &m, false);
         let warm = components(&argument, &m);
         let expected = warm
             .clone()
@@ -27,7 +27,7 @@ fn main() {
                 let mut rows = Vec::new();
                 for _ in 0..repeats {
                     rows.push(if mode == "mpfr_ode" {
-                        Err(black_box(oracle::reference(&argument, &m)))
+                        Err(black_box(oracle::reference(&argument, &m, false)))
                     } else {
                         let values = if mode == "native_cold" {
                             components(&argument, &m)

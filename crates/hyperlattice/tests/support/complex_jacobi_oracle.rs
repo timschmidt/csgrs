@@ -1,6 +1,8 @@
 //! Independent local Jacobi oracle, using the ODE in DLMF 22.13.1 (table).
 //!
 //! s'=c*d, c'=-s*d, d'=-m*s*c, with (s,c,d)(0)=(0,1,1).
+//! Epsilon additionally satisfies epsilon'=d*d and epsilon(0)=0. Its nth
+//! coefficient is bounded by A^(n-1)<=A^n, so the same tail bound applies.
 //! MPFR interval arithmetic encloses coefficient and Horner rounding. If
 //! A=max(1,|m|), induction on the convolution recurrence bounds every Taylor
 //! coefficient by A^n. For q=A*(|x|+|y|)<1 the omitted tail after degree N
@@ -107,7 +109,9 @@ impl Interval {
     }
 }
 
-pub(crate) fn reference(argument: &Complex, parameter: &Real) -> [Interval; 6] {
+// Return the six triplet components, or the two epsilon components. Both
+// choices use the same differential system and independent coefficient bound.
+pub(crate) fn reference(argument: &Complex, parameter: &Real, epsilon: bool) -> Vec<Interval> {
     let x = Interval::native(&argument.re);
     let y = Interval::native(&argument.im);
     let m = Interval::native(parameter);
@@ -129,17 +133,25 @@ pub(crate) fn reference(argument: &Complex, parameter: &Real) -> [Interval; 6] {
         vec![Interval::integer(1)],
         vec![Interval::integer(1)],
     ];
+    let mut epsilon_coefficients = vec![Interval::integer(0)];
     for n in 1..=DEGREE {
         let mut sums: [Interval; 3] = std::array::from_fn(|_| Interval::integer(0));
+        let mut epsilon_sum = Interval::integer(0);
         for j in 0..n {
             let k = n - 1 - j;
             for (sum, (first, second)) in sums.iter_mut().zip([(1, 2), (0, 2), (0, 1)]) {
                 *sum = sum.add(&coefficients[first][j].mul(&coefficients[second][k]));
             }
+            if epsilon {
+                epsilon_sum = epsilon_sum.add(&coefficients[2][j].mul(&coefficients[2][k]));
+            }
         }
         coefficients[0].push(sums[0].div_count(n));
         coefficients[1].push(sums[1].neg().div_count(n));
         coefficients[2].push(m.mul(&sums[2]).neg().div_count(n));
+        if epsilon {
+            epsilon_coefficients.push(epsilon_sum.div_count(n));
+        }
     }
     let mut power = Float::with_val(PRECISION, 1);
     for _ in 0..=DEGREE {
@@ -151,8 +163,13 @@ pub(crate) fn reference(argument: &Complex, parameter: &Real) -> [Interval; 6] {
         lo: -tail.clone(),
         hi: tail,
     };
-    let mut result: [Interval; 6] = std::array::from_fn(|_| Interval::integer(0));
-    for (terms, pair) in coefficients.iter().zip(result.as_chunks_mut::<2>().0) {
+    let terms = if epsilon {
+        std::slice::from_ref(&epsilon_coefficients)
+    } else {
+        &coefficients
+    };
+    let mut result = vec![Interval::integer(0); terms.len() * 2];
+    for (terms, pair) in terms.iter().zip(result.as_chunks_mut::<2>().0) {
         let mut re = Interval::integer(0);
         let mut im = Interval::integer(0);
         for coefficient in terms.iter().rev() {
@@ -182,12 +199,17 @@ impl Interval {
     }
 }
 
-pub(crate) fn compare(argument: &Complex, parameter: &Real) {
-    let (sn, cn, dn) = argument.clone().jacobi_sncndn(parameter).unwrap();
-    for (reference, value) in reference(argument, parameter)
-        .iter()
-        .zip([sn.re, sn.im, cn.re, cn.im, dn.re, dn.im])
-    {
+pub(crate) fn compare(argument: &Complex, parameter: &Real, epsilon: bool) {
+    let components = if epsilon {
+        let value = argument.clone().jacobi_epsilon(parameter).unwrap();
+        vec![value.re, value.im]
+    } else {
+        let (sn, cn, dn) = argument.clone().jacobi_sncndn(parameter).unwrap();
+        vec![sn.re, sn.im, cn.re, cn.im, dn.re, dn.im]
+    };
+    let expected = reference(argument, parameter, epsilon);
+    assert_eq!(expected.len(), components.len());
+    for (reference, value) in expected.iter().zip(components) {
         let actual = value.certified_rational_interval(-224).unwrap();
         assert!(
             reference.agrees_with(&actual, 200),

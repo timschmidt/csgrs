@@ -37,6 +37,8 @@ include!("node/jacobi.rs");
 include!("node/jacobi_tests.rs");
 include!("node/range_reduction_tests.rs");
 include!("node/algebra.rs");
+include!("node/shared_square_quotient.rs");
+include!("node/shared_square_quotient_tests.rs");
 include!("node/ring_polynomial.rs");
 include!("node/ring_polynomial_tests.rs");
 include!("node/ring_quotient.rs");

@@ -5,6 +5,18 @@ consumer: Hyperspatial E2 rectification. The baseline supplies RF/RD but lacks
 complete and incomplete Legendre APIs. The initial acceptance test is
 `tests/legendre_integrals.rs`, which must fail to compile on that baseline.
 
+The subsequent [Jacobi epsilon increment](../../hyperlattice/docs/admission-jacobi-epsilon.md)
+extends exact endpoint retention at integer multiples of pi/2 for F and E.
+The even, pi-periodic integrands give the complete integral times that integer.
+Its tests retain cancellation and distinguish offsets of 1e-60; the
+[consumer contract](../../hyperspatial/docs/admission/e2-jacobi-epsilon.md)
+records the reproduced missing certificate and required downstream checks.
+New constructions can serialize as the equivalent complete formula; existing
+wire tags and previously serialized mathematical definitions stay unchanged.
+The [epsilon verification record](../../hyperspatial/verification/2026-10-19-e2-jacobi-epsilon/README.md)
+records final-source acceptance, including 137/138 forward-Legendre production
+lines covered, native/downstream tests and retained representation migrations.
+
 The extension represents F(phi|m), E(phi|m), K(m), and complete E(m) for real
 amplitude phi and real **parameter m < 1** (m is the squared modulus).
 Incomplete integrals start at zero and retain the unwrapped amplitude.

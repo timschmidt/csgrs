@@ -16,6 +16,7 @@ def native_source_groups(root):
             sources.append(root / "crates/hyperreal/src/computable/node/log_argument.rs")
         groups[label] = sources
     groups["native_complex_jacobi"] = [root / "crates/hyperlattice/src/complex/jacobi.rs"]
+    groups["native_square_quotient"] = [root / "crates/hyperreal/src/computable/node/shared_square_quotient.rs"]
     groups["native_relations"] = [root / "crates/hyperreal/src/computable/node" / name
                                  for name in ("ring_native_relations.rs", "ring_native_reduction.rs",
                                               "ring_native_projection.rs", "ring_parameter_atoms.rs",
@@ -53,6 +54,6 @@ def check_native_elliptic_coverage(groups):
     # Keep the existing Carlson floor independent: new lines cannot mask a
     # regression in its denominator. Each later family gets its own floor.
     for label in ("native_elliptic", "native_legendre", "native_inverse_legendre", "native_jacobi",
-                  "native_complex_jacobi", "native_relations"):
+                  "native_complex_jacobi", "native_square_quotient", "native_relations"):
         if groups[label]["totals"]["lines"]["percent"] < 95:
             raise SystemExit(f"{label} production line coverage is below the 95% gate")

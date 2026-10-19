@@ -710,6 +710,52 @@ fn bench_real_elementary_api(c: &mut Criterion) {
 
     let argument: Real = "0.75".parse().unwrap();
     let parameter: Real = "0.5".parse().unwrap();
+    let native = || argument.clone().jacobi_epsilon(&parameter).unwrap();
+    let reference = || {
+        let amplitude = inverse_legendre_oracle::inverse(&argument, &parameter, false);
+        legendre_oracle::series(&legendre_oracle::native(amplitude), &parameter)[1].clone()
+    };
+    let [lo, hi] = (native() - legendre_oracle::native(reference()))
+        .certified_rational_interval(-144)
+        .unwrap();
+    let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+    assert!(lo >= -tolerance.clone() && hi <= tolerance);
+    group.bench_function(
+        BenchmarkId::new("hyperreal_evaluated_p128", "jacobi_epsilon"),
+        |b| b.iter(|| black_box(native().certified_rational_interval(-128).unwrap())),
+    );
+    group.bench_function(
+        BenchmarkId::new("mpfr1024_point_reference", "jacobi_epsilon"),
+        |b| b.iter(|| black_box(reference())),
+    );
+
+    let native = || {
+        let (sn, cn, dn, epsilon) = argument.clone().jacobi_sncndn_epsilon(&parameter).unwrap();
+        [sn, cn, dn, epsilon]
+    };
+    let reference = || {
+        let [sn, cn, dn] = jacobi_oracle::values(&argument, &parameter);
+        let amplitude = inverse_legendre_oracle::inverse(&argument, &parameter, false);
+        let epsilon =
+            legendre_oracle::series(&legendre_oracle::native(amplitude), &parameter)[1].clone();
+        [sn, cn, dn, epsilon]
+    };
+    for (actual, expected) in native().into_iter().zip(reference()) {
+        let [lo, hi] = (actual - legendre_oracle::native(expected))
+            .certified_rational_interval(-144)
+            .unwrap();
+        let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+        assert!(lo >= -tolerance.clone() && hi <= tolerance);
+    }
+    group.bench_function(
+        BenchmarkId::new("hyperreal_evaluated_p128", "jacobi_sncndn_epsilon"),
+        |b| b.iter(|| black_box(native().map(|v| v.certified_rational_interval(-128).unwrap()))),
+    );
+    group.bench_function(
+        BenchmarkId::new("mpfr1024_point_reference", "jacobi_sncndn_epsilon"),
+        |b| b.iter(|| black_box(reference())),
+    );
+
     let native = || {
         let (sn, cn, dn) = argument.clone().jacobi_sncndn(&parameter).unwrap();
         [sn, cn, dn]
