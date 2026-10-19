@@ -88,7 +88,20 @@ pub fn closed_loop_evaluation_split_reverse_and_source_identity() {
         assert!(high.end().coincides_with(&low.start()).unwrap());
         assert!(high.start().coincides_with(&curve.end()).unwrap());
         assert!(curve.point_at(&Real::zero().into()).is_err());
-        assert!(curve.derivatives_at(&q(1, 2).into(), 1).is_err());
+        let derivatives = curve.derivatives_at(&q(1, 2).into(), 1).unwrap();
+        assert_eq!(derivatives.len(), 1);
+        assert_eq!(
+            derivatives[0]
+                .compare_linear_form(&Real::one(), &Real::zero(), &Real::one())
+                .unwrap(),
+            Ordering::Equal,
+        );
+        assert_eq!(
+            derivatives[0]
+                .compare_linear_form(&Real::zero(), &Real::one(), &Real::zero())
+                .unwrap(),
+            Ordering::Equal,
+        );
         curve.bounds().unwrap();
     }
     assert!(

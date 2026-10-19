@@ -268,13 +268,8 @@ impl ArenaModelBuilder {
                     Direction::Reversed => edge.domain.end(),
                 };
                 let mut tangent = curve
-                    .derivative_at(
-                        (parameter)
-                            .try_real()
-                            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
-                        1,
-                    )?
-                    .vector()
+                    .derivative_at(parameter, 1)?
+                    .require_coordinates()?
                     .clone();
                 if edge_use.direction == Direction::Reversed {
                     tangent = -tangent;

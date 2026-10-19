@@ -551,7 +551,7 @@ impl Curve3 {
         })
     }
 
-    fn projection(&self, axis: Axis) -> GeometryResult<&Curve2> {
+    pub(super) fn projection(&self, axis: Axis) -> GeometryResult<&Curve2> {
         let projections = self.data.projections.get_or_init(Box::default);
         let cache = if axis == Axis::Z {
             &projections.xz
@@ -571,7 +571,10 @@ impl Curve3 {
 
     /// A linear/affine control image preserves the original source parameter.
     /// Degree-one Beziers also admit constant projections of spatial lines.
-    fn planar_control_image(&self, point: impl Fn(&Point3) -> Point2) -> GeometryResult<Curve2> {
+    pub(super) fn planar_control_image(
+        &self,
+        point: impl Fn(&Point3) -> Point2,
+    ) -> GeometryResult<Curve2> {
         Ok(match &self.data.geometry {
             CurveGeometry3::Line(line) => RationalBezier2::try_new(
                 vec![point(&line.start), point(&line.end)],

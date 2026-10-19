@@ -32,6 +32,7 @@ mod spline;
 mod surface_point;
 mod transform;
 mod translation;
+mod vector;
 pub(crate) use affine_image::AffineCurve3;
 pub use affine_image::AffineCurveGeometry;
 pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
@@ -54,6 +55,7 @@ pub use spline::{NurbsCurveGeometry, RationalBezierCurveGeometry};
 pub(crate) use transform::TransformMetric;
 pub(crate) use translation::TranslationCurve3;
 pub use translation::TranslationCurveGeometry;
+pub use vector::GeometricVector3;
 
 pub(crate) fn resolve_planar_classification<T>(
     classification: Classification<T>,
@@ -153,12 +155,6 @@ pub enum Curve3Kind {
     EllipseArc,
 }
 
-/// Exact first derivative of a spatial curve.
-#[derive(Clone, Debug)]
-pub struct CurveDerivative3 {
-    vector: Vector3,
-}
-
 /// Complete exact parameter-location result for one spatial curve.
 #[derive(Clone, Debug)]
 pub enum CurveParameterLocation {
@@ -169,13 +165,6 @@ pub enum CurveParameterLocation {
     Parameters(Vec<Parameter>),
     /// Every parameter in the curve domain maps to the point.
     EntireDomain,
-}
-
-impl CurveDerivative3 {
-    /// Returns the exact derivative vector.
-    pub const fn vector(&self) -> &Vector3 {
-        &self.vector
-    }
 }
 
 pub(crate) fn native_span_parameter_range(
@@ -1063,51 +1052,69 @@ impl Curve3 {
         })
     }
 
-    /// Evaluates one positive-order exact derivative.
+    /// Evaluates one positive-order derivative in the original parameter chart.
     ///
-    /// For spline families, an order whose derivative storage cannot be
-    /// addressed returns [`hyperreal::Problem::OutOfRange`] inside
-    /// [`GeometryError::Numeric`]. A rejected jet-buffer allocation returns
-    /// [`hyperreal::Problem::Exhausted`]. Closed-form line and conic derivatives
-    /// do not allocate storage proportional to the order.
+    /// Retained parameters and implicit section images preserve their joint
+    /// source. The optional represented-vector view never rounds coordinates.
+    /// Regular implicit graphs support arbitrary finite orders; singular-chart
+    /// limits and general selected angular evaluations remain typed blockers.
+    /// Native spline address-space overflow is `Numeric(OutOfRange)` and a
+    /// refused jet allocation is `Numeric(Exhausted)`. Owner controls for
+    /// retained jets remain distinct from total work or coefficient-size bounds.
     pub fn derivative_at(
         &self,
-        parameter: &Real,
+        parameter: &Parameter,
         order: usize,
-    ) -> GeometryResult<CurveDerivative3> {
+    ) -> GeometryResult<GeometricVector3> {
         crate::context::strict(|| {
             if order == 0 {
                 return Err(GeometryError::InvalidDerivativeOrder);
             }
-            if !self.domain().contains_real(parameter)? {
+            if !self.domain().contains(parameter)? {
                 return Err(GeometryError::ParameterOutsideDomain);
             }
-            let vector = match &self.data.geometry {
-                CurveGeometry3::AffineImage(image) => image
-                    .transform
-                    .transform_direction3(image.source.derivative_at(parameter, order)?.vector()),
-                CurveGeometry3::Rotation(rotation) => rotation.derivative_at(parameter, order)?,
+            match &self.data.geometry {
+                CurveGeometry3::AffineImage(image) => {
+                    return image
+                        .source
+                        .derivative_at(parameter, order)?
+                        .affine_image(&image.transform);
+                }
+                CurveGeometry3::PlanarImage(image) => return image.derivative_at(parameter, order),
                 CurveGeometry3::Translation(line) => {
-                    if order == 1 {
+                    return Ok(GeometricVector3::from_coordinates(if order == 1 {
                         line.displacement.clone()
                     } else {
                         Vector3::zeros()
-                    }
+                    }));
                 }
-                CurveGeometry3::PlanarImage(image) => image.derivative_at(parameter, order)?,
                 CurveGeometry3::Line(line) => {
-                    if order == 1 {
+                    return Ok(GeometricVector3::from_coordinates(if order == 1 {
                         &line.end - &line.start
                     } else {
-                        Vector3::zero()
+                        Vector3::zeros()
+                    }));
+                }
+                _ => {}
+            }
+            let Some(parameter_value) = parameter.try_real() else {
+                return match &self.data.geometry {
+                    CurveGeometry3::RationalBezier(_) | CurveGeometry3::Nurbs(_) => {
+                        GeometricVector3::native_derivative(self, parameter, order)
                     }
+                    _ => Err(GeometryError::UnsupportedSelectedEvaluation),
+                };
+            };
+            let vector = match &self.data.geometry {
+                CurveGeometry3::Rotation(rotation) => {
+                    rotation.derivative_at(parameter_value, order)?
                 }
                 CurveGeometry3::RationalBezier(curve) => {
-                    evaluate_rational_bezier_derivative(curve, parameter, order)?
+                    evaluate_rational_bezier_derivative(curve, parameter_value, order)?
                 }
                 CurveGeometry3::Nurbs(curve) => {
                     let span = find_span(
-                        parameter,
+                        parameter_value,
                         &self.domain().represented_domain()?,
                         curve.degree,
                         curve.control_points.len(),
@@ -1118,7 +1125,7 @@ impl Curve3 {
                         &curve.knots,
                         curve.degree,
                         span,
-                        parameter,
+                        parameter_value,
                         order,
                     )?
                 }
@@ -1126,12 +1133,51 @@ impl Curve3 {
                     evaluate_ellipse_arc_derivative(
                         arc,
                         &self.domain().represented_domain()?,
-                        parameter,
+                        parameter_value,
                         order,
                     )
                 }
+                _ => unreachable!("affine, planar and constant derivatives dispatched above"),
             };
-            Ok(CurveDerivative3 { vector })
+            Ok(GeometricVector3::from_coordinates(vector))
+        })
+    }
+
+    /// A nonzero tangent direction oriented toward increasing public parameter.
+    ///
+    /// Smooth implicit vertical endpoints use their incident branch's exact
+    /// one-sided direction. Spatial reversal reflects the public parameter
+    /// chart; its negative scale reverses the direction by the chain rule.
+    /// No unit length or derivative magnitude is promised.
+    /// Gradient-zero events, stationary image limits and unsupported selected
+    /// families return a typed blocker; a zero derivative is never a tangent.
+    pub fn tangent_direction_at(&self, parameter: &Parameter) -> GeometryResult<GeometricVector3> {
+        crate::context::strict(|| {
+            if !self.domain().contains(parameter)? {
+                return Err(GeometryError::ParameterOutsideDomain);
+            }
+            if let CurveGeometry3::AffineImage(image) = &self.data.geometry {
+                return image
+                    .source
+                    .tangent_direction_at(parameter)?
+                    .affine_image(&image.transform);
+            }
+            let result = if let CurveGeometry3::PlanarImage(image) = &self.data.geometry
+                && let Some(branch) = image.source.polynomial_branch()
+            {
+                let mapped = parameter.affine_image(&image.source_scale, &image.source_offset)?;
+                GeometricVector3::from_planar(
+                    branch.tangent_direction_at(&mapped.curve_parameter())?,
+                    image.u.clone() * &image.source_scale,
+                    image.v.clone() * &image.source_scale,
+                )
+            } else {
+                self.derivative_at(parameter, 1)?
+            };
+            if result.is_zero()? {
+                return Err(GeometryError::UnsupportedSelectedEvaluation);
+            }
+            Ok(result)
         })
     }
 
@@ -3852,12 +3898,20 @@ impl Surface {
                     })
                 }
                 SurfaceGeometry::Extrusion(surface) => Ok(SurfacePartials {
-                    u: surface.profile.derivative_at(&parameter.x, 1)?.vector,
+                    u: surface
+                        .profile
+                        .derivative_at(&parameter.x.clone().into(), 1)?
+                        .require_coordinates()?
+                        .clone(),
                     v: surface.direction.clone(),
                 }),
                 SurfaceGeometry::Revolution(surface) => {
                     let profile_point = surface.profile.evaluate_real(&parameter.y)?;
-                    let profile_derivative = surface.profile.derivative_at(&parameter.y, 1)?.vector;
+                    let profile_derivative = surface
+                        .profile
+                        .derivative_at(&parameter.y.clone().into(), 1)?
+                        .require_coordinates()?
+                        .clone();
                     let relative = &profile_point - &surface.axis_origin;
                     let axial = surface.axis.clone() * surface.axis.dot(&relative);
                     let radial = relative - axial;
@@ -5347,8 +5401,8 @@ pub(crate) fn project_curve_to_plane_frame(
             let end = project(&curve.end()?)?;
             let tangent_point = data.center.clone()
                 + curve
-                    .derivative_at(curve.domain().represented_start()?, 1)?
-                    .vector();
+                    .derivative_at(&curve.domain().represented_start()?.clone().into(), 1)?
+                    .require_coordinates()?;
             let projected_tangent_point = project(&tangent_point)?;
             let projected_tangent = (
                 projected_tangent_point.x() - center.x(),
@@ -11394,8 +11448,8 @@ mod tests {
         let curve =
             Curve3::rational_bezier(vec![p(0, 0, 0), p(2, 4, 6)], vec![r(1), r(1)]).unwrap();
         assert_points_equal(&curve.evaluate_real(&q(1, 2)).unwrap(), &p(1, 2, 3));
-        let derivative = curve.derivative_at(&q(1, 3), 1).unwrap();
-        assert_eq!(derivative.vector().0, [r(2), r(4), r(6)]);
+        let derivative = curve.derivative_at(&q(1, 3).into(), 1).unwrap();
+        assert_eq!(derivative.try_coordinates().unwrap().0, [r(2), r(4), r(6)]);
         let bounds = curve.bounds().unwrap();
         assert_points_equal(&bounds.mins, &p(0, 0, 0));
         assert_points_equal(&bounds.maxs, &p(2, 4, 6));
@@ -11410,7 +11464,7 @@ mod tests {
         for curve in [bezier, nurbs] {
             for order in [usize::MAX, usize::MAX - 1] {
                 assert_eq!(
-                    curve.derivative_at(&q(1, 2), order).unwrap_err(),
+                    curve.derivative_at(&q(1, 2).into(), order).unwrap_err(),
                     GeometryError::Numeric(hyperreal::Problem::OutOfRange)
                 );
             }
@@ -11419,7 +11473,11 @@ mod tests {
         // valid when its answer can be obtained directly.
         let line = Curve3::line(p(0, 0, 0), p(2, 4, 6)).unwrap();
         assert_eq!(
-            line.derivative_at(&q(1, 2), usize::MAX).unwrap().vector().0,
+            line.derivative_at(&q(1, 2).into(), usize::MAX)
+                .unwrap()
+                .try_coordinates()
+                .unwrap()
+                .0,
             [r(0), r(0), r(0)]
         );
     }
@@ -11428,11 +11486,15 @@ mod tests {
     fn every_curve_family_exposes_exact_positive_order_derivatives() {
         let line = Curve3::line(p(0, 0, 0), p(2, 4, 6)).unwrap();
         assert_eq!(
-            line.derivative_at(&q(1, 2), 2).unwrap().vector().0,
+            line.derivative_at(&q(1, 2).into(), 2)
+                .unwrap()
+                .try_coordinates()
+                .unwrap()
+                .0,
             Vector3::zero().0
         );
         assert_eq!(
-            line.derivative_at(&q(1, 2), 0).unwrap_err(),
+            line.derivative_at(&q(1, 2).into(), 0).unwrap_err(),
             GeometryError::InvalidDerivativeOrder
         );
 
@@ -11444,9 +11506,10 @@ mod tests {
         assert_points_equal(
             &Point3::from(
                 polynomial
-                    .derivative_at(&q(1, 2), 1)
+                    .derivative_at(&q(1, 2).into(), 1)
                     .unwrap()
-                    .vector()
+                    .try_coordinates()
+                    .unwrap()
                     .clone(),
             ),
             &p(4, 0, 0),
@@ -11454,15 +11517,21 @@ mod tests {
         assert_points_equal(
             &Point3::from(
                 polynomial
-                    .derivative_at(&q(1, 2), 2)
+                    .derivative_at(&q(1, 2).into(), 2)
                     .unwrap()
-                    .vector()
+                    .try_coordinates()
+                    .unwrap()
                     .clone(),
             ),
             &p(4, 0, 0),
         );
         assert_eq!(
-            polynomial.derivative_at(&q(1, 2), 3).unwrap().vector().0,
+            polynomial
+                .derivative_at(&q(1, 2).into(), 3)
+                .unwrap()
+                .try_coordinates()
+                .unwrap()
+                .0,
             Vector3::zero().0
         );
         let rational = Curve3::rational_bezier(
@@ -11471,7 +11540,14 @@ mod tests {
         )
         .unwrap();
         assert_points_equal(
-            &Point3::from(rational.derivative_at(&r(0), 2).unwrap().vector().clone()),
+            &Point3::from(
+                rational
+                    .derivative_at(&r(0).into(), 2)
+                    .unwrap()
+                    .try_coordinates()
+                    .unwrap()
+                    .clone(),
+            ),
             &p(-20, 0, 0),
         );
 
@@ -11483,11 +11559,23 @@ mod tests {
         )
         .unwrap();
         assert_points_equal(
-            &Point3::from(nurbs.derivative_at(&q(1, 2), 2).unwrap().vector().clone()),
+            &Point3::from(
+                nurbs
+                    .derivative_at(&q(1, 2).into(), 2)
+                    .unwrap()
+                    .try_coordinates()
+                    .unwrap()
+                    .clone(),
+            ),
             &p(4, 0, 0),
         );
         assert_eq!(
-            nurbs.derivative_at(&q(1, 2), 3).unwrap().vector().0,
+            nurbs
+                .derivative_at(&q(1, 2).into(), 3)
+                .unwrap()
+                .try_coordinates()
+                .unwrap()
+                .0,
             Vector3::zero().0
         );
 
@@ -11510,9 +11598,10 @@ mod tests {
             assert_points_equal(
                 &Point3::from(
                     circle
-                        .derivative_at(&Real::zero(), order)
+                        .derivative_at(&Real::zero().into(), order)
                         .unwrap()
-                        .vector()
+                        .try_coordinates()
+                        .unwrap()
                         .clone(),
                 ),
                 &expected,
@@ -11533,7 +11622,12 @@ mod tests {
         assert_eq!(curve.domain().represented_end().unwrap(), &r(2));
         assert_points_equal(&curve.evaluate_real(&q(3, 2)).unwrap(), &p(3, 0, 0));
         assert_eq!(
-            curve.derivative_at(&q(3, 2), 1).unwrap().vector().0,
+            curve
+                .derivative_at(&q(3, 2).into(), 1)
+                .unwrap()
+                .try_coordinates()
+                .unwrap()
+                .0,
             [r(2), r(0), r(0)]
         );
     }
@@ -18428,9 +18522,10 @@ mod tests {
         assert_points_equal(
             &Point3::from(
                 circle
-                    .derivative_at(&Real::zero(), 1)
+                    .derivative_at(&Real::zero().into(), 1)
                     .unwrap()
-                    .vector()
+                    .try_coordinates()
+                    .unwrap()
                     .clone(),
             ),
             &p(0, 2, 0),

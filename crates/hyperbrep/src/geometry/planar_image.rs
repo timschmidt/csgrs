@@ -268,20 +268,24 @@ impl PlanarCurve3 {
         Ok(self.lift(&represented_curve_point(&self.source, &self.parameter(s))?))
     }
 
-    pub(super) fn derivative_at(&self, s: &Real, order: usize) -> GeometryResult<Vector3> {
-        let derivatives = self
+    pub(super) fn derivative_at(
+        &self,
+        s: &Parameter,
+        order: usize,
+    ) -> GeometryResult<GeometricVector3> {
+        let mapped = s.affine_image(&self.source_scale, &self.source_offset)?;
+        let mut derivatives = self
             .source
-            .derivatives_at(&self.parameter(s).into(), order)?;
-        let (x, y) = derivatives
-            .last()
-            .expect("positive derivative order")
-            .represented_coordinates()
-            .ok_or(GeometryError::UnsupportedSelectedEvaluation)?;
+            .derivatives_at(&mapped.curve_parameter(), order)?;
         let mut power = Real::one();
         for _ in 0..order {
             power *= &self.source_scale;
         }
-        Ok((self.u.clone() * x + self.v.clone() * y) * power)
+        Ok(GeometricVector3::from_planar(
+            derivatives.pop().expect("positive derivative order"),
+            self.u.clone() * &power,
+            self.v.clone() * power,
+        ))
     }
 
     /// Preserve the owner's chart and return its exact map to the target

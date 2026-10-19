@@ -171,10 +171,10 @@ pub fn planar_images_preserve_exact_frame_and_chart() {
                 .unwrap(),
             &midpoint,
         );
-        let derivative = image.derivative_at(&q(1, 2), 1).unwrap();
+        let derivative = image.derivative_at(&q(1, 2).into(), 1).unwrap();
         let expected = Vector3::new([(12 * (b - a)).into(), 0.into(), (6 * (b - a)).into()]);
         for i in 0..3 {
-            equal(&derivative.vector()[i], &expected[i]);
+            equal(&derivative.try_coordinates().unwrap()[i], &expected[i]);
         }
         let CurveParameterLocation::Parameters(parameters) =
             image.parameters_of(&midpoint).unwrap()
@@ -225,10 +225,10 @@ pub fn planar_images_preserve_exact_frame_and_chart() {
             );
         }
         assert!(matches!(
-            image.derivative_at(&q(1, 2), 0),
+            image.derivative_at(&q(1, 2).into(), 0),
             Err(GeometryError::InvalidDerivativeOrder)
         ));
-        assert!(image.derivative_at(&q(1, 2), 2).is_err());
+        assert!(image.derivative_at(&q(1, 2).into(), 2).is_err());
     }
 }
 
@@ -784,7 +784,7 @@ pub fn planar_lifts_share_native_source_evaluation() {
             }
             // Entire-curve bounds are conservative for an affine subchart too.
             image.bounds().unwrap();
-            image.derivative_at(&q(1, 2), 1).unwrap();
+            image.derivative_at(&q(1, 2).into(), 1).unwrap();
             image.reversed().unwrap().split_at(&q(1, 2)).unwrap();
         }
     }

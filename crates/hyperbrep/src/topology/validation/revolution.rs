@@ -334,8 +334,15 @@ impl ArenaModelBuilder {
                         return Ok(None);
                     }
                     let tangent = represented_profile
-                        .derivative_at(represented_profile.domain().represented_start()?, 1)?
-                        .vector()
+                        .derivative_at(
+                            &represented_profile
+                                .domain()
+                                .represented_start()?
+                                .clone()
+                                .into(),
+                            1,
+                        )?
+                        .require_coordinates()?
                         .clone();
                     let tangent_radial = ray.dot(&tangent);
                     let tangent_axial = this_axis.dot(&tangent);

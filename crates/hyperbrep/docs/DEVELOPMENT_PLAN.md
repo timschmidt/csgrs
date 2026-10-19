@@ -1202,8 +1202,8 @@ strips, including interior loops and singular incidence. Its tests replay
 independent slice counts and retained exclusions, and exercise subsequent
 source-bound rational slices. Vertical/nullified components, generic repeated
 factors and whole boundary components still fail typed. This finite graph now
-feeds the native branch carrier described below. The original public
-biquadratic interior-loop section remains unsupported. WP05a is in progress;
+feeds the native branch carrier described below. That prototype alone did not construct the public biquadratic interior-loop
+section. The later complete plane/tensor increment now admits that full target. WP05a is in progress;
 its complete gate and G3/G4 remain open.
 
 The [native polynomial-branch increment](evidence/2026-10-19-polynomial-branches/README.md)
@@ -1212,7 +1212,8 @@ isolated `CurvePoint2` values. Selected fiber evaluation, subdivision, reversal,
 similarity, conservative bounds and point-definition replay retain the original
 chart and shared equation. BRep's public archive admits these point definitions
 as retained-chord endpoints with degree/element accounting and checked singleton
-replay. The public surface section remains unsupported. Follow the new
+replay. At that increment, the public surface section was still unsupported; the
+plane/tensor integration below now supplies its complete admitted domain. Follow the new
 [next domains](evidence/2026-10-19-polynomial-branches/next-domains.md) for selected
 rational functions, regular derivatives/maps, spatial/dual-chart images,
 whole-branch replay, components and arrangements. General filled topology and
@@ -1278,6 +1279,30 @@ that curve carrier and rejects earlier versions. Continue with complete selected
 section restrictions and branch/event replay, retaining the original complete
 interior-loop success assertion. Selected angular images, general procedural
 profiles, full resource bounds and release/push gates remain open.
+
+The current integration supersedes the historical dependency frontiers above.
+[Complete plane/tensor sections](evidence/2026-10-19-plane-tensor-sections/README.md)
+now include the original full interior-loop target, nonlinear weighted images,
+selected restrictions, isolated contacts, both pcurves, and whole-image validation
+through affine replay. [Section differentials](evidence/2026-10-19-section-differentials/README.md)
+add regular implicit jets, smooth-event directions, exact spatial vectors,
+selected native rational derivatives and explicit chart transport. Hypercurve
+owns joint differential evaluation; BRep owns spatial lifting and affine transport.
+No independent coordinate roots or sampled tangent chords become authority.
+
+Next, Hypersolve must provide branch-specific singular limits and local-series
+certificates in the selected coefficient field; Hypercurve must bind those
+certificates to incident graph arcs and supply exact contact ordering and joint
+vector products. BRep must extend selected surface partials/normals, prove
+spatial/dual-pcurve differential agreement, and assemble complete trim arrangements.
+Nodes, cusps, tacnodes, higher contact, stationary rational images, periodic seams
+and algebraic event parameters all need independent fixtures, typed resource
+failure and subsequent modeling consumers. A finite cusp derivative is a limit
+operation, not permission to cancel an original zero denominator. General NURBS
+and patch-pair sections, fillets/shelling/sweeps, STEP, assemblies/history and all
+other work packages retain their existing requirements. Use the current
+[next domains](evidence/2026-10-19-section-differentials/next-domains.md) to choose
+implementation order; older records remain evidence for their own revisions.
 
 Apply [research gates G2–G5](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)
 before making practical-completeness claims. ESOLID and exact quadric work

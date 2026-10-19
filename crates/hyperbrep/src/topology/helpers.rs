@@ -358,8 +358,8 @@ pub(super) fn extrusion_constant_area_scale(
     }
     Ok(Some(
         profile
-            .derivative_at(profile.domain().represented_start()?, 1)?
-            .vector()
+            .derivative_at(&profile.domain().represented_start()?.clone().into(), 1)?
+            .require_coordinates()?
             .cross(direction)
             .norm_squared()
             .sqrt()

@@ -1093,3 +1093,37 @@ must agree before publication. Other analytic/spline/void/assembly mappings,
 curved STEP export, explicit healing, general chart gluing and complete resource
 and delivery contracts remain open. Native archive replay and an independent
 floating-point reader do not establish a curved STEP round trip or AP conformance.
+
+
+### Retained section differentials and the singular-limit boundary
+
+For a regular implicit graph `F(x,y)=0`, use
+`delta = Fy*partial_x - Fx*partial_y` and `d/dx = delta/Fy` in the original
+joint field. If an image coordinate is `N/W`, its order-`k` derivative can keep
+the denominator `W^(k+1)*Fy^(2k-1)` for `k>=1`, with a polynomial numerator
+recurrence. This avoids repeatedly squaring a previously expanded denominator;
+it is an algebraic design choice, not a measured speedup. Every original pole
+guard remains in force. A smooth vertical endpoint uses the nonzero gradient
+and the incident slab's certified orientation. Gradient-zero events require
+branch limits, even when a particular image has a finite derivative.
+
+Poteaux and Weimann give a divide-and-conquer method for singular Puiseux parts,
+with expected soft-O(D*delta) field operations for separable input over a
+perfect field of characteristic zero or sufficiently large characteristic;
+delta measures the discriminant/resultant valuation. This supports investigating
+local-series certificates in Hypersolve, with explicit applicability checks.
+It does not establish Rust runtime, bit-growth or memory bounds, or branch
+selection over our retained real algebraic events.
+[Primary paper, 2021](https://ahl.centre-mersenne.org/articles/10.5802/ahl.97/).
+
+CGAL's algebraic-kernel concept separates bivariate sign/isolation queries,
+coprime and square-free operations, and finite solution enumeration. These are
+useful ownership precedents for the solver primitives beneath curve arrangements.
+[Official algebraic-kernel reference](https://doc.cgal.org/latest/Algebraic_kernel_d/classAlgebraicKernel__d__2.html).
+Our implementation order is an inference from these sources and the reproduced
+section failures: keep regular jets cheap; develop singular germs and exact
+one-sided ordering only where required, then integrate complete trim graphs.
+External kernels remain optional test oracles, never production dependencies.
+The [current differential record](evidence/2026-10-19-section-differentials/next-domains.md)
+defines concrete next fixtures and owners. No cited complexity theorem is credited
+as a proof of this implementation or a completed release gate.

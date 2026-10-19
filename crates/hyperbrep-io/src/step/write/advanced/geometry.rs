@@ -277,10 +277,19 @@ pub(super) fn surface(
                     .start()
                     .map_err(|error| out.site.error(WriteErrorKind::Geometry(error)))?;
                 let u = profile
-                    .derivative_at(start, 1)
+                    .derivative_at(&start.clone().into(), 1)
                     .map_err(|error| out.site.error(WriteErrorKind::Geometry(error)))?;
-                let (id, mut parameters, reversed) =
-                    plane(out, &origin, u.vector(), direction, scale)?;
+                let (id, mut parameters, reversed) = plane(
+                    out,
+                    &origin,
+                    u.try_coordinates().ok_or_else(|| {
+                        out.site.error(WriteErrorKind::Geometry(
+                            hyperbrep::GeometryError::UnsupportedSelectedEvaluation,
+                        ))
+                    })?,
+                    direction,
+                    scale,
+                )?;
                 parameters.origin = Point2::origin() - parameters.u.clone() * start;
                 return Ok((id, parameters, reversed));
             }

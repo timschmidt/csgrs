@@ -14,6 +14,9 @@ use hypersolve::{
 };
 use std::cmp::Ordering;
 
+#[path = "polynomial_curve_differential.rs"]
+mod differential;
+
 /// The complete zero set of one admitted polynomial in a closed rectangle.
 ///
 /// This is a curve collection, not a filled region. Every solver graph arc is
@@ -38,8 +41,9 @@ struct PolynomialCurveSource2 {
 /// The parameter is the first coordinate of the source polynomial, including
 /// after reversal and similarity transforms. Endpoints retain the selected
 /// event fiber; interior points retain the branch's ordered fiber root.
-/// Derivatives, rational Bézier promotion, and filled arrangements are not
-/// supplied by this carrier and report their typed capability blockers.
+/// Regular derivatives and smooth-event tangent directions retain that joint
+/// source. Singular limits, rational Bézier promotion, and filled arrangements
+/// report their typed capability blockers.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolynomialCurveBranch2 {
     source: Arc<PolynomialCurveSource2>,
@@ -300,6 +304,14 @@ impl PolynomialCurveBranch2 {
         if last.is_eq() {
             return Ok(self.endpoints[1].clone());
         }
+        self.map_point(self.interior_point(value, policy)?, policy)
+    }
+
+    fn interior_point(
+        &self,
+        value: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurvePoint2> {
         let base = value
             .as_bezier_parameter()
             .ok_or_else(|| blocked(UncertaintyReason::Unsupported))?;
@@ -342,10 +354,9 @@ impl PolynomialCurveBranch2 {
             base.clone(),
             &report.intervals[self.root..=self.root],
         )?;
-        let point = points
+        points
             .pop()
-            .ok_or_else(|| invalid(CurveError::InvalidBezierAlgebraicParameter))?;
-        self.map_point(point, policy)
+            .ok_or_else(|| invalid(CurveError::InvalidBezierAlgebraicParameter))
     }
 
     fn map_point(

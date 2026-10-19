@@ -1670,6 +1670,51 @@ impl PartialEq for RationalBezierAlgebraicTangentImage2 {
 }
 
 impl RationalBezierAlgebraicTangentImage2 {
+    pub(crate) fn coordinate_image(
+        &self,
+        scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<crate::CurvePoint2>> {
+        let parameter = if let Some(parameter) = self.retained_parameter() {
+            BezierParameter2::Algebraic(parameter.clone())
+        } else {
+            match BezierParameter2::from_algebraic_root_representation_unbounded(
+                self.parameter(),
+                policy,
+            )? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        };
+        let (x, y, denominator) = self.coordinate_polynomials();
+        match parameter {
+            BezierParameter2::Algebraic(parameter) => rational_point_image_from_power_basis(
+                &parameter,
+                x.iter().map(|c| c * scale).collect(),
+                y.iter().map(|c| c * scale).collect(),
+                denominator.to_vec(),
+                policy,
+            )
+            .map(|result| result.map(crate::CurvePoint2::from)),
+            BezierParameter2::Exact(value) => {
+                let interval = hypersolve::RealInterval {
+                    lower: value.clone(),
+                    upper: value,
+                };
+                let evaluate = |p| {
+                    hypersolve::RealInterval::evaluate_power_basis(p, &interval).map(|v| v.lower)
+                };
+                let (Some(x), Some(y), Some(w)) = (evaluate(x), evaluate(y), evaluate(denominator))
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                };
+                Ok(Classification::Decided(
+                    crate::Point2::new(((x * scale) / &w)?, ((y * scale) / &w)?).into(),
+                ))
+            }
+        }
+    }
+
     fn new(parameter: AlgebraicRootRepresentation, definition: RationalTangentDefinition) -> Self {
         Self {
             data: Arc::new(RationalBezierAlgebraicTangentImageData {

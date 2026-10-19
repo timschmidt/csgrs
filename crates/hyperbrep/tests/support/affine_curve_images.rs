@@ -104,11 +104,15 @@ pub fn affine_images_cover_native_and_retained_families() {
         assert!(image.circular_geometry().is_none());
         let bounds = image.bounds().unwrap();
         for order in [1, 2, 5] {
-            let at = source.domain().start().try_real().unwrap();
+            let at = source.domain().start();
             let derivative = source.derivative_at(at, order).unwrap();
-            let d = derivative.vector();
+            let d = derivative.try_coordinates().unwrap();
             assert_eq!(
-                image.derivative_at(at, order).unwrap().vector(),
+                image
+                    .derivative_at(at, order)
+                    .unwrap()
+                    .try_coordinates()
+                    .unwrap(),
                 &Vector3::new([-&d[0] + Real::from(2) * &d[1], d[1].clone(), d[2].clone()])
             );
         }
@@ -228,11 +232,19 @@ pub fn affine_images_preserve_periods_derivatives_and_admission() {
     .unwrap();
     let image = Curve3::affine_image(source.clone(), shear()).unwrap();
     assert_eq!(
-        image.derivative_at(&0.into(), 1).unwrap().vector(),
+        image
+            .derivative_at(&Real::zero().into(), 1)
+            .unwrap()
+            .try_coordinates()
+            .unwrap(),
         &Vector3::new([4.into(), 2.into(), 0.into()])
     );
     assert_eq!(
-        image.derivative_at(&0.into(), 2).unwrap().vector(),
+        image
+            .derivative_at(&Real::zero().into(), 2)
+            .unwrap()
+            .try_coordinates()
+            .unwrap(),
         &Vector3::new([2.into(), 0.into(), 0.into()])
     );
     let mut builder = ModelBuilder::new();

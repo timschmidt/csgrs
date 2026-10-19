@@ -238,7 +238,7 @@ pub fn selected_rotation_retains_points_and_angular_charts() {
         Err(GeometryError::UnsupportedSelectedEvaluation)
     ));
     assert!(matches!(
-        rotation.derivative_at(&quarter(), 1),
+        rotation.derivative_at(&quarter().into(), 1),
         Err(GeometryError::UnrepresentablePoint)
     ));
     // Authored origins use the same retained-orbit tag and admit ordinary
@@ -252,9 +252,9 @@ pub fn selected_rotation_retains_points_and_angular_charts() {
     )
     .unwrap();
     assert_eq!(native.kind(), Curve3Kind::Rotation);
-    let derivative = native.derivative_at(&quarter(), 1).unwrap();
+    let derivative = native.derivative_at(&quarter().into(), 1).unwrap();
     assert_eq!(
-        derivative.vector(),
+        derivative.try_coordinates().unwrap(),
         &Vector3::new([(-5).into(), 0.into(), 0.into()])
     );
     for (order, expected) in [
@@ -263,7 +263,11 @@ pub fn selected_rotation_retains_points_and_angular_charts() {
         (4, Vector3::new([0.into(), 5.into(), 0.into()])),
     ] {
         assert_eq!(
-            native.derivative_at(&quarter(), order).unwrap().vector(),
+            native
+                .derivative_at(&quarter().into(), order)
+                .unwrap()
+                .try_coordinates()
+                .unwrap(),
             &expected
         );
     }
@@ -271,9 +275,10 @@ pub fn selected_rotation_retains_points_and_angular_charts() {
         native
             .reversed()
             .unwrap()
-            .derivative_at(&quarter(), 1)
+            .derivative_at(&quarter().into(), 1)
             .unwrap()
-            .vector(),
+            .try_coordinates()
+            .unwrap(),
         &Vector3::new([5.into(), 0.into(), 0.into()])
     );
     let bounds = native.bounds().unwrap();

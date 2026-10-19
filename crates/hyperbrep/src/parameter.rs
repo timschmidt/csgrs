@@ -78,9 +78,16 @@ impl Parameter {
         self.value.clone()
     }
 
-    pub(crate) fn affine_image(&self, scale: &Real, offset: &Real) -> GeometryResult<Self> {
-        Ok(Self {
-            value: self.value.affine_image(scale, offset)?,
+    /// Returns `scale * self + offset` in the same selected source field.
+    ///
+    /// This transports exact parameters between curve charts, including
+    /// reversal, without reconstructing or rounding independent coordinates.
+    /// The result is not a domain-membership or incidence certificate.
+    pub fn affine_image(&self, scale: &Real, offset: &Real) -> GeometryResult<Self> {
+        crate::context::strict(|| {
+            Ok(Self {
+                value: self.value.affine_image(scale, offset)?,
+            })
         })
     }
 }

@@ -11,6 +11,8 @@ pub(crate) mod curve_evaluation;
 mod curve_injectivity;
 #[path = "curve_subdivision.rs"]
 mod curve_subdivision;
+#[path = "curve_vector.rs"]
+mod curve_vector;
 use crate::bezier_split::{CurveParameterDomain2, CurveParameterRange2};
 use curve_subdivision::CurveSourceRange2;
 pub(crate) use curve_subdivision::CurveSourceSpan2;
@@ -92,7 +94,7 @@ pub struct CurveDerivative2 {
 /// Exact derivative vector of a curve at a general public parameter.
 ///
 /// Coordinates are either represented reals or selected algebraic values kept
-/// in the field of the parameter that produced them. Selected coordinates are
+/// in the joint parameter/fiber source that produced them. Selected coordinates are
 /// never rounded; [`Self::represented_coordinates`] is the narrower query for
 /// callers that need two represented reals.
 #[derive(Clone, Debug, PartialEq)]
@@ -103,6 +105,8 @@ pub struct CurveVector2 {
 #[derive(Clone, Debug, PartialEq)]
 enum CurveVectorData2 {
     Represented(CurveDerivative2),
+    /// Both coordinates are rational images of one joint selected source.
+    Joint(Box<CurvePoint2>),
     /// A selected-field vector times an exact positive chart factor.
     Selected {
         vector: crate::BezierAlgebraicTangentVector2,
@@ -127,6 +131,7 @@ impl CurveVector2 {
     pub fn represented_coordinates(&self) -> Option<(&Real, &Real)> {
         match &self.data {
             CurveVectorData2::Represented(derivative) => Some((derivative.dx(), derivative.dy())),
+            CurveVectorData2::Joint(point) => point.coordinates().map(|p| (p.x(), p.y())),
             CurveVectorData2::Selected { .. } | CurveVectorData2::SelectedParallel(_) => None,
         }
     }
@@ -147,6 +152,19 @@ impl CurveVector2 {
     ) -> ExactCurveResult<Classification<RealSign>> {
         let use_x = axis == crate::Axis2::X;
         match &self.data {
+            CurveVectorData2::Joint(point) => {
+                crate::bezier_offset::point_affine_form_order_to_real(
+                    point,
+                    &Real::from(i32::from(use_x)),
+                    &Real::from(i32::from(!use_x)),
+                    &Real::zero(),
+                    policy,
+                )
+                .map(|order| order.map(curve_vector::order_sign))
+                .map_err(|cause| {
+                    ExactCurveError::invalid_unattributed(CurveOperation2::Classification, cause)
+                })
+            }
             CurveVectorData2::Represented(derivative) => {
                 let value = if use_x {
                     derivative.dx()
@@ -1791,7 +1809,10 @@ impl Curve2 {
     /// Evaluates exact derivatives through `max_order` in the public parameter.
     ///
     /// The returned vector stores orders `1..=max_order`. Native curves use
-    /// `[0, 1]`; spline curves use their authored knot domain.
+    /// `[0, 1]`; spline curves use their authored knot domain. Implicit graph
+    /// branches use their original first coordinate, including after traversal
+    /// reversal. A regular graph point requires nonzero `Fy`; singular-chart
+    /// limits remain typed blockers.
     pub fn derivatives_at(
         &self,
         parameter: &CurveParameter2,
@@ -1854,6 +1875,9 @@ impl Curve2 {
         side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveVector2>> {
+        if let Some(branch) = self.polynomial_branch() {
+            return branch.derivatives_at(parameter, max_order, policy);
+        }
         if self.source_range().is_some() {
             return self.source_range_derivatives_at(parameter, max_order, side, policy);
         }

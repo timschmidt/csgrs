@@ -779,3 +779,27 @@ refinement controls are distinct from total work, memory and cancellation limits
 
 The [plane/tensor section evidence](docs/evidence/2026-10-19-plane-tensor-sections/README.md)
 records the admitted domain, preserved corpus, independent checks and costs.
+
+
+`Curve3::derivative_at(&Parameter, order)` returns `GeometricVector3`.
+Represented coordinates are available through `try_coordinates()`; retained
+vectors support exact coordinate signs, linear-form comparisons, zero tests and
+invertible affine transport. Native rational Bézier/NURBS derivatives preserve
+selected parameters, including non-unit knot charts. Planar implicit-section
+jets retain their original joint polynomial/fiber source through rational maps,
+restrictions, spatial reversal and cold curve replay. `Parameter::affine_image`
+transports selected values between those charts without scalar reconstruction.
+This replaces `CurveDerivative3::vector()` directly, with no compatibility alias.
+
+`Curve3::tangent_direction_at` also handles smooth vertical events of retained
+polynomial sections. Its direction follows increasing spatial parameter and is
+not normalized. Hypercurve branch reversal keeps the source chart; BRep reversal
+reflects its public chart, so derivatives and directions use the explicit chart
+scale. Gradient-zero nodes/cusps, singular image limits, general selected angular
+families, and general vector products remain open. Selected analytic parallels
+admit direction/zero tests, while comparisons against a nonzero scalar still
+need their radical speed magnitude. No successful zero vector substitutes for
+an unresolved tangent. The [section differential record](docs/evidence/2026-10-19-section-differentials/README.md)
+separates the admitted domain from these limits and the remaining trim-arrangement
+work. The native archive stays at version 14; vector queries do not change model
+records or add a compatibility decoder.
