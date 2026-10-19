@@ -1,8 +1,9 @@
 # Hyperspatial directed inputs
 
 The `forward_local` target checks positive rational sphere/oblate/prolate
-surfaces at exact special angles, both local-axis conventions, orthonormality,
-and repeated source/evidence-preserving composition. It is a separate,
+surfaces at exact special angles, closest-point inversion with certified
+latitude/height/forward-residual enclosures, both local-axis conventions,
+orthonormality, and repeated source/evidence-preserving composition. It is a separate,
 unpublished development package; libFuzzer is not a production dependency.
 
 From the repository root:

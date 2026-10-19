@@ -9,10 +9,11 @@ Build a native coordinate transformation layer for the Hyper stack, beginning
 with Earth geodesy, map projections, and local frames. Extend the same evidence
 and reference-frame model to Earth orientation, celestial coordinates,
 observers, and ephemerides. Implementation is incremental; the full plan remains
-active. The initial native increment implements units, validated ellipsoids,
-geodetic-to-ECEF and anchored ENU/NED transforms with retained evidence.
-ECEF inversion and the remaining E1 acceptance work are open; E2–E4 and A1–A5
-remain planned. See the [E1 admission record](docs/admission/e1-native.md).
+active. E1 provides units, validated ellipsoids, forward and closest-point
+inverse geodetic/ECEF operations, atomic batches and anchored ENU/NED transforms
+with retained evidence. Further E1 testing/admission work is open; E2–E4 and
+A1–A5 remain planned. See the [forward/local admission](docs/admission/e1-native.md)
+and [closest-point inverse admission](docs/admission/e1-inverse.md).
 Dedicated stable/MSRV CI, native WASM compilation, production coverage,
 source-consumer checks and workspace adversarial/benchmark integration are
 recorded in the [testing admission](docs/admission/testing.md).
@@ -37,7 +38,7 @@ The workspace [properties](../../properties.md) and
 | [Hyperreal](../hyperreal/README.md) | Exact rational and decimal input, symbolic constants, computable reals, trig, `atan2`, `hypot3`, stable arithmetic, typed scalar failure | Reuse scalars and reducers. Add generally useful scalar identities here, with scalar acceptance evidence. |
 | [Hyperlattice](../hyperlattice/README.md) | `Point3`, `Vector3`, `Matrix3`, `Matrix4`, affine/projective transforms, checked inverses, batch operations | Reuse Cartesian carriers and linear algebra. Generic rotation/state algebra belongs at the earliest sufficient layer. |
 | [Hyperlimit](../hyperlimit/README.md) | Explicit policies, certified decisions, unresolved outcomes, evidence | Reuse domain and branch decisions; do not introduce geodetic epsilon predicates. |
-| Hyperspatial | Native units, ellipsoids, forward geodetic and local Cartesian operations | Own coordinate semantics, frame realizations, reference epochs, coordinate operations, model selection, and data-provider contracts. |
+| Hyperspatial | Native units, ellipsoids, forward/inverse geodetic and local Cartesian operations | Own coordinate semantics, frame realizations, reference epochs, coordinate operations, model selection, and data-provider contracts. |
 | Hypercurve, Hypermesh, CSGRS | Native curves, regions, meshes, topology and modeling composition | Consume explicit Cartesian results. Own geometry validity and adapters for nonlinear images; retain original sources and transformation evidence. |
 | Development oracles | PROJ, GeoRust, astronomy/time libraries | Test/benchmark comparisons and algorithm research only; adapters remain in development tooling. |
 
@@ -214,7 +215,8 @@ still requires the full repository pre-push validation set.
 The initial design keeps these decisions open until a concrete acceptance
 experiment resolves them:
 
-- Exact inverse algorithms and branch evidence for the admitted ellipsoid domain.
+- Broader dispatch, sanitizer and resource evidence for the implemented exact
+  closest-point inverse and its admitted ellipsoid domain.
 - Projection remainder certificates and general geodesic representations.
 - Static/runtime frame type balance and serialization of qualified outcomes.
 - `Real`-backed time API and exact ingress/egress without hidden nanosecond or

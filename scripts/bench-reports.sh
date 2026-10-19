@@ -67,6 +67,7 @@ hypertri() {
 hyperspatial() {
   # This native workflow probe emits CSV on stdout instead of Criterion files.
   bench hyperspatial --bench forward_local
+  bench hyperspatial --bench inverse
 }
 
 crates=("$@")

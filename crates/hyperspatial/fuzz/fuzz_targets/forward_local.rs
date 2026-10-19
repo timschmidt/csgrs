@@ -17,6 +17,17 @@ fn equal(left: &Real, right: &Real) {
     ));
 }
 
+fn close(left: &Real, right: &Real) {
+    let bound: Real = "0.000000000000000000000000000001".parse().unwrap();
+    assert!(matches!(
+        compare_reals(&(left - right).abs(), &bound, PredicatePolicy::STRICT),
+        PredicateOutcome::Decided {
+            value: Ordering::Less,
+            ..
+        }
+    ));
+}
+
 fuzz_target!(|data: &[u8]| {
     if data.len() < 6 {
         return;
@@ -49,6 +60,33 @@ fuzz_target!(|data: &[u8]| {
     let surface =
         ((&p.x * &p.x + &p.y * &p.y) / (&a * &a)).unwrap() + ((&p.z * &p.z) / (&b * &b)).unwrap();
     equal(&surface, &Real::one());
+    let inverse = ecef
+        .to_geodetic_closest(
+            source.ellipsoid().clone(),
+            PoleMeridian::Use(source.longitude().clone()),
+            &mut context,
+        )
+        .unwrap();
+    close(
+        inverse.latitude().angle().as_radians(),
+        source.latitude().angle().as_radians(),
+    );
+    close(inverse.height().as_metres(), &Real::zero());
+    let evaluated = GeodeticPosition::new(
+        inverse.latitude().clone(),
+        inverse.longitude().clone(),
+        inverse.height().clone(),
+        inverse.ellipsoid().clone(),
+        inverse.reference().clone(),
+        InputProvenance::new("independent forward evaluation", InputAccuracy::ExactModel),
+        &mut context,
+    )
+    .unwrap()
+    .to_ecef(&mut context)
+    .unwrap();
+    close(&evaluated.coordinates().x, &p.x);
+    close(&evaluated.coordinates().y, &p.y);
+    close(&evaluated.coordinates().z, &p.z);
     let axes = if data[4] & 1 == 0 {
         LocalAxes::Enu
     } else {

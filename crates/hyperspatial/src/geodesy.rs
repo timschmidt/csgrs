@@ -144,12 +144,13 @@ impl Ellipsoid {
 /// Geodetic latitude, longitude and ellipsoidal height on a named reference.
 #[derive(Clone, Debug)]
 pub struct GeodeticPosition {
-    latitude: Latitude,
-    longitude: Longitude,
-    height: Length,
-    ellipsoid: Arc<Ellipsoid>,
-    reference: ReferenceFrame,
-    receipt: Receipt,
+    pub(crate) latitude: Latitude,
+    pub(crate) longitude: Longitude,
+    pub(crate) height: Length,
+    pub(crate) ellipsoid: Arc<Ellipsoid>,
+    pub(crate) reference: ReferenceFrame,
+    pub(crate) receipt: Receipt,
+    pub(crate) source: GeodeticSource,
 }
 
 impl GeodeticPosition {
@@ -176,6 +177,7 @@ impl GeodeticPosition {
             ellipsoid,
             reference,
             receipt,
+            source: GeodeticSource::Input,
         })
     }
     /// Geodetic latitude (surface-normal angle, not geocentric latitude).
@@ -203,6 +205,11 @@ impl GeodeticPosition {
         &self.receipt
     }
 
+    /// Retained construction and any selected inverse/pole convention.
+    pub fn source(&self) -> &GeodeticSource {
+        &self.source
+    }
+
     /// Converts to geocentric Cartesian metres with exact represented arithmetic.
     ///
     /// With `d = hypot(a cos(phi), b sin(phi))`, the surface meridian point is
@@ -211,19 +218,16 @@ impl GeodeticPosition {
     /// stable hypot primitive. No inverse-uniqueness claim is made.
     pub fn to_ecef(&self, context: &mut Context) -> Result<EcefPosition> {
         context.checkpoint()?;
-        let phi = self.latitude.angle().as_radians();
-        let lambda = self.longitude.angle().as_radians();
-        let sin_phi = phi.clone().sin();
-        let cos_phi = phi.clone().cos();
-        let a = self.ellipsoid.equatorial.as_metres();
-        let b = self.ellipsoid.polar.as_metres();
-        let denominator = Real::hypot2(&(a * &cos_phi), &(b * &sin_phi))?;
-        context.checkpoint()?;
-        let rho = ((&self.ellipsoid.equatorial_squared / &denominator)? + self.height.as_metres())
-            * &cos_phi;
-        let z =
-            ((&self.ellipsoid.polar_squared / &denominator)? + self.height.as_metres()) * &sin_phi;
-        let coordinates = Point3::new(&rho * lambda.clone().cos(), &rho * lambda.clone().sin(), z);
+        let coordinates = if let GeodeticSource::EcefClosest { position, .. } = &self.source
+            && self.receipt.certainty() != crate::Certainty::Approximate
+        {
+            // The certified inverse relation retains this immutable source.
+            // Approximate branch selection cannot justify this identity.
+            context.checkpoint()?;
+            position.coordinates.clone()
+        } else {
+            self.evaluate_forward(context)?
+        };
         let receipt = context.receipt(
             "geodetic to ECEF",
             vec![self.receipt.clone()],
@@ -237,6 +241,40 @@ impl GeodeticPosition {
             source: EcefSource::Geodetic(Arc::new(self.clone())),
         })
     }
+
+    fn evaluate_forward(&self, context: &mut Context) -> Result<Point3> {
+        let phi = self.latitude.angle().as_radians();
+        let lambda = self.longitude.angle().as_radians();
+        let sin_phi = phi.clone().sin();
+        let cos_phi = phi.clone().cos();
+        let a = self.ellipsoid.equatorial.as_metres();
+        let b = self.ellipsoid.polar.as_metres();
+        let denominator = Real::hypot2(&(a * &cos_phi), &(b * &sin_phi))?;
+        context.checkpoint()?;
+        let rho = ((&self.ellipsoid.equatorial_squared / &denominator)? + self.height.as_metres())
+            * &cos_phi;
+        let z =
+            ((&self.ellipsoid.polar_squared / &denominator)? + self.height.as_metres()) * &sin_phi;
+        Ok(Point3::new(
+            &rho * lambda.clone().cos(),
+            &rho * lambda.clone().sin(),
+            z,
+        ))
+    }
+}
+
+/// Retained construction recipe for normal coordinates on a reference surface.
+#[derive(Clone, Debug)]
+pub enum GeodeticSource {
+    /// Explicit geodetic ingress, qualified by its input receipt.
+    Input,
+    /// Closest-point inverse of the retained Cartesian position.
+    EcefClosest {
+        /// Original Cartesian source, including frame, epoch and qualification.
+        position: Arc<EcefPosition>,
+        /// Meridian explicitly selected at a pole; absent away from the axis.
+        pole_meridian: Option<Longitude>,
+    },
 }
 
 /// Retained construction recipe for a Cartesian position.

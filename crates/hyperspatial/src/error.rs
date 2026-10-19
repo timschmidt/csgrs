@@ -26,6 +26,8 @@ pub enum Error {
     ReferenceMismatch,
     /// Local coordinates belong to a different prepared anchor.
     LocalFrameMismatch,
+    /// The selected inverse has multiple solutions or needs a pole convention.
+    AmbiguousInverse(&'static str),
 }
 
 impl From<Problem> for Error {

@@ -52,6 +52,17 @@ pub struct Latitude {
 }
 
 impl Latitude {
+    pub(crate) fn derived(angle: Angle, parent: Receipt, context: &mut Context) -> Result<Self> {
+        let mut latitude = Self::new(angle, context)?;
+        latitude.receipt = context.receipt(
+            "derived latitude",
+            vec![parent, latitude.receipt],
+            Vec::new(),
+            None,
+        )?;
+        Ok(latitude)
+    }
+
     /// Validates the latitude under an explicit predicate policy.
     pub fn new(angle: Angle, context: &mut Context) -> Result<Self> {
         context.checkpoint()?;

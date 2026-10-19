@@ -2872,6 +2872,7 @@ dependencies = [
  "hyperlattice",
  "hyperlimit",
  "hyperreal",
+ "map_3d",
  "proptest",
 ]
 
@@ -3446,6 +3447,12 @@ dependencies = [
  "clipper2-rust",
  "num-traits 0.2.19",
 ]
+
+[[package]]
+name = "map_3d"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b312acb4684cdc32c4a2d6e0ff9ef7d53498688621ee2c485690a75c858a93cf"
 
 [[package]]
 name = "matchers"

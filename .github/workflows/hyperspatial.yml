@@ -56,8 +56,8 @@ jobs:
           key: hyperspatial-${{ matrix.toolchain }}
       - name: Run native checks and source consumer
         run: bash crates/hyperspatial/scripts/checks.sh
-      - name: Run optimized workflow probe
-        run: cargo bench --locked -p hyperspatial --bench forward_local
+      - name: Run optimized workflow probes
+        run: cargo bench --locked -p hyperspatial --benches
 
   wasm:
     name: WASM library build

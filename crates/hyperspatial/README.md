@@ -7,7 +7,7 @@ work connects terrestrial positions to celestial frames, observers, and
 ephemerides.
 
 The first implementation provides exact angular/length units, validated
-spherical/oblate/prolate ellipsoids, geodetic-to-ECEF conversion, and anchored
+spherical/oblate/prolate ellipsoids, geodetic/ECEF conversion, and anchored
 ENU/NED position/vector transforms. Reference identity, coordinate epoch,
 source construction and predicate evidence survive supported compositions.
 The package is unpublished; the development plan is still in progress.
@@ -40,6 +40,11 @@ let local = LocalFrame::new(&origin, LocalAxes::Enu, &mut context)?;
 let zero = local.to_local_position(&ecef, &mut context)?;
 assert_eq!(zero.coordinates().x, Real::zero());
 assert_eq!(zero.receipt().certainty(), Certainty::Exact);
+let inverse = ecef.to_geodetic_closest(
+    origin.ellipsoid().clone(), PoleMeridian::Reject, &mut context,
+)?;
+assert_eq!(inverse.height().as_metres(), &Real::zero());
+assert!(matches!(inverse.source(), GeodeticSource::EcefClosest { .. }));
 # Ok::<(), hyperspatial::Error>(())
 ```
 
@@ -48,6 +53,12 @@ is opt-in; an unrolled pole longitude determines the local meridian. Local
 coordinates belong to a particular prepared anchor; cloning a frame preserves
 that identity. Moving to a different anchor requires conversion through ECEF.
 Vector transforms rotate without the position origin translation.
+The inverse selects the closest point on the ellipsoid, including ordinary
+negative heights. It reports ambiguity at the centre, on the oblate equatorial
+medial disk and on the prolate axial medial segment. Their unique cusp endpoints
+remain supported. At a pole, `PoleMeridian::Use(longitude)` explicitly chooses
+the meridian for subsequent local frames; `Reject` returns a typed ambiguity.
+Forward and inverse batch APIs return complete output or an error.
 `Angle` and `Length` equality follows `Real` structural equality. Use native
 certified scalar comparisons when mathematical equality of different expressions
 is required.
@@ -56,8 +67,8 @@ is required.
 not scalar heap-byte or wall-clock bounds. Cancellation is cooperative between
 native calls and cannot change the meaning of an already returned coordinate.
 
-ECEF-to-geodetic inversion, projections, datum operations, serialization,
-celestial/observer transformations and ephemerides remain under development.
+Projections, datum operations, serialization, celestial/observer transformations
+and ephemerides remain under development.
 No physical accuracy is inferred from exact evaluation of a model. Raw Cartesian
 ingress requires an explicit `InputProvenance`; missing uncertainty stays unknown.
 
@@ -73,6 +84,8 @@ ingress requires an explicit `InputProvenance`; missing uncertainty stays unknow
   contracts, validation evidence and remaining work.
 - [Testing integration](docs/admission/testing.md): compiler/target gates,
   production coverage, source-consumer and fuzz checks.
+- [Closest-point inverse admission](docs/admission/e1-inverse.md): inverse
+  selection, exact equations, independent fixtures and qualified oracle results.
 
 From the repository root:
 
@@ -93,3 +106,6 @@ JavaScript binding or runtime consumer. Fuzz instructions are in
 All changes follow the workspace [properties](../../properties.md) and
 [admission protocol](../../docs/admission.md). The package uses the repository's
 MIT license; see [LICENSE](./LICENSE).
+The inverse algebra adapts GeographicLib's MIT-licensed equations; its
+[upstream notice](LICENSE-GEOGRAPHICLIB) is retained. `map_3d` is a pinned
+development-only oracle; it is absent from the normal dependency graph.

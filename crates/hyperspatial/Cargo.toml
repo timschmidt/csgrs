@@ -23,7 +23,12 @@ hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = fal
 
 [dev-dependencies]
 proptest = "1.7.0"
+map_3d = "=0.1.7"
 
 [[bench]]
 name = "forward_local"
+harness = false
+
+[[bench]]
+name = "inverse"
 harness = false

@@ -1,0 +1,22 @@
+{
+  "command": [
+    "target/release/deps/inverse-f990e404c88ce99c",
+    "--test"
+  ],
+  "exit_code": 0,
+  "elapsed_ns": 4645444,
+  "child_peak_rss_kib": 16892,
+  "executable_bytes": 2538392,
+  "stdout": "operation,trial,iterations,elapsed_ns,completed,certainty\ninverse_receipt_display,0,1,1446168,1,Exact\n",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "cpu": "Intel Xeon E5-2680 v2 @ 2.80GHz",
+  "features": "default",
+  "profile": "workspace release",
+  "oracle": "map_3d 0.1.7, development only, represented binary64 WGS84 axes",
+  "source_sha256": {
+    "crates/hyperspatial/src/inverse.rs": "c151d6a57b5a8c8feb1f570491355b80094385a8092cc9816c03aa646b5aa057",
+    "crates/hyperspatial/benches/inverse.rs": "8ae86755a63656a9ba73198a6483b31b1e600cf9295ccabba9454b2e9004492b",
+    "Cargo.lock": "6aab6be90e15aa96a53a0e60c5824b0e99fad1a38bb44c1bd3c2c069f70b1aee"
+  },
+  "scope": "one fresh process, one native inverse/display/source-replay iteration with explicit evidence; RSS is not an allocation count or heap bound; no speedup claim"
+}

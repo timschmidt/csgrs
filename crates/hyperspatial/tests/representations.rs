@@ -31,6 +31,11 @@ fn every_public_scalar_family_survives_the_local_height_workflow() {
             &mut ctx,
         );
         let ecef = source.to_ecef(&mut ctx).unwrap();
+        let inverse = ecef
+            .to_geodetic_closest(ellipsoid.clone(), PoleMeridian::Reject, &mut ctx)
+            .unwrap();
+        equal(inverse.height().as_metres(), &value);
+        equal(inverse.latitude().angle().as_radians(), &Real::zero());
         let local = frame.to_local_position(&ecef, &mut ctx).unwrap();
         equal(&local.coordinates().x, &Real::zero());
         equal(&local.coordinates().y, &Real::zero());

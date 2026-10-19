@@ -1,0 +1,6 @@
+operation,trial,iterations,elapsed_ns,completed,certainty
+inverse_receipt_display,0,100,123249268,100,Exact
+inverse_receipt_display,1,100,121162346,100,Exact
+inverse_receipt_display,2,100,121213754,100,Exact
+inverse_receipt_display,3,100,121410412,100,Exact
+inverse_receipt_display,4,100,121296446,100,Exact
