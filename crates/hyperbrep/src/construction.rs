@@ -8082,7 +8082,18 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        assert!(model.certified_revolution_profile(solid).is_none());
+        let certificate = model
+            .certified_revolution_profile(solid)
+            .expect("the NURBS profile remains available to later Booleans");
+        assert!(certificate.native_polygons().is_none());
+        assert_eq!(
+            certificate
+                .region()
+                .unwrap()
+                .classify_point(&cp(3, 1).into())
+                .unwrap(),
+            hypercurve::RegionPointLocation::Inside
+        );
         for (point, expected) in [
             (p(3, 0, 1), SolidPointLocation::Inside),
             (p(5, 0, 1), SolidPointLocation::Outside),

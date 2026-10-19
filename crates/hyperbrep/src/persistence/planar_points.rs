@@ -26,6 +26,10 @@ pub(super) enum RawPlanarPoint {
         source: Box<RawPlanarPoint>,
         coefficients: [Real; 6],
     },
+    SupportingLineIntersection {
+        first: Box<[RawPlanarPoint; 2]>,
+        second: Box<[RawPlanarPoint; 2]>,
+    },
 }
 
 impl GraphEncoder {
@@ -73,6 +77,15 @@ impl GraphEncoder {
                         x.clone(),
                         y.clone(),
                     ],
+                }
+            }
+            CurvePointDefinition2::SupportingLineIntersection { first, second } => {
+                RawPlanarPoint::SupportingLineIntersection {
+                    first: Box::new([self.planar_point(&first[0])?, self.planar_point(&first[1])?]),
+                    second: Box::new([
+                        self.planar_point(&second[0])?,
+                        self.planar_point(&second[1])?,
+                    ]),
                 }
             }
         })
@@ -133,6 +146,14 @@ impl SelectionGraph {
                 transform: Similarity2::try_from_real_affine(a, b, c, d, x, y)
                     .map_err(GeometryError::from)?,
             },
+            RawPlanarPoint::SupportingLineIntersection { first, second } => {
+                let [a, b] = *first;
+                let [c, d] = *second;
+                CurvePointDefinition2::SupportingLineIntersection {
+                    first: [self.planar_point(a)?, self.planar_point(b)?],
+                    second: [self.planar_point(c)?, self.planar_point(d)?],
+                }
+            }
         };
         Ok(definition.into_point().map_err(GeometryError::from)?)
     }

@@ -917,6 +917,21 @@ impl RationalBezierAlgebraicPointImage2 {
         }
     }
 
+    /// Recovers the shared source parameter, including the root selection
+    /// retained by independently represented coordinate images.
+    pub(crate) fn source_parameter(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParameter2>> {
+        if let Some(parameter) = self.retained_parameter() {
+            Ok(Classification::Decided(BezierParameter2::Algebraic(
+                parameter.clone(),
+            )))
+        } else {
+            BezierParameter2::from_algebraic_root_representation_unbounded(self.parameter(), policy)
+        }
+    }
+
     pub(crate) fn native_curve_evaluation(
         &self,
     ) -> Option<(&RationalBezier2, &BezierAlgebraicParameter2)> {
@@ -1349,17 +1364,10 @@ impl RationalBezierAlgebraicPointImage2 {
                     x.denominator_coefficients(),
                 )
             };
-        let parameter = if let Some(parameter) = image.retained_parameter() {
-            BezierParameter2::Algebraic(parameter.clone())
-        } else {
-            match BezierParameter2::from_algebraic_root_representation_unbounded(
-                image.parameter(),
-                policy,
-            )? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+        let parameter = match image.source_parameter(policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
         };
         let denominator_sign =

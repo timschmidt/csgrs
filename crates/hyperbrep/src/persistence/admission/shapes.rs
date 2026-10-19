@@ -333,6 +333,10 @@ pub(super) enum PlanarPoint {
     Similarity {
         source: Box<PlanarPoint>,
     },
+    SupportingLineIntersection {
+        first: Box<[PlanarPoint; 2]>,
+        second: Box<[PlanarPoint; 2]>,
+    },
 }
 impl Record for PlanarPoint {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
@@ -362,6 +366,13 @@ impl Record for PlanarPoint {
             Self::Similarity { source } => {
                 budget.record()?;
                 source.admit(budget)
+            }
+            Self::SupportingLineIntersection { first, second } => {
+                for point in (*first).into_iter().chain(*second) {
+                    budget.record()?;
+                    point.admit(budget)?;
+                }
+                Ok(())
             }
         }
     }

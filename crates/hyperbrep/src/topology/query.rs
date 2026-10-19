@@ -1640,17 +1640,11 @@ impl ArenaModel {
             .certified_revolutions
             .get(solid.index())
             .and_then(Option::as_ref)?;
-        let profile = revolution.profile.native_contour()?.clone();
-        let holes = revolution
-            .voids
-            .iter()
-            .map(|void| void.native_contour().cloned())
-            .collect::<Option<Vec<_>>>()?;
         Some(CertifiedRevolutionProfile {
             axis_origin: revolution.axis_origin.clone(),
             axis: revolution.axis.clone(),
-            profile,
-            holes,
+            profile: revolution.profile.clone(),
+            holes: revolution.voids.clone(),
         })
     }
 

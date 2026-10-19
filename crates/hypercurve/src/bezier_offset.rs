@@ -8623,6 +8623,21 @@ pub(crate) fn affine_line_parameter_at_incident_point(
             BezierParameter2::Exact(((coordinate - start) / delta)?),
         )));
     }
+    if matches!(point.0, CurvePointData2::Algebraic(_)) {
+        // Rational coordinate images and their replayed expressions must
+        // extract the same affine parameter from their shared source root.
+        let (start, delta) = match axis {
+            Axis2::X => (line.start().x(), line.end().x() - line.start().x()),
+            Axis2::Y => (line.start().y(), line.end().y() - line.start().y()),
+        };
+        let scale = (Real::one() / delta)?;
+        let offset = -start * &scale;
+        let (a, b) = match axis {
+            Axis2::X => (scale, Real::zero()),
+            Axis2::Y => (Real::zero(), scale),
+        };
+        return point_affine_form_parameter(point, &[a, b, offset], policy);
+    }
     let points = match recursive_projective_evidence_points(&[point], policy)? {
         Classification::Decided(Some(points)) => points,
         Classification::Decided(None) => {

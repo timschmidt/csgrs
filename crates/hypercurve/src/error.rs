@@ -304,6 +304,8 @@ impl std::error::Error for ExactCurveError {
 pub enum CurveError {
     /// A line segment has equal endpoints.
     ZeroLengthLine,
+    /// Two parallel or coincident supporting lines do not define one point.
+    ParallelLineSupports,
     /// A circular arc has zero radius.
     ZeroRadiusArc,
     /// A rational Bezier weight is structurally zero.
@@ -413,6 +415,7 @@ impl fmt::Display for CurveError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::ZeroLengthLine => write!(f, "line segment has zero length"),
+            Self::ParallelLineSupports => write!(f, "line supports are parallel or coincident"),
             Self::ZeroRadiusArc => write!(f, "circular arc has zero radius"),
             Self::ZeroRationalBezierWeight => {
                 write!(f, "rational Bezier weight is structurally zero")

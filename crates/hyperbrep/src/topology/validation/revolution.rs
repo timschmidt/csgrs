@@ -73,7 +73,10 @@ impl ArenaModelBuilder {
         if faces.len() < 8 {
             return Ok(None);
         }
-        let mut groups: HashMap<SurfaceId, Vec<FaceId>> = HashMap::new();
+        // The first source seeds the retained meridian cycle and its frame.
+        // Preserve arena order across independent admissions so downstream
+        // Booleans receive the same source charts, not a random cycle rotation.
+        let mut groups = std::collections::BTreeMap::<SurfaceId, Vec<FaceId>>::new();
         let mut planar_faces = 0;
         for face_id in faces {
             let face = self.face_ref(*face_id)?;
@@ -614,5 +617,62 @@ impl ArenaModelBuilder {
             ));
         }
         Ok(Some(segments))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cold_revolution_admission_preserves_profile_source_order() {
+        let p = |x, y| CurvePoint2::from_values(x, y);
+        let polygon = crate::construction::revolve(
+            &[(4, -3), (6, -3), (6, 3), (4, 3)]
+                .map(|(x, y)| crate::Point2::new(x.into(), y.into())),
+        )
+        .unwrap();
+        let spline = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(2, 0), p(4, 0)).unwrap()),
+            Curve2::try_nurbs(
+                2,
+                vec![p(4, 0), p(5, 1), p(4, 2)],
+                vec![Real::one(); 3],
+                vec![0.into(), 0.into(), 0.into(), 1.into(), 1.into(), 1.into()],
+            )
+            .unwrap(),
+            Curve2::from(LineSeg2::try_new(p(4, 2), p(2, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(2, 2), p(2, 0)).unwrap()),
+        ])
+        .unwrap();
+        let spline = crate::construction::revolve_path(&spline).unwrap();
+        for (model, solid) in [polygon, spline] {
+            let source = model.to_json().unwrap();
+            let expected = model
+                .certified_revolution_profile(solid)
+                .unwrap()
+                .profile
+                .as_curve_path()
+                .unwrap();
+            // A fresh admission gets independent map seeds. A later Boolean
+            // must see the same retained source sequence on every admission.
+            for _ in 0..32 {
+                let cold = crate::persistence::ImportedModel::from_json(
+                    &source,
+                    &crate::ArchiveLimits::default(),
+                )
+                .unwrap()
+                .validate()
+                .unwrap();
+                let profile = cold
+                    .certified_revolution_profile(solid)
+                    .unwrap()
+                    .profile
+                    .as_curve_path()
+                    .unwrap();
+                assert_eq!(profile.curves(), expected.curves());
+                assert_eq!(cold.to_json().unwrap(), source);
+            }
+        }
     }
 }

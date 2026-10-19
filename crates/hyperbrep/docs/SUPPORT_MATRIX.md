@@ -544,12 +544,19 @@ from the whole-frustum optimization profile.
 Geometrically identical ring tori support union, intersection, and difference
 even when their periodic frames use opposite axis directions.
 
-Coaxial polygonal revolutions reduce exactly to their radial/axial Hypercurve
-regions, including operands whose carrier axes point in opposite directions.
-Union, intersection, and difference reconstruct connected, disconnected, and
-holed profile results as native periodic revolution shells; contained
-subtraction retains inward toroidal-profile cavities that remain valid Boolean
-operands.
+Coaxial full-turn revolutions reduce exactly to their radial/axial Hypercurve
+regions after proving a common axis line. Native polygonal carriers keep their
+existing path; native arcs/NURBS, analytic parallels and Boolean-selected
+profiles retain their source curves and parameter identities. Union,
+intersection, difference and XOR reconstruct and independently admit connected,
+disconnected, holed and empty results. Opposite axis directions, shifted axial
+origins and common similarities/reflections are supported. Profiles must have
+strictly positive radius, and the owning curve kernel must certify the region
+operation. This does not admit partial turns, singular axis contacts or general
+noncoaxial surface intersections. The
+[coaxial qualification](evidence/2026-10-19-coaxial-procedural/README.md)
+records exact set oracles, repeated composition, native replay and the remaining
+resource and delivery gates.
 
 A bounded authored-axis slab can also clip one polygonal revolution through
 the retained graph. Each transverse plane/profile contact is clipped across

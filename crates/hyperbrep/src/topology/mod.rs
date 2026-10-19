@@ -635,8 +635,61 @@ pub(crate) struct CertifiedConeFrustumProfile {
 pub(crate) struct CertifiedRevolutionProfile {
     pub(crate) axis_origin: Point3,
     pub(crate) axis: Vector3,
-    pub(crate) profile: Contour2,
-    pub(crate) holes: Vec<Contour2>,
+    profile: CertifiedRevolutionBoundary,
+    holes: Vec<CertifiedRevolutionBoundary>,
+}
+
+impl CertifiedRevolutionProfile {
+    fn native_contours(&self) -> Option<(Contour2, Vec<Contour2>)> {
+        Some((
+            self.profile.native_contour()?.clone(),
+            self.holes
+                .iter()
+                .map(|hole| hole.native_contour().cloned())
+                .collect::<Option<Vec<_>>>()?,
+        ))
+    }
+
+    /// Preserve the existing polygon construction path without projecting a
+    /// curved or selected profile to scalar vertices.
+    pub(crate) fn native_polygons(&self) -> Option<(Contour2, Vec<Contour2>)> {
+        let (outer, holes) = self.native_contours()?;
+        std::iter::once(&outer)
+            .chain(&holes)
+            .all(|contour| {
+                contour
+                    .segments()
+                    .iter()
+                    .all(|segment| matches!(segment, Segment2::Line(_)))
+            })
+            .then_some((outer, holes))
+    }
+
+    /// The solid's independently admitted shell/cavity roles establish this
+    /// filled region. Hypercurve replays its planar winding and contact proof.
+    pub(crate) fn region(&self) -> Result<CurveRegion2, GeometryError> {
+        if let Some((outer, holes)) = self.native_contours() {
+            return CurveRegion2::try_from_native_contours(vec![outer], holes)
+                .map_err(GeometryError::from);
+        }
+        let paths = std::iter::once(&self.profile)
+            .chain(&self.holes)
+            .map(CertifiedRevolutionBoundary::as_curve_path)
+            .collect::<Result<Vec<_>, _>>()?;
+        let roles = std::iter::once(hypercurve::CurveRegionLoopRole::Material)
+            .chain(
+                self.holes
+                    .iter()
+                    .map(|_| hypercurve::CurveRegionLoopRole::Hole),
+            )
+            .collect::<Vec<_>>();
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &paths,
+            &roles,
+            &vec![hypercurve::FillRule::NonZero; paths.len()],
+        )
+        .map_err(GeometryError::from)
+    }
 }
 
 #[derive(Clone, Debug)]

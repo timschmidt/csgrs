@@ -3,6 +3,17 @@
 use super::*;
 
 impl BezierAlgebraicChordPairPoint2 {
+    /// Replay needs only the two nonzero supporting lines. Stored side and
+    /// anchor-order certificates must be established again by the consumer.
+    pub(crate) fn strict_support_endpoints(&self) -> Option<[[CurvePoint2; 2]; 2]> {
+        self.accepts_policy(&CurveContext::STRICT).then(|| {
+            [&self.data.first, &self.data.second].map(|line| {
+                let support = line.retained_support();
+                [support.start().clone(), support.end().clone()]
+            })
+        })
+    }
+
     pub(in crate::bezier_offset) fn accepts_policy(&self, policy: &CurveContext) -> bool {
         policy.accepts_retained_policy(self.data.policy)
     }

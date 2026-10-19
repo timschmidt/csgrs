@@ -35,6 +35,8 @@ impl CurvePointAffineForm2 {
     /// No coordinate elimination or independent root reconstruction is used.
     /// Authored constants remain authored; other values retain their defining
     /// field and its selected sources. Unsupported fields fail explicitly.
+    /// A retained supporting-line intersection preserves both source lines
+    /// even when their endpoints also admit scalar coordinate expressions.
     pub fn parameter(&self) -> ExactCurveResult<crate::CurveParameter2> {
         resolve(CurveOperation2::Evaluation, || {
             crate::policy::resolve_certified_operation(

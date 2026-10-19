@@ -23,6 +23,7 @@ This README describes crate version `0.3.1`.
 | --- | --- |
 | `Point2`, `Aabb2`, `Similarity2` | Exact planar coordinates, bounds, and similarity transforms |
 | `CurvePoint2` | Exact curve point retaining coordinates or selected geometric evidence |
+| `CurvePointDefinition2` | Replayable point sources and shared selected roots, with strict validation on reconstruction |
 | `CurvePointAffineForm2` | Source-bound query of `a*x + b*y + c`, preserving selected coordinate correlation |
 | `LineSeg2`, `CircularArc2`, `Segment2` | Native line/arc primitives and their common enum |
 | `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, `RationalBezier2` | Polynomial and rational Bézier carriers |
@@ -39,6 +40,17 @@ This README describes crate version `0.3.1`.
 
 `CurveRegion2` is the sole public filled-region carrier. Native line/arc
 specializations remain private fast paths inside the unified kernel.
+
+`CurvePoint2::definition()` retains supported rational/parallel source images,
+correlated coordinate expressions, similarities and intersections of exact
+supporting lines. `SupportingLineIntersection` stores two endpoint pairs;
+`into_point()` rechecks their strict definitions, nondegeneracy and unique
+intersection. The intersection may lie outside either finite witness chord.
+Parallel or coincident supports return `CurveError::ParallelLineSupports`;
+degenerate supports and unresolved proofs keep their own typed outcomes.
+NURBS coordinate images reuse their original selected root for replay and affine
+queries. Independent coordinate roots and stored certainty flags are not used
+to replace that identity. This source view is not complete authoring history.
 
 `Curve2::native_segment()` proves eligible complete line/arc images under a
 strict policy, including represented retained chords and supported single-span

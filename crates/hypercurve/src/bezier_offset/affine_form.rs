@@ -78,16 +78,16 @@ pub(crate) fn point_affine_form_parameter(
     };
     match &source.0 {
         CurvePointData2::Algebraic(point) => {
-            if let (Some((x, y, w)), Some(parameter)) = (
-                point.retained_coordinate_polynomials(),
-                point.retained_parameter(),
-            ) && let Some(result) = affine(
-                x,
-                y,
-                w,
-                &BezierParameter2::Algebraic(parameter.clone()).into(),
-            )? {
-                return Ok(result);
+            if let Some((x, y, w)) = point.retained_coordinate_polynomials() {
+                let parameter = match point.source_parameter(policy)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if let Some(result) = affine(x, y, w, &parameter.into())? {
+                    return Ok(result);
+                }
             }
         }
         CurvePointData2::AnalyticParallel(point) => {
@@ -158,10 +158,17 @@ pub(crate) fn point_affine_form_parameter(
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    if let (Some(numerator), Some(denominator)) = (
-        numerator.exact_real_value_with_retained_witnesses(),
-        point.denominator.exact_real_value_with_retained_witnesses(),
-    ) {
+    // Chord-intersection charts retain both supporting-line authorities even
+    // when their current endpoint fields happen to yield scalar expressions.
+    // The chord chart constructor uses this same retained affine identity.
+    // Promoting only during cold replay discards that identity and expands
+    // every later curve/vertex occurrence into a different scalar expression.
+    if !matches!(source.0, CurvePointData2::AlgebraicChordPair(_))
+        && let (Some(numerator), Some(denominator)) = (
+            numerator.exact_real_value_with_retained_witnesses(),
+            point.denominator.exact_real_value_with_retained_witnesses(),
+        )
+    {
         return Ok(Classification::Decided((numerator / denominator)?.into()));
     }
     Ok(BezierRecursiveProjectiveParameter2::new(

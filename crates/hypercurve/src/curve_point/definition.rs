@@ -38,6 +38,14 @@ pub enum CurvePointDefinition2 {
         source: CurvePoint2,
         transform: Similarity2,
     },
+    /// The unique intersection of two infinite supporting lines. Each pair
+    /// supplies distinct exact endpoints; the point may lie outside either
+    /// finite chord. Replay certifies nonparallelism without trusting stored
+    /// side classifications or materializing independent selected fields.
+    SupportingLineIntersection {
+        first: [CurvePoint2; 2],
+        second: [CurvePoint2; 2],
+    },
 }
 
 impl CurvePoint2 {
@@ -60,16 +68,34 @@ impl CurvePoint2 {
                         parameter: BezierParameter2::Algebraic(parameter.clone()).into(),
                     });
                 }
-                let parameter = point.retained_parameter().ok_or_else(blocked)?;
+                let parameter = ExactCurveError::decided(
+                    CurveOperation2::Evaluation,
+                    point
+                        .source_parameter(&CurveContext::STRICT)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid_unattributed(
+                                CurveOperation2::Evaluation,
+                                cause,
+                            )
+                        })?,
+                )?;
                 let (x, y, w) = point
                     .retained_coordinate_polynomials()
                     .ok_or_else(blocked)?;
-                Ok(CurvePointDefinition2::RationalExpression {
-                    parameter: BezierParameter2::Algebraic(parameter.clone()),
+                let exact = matches!(parameter, BezierParameter2::Exact(_));
+                let definition = CurvePointDefinition2::RationalExpression {
+                    parameter,
                     x_numerator: x.to_vec(),
                     y_numerator: y.to_vec(),
                     denominator: w.to_vec(),
-                })
+                };
+                if exact {
+                    // Scalar source parameters replay as authored coordinates;
+                    // publish that same canonical form on the first export.
+                    definition.into_point()?.definition()
+                } else {
+                    Ok(definition)
+                }
             }
             CurvePointData2::AnalyticParallel(point) => {
                 let (source, parameter) = point.native_parallel_evaluation().ok_or_else(blocked)?;
@@ -84,6 +110,10 @@ impl CurvePoint2 {
                     source: source.clone(),
                     transform: transform.clone(),
                 })
+            }
+            CurvePointData2::AlgebraicChordPair(point) => {
+                let [first, second] = point.strict_support_endpoints().ok_or_else(blocked)?;
+                Ok(CurvePointDefinition2::SupportingLineIntersection { first, second })
             }
             CurvePointData2::Endpoint(endpoint) => {
                 let point = ExactCurveError::decided(
@@ -101,7 +131,7 @@ impl CurvePoint2 {
 }
 
 impl CurvePointDefinition2 {
-    /// Replays the source with pole and regular-normal checks under strict
+    /// Replays the source with pole, regular-normal and line-uniqueness checks under strict
     /// predicates. The input definition carries no trusted validation flags.
     pub fn into_point(self) -> ExactCurveResult<CurvePoint2> {
         crate::policy::resolve_certified_operation(&CurveContext::STRICT, |policy| match self {
@@ -177,6 +207,31 @@ impl CurvePointDefinition2 {
                 // acquire a stronger claim merely by being wrapped.
                 source.definition()?.into_point()?;
                 Ok(crate::BezierSimilarityPoint2::new(source, transform, policy).into())
+            }
+            Self::SupportingLineIntersection { first, second } => {
+                let invalid = |cause| {
+                    ExactCurveError::invalid(CurveOperation2::Evaluation, CurveFamily2::Line, cause)
+                };
+                let line = |[start, end]: [CurvePoint2; 2]| {
+                    // Retain source identity after proving every recursive
+                    // definition admissible under the strict replay policy.
+                    start.definition()?.into_point()?;
+                    end.definition()?.into_point()?;
+                    ExactCurveError::decided(
+                        CurveOperation2::Evaluation,
+                        crate::BezierAlgebraicChord2::try_new(start, end, policy)
+                            .map_err(invalid)?,
+                    )
+                };
+                let first = line(first)?;
+                let second = line(second)?;
+                ExactCurveError::decided(
+                    CurveOperation2::Evaluation,
+                    first
+                        .supporting_line_intersection(&second, policy)
+                        .map_err(invalid)?,
+                )?
+                .ok_or_else(|| invalid(crate::CurveError::ParallelLineSupports))
             }
         })
         .map(crate::CurveOutcome::into_value)

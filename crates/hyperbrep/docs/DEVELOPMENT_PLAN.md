@@ -1153,6 +1153,12 @@ completeness over the original face domains.
    equivalence under alternate frames and parameterizations. Add general
    quadric pencil/type analysis without assuming rational parameterizations
    exist for every intersection curve.
+   Complete positive-radius revolutions with a common axis already reduce to
+   the owning Hypercurve filled-region Boolean, including retained procedural
+   and selected profiles. Preserve its
+   [qualification corpus](evidence/2026-10-19-coaxial-procedural/README.md)
+   while extending the general fallback; this product-domain proof does not
+   supply missing branches for noncoaxial surfaces or singular axis contacts.
 3. For rational surfaces, decompose at knots, establish denominator signs,
    and prefer a bivariate pullback when a cheap exact implicit carrier is
    available. For general pairs, prototype reusable matrix/implicit

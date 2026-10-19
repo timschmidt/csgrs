@@ -401,9 +401,12 @@ The clean-break implementation currently provides:
   Standard intersection and torus-minus-cutter difference publish the two
   complementary half-tori through one closed longitude-region certificate,
   with exact area, volume, classification, transforms, and persistence;
-- exact coaxial polygonal-revolution Booleans through Hypercurve radial/axial
-  regions, including reversed axes, disconnected outputs, and retained
-  toroidal-profile cavities;
+- exact coaxial full-turn revolution Booleans through Hypercurve radial/axial
+  regions, including native arcs/NURBS, retained analytic parallels and
+  Boolean-selected profiles. Common-axis proofs account for reversed axes,
+  shifted axial origins and common similarities/reflections; reconstruction
+  admits disconnected outputs, cavities and empty results. Profiles must stay
+  strictly off the axis, and every curve operation must certify its domain;
 - strict certified-AABB disjoint Booleans across every current single-solid
   analytic family, with exact full-arena remapping for multi-solid unions;
 - equal, strictly contained, and strictly partially overlapping sphere

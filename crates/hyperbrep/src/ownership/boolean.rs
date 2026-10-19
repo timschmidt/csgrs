@@ -45,6 +45,10 @@ pub fn symmetric_difference(first: &BodySet, second: &BodySet) -> Result<BodySet
 /// contain all selected components; a failed constituent operation fails the
 /// whole call without changing either input. Single-solid kernels and their
 /// supported geometry matrix are shared with the multi-body path.
+/// Certified full-turn revolutions of strictly positive-radius profiles use
+/// the same Hypercurve filled-region operation when their exact axis lines
+/// coincide. Native and retained procedural boundaries, cavities, opposite
+/// axis directions and axial-origin shifts retain their source definitions.
 /// Certified world-Z prisms with provably equal filled profiles also support
 /// partial-height difference and unions across touching or overlapping slabs.
 /// Positive gaps remain separate components. Matching bounds or outer curves

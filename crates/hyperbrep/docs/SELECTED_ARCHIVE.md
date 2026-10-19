@@ -92,7 +92,8 @@ maps, split/reflection and forged-record rejection are covered in the
 - `AffineForm { point, coefficients }` supplies a retained planar point and
   `a*x + b*y + c`. The point definition contains authored coordinates, a rational
   or regular parallel source with its parameter, correlated rational coordinate
-  polynomials in one selected parameter, or a strict-compatible similarity.
+  polynomials in one selected parameter, a strict-compatible similarity, or a
+  unique intersection of two exact supporting lines.
   Every selected reference must name an earlier node. Replay reconstructs the
   source and shared parameter field; it does not trust precomputed coordinates.
 
@@ -140,6 +141,19 @@ record admission. Authored scalar evaluation, split and affine transform keep
 the origin's source; an independently selected sweep parameter remains typed
 unsupported. `Chord { start, end }` pcurves use checked planar point definitions
 and Hypercurve's exact line constructor.
+
+The additive schema-10 planar point record
+`SupportingLineIntersection { first: [point; 2], second: [point; 2] }` retains
+both source endpoint pairs, including independently selected fields. Replay
+reconstructs every source, proves each support nondegenerate and proves a unique
+intersection under strict predicates. Finite chord membership is not required;
+parallel and coincident supports are rejected. All four endpoint definitions
+consume record limits recursively before scalar decoding. No side, incidence
+or certainty flags are trusted. Rational coordinate images reuse their shared
+original selected root and polynomials; affine extraction uses the same owner
+operation during construction and replay. Other records retain their existing
+meaning. See the [coaxial qualification](evidence/2026-10-19-coaxial-procedural/README.md)
+for nested limit/recovery checks and deterministic artifact evidence.
 
 `Rotation` curves add an origin (`Coordinates` or `CurveImage`), authored axis
 origin/unit direction, angular domain, direction sign and offset to schema 10.
