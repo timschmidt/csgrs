@@ -502,5 +502,14 @@ fn acos_positive_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -
 }
 
 fn acos_negative_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
-    Computable::pi().approx_signal(signal, p) - acos_positive_rational(signal, r, p)
+    if should_stop(signal) {
+        return Zero::zero();
+    }
+    // Each sample can err by one working unit, including a rescaled cached
+    // sample. Two guard bits bound their combined error by half an output
+    // unit; rounding once adds at most the remaining half, as in native add.
+    let work_precision = p - 2;
+    let pi = Computable::pi().approx_signal(signal, work_precision);
+    let positive = acos_positive_rational(signal, r, work_precision);
+    scale(pi - positive, -2)
 }

@@ -25037,6 +25037,852 @@
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/integral-atan-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
     "runtime_admitted": true,
     "general_speedup_claimed": false
+  },
+  "acos_complement_error_budget": {
+    "decision": "Retain the negative rational acos error-budget repair with all measured costs disclosed.",
+    "admitted_scope": "Both terms of the negative-rational acos complement are sampled with two guard bits before subtraction and a single final rounding. Valid shared-pi cache reuse can no longer consume an unbudgeted second sample error in this composition. Stored graphs, typed import failures and following arithmetic are preserved.",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1123
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 956
+      }
+    },
+    "debug_units_passed": 834,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-solid_cache": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "ordinary_cost": {
+      "candidate_over_parent_median_latency": {
+        "named-root-cbor": 1.0119885129579171,
+        "named-root-json": 1.0265076391857302,
+        "opaque-add-fresh": 0.9652480662169335,
+        "opaque-add-warm": 0.9927625394533776,
+        "opaque-root-cbor": 1.0463067812024744,
+        "opaque-root-json": 0.9951780667762018,
+        "radical-add-fresh": 0.9678126249374381,
+        "radical-add-warm": 0.977299461827971,
+        "rational-add": 1.0207730445102263,
+        "rational-cbor": 0.9697744518917361,
+        "rational-json": 1.011258668919324,
+        "small-atanh-cbor": 1.012630797583638,
+        "small-atanh-json": 0.9986463299256186,
+        "trig-add-fresh": 0.9631027484692847,
+        "trig-add-warm": 0.994471574063861,
+        "trig-cbor": 1.0023428932052263,
+        "trig-json": 0.9832590560253983
+      },
+      "binary_bytes": {
+        "candidate": 6783840,
+        "parent": 6783792
+      },
+      "allocation_deltas_first_pair": {
+        "named-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "named-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-add": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "allocation_deltas_stable_across_all_five_pairs": true,
+      "all_allocation_and_byte_metrics_identical": true,
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "native_acos_complement_cost": {
+      "candidate_over_parent_median_latency": {
+        "computable-acos-half-cold--128": 1.0116912117503813,
+        "computable-acos-half-cold--32": 1.0000932362953043,
+        "computable-acos-half-cold-0": 0.9889444731332313,
+        "computable-acos-half-warm--128": 0.9889705076998343,
+        "computable-acos-half-warm--32": 1.045048415405372,
+        "computable-acos-half-warm-0": 1.0316822974145128,
+        "computable-acos-near-one-cold--128": 1.0385435205399385,
+        "computable-acos-near-one-cold--32": 1.0729910152561006,
+        "computable-acos-near-one-cold-0": 1.0397377262989582,
+        "computable-acos-near-one-warm--128": 0.9838059356203318,
+        "computable-acos-near-one-warm--32": 0.9517068664055401,
+        "computable-acos-near-one-warm-0": 0.9153210264163371,
+        "imported-negative-acos-half-cold--128": 1.019174988538356,
+        "imported-negative-acos-half-cold--32": 0.9753366740980366,
+        "imported-negative-acos-half-cold-0": 1.0157760034637175,
+        "imported-negative-acos-half-warm--128": 0.9931188966809656,
+        "imported-negative-acos-half-warm--32": 1.0299165611532055,
+        "imported-negative-acos-half-warm-0": 1.0222863188552718,
+        "imported-negative-acos-near-one-cold--128": 1.0391564707067034,
+        "imported-negative-acos-near-one-cold--32": 1.0541668300646918,
+        "imported-negative-acos-near-one-cold-0": 1.0631947636123302,
+        "imported-negative-acos-near-one-warm--128": 0.968688966397649,
+        "imported-negative-acos-near-one-warm--32": 1.0139788021737641,
+        "imported-negative-acos-near-one-warm-0": 0.9993035871371323,
+        "real-acos-half-cold--128": 0.986136953525209,
+        "real-acos-half-cold--32": 0.9989022850747659,
+        "real-acos-half-cold-0": 0.9124354888633304,
+        "real-acos-half-warm--128": 0.9956283305846683,
+        "real-acos-half-warm--32": 1.007245986159118,
+        "real-acos-half-warm-0": 1.0135233319875019,
+        "real-acos-near-one-cold--128": 1.0350014403801537,
+        "real-acos-near-one-cold--32": 1.0150094282207167,
+        "real-acos-near-one-cold-0": 1.0567753089891465,
+        "real-acos-near-one-warm--128": 0.9895206997394167,
+        "real-acos-near-one-warm--32": 0.9938724570732753,
+        "real-acos-near-one-warm-0": 0.983973092049809
+      },
+      "binary_bytes": {
+        "candidate": 6910744,
+        "parent": 6910696
+      },
+      "allocation_deltas_first_pair": {
+        "computable-acos-half-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "computable-acos-half-cold--32": {
+          "allocations": 6,
+          "allocated_bytes": 144,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "computable-acos-half-cold-0": {
+          "allocations": 6,
+          "allocated_bytes": -368,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -56
+        },
+        "computable-acos-half-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-acos-half-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-acos-half-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-acos-near-one-cold--128": {
+          "allocations": 20000,
+          "allocated_bytes": 320000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -56
+        },
+        "computable-acos-near-one-cold--32": {
+          "allocations": 20003,
+          "allocated_bytes": 480072,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "computable-acos-near-one-cold-0": {
+          "allocations": -9994,
+          "allocated_bytes": -80368,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -408
+        },
+        "computable-acos-near-one-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-acos-near-one-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-acos-near-one-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-negative-acos-half-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "imported-negative-acos-half-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "imported-negative-acos-half-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "imported-negative-acos-half-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-negative-acos-half-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-negative-acos-half-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-negative-acos-near-one-cold--128": {
+          "allocations": 20000,
+          "allocated_bytes": 320000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "imported-negative-acos-near-one-cold--32": {
+          "allocations": 20000,
+          "allocated_bytes": 480000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "imported-negative-acos-near-one-cold-0": {
+          "allocations": -10000,
+          "allocated_bytes": -80000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "imported-negative-acos-near-one-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-negative-acos-near-one-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-negative-acos-near-one-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-acos-half-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-acos-half-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-acos-half-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-acos-half-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-acos-half-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-acos-half-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-acos-near-one-cold--128": {
+          "allocations": 20000,
+          "allocated_bytes": 320000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "real-acos-near-one-cold--32": {
+          "allocations": 20000,
+          "allocated_bytes": 480000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "real-acos-near-one-cold-0": {
+          "allocations": -10000,
+          "allocated_bytes": -80000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": -72
+        },
+        "real-acos-near-one-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-acos-near-one-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-acos-near-one-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "allocation_deltas_stable_across_all_five_pairs": true,
+      "all_allocation_and_byte_metrics_identical": false,
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "cost_interpretation": {
+      "all_unfavorable_samples_retained": true,
+      "claim": "Correctness and completed-domain extension; no general speedup claim.",
+      "measurement_limitations": [
+        "Finite single-host measurements with five alternating pairs; timing changes are not causal attribution.",
+        "The counted Rust allocator covers the measured implementation allocations; this is not a process-wide heap bound.",
+        "Former incorrect parent enclosures are reported separately from matched successful cost rows."
+      ],
+      "native": {
+        "all_completed_output_assertions_passed": true,
+        "all_slower_rows_retained_in_raw_result": true,
+        "allocation_deltas_stable_across_pairs": true,
+        "binary_bytes": {
+          "candidate": 6910744,
+          "parent": 6910696
+        },
+        "binary_bytes_delta": 48,
+        "changed_allocator_metrics_first_pair": {
+          "computable-acos-half-cold--128": {
+            "allocated_bytes": 0,
+            "allocations": 0,
+            "frees": 0,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          },
+          "computable-acos-half-cold--32": {
+            "allocated_bytes": 144,
+            "allocations": 6,
+            "frees": 6,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          },
+          "computable-acos-half-cold-0": {
+            "allocated_bytes": -368,
+            "allocations": 6,
+            "frees": 6,
+            "peak_extra_bytes": -56,
+            "retained_bytes": 0
+          },
+          "computable-acos-near-one-cold--128": {
+            "allocated_bytes": 320000,
+            "allocations": 20000,
+            "frees": 20000,
+            "peak_extra_bytes": -56,
+            "retained_bytes": 0
+          },
+          "computable-acos-near-one-cold--32": {
+            "allocated_bytes": 480072,
+            "allocations": 20003,
+            "frees": 20003,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          },
+          "computable-acos-near-one-cold-0": {
+            "allocated_bytes": -80368,
+            "allocations": -9994,
+            "frees": -9994,
+            "peak_extra_bytes": -408,
+            "retained_bytes": 0
+          },
+          "imported-negative-acos-half-cold--128": {
+            "allocated_bytes": 0,
+            "allocations": 0,
+            "frees": 0,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          },
+          "imported-negative-acos-half-cold--32": {
+            "allocated_bytes": 0,
+            "allocations": 0,
+            "frees": 0,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          },
+          "imported-negative-acos-half-cold-0": {
+            "allocated_bytes": 0,
+            "allocations": 0,
+            "frees": 0,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          },
+          "imported-negative-acos-near-one-cold--128": {
+            "allocated_bytes": 320000,
+            "allocations": 20000,
+            "frees": 20000,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          },
+          "imported-negative-acos-near-one-cold--32": {
+            "allocated_bytes": 480000,
+            "allocations": 20000,
+            "frees": 20000,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          },
+          "imported-negative-acos-near-one-cold-0": {
+            "allocated_bytes": -80000,
+            "allocations": -10000,
+            "frees": -10000,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          },
+          "real-acos-near-one-cold--128": {
+            "allocated_bytes": 320000,
+            "allocations": 20000,
+            "frees": 20000,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          },
+          "real-acos-near-one-cold--32": {
+            "allocated_bytes": 480000,
+            "allocations": 20000,
+            "frees": 20000,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          },
+          "real-acos-near-one-cold-0": {
+            "allocated_bytes": -80000,
+            "allocations": -10000,
+            "frees": -10000,
+            "peak_extra_bytes": -72,
+            "retained_bytes": 0
+          }
+        },
+        "iterations_per_row": 10000,
+        "maximum_added_allocated_bytes_per_iteration": 48.0072,
+        "maximum_added_allocation_calls_per_iteration": 2.0003,
+        "maximum_added_peak_bytes_per_row": 0,
+        "median_latency_ratio_range": [
+          0.9124354888633304,
+          1.0729910152561006
+        ],
+        "pairs": 5,
+        "result_sha256": "09f067c502fb5f2eb598d5aff604ec43f5b8447a402731e8ef6ad617d4a08a74",
+        "rows": 36,
+        "rows_with_changed_allocator_metrics": 15,
+        "slower_rows": 20,
+        "slowest_ratios": {
+          "computable-acos-half-warm--32": 1.045048415405372,
+          "computable-acos-half-warm-0": 1.0316822974145128,
+          "computable-acos-near-one-cold--128": 1.0385435205399385,
+          "computable-acos-near-one-cold--32": 1.0729910152561006,
+          "computable-acos-near-one-cold-0": 1.0397377262989582,
+          "imported-negative-acos-near-one-cold--128": 1.0391564707067034,
+          "imported-negative-acos-near-one-cold--32": 1.0541668300646918,
+          "imported-negative-acos-near-one-cold-0": 1.0631947636123302,
+          "real-acos-near-one-cold--128": 1.0350014403801537,
+          "real-acos-near-one-cold-0": 1.0567753089891465
+        }
+      },
+      "ordinary": {
+        "all_completed_output_assertions_passed": true,
+        "all_slower_rows_retained_in_raw_result": true,
+        "allocation_deltas_stable_across_pairs": true,
+        "binary_bytes": {
+          "candidate": 6783840,
+          "parent": 6783792
+        },
+        "binary_bytes_delta": 48,
+        "changed_allocator_metrics_first_pair": {},
+        "iterations_per_row": 100000,
+        "maximum_added_allocated_bytes_per_iteration": 0.0,
+        "maximum_added_allocation_calls_per_iteration": 0.0,
+        "maximum_added_peak_bytes_per_row": 0,
+        "median_latency_ratio_range": [
+          0.9631027484692847,
+          1.0463067812024744
+        ],
+        "pairs": 5,
+        "result_sha256": "f97c38f99fe8fa9387f03b77023f1263ed56e2f4b01672dafbc89b1ab3eee018",
+        "rows": 17,
+        "rows_with_changed_allocator_metrics": 0,
+        "slower_rows": 7,
+        "slowest_ratios": {
+          "named-root-cbor": 1.0119885129579171,
+          "named-root-json": 1.0265076391857302,
+          "opaque-root-cbor": 1.0463067812024744,
+          "opaque-root-json": 0.9951780667762018,
+          "rational-add": 1.0207730445102263,
+          "rational-json": 1.011258668919324,
+          "small-atanh-cbor": 1.012630797583638,
+          "small-atanh-json": 0.9986463299256186,
+          "trig-add-warm": 0.994471574063861,
+          "trig-cbor": 1.0023428932052263
+        }
+      },
+      "resources": {
+        "disk_b_free_bytes": 208677269504,
+        "free_bytes": 74386325504,
+        "host_available_bytes": 107492716544,
+        "log_bytes": 156270952,
+        "new_volume_free_bytes": 1986047561728,
+        "tmp_free_bytes": 66843930624
+      }
+    },
+    "cost_retention": {
+      "all_unfavorable_samples_retained": true,
+      "cost_interpretation": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/acos-complement-admission-20261019-v1/cost-interpretation-v1.json",
+      "cost_interpretation_sha256": "143046a5cdb1b07302c39beeb8e2a2ab90114a6bf488e3f720f61fb22b56ef37",
+      "decision": "Retain the negative rational acos error-budget repair with all measured costs disclosed.",
+      "future_work": "Any future optimization must preserve the admitted domain, independent enclosures, cancellation recovery, wire representation and downstream completion.",
+      "general_speedup_claimed": false,
+      "governing_priority": "Exactness and supported completion precede performance and memory.",
+      "measured_costs": {
+        "native": {
+          "allocation_deltas_stable_across_pairs": true,
+          "executable_growth_bytes": 48,
+          "maximum_added_allocated_bytes_per_iteration": 48.0072,
+          "maximum_added_allocation_calls_per_iteration": 2.0003,
+          "maximum_added_peak_bytes_per_row": 0,
+          "median_latency_ratio_range": [
+            0.9124354888633304,
+            1.0729910152561006
+          ],
+          "rows_more_than_ten_percent_slower": {},
+          "rows_with_changed_allocator_metrics": 15
+        },
+        "ordinary": {
+          "allocation_deltas_stable_across_pairs": true,
+          "executable_growth_bytes": 48,
+          "maximum_added_allocated_bytes_per_iteration": 0.0,
+          "maximum_added_allocation_calls_per_iteration": 0.0,
+          "maximum_added_peak_bytes_per_row": 0,
+          "median_latency_ratio_range": [
+            0.9631027484692847,
+            1.0463067812024744
+          ],
+          "rows_more_than_ten_percent_slower": {},
+          "rows_with_changed_allocator_metrics": 0
+        }
+      },
+      "measurement_limits": "Five alternating pairs on one host; latency changes alone do not establish causation. Rust allocator instrumentation is not a process-wide heap bound. Former false enclosures are correctness failures, not faster successful operations.",
+      "reason": "The unchanged parent publishes six false enclosures after valid shared-pi cache warming, and the independent regression fails against it. The repair reserves both native sample errors before subtraction and rounding. The original scalar and downstream workloads still complete, and every matched successful cost row passes independent enclosure assertions under its original limits.",
+      "tradeoff": "Two guard bits can require additional native refinement and allocation. All measured favorable and adverse effects remain in the record. Correcting false cached enclosures has priority over reducing that required work; the former incorrect outcomes are recorded separately from matched successful rows."
+    },
+    "remaining_limitations": [
+      "General expression domains, other kernel ranges, full-width precision and typed native evaluation/cancellation remain open.",
+      "The isolated fallible-evaluation prototype remains unadmitted.",
+      "External containment does not establish internal total-work, heap, expression-growth or cancellation contracts.",
+      "Finite and concurrent tests do not establish exhaustive correctness, formal verification, coverage targets or all possible thread schedules.",
+      "The complete useful-workflow corpus, clean shipped distribution, real foreign consumers and full CI/DRC gates remain open.",
+      "Historical missing evidence was neither reaudited nor recovered."
+    ],
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": null,
+    "disk_b_quota_mode": "User authorized available artifact volume capacity; no retained-artifact quota.",
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "all_adverse_results_retained": true,
+    "next": "Continue scalar domain/evidence ownership and ordinary strict completion, then complete the shipped user path and release validation.",
+    "parent_revision": "8f5a82169d4d3c905b0c97fdb23b75083f4bb6af",
+    "review": "docs/evidence/2026-10-19-acos-complement-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-acos-complement-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/acos-complement-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "runtime_admitted": true,
+    "general_speedup_claimed": false
   }
 },
   "status_meanings": {

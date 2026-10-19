@@ -423,6 +423,10 @@ The integral arctangent kernel represents `atan(1/n)` for nonzero integers.
 Unit denominators reuse the native exact `atan(±1) = ±π/4` identity, so valid
 imported endpoints refine without the slowly converging unit-argument series.
 The stored graph and its wire representation remain intact.
+The negative-rational `acos` complement reserves the combined error of its
+π and positive-`acos` samples before subtraction, then rounds once. This
+keeps its enclosure valid when a shared π sample is reused at a coarser
+precision, including through public construction and imported graphs.
 Inverse-cosine endpoint facts distinguish `acos(1) = acosh(1) = 0`; an imported
 `acosh` node needs evidence about its argument before claiming a positive sign.
 The native rational reader recognizes these exact endpoints so later arithmetic
