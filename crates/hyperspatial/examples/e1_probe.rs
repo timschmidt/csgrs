@@ -20,6 +20,9 @@ mod inverse_isometric;
 #[path = "../dev/ellipsoidal_mercator.rs"]
 mod ellipsoidal_mercator;
 
+#[path = "../dev/transverse_mercator.rs"]
+mod transverse_mercator;
+
 fn main() {
     let encoded = std::env::args()
         .nth(1)
@@ -39,6 +42,7 @@ fn main() {
         "normal_offset" => normal_offset::exercise(data),
         "mercator" => mercator::exercise(data),
         "ellipsoidal_mercator" => ellipsoidal_mercator::exercise(data),
+        "transverse_mercator" => transverse_mercator::exercise(data),
         "inverse_isometric" => inverse_isometric::exercise(data),
         _ => panic!("unknown workload {workload}"),
     });

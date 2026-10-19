@@ -1,6 +1,6 @@
 use crate::{Context, Error, Receipt, Result};
 use hyperreal::Real;
-use std::cmp::Ordering;
+use std::{cmp::Ordering, sync::Arc};
 
 /// An exact represented angle, stored in radians without implicit wrapping.
 #[derive(Clone, Debug, PartialEq)]
@@ -52,6 +52,8 @@ pub struct Latitude {
     // Only the native inverse constructor creates this relation. Its equation
     // proves the open range even when a bounded comparison cannot resolve a pole.
     isometric: Option<(Real, Real)>,
+    // Created only by the finite-tangent constructor below.
+    atan_tangent: Option<Real>,
 }
 
 impl Latitude {
@@ -73,11 +75,33 @@ impl Latitude {
             angle,
             receipt,
             isometric: Some((psi, axis_ratio)),
+            atan_tangent: None,
+        })
+    }
+
+    pub(crate) fn from_tangent(
+        tangent: Real,
+        parent: Receipt,
+        context: &mut Context,
+    ) -> Result<Self> {
+        context.checkpoint()?;
+        let angle = Angle::radians(tangent.clone().atan()?);
+        let receipt = context.receipt(
+            "latitude from finite tangent: open domain",
+            vec![parent],
+            Vec::new(),
+            None,
+        )?;
+        Ok(Self {
+            angle,
+            receipt,
+            isometric: None,
+            atan_tangent: Some(tangent),
         })
     }
 
     pub(crate) fn has_open_domain(&self) -> bool {
-        self.isometric.is_some()
+        self.isometric.is_some() || self.atan_tangent.is_some()
     }
 
     pub(crate) fn isometric_for(&self, axis_ratio: &Real) -> Option<&Real> {
@@ -137,6 +161,7 @@ impl Latitude {
             angle,
             receipt,
             isometric: None,
+            atan_tangent: None,
         })
     }
     /// Validated angle (its validation certainty is in the receipt).
@@ -154,6 +179,17 @@ impl Latitude {
 pub struct Longitude {
     angle: Angle,
     wrapped: bool,
+    transverse: Option<Arc<TransverseRelation>>,
+}
+
+/// Private joint inverse relation. Only a validated inverse can construct it.
+#[derive(Clone, Debug)]
+struct TransverseRelation {
+    central_meridian: Real,
+    latitude: Real,
+    eta: Real,
+    xi: Real,
+    receipt: Receipt,
 }
 
 impl Longitude {
@@ -162,6 +198,7 @@ impl Longitude {
         Self {
             angle,
             wrapped: false,
+            transverse: None,
         }
     }
     /// Wraps to [-pi, pi) using Hyperreal's certified Euclidean remainder.
@@ -173,7 +210,53 @@ impl Longitude {
         Ok(Self {
             angle: Angle::radians(radians),
             wrapped: true,
+            transverse: None,
         })
+    }
+
+    pub(crate) fn transverse_inverse(
+        angle: Angle,
+        central_meridian: Real,
+        latitude: Real,
+        eta: Real,
+        xi: Real,
+        receipt: Receipt,
+    ) -> Self {
+        Self {
+            angle,
+            wrapped: false,
+            transverse: Some(Arc::new(TransverseRelation {
+                central_meridian,
+                latitude,
+                eta,
+                xi,
+                receipt,
+            })),
+        }
+    }
+
+    pub(crate) fn transverse_range(&self, central_meridian: &Real) -> bool {
+        self.transverse.as_ref().is_some_and(|proof| {
+            proof.central_meridian == *central_meridian
+                && proof.receipt.certainty() != crate::Certainty::Approximate
+        })
+    }
+
+    pub(crate) fn transverse_coordinates(
+        &self,
+        central_meridian: &Real,
+        latitude: &Real,
+    ) -> Option<(&Real, &Real)> {
+        self.transverse
+            .as_ref()
+            .filter(|proof| self.transverse_range(central_meridian) && proof.latitude == *latitude)
+            .map(|proof| (&proof.eta, &proof.xi))
+    }
+
+    /// Inherited inverse-construction evidence, when present. Cloning this
+    /// longitude preserves its qualification in subsequent geometry and parameters.
+    pub fn receipt(&self) -> Option<&Receipt> {
+        self.transverse.as_ref().map(|proof| &proof.receipt)
     }
     /// Longitude angle with its chosen wrapping interpretation.
     pub fn angle(&self) -> &Angle {

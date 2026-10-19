@@ -19,7 +19,10 @@ the ellipsoidal projection inverse; its
 [scalar admission](../hyperreal/docs/admission-inverse-isometric-latitude.md)
 and [projection admission](docs/admission/e2-ellipsoidal.md) distinguish the
 scalar proof from coordinate identity, range evidence and downstream composition.
-Transverse Mercator/UTM and geodesic measurements remain open within E2.
+E2 also provides the exact spherical transverse chart and UTM angular zone
+selection, with retained inverse relations and explicit pole conventions. The
+[transverse admission](docs/admission/e2-transverse.md) records this prerequisite.
+Ellipsoidal Transverse Mercator/UTM and geodesic measurements remain open within E2.
 See the [spherical Mercator admission](docs/admission/e2-mercator.md),
 the [forward/local admission](docs/admission/e1-native.md)
 and [closest-point inverse admission](docs/admission/e1-inverse.md).
@@ -147,6 +150,13 @@ longitude policy, then ellipsoidal Mercator and Transverse Mercator/UTM.
 Record each projection's parameters, area of use, inverse domain and model.
 Handle zone/hemisphere selection, antimeridian seams, and Norway/Svalbard rules
 explicitly. Web display clipping is a separate boundary operation.
+
+Implemented prerequisites: exact spherical transverse forward/inverse on its
+closed longitude chart, scaled inverse for huge finite eastings, and exact UTM
+zone/hemisphere selection with special areas. Ellipsoidal conformal-latitude
+conversion can reuse the native isometric scalar. Rectification still needs
+its own finite-model or certified-remainder contract; the spherical chart and
+zone selector do not supply ellipsoidal projected coordinates.
 
 Admit Transverse Mercator series only with a stated finite-model contract or
 certified remainder bounds relative to the ideal projection. Exact scalar

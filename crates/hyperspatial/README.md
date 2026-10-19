@@ -9,7 +9,8 @@ ephemerides.
 The first implementation provides exact angular/length units, validated
 spherical/oblate/prolate ellipsoids, geodetic/ECEF conversion, and anchored
 ENU/NED position/vector transforms, plus spherical/pseudo-Mercator and
-ellipsoidal Mercator projections.
+ellipsoidal Mercator projections, the spherical transverse chart, and UTM
+zone/hemisphere selection.
 Reference identity, coordinate epoch,
 source construction and predicate evidence survive supported compositions.
 The package is unpublished; the development plan is still in progress.
@@ -117,11 +118,51 @@ validation. A relation is reused only for the same represented axis ratio.
 certified scalar comparisons when mathematical equality of different expressions
 is required.
 
+`SphericalTransverseMercator` prepares a genuine sphere. Its chart includes
+both poles and longitude differences up to ±90°; the two equatorial edges
+are singular. Inversion at a geographic pole requires `PoleMeridian::Use`.
+Finite eastings may be arbitrarily large: the inverse uses scaled exponential
+forms and retains a joint latitude/longitude relation for exact reprojection.
+Changing the latitude or central meridian invalidates reuse of that relation.
+Cloned longitudes retain qualification, exposed by `Longitude::receipt`, when
+used in new positions, projection parameters or explicit pole conventions.
+
+`UtmSelection` classifies canonical angles in longitude [-180°,180°), latitude
+[-80°,84°), including Norway/Svalbard exceptions. It retains the original
+position and decisions; `parameters` retains this evidence in the conventional
+scale and false origins. Selection does not perform ellipsoidal UTM projection.
+
+```rust
+use hyperspatial::*;
+let mut context = Context::new(PredicatePolicy::STRICT, Limits::default());
+let chart = SphericalTransverseMercator::new(
+    Length::metres(5.into()), ReferenceFrame::fixed("example:sphere")?,
+    TransverseMercatorParameters::greenwich(TransverseLongitudePolicy::RejectOutsideChart),
+    &mut context,
+)?;
+let source = GeodeticPosition::new(
+    Latitude::new(Angle::degrees(30.into()), &mut context)?,
+    Longitude::unrolled(Angle::degrees(2.into())), Length::metres(0.into()),
+    chart.ellipsoid().clone(), chart.reference().clone(),
+    InputProvenance::new("spherical example", InputAccuracy::ExactModel), &mut context,
+)?;
+let point = chart.project(&source, &mut context)?;
+let fresh = chart.position(point.coordinates().clone(),
+    InputProvenance::new("exact chart coordinates", InputAccuracy::ExactModel), &mut context)?;
+let inverse = chart.unproject(&fresh, PoleMeridian::Reject, &mut context)?;
+assert_ne!(inverse.receipt().certainty(), Certainty::Approximate);
+let zone = UtmSelection::select(&source, &mut context)?;
+assert_eq!(zone.zone().number(), 31);
+assert_eq!(zone.hemisphere(), Hemisphere::North);
+assert!(zone.parameters()?.receipt().is_some());
+# Ok::<(), hyperspatial::Error>(())
+```
+
 `Limits` bounds work checkpoints, batch length and evidence depth. These are
 not scalar heap-byte or wall-clock bounds. Cancellation is cooperative between
 native calls and cannot change the meaning of an already returned coordinate.
 
-Transverse Mercator/UTM, geodesics, datum operations,
+Ellipsoidal Transverse Mercator/UTM, geodesics, datum operations,
 serialization, celestial/observer transformations
 and ephemerides remain under development.
 No physical accuracy is inferred from exact evaluation of a model. Raw Cartesian
@@ -129,6 +170,8 @@ ingress requires an explicit `InputProvenance`; missing uncertainty stays unknow
 
 - [Development plan](DEVELOPMENT.md): scope, ownership, proposed API, stages,
   and acceptance criteria.
+- [Transverse chart admission](docs/admission/e2-transverse.md): spherical
+  equations, UTM selection, inverse relations and validation evidence.
 - [Rust ecosystem comparison](docs/ecosystem.md): available crates and their
   relationship to the existing workspace.
 - [Earth and sky research](docs/astronomy.md): celestial frames, time scales,

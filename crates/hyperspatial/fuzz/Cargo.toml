@@ -24,6 +24,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "transverse_mercator"
+path = "fuzz_targets/transverse_mercator.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "inverse_isometric"
 path = "fuzz_targets/inverse_isometric.rs"
 test = false

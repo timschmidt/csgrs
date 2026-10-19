@@ -123,12 +123,10 @@ impl EcefPosition {
             };
             (Angle::radians(latitude), height, longitude, None)
         };
-        let selection = context.receipt(
-            "geodetic closest-point selection",
-            vec![self.receipt().clone(), ellipsoid.receipt().clone()],
-            decisions,
-            None,
-        )?;
+        let mut parents = vec![self.receipt().clone(), ellipsoid.receipt().clone()];
+        parents.extend(longitude.receipt().cloned());
+        let selection =
+            context.receipt("geodetic closest-point selection", parents, decisions, None)?;
         let latitude = Latitude::derived(latitude, selection, context)?;
         let receipt = context.receipt(
             "ECEF to geodetic closest",

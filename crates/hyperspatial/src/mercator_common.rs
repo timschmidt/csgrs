@@ -52,12 +52,9 @@ impl Definition {
             return Err(Error::InvalidInput("Mercator scale must be positive"));
         }
         let scale_radius = ellipsoid.equatorial_radius().as_metres() * &parameters.scale;
-        let receipt = context.receipt(
-            operation,
-            vec![ellipsoid.receipt().clone()],
-            decisions,
-            None,
-        )?;
+        let mut parents = vec![ellipsoid.receipt().clone()];
+        parents.extend(parameters.central_meridian.receipt().cloned());
+        let receipt = context.receipt(operation, parents, decisions, None)?;
         Ok(Arc::new(Self {
             ellipsoid,
             reference,

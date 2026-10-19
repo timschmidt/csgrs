@@ -31,8 +31,8 @@ arguments = ["cargo", "test", "--locked", "-p", "hyperspatial", "--all-features"
 native_arguments = ["cargo", "test", "--locked", "-p", "hyperreal", "--no-default-features",
                     "--features", "serde,dispatch-trace"]
 commands = [arguments,
-            native_arguments + ["--test", "inverse_isometric_latitude"],
-            native_arguments + ["--lib", "isometric_precision_tests"]]
+            native_arguments + ["--test", "inverse_isometric_latitude", "--test", "negative_exp_tail"],
+            native_arguments + ["--lib"]]
 with tempfile.TemporaryDirectory(prefix="profiles-", dir=target) as profiles:
     environment["LLVM_PROFILE_FILE"] = str(Path(profiles) / "%p-%m.profraw")
     executables = set()
@@ -123,6 +123,44 @@ report["native_inverse"] = {
     "physical_executable_lines": native_total,
     "source_sha256": {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
                       for p in native_sources},
+}
+# The repaired exponential paths predate this crate. Report their complete
+# function denominators separately, without rebranding this as whole-native
+# coverage or changing the existing Hyperspatial/inverse gates.
+exp_ranges = {}
+for path, start_marker, end_marker in [
+    (root / "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+     "fn exp(", "fn expm1("),
+    (root / "crates/hyperreal/src/real/arithmetic/elementary_functions.rs",
+     "    pub fn exp(", "    /// Raise two to this Real exponent."),
+]:
+    lines = path.read_text().splitlines()
+    start = next(i for i, line in enumerate(lines, 1) if line.startswith(start_marker))
+    end = next(i for i, line in enumerate(lines, 1) if i > start and line.startswith(end_marker))
+    exp_ranges[str(path)] = {"start": start, "end_exclusive": end, "count": 0, "covered": 0}
+exp_annotated = subprocess.check_output(
+    [str(llvm / "llvm-cov"), "show", *cov_args, *exp_ranges,
+     "--show-instantiations=false", "--show-line-counts-or-regions"], text=True)
+active = None
+for line in exp_annotated.splitlines():
+    if line.endswith(":") and line[:-1] in exp_ranges:
+        active = exp_ranges[line[:-1]]
+        continue
+    fields = line.split("|", 2)
+    if active is None or len(fields) != 3 or not fields[0].strip().isdigit():
+        continue
+    number, count = int(fields[0].strip()), fields[1].strip()
+    if count and active["start"] <= number < active["end_exclusive"]:
+        active["count"] += 1
+        active["covered"] += count != "0"
+if any(not row["count"] for row in exp_ranges.values()):
+    raise SystemExit("LLVM reported no repaired exponential function lines")
+report["native_exponential"] = {
+    "scope": "complete Computable exp approximation and Real::exp functions; physical executable lines",
+    "regions_functions_branches": "not measured separately for this subset",
+    "files": {str(Path(p).relative_to(root)): row for p, row in exp_ranges.items()},
+    "source_sha256": {str(Path(p).relative_to(root)): hashlib.sha256(Path(p).read_bytes()).hexdigest()
+                      for p in exp_ranges},
 }
 output = target / "coverage.json"
 output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")

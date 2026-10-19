@@ -30,6 +30,10 @@ mod e_plan_tests;
 mod precision_tests;
 
 #[cfg(test)]
+#[path = "approximation/exp_tail_tests.rs"]
+mod exp_tail_tests;
+
+#[cfg(test)]
 mod chudnovsky_pi_tests {
     use super::*;
     use rug::{Float, float::Constant, float::Round};

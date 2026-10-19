@@ -53,3 +53,7 @@ harness = false
 [[bench]]
 name = "ellipsoidal_mercator"
 harness = false
+
+[[bench]]
+name = "transverse_mercator"
+harness = false

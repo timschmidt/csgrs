@@ -187,12 +187,9 @@ impl GeodeticPosition {
         provenance: InputProvenance,
         context: &mut Context,
     ) -> Result<Self> {
-        let receipt = context.receipt(
-            "geodetic input",
-            vec![latitude.receipt().clone(), ellipsoid.receipt().clone()],
-            Vec::new(),
-            Some(provenance),
-        )?;
+        let mut parents = vec![latitude.receipt().clone(), ellipsoid.receipt().clone()];
+        parents.extend(longitude.receipt().cloned());
+        let receipt = context.receipt("geodetic input", parents, Vec::new(), Some(provenance))?;
         Ok(Self {
             latitude,
             longitude,
@@ -295,6 +292,13 @@ pub enum GeodeticSource {
     SphericalMercator(Arc<crate::ProjectedPosition<crate::SphericalMercator>>),
     /// Inverse of retained ellipsoidal Mercator coordinates and parameters.
     EllipsoidalMercator(Arc<crate::ProjectedPosition<crate::EllipsoidalMercator>>),
+    /// Inverse of spherical transverse coordinates, with any selected pole meridian.
+    SphericalTransverseMercator {
+        /// Retained projected source and prepared chart.
+        position: Arc<crate::ProjectedPosition<crate::SphericalTransverseMercator>>,
+        /// Explicit local meridian selected at a geographic pole.
+        pole_meridian: Option<Longitude>,
+    },
     /// Closest-point inverse of the retained Cartesian position.
     EcefClosest {
         /// Original Cartesian source, including frame, epoch and qualification.

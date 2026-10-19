@@ -43,7 +43,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "target/hyperspatial-directed")
     parser.add_argument("--seed", type=int, default=20261018)
-    parser.add_argument("--workload", choices=("normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator"), default="normal_offset")
+    parser.add_argument("--workload", choices=("normal_offset", "mercator", "inverse_isometric", "ellipsoidal_mercator", "transverse_mercator"), default="normal_offset")
     parser.add_argument("--candidates", type=int, default=4)
     parser.add_argument("--generations", type=int, default=2)
     parser.add_argument("--timeout", type=float, default=15)
@@ -59,7 +59,7 @@ def main():
     metadata = json.loads(run_text("cargo", "metadata", "--no-deps", "--format-version", "1"))
     executable = Path(metadata["target_directory"]) / "release/examples/e1_probe"
     source_files = sorted((CRATE / "src").glob("*.rs")) + [
-        CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "dev/ellipsoidal_mercator.rs", CRATE / "dev/inverse_isometric.rs",
+        CRATE / "dev/normal_offset.rs", CRATE / "dev/mercator.rs", CRATE / "dev/ellipsoidal_mercator.rs", CRATE / "dev/inverse_isometric.rs", CRATE / "dev/transverse_mercator.rs",
         CRATE / "examples/e1_probe.rs",
         Path(__file__).resolve(), CRATE / "Cargo.toml", ROOT / "Cargo.lock",
         ROOT / "crates/hyperreal/tests/support/representations.rs",
@@ -74,7 +74,7 @@ def main():
                           for p in source_files},
         "features": ["dispatch-trace", "dev:hyperreal/serde"],
         "cache": ("fresh process per case; optional display warming from byte 5 "
-                  + ("bit 2" if args.workload in ("mercator", "ellipsoidal_mercator") else "bit 1")
+                  + ("bit 2" if args.workload in ("mercator", "ellipsoidal_mercator", "transverse_mercator") else "bit 1")
                   + "; scalar global caches follow native defaults"),
         "policy": "STRICT", "families": 22,
         "candidates_per_family": args.candidates, "generations": args.generations,

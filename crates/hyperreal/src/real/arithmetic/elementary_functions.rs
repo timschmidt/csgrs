@@ -378,14 +378,11 @@ impl Real {
             }
             Ln(ln) => {
                 if let Some(int) = self.rational.to_big_integer() {
-                    // exp(k ln n) folds to n^k when k is integral.
+                    // exp(k ln n) is n^k. Reuse the Real power contract so
+                    // oversized rational outputs retain an exact symbolic
+                    // expression instead of failing the eager rational budget.
                     crate::trace_dispatch!("real", "exp", "integer-log-collapse");
-                    return Ok(Self {
-                        rational: ln.clone().powi(int)?,
-                        class: One,
-                        computable: None,
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
-                    });
+                    return Self::new(ln.clone()).powi(int);
                 }
                 if self.rational.denominator() == unsigned::TWO.deref() {
                     if self.rational.numerator() == unsigned::ONE.deref() {
