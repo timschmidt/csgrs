@@ -381,7 +381,19 @@ when a zero outer factor would hide the invalid child. Small-angle `sinc` and
 constants whose certified magnitude proves they exceed that bound. This
 tightens earlier unchecked private representations; the public trigonometric
 constructors retain their wider input domains through argument reduction.
-General non-leaf kernel ranges remain incomplete.
+The domain and small-kernel checks also recognize defined rational expressions
+using the shared quotient evaluator: addition, multiplication, squares,
+negation, powers-of-two scaling, three-term linear combinations and reciprocals
+with proved nonzero denominators. For example, `inverse(1 + (-1))` now fails
+import before multiplication by zero or a named certificate can conceal it.
+Such invalid graphs previously accepted, or reported as `UnknownCertificate`,
+now return `ParseError`. Valid graphs retain their wire representation.
+This optional proof uses the existing limits of 512 nodes, depth 64, 8192
+operations and 4096 coefficient bits; existing exact-leaf checks still apply
+to larger leaves. Both operands are checked even under a zero factor. An
+opaque operand or exhausted proof budget leaves the domain unproved; acceptance
+does not certify an arbitrary graph's domain. General expression domains,
+kernel ranges and whole-input resource limits remain incomplete.
 Inverse-cosine endpoint facts distinguish `acos(1) = acosh(1) = 0`; an imported
 `acosh` node needs evidence about its argument before claiming a positive sign.
 The native rational reader recognizes these exact endpoints so later arithmetic

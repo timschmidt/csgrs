@@ -60,6 +60,32 @@ fn an_undecided_import_cannot_publish_a_model() {
 
 #[test]
 #[cfg(feature = "svg-io")]
+fn an_undefined_arithmetic_import_cannot_publish_a_model() {
+    // The inner denominator is 1 + (-1), even when the outer scale is zero.
+    let graph = r#"{"internal":{"Inverse":{"internal":{"Add":[{"internal":{"Int":[1,[1]]}},{"internal":{"Int":[-1,[1]]}}]}}}}"#;
+    for rational in [
+        r#"{"sign":0,"numerator":[],"denominator":[1]}"#,
+        r#"{"sign":1,"numerator":[1],"denominator":[1]}"#,
+    ] {
+        let wire =
+            format!(r#"{{"rational":{rational},"class":"Irrational","computable":{graph}}}"#);
+        let mut constructed = false;
+        let result = csgrs::Real::from_json(&wire)
+            .map_err(ValidationError::from)
+            .and_then(|side| {
+                constructed = true;
+                csgrs::solid::cube(side)
+            });
+        assert!(!constructed);
+        assert!(matches!(
+            result,
+            Err(ValidationError::Scalar(Problem::ParseError))
+        ));
+    }
+}
+
+#[test]
+#[cfg(feature = "svg-io")]
 fn svg_import_retains_the_typed_scalar_failure() {
     use csgrs::io::{IoError, svg::import_svg};
     use std::fmt::Write;

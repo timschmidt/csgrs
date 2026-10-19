@@ -22,7 +22,10 @@ impl Real {
     /// [`Problem::ParseError`]. An unproved named certificate or a payload whose
     /// equality is undecided returns [`Problem::UnknownCertificate`]. A supplied
     /// payload is preserved only after proving its relationship to the class.
-    /// Opaque expression graphs are not yet fully validated for domain errors.
+    /// Known domain and kernel-range violations, including bounded rational
+    /// arithmetic arguments, return [`Problem::ParseError`] before an outer
+    /// scale or identity can hide them. Opaque expressions and expressions that
+    /// exceed the rational recognizer's budget are not fully domain-validated.
     pub fn from_json(json: &str) -> Result<Self, Problem> {
         serde_json::from_str::<RealWire>(json)
             .map_err(|_| Problem::ParseError)?

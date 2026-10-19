@@ -19512,6 +19512,247 @@
     "public_distribution_complete": false,
     "hypervoxel_deferred_by_user": true,
     "next": "Continue native domain obligations and ordinary strict-mode completion, then the complete external user-path and release validation."
+  },
+  "arithmetic_graph_domain_admission": {
+    "decision": "Retain shared bounded rational proofs at native graph admission; reject known invalid domains and small-kernel ranges before outer identities or wrappers publish a value.",
+    "admitted_scope": "Reject proved domain/range violations before importing Computable or Real. Preserve valid graph bytes, existing exact-leaf proofs, and genuinely undecided named-certificate diagnostics.",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1089
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 940
+      }
+    },
+    "debug_units_passed": 818,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-solid_cache": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "cost": {
+      "matched_rows": 17,
+      "iterations_per_row": 100000,
+      "pairs": 5,
+      "all_completed_contract_assertions_passed": true,
+      "candidate_over_parent_median_latency": {
+        "named-root-cbor": 0.9995452278289669,
+        "named-root-json": 0.9908116275935736,
+        "opaque-add-fresh": 1.019326798511095,
+        "opaque-add-warm": 0.9940439886999437,
+        "opaque-root-cbor": 1.0168179268558446,
+        "opaque-root-json": 1.017102241703678,
+        "radical-add-fresh": 1.005019784027426,
+        "radical-add-warm": 1.006315454501742,
+        "rational-add": 1.0348145104630349,
+        "rational-cbor": 0.9846284270220745,
+        "rational-json": 0.9934326769876561,
+        "small-atanh-cbor": 0.994519061466657,
+        "small-atanh-json": 1.0109581007322326,
+        "trig-add-fresh": 1.097079080316558,
+        "trig-add-warm": 0.9877516171429307,
+        "trig-cbor": 0.9990334414317784,
+        "trig-json": 1.0306668446877494
+      },
+      "allocation_counts_and_bytes_identical": true,
+      "executables_bytes": {
+        "candidate": 6772328,
+        "parent": 6770816
+      },
+      "interpretation": "Limited matched measurements, including all slower rows; no general speedup claim. Correctness repair takes precedence over the reported cost increases.",
+      "raw_evidence": "/run/media/tim/Disk B/csgrs/domain-admission-20261018-v1/ordinary-cost-v3/result-v1.json",
+      "general_speedup_claimed": false
+    },
+    "remaining_limitations": [
+      "General opaque-expression domain/range validation remains open; a preserved unresolved-opaque regression still demonstrates why cached zero alone is not a domain proof.",
+      "The optional rational recognizer is bounded per attempt; parsing, graph allocation, direct large leaves and total import work do not have a complete internal resource/cancellation contract.",
+      "Native unchecked partial-function construction preconditions are unchanged.",
+      "This finite matrix does not establish exhaustive correctness, formal verification, coverage targets or the entire useful-workload corpus.",
+      "Real foreign-language consumers, clean shipped-distribution validation, full geometry/DRC runtime gates and the complete properties plan remain open.",
+      "Historical missing artifacts were neither reaudited nor recovered."
+    ],
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": 145,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "all_adverse_results_retained": true,
+    "next": "Continue unresolved native domain obligations and ordinary strict completion, then complete user-path and release validation.",
+    "parent_revision": "e417fdbeacc8e8f9731c65082ddefcee251d87c6",
+    "review": "docs/evidence/2026-10-18-arithmetic-domain-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-arithmetic-domain-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs/domain-admission-20261018-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "runtime_admitted": true,
+    "general_speedup_claimed": false
   }
 },
   "status_meanings": {

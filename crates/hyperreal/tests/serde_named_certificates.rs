@@ -411,11 +411,11 @@ fn zero_factors_cannot_certify_undefined_payloads() {
         let wire = json!({"rational":q(scale,1),"class":{"Exp":q(1,1)},"computable":graph});
         assert_eq!(
             Real::from_json(&wire.to_string()),
-            Err(hyperreal::Problem::UnknownCertificate)
+            Err(hyperreal::Problem::ParseError)
         );
         assert_eq!(
             Real::from_bytes(&cbor(&wire)),
-            Err(hyperreal::Problem::UnknownCertificate)
+            Err(hyperreal::Problem::ParseError)
         );
     }
 }

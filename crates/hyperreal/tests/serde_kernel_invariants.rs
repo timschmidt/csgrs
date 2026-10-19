@@ -133,8 +133,24 @@ fn inverse_cosine_endpoints_preserve_zero_facts_and_downstream_failure() {
 }
 
 #[test]
-fn endpoint_proofs_do_not_erase_unresolved_domain_obligations() {
+fn endpoint_proofs_reject_undefined_rational_arithmetic_children() {
     let denominator = node("Add", json!([leaf(1, 1), leaf(-1, 1)]));
+    let invalid = node("Inverse", denominator);
+    let hidden = node("Multiply", json!([leaf(0, 1), invalid]));
+    assert!(serde_json::from_value::<Computable>(hidden.clone()).is_err());
+    let argument = node("Add", json!([hidden, leaf(1, 1)]));
+    for kind in ["AcoshNearOne", "AcoshDirect"] {
+        let graph = node(kind, argument.clone());
+        assert!(serde_json::from_value::<Computable>(graph).is_err());
+    }
+}
+
+#[test]
+fn endpoint_proofs_do_not_erase_unresolved_domain_obligations() {
+    // The rational-only domain proof deliberately does not cancel opaque
+    // atoms. Keep this unresolved case alongside the rejected rational one.
+    let sine = node("PrescaledSin", leaf(1, 1));
+    let denominator = node("Add", json!([sine, node("Negate", sine.clone())]));
     let invalid = node("Inverse", denominator);
     let hidden = node("Multiply", json!([leaf(0, 1), invalid]));
     let value: Computable = serde_json::from_value(hidden.clone()).unwrap();

@@ -6,9 +6,10 @@
 ///
 /// With `serde`, decoding rejects out-of-domain exact rational arguments to
 /// partial functions and known violations of stored kernel parameter ranges.
-/// This check does not prove that an arbitrary expression is defined: general
-/// non-leaf domain/range obligations and quantile seed proofs still apply.
-/// Deserialization does not refine an operand to decide its domain.
+/// This includes defined rational arithmetic recognized by the bounded shared
+/// evaluator. An opaque expression or an exhausted recognition budget leaves
+/// the domain unproved; decoding does not validate arbitrary expression domains
+/// or refine an operand to decide them. Valid expression graphs are preserved.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg(not(verus_keep_ghost))]
@@ -62,6 +63,16 @@ impl<'de> Deserialize<'de> for Node {
 
 #[cfg(all(feature = "serde", not(verus_keep_ghost)))]
 impl Node {
+    fn serialized_rational_argument(value: &Computable) -> Option<Rational> {
+        // Preserve existing exact proofs, including large rational leaves.
+        // The bounded fallback checks every operand and inverse denominator;
+        // unlike general algebraic cancellation, it never erases an opaque
+        // child's unresolved domain obligation, even under a zero factor.
+        value
+            .exact_rational()
+            .or_else(|| value.bounded_defined_rational())
+    }
+
     fn check_serialized_kernel_parameters(
         approximation: &Approximation,
     ) -> Result<(), &'static str> {
@@ -80,7 +91,7 @@ impl Node {
                     || Computable::exact_rational_half_pi_shortcut_magnitude(r).is_none()
             }
             Approximation::SincSmall(argument) | Approximation::CoscSmall(argument) => {
-                if let Some(rational) = argument.exact_rational() {
+                if let Some(rational) = Self::serialized_rational_argument(argument) {
                     let limit = Rational::fraction(3, 4).expect("nonzero constant denominator");
                     rational.compare_magnitude(&limit) == Ordering::Greater
                 } else if let Approximation::Constant(constant) = &argument.internal.approximation {
@@ -93,7 +104,7 @@ impl Node {
                         .flatten()
                         .is_some_and(|msd| msd >= 0)
                 } else {
-                    // General non-leaf domain/range admission remains open.
+                    // General expression domain/range admission remains open.
                     false
                 }
             }
@@ -109,46 +120,44 @@ impl Node {
     fn check_serialized_rational_domain(approximation: &Approximation) -> Result<(), &'static str> {
         // Children have already passed the same check while decoding. Reject
         // an undefined child before a parent can hide it with multiplication
-        // by zero, cancellation, or an outer Real scale. Only inspect exact
-        // leaves; an inconclusive domain proof must not reject a valid graph.
+        // by zero, cancellation, or an outer Real scale. An inconclusive
+        // bounded rational proof must not reject a valid graph.
         let outside_closed_unit = |r: &Rational| r < &-Rational::one() || r > &Rational::one();
         let outside_open_unit = |r: &Rational| r <= &-Rational::one() || r >= &Rational::one();
         let outside_positive_unit = |r: &Rational| r.sign() == Sign::Minus || r > &Rational::one();
         let invalid = match approximation {
-            Approximation::Inverse(value) | Approximation::PrescaledCot(value) => value
-                .exact_rational()
-                .is_some_and(|r| r.sign() == Sign::NoSign),
-            Approximation::Sqrt(value) | Approximation::NthRoot(value, _) => value
-                .exact_rational()
-                .is_some_and(|r| r.sign() == Sign::Minus),
-            Approximation::PrescaledLn(value) => value
-                .exact_rational()
-                .is_some_and(|r| r <= -Rational::one()),
+            Approximation::Inverse(value) | Approximation::PrescaledCot(value) => {
+                Self::serialized_rational_argument(value).is_some_and(|r| r.sign() == Sign::NoSign)
+            }
+            Approximation::Sqrt(value) | Approximation::NthRoot(value, _) => {
+                Self::serialized_rational_argument(value).is_some_and(|r| r.sign() == Sign::Minus)
+            }
+            Approximation::PrescaledLn(value) => {
+                Self::serialized_rational_argument(value).is_some_and(|r| r <= -Rational::one())
+            }
             // These variants store x for ln(1+x), not the logarithm's input.
             Approximation::PrescaledLnRational(r)
             | Approximation::BinaryScaledLnRational { residual: r, .. } => r <= &-Rational::one(),
             Approximation::IntegralAtan(denominator) => denominator.is_zero(),
             Approximation::AsinRational(r) => outside_closed_unit(r),
-            Approximation::PrescaledAsin(value) | Approximation::AsinDeferred(value) => value
-                .exact_rational()
-                .is_some_and(|r| outside_closed_unit(&r)),
+            Approximation::PrescaledAsin(value) | Approximation::AsinDeferred(value) => {
+                Self::serialized_rational_argument(value).is_some_and(|r| outside_closed_unit(&r))
+            }
             // Both rational endpoint variants store an absolute argument.
             Approximation::AcosPositiveRational(r) | Approximation::AcosNegativeRational(r) => {
                 outside_positive_unit(r)
             }
-            Approximation::AcosPositive(value) => value
-                .exact_rational()
-                .is_some_and(|r| outside_positive_unit(&r)),
-            Approximation::AtanhRational(r) => outside_open_unit(r),
-            Approximation::PrescaledAtanh(value) | Approximation::AtanhDirect(value) => value
-                .exact_rational()
-                .is_some_and(|r| outside_open_unit(&r)),
-            Approximation::AcoshNearOne(value) | Approximation::AcoshDirect(value) => {
-                value.exact_rational().is_some_and(|r| r < Rational::one())
+            Approximation::AcosPositive(value) => {
+                Self::serialized_rational_argument(value).is_some_and(|r| outside_positive_unit(&r))
             }
-            Approximation::NormalQuantile(data) => data
-                .p
-                .exact_rational()
+            Approximation::AtanhRational(r) => outside_open_unit(r),
+            Approximation::PrescaledAtanh(value) | Approximation::AtanhDirect(value) => {
+                Self::serialized_rational_argument(value).is_some_and(|r| outside_open_unit(&r))
+            }
+            Approximation::AcoshNearOne(value) | Approximation::AcoshDirect(value) => {
+                Self::serialized_rational_argument(value).is_some_and(|r| r < Rational::one())
+            }
+            Approximation::NormalQuantile(data) => Self::serialized_rational_argument(&data.p)
                 .is_some_and(|r| r.sign() != Sign::Plus || r >= Rational::one()),
             _ => false,
         };
