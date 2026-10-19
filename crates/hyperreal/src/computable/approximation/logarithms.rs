@@ -12,7 +12,9 @@ fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let op_appr = c.approx_signal(signal, op_prec);
     // Reuse the series sample: bits(|a|) <= -op_prec-1 leaves one integer
     // unit for its error and proves |x| <= 1/2. No separate probe is needed.
-    if op_appr.magnitude().bits() > u64::try_from(-op_prec - 1).expect("ln1p series scale is positive") {
+    if op_appr.magnitude().bits()
+        > u64::try_from(-op_prec - 1).expect("ln1p series scale is positive")
+    {
         if should_stop(signal) {
             return Zero::zero();
         }
@@ -20,7 +22,13 @@ fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         // at +/-1/2, so an uncertain boundary cannot reconstruct itself in a
         // loop through ln's normal reduction. Its usual binary scaling still
         // handles very large and near-minus-one inputs.
-        return c.clone().add(Computable::one()).sqrt().ln().shift_left(1).approx_signal(signal, p);
+        return c
+            .clone()
+            .add(Computable::one())
+            .sqrt()
+            .ln()
+            .shift_left(1)
+            .approx_signal(signal, p);
     }
     // On the certified interval |ln(1+x)| <= ln(2) < 1. This shortcut is not
     // valid for an arbitrary caller-supplied residual.
@@ -64,9 +72,21 @@ fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 }
 
 fn ln_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
-    // Exact-rational ln1p paths already know the small residual. Feed it
-    // directly into the same atanh-transformed series instead of wrapping it in
-    // a temporary Ratio child and calling back through Computable::approx.
+    // Stored rational residuals need the same range proof as generic ln1p.
+    // Only zero or a proved |r| < 1/2 admits the series and its coarse-zero
+    // shortcut: |ln(1+r)| <= ln(2) < 1. Unknown magnitude is not a proof.
+    if r.sign() != Sign::NoSign && r.msd_exact().is_none_or(|msd| msd >= -1) {
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+        // Reuse native exact-rational log reduction for large positive and
+        // near-minus-one residuals, without changing the stored graph.
+        return Computable::rational(r.add_one())
+            .ln()
+            .approx_signal(signal, p);
+    }
+    // Small exact residuals feed the existing atanh-transformed series
+    // directly, avoiding a temporary Ratio child and its approximation cache.
     if p >= 0 {
         return Zero::zero();
     }

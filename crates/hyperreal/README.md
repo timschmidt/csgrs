@@ -406,6 +406,10 @@ range from the argument before using a coarse approximation. Larger real
 arguments use the existing logarithmic identity with odd symmetry; importing
 them preserves the stored graph and the represented `asinh` value. This range
 check does not prove the domain of an arbitrary child expression.
+Rational logarithm kernels likewise prove their residual is small before using
+the series or a coarse-zero shortcut. Larger or near-minus-one residuals reuse
+native exact-rational logarithm reduction, including the binary-scaled form;
+valid stored graphs retain their meaning and wire representation.
 Inverse-cosine endpoint facts distinguish `acos(1) = acosh(1) = 0`; an imported
 `acosh` node needs evidence about its argument before claiming a positive sign.
 The native rational reader recognizes these exact endpoints so later arithmetic

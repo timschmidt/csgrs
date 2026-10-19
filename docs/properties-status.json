@@ -20480,6 +20480,871 @@
     "artifact_expectations": "/run/media/tim/Disk B/csgrs/asinh-kernel-admission-20261018-v1/external-evidence/artifact-expectations-v1.json.gz",
     "runtime_admitted": true,
     "general_speedup_claimed": false
+  },
+  "rational_log_kernel_ranges": {
+    "decision": "Retain rational logarithm range checks and shared native reduction.",
+    "admitted_scope": "PrescaledLnRational and BinaryScaledLnRational establish the shared residual kernel range before using its series or coarse-zero shortcut. Larger or near-minus-one residuals reuse native exact-rational logarithm reduction. Stored valid graphs retain their wire representation and following arithmetic.",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1103
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 944
+      }
+    },
+    "debug_units_passed": 822,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-solid_cache": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "ordinary_cost": {
+      "candidate_over_parent_median_latency": {
+        "named-root-cbor": 1.0256744286630308,
+        "named-root-json": 1.0356089434987585,
+        "opaque-add-fresh": 0.9908681251381871,
+        "opaque-add-warm": 1.0053160789039939,
+        "opaque-root-cbor": 1.0060056734740972,
+        "opaque-root-json": 1.0106819303838923,
+        "radical-add-fresh": 1.0000141898176627,
+        "radical-add-warm": 1.016925484850508,
+        "rational-add": 0.9997295949307684,
+        "rational-cbor": 1.0194442136304134,
+        "rational-json": 1.1196443144930461,
+        "small-atanh-cbor": 0.9962888364979408,
+        "small-atanh-json": 1.0313543717384903,
+        "trig-add-fresh": 1.0061226663904639,
+        "trig-add-warm": 1.0261663699150303,
+        "trig-cbor": 1.0531237708324652,
+        "trig-json": 1.0010292061308548
+      },
+      "binary_bytes": {
+        "candidate": 6781632,
+        "parent": 6780912
+      },
+      "allocation_deltas_first_pair": {
+        "named-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "named-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-add": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "allocation_deltas_stable_across_all_five_pairs": true,
+      "all_allocation_and_byte_metrics_identical": true,
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "native_log_cost": {
+      "candidate_over_parent_median_latency": {
+        "computable-log-s-1-k0-cold--128": 1.0030128117584571,
+        "computable-log-s-1-k0-cold--32": 1.0341966820098754,
+        "computable-log-s-1-k0-cold-0": 1.0424645985845498,
+        "computable-log-s-1-k0-warm--128": 0.9282713095966043,
+        "computable-log-s-1-k0-warm--32": 0.8605241679513921,
+        "computable-log-s-1-k0-warm-0": 1.0047065837262024,
+        "computable-log-s-1-k4-cold--128": 0.9925844254902059,
+        "computable-log-s-1-k4-cold--32": 0.9833393619940292,
+        "computable-log-s-1-k4-cold-0": 1.028771536660943,
+        "computable-log-s-1-k4-warm--128": 1.0261271623464172,
+        "computable-log-s-1-k4-warm--32": 0.9860600122772712,
+        "computable-log-s-1-k4-warm-0": 0.9963413732784745,
+        "computable-log-s1-k0-cold--128": 1.0124904799036087,
+        "computable-log-s1-k0-cold--32": 1.014303833407759,
+        "computable-log-s1-k0-cold-0": 1.0529004494479004,
+        "computable-log-s1-k0-warm--128": 1.001048250586244,
+        "computable-log-s1-k0-warm--32": 0.9749454425041791,
+        "computable-log-s1-k0-warm-0": 0.9566949360185266,
+        "computable-log-s1-k4-cold--128": 1.0057516961997994,
+        "computable-log-s1-k4-cold--32": 1.003260755742925,
+        "computable-log-s1-k4-cold-0": 0.9873510084232562,
+        "computable-log-s1-k4-warm--128": 1.0008574466810447,
+        "computable-log-s1-k4-warm--32": 0.986601868430348,
+        "computable-log-s1-k4-warm-0": 1.0210476986906796,
+        "imported-rational-log-s-1-k0-cold--128": 0.9122937664469928,
+        "imported-rational-log-s-1-k0-cold--32": 0.965285082100177,
+        "imported-rational-log-s-1-k0-cold-0": 1.034413046795502,
+        "imported-rational-log-s-1-k0-warm--128": 0.9862667504029177,
+        "imported-rational-log-s-1-k0-warm--32": 0.9869048732578805,
+        "imported-rational-log-s-1-k0-warm-0": 1.0013929744284136,
+        "imported-rational-log-s-1-k4-cold--128": 1.0091634077936584,
+        "imported-rational-log-s-1-k4-cold--32": 0.990925499204979,
+        "imported-rational-log-s-1-k4-cold-0": 1.0898498788106374,
+        "imported-rational-log-s-1-k4-warm--128": 1.0080842370667396,
+        "imported-rational-log-s-1-k4-warm--32": 0.9628645312443969,
+        "imported-rational-log-s-1-k4-warm-0": 0.9962233789264544,
+        "imported-rational-log-s1-k0-cold--128": 1.007277810729569,
+        "imported-rational-log-s1-k0-cold--32": 1.0332227333251094,
+        "imported-rational-log-s1-k0-cold-0": 1.048704427149115,
+        "imported-rational-log-s1-k0-warm--128": 1.0104971366144013,
+        "imported-rational-log-s1-k0-warm--32": 0.9721707232832989,
+        "imported-rational-log-s1-k0-warm-0": 0.9885328542825713,
+        "imported-rational-log-s1-k4-cold--128": 0.9858967426244731,
+        "imported-rational-log-s1-k4-cold--32": 1.0198736892919134,
+        "imported-rational-log-s1-k4-cold-0": 0.9773086683583768,
+        "imported-rational-log-s1-k4-warm--128": 1.0019091685009658,
+        "imported-rational-log-s1-k4-warm--32": 0.9826296801674677,
+        "imported-rational-log-s1-k4-warm-0": 1.0003614704618387,
+        "real-log-s-1-k0-cold--128": 1.0695477214836193,
+        "real-log-s-1-k0-cold--32": 1.0116993417779387,
+        "real-log-s-1-k0-cold-0": 1.139385771406952,
+        "real-log-s-1-k0-warm--128": 1.0088117599802595,
+        "real-log-s-1-k0-warm--32": 1.0117710668530133,
+        "real-log-s-1-k0-warm-0": 0.9631514387820923,
+        "real-log-s-1-k4-cold--128": 1.0302022690029262,
+        "real-log-s-1-k4-cold--32": 0.9827047319775891,
+        "real-log-s-1-k4-cold-0": 0.9981172687523393,
+        "real-log-s-1-k4-warm--128": 0.967750661722809,
+        "real-log-s-1-k4-warm--32": 0.9706216811242123,
+        "real-log-s-1-k4-warm-0": 0.9836518252921196,
+        "real-log-s1-k0-cold--128": 1.0298239134473832,
+        "real-log-s1-k0-cold--32": 1.0010533056400086,
+        "real-log-s1-k0-cold-0": 1.021239958744829,
+        "real-log-s1-k0-warm--128": 0.9466618131664497,
+        "real-log-s1-k0-warm--32": 0.974416495899593,
+        "real-log-s1-k0-warm-0": 1.0085529469395,
+        "real-log-s1-k4-cold--128": 1.0222954309426833,
+        "real-log-s1-k4-cold--32": 0.9877786405854634,
+        "real-log-s1-k4-cold-0": 0.976688697613761,
+        "real-log-s1-k4-warm--128": 0.9956564884026595,
+        "real-log-s1-k4-warm--32": 0.9902039791324679,
+        "real-log-s1-k4-warm-0": 0.9813237141200956
+      },
+      "binary_bytes": {
+        "candidate": 6841296,
+        "parent": 6840608
+      },
+      "allocation_deltas_first_pair": {
+        "computable-log-s-1-k0-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s-1-k0-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s-1-k0-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s-1-k0-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s-1-k0-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s-1-k0-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s-1-k4-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s-1-k4-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s-1-k4-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s-1-k4-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s-1-k4-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s-1-k4-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k0-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k0-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k0-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k0-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k0-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k0-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k4-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k4-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k4-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k4-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k4-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-log-s1-k4-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k0-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k0-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k0-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k0-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k0-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k0-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k4-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k4-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k4-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k4-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k4-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s-1-k4-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k0-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k0-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k0-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k0-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k0-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k0-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k4-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k4-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k4-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k4-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k4-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-rational-log-s1-k4-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k0-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k0-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k0-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k0-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k0-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k0-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k4-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k4-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k4-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k4-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k4-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s-1-k4-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k0-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k0-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k0-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k0-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k0-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k0-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k4-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k4-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k4-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k4-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k4-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-log-s1-k4-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "allocation_deltas_stable_across_all_five_pairs": true,
+      "all_allocation_and_byte_metrics_identical": true,
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "cost_interpretation": "All measured allocation counts, allocated bytes, retained bytes and peak bytes match the parent across all rows and all five pairs. Ordinary median latency ratios range from 0.9909 to 1.1196; native-log ratios range from 0.8605 to 1.1394, including a 13.94% slower cold Real query. The ordinary and native executables grow by 720 and 688 bytes respectively. Every unfavorable row is retained. These limited measurements do not establish a general speedup or isolate the cause of timing changes. Exactness and supported completion take priority over the recorded costs.",
+    "remaining_limitations": [
+      "General expression domains, other private kernel ranges and typed native evaluation/cancellation remain open.",
+      "The isolated fallible-evaluation prototype remains unadmitted; its whole-crate obligations are not discharged here.",
+      "The unavailable i32 magnitude-metadata branch is handled conservatively by inspection; no multi-gigabit operand was allocated for empirical coverage.",
+      "Per-process containment does not establish total internal work, heap, expression-growth or cancellation contracts.",
+      "Finite tests and matched measurements do not establish exhaustive correctness, formal verification, coverage targets or the complete useful-workload corpus.",
+      "Clean shipped-distribution and foreign consumers, full CI/DRC gates and the full properties plan remain open.",
+      "Historical missing evidence was neither reaudited nor recovered."
+    ],
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": null,
+    "disk_b_quota_mode": "No user-imposed retained-artifact quota; use available Disk B as needed.",
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "all_adverse_results_retained": true,
+    "next": "Continue scalar domain/evidence ownership and ordinary strict completion, then complete the shipped user path and release validation.",
+    "parent_revision": "7f3d813e91d96e76245dfa7342bff88007f7505a",
+    "review": "docs/evidence/2026-10-18-log-rational-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-log-rational-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs/log-rational-admission-20261018-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "runtime_admitted": true,
+    "general_speedup_claimed": false
   }
 },
   "status_meanings": {
