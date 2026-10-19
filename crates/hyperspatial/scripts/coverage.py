@@ -33,7 +33,7 @@ arguments = ["cargo", "test", "--locked", "-p", "hyperspatial", "--all-features"
 native_arguments = ["cargo", "test", "--locked", "-p", "hyperreal", "--no-default-features",
                     "--features", "serde,dispatch-trace"]
 commands = [arguments,
-            native_arguments + ["--test", "inverse_isometric_latitude", "--test", "negative_exp_tail", "--test", "elliptic_integrals", "--test", "legendre_integrals"],
+            native_arguments + ["--test", "inverse_isometric_latitude", "--test", "negative_exp_tail", "--test", "elliptic_integrals", "--test", "legendre_integrals", "--test", "inverse_legendre"],
             native_arguments + ["--lib"]]
 with tempfile.TemporaryDirectory(prefix="profiles-", dir=target) as profiles:
     environment["LLVM_PROFILE_FILE"] = str(Path(profiles) / "%p-%m.profraw")
@@ -91,6 +91,7 @@ report = {
 # from this physical executable-line denominator. Executions from unit tests
 # still cover production code. This is not whole-Hyperreal coverage.
 native_sources = [root / "crates/hyperreal/src/computable/approximation/inverse_isometric_latitude.rs",
+                  root / "crates/hyperreal/src/computable/approximation/certified_interval.rs",
                   root / "crates/hyperreal/src/real/arithmetic/isometric_latitude.rs"]
 native_lines = {str(p): {"count": 0, "covered": 0,
                         "test_boundary": next((i for i, line in enumerate(p.read_text().splitlines(), 1)

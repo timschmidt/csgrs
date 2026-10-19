@@ -1,35 +1,6 @@
 // See docs/admission-inverse-isometric-latitude.md for the monotonicity,
 // clipping and error proofs. All interval endpoints below are exact rationals.
 
-fn isometric_dyadic(value: BigInt, p: Precision) -> Rational {
-    if p < 0 {
-        Rational::from_bigint_fraction(value, BigUint::one() << p.unsigned_abs() as usize)
-            .expect("dyadic denominator is nonzero")
-    } else {
-        Rational::from_bigint(value << p as usize)
-    }
-}
-
-fn isometric_interval(c: &Computable, signal: &Option<Signal>, p: Precision) -> [Rational; 2] {
-    if let Some(exact) = c.exact_rational() {
-        return [exact.clone(), exact];
-    }
-    let a = c.approx_signal(signal, p);
-    [isometric_dyadic(&a - 1, p), isometric_dyadic(a + 1, p)]
-}
-
-fn isometric_min(a: Rational, b: Rational) -> Rational {
-    if a < b { a } else { b }
-}
-
-fn isometric_max(a: Rational, b: Rational) -> Rational {
-    if a > b { a } else { b }
-}
-
-fn isometric_clamp(a: Rational, k: &Rational) -> Rational {
-    isometric_max(-k.clone(), isometric_min(k.clone(), a))
-}
-
 // F(s,r), for exact rational s and positive rational r. The root algorithm
 // limits |s| to K before calling this, avoiding enormous exp(psi) intermediates.
 fn isometric_at(s: &Rational, r: &Rational) -> Computable {
@@ -81,7 +52,7 @@ fn inverse_isometric_latitude(
     );
     let root_precision = p.checked_sub(4).expect("root precision fits i32");
     let k = Rational::from_bigint(BigInt::from(4_i64 - i64::from(p)));
-    let width = isometric_dyadic(BigInt::one(), root_precision);
+    let width = interval_dyadic(BigInt::one(), root_precision);
     let mut lower = -k.clone();
     let mut upper = k.clone();
     let ratio_squared = log_axis_ratio.clone().shift_left(1).exp();
@@ -97,20 +68,20 @@ fn inverse_isometric_latitude(
             if should_stop(signal) {
                 return BigInt::zero();
             }
-            let [rlo, rhi] = isometric_interval(&ratio_squared, signal, precision);
+            let [rlo, rhi] = interval_of(&ratio_squared, signal, precision);
             if rlo.sign() == Sign::Plus {
-                let minimum = isometric_min(Rational::one(), rlo.clone());
-                let maximum = isometric_max(Rational::one(), rhi.clone());
-                let [ylo, yhi] = isometric_interval(psi, signal, precision);
+                let minimum = interval_min(Rational::one(), rlo.clone());
+                let maximum = interval_max(Rational::one(), rhi.clone());
+                let [ylo, yhi] = interval_of(psi, signal, precision);
                 let [first, second] = if midpoint.sign() == Sign::Minus {
                     [rhi, rlo]
                 } else {
                     [rlo, rhi]
                 };
-                let flo = isometric_interval(&isometric_at(&midpoint, &first), signal, precision)
+                let flo = interval_of(&isometric_at(&midpoint, &first), signal, precision)
                     [0]
                 .clone();
-                let fhi = isometric_interval(&isometric_at(&midpoint, &second), signal, precision)
+                let fhi = interval_of(&isometric_at(&midpoint, &second), signal, precision)
                     [1]
                 .clone();
                 let residual = [flo - yhi, fhi - ylo];
@@ -143,14 +114,14 @@ fn inverse_isometric_latitude(
         // Outward dyadic rounding bounds denominator growth before the next
         // midpoint. This is enclosure arithmetic, not a rounded root value.
         let grid = root_precision - 4;
-        let next_lower = isometric_dyadic(ratio(&(&midpoint - quotient_hi), grid) - 1, grid);
-        let next_upper = isometric_dyadic(ratio(&(&midpoint - quotient_lo), grid) + 1, grid);
-        lower = isometric_max(lower, isometric_clamp(next_lower, &k));
-        upper = isometric_min(upper, isometric_clamp(next_upper, &k));
+        let next_lower = interval_dyadic(ratio(&(&midpoint - quotient_hi), grid) - 1, grid);
+        let next_upper = interval_dyadic(ratio(&(&midpoint - quotient_lo), grid) + 1, grid);
+        lower = interval_max(lower, interval_clamp(next_lower, &k));
+        upper = interval_min(upper, interval_clamp(next_upper, &k));
         if residual[0].sign() == Sign::Plus {
-            upper = isometric_min(upper, midpoint.clone());
+            upper = interval_min(upper, midpoint.clone());
         } else if residual[1].sign() == Sign::Minus {
-            lower = isometric_max(lower, midpoint);
+            lower = interval_max(lower, midpoint);
         }
         debug_assert!(lower <= upper, "certified root intervals intersect");
     }

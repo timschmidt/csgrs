@@ -212,6 +212,9 @@ pub(super) enum Approximation {
     // Keep appended: existing binary serialization indices remain unchanged.
     EllipticF(Box<[Computable; 2]>),
     EllipticE(Box<[Computable; 2]>),
+    // Unwrapped inverse integrals: [value, ln(1-m)], intrinsically in-domain.
+    JacobiAmplitude(Box<[Computable; 2]>),
+    InverseEllipticE(Box<[Computable; 2]>),
 }
 
 #[cfg(feature = "serde")]

@@ -25,8 +25,9 @@ selection, with retained inverse relations and explicit pole conventions. The
 Ellipsoidal Transverse Mercator/UTM and geodesic measurements remain open within E2.
 Native Carlson RF/RD elliptic integrals are an additional scalar prerequisite
 for exact rectification, with [scalar admission](../hyperreal/docs/admission-elliptic-integrals.md).
-They do not yet provide Jacobi functions, Thompson/Lee rectification or a
-complete ellipsoidal transverse projection.
+Native Legendre F/E and their continuous inverses now supply further scalar
+prerequisites. Jacobi sn/cn/dn, complex continuation, Thompson/Lee rectification
+and a complete ellipsoidal transverse projection remain open.
 See the [spherical Mercator admission](docs/admission/e2-mercator.md),
 the [forward/local admission](docs/admission/e1-native.md)
 and [closest-point inverse admission](docs/admission/e1-inverse.md).
@@ -166,9 +167,12 @@ The exact rectification path now has native Carlson RF/RD and complete/incomplet
 Legendre F/E integrals (real parameter m < 1, unwrapped real amplitudes). The
 [Legendre admission](../hyperreal/docs/admission-legendre-integrals.md) records
 period reduction, positive second-kind formulas, and independent development
-oracles. Next, admit inverse Legendre and Jacobi functions with retained
-periods, branch choices and inverse relations, then
-the Thompson/Lee mapping and its certified inverse. References are
+oracles. Native `jacobi_amplitude` and `inverse_elliptic_e` now retain unwrapped
+inverse relations and use certified rational root enclosures; their
+[admission](../hyperreal/docs/admission-inverse-legendre.md) distinguishes the
+retained exact value from finite evaluation bounds. Next, admit Jacobi sn/cn/dn
+with retained periods and branch choices, complex continuation, then the
+Thompson/Lee mapping and its certified inverse. References are
 [DLMF integral relations](https://dlmf.nist.gov/19.25),
 [Jacobi computation](https://dlmf.nist.gov/22.20), and
 [Karney's exact and series formulations](https://arxiv.org/abs/1002.1417).

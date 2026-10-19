@@ -57,7 +57,7 @@ impl Real {
         if self.definitely_zero() || parameter.definitely_zero() {
             return Ok(self);
         }
-        Ok(Self::irrational_from_computable(
+        Ok(Self::elliptic_result(
             self.fold().elliptic_legendre(log_complement.fold(), second),
         ))
     }

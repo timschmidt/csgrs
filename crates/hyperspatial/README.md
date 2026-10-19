@@ -186,6 +186,27 @@ assert!(endpoint.certified_rational_interval(-128).is_some());
 This produces a scalar length for the defined ellipsoid. Coordinate-operation
 receipts and physical measurement accuracy require their separate contracts.
 
+Native inverse integrals supply the scalar basis for rectifying latitude:
+
+```rust
+use hyperspatial::Real;
+
+let parameter: Real = "0.5".parse()?;
+let integral_value: Real = "0.75".parse()?;
+let amplitude = integral_value.clone().jacobi_amplitude(&parameter)?;
+let rectifying = integral_value.clone().inverse_elliptic_e(&parameter)?;
+assert!(amplitude.certified_rational_interval(-128).is_some());
+assert!(rectifying.certified_rational_interval(-128).is_some());
+assert_eq!(amplitude.elliptic_f(&parameter)?, integral_value);
+assert_eq!(rectifying.elliptic_e(&parameter)?, integral_value);
+# Ok::<(), hyperspatial::Error>(())
+```
+
+These inverse scalars retain every real period and support negative parameters.
+Their arguments are dimensionless integral values; coordinate operations own
+ellipsoid length scaling.
+They do not yet supply the ellipsoidal transverse coordinate operation.
+
 Ellipsoidal Transverse Mercator/UTM, geodesics, datum operations,
 serialization, celestial/observer transformations
 and ephemerides remain under development.
@@ -218,6 +239,8 @@ ingress requires an explicit `InputProvenance`; missing uncertainty stays unknow
 - [Legendre scalar admission](../hyperreal/docs/admission-legendre-integrals.md):
   native complete/incomplete elliptic integrals, unwrapped amplitudes, independent
   MPFR oracles and downstream representation gates.
+- [Inverse Legendre admission](../hyperreal/docs/admission-inverse-legendre.md):
+  Jacobi amplitude, inverse E, retained relations and certified root enclosures.
 
 - [Ellipsoidal Mercator admission](docs/admission/e2-ellipsoidal.md): exact inverse
   relations, open latitude evidence, shared projection rules and validation.

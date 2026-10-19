@@ -21,6 +21,8 @@ use rug::{
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
 
+#[path = "../tests/support/inverse_legendre_oracle.rs"]
+mod inverse_legendre_oracle;
 #[path = "../tests/support/legendre_oracle.rs"]
 mod legendre_oracle;
 
@@ -702,6 +704,32 @@ fn bench_real_arithmetic_api(c: &mut Criterion) {
 
 fn bench_real_elementary_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_real_elementary_api");
+
+    for (name, second) in [("jacobi_amplitude", false), ("inverse_elliptic_e", true)] {
+        let parameter: Real = "0.5".parse().unwrap();
+        let argument: Real = "0.75".parse().unwrap();
+        let native = || {
+            if second {
+                argument.clone().inverse_elliptic_e(&parameter)
+            } else {
+                argument.clone().jacobi_amplitude(&parameter)
+            }
+            .unwrap()
+        };
+        let reference = || inverse_legendre_oracle::inverse(&argument, &parameter, second);
+        let expected = legendre_oracle::native(reference());
+        let [lo, hi] = (native() - expected)
+            .certified_rational_interval(-144)
+            .unwrap();
+        let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+        assert!(lo >= -tolerance.clone() && hi <= tolerance);
+        group.bench_function(BenchmarkId::new("hyperreal_evaluated_p128", name), |b| {
+            b.iter(|| black_box(native().certified_rational_interval(-128).unwrap()))
+        });
+        group.bench_function(BenchmarkId::new("mpfr1024_point_reference", name), |b| {
+            b.iter(|| black_box(reference()))
+        });
+    }
 
     // All four native APIs are evaluated, with independent AGM / integrand
     // series point references. These different contracts imply no speed ratio.

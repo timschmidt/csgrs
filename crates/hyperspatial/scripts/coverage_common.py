@@ -7,7 +7,8 @@ from pathlib import Path
 def native_elliptic_coverage(export, root):
     groups = {}
     for label, name in (("native_elliptic", "elliptic_integrals.rs"),
-                        ("native_legendre", "legendre_integrals.rs")):
+                        ("native_legendre", "legendre_integrals.rs"),
+                        ("native_inverse_legendre", "inverse_legendre.rs")):
         sources = [root / "crates/hyperreal/src" / part / name
                    for part in ("computable/approximation", "computable/node", "real/arithmetic")]
         files = {
@@ -35,7 +36,7 @@ def native_elliptic_coverage(export, root):
 
 def check_native_elliptic_coverage(groups):
     # Keep the existing Carlson floor independent: new lines cannot mask a
-    # regression in its denominator. Legendre gets its own identical floor.
-    for label in ("native_elliptic", "native_legendre"):
+    # regression in its denominator. Each later family gets its own floor.
+    for label in ("native_elliptic", "native_legendre", "native_inverse_legendre"):
         if groups[label]["totals"]["lines"]["percent"] < 95:
             raise SystemExit(f"{label} production line coverage is below the 95% gate")

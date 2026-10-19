@@ -17,6 +17,13 @@ hyperlattice = { path = "../../hyperlattice" }
 hyperlimit = { path = "../../hyperlimit", default-features = false, features = ["std"] }
 
 [[bin]]
+name = "inverse_legendre"
+path = "fuzz_targets/inverse_legendre.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "elliptic"
 path = "fuzz_targets/elliptic.rs"
 test = false

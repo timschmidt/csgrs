@@ -29,6 +29,7 @@ include!("arithmetic/elementary_functions.rs");
 include!("arithmetic/isometric_latitude.rs");
 include!("arithmetic/elliptic_integrals.rs");
 include!("arithmetic/legendre_integrals.rs");
+include!("arithmetic/inverse_legendre.rs");
 include!("arithmetic/structural_helpers.rs");
 include!("arithmetic/format_parse.rs");
 include!("arithmetic/add_sub.rs");

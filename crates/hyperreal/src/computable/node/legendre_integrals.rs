@@ -1,6 +1,18 @@
 impl Computable {
     pub(crate) fn elliptic_legendre(self, log_complement: Self, second: bool) -> Self {
         let signal = self.signal.clone().or_else(|| log_complement.signal.clone());
+        let matched = match &self.internal.approximation {
+            Approximation::JacobiAmplitude(arguments) if !second => Some(arguments),
+            Approximation::InverseEllipticE(arguments) if second => Some(arguments),
+            _ => None,
+        };
+        if let Some(arguments) = matched
+            && Self::internal_structural_eq(&arguments[1], &log_complement)
+        {
+            let mut result = arguments[0].clone();
+            result.signal = signal.or(result.signal);
+            return result;
+        }
         let sign = self.exact_sign();
         let payload = Box::new([self, log_complement]);
         let approximation = if second {

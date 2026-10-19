@@ -64,6 +64,10 @@ name = "elliptic_integrals"
 harness = false
 
 [[bench]]
+name = "inverse_legendre"
+harness = false
+
+[[bench]]
 name = "legendre_integrals"
 harness = false
 

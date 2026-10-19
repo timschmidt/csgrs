@@ -108,6 +108,8 @@ impl Approximation {
             EllipticRd(arguments) => elliptic_carlson(signal, arguments, true, p),
             EllipticF(arguments) => elliptic_legendre(signal, arguments, false, p),
             EllipticE(arguments) => elliptic_legendre(signal, arguments, true, p),
+            JacobiAmplitude(arguments) => inverse_legendre(signal, arguments, false, p),
+            InverseEllipticE(arguments) => inverse_legendre(signal, arguments, true, p),
         }
     }
 }

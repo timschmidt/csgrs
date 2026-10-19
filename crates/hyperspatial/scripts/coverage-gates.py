@@ -17,11 +17,11 @@ root = Path(__file__).resolve().parents[3]
 files = [{"filename": str(root / "crates/hyperreal/src" / part / name),
           "summary": {metric: {"count": 50, "covered": 50}
                       for metric in ("lines", "regions", "functions")}}
-         for name in ("elliptic_integrals.rs", "legendre_integrals.rs")
+         for name in ("elliptic_integrals.rs", "legendre_integrals.rs", "inverse_legendre.rs")
          for part in ("computable/approximation", "computable/node", "real/arithmetic")]
 export = {"data": [{"files": files}]}
 check_native_elliptic_coverage(native_elliptic_coverage(export, root))
-for start, label in [(0, "native_elliptic"), (3, "native_legendre")]:
+for start, label in [(0, "native_elliptic"), (3, "native_legendre"), (6, "native_inverse_legendre")]:
     masked = copy.deepcopy(export)
     for offset, count, covered in [(0, 51, 46), (1, 50, 45), (2, 50, 45)]:
         masked["data"][0]["files"][start + offset]["summary"]["lines"] = {
@@ -33,15 +33,17 @@ for start, label in [(0, "native_elliptic"), (3, "native_legendre")]:
         assert label in str(error)
     else:
         raise AssertionError("combined coverage masked a failing independent floor")
-missing = copy.deepcopy(export)
-missing["data"][0]["files"].pop()
-try:
-    native_elliptic_coverage(missing, root)
-except SystemExit as error:
-    assert "every native_legendre" in str(error)
-else:
-    raise AssertionError("missing source was accepted")
-print("Independent Carlson/Legendre coverage floors and missing-file regression passed")
+for start, label in [(0, "native_elliptic"), (3, "native_legendre"), (6, "native_inverse_legendre")]:
+    for offset in range(3):
+        missing = copy.deepcopy(export)
+        missing["data"][0]["files"].pop(start + offset)
+        try:
+            native_elliptic_coverage(missing, root)
+        except SystemExit as error:
+            assert f"every {label}" in str(error)
+        else:
+            raise AssertionError("missing source was accepted")
+print("Independent Carlson/Legendre/inverse coverage floors and missing-file regression passed")
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--report", type=Path)
@@ -58,7 +60,7 @@ if args.report:
             if hashlib.sha256((base / path).read_bytes()).hexdigest() != digest:
                 raise SystemExit(f"Measured production source changed: {path}")
     measured = {}
-    for label in ("native_elliptic", "native_legendre"):
+    for label in ("native_elliptic", "native_legendre", "native_inverse_legendre"):
         group = report.get(label, {})
         if set(group.get("files", {})) != set(group.get("source_sha256", {})):
             raise SystemExit(f"Incomplete source hashes for {label}")
@@ -77,4 +79,4 @@ if args.report:
                            "tests_reexecuted": False,
                            "source": "unchanged LLVM per-file measurements; independent group floors"}
     args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
-    print("Retained measurements pass all four independent line gates")
+    print("Retained measurements pass all five independent line gates")

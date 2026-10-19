@@ -47,11 +47,12 @@ development tool with `cargo install --locked cargo-fuzz --version 0.13.2`.
 The smoke driver supplies 918 initial forward/local cases, 44 normal-offset
 cases, 44 spherical projection cases, 44 inverse-scalar cases, 44 ellipsoidal
 projection cases, 176 transverse cases, 176 elliptic cases, and any cases
-selected by the directed driver. All seven
+selected by the directed driver. The inverse-Legendre target adds 176 cases
+covering the same 22 families, four regimes, and cold/warm inputs. All eight
 targets use ASan, a 10-second per-input timeout, and a 2048 MiB RSS limit.
 The existing forward/local, normal-offset and spherical projection targets
 have a 60-second libFuzzer budget. The inverse scalar, ellipsoidal projection,
-transverse chart and elliptic prerequisites each have 900 seconds because
+transverse chart, elliptic prerequisites and inverse integrals each have 900 seconds because
 replaying their full seeds is more expensive.
 `--targets` permits focused reruns without changing any target's seed set. Initialization can consume or extend the time budget; the raw log
 distinguishes corpus replay from mutation and any newly discovered paths.

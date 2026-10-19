@@ -26,6 +26,9 @@ mod transverse_mercator;
 #[path = "../dev/elliptic.rs"]
 mod elliptic;
 
+#[path = "../dev/inverse_legendre.rs"]
+mod inverse_legendre;
+
 fn main() {
     let encoded = std::env::args()
         .nth(1)
@@ -48,6 +51,7 @@ fn main() {
         "transverse_mercator" => transverse_mercator::exercise(data),
         "inverse_isometric" => inverse_isometric::exercise(data),
         "elliptic" => elliptic::exercise(data),
+        "inverse_legendre" => inverse_legendre::exercise(data),
         _ => panic!("unknown workload {workload}"),
     });
     let evaluation_ns = start.elapsed().as_nanos();

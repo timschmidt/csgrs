@@ -163,7 +163,9 @@ impl Computable {
                 | (Approximation::EllipticRd(left), Approximation::EllipticRd(right)) =>
                     NodeComparison::Three(std::array::from_fn(|i| (&left[i], &right[i]))),
                 (Approximation::EllipticF(left), Approximation::EllipticF(right))
-                | (Approximation::EllipticE(left), Approximation::EllipticE(right)) =>
+                | (Approximation::EllipticE(left), Approximation::EllipticE(right))
+                | (Approximation::JacobiAmplitude(left), Approximation::JacobiAmplitude(right))
+                | (Approximation::InverseEllipticE(left), Approximation::InverseEllipticE(right)) =>
                     NodeComparison::Two((&left[0], &right[0]), (&left[1], &right[1])),
                 _ => NodeComparison::Decided(false),
             }
