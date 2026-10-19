@@ -21,6 +21,7 @@ pub mod bareiss;
 pub mod batch;
 pub mod bivariate_arithmetic;
 pub mod bivariate_components;
+pub mod bivariate_topology;
 pub mod branches;
 pub mod certification;
 pub mod classification;

@@ -24,6 +24,10 @@
 //! constrained tensor-axis resultants, fixed-rank three/four-variable norms,
 //! their subresultants, bivariate cofactor parameter lifts, common-component
 //! discovery, and axis-factor extraction also participate.
+//! Bivariate finite-fiber topology charges its construction entry, its existing
+//! projection/fiber operations, and connection-strip or outer-separator
+//! refinement attempts. Reusing a topology for a rational slice charges only
+//! the root work actually required; its earlier graph proof is not rebuilt.
 //! Other elimination entry points,
 //! remaining curve dispatch paths,
 //! scalar precision refinement, and arbitrary caller arithmetic are not

@@ -250,7 +250,21 @@ blocks before an algorithm is selected.
   matrix. Both lanes evaluate one division-free polynomial determinant instead
   of repeated scalar determinants plus interpolation; the generic
   exact-coefficient path remains authoritative outside those bounded lanes.
-  Curve topology still belongs to Hypercurve.
+  Planar curve carriers and filled-region topology still belong to Hypercurve.
+- `bivariate_topology::decompose_bivariate_curve` is a source-tree prototype for
+  complete rational polynomial zero-set graphs in a closed rational rectangle.
+  It isolates all projection events and fibers, including interior loops and
+  isolated contacts, and retains root-free connection strips with exact branch
+  counts. The source equation, domain, event roots and ordered branches remain
+  queryable; `rational_fiber` continues exact slice queries without a polyline
+  conversion. Singular nodes and cusps need no generic-position assumption.
+  Vertical components, repeated generic fibers and whole horizontal boundary
+  components remain typed blockers. Source/projection degree, fiber depth and
+  connection refinement controls are distinct from the shared work budget;
+  none establishes a total scalar-work or heap bound. Hypercurve implicit
+  carriers and HyperBRep spatial/dual-chart integration are still required
+  before this becomes a general surface-intersection workflow. The diagnostic
+  graph records used in tests are not a native BRep archive format.
 - Univariate, typed trivariate/quadrivariate, and rank-independent tensor
   resultants use the requested coefficient-refinement bound as their fast
   path, then continue unresolved exact degree, trimming, zero, normalization,

@@ -2556,6 +2556,41 @@
       "validation": "Eight new public Boolean groups and two archive groups extend the BRep corpus; three added owner regressions extend the existing five point-definition tests. A further owner regression preserves exact profile sequence across 64 cold admissions of identical polygon/NURBS archives. Three fresh diagnostic processes repeat the original full union/XOR, NURBS and transformed-axis recipes. Two earlier private-query expectations now assert a usable curved certificate while retaining exact volume, classification and replay oracles. Final BRep/IO release suites pass 729 all-feature and 721 minimal-feature tests; 32 selected Hypercurve owner regressions pass. Both affected all-target Clippy configurations include Hypercurve and deny warnings. Warning-denied rustdoc, BRep fuzz-target compilation and formatting pass. Six source-path projects execute 51 native and 51 actual zero-import WASM groups: 33 preserved BRep groups, ten Boolean/archive groups and eight owner point-definition groups. This is the affected boundary corpus, not the full historical WASM inventory. WASM recipes check cold archive replay internally; the separate file comparison is native, with no cross-platform byte-identity claim. Archive qualification retains 1573 verified file aliases with 457 distinct payload/extension pairs. Each distinct native or STEP payload is executed once, with repeated cold native admission; text controls are inventory-only. 345 distinct native archives re-encode byte-identically; 108 distinct STEP files import 118 bodies. All 71 fresh preserved baseline/candidate outputs match bytes; 29 new Boolean outputs repeat deterministically. The archive-shape record reports serialized value depth, rational limb counts and retained source/parameter records separately from live memory or execution bounds. No previously admitted native record or scalar encoding is reinterpreted. The schema-10 supporting-line point tag is additive; older readers need not recognize new records.",
       "cost_evidence": "Three alternating CPU-pinned pairs cover 14 preserved completed workflows. Six absolute processes (three per cohort) cover three new Boolean/replay recipes, both archive-control recipes and eight owner point-definition groups. All 30 processes pass; first and repeated fresh-input invocations are separate (three repeats for ordinary groups, one for the expensive overlapping union/XOR group). The 28 matched phase ratios range 0.900838 to 1.087323; 0 exceed the 10% review marker and 0 increase allocation traffic. Every raw sample and adverse result is retained. The complete selected-cap Boolean recipe takes 58.433s first and 58.412s per repeated invocation, requesting 59.375/59.404 GB respectively. Maximum process RSS is 34.83 MiB. Cumulative requested bytes are counted Rust allocation traffic, not live heap or a complete count of foreign allocator traffic. These instrumented shared-host samples establish no general speedup or internal resource bound. Baseline binaries are reused only after source, input and binary-hash verification; all native baseline samples are freshly executed.",
       "limits": "The extension covers admitted complete-turn, strictly positive-radius revolutions with a proved common axis and owner-supported filled-region operations. General noncoaxial curved Booleans, partial/singular revolutions, independent selected angular/axial fields, general procedural metrics and STEP, complete authoring-intent provenance, total work/heap/coefficient/cancellation bounds, runtime fuzz/ASan/lexicase, formal/coverage, MSRV, installed distributions and production bindings remain open. Nested archive limits are checked at depths 1,2,4,8; they do not prove all-depth stack or replay-work safety, and inline point witnesses do not bound shared-source expansion during export. All 28 work packages remain open/in-progress. No full repository pre-push matrix is claimed and the consumed eaa0 one-time push exception does not authorize publishing this increment."
+    },
+    {
+      "id": "bivariate-cell-prototype-2026-10-19",
+      "work_packages": [
+        "WP05a",
+        "WP05b",
+        "WP06",
+        "WP02",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P5",
+        "P8",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P27",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Add a solver-owned exact rational bivariate cell-topology prototype with complete event fibers, retained source equations, certified branch connections and subsequent rational slice queries. Preserve the original public BRep interior-loop failure for carrier integration.",
+      "sources": [
+        "../../hypersolve/src/bivariate_topology.rs",
+        "../../hypersolve/src/lib.rs",
+        "../../hypersolve/src/work_budget.rs"
+      ],
+      "evidence": "evidence/2026-10-19-bivariate-cell-prototype/manifest.json",
+      "validation": "Ten shared rational polynomial topology groups pass natively and in actual zero-import WASM. Two fresh native runs produce 29 byte-identical complete diagnostic graph records. Independent analytic incidence expectations, Sturm counts and whole-strip exclusions check interior loops, covertical critical points, nodes, cusps, isolated points, boundary contacts, degree drops and algebraic events. Later rational slices retain the equation; degree/refinement/work refusal and recovery pass. The final all-feature Hypersolve suite passes 985 tests and BRep/IO passes 729; both owners pass all-target Clippy with warnings denied, Hypersolve rustdoc denies warnings, and formatting passes. Three preserved source-path BRep workflows pass on freshly built baseline and candidate binaries. This is an additive solver foundation: the original public biquadratic BRep section still returns UnsupportedIntersection. The exact failing recipe remains in the evidence. Diagnostic JSON is not a native BRep archive or an untrusted proof decoder.",
+      "cost_evidence": "Nine CPU-pinned processes retain three alternating baseline/candidate pairs for three complete preserved BRep workflows and three absolute processes for ten new topology recipes. First and three repeated fresh-input calls include all assertions; topology costs include graph proof inspection and complete exact diagnostic materialization. The six matched phase ratios range 0.957446 to 1.019787; 0 rows increase counted allocation traffic. All samples and adverse results remain. Maximum process RSS is 22832 KiB. Requested Rust allocation traffic is distinct from live heap and excludes foreign allocator internals. The largest diagnostic graph is 2404 bytes; retained rational numerators/denominators reach 82/40 bits. These finite payload metrics do not measure intermediate coefficient growth or prove an execution bound. No general speedup or successful-work baseline for the new capability is claimed.",
+      "limits": "The constructor admits exact rational equations on rational rectangles with finite fibers and complete checked projection/adjacency; it preserves singular incidence but does not classify multiplicity or material transitions. Vertical/nullified fibers, generic repeated factors and whole horizontal boundary components remain typed blockers. Hypercurve branch carriers, BRep spatial and both chart mappings, surface guards, trim arrangements, general patch-pair intersections and branch replay remain open. Input/projection degree, isolation depth, connection refinement and shared work controls are not total work, coefficient, retained-heap, stack or cancellation bounds. All 28 work packages remain open/in-progress. Runtime fuzz/ASan/lexicase, formal/coverage, MSRV, installed distributions, production bindings and the full pre-push matrix remain unqualified. No additional push is authorized by the consumed eaa0cae54 exception."
     }
   ],
   "work_packages": [
@@ -2591,7 +2626,7 @@
     },
     {
       "id": "WP05a",
-      "status": "open",
+      "status": "in-progress",
       "deliverable": "Exact cell/branch decomposition prototype and certificate format for bounded rational surface equations",
       "gate": "Independent root counts and critical events verified on regular, tangent and common-factor fixtures; degree/bit/work costs measured"
     },
@@ -2730,6 +2765,7 @@
     }
   ],
   "next_actions": [
+    "Continue WP05a/WP05b from evidence/2026-10-19-bivariate-cell-prototype/manifest.json and its next-domains.md. Preserve the original complete interior-loop surface probe, all exact graph fixtures, independent slice/strip checks, typed component blockers and adverse costs. Build retained Hypercurve branches and BRep spatial/dual-chart correspondence before claiming the public section fixed; complete component processing, surface guards, trim arrangements, persistence and resource contracts. This solver prerequisite closes no work package or publication gate.",
     "Preserve evidence/2026-10-19-coaxial-procedural/manifest.json and all earlier original profiles, archives and adverse costs. Continue its next-domains.md: selected angular/axial fields, partial and singular revolutions, general surface arrangements/Booleans, metrics, STEP, resource bounds and shipped consumers. The common-axis product reduction does not close general surface arrangements, replay resource contracts, any work package or pre-push qualification.",
     "Preserve evidence/2026-10-18-procedural-revolution/manifest.json and all earlier original profiles, archives and adverse costs. Continue its next-domains.md: selected angular/axial fields, partial and singular revolutions, general surface arrangements/Booleans, metrics, STEP, resource bounds and shipped consumers. Complete positive-radius procedural revolutions do not close any work package or waive full pre-push qualification.",
     "Preserve evidence/2026-10-18-selected-revolution/manifest.json and every earlier corpus/artifact/cost record. Follow its next-domains.md for selected angular/axial fields, complete contact/arrangement/regularity/embedding proofs and further modeling/STEP continuation. Finite retained rotation support does not close general CAD, resource or delivery gates.",

@@ -1195,6 +1195,20 @@ release risk, not something a sampling fallback resolves.
 Separate regular isolated branches from singular/common-component work in
 both implementation and capability reporting.
 
+The [rational polynomial cell prototype](evidence/2026-10-19-bivariate-cell-prototype/README.md)
+now provides the first WP05a implementation in Hypersolve. It retains complete
+projection/event fibers and proves branch adjacency with root-free connection
+strips, including interior loops and singular incidence. Its tests replay
+independent slice counts and retained exclusions, and exercise subsequent
+source-bound rational slices. Vertical/nullified components, generic repeated
+factors and whole boundary components still fail typed. This finite graph
+is not yet a Hypercurve branch carrier or a BRep section: the original public
+biquadratic interior-loop probe remains unsupported. Follow its
+[next domains](evidence/2026-10-19-bivariate-cell-prototype/next-domains.md) for
+retained planar branches, spatial/dual-chart maps, surface guards, trimming,
+component processing, persistence and full resource qualification. WP05a is
+in progress; its complete gate and G3/G4 remain open.
+
 Apply [research gates G2–G5](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)
 before making practical-completeness claims. ESOLID and exact quadric work
 establish useful precedents with specific domains; recent numerical tracing
