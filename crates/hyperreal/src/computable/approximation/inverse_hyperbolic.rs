@@ -39,18 +39,50 @@ fn asinh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt
     c.clone().add(radicand.sqrt()).ln().approx_signal(signal, p)
 }
 
+fn asinh_outside_series(
+    signal: &Option<Signal>,
+    c: &Computable,
+    negative: bool,
+    p: Precision,
+) -> BigInt {
+    // A separated series sample (or the exact rational) proves this sign.
+    // Use odd symmetry before the existing logarithmic identity so a large
+    // negative argument cannot cancel against sqrt(1+x^2).
+    if negative {
+        -asinh_direct(signal, &c.clone().negate(), p)
+    } else {
+        asinh_direct(signal, c, p)
+    }
+}
+
 // Approximate asinh(c) for small |c|.
 fn asinh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Dedicated tiny-argument asinh series. It avoids constructing the generic
     // ln(x + sqrt(1+x^2)) or ln1p expression for exact tiny rational inputs.
-    if p >= 1 {
+    if should_stop(signal) {
         return Zero::zero();
     }
 
-    let iterations_needed: i32 = -p / 2 + 4;
-    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
+    let series_precision = p.min(0);
+    let iterations_needed: i32 = -series_precision / 2 + 4;
+    let calc_precision = series_precision - bound_log2(2 * iterations_needed) - 5;
     let op_prec = calc_precision - 3;
     let op_appr = c.approx_signal(signal, op_prec);
+    // bits(|a|) <= -op_prec-1, including the sample's one-unit error,
+    // proves |c| <= 1/2. An imported tag is not this range certificate.
+    if op_appr.magnitude().bits()
+        > u64::try_from(-op_prec - 1).expect("asinh series scale is positive")
+    {
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+        return asinh_outside_series(signal, c, op_appr.sign() == Sign::Minus, p);
+    }
+    // |asinh(c)| <= |c| <= 1/2 justifies the coarse approximation only
+    // after the range proof, independently of the requested precision.
+    if p >= 1 {
+        return Zero::zero();
+    }
     let op_squared = scale(&op_appr * &op_appr, op_prec);
 
     // This is the asin recurrence with alternating sign:
@@ -82,6 +114,19 @@ fn asinh_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt
     // recurrence as `asinh_computable`, but it feeds the stored Rational
     // straight to the final precision request instead of allocating a temporary
     // Ratio node and child cache.
+    // Only zero or a proved small magnitude admits the series. A magnitude
+    // outside the metadata's i32 range is not a small-argument certificate.
+    if r.sign() != Sign::NoSign && r.msd_exact().is_none_or(|msd| msd >= -1) {
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+        return asinh_outside_series(
+            signal,
+            &Computable::rational(r.clone()),
+            r.sign() == Sign::Minus,
+            p,
+        );
+    }
     if p >= 1 {
         return Zero::zero();
     }
@@ -148,7 +193,9 @@ fn atanh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Bi
     let op_appr = c.approx_signal(signal, op_prec);
     // The sample is already required by the series. bits(|a|) <= -op_prec-3
     // leaves one integer unit for its error and proves |c| <= 1/8.
-    if op_appr.magnitude().bits() > u64::try_from(-op_prec - 3).expect("tiny-series scale is positive") {
+    if op_appr.magnitude().bits()
+        > u64::try_from(-op_prec - 3).expect("tiny-series scale is positive")
+    {
         if should_stop(signal) {
             return Zero::zero();
         }

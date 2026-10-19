@@ -401,6 +401,11 @@ retains the existing limits of 32 atoms, 64 terms and polynomial degree 8.
 An inconclusive or exhausted proof leaves the domain unproved; acceptance does
 not certify an arbitrary graph's domain. General expression domains, kernel
 ranges and whole-input resource limits remain incomplete.
+The `PrescaledAsinh` and `AsinhRational` evaluators establish their small-series
+range from the argument before using a coarse approximation. Larger real
+arguments use the existing logarithmic identity with odd symmetry; importing
+them preserves the stored graph and the represented `asinh` value. This range
+check does not prove the domain of an arbitrary child expression.
 Inverse-cosine endpoint facts distinguish `acos(1) = acosh(1) = 0`; an imported
 `acosh` node needs evidence about its argument before claiming a positive sign.
 The native rational reader recognizes these exact endpoints so later arithmetic

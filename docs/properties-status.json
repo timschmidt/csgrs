@@ -19997,6 +19997,489 @@
     "artifact_expectations": "/run/media/tim/Disk B/csgrs/symbolic-domain-admission-20261018-v1/external-evidence/artifact-expectations-v1.json.gz",
     "runtime_admitted": true,
     "general_speedup_claimed": false
+  },
+  "asinh_kernel_ranges": {
+    "decision": "Retain asinh series range checks and native logarithmic fallback.",
+    "admitted_scope": "Both PrescaledAsinh and AsinhRational justify their series range before a coarse-zero shortcut, and use the shared logarithmic identity with odd symmetry for larger arguments. Valid imported graphs retain their wire representation and following arithmetic.",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1099
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 942
+      }
+    },
+    "debug_units_passed": 820,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-solid_cache": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "ordinary_cost": {
+      "candidate_over_parent_median_latency": {
+        "named-root-cbor": 1.0271420662707038,
+        "named-root-json": 0.973432073602226,
+        "opaque-add-fresh": 1.0306203504869929,
+        "opaque-add-warm": 1.0275607870963588,
+        "opaque-root-cbor": 1.008775368925036,
+        "opaque-root-json": 1.005925663468031,
+        "radical-add-fresh": 0.9617079415657162,
+        "radical-add-warm": 1.014246045738234,
+        "rational-add": 0.9435617163698593,
+        "rational-cbor": 1.027551027802632,
+        "rational-json": 0.9801344064976169,
+        "small-atanh-cbor": 1.02927140143879,
+        "small-atanh-json": 1.025097770279536,
+        "trig-add-fresh": 1.0422584520442457,
+        "trig-add-warm": 1.003576200816925,
+        "trig-cbor": 0.9842631754776653,
+        "trig-json": 1.0022841789015284
+      },
+      "binary_bytes": {
+        "candidate": 6780912,
+        "parent": 6779368
+      },
+      "allocation_deltas_first_pair": {
+        "named-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "named-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-add": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "native_asinh_cost": {
+      "candidate_over_parent_median_latency": {
+        "computable-asinh-cold--128": 1.0050173441424295,
+        "computable-asinh-cold--32": 1.0257527847689973,
+        "computable-asinh-cold-1": 1.0986333402223494,
+        "computable-asinh-warm--128": 1.0570731631041546,
+        "computable-asinh-warm--32": 1.0106568958497977,
+        "computable-asinh-warm-1": 1.09416508023829,
+        "imported-generic-asinh-cold--128": 1.007464531013671,
+        "imported-generic-asinh-cold--32": 1.006313952188865,
+        "imported-generic-asinh-cold-1": 1.2005408323949363,
+        "imported-generic-asinh-warm--128": 1.0424901341131707,
+        "imported-generic-asinh-warm--32": 1.0260546951853622,
+        "imported-generic-asinh-warm-1": 0.9905572768139643,
+        "real-asinh-cold--128": 0.9659112542224211,
+        "real-asinh-cold--32": 1.0328716288560342,
+        "real-asinh-cold-1": 1.0484049841796688,
+        "real-asinh-warm--128": 0.8809290951521644,
+        "real-asinh-warm--32": 0.9396828935207129,
+        "real-asinh-warm-1": 1.016852567015625
+      },
+      "binary_bytes": {
+        "candidate": 6825000,
+        "parent": 6823472
+      },
+      "allocation_deltas_first_pair": {
+        "computable-asinh-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-asinh-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-asinh-cold-1": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-asinh-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-asinh-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-asinh-warm-1": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-generic-asinh-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-generic-asinh-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-generic-asinh-cold-1": {
+          "allocations": 40000,
+          "allocated_bytes": 960000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 80
+        },
+        "imported-generic-asinh-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-generic-asinh-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-generic-asinh-warm-1": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-asinh-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-asinh-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-asinh-cold-1": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-asinh-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-asinh-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-asinh-warm-1": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "cost_interpretation": "The cold imported generic coarse query now obtains the missing range proof: four extra allocations and 96 extra allocated bytes per iteration, with 80 extra peak bytes in the measured case. Its latency increased in the retained run. Other measured native allocation metrics and all ordinary-corpus allocation metrics match. Exactness and supported completion take priority over this recorded cost.",
+    "remaining_limitations": [
+      "General expression domains, other private kernel ranges and typed native evaluation/cancellation remain open.",
+      "The older isolated fallible-evaluation prototype is present but unadmitted; its whole-crate obligations are not discharged here.",
+      "The i32-overflow magnitude case is handled conservatively by inspection; no multi-gigabit operand was allocated as an empirical test.",
+      "Per-process containment does not establish total internal work, heap, expression-growth or cancellation contracts.",
+      "Finite tests and matched measurements do not establish exhaustive correctness, formal verification or full ordinary-workload coverage.",
+      "Clean shipped-distribution and foreign consumers, full CI/DRC gates and the complete properties plan remain open.",
+      "Historical missing evidence was neither reaudited nor recovered."
+    ],
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": null,
+    "disk_b_quota_mode": "No user-imposed retained-artifact quota; use available Disk B as needed.",
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "all_adverse_results_retained": true,
+    "next": "Continue scalar domain/evidence ownership and ordinary strict completion, then complete the shipped user path and release validation.",
+    "parent_revision": "59b1df88378b34954db82824ae883cc18a112043",
+    "review": "docs/evidence/2026-10-18-asinh-kernel-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-18-asinh-kernel-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/Disk B/csgrs/asinh-kernel-admission-20261018-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "runtime_admitted": true,
+    "general_speedup_claimed": false
   }
 },
   "status_meanings": {
