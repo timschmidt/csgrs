@@ -122,6 +122,14 @@ fn enu_and_ned_have_expected_axes_and_point_vector_semantics() {
         let point = frame.to_local_position(&absolute, &mut ctx).unwrap();
         let displacement = frame.to_local_vector(&vector, &mut ctx).unwrap();
         assert_eq!(
+            point.source_ecef().unwrap().coordinates(),
+            absolute.coordinates()
+        );
+        assert_eq!(
+            displacement.source_ecef().unwrap().coordinates(),
+            vector.coordinates()
+        );
+        assert_eq!(
             point.coordinates(),
             &Point3::new(expected[0].into(), expected[1].into(), expected[2].into())
         );
@@ -136,13 +144,9 @@ fn enu_and_ned_have_expected_axes_and_point_vector_semantics() {
                 .coordinates(),
             absolute.coordinates()
         );
-        assert_eq!(
-            frame
-                .to_ecef_vector(&displacement, &mut ctx)
-                .unwrap()
-                .coordinates(),
-            vector.coordinates()
-        );
+        let restored = frame.to_ecef_vector(&displacement, &mut ctx).unwrap();
+        assert_eq!(restored.coordinates(), vector.coordinates());
+        assert!(restored.source_local().unwrap().frame().same_anchor(&frame));
         assert_eq!(
             frame
                 .to_local_position(frame.origin(), &mut ctx)
@@ -196,6 +200,13 @@ fn distinct_anchors_frames_and_epochs_are_rejected() {
     let frame = LocalFrame::new(&origin, LocalAxes::Enu, &mut ctx).unwrap();
     let other_anchor = LocalFrame::new(&origin, LocalAxes::Enu, &mut ctx).unwrap();
     let local = frame.position(Point3::origin(), input(), &mut ctx).unwrap();
+    assert!(local.source_ecef().is_none());
+    let vector = frame.vector(Vector3::zero(), input(), &mut ctx).unwrap();
+    assert!(vector.source_ecef().is_none());
+    assert!(matches!(
+        other_anchor.to_ecef_vector(&vector, &mut ctx),
+        Err(Error::LocalFrameMismatch)
+    ));
     assert!(frame.same_anchor(&frame.clone()));
     assert!(!frame.same_anchor(&other_anchor));
     assert!(matches!(
@@ -232,6 +243,11 @@ fn coordinate_epochs_compare_as_values_and_the_decision_is_retained() {
         &mut ctx,
     )
     .unwrap();
+    assert_eq!(origin.reference().epoch_julian_year(), Some(&r("2025")));
+    equal(
+        origin.ellipsoid().equatorial_radius().as_metres(),
+        &r("6378137"),
+    );
     let frame = LocalFrame::new(&origin, LocalAxes::Enu, &mut ctx).unwrap();
     for (epoch, succeeds) in [
         (Real::from(2024) + Real::one(), true),
@@ -252,6 +268,10 @@ fn coordinate_epochs_compare_as_values_and_the_decision_is_retained() {
                 result.receipt().decisions()[0].claim(),
                 "coordinate epochs agree"
             );
+            let decision = &result.receipt().decisions()[0];
+            equal(decision.left(), &r("2025"));
+            equal(decision.right(), &r("2025"));
+            assert_eq!(decision.outcome().value(), Some(std::cmp::Ordering::Equal));
         } else {
             assert!(matches!(result, Err(Error::ReferenceMismatch)));
         }

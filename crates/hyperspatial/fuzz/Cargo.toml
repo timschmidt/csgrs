@@ -1,0 +1,23 @@
+[package]
+name = "hyperspatial-fuzz"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hyperspatial = { path = ".." }
+hyperlattice = { path = "../../hyperlattice" }
+hyperlimit = { path = "../../hyperlimit", default-features = false, features = ["std"] }
+
+[[bin]]
+name = "forward_local"
+path = "fuzz_targets/forward_local.rs"
+test = false
+doc = false
+bench = false

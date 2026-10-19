@@ -71,15 +71,24 @@ ingress requires an explicit `InputProvenance`; missing uncertainty stays unknow
   change contract and executed validation.
 - [Native E1 admission record](docs/admission/e1-native.md): current forward/local
   contracts, validation evidence and remaining work.
+- [Testing integration](docs/admission/testing.md): compiler/target gates,
+  production coverage, source-consumer and fuzz checks.
 
 From the repository root:
 
 ```sh
-cargo check --locked -p hyperspatial --all-targets --all-features
-cargo test --locked -p hyperspatial --all-features
-cargo clippy --locked -p hyperspatial --all-targets --all-features -- -D warnings
-cargo doc --locked -p hyperspatial --no-deps --all-features
+bash crates/hyperspatial/scripts/checks.sh
+python3 crates/hyperspatial/scripts/coverage.py
+bash scripts/bench-reports.sh hyperspatial
 ```
+
+CI runs the checks on stable Rust and the declared 1.95 MSRV, and compiles the
+native library for `wasm32-unknown-unknown`. Coverage requires the rustup
+`llvm-tools-preview` component and measures production lines/regions/functions
+from library and integration tests. It enforces a 95% line floor; branch
+coverage and the 100% target remain open. The WASM build does not establish a
+JavaScript binding or runtime consumer. Fuzz instructions are in
+[fuzz/README.md](fuzz/README.md).
 
 All changes follow the workspace [properties](../../properties.md) and
 [admission protocol](../../docs/admission.md). The package uses the repository's

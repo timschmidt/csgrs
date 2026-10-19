@@ -3,7 +3,7 @@ name: Workspace
 # Builds every crate in the workspace together, and tests the crates that
 # have no workflow of their own. Crates with their own workflow (csgrs,
 # csgrs-ffi, hyperreal, hyperlattice, hypersolve, hypertri, hypermesh,
-# hypercurve, hypergraphics) are tested there.
+# hypercurve, hypergraphics, hyperspatial) are tested there.
 
 on: [push, pull_request]
 

@@ -1,0 +1,92 @@
+name: hyperspatial
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "crates/hyperspatial/**"
+      - "crates/hyperreal/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperspatial.yml"
+  pull_request:
+    paths:
+      - "crates/hyperspatial/**"
+      - "crates/hyperreal/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperspatial.yml"
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  checks:
+    name: Native checks (${{ matrix.toolchain }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: [stable, 1.95.0]
+    env:
+      RUSTUP_TOOLCHAIN: ${{ matrix.toolchain }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal --component clippy --component rustfmt
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: hyperspatial-${{ matrix.toolchain }}
+      - name: Run native checks and source consumer
+        run: bash crates/hyperspatial/scripts/checks.sh
+      - name: Run optimized workflow probe
+        run: cargo bench --locked -p hyperspatial --bench forward_local
+
+  wasm:
+    name: WASM library build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust and WASM target
+        run: rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+      - name: Check native library on WASM
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: cargo check --locked -p hyperspatial --lib --all-features --target wasm32-unknown-unknown
+
+  coverage:
+    name: Production coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust and LLVM tools
+        run: rustup toolchain install stable --profile minimal --component llvm-tools-preview
+      - name: Measure production coverage
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/coverage.py

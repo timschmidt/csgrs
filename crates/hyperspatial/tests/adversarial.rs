@@ -77,14 +77,29 @@ fn cancellation_and_small_budgets_fail_without_poisoning_results() {
             ..Limits::default()
         },
     );
+    assert_eq!(limited.policy(), PredicatePolicy::STRICT);
+    assert_eq!(limited.steps_used(), 0);
     assert!(matches!(
         source.to_ecef(&mut limited),
         Err(Error::ResourceExhausted(_))
     ));
+    assert_eq!(limited.steps_used(), limited.limits().max_steps);
     assert_eq!(
         source.to_ecef(&mut context()).unwrap().coordinates(),
         retained.coordinates()
     );
+}
+
+#[test]
+fn public_errors_retain_scalar_causes_and_domain_diagnostics() {
+    use std::error::Error as _;
+    let scalar = Real::from(-1).sqrt().unwrap_err();
+    let wrapped = Error::from(scalar);
+    assert!(wrapped.source().is_some());
+    assert!(wrapped.to_string().contains("Scalar"));
+    let invalid = Latitude::new(Angle::degrees(91.into()), &mut context()).unwrap_err();
+    assert!(invalid.source().is_none());
+    assert!(invalid.to_string().contains("latitude"));
 }
 
 #[test]

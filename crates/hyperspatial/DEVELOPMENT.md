@@ -13,6 +13,9 @@ active. The initial native increment implements units, validated ellipsoids,
 geodetic-to-ECEF and anchored ENU/NED transforms with retained evidence.
 ECEF inversion and the remaining E1 acceptance work are open; E2–E4 and A1–A5
 remain planned. See the [E1 admission record](docs/admission/e1-native.md).
+Dedicated stable/MSRV CI, native WASM compilation, production coverage,
+source-consumer checks and workspace adversarial/benchmark integration are
+recorded in the [testing admission](docs/admission/testing.md).
 
 Design constraints confirmed in this planning session: **production numerical
 scalars are `hyperreal::Real` or types backed by it**, and **external crates are
@@ -203,8 +206,9 @@ completed contract including provenance, output materialization and failures.
 
 Before a release, validate MSRV, features, documentation, packaging and clean
 external consumers through construct/transform/compose/evidence/export/import.
-Add dedicated CI tests and a WASM consumer when executable capability exists;
-the current workspace check discovers this scaffold automatically. Every push
+Dedicated CI now checks stable and Rust 1.95, production coverage and a native
+WASM library build. A WASM runtime consumer and packaging remain open; the
+separate README consumer validates local source use. Every push
 still requires the full repository pre-push validation set.
 
 The initial design keeps these decisions open until a concrete acceptance
