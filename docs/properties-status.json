@@ -28202,6 +28202,149 @@
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/known-angle-facts-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
     "runtime_admitted": true,
     "general_speedup_claimed": false
+  },
+  "strict_boolean_workflow_corpus": {
+    "decision": "Retain the named ordinary strict workflow corpus and independent exact set oracle.",
+    "admitted_scope": "50 permanent named tests: 45 workflow pairs with 21 audited outputs each, and five control tests combining same-volume wrong-set rejection with a forced degenerate-ray retry. The catalog names this finite domain and existing drilled, transform, empty and extrusion gates.",
+    "production_implementation_changed": false,
+    "runtime_extension_claimed": false,
+    "test_and_documentation_admitted": true,
+    "baseline_result": {
+      "already_supported_certified_pairs": 45,
+      "outputs": 945,
+      "open_cells": 58800,
+      "wrong_set_controls": 5,
+      "regression_gap": "No permanent named test had this independent exact represented-set oracle for all 45 pairs."
+    },
+    "cargo_tests": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-strict_boolean_workflows": [
+        [
+          "ok",
+          "50",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_boolean_workflows": [
+        [
+          "ok",
+          "50",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-transform_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "cargo_total_passed": 129,
+    "focused_tests_passed": 50,
+    "workflow_audits": {
+      "minimal": {
+        "certified_pairs": 45,
+        "outputs": 945,
+        "open_cells": 58800,
+        "wrong_set_controls": 5,
+        "ray_retry_controls": 5,
+        "stdout_sha256": "05df39f8b0d0c4ec5c4f16fc03fe5df1d972861efad9a4f09f38f9bdb6b35dc7"
+      },
+      "fields-svg": {
+        "certified_pairs": 45,
+        "outputs": 945,
+        "open_cells": 58800,
+        "wrong_set_controls": 5,
+        "ray_retry_controls": 5,
+        "stdout_sha256": "36fa1e76ec2c86be21ed666f2ccfd4560546558ae88166fe5e5dac32decd0e66"
+      }
+    },
+    "validation": "Workspace fmt and explicit helper-file rustfmt; Cargo target discovery; release builds and all selected tests in minimal and curve/sdf/metaballs/svg-io configurations; matching Cargo Clippy with -D warnings; Rust 1.95 checks of the new target in both configurations.",
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "new_test_target_checked": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_tests_on_floor_run": false
+    },
+    "resource_observations": {
+      "binary_bytes": {
+        "fields-svg-build--exact_linear_modeling-test-tests": 18292808,
+        "fields-svg-build--strict_boolean_workflows-test-tests": 6832104,
+        "minimal-build--empty_composition-test-tests": 6617568,
+        "minimal-build--strict_boolean_workflows-test-tests": 6472728,
+        "minimal-build--strict_drilled_workflows-test-tests": 6601552,
+        "minimal-build--transform_failures-test-tests": 6645928
+      },
+      "focused_binary_bytes": 12572336,
+      "scope": "Recorded compile and full-test wall times, raw samples and binary sizes characterize these checks. Dependencies were partly cached; no matched production performance, allocation or size claim follows from this tests/docs-only change."
+    },
+    "remaining_limitations": [
+      "Exact rational chart recovery depends on the native scalar recognizer; inability to recover a chart coordinate is an oracle limitation, not proof of an incorrect set.",
+      "Rational arithmetic and the separately checked native PWN validator remain trusted dependencies. This is an independent set oracle, not a second independent arbitrary-precision arithmetic implementation or formal proof.",
+      "The named finite domain and one test execution order do not exhaust symbolic expressions, mesh families, cache histories or thread schedules.",
+      "External containment does not establish internal total-work, retained-memory or cancellation guarantees. Runtime API, certainty provenance, interchange and release contracts are unchanged.",
+      "End-to-end certainty provenance, full ordinary workload coverage, clean shipped distribution, foreign consumers and complete CI remain open.",
+      "No push or release was performed. The whole pre-push validation matrix was not run for this scoped commit.",
+      "Historical missing evidence was not reaudited or recovered."
+    ],
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": null,
+    "disk_b_quota_mode": "User authorized available artifact volume capacity; no retained-artifact quota.",
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "all_adverse_results_retained": true,
+    "next": "Continue ordinary workflow and certainty-provenance contracts, then the clean shipped user path and release gates. The finite corpus is retained acceptance evidence, not completion of properties.md.",
+    "parent_revision": "f00073d098a5bf4a718291147e7f50b1ab1781cd",
+    "review": "docs/evidence/2026-10-19-strict-boolean-workflows-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-strict-boolean-workflows-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/strict-boolean-workflows-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "runtime_admitted": false,
+    "general_speedup_claimed": false
   }
 },
   "status_meanings": {

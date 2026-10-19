@@ -220,7 +220,10 @@ serialization; neither substitutes for the other contract.
 
 Maintain a named corpus of ordinary workflows: drilled bodies, transformed
 primitives, profile extrusion, holes, repeated cuts, touching and coplanar
-surfaces, and supported symbolic representations. Record separately:
+surfaces, and supported symbolic representations. The
+[named modeling corpus](workflow-corpus.md) records fixtures, input domains
+and semantic equality criteria; admission records identify the revisions and
+configurations actually executed. Record separately:
 
 ```text
 certified completion
