@@ -59,3 +59,4 @@ include!("node/asinh_range_tests.rs");
 include!("node/log_rational_range_tests.rs");
 include!("node/atan_range_tests.rs");
 include!("node/atanh_rational_range_tests.rs");
+include!("node/integral_atan_range_tests.rs");

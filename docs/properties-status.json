@@ -24043,6 +24043,1000 @@
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/atanh-rational-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
     "runtime_admitted": true,
     "general_speedup_claimed": false
+  },
+  "integral_atan_kernel_endpoints": {
+    "decision": "Retain native exact quarter-turn reduction for imported integral atan unit denominators.",
+    "admitted_scope": "The evaluator reuses the native exact atan(+/-1) identity for unit denominators before the recurrence. Non-unit denominators retain the original series. Fine endpoint refinement now completes in the tested domain while stored graphs, enclosures, following arithmetic and typed import failures retain their meaning.",
+    "scalar_cargo": {
+      "all": {
+        "doctests_passed": 29,
+        "parent_ignored": 0,
+        "parent_tests_passed": 1118
+      },
+      "default": {
+        "doctests_passed": 24,
+        "parent_ignored": 0,
+        "parent_tests_passed": 953
+      }
+    },
+    "debug_units_passed": 831,
+    "consumers": {
+      "hypercircuit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--features",
+          "interchange"
+        ],
+        "ignored": 0,
+        "passed": 60,
+        "selected_targets": [
+          "interchange",
+          "event_interchange",
+          "package",
+          "edit",
+          "curved_outline"
+        ]
+      },
+      "hyperlimit": {
+        "doctests": [
+          [
+            "ok",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "features": [
+          "--all-features"
+        ],
+        "ignored": 0,
+        "passed": 366,
+        "selected_targets": [
+          "all test targets"
+        ]
+      }
+    },
+    "curve_tests": {
+      "hypercurve_svg": [
+        [
+          "ok",
+          "20",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "svg_scalar_failures": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "modeling": {
+      "fields-svg-exact_linear_modeling": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sampled_profile_failures": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-scalar_certificate_failures": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "fields-svg-sdf_failures": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-empty_composition": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-scalar_certificate_failures": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-solid_cache": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "minimal-strict_drilled_workflows": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "compiler_floor": {
+      "compiler": "1.95.0",
+      "all_targets": [
+        "hyperreal",
+        "hyperlimit",
+        "hypercurve"
+      ],
+      "features": [
+        "all",
+        "no-default"
+      ],
+      "modeling_library": [
+        "no-default",
+        "curve,sdf,metaballs,svg-io"
+      ],
+      "runtime_or_clippy_on_floor_run": false
+    },
+    "ordinary_cost": {
+      "candidate_over_parent_median_latency": {
+        "named-root-cbor": 1.0207451589890972,
+        "named-root-json": 1.006120736996979,
+        "opaque-add-fresh": 1.0170228934849892,
+        "opaque-add-warm": 0.9967612011516592,
+        "opaque-root-cbor": 1.0388962532267934,
+        "opaque-root-json": 0.9615998578937269,
+        "radical-add-fresh": 0.9949149147110672,
+        "radical-add-warm": 0.987178719935615,
+        "rational-add": 0.9724090091520884,
+        "rational-cbor": 1.0499516264056417,
+        "rational-json": 0.9708745800111226,
+        "small-atanh-cbor": 1.0368813445339848,
+        "small-atanh-json": 0.9242883277591063,
+        "trig-add-fresh": 1.0060129302184753,
+        "trig-add-warm": 1.010935879177875,
+        "trig-cbor": 1.0042126907215994,
+        "trig-json": 1.0100308243864016
+      },
+      "binary_bytes": {
+        "candidate": 6783728,
+        "parent": 6783552
+      },
+      "allocation_deltas_first_pair": {
+        "named-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "named-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "opaque-root-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "radical-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-add": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "rational-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "small-atanh-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-fresh": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-add-warm": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-cbor": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "trig-json": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "allocation_deltas_stable_across_all_five_pairs": true,
+      "all_allocation_and_byte_metrics_identical": true,
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "native_integral_atan_cost": {
+      "candidate_over_parent_median_latency": {
+        "computable-atan-nonunit-s-1-cold--128": 0.984877014211776,
+        "computable-atan-nonunit-s-1-cold--32": 1.015952520037792,
+        "computable-atan-nonunit-s-1-cold-0": 1.0192183936758596,
+        "computable-atan-nonunit-s-1-warm--128": 1.02165194917914,
+        "computable-atan-nonunit-s-1-warm--32": 1.2516945638473886,
+        "computable-atan-nonunit-s-1-warm-0": 1.0018829288958975,
+        "computable-atan-nonunit-s1-cold--128": 1.004602801600042,
+        "computable-atan-nonunit-s1-cold--32": 0.9840865781262631,
+        "computable-atan-nonunit-s1-cold-0": 1.0089591627885783,
+        "computable-atan-nonunit-s1-warm--128": 1.0149483801104462,
+        "computable-atan-nonunit-s1-warm--32": 1.017564143365306,
+        "computable-atan-nonunit-s1-warm-0": 0.9850451622000611,
+        "computable-atan-unit-s-1-cold--8": 1.015348946073081,
+        "computable-atan-unit-s-1-cold-0": 1.0279886726086145,
+        "computable-atan-unit-s-1-warm--8": 0.9980137089904546,
+        "computable-atan-unit-s-1-warm-0": 1.2090489838566867,
+        "computable-atan-unit-s1-cold--8": 1.0493018617021277,
+        "computable-atan-unit-s1-cold-0": 0.9714942050824168,
+        "computable-atan-unit-s1-warm--8": 1.0254207721273805,
+        "computable-atan-unit-s1-warm-0": 1.0181529770034015,
+        "imported-integral-atan-nonunit-s-1-cold--128": 0.9657282976185316,
+        "imported-integral-atan-nonunit-s-1-cold--32": 1.0034340657555627,
+        "imported-integral-atan-nonunit-s-1-cold-0": 1.1024946720620503,
+        "imported-integral-atan-nonunit-s-1-warm--128": 1.0292151600035944,
+        "imported-integral-atan-nonunit-s-1-warm--32": 1.0230793744178066,
+        "imported-integral-atan-nonunit-s-1-warm-0": 0.9817500057510486,
+        "imported-integral-atan-nonunit-s1-cold--128": 0.9862244574319943,
+        "imported-integral-atan-nonunit-s1-cold--32": 0.9801955659553117,
+        "imported-integral-atan-nonunit-s1-cold-0": 1.0041481598343083,
+        "imported-integral-atan-nonunit-s1-warm--128": 1.0135336473938295,
+        "imported-integral-atan-nonunit-s1-warm--32": 1.0161652358042692,
+        "imported-integral-atan-nonunit-s1-warm-0": 0.989783970263495,
+        "imported-integral-atan-unit-s-1-cold--8": 0.017893194079985256,
+        "imported-integral-atan-unit-s-1-cold-0": 1.324517936038303,
+        "imported-integral-atan-unit-s-1-warm--8": 0.992411797233535,
+        "imported-integral-atan-unit-s-1-warm-0": 1.002390958125813,
+        "imported-integral-atan-unit-s1-cold--8": 0.013294112107573879,
+        "imported-integral-atan-unit-s1-cold-0": 1.0243605806407408,
+        "imported-integral-atan-unit-s1-warm--8": 1.008179130581284,
+        "imported-integral-atan-unit-s1-warm-0": 1.1177167602956346,
+        "real-atan-nonunit-s-1-cold--128": 0.9753947842457407,
+        "real-atan-nonunit-s-1-cold--32": 0.9705117295414422,
+        "real-atan-nonunit-s-1-cold-0": 1.0246675745150051,
+        "real-atan-nonunit-s-1-warm--128": 1.016892138939671,
+        "real-atan-nonunit-s-1-warm--32": 1.0136485841269631,
+        "real-atan-nonunit-s-1-warm-0": 1.059679305561812,
+        "real-atan-nonunit-s1-cold--128": 0.9800321866651024,
+        "real-atan-nonunit-s1-cold--32": 0.9862353227709318,
+        "real-atan-nonunit-s1-cold-0": 1.0262672256560947,
+        "real-atan-nonunit-s1-warm--128": 1.0381617332538027,
+        "real-atan-nonunit-s1-warm--32": 1.0443382483197,
+        "real-atan-nonunit-s1-warm-0": 1.0605705660197955,
+        "real-atan-unit-s-1-cold--8": 0.9755369229120491,
+        "real-atan-unit-s-1-cold-0": 0.8945188797306094,
+        "real-atan-unit-s-1-warm--8": 1.007731809722743,
+        "real-atan-unit-s-1-warm-0": 1.162173296602281,
+        "real-atan-unit-s1-cold--8": 1.156454784190951,
+        "real-atan-unit-s1-cold-0": 1.0292974804628552,
+        "real-atan-unit-s1-warm--8": 0.9848565094705838,
+        "real-atan-unit-s1-warm-0": 1.15842557243158
+      },
+      "binary_bytes": {
+        "candidate": 6898080,
+        "parent": 6897896
+      },
+      "allocation_deltas_first_pair": {
+        "computable-atan-nonunit-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-nonunit-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-nonunit-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-nonunit-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-nonunit-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-nonunit-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-nonunit-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-nonunit-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-nonunit-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-nonunit-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-nonunit-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-nonunit-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-unit-s-1-cold--8": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-unit-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-unit-s-1-warm--8": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-unit-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-unit-s1-cold--8": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-unit-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-unit-s1-warm--8": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "computable-atan-unit-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-nonunit-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-unit-s-1-cold--8": {
+          "allocations": -19130000,
+          "allocated_bytes": -376560000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 304
+        },
+        "imported-integral-atan-unit-s-1-cold-0": {
+          "allocations": 70000,
+          "allocated_bytes": 7440000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 304
+        },
+        "imported-integral-atan-unit-s-1-warm--8": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-unit-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-unit-s1-cold--8": {
+          "allocations": -19250000,
+          "allocated_bytes": -381680000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 120
+        },
+        "imported-integral-atan-unit-s1-cold-0": {
+          "allocations": -50000,
+          "allocated_bytes": 2320000,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 120
+        },
+        "imported-integral-atan-unit-s1-warm--8": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "imported-integral-atan-unit-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s-1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s-1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s-1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s-1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s1-cold--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s1-cold--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s1-warm--128": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s1-warm--32": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-nonunit-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-unit-s-1-cold--8": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-unit-s-1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-unit-s-1-warm--8": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-unit-s-1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-unit-s1-cold--8": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-unit-s1-cold-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-unit-s1-warm--8": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        },
+        "real-atan-unit-s1-warm-0": {
+          "allocations": 0,
+          "allocated_bytes": 0,
+          "retained_bytes": 0,
+          "peak_extra_bytes": 0
+        }
+      },
+      "allocation_deltas_stable_across_all_five_pairs": true,
+      "all_allocation_and_byte_metrics_identical": false,
+      "completed_output_assertions_passed": true,
+      "all_five_alternating_pairs_retained": true,
+      "general_speedup_claimed": false
+    },
+    "cost_interpretation": {
+      "all_unfavorable_samples_retained": true,
+      "claim": "Correctness and completed-domain extension; no general speedup claim.",
+      "measurement_limitations": [
+        "Finite single-host measurements with five alternating pairs; timing changes are not causal attribution.",
+        "The counted Rust allocator covers the measured implementation allocations; this is not a process-wide heap bound.",
+        "Former parent timeouts are reported separately from matched successful cost rows."
+      ],
+      "native": {
+        "all_completed_output_assertions_passed": true,
+        "all_slower_rows_retained_in_raw_result": true,
+        "allocation_deltas_stable_across_pairs": true,
+        "binary_bytes": {
+          "candidate": 6898080,
+          "parent": 6897896
+        },
+        "binary_bytes_delta": 184,
+        "changed_allocator_metrics_first_pair": {
+          "imported-integral-atan-unit-s-1-cold--8": {
+            "allocated_bytes": -376560000,
+            "allocations": -19130000,
+            "frees": -19130000,
+            "peak_extra_bytes": 304,
+            "retained_bytes": 0
+          },
+          "imported-integral-atan-unit-s-1-cold-0": {
+            "allocated_bytes": 7440000,
+            "allocations": 70000,
+            "frees": 70000,
+            "peak_extra_bytes": 304,
+            "retained_bytes": 0
+          },
+          "imported-integral-atan-unit-s1-cold--8": {
+            "allocated_bytes": -381680000,
+            "allocations": -19250000,
+            "frees": -19250000,
+            "peak_extra_bytes": 120,
+            "retained_bytes": 0
+          },
+          "imported-integral-atan-unit-s1-cold-0": {
+            "allocated_bytes": 2320000,
+            "allocations": -50000,
+            "frees": -50000,
+            "peak_extra_bytes": 120,
+            "retained_bytes": 0
+          }
+        },
+        "iterations_per_row": 10000,
+        "maximum_added_allocated_bytes_per_iteration": 744.0,
+        "maximum_added_allocation_calls_per_iteration": 7.0,
+        "maximum_added_peak_bytes_per_row": 304,
+        "median_latency_ratio_range": [
+          0.013294112107573879,
+          1.324517936038303
+        ],
+        "pairs": 5,
+        "result_sha256": "84b9a6b8bd996bc80e37caa239aac413737f5f0df81f082a6af43b252ab47909",
+        "rows": 60,
+        "rows_with_changed_allocator_metrics": 4,
+        "slower_rows": 40,
+        "slowest_ratios": {
+          "computable-atan-nonunit-s-1-warm--32": 1.2516945638473886,
+          "computable-atan-unit-s-1-warm-0": 1.2090489838566867,
+          "imported-integral-atan-nonunit-s-1-cold-0": 1.1024946720620503,
+          "imported-integral-atan-unit-s-1-cold-0": 1.324517936038303,
+          "imported-integral-atan-unit-s1-warm-0": 1.1177167602956346,
+          "real-atan-nonunit-s-1-warm-0": 1.059679305561812,
+          "real-atan-nonunit-s1-warm-0": 1.0605705660197955,
+          "real-atan-unit-s-1-warm-0": 1.162173296602281,
+          "real-atan-unit-s1-cold--8": 1.156454784190951,
+          "real-atan-unit-s1-warm-0": 1.15842557243158
+        }
+      },
+      "ordinary": {
+        "all_completed_output_assertions_passed": true,
+        "all_slower_rows_retained_in_raw_result": true,
+        "allocation_deltas_stable_across_pairs": true,
+        "binary_bytes": {
+          "candidate": 6783728,
+          "parent": 6783552
+        },
+        "binary_bytes_delta": 176,
+        "changed_allocator_metrics_first_pair": {},
+        "iterations_per_row": 100000,
+        "maximum_added_allocated_bytes_per_iteration": 0.0,
+        "maximum_added_allocation_calls_per_iteration": 0.0,
+        "maximum_added_peak_bytes_per_row": 0,
+        "median_latency_ratio_range": [
+          0.9242883277591063,
+          1.0499516264056417
+        ],
+        "pairs": 5,
+        "result_sha256": "51cf1507a90a50d40bc8b7454788f6203cbbffef58fe1d686b55468f0a2efe64",
+        "rows": 17,
+        "rows_with_changed_allocator_metrics": 0,
+        "slower_rows": 10,
+        "slowest_ratios": {
+          "named-root-cbor": 1.0207451589890972,
+          "named-root-json": 1.006120736996979,
+          "opaque-add-fresh": 1.0170228934849892,
+          "opaque-root-cbor": 1.0388962532267934,
+          "rational-cbor": 1.0499516264056417,
+          "small-atanh-cbor": 1.0368813445339848,
+          "trig-add-fresh": 1.0060129302184753,
+          "trig-add-warm": 1.010935879177875,
+          "trig-cbor": 1.0042126907215994,
+          "trig-json": 1.0100308243864016
+        }
+      },
+      "resources": {
+        "disk_b_free_bytes": 208677269504,
+        "free_bytes": 74387628032,
+        "host_available_bytes": 107360813056,
+        "log_bytes": 152539526,
+        "new_volume_free_bytes": 1989140946944,
+        "tmp_free_bytes": 66844057600
+      }
+    },
+    "cost_retention": {
+      "all_unfavorable_samples_retained": true,
+      "cost_interpretation": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/integral-atan-admission-20261019-v1/cost-interpretation-v1.json",
+      "cost_interpretation_sha256": "d6cbd711811823ef8dd9f0f72bdb59c401b5fea7dde35f566e7bc325935e0dc8",
+      "decision": "Retain native exact unit-denominator reduction with all measured costs disclosed.",
+      "future_work": "Any future optimization must preserve the admitted domain, independent enclosures, cancellation recovery, wire representation and downstream completion.",
+      "general_speedup_claimed": false,
+      "governing_priority": "Exactness and supported completion precede performance and memory.",
+      "measured_costs": {
+        "native": {
+          "allocation_deltas_stable_across_pairs": true,
+          "executable_growth_bytes": 184,
+          "maximum_added_allocated_bytes_per_iteration": 744.0,
+          "maximum_added_allocation_calls_per_iteration": 7.0,
+          "maximum_added_peak_bytes_per_row": 304,
+          "median_latency_ratio_range": [
+            0.013294112107573879,
+            1.324517936038303
+          ],
+          "rows_more_than_ten_percent_slower": {
+            "computable-atan-nonunit-s-1-warm--32": {
+              "candidate_over_parent_median_ratio": 1.2516945638473886,
+              "median_nanoseconds_per_query": {
+                "candidate": 30.4879,
+                "parent": 24.3573
+              }
+            },
+            "computable-atan-unit-s-1-warm-0": {
+              "candidate_over_parent_median_ratio": 1.2090489838566867,
+              "median_nanoseconds_per_query": {
+                "candidate": 28.812,
+                "parent": 23.8303
+              }
+            },
+            "imported-integral-atan-nonunit-s-1-cold-0": {
+              "candidate_over_parent_median_ratio": 1.1024946720620503,
+              "median_nanoseconds_per_query": {
+                "candidate": 527.7158,
+                "parent": 478.6561
+              }
+            },
+            "imported-integral-atan-unit-s-1-cold-0": {
+              "candidate_over_parent_median_ratio": 1.324517936038303,
+              "median_nanoseconds_per_query": {
+                "candidate": 815.7,
+                "parent": 615.8467
+              }
+            },
+            "imported-integral-atan-unit-s1-warm-0": {
+              "candidate_over_parent_median_ratio": 1.1177167602956346,
+              "median_nanoseconds_per_query": {
+                "candidate": 26.2232,
+                "parent": 23.4614
+              }
+            },
+            "real-atan-unit-s-1-warm-0": {
+              "candidate_over_parent_median_ratio": 1.162173296602281,
+              "median_nanoseconds_per_query": {
+                "candidate": 320.746,
+                "parent": 275.9881
+              }
+            },
+            "real-atan-unit-s1-cold--8": {
+              "candidate_over_parent_median_ratio": 1.156454784190951,
+              "median_nanoseconds_per_query": {
+                "candidate": 642.1029,
+                "parent": 555.2339
+              }
+            },
+            "real-atan-unit-s1-warm-0": {
+              "candidate_over_parent_median_ratio": 1.15842557243158,
+              "median_nanoseconds_per_query": {
+                "candidate": 366.3339,
+                "parent": 316.2343
+              }
+            }
+          },
+          "rows_with_changed_allocator_metrics": 4
+        },
+        "ordinary": {
+          "allocation_deltas_stable_across_pairs": true,
+          "executable_growth_bytes": 176,
+          "maximum_added_allocated_bytes_per_iteration": 0.0,
+          "maximum_added_allocation_calls_per_iteration": 0.0,
+          "maximum_added_peak_bytes_per_row": 0,
+          "median_latency_ratio_range": [
+            0.9242883277591063,
+            1.0499516264056417
+          ],
+          "rows_more_than_ten_percent_slower": {},
+          "rows_with_changed_allocator_metrics": 0
+        }
+      },
+      "measurement_limits": "Five alternating pairs on one host; latency changes alone do not establish causation. Rust allocator instrumentation is not a process-wide heap bound. Former timeouts are completion extensions, not matched successful-workload speedups.",
+      "reason": "The unchanged parent exceeds the original 60-second limit for three imported unit-denominator cases and the new regression. The repair reuses the existing exact quarter-turn identity. The original scalar and downstream workloads still complete, and every matched successful cost row passes independent enclosure assertions under its original limits.",
+      "tradeoff": "The unit-denominator identity changes evaluation work and allocations, while every non-unit kernel call gains an exact unit-magnitude check. All measured favorable and adverse effects remain in the record; completion at formerly timed-out precisions is reported separately from the matched successful rows."
+    },
+    "remaining_limitations": [
+      "General expression domains, other kernel ranges, full-width precision and typed native evaluation/cancellation remain open.",
+      "The isolated fallible-evaluation prototype remains unadmitted.",
+      "External containment does not establish internal total-work, heap, expression-growth or cancellation contracts.",
+      "Finite and concurrent tests do not establish exhaustive correctness, formal verification, coverage targets or all possible thread schedules.",
+      "The complete useful-workflow corpus, clean shipped distribution, real foreign consumers and full CI/DRC gates remain open.",
+      "Historical missing evidence was neither reaudited nor recovered."
+    ],
+    "full_plan_complete": false,
+    "public_distribution_complete": false,
+    "hypervoxel_deferred_by_user": true,
+    "storage_baselines_reset": false,
+    "disk_b_allowance_gib": null,
+    "disk_b_quota_mode": "User authorized available artifact volume capacity; no retained-artifact quota.",
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "all_adverse_results_retained": true,
+    "next": "Continue scalar domain/evidence ownership and ordinary strict completion, then complete the shipped user path and release validation.",
+    "parent_revision": "e378f873fbef140919eb8beeaed4e7ed92013f9b",
+    "review": "docs/evidence/2026-10-19-integral-atan-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-integral-atan-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/integral-atan-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz",
+    "runtime_admitted": true,
+    "general_speedup_claimed": false
   }
 },
   "status_meanings": {

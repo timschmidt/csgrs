@@ -5,6 +5,16 @@ fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
     if p >= 1 {
         return Zero::zero();
     }
+    // The series' geometric work/error bound requires |n| >= 2. Imported
+    // unit denominators are valid, but need the native atan(+/-1) identity.
+    if i.magnitude().is_one() {
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+        return Computable::integer(i.clone())
+            .atan()
+            .approx_signal(signal, p);
+    }
 
     let iterations_needed: i32 = -p / 2 + 2; // conservative estimate > 0.
     // from Java implementation description:
