@@ -319,8 +319,11 @@ impl Real {
             // free borrowed binary64 conversion before narrowing at this
             // explicitly lossy IO boundary. Zero falls through so the general
             // path can retain the sign of an underflowed negative value.
-            let narrowed = value as f32;
-            let narrowed = narrowed.is_finite().then_some(narrowed);
+            // Narrowing the correctly rounded binary64 value is exact unless
+            // it sits at or next to a binary32 tie, where rounding twice could
+            // pick the wrong neighbour; round the exact rational there.
+            let narrowed = unambiguous_f32_from_f64(value)
+                .unwrap_or_else(|| self.rational.to_f32_correctly_rounded());
             #[cfg(all(feature = "cached-f64-approx", not(feature = "cached-f32-approx")))]
             self.primitive_approx_cache
                 .set(PrimitiveApproxCache::F64(Some(value)));
@@ -362,7 +365,6 @@ impl Real {
 /// immediate neighbors, where narrowing an approximate proposal could select
 /// a different adjacent value. Signed zero deliberately falls through so the
 /// exact sign can be retained.
-#[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
 fn unambiguous_f32_from_f64(value: f64) -> Option<Option<f32>> {
     if value == 0.0 || !value.is_finite() {
         return None;

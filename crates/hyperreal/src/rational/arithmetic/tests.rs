@@ -3350,6 +3350,131 @@ mod tests {
         assert!(checked > 3_000);
     }
 
+    /// Whether `candidate` is the binary64 value nearest to `value`, with a
+    /// tie going to the even significand, decided with exact arithmetic.
+    fn is_nearest_f64(value: &Rational, candidate: f64) -> bool {
+        let distance = |float: f64| {
+            let difference = value - &Rational::try_from(float).unwrap();
+            if difference.sign() == Minus { -difference } else { difference }
+        };
+        let here = distance(candidate);
+        [candidate.next_down(), candidate.next_up()]
+            .into_iter()
+            .filter(|neighbour| neighbour.is_finite())
+            .all(|neighbour| match here.partial_cmp(&distance(neighbour)).unwrap() {
+                Ordering::Less => true,
+                Ordering::Equal => candidate.to_bits() & 1 == 0,
+                Ordering::Greater => false,
+            })
+    }
+
+    #[test]
+    fn unreduced_decimals_convert_by_value() {
+        // OBJ export writes 47/6's binary64 value as this exact decimal;
+        // parsing keeps it over 10^50, unreduced. Converting it back must
+        // give the same binary64 value, not its neighbour.
+        let decimal: Rational = "7.83333333333333303727386009995825588703155517578125"
+            .parse()
+            .unwrap();
+        let expected = 47.0_f64 / 6.0;
+        assert_eq!(expected.to_bits(), 0x401f_5555_5555_5555);
+        assert_eq!(decimal, Rational::try_from(expected).unwrap());
+        assert_eq!(decimal.to_f64_lossy().map(f64::to_bits), Some(expected.to_bits()));
+        assert_eq!(
+            crate::Real::new(decimal).to_f64_lossy().map(f64::to_bits),
+            Some(expected.to_bits())
+        );
+    }
+
+    #[test]
+    fn wide_rationals_round_to_the_nearest_f64_in_every_representation() {
+        use rug::{Float, Integer, Rational as GmpRational, integer::Order};
+        crate::mpfr_test::cleanup_on_thread_exit();
+
+        let mut state = 0x3c6e_f372_fe94_f82b_u64;
+        let mut next = || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        let wide = |bits: u64, next: &mut dyn FnMut() -> u64| {
+            let mut value = BigUint::from(next() | (1_u64 << 63)) << (bits - 64);
+            value |= BigUint::from(next()) << ((bits - 64) / 2);
+            value | BigUint::one()
+        };
+        let mut subnormal = 0;
+        for _ in 0..2_000 {
+            let numerator_bits = 64 + next() % 300;
+            let numerator = wide(numerator_bits, &mut next);
+            let denominator_bits = 64 + next() % 300;
+            // A power-of-two scale moves the quotient across the normal and
+            // subnormal ranges.
+            let scale = next() % 1_400;
+            let denominator = wide(denominator_bits, &mut next) << scale;
+            let value = Rational::from_fraction_parts(Plus, numerator.clone(), denominator.clone());
+            let Some(converted) = value.to_f64_lossy() else {
+                continue;
+            };
+            assert!(is_nearest_f64(&value, converted), "{value:?} -> {converted:e}");
+            if converted != 0.0 && !converted.is_normal() {
+                subnormal += 1;
+            } else if converted.is_normal() {
+                let gmp = GmpRational::from((
+                    Integer::from_digits(&numerator.to_u64_digits(), Order::Lsf),
+                    Integer::from_digits(&denominator.to_u64_digits(), Order::Lsf),
+                ));
+                assert_eq!(converted.to_bits(), Float::with_val(53, &gmp).to_f64().to_bits());
+            }
+
+            // A common factor must not change the result.
+            let factor = BigUint::from(next() | 1) * BigUint::from(next() | 1);
+            let unreduced =
+                Rational::from_parts_raw(Plus, numerator * &factor, denominator * &factor);
+            assert_eq!(unreduced.to_f64_lossy().map(f64::to_bits), Some(converted.to_bits()));
+        }
+        assert!(subnormal > 0, "the corpus must reach subnormal results");
+    }
+
+    #[test]
+    fn rationals_next_to_a_binary32_tie_round_once() {
+        // 1 + 2^-24 is the binary32 midpoint between 1 and 1 + 2^-23, and a
+        // binary64 value. Just above it, the binary64 rounding is the
+        // midpoint itself, which narrows to 1 by ties-to-even; the value
+        // itself rounds up.
+        let above = Rational::from_fraction_parts(
+            Plus,
+            (BigUint::one() << 80_usize) + (BigUint::one() << 56_usize) + BigUint::one(),
+            BigUint::one() << 80_usize,
+        );
+        assert_eq!(above.to_f64_lossy(), Some(1.0 + 2.0_f64.powi(-24)));
+        assert_eq!(crate::Real::new(above.clone()).to_f32_lossy(), Some(1.0 + f32::EPSILON));
+        assert_eq!(above.to_f32_correctly_rounded(), Some(1.0 + f32::EPSILON));
+
+        let below = Rational::from_fraction_parts(
+            Plus,
+            (BigUint::one() << 80_usize) + (BigUint::one() << 56_usize) - BigUint::one(),
+            BigUint::one() << 80_usize,
+        );
+        assert_eq!(crate::Real::new(below.clone()).to_f32_lossy(), Some(1.0));
+        let midpoint = Rational::from_fraction_parts(
+            Plus,
+            (BigUint::one() << 24_usize) + BigUint::one(),
+            BigUint::one() << 24_usize,
+        );
+        assert_eq!(crate::Real::new(midpoint).to_f32_lossy(), Some(1.0));
+        assert_eq!(
+            crate::Real::new(-above).to_f32_lossy(),
+            Some(-(1.0 + f32::EPSILON))
+        );
+        // Below half the smallest subnormal, binary32 rounds to zero; above
+        // the largest finite value it overflows.
+        let tiny = Rational::from_fraction_parts(Plus, BigUint::one(), BigUint::one() << 151_usize);
+        assert_eq!(tiny.to_f32_correctly_rounded(), Some(0.0));
+        let huge = Rational::from_fraction_parts(Plus, BigUint::one() << 128_usize, BigUint::one());
+        assert_eq!(huge.to_f32_correctly_rounded(), None);
+    }
+
     #[test]
     fn display() {
         let many: Rational = "12345".parse().unwrap();

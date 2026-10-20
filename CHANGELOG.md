@@ -108,6 +108,11 @@ migrations, including changed serialized output, are listed in
 
 ### Fixed
 
+- Exporting a reimported OBJ file reproduces it exactly, as `to_obj`
+  documents. A coordinate whose binary64 value has a long decimal, such as a
+  Steiner vertex with denominator 3 or 6, could be written one ulp away the
+  second time, because hyperreal's float conversion depended on how the
+  value was stored.
 - The involute and cycloidal gear and rack constructors, marked "under
   construction" in 0.20.1, now produce corrected tooth profiles and validate
   their parameters.

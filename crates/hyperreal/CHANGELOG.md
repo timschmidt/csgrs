@@ -100,9 +100,13 @@
 
 ### Fixed
 
-- `Real::to_f64_lossy` returned `0.0` for a nonzero exact rational whose
-  denominator exceeds the binary64 range. It now returns a finite
-  approximation within one ulp.
+- `Real::to_f64_lossy` and `Real::to_f32_lossy` round exact rationals to the
+  nearest value, ties to even, whatever their representation. A rational with
+  operands wider than 53 bits, such as a long decimal parsed over a power of
+  ten, was rounded twice and could land one ulp away, so equal values could
+  convert differently. A value just above a binary32 midpoint could narrow to
+  the lower neighbour. A nonzero rational whose denominator exceeds the
+  binary64 range returned `0.0`.
 - Integer powers of a negative base that fall back to the lazy
   `exp(k * ln x)` construction took the logarithm of the negative base. They
   now use its magnitude and restore the sign by parity.

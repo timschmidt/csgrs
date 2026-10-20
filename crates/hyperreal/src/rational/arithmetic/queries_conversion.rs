@@ -370,12 +370,20 @@ impl Rational {
             return Some(0.0);
         }
 
-        let numerator = self.numerator.to_f64()?;
-        // BigUint conversion can return infinity rather than None. Dividing
-        // by that infinity would erase a representable finite result;
-        // leave such ratios to the magnitude-aware computable fallback.
-        let denominator = self.denominator.to_f64().filter(|value| value.is_finite())?;
-        let value = numerator / denominator;
+        // Operands of at most 53 bits convert exactly, so one IEEE division
+        // rounds the quotient correctly. Wider operands, including unreduced
+        // ones such as long decimals over a power of ten, would round twice
+        // that way; round their exact quotient instead, so the result depends
+        // only on the value.
+        let value = if self.numerator.bits() <= 53 && self.denominator.bits() <= 53 {
+            self.numerator.to_f64()? / self.denominator.to_f64()?
+        } else {
+            let (significand, ulp) = self.rounded_binary_magnitude(53, -1074);
+            // The significand is at most 2^53, so it is exact in binary64,
+            // and scaling by a power of two is exact while the result is
+            // finite.
+            (significand as f64) * f64_power_of_two(ulp)?
+        };
         if !value.is_finite() {
             return None;
         }
@@ -385,6 +393,63 @@ impl Rational {
             NoSign => 0.0,
             Plus => value,
         })
+    }
+
+    /// Rounds `|self|` to `precision` significant bits, ties to even, with
+    /// the last place no finer than `2^minimum_ulp_exponent` (the subnormal
+    /// floor of the target format). Returns the significand `q` and the
+    /// exponent `u` of its last place: the rounded value is `q * 2^u`, with
+    /// `q <= 2^precision`.
+    fn rounded_binary_magnitude(&self, precision: u32, minimum_ulp_exponent: i64) -> (u64, i64) {
+        use num::Integer as _;
+
+        let numerator = &self.numerator;
+        let denominator = &self.denominator;
+        // 2^(shift - 1) < |self| < 2^(shift + 1); one comparison fixes the
+        // binary exponent.
+        let shift = i64::try_from(numerator.bits()).unwrap_or(i64::MAX)
+            - i64::try_from(denominator.bits()).unwrap_or(i64::MAX);
+        let at_least = if shift >= 0 {
+            *numerator >= (denominator << shift.unsigned_abs())
+        } else {
+            (numerator << shift.unsigned_abs()) >= *denominator
+        };
+        let exponent = if at_least { shift } else { shift - 1 };
+        let ulp = (exponent - (i64::from(precision) - 1)).max(minimum_ulp_exponent);
+        let (dividend, divisor) = if ulp >= 0 {
+            (numerator.clone(), denominator << ulp.unsigned_abs())
+        } else {
+            (numerator << ulp.unsigned_abs(), denominator.clone())
+        };
+        let (quotient, remainder) = dividend.div_rem(&divisor);
+        let mut significand = quotient
+            .to_u64()
+            .expect("the quotient has at most `precision` bits");
+        let twice_remainder = remainder << 1_u32;
+        if twice_remainder > divisor || (twice_remainder == divisor && significand & 1 == 1) {
+            significand += 1;
+        }
+        (significand, ulp)
+    }
+
+    /// Rounds to the nearest binary32 value, ties to even. Returns `None`
+    /// when the magnitude overflows binary32.
+    pub(crate) fn to_f32_correctly_rounded(&self) -> Option<f32> {
+        if self.sign == NoSign {
+            return Some(0.0);
+        }
+        // |self| >= 2^(bits(n) - bits(d) - 1); from 2^128 on, binary32 overflows.
+        if i128::from(self.numerator.bits()) - i128::from(self.denominator.bits()) > 128 {
+            return None;
+        }
+        let (significand, ulp) = self.rounded_binary_magnitude(24, -149);
+        // At most 2^24, so exact in binary32; the power-of-two scale is exact
+        // while the result is finite.
+        let value = (significand as f32) * f32_power_of_two(ulp)?;
+        if !value.is_finite() {
+            return None;
+        }
+        Some(if self.sign == Minus { -value } else { value })
     }
 
     #[inline]
@@ -836,4 +901,24 @@ impl Rational {
         self.sign == Plus
     }
 
+}
+
+/// `2^exponent` as binary64, including subnormal powers; `None` past the
+/// finite range.
+fn f64_power_of_two(exponent: i64) -> Option<f64> {
+    match exponent {
+        -1022..=1023 => Some(f64::from_bits(u64::try_from(exponent + 1023).ok()? << 52)),
+        -1074..=-1023 => Some(f64::from_bits(1_u64 << (exponent + 1074))),
+        _ => None,
+    }
+}
+
+/// `2^exponent` as binary32, including subnormal powers; `None` past the
+/// finite range.
+fn f32_power_of_two(exponent: i64) -> Option<f32> {
+    match exponent {
+        -126..=127 => Some(f32::from_bits(u32::try_from(exponent + 127).ok()? << 23)),
+        -149..=-127 => Some(f32::from_bits(1_u32 << (exponent + 149))),
+        _ => None,
+    }
 }

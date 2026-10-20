@@ -1327,14 +1327,22 @@ mod tests {
             huge_denominator,
         )
         .unwrap();
+        // Operands wider than binary64 now take the direct, correctly rounded
+        // conversion, so this value can carry a certified view. A cache entry
+        // that the direct route did not establish is still never consumed as
+        // predicate evidence: poison the cache first.
         let huge_real = Real::from(huge.clone());
-        assert!(huge_real.to_f64_lossy().is_some());
+        huge_real
+            .primitive_approx_cache
+            .set(PrimitiveApproxCache::F64(Some(2.0)));
+        assert!(!huge.has_relative_f64_filter_view());
         assert_eq!(
             Real::exact_rational_real_f64_with_error(&huge_real),
-            None,
+            Some((1.0, 32.0 * f64::EPSILON)),
             "a generic lossy cache entry is not certified predicate evidence"
         );
-        assert!(!huge.has_relative_f64_filter_view());
+        assert!(huge.has_relative_f64_filter_view());
+        assert_eq!(huge_real.to_f64_lossy(), Some(1.0));
 
         let zero = Rational::zero();
         let third = Rational::fraction(1, 3).unwrap();
