@@ -33,7 +33,7 @@ pub struct LineOffsetCandidate {
     pub side: OffsetSide,
     /// Exact offset distance.
     pub distance: Real,
-    /// Offset segment with source provenance preserved.
+    /// Offset segment.
     pub segment: LinePathSegment,
 }
 
@@ -57,7 +57,7 @@ pub struct ArcOffsetCandidate {
     pub side: OffsetSide,
     /// Exact offset distance.
     pub distance: Real,
-    /// Offset cardinal arc with source provenance preserved.
+    /// Offset cardinal arc.
     pub arc: CircularArc,
 }
 
@@ -68,7 +68,7 @@ pub struct ExplicitArcOffsetCandidate {
     pub side: OffsetSide,
     /// Exact offset distance.
     pub distance: Real,
-    /// Offset explicit arc with source provenance preserved.
+    /// Offset explicit arc.
     pub arc: ExplicitCircularArc,
 }
 

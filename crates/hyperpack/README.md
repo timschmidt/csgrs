@@ -108,7 +108,8 @@ turn an unverified proposal into a feasible packing.
 - `OrientedSheetItem2::new`, `Orientation2::apply`, and
   `verify_oriented_packing_2d` cover cardinal sheet rotations.
 - `Bin3`, `Item3`, `Placement3`, and `verify_packing_3d` cover fixed-orientation
-  cuboids; `PackingVerification3::replay` is the associated constructor.
+  cuboids; `FeasibilityReplay3::replay` is the containment/no-overlap replay
+  without accounting.
 - `OrientedItem3::new`, `Orientation3::apply`, and
   `verify_oriented_packing_3d` cover six dimension permutations.
 - `BinId::new`, `BinInstance3::new`, and

@@ -104,9 +104,9 @@ source grid / exact points
 ```
 
 Construction functions return completed domain values or reports immediately;
-there is no public prepared-object lifecycle. Provenance and source-grid units
-remain attached so an import is not accidentally treated as authored exact
-geometry.
+there is no public prepared-object lifecycle. Specctra fixed-grid records keep
+their source-grid units and denominator; the exact path values lowered from
+them carry no import provenance.
 
 ## API guide
 
@@ -239,8 +239,8 @@ search.
   no primitive-float round trip is required.
 - Clearance, tangency, containment, length, skew, and manufacturing reports
   return certified status, failure, or explicit uncertainty.
-- Source-grid facts, construction stamps, tangent records, and low-degree
-  residuals stay structured to avoid unnecessary symbolic expansion.
+- Source-grid records, tangent records, and low-degree residuals stay
+  structured to avoid unnecessary symbolic expansion.
 - Sampled Bézier offsets, incomplete arrangements, and imported routes remain
   candidates until their required domain reports pass.
 
@@ -309,7 +309,7 @@ source-code derivation or vendor endorsement.
 
 Licensed under Apache-2.0 as declared in [Cargo.toml](Cargo.toml).
 
-Bug reports should include exact path inputs, source-grid/provenance records,
+Bug reports should include exact path inputs, source-grid records,
 the requested check, enabled features, and the complete result. Before
 proposing a change, run formatting, focused tests, all targets/features, and
 strict Clippy.

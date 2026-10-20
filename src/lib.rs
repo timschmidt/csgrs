@@ -23,15 +23,16 @@
 //! - Exact convex hull and Minkowski sum are always available through `hypermesh`.
 //! - **metaballs**: enables an implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
 //! - **sdf**: retained implicit fields sampled with native-real Hypermesh Surface Nets
-//! - **hypertri**: hyperreal-backed polygon and curve triangulation
-//!
-//! #### Optional
-//! - **offset**: regularized planar offsets returned as native filled regions
-//! - **svg-io**: native curve import/export for SVG
-//! - **gerber-io**: native curve import/export for Gerber
+//! - Hyperreal-backed polygon and curve triangulation uses the non-optional
+//!   `hypertri` dependency.
 //! - **truetype-text**: filled regions from TrueType fonts
 //! - **hershey-text**: open strings from Hershey fonts
 //! - **image-io**: filled regions from raster contours
+//!
+//! #### Optional
+//! - **offset**: enables `curve`; Hypercurve's `CurveRegion2::offset` is not
+//!   feature-gated
+//! - **svg-io**: native curve import/export for SVG
 //! - **bevymesh**: conversion from native triangle geometry to Bevy
 
 #![forbid(unsafe_code)]

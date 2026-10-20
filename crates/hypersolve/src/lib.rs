@@ -1,9 +1,8 @@
 //! Iterative constraint solving experiments built on `hyperreal`.
 //!
-//! This first pass establishes the public seams from `PLAN.md`: symbolic
-//! expressions with variable leaves, residual evaluation, a linear-solver
-//! facade, a predicate/classification facade, and a small iterative solver
-//! skeleton.
+//! Its public seams include symbolic expressions with variable leaves,
+//! residual evaluation, a linear-solver facade, a predicate/classification
+//! facade, and a small iterative solver skeleton.
 
 pub mod active_set;
 pub mod affine;

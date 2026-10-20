@@ -99,10 +99,10 @@ that it remains identical to this README block.
 | Task | API |
 | --- | --- |
 | Construct exact points | `Point2::new` |
-| Build a checked owned polygon | `PolygonInput::new`, `PolygonInput::from_parts` |
+| Build a checked owned polygon | `PolygonInput::new` |
 | Borrow or consume its buffers | `vertices`, `hole_indices`, `into_parts` |
 | Read retained structure | `facts` and `PolygonInputFacts` query methods |
-| Interpret hole starts | `polygon::rings_from_hole_indices`, `polygon::open_ring_indices` |
+| Interpret hole starts | `polygon::rings_from_hole_indices` |
 
 The exterior ring begins at vertex zero. Each `hole_indices` entry is the
 start of a hole in the same flat point buffer.
@@ -192,7 +192,7 @@ input facts guide scheduling; exact predicates still certify the topology.
 | Inspect stable handles | `vertex`, `cell`, `facet`, `facet_key`, `vertices`, `cells` |
 | Validate the TDS | combinatorial, manifold, and geometric `validate_*` methods and reports |
 | Wrap valid storage | `TriangulationD::new`, `DelaunayTriangulationD::new` |
-| Analyze insertion | `DelaunayInsertionReportD::from_parts`, `insert_point_oracle` |
+| Analyze insertion | `insert_point_oracle`, `DelaunayInsertionReportD` |
 | Analyze/apply flips | `validate_bistellar_flip`, `flip_oracle`, `BistellarFlipD` and report types |
 
 The D-dimensional complex is intended as a small semantic oracle and validation

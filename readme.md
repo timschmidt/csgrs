@@ -264,7 +264,7 @@ Both text constructors return `Result`. Their `_with_context` variants return
 outlines and undecided scales are errors, never successful empty or partial
 text. Valid empty text, whitespace and blank glyphs remain empty after input
 validation. Hershey sizes may be negative but must be provably nonzero;
-Cartesian coordinates and horizontal spacing are preserved. `parts::dimension::annotate` also returns
+Cartesian coordinates and horizontal spacing are preserved. `parts::annotate` also returns
 `Result` and leaves the drawing unchanged if label construction fails.
 
 TrueType outlines are native lines and quadratic/cubic Bézier curves. The
@@ -297,7 +297,7 @@ Planar operations:
 
 - `CurveRegion2::boolean_region(&other, BooleanOp::{Union, Difference, Intersection, Xor})`
   from Hypercurve, or `boolean_regions` for all four sharing one arrangement;
-- `offset` and `offset_rounded`;
+- `offset` with an explicit `OffsetCornerStyle2` (`Miter`, `Bevel`, or `Round`);
 - `transformed`, `translated`, `rotated`, and `scaled`;
 - `contains_xy`, `bounding_box`, `try_finite_profiles`, and `try_triangulate`.
 
@@ -738,7 +738,8 @@ Feature-gated functions live under `csgrs::io`:
 | SVG | `svg::import_svg` | `svg::export_svg` |
 | Gerber | `gerber::import_gerber` | `gerber::export_gerber` |
 
-Triangle importers return `TriangleMesh`. Curve importers return distinct
+Triangle importers return `TriangleMesh`; glTF and VRML return it in an
+import report's `mesh` field. Curve importers return distinct
 filled, string, and path carriers where the source format can contain more
 than one topology kind. Mesh exporters accept `TriangleMesh` directly, and
 planar exporters accept native `CurveRegion2` values.
@@ -821,7 +822,7 @@ features of their own; enable the feature that names the capability.
 | `gltf-io`, `vrml-io`, `dxf-io` | yes | scene and CAD interchange |
 | `gerber-io` | yes | Gerber curve interchange |
 | `svg-io` | no | SVG curve interchange |
-| `offset` | no | regularized planar offsets |
+| `offset` | no | enables `curve` only; Hypercurve's `CurveRegion2::offset` is not feature-gated |
 | `truetype-text`, `hershey-text`, `image-io` | yes | text and raster curve construction |
 | `metaballs`, `sdf` | yes | sampled implicit geometry |
 | `bevymesh` | no | Bevy conversion |

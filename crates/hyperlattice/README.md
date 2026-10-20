@@ -139,8 +139,8 @@ reciprocal functions reject unknown-zero divisors without refinement, unlike
 | --- | --- |
 | Construct | `Vector2::from_xy`, `Vector3::new`/`from_xyz`, `Vector4::new`/`from_xyzw`, `zero`/`zeros` |
 | Import/export | `try_from_f32_array`, `try_from_f64_array`, `to_f32_array_lossy`, `to_f64_array_lossy` |
-| Read components | `x`, `y`, `z`, `components`, `into_components` |
-| Measure | `dot`, `norm_squared`, `squared_norm`, `magnitude`/`norm`, `squared_distance`, `wedge`, `cross` |
+| Read components | `x`, `y`, `z`, the public component array; `SharedScaleVec::components`, `into_components` |
+| Measure | `dot`, `norm_squared`, `magnitude`/`norm`, `squared_distance`, `wedge`, `cross`; `SharedScaleVec::squared_norm` |
 | Normalize and divide | `normalize`, `normalize_checked`, abort-aware checked variants, `div_scalar_checked` |
 | Combine | `lerp`, `step`, `mean`, `weighted_sum` |
 | 3D frames | `unit_cross_checked`, `orthonormal_basis_checked`, `angle_to` |
@@ -202,7 +202,7 @@ Both matrix types provide `new`, `zero`, `identity`, `transpose`, `determinant`,
 | Construct signed permutations | `signed_permutation` |
 | Use specialized inverses | `diagonal_inverse`, triangular inverse methods, `affine_translation_inverse`, `affine_orthonormal_inverse`, `signed_permutation_inverse`, `uniform_scale_inverse` |
 | Transform values | `transform_vec3`, `transform_vec4`, `transform_point3`, `transform_direction3` and corresponding batch methods |
-| Inspect scheduling | `exact_facts`, `structural_facts`, `determinant_schedule_hint` |
+| Inspect scheduling | `exact_facts`, `structural_facts` and its `determinant_schedule_hint` |
 
 Specialized division and inverse methods have checked variants that reject
 unresolved divisors or pivots. General matrix operations provide

@@ -128,9 +128,11 @@ boundaries.
   classification_report}` is the common physical shape carrier.
 - `ClosedTriangleMesh3::to_hypermesh_exact` performs the explicit exact mesh
   conversion.
-- `MassPropertyReport3::{zero, uniform_density_mass_properties,
-  material_mass_properties}` computes exact oriented-triangle volume, center
-  of mass, and symmetric inertia with a `MassPropertyCertificate3`.
+- `ClosedTriangleMesh3::{uniform_density_mass_properties,
+  material_mass_properties}` and, for native Hypermesh geometry,
+  `triangle_mesh_uniform_density_mass_properties` compute exact
+  oriented-triangle volume, center of mass, and symmetric inertia as a
+  `MassPropertyReport3` with a `MassPropertyCertificate3`.
 
 ### Classification and collision
 
@@ -163,9 +165,9 @@ These are replay and diagnostic APIs, not an open-ended time-stepping runtime.
 
 ### Thermal, optical, electromagnetic, process, and fluid carriers
 
-- `ThermalMaterial::new`, `TemperatureField3::new`,
-  `SteadySlabConductionReport::through_slab`,
-  `HeatSource3::joule_heating`,
+- `ThermalMaterial::new`, `TemperatureField3`,
+  `SteadySlabConductionReport::{through_slab, joule_heating}`,
+  `HeatSource3`,
   `TransientThermalStepReport::energy_balance_step`, and
   `LumpedRcThermalStepReport::explicit_euler_step` provide exact-aware thermal
   setup and replay reports.

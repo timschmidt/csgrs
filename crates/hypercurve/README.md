@@ -390,7 +390,7 @@ exact signatures.
   construction semantics.
 - `CurvePath2::{try_new, reversed, transform_similarity,
   chamfer_vertex_by_setbacks, fillet_vertex, bounds, classify_point,
-  native_bezier_fragments, bezier_boundary_loop}` is the sole connected-curve
+  native_bezier_fragments}` is the sole connected-curve
   corner-edit authority and handles general connected curves. Chamfers
   enumerate exact solutions from design setbacks. Fillets take `CurveFillet2`
   with an exact radius and optional center or contact constraints. Contact
@@ -434,8 +434,8 @@ exact signatures.
   intersection, difference, and xor results. Authored winding and canceled
   seams are resolved first. `BooleanOp` selects an operation; batched
   `CurveRegionBooleanResults2` exposes all four from one evaluation.
-- `CurveRegion2::straight_skeleton` and the
-  `straight_skeleton_*_events` methods expose staged skeleton construction and
+- `Contour2::straight_skeleton`, `CurvePath2::straight_skeleton`, and the
+  `Contour2::straight_skeleton_*_events` methods expose staged skeleton construction and
   blockers. `translation_obstacle_convex` constructs the exact translational
   configuration-space obstacle for supported convex contours.
 
@@ -449,7 +449,7 @@ exact signatures.
   region from finite material/hole profiles. `PolylineReconstructionOptions` controls reconstruction
   tolerance; the import remains lossy relative to the original source curves.
 - `project_to_finite_polyline`, `project_to_finite_curve_paths`,
-  `project_to_finite_profiles`, and `project_to_finite_region` provide explicit
+  `project_to_finite_profiles`, and `project_to_finite_ring` provide explicit
   finite approximations. `FiniteProjectionOptions` makes the curve chord-error
   budget visible at the boundary.
 - `CurveRegionProfile2::linear_contours` retains exact certified line images,

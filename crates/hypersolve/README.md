@@ -30,7 +30,7 @@ This README describes crate version `0.3.1`.
 | `AlgebraicRootRepresentation` | Isolated exact algebraic root carrier |
 | `work_budget::{WorkBudget, BudgetOutcome, BudgetExceeded}` | Shared synchronous refinement/promotion accounting with typed exhaustion |
 | `SolverConfig`, `SolverState`, `SolveReport` | Explicit proposal-engine state and diagnostics |
-| `SketchSolveProblem`, `SketchConstraintBuilder` | Sketch-specific equation construction and reports |
+| `SketchSolveProblem`, `SketchConstraintBuildReport` | Sketch-specific equation construction and reports |
 
 ## Install
 
@@ -122,7 +122,7 @@ blocks before an algorithm is selected.
   `ConstraintKind` identifies other row semantics.
 - `context_from_problem`, `EvaluationContext::bind`, and
   `evaluate_residuals` create and evaluate exact candidates.
-- `symbolic_jacobian`, `symbolic_jacobian_with_analysis`, and
+- `jacobian::symbolic_jacobian`, `symbolic_jacobian_with_analysis`, and
   `finite_difference_jacobian` expose exact-symbolic and explicitly finite
   Jacobian routes.
 
@@ -313,7 +313,7 @@ blocks before an algorithm is selected.
   actual leading coefficient. Denominator clearing consumes its optional
   denominators instead of cloning a parallel copy.
 - Local sign and zero queries reuse the reduced numerator invariant established
-  by every `LocalFieldElement` constructor and operation. Debug builds assert
+  by every local-field element constructor and operation. Debug builds assert
   the canonical degree/trailing-coefficient boundary; release builds avoid a
   repeated clone, trim, and quotient reduction before consulting the sign
   cache.
@@ -420,8 +420,8 @@ comparison.
 
 ### Sketch and domain helpers
 
-- `SketchSolveProblem` and `SketchConstraintBuilder` build exact-aware 2D and
-  projected-workplane constraints.
+- `SketchSolveProblem` and the `sketch_builders` modules build exact-aware 2D
+  and projected-workplane constraints.
 - Builder methods cover coincidence, incidence, horizontal/vertical,
   parallel/perpendicular/same-direction, distances and ranges, radii,
   concentricity, length equality/ratio/difference, angles, tangency,

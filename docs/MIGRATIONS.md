@@ -18,7 +18,7 @@ geometry on error; now they fail. Propagate errors with `?`, or match
 | Gears and airfoils | the five gear, rack and airfoil constructors | Invalid profiles no longer become successful empty solids, including at zero thickness. |
 | Splines | `bezier_path`, `bspline_path`, `bezier_region` | A missing path or empty geometry no longer stands in for failed construction. |
 | Hilbert curves | `hilbert_strings` | Replaces midpoint-only clipping and empty-on-error behavior. Output segmentation may change at actual boundary contacts. |
-| Text | both text constructors, `parts::dimension::annotate` | Invalid fonts, missing glyphs, failed outlines and undecided scales no longer produce empty or partial text. |
+| Text | both text constructors, `parts::annotate` | Invalid fonts, missing glyphs, failed outlines and undecided scales no longer produce empty or partial text. |
 | Curve transforms | `curve::transformed`, `translated`, `rotated`, `scaled` | Failures no longer become empty regions. `contains_xy` returns `Result<Option<bool>, ValidationError>`. |
 | 3D primitives | `cube`, `cuboid`, `sphere`, `cylinder`, `ellipsoid`, `frustum`, `frustum_between`, `octahedron`, `icosahedron`, `arrow`, `torus` | Return `Result<TriangleMesh, ValidationError>`. |
 | Bounds | `solid::bounding_box`, `curve::bounding_box`, their `try_` variants, `SolidExt::exact_bounds`, `solid::center`, `float` | Bounds queries return `Result<Option<Aabb>, ValidationError>`. `None` is a completed query on empty geometry. |

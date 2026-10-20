@@ -111,11 +111,11 @@ fn require_decided<T>(outcome: PredicateOutcome<T>) -> Result<T, RefinementNeed>
 | Task | API |
 | --- | --- |
 | Classify one scalar | `classify_real_sign`, `RealPredicateExt` |
-| Compare scalars | `compare_reals`, `compare_reals_with_policy`, `real_le`, `real_ge`, `real_min`, `real_max`, `real_clamp` |
+| Compare scalars | `compare_reals`, `real_le`, `real_ge`, `real_min`, `real_max`, `real_clamp` |
 | Compare points | `compare_point2_lexicographic`, `compare_point3_lexicographic`, `point2_equal`, `point3_equal` |
 | Classify a closed interval | `classify_real_closed_interval`, `real_in_closed_interval` |
 | Intersect intervals | `classify_closed_interval_intersection`, `closed_intervals_intersect` |
-| Use certified scalar filters | `certified_ball_sign`, `certified_interval_sign`, `classify_ball_sign_with_policy` |
+| Use certified scalar filters | `certified_ball_sign`, `certified_interval_sign`, `classify_ball_sign` |
 
 Point equality can use any certified unequal coordinate as a complete witness,
 even when another coordinate is undecided. It checks certified coordinate
@@ -127,15 +127,15 @@ undecided for the same pair of points.
 
 | Task | API |
 | --- | --- |
-| 2D/3D orientation | `orient2`, `orient2_with_policy`, `orient3` |
+| 2D/3D orientation | `orient2`, `orient3` |
 | Point against a directed line | `classify_point_line` |
 | Retain a line orientation | `line2_orientation`, `line2_orientation_with_facts`, `classify_point_line_with_orientation` |
 | In-circle | `incircle2`, `incircle2_evidence`, `incircle2_with_evidence` |
 | In-sphere | `insphere3`, `insphere3_evidence`, `insphere3_with_evidence` |
 | D-dimensional predicates | `orient_d`, `insphere_d`, `affine_independent_d` |
 
-Evidence-based classifiers also expose `*_with_policy` variants for callers
-that need an explicit `PredicatePolicy`.
+Evidence-based classifiers take the same explicit `PredicatePolicy` argument
+as the plain predicates.
 
 ### Segments, rings, and planar regions
 
@@ -170,7 +170,7 @@ Construct `Plane3` with its public `normal: Point3` and `offset: Real` fields.
 | Point/plane | `classify_point_plane`, `classify_point_oriented_plane` |
 | Plane/segment or triangle | `classify_plane_segment`, `classify_plane_triangle`, `classify_triangle_against_oriented_plane` |
 | Plane/AABB | `classify_plane_aabb3`, `classify_plane_aabb3_report` |
-| Retain evidence | `plane3_evidence`, `oriented_plane3_evidence`, corresponding `classify_*_with_evidence` methods |
+| Retain evidence | `plane3_evidence`, `oriented_plane3_evidence`, corresponding `classify_*_with_evidence` functions |
 | Homogeneous intersections | `intersect_two_planes`, `intersect_three_planes`, `intersect_homogeneous_line_plane` |
 | Homogeneous incidence | `classify_homogeneous_point_plane` |
 | Segment/plane construction | `intersect_segment_with_plane`, `intersect_segment_with_oriented_plane`, `intersect_segment_with_plane_values` |
@@ -186,7 +186,7 @@ so retained decisions can be checked against their source geometry.
 | Point/triangle | `classify_point_triangle`, `classify_point_triangle3`, facts/orientation reuse variants |
 | Triangle orientation and degeneracy | `triangle3_orientation`, `triangle3_winding_normal_sign`, `classify_triangle3_degeneracy` |
 | Segment or ray/triangle | `classify_segment_triangle3_intersection`, `classify_ray_triangle3_intersection` and report variants |
-| Triangle/triangle | `classify_triangle_triangle3`, `classify_triangle_triangle3_with_policy`, `classify_triangle_triangle3_points_with_policy` |
+| Triangle/triangle | `classify_triangle_triangle3`, `classify_triangle_triangle3_points` |
 | Point/tetrahedron | `classify_point_tetrahedron` |
 | Coplanar triangles | `classify_coplanar_triangles`, `classify_coplanar_triangle_points`, `derive_coplanar_triangle_relation` |
 | Coplanar projection | `choose_coplanar_projection`, `project_point3`, `project_triangle3`, projected area, turn, line, and segment helpers |

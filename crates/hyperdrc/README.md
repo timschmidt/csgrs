@@ -195,12 +195,12 @@ hyperdrc \
   --summary-file summary.json
 ```
 
-The binary maps malformed input or impossible evidence construction to exit
-status 1 and active findings to status 2. `--allow-findings` retains the report
-but suppresses the latter status for exploratory automation.
+The binary exits with status 1 for malformed input, impossible evidence
+construction, or active findings. `--allow-findings` retains the report but
+suppresses the active-findings status for exploratory automation.
 
 Use `--check` to select check families, `--config` and rule flags to resolve
-policy, `--waiver-file` and baseline options to govern known findings, and
+policy, `--waiver` and baseline options to govern known findings, and
 `--help` for the complete generated option list. Converter entry points include
 `--convert-input`, `--converter`, `--conversion-output-dir`, and the
 tool-specific handoff/review export flags.

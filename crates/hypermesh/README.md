@@ -233,7 +233,8 @@ their approximated coordinates back into topology decisions.
 `surface_nets` constructs a regular-grid Surface Nets proposal directly from
 `Real` scalar samples. Sign classification, edge interpolation, cell centroids,
 quad diagonal selection, and triangle-degeneracy checks remain in the exact
-geometry boundary, and the result is returned as a `TriangleMesh`.
+geometry boundary, and the returned `SurfaceNetsOutput` carries the result as
+a `TriangleMesh`.
 
 This removes primitive-float coordinate quantization but does not certify that
 the finite sample grid captures the topology of an underlying continuous
@@ -245,7 +246,7 @@ the level set away from the grid boundary and validate closed PWN intake.
 
 | Feature | Default | Effect |
 | --- | --- | --- |
-| `fuzz-bounded-campaign` | no | Enables explicitly bounded fuzz campaign behavior. |
+| `fuzz-bounded-campaign` | no | Enabled by the fuzz and size harnesses; adds one internal predicate test and does not change library behavior. |
 | `dispatch-trace` | no | Enables correlated Hyperreal, Hyperlattice, and Hyperlimit dispatch tracing. |
 
 Hypermesh has no default features.

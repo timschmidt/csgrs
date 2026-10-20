@@ -241,10 +241,12 @@ and reverse-channel behavior are not implied.
   `CircuitModuleParameterTarget`, and overrides;
 - typed bundles: `SignalBundle`, `SignalBundleMember`, `Modport`,
   `SignalBundleEndpoint`, `SignalBundleLibrary`;
-- design modules: `DesignModule`, `DesignModuleInstance`, `CheckedProject`;
+- design modules with `layout`: `DesignModule`, `DesignModuleInstance`,
+  `CheckedProject`;
 - package resolution: `CircuitPackageCatalog`, `PackageRequirement`,
-  `CircuitPackageLock`, `PackageDigest`, `CircuitPackageStore`;
-- portable library artifacts: `CircuitLibraryArtifact`,
+  `CircuitPackageLock`, `PackageDigest`, and, with `interchange`,
+  `CircuitPackageStore`;
+- portable library artifacts with `interchange`: `CircuitLibraryArtifact`,
   `PartLibraryArtifact`, and portable part definitions.
 
 Hierarchy validation rejects recursion and missing or incompatible bindings.
@@ -316,7 +318,8 @@ carry.
 
 ### Geometry, fabrication, DRC, and release
 
-- `geometry`: exact-coordinate layout/material carriers lowered through CSGRS;
+- `coordinates`: exact manufacturing coordinate frames, orientations, and
+  transforms;
 - `materialize`: copper/process features, layer images, drill hits, projection
   evidence, and 3D assembly/glTF reports;
 - `fabrication`: Gerber/X3, Gerber Job, Excellon, IPC-D-356, manifests,
@@ -392,8 +395,9 @@ These are boundary records. HyperCircuit does not embed a general field solver.
 | `interchange` | semantic JSON, project manifests, edit history, KiCad/package/release exchange |
 | `lceda` | EasyEDA/LCEDA Pro adapter; implies `interchange` |
 
-Features are cumulative where shown in `Cargo.toml`: `geometry` includes
-`layout`, `drc` includes `geometry`, and `lceda` includes `interchange`.
+Features are cumulative where shown in `Cargo.toml`: `geometry` and
+`interchange` include `layout`, `drc` includes `geometry`, and `lceda` includes
+`interchange`.
 
 ## Guarantees and boundaries
 

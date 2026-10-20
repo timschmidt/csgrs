@@ -288,12 +288,13 @@ be used as numeric input to exact geometry or machine output.
 
 ### Advanced exact reducers
 
-Geometry and linear-algebra crates can use the public determinant filters,
-signed-product sums, dot/linear/affine combinations, exact dyadic-line
-carriers, and certified determinant-sign helpers re-exported from the crate
-root. These are advanced stack-building APIs rather than ordinary scalar
-entry points; their complete signatures and invariants are maintained in
-rustdoc.
+Geometry and linear-algebra crates can use the signed-product sums,
+dot/linear/affine combinations, and certified determinant-sign helpers on
+`Real`, and the determinant filters and exact dyadic-line carriers
+re-exported from the crate root. These are advanced stack-building APIs
+rather than ordinary scalar entry points. The `Real` helpers' complete
+signatures and invariants are maintained in rustdoc; the crate-root filters
+and carriers are hidden from rendered rustdoc and documented in source.
 
 ## Features
 
@@ -308,8 +309,8 @@ rustdoc.
 Enable the optional expression language with the `simple` feature in the
 source checkout.
 
-The user-facing `Simple` API is `FromStr`, `Simple::evaluate`, and
-`Simple::value`. Its grammar exposes the corresponding arithmetic,
+The user-facing `Simple` API is `FromStr`, `Simple::parse`, and
+`Simple::evaluate`. Its grammar exposes the corresponding arithmetic,
 elementary, stable, polynomial, probability, and special-function `Real`
 operations. Run expressions from the monorepo root with:
 
