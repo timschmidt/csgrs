@@ -30,7 +30,7 @@ This README describes crate version `0.3.0`.
 
 ## Install
 
-Add `hyperpack` 0.3.0 to a project with `cargo add hyperpack`; it requires Rust
+Add hyperpack 0.3.0 to a project with `cargo add hyperpack`; it requires Rust
 1.95 or newer. The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 

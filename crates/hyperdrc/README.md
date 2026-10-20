@@ -97,7 +97,7 @@ crate's own project rather than a source-file blob:
 
 ## Installation
 
-Add `hyperdrc` 0.3.0 to a project with `cargo add hyperdrc`; it requires Rust
+Add hyperdrc 0.3.0 to a project with `cargo add hyperdrc`; it requires Rust
 1.95 or newer. The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 

@@ -63,7 +63,7 @@ for the domain and verification contract. It is new in 0.7.0.
 
 ## Quick start
 
-Add `hyperlattice` 0.7.0 to a project with `cargo add hyperlattice`; it requires Rust
+Add hyperlattice 0.7.0 to a project with `cargo add hyperlattice`; it requires Rust
 1.95 or newer. The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 

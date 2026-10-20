@@ -56,7 +56,7 @@ policy outside this crate.
 
 ## Quick start
 
-Add `hyperlimit` 0.5.0 to a project with `cargo add hyperlimit`; it requires Rust
+Add hyperlimit 0.5.0 to a project with `cargo add hyperlimit`; it requires Rust
 1.95 or newer. The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 

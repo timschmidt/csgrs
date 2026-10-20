@@ -59,7 +59,7 @@ float to its exact represented value before topology is decided.
 
 ## Quick start
 
-Add `hypertri` 0.5.0 to a project with `cargo add hypertri`; it requires Rust
+Add hypertri 0.5.0 to a project with `cargo add hypertri`; it requires Rust
 1.95 or newer. The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 

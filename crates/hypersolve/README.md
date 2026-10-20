@@ -34,7 +34,7 @@ This README describes crate version `0.3.1`.
 
 ## Install
 
-Add `hypersolve` 0.4.0 to a project with `cargo add hypersolve`; it requires Rust
+Add hypersolve 0.4.0 to a project with `cargo add hypersolve`; it requires Rust
 1.95 or newer. The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 

@@ -108,7 +108,7 @@ arrangement from winding; authoring does not require orientation hints.
 
 ## Install
 
-Add `hypercurve` 0.4.0 to a project with `cargo add hypercurve`; it requires Rust
+Add hypercurve 0.4.0 to a project with `cargo add hypercurve`; it requires Rust
 1.95 or newer. The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 

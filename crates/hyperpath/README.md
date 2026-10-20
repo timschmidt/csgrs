@@ -35,7 +35,7 @@ This README describes crate version `0.3.0`.
 
 ## Install
 
-Add `hyperpath` 0.3.0 to a project with `cargo add hyperpath`; it requires Rust
+Add hyperpath 0.3.0 to a project with `cargo add hyperpath`; it requires Rust
 1.95 or newer. The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 

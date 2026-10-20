@@ -11,7 +11,7 @@ routing, packing, voxel, and design-readiness crates.
 The crate does not try to be a complete computer algebra system. Its job is to
 preserve exact or refinement-ready structure until a caller can make a
 certified decision—or report that the available evidence is insufficient.
-This README describes version 0.14.0.
+Version `0.14.0` is the release this README describes.
 
 ## Why exact-aware real arithmetic?
 

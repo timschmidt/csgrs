@@ -32,7 +32,7 @@ This README describes crate version `0.3.0`.
 
 ## Install
 
-Add `hyperphysics` 0.3.0 to a project with `cargo add hyperphysics`; it requires Rust
+Add hyperphysics 0.3.0 to a project with `cargo add hyperphysics`; it requires Rust
 1.95 or newer. The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 

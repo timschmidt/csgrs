@@ -60,7 +60,7 @@ vertex arena.
 
 ## Quick start
 
-Add `hypermesh` 0.1.0 to a project with `cargo add hypermesh`; it requires Rust
+Add hypermesh 0.1.0 to a project with `cargo add hypermesh`; it requires Rust
 1.95 or newer. The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 

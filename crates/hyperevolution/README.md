@@ -25,7 +25,7 @@ This README describes crate version `0.3.0`.
 
 ## Install
 
-Add `hyperevolution` 0.3.0 to a project with `cargo add hyperevolution`; it requires Rust
+Add hyperevolution 0.3.0 to a project with `cargo add hyperevolution`; it requires Rust
 1.95 or newer. The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 
