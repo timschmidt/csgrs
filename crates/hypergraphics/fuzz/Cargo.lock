@@ -230,7 +230,7 @@ dependencies = [
 
 [[package]]
 name = "hypercurve"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",
@@ -265,14 +265,14 @@ dependencies = [
 
 [[package]]
 name = "hyperlattice"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "hyperreal",
 ]
 
 [[package]]
 name = "hyperlimit"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "hyperlattice",
  "hyperreal",
@@ -290,14 +290,14 @@ dependencies = [
 
 [[package]]
 name = "hyperreal"
-version = "0.13.1"
+version = "0.14.0"
 dependencies = [
  "num",
 ]
 
 [[package]]
 name = "hypersolve"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "hyperlattice",
  "hyperlimit",
@@ -307,7 +307,7 @@ dependencies = [
 
 [[package]]
 name = "hypertri"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",

@@ -56,8 +56,9 @@ policy outside this crate.
 
 ## Quick start
 
-The examples below target `hyperlimit 0.4.1` in the
-[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+Add `hyperlimit` 0.5.0 to a project with `cargo add hyperlimit`; it requires Rust
+1.95 or newer. The examples below are checked in; from the root of a
+[CSGRS source checkout](../../readme.md), run:
 
 ```sh
 cargo run -p hyperlimit --example readme_quickstart

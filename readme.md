@@ -50,8 +50,9 @@ exchange geometry with another format.
 
 ## Quick start
 
-The example below uses the unreleased `csgrs 0.23.0` API. Install Rust with
-[rustup](https://rustup.rs/), then run it from this source checkout's root:
+The example below uses the `csgrs 0.23.0` API, which requires Rust 1.95 or
+newer. Add the crate to a project with `cargo add csgrs`, or install Rust with
+[rustup](https://rustup.rs/) and run the example from this source checkout's root:
 
 ```sh
 cargo run --example basic

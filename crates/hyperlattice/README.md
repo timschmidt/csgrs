@@ -59,12 +59,13 @@ functions to complex arguments, including negative real parameters. Known
 poles fail with `DivideByZero`; an unproved denominator fails with `UnknownZero`.
 The components retain `Real` expressions and exact norm relations. Complex dn
 can be zero or negative. See the [admission](docs/admission-complex-jacobi.md)
-for the domain and verification contract. This addition has not been published.
+for the domain and verification contract. It is new in 0.7.0.
 
 ## Quick start
 
-The examples below target `hyperlattice 0.6.1` in the
-[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+Add `hyperlattice` 0.7.0 to a project with `cargo add hyperlattice`; it requires Rust
+1.95 or newer. The examples below are checked in; from the root of a
+[CSGRS source checkout](../../readme.md), run:
 
 ```sh
 cargo run -p hyperlattice --example readme_quickstart

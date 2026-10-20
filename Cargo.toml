@@ -151,14 +151,14 @@ panic = "abort"
 [dependencies]
 # geometry
 #alum = "0.6.1"
-hypercurve = { version = "0.3.1", path = "crates/hypercurve", features = ["triangulation"] }
-hyperlattice = { version = "0.6.1", path = "crates/hyperlattice" }
-hyperlimit = { version = "0.4.1", path = "crates/hyperlimit" }
+hypercurve = { version = "0.4.0", path = "crates/hypercurve", features = ["triangulation"] }
+hyperlattice = { version = "0.7.0", path = "crates/hyperlattice" }
+hyperlimit = { version = "0.5.0", path = "crates/hyperlimit" }
 hypermesh = { version = "0.1.0", path = "crates/hypermesh" }
 hyperphysics = { version = "0.3.0", path = "crates/hyperphysics" }
-hyperreal = { version = "0.13.1", path = "crates/hyperreal", default-features = false, features = ["cached-f64-approx"] }
+hyperreal = { version = "0.14.0", path = "crates/hyperreal", default-features = false, features = ["cached-f64-approx"] }
 hypersdf = { version = "0.2.0", path = "crates/hypersdf", optional = true }
-hypertri = { version = "0.4.1", path = "crates/hypertri", default-features = false, features = ["earcut"] }
+hypertri = { version = "0.5.0", path = "crates/hypertri", default-features = false, features = ["earcut"] }
 # bevy mesh conversion
 bevy_mesh = { version = "0.18", optional = true }
 bevy_asset = { version = "0.18", optional = true }

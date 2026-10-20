@@ -13,8 +13,8 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 arbitrary = { version = "1", features = ["derive"] }
-hyperlimit = { version = "0.4.1", path = "..", default-features = false, features = ["std", "parallel"] }
-hyperreal = { version = "0.13.1", path = "../../hyperreal" }
+hyperlimit = { version = "0.5.0", path = "..", default-features = false, features = ["std", "parallel"] }
+hyperreal = { version = "0.14.0", path = "../../hyperreal" }
 
 [[bin]]
 name = "predicate_invariants"

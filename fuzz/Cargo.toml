@@ -9,9 +9,9 @@ cargo-fuzz = true
 
 [dependencies]
 csgrs = { version = "0.23.0", path = "..", features = ["attributed", "offset", "svg-io"] }
-hypercurve = { version = "0.3.1", path = "../crates/hypercurve" }
-hyperlimit = { version = "0.4.1", path = "../crates/hyperlimit" }
-hyperlattice = { version = "0.6.1", path = "../crates/hyperlattice" }
+hypercurve = { version = "0.4.0", path = "../crates/hypercurve" }
+hyperlimit = { version = "0.5.0", path = "../crates/hyperlimit" }
+hyperlattice = { version = "0.7.0", path = "../crates/hyperlattice" }
 hypermesh = { version = "0.1.0", path = "../crates/hypermesh" }
 hypersdf = { version = "0.2.0", path = "../crates/hypersdf" }
 libfuzzer-sys = "0.4"

@@ -15,12 +15,12 @@ default = []
 tessellation = ["dep:hypertri"]
 
 [dependencies]
-hypercurve = { version = "0.3.1", path = "../hypercurve" }
-hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
-hyperlimit = { version = "0.4.1", path = "../hyperlimit" }
-hyperreal = { version = "0.13.1", path = "../hyperreal", features = ["serde"] }
-hypersolve = { version = "0.3.1", path = "../hypersolve" }
-hypertri = { version = "0.4.1", path = "../hypertri", optional = true, features = ["earcut"] }
+hypercurve = { version = "0.4.0", path = "../hypercurve" }
+hyperlattice = { version = "0.7.0", path = "../hyperlattice" }
+hyperlimit = { version = "0.5.0", path = "../hyperlimit" }
+hyperreal = { version = "0.14.0", path = "../hyperreal", features = ["serde"] }
+hypersolve = { version = "0.4.0", path = "../hypersolve" }
+hypertri = { version = "0.5.0", path = "../hypertri", optional = true, features = ["earcut"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.149", features = ["unbounded_depth"] }
 serde_stacker = "0.1.14"

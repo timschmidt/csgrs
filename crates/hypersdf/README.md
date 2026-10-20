@@ -31,8 +31,9 @@ This README describes crate version `0.2.0`.
 
 ## Install
 
-The examples below target `hypersdf 0.2.0` in the
-[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+Add `hypersdf` 0.2.0 to a project with `cargo add hypersdf`; it requires Rust
+1.95 or newer. The examples below are checked in; from the root of a
+[CSGRS source checkout](../../readme.md), run:
 
 ```sh
 cargo run -p hypersdf --example basic

@@ -1,6 +1,6 @@
 [package]
 name = "hypercurve"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2024"
 rust-version = "1.95.0"
 description = "Hyperreal-backed planar curves, contours, and regions for CAD topology"
@@ -17,10 +17,10 @@ categories = ["mathematics", "graphics", "algorithms"]
 all-features = true
 
 [dependencies]
-hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
-hypersolve = { version = "0.3.1", path = "../hypersolve", default-features = false }
-hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
-hypertri = { version = "0.4.1", path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
+hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false }
+hypersolve = { version = "0.4.0", path = "../hypersolve", default-features = false }
+hyperlimit = { version = "0.5.0", path = "../hyperlimit", default-features = false, features = ["std"] }
+hypertri = { version = "0.5.0", path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
 num = { version = "0.4.3", features = ["num-bigint"] }
 cavalier_contours = { version = "0.7.0", optional = true }
 curvo = { version = "0.1.91", optional = true }

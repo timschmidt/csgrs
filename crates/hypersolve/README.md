@@ -34,8 +34,9 @@ This README describes crate version `0.3.1`.
 
 ## Install
 
-The examples below target `hypersolve 0.3.1` in the
-[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+Add `hypersolve` 0.4.0 to a project with `cargo add hypersolve`; it requires Rust
+1.95 or newer. The examples below are checked in; from the root of a
+[CSGRS source checkout](../../readme.md), run:
 
 ```sh
 cargo run -p hypersolve --example basic

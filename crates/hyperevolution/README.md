@@ -25,8 +25,9 @@ This README describes crate version `0.3.0`.
 
 ## Install
 
-The examples below target `hyperevolution 0.3.0` in the
-[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+Add `hyperevolution` 0.3.0 to a project with `cargo add hyperevolution`; it requires Rust
+1.95 or newer. The examples below are checked in; from the root of a
+[CSGRS source checkout](../../readme.md), run:
 
 ```sh
 cargo run -p hyperevolution --example basic

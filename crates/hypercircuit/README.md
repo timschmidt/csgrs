@@ -86,8 +86,9 @@ Ownership is deliberately separated:
 
 ## Installation
 
-The examples below target `hypercircuit 0.3.0` in the
-[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+Add `hypercircuit` 0.3.0 to a project with `cargo add hypercircuit`; it requires Rust
+1.95 or newer. The examples below are checked in; from the root of a
+[CSGRS source checkout](../../readme.md), run:
 
 ```sh
 cargo run -p hypercircuit --example basic

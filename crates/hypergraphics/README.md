@@ -59,8 +59,9 @@ with the default `exact` feature.
 
 ## Quick start
 
-The examples below target `hypergraphics 0.1.0` in the
-[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+Add `hypergraphics` 0.1.0 to a project with `cargo add hypergraphics`; it requires Rust
+1.95 or newer. The examples below are checked in; from the root of a
+[CSGRS source checkout](../../readme.md), run:
 
 ```sh
 cargo run -p hypergraphics --example readme_quickstart

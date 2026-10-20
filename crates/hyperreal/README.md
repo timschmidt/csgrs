@@ -11,7 +11,7 @@ routing, packing, voxel, and design-readiness crates.
 The crate does not try to be a complete computer algebra system. Its job is to
 preserve exact or refinement-ready structure until a caller can make a
 certified decision—or report that the available evidence is insufficient.
-Version `0.13.1` describes the unreleased source in this checkout.
+This README describes version 0.14.0.
 
 ## Why exact-aware real arithmetic?
 
@@ -65,7 +65,9 @@ explain their representations in more depth.
 
 ## Quick start
 
-From the repository root, run the checked-in example for this source version:
+Add `hyperreal` 0.14.0 to a project with `cargo add hyperreal`; it requires Rust
+1.95 or newer. From the root of a [CSGRS source checkout](../../readme.md), run
+the checked-in example:
 
 ```sh
 cargo run -p hyperreal --example readme_quickstart

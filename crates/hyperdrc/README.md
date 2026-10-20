@@ -97,8 +97,9 @@ crate's own project rather than a source-file blob:
 
 ## Installation
 
-The examples below target `hyperdrc 0.3.0` in the
-[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+Add `hyperdrc` 0.3.0 to a project with `cargo add hyperdrc`; it requires Rust
+1.95 or newer. The examples below are checked in; from the root of a
+[CSGRS source checkout](../../readme.md), run:
 
 ```sh
 cargo run -p hyperdrc --example basic

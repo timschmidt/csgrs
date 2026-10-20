@@ -14,10 +14,10 @@ keywords = ["mesh", "boolean", "geometry", "exact", "csg"]
 categories = ["mathematics", "graphics", "algorithms"]
 
 [dependencies]
-hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
-hyperreal = { version = "0.13.1", path = "../hyperreal" }
-hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
-hypertri = { version = "0.4.1", path = "../hypertri", default-features = false, features = ["earcut", "cdt"] }
+hyperlattice = { version = "0.7.0", path = "../hyperlattice" }
+hyperreal = { version = "0.14.0", path = "../hyperreal" }
+hyperlimit = { version = "0.5.0", path = "../hyperlimit", default-features = false, features = ["std"] }
+hypertri = { version = "0.5.0", path = "../hypertri", default-features = false, features = ["earcut", "cdt"] }
 
 [dev-dependencies]
 boolmesh = "=0.1.9"

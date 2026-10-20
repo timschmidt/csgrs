@@ -59,8 +59,9 @@ float to its exact represented value before topology is decided.
 
 ## Quick start
 
-The examples below target `hypertri 0.4.1` in the
-[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+Add `hypertri` 0.5.0 to a project with `cargo add hypertri`; it requires Rust
+1.95 or newer. The examples below are checked in; from the root of a
+[CSGRS source checkout](../../readme.md), run:
 
 ```sh
 cargo run -p hypertri --example basic --no-default-features --features earcut

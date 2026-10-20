@@ -1,6 +1,6 @@
 [package]
 name = "hypersolve"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2024"
 rust-version = "1.95.0"
 description = "Hyperreal-backed nonlinear solving and constraint evaluation"
@@ -16,9 +16,9 @@ categories = ["mathematics", "science", "algorithms"]
 [dependencies]
 # Cargo uses these paths in the workspace and retains the version requirements
 # in the published manifest.
-hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
-hyperlattice = { version = "0.6.1", path = "../hyperlattice", default-features = false }
-hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false }
+hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false }
+hyperlattice = { version = "0.7.0", path = "../hyperlattice", default-features = false }
+hyperlimit = { version = "0.5.0", path = "../hyperlimit", default-features = false }
 num = { version = "0.4.3", features = ["num-bigint"] }
 [dev-dependencies]
 criterion = "0.5"

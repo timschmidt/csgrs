@@ -32,8 +32,9 @@ This README describes crate version `0.3.0`.
 
 ## Install
 
-The examples below target `hyperphysics 0.3.0` in the
-[CSGRS source checkout](../../readme.md). From the monorepo root, run:
+Add `hyperphysics` 0.3.0 to a project with `cargo add hyperphysics`; it requires Rust
+1.95 or newer. The examples below are checked in; from the root of a
+[CSGRS source checkout](../../readme.md), run:
 
 ```sh
 cargo run -p hyperphysics --example basic
