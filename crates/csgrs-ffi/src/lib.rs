@@ -2329,7 +2329,7 @@ mod tests {
     fn undecided_native_normals_leave_abi_buffers_untouched_and_recover() {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
-        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let zero = terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
         for (height, expected) in [
             (Real::zero(), CsgrsStatus::ValidationFailed),
             (zero, CsgrsStatus::PredicateUndecided),
@@ -2389,7 +2389,7 @@ mod tests {
         let one = CsgrsReal { inner: Real::one() };
         let two = CsgrsReal { inner: 2.into() };
         let uncertain = CsgrsReal {
-            inner: &sine * &sine + &cosine * &cosine - Real::one(),
+            inner: terminal_zero(&sine * &sine + &cosine * &cosine - Real::one()),
         };
         let (z, o, t, u) = (
             ptr::from_ref(&zero).cast_mut(),
@@ -2433,7 +2433,7 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let zero = CsgrsReal {
-            inner: &sine * &sine + &cosine * &cosine - Real::one(),
+            inner: terminal_zero(&sine * &sine + &cosine * &cosine - Real::one()),
         };
         let square = curve_region_handle::<RealFamily>(ScalarCurve::from_native(
             csgrs::curve::square(2.into()).unwrap(),
