@@ -6,8 +6,10 @@ rust-version = "1.95.0"
 description = "C ABI for csgrs scalar adapters"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT"
-repository = "https://github.com/timschmidt/csgrs-ffi"
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/csgrs-ffi"
 readme = "README.md"
+include = ["/src/**", "/README.md", "/LICENSE*"]
 
 [lib]
 crate-type = ["cdylib", "staticlib", "rlib"]

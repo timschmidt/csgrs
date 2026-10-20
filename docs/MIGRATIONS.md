@@ -81,3 +81,13 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   to that name.
 - **Boolean batches.** Conversion from a shared Hypermesh Boolean batch gives
   empty rows zero positions as well as zero triangles.
+
+## Cargo features
+
+- **No dependency-named features.** Optional dependencies no longer create
+  features of their own, so `stl_io`, `chrono`, `dxf`, `base64`,
+  `serde_json`, `gerber-types`, `gerber_parser`, `ttf-parser`, `image`,
+  `hypersdf`, `wasm-bindgen`, `js-sys`, `serde-wasm-bindgen` and `serde`
+  are not valid `csgrs` features. Enable the capability feature instead, for
+  example `stl-io` for `stl_io`, `image-io` for `image` and `sdf` or
+  `metaballs` for `hypersdf`. The [README](../readme.md#features) lists them.

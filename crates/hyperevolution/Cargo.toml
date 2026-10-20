@@ -2,10 +2,13 @@
 name = "hyperevolution"
 version = "0.3.0"
 edition = "2024"
+rust-version = "1.95.0"
 description = "Exact-aware evolutionary and proposal-search carriers for the Hyper ecosystem"
 license = "Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/timschmidt/hyperevolution"
+include = ["/src/**", "/README.md", "/LICENSE*"]
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/hyperevolution"
 keywords = ["evolution", "optimization", "search", "hyperreal", "simulation"]
 categories = ["algorithms", "science", "simulation"]
 

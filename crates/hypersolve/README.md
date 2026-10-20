@@ -552,7 +552,8 @@ source-code derivation.
 
 ## License and contributing
 
-Licensed under the [Apache License 2.0](LICENSE-APACHE).
+Licensed under the [MIT License](LICENSE) or the
+[Apache License 2.0](LICENSE-APACHE), at your option.
 
 Bug reports should include the smallest problem, initial candidate, selected
 proposal engine, enabled features, and complete analysis/certification report.

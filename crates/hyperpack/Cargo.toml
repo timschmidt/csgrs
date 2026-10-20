@@ -2,10 +2,13 @@
 name = "hyperpack"
 version = "0.3.0"
 edition = "2024"
+rust-version = "1.95.0"
 description = "Exact-aware packing carriers and feasibility replay for the Hyper ecosystem"
 license = "Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/timschmidt/hyperpack"
+include = ["/src/**", "/README.md", "/LICENSE*"]
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/hyperpack"
 keywords = ["packing", "optimization", "geometry", "hyperreal", "cad"]
 categories = ["algorithms", "mathematics", "science"]
 

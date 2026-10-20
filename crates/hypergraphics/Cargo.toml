@@ -2,13 +2,14 @@
 name = "hypergraphics"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.95"
+rust-version = "1.95.0"
 description = "Exact 3D scene geometry with explicit f64/f32 rendering boundaries."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/timschmidt/hypergraphics"
+repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hypergraphics"
 readme = "README.md"
+include = ["/src/**", "/README.md", "/LICENSE*"]
 keywords = ["graphics", "renderer", "hyperreal", "geometry", "opengl"]
 categories = ["graphics", "rendering", "mathematics"]
 

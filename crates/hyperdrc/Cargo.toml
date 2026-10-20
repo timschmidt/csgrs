@@ -6,13 +6,11 @@ rust-version = "1.95.0"
 license = "MIT"
 description = "Command line design readiness checks for printed circuit board Gerber files"
 readme = "README.md"
-repository = "https://github.com/timschmidt/hyperdrc"
+include = ["/src/**", "/README.md", "/LICENSE*"]
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/hyperdrc"
 categories = ["command-line-utilities", "development-tools"]
 keywords = ["pcb", "drc", "dfm", "gerber", "kicad"]
-exclude = [
-    "docs/CPArti FPGA dev board.zip",
-    "docs/HVP109A.zip",
-]
 
 [package.metadata.docs.rs]
 all-features = true

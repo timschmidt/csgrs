@@ -9,7 +9,9 @@ rust-version = "1.95.0"
 
 license = "MIT"
 repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/csgrs"
 readme = "readme.md"
+include = ["/src/**", "/readme.md", "/LICENSE"]
 
 keywords = ["geometry", "physics", "csg", "slicing", "offsetting"]
 categories = ["game-development", "graphics", "mathematics", "simulation", "wasm"]
@@ -232,7 +234,7 @@ dispatch-trace = [
 ]
 curve = []
 stl-io = [
-  "stl_io",
+  "dep:stl_io",
 ]
 svg-io = [
   "curve",
@@ -240,8 +242,8 @@ svg-io = [
 ]
 dxf-io = [
   "curve",
-  "chrono",
-  "dxf",
+  "dep:chrono",
+  "dep:dxf",
 ]
 obj-io = [
   # OBJ format support - no external dependencies needed
@@ -253,8 +255,8 @@ amf-io = [
   # AMF format support - no external dependencies needed
 ]
 gltf-io = [
-  "base64",
-  "serde_json",
+  "dep:base64",
+  "dep:serde_json",
   "dep:gltf",
 ]
 vrml-io = [
@@ -262,23 +264,23 @@ vrml-io = [
 ]
 gerber-io = [
   "curve",
-  "gerber-types",
-  "gerber_parser",
+  "dep:gerber-types",
+  "dep:gerber_parser",
 ]
 truetype-text = [
   "curve",
-  "ttf-parser",
+  "dep:ttf-parser",
 ]
 hershey-text = [
   "curve",
   "hypercurve/hershey",
 ]
 image-io = [
-  "image",
+  "dep:image",
   "curve",
 ]
-metaballs = ["hypersdf"]
-sdf = ["hypersdf"]
+metaballs = ["dep:hypersdf"]
+sdf = ["dep:hypersdf"]
 # Native Hypercurve offset and regularized-buffer operations.
 offset = ["curve"]
 bevymesh = [
@@ -293,11 +295,11 @@ wasm = [
   "amf-io",
   "gltf-io",
   "sdf",
-  "wasm-bindgen",
-  "js-sys",
-  "serde-wasm-bindgen",
-  "serde_json",
-  "serde",
+  "dep:wasm-bindgen",
+  "dep:js-sys",
+  "dep:serde-wasm-bindgen",
+  "dep:serde_json",
+  "dep:serde",
 ]
 
 [[example]]

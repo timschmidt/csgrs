@@ -2,11 +2,14 @@
 name = "hypersdf"
 version = "0.2.0"
 edition = "2024"
+rust-version = "1.95.0"
 description = "Exact-aware signed-distance and implicit-field carriers for the Hyper stack"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "Apache-2.0"
-repository = "https://github.com/timschmidt/hypersdf"
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/hypersdf"
 readme = "README.md"
+include = ["/src/**", "/README.md", "/LICENSE*"]
 keywords = ["sdf", "implicit", "geometry", "exact", "voxel"]
 categories = ["mathematics", "graphics", "algorithms"]
 

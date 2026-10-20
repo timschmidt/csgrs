@@ -538,9 +538,9 @@ the other credited commit authors.
 
 ## License and contributing
 
-Hyperreal is distributed under the Apache License 2.0. Upstream-derived files
-retain their applicable copyright and license notices; see
-[`LICENSE.txt`](LICENSE.txt) and [`LICENSE-MIT`](LICENSE-MIT).
+Hyperreal is dual-licensed under the [MIT License](LICENSE-MIT) or the
+[Apache License 2.0](LICENSE.txt), at your option. Upstream-derived files
+retain their applicable copyright and license notices.
 
 Changes should keep lossy conversions explicit and preserve uncertainty at
 decision boundaries. Before submitting a change, run:

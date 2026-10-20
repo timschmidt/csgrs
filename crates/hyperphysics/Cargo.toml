@@ -2,11 +2,14 @@
 name = "hyperphysics"
 version = "0.3.0"
 edition = "2024"
+rust-version = "1.95.0"
 description = "Hyperreal-backed physical simulation primitives"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
-license = "Apache-2.0"
-repository = "https://github.com/timschmidt/hyperphysics"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/hyperphysics"
 readme = "README.md"
+include = ["/src/**", "/README.md", "/LICENSE*"]
 keywords = ["physics", "simulation", "hyperreal", "dynamics"]
 categories = ["science", "simulation", "mathematics"]
 

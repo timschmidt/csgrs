@@ -666,7 +666,8 @@ heap-byte or cancellation bound.
 
 ## License and contributing
 
-Licensed under the [Apache License 2.0](LICENSE-APACHE).
+Licensed under the [MIT License](LICENSE) or the
+[Apache License 2.0](LICENSE-APACHE), at your option.
 
 Bug reports should include the smallest exact input, selected features, policy,
 operation, and returned blocker or uncertainty evidence. Before proposing a

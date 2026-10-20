@@ -2,11 +2,14 @@
 name = "hypertri"
 version = "0.4.1"
 edition = "2024"
+rust-version = "1.95.0"
 description = "Hyperreal-backed triangulation algorithms with exact geometric predicates"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/timschmidt/hypertri"
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/hypertri"
 readme = "README.md"
+include = ["/src/**", "/README.md", "/LICENSE*"]
 keywords = ["triangulation", "geometry", "hyperreal", "predicates"]
 categories = ["mathematics", "graphics", "algorithms"]
 

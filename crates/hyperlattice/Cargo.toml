@@ -2,11 +2,14 @@
 name = "hyperlattice"
 version = "0.6.1"
 edition = "2024"
+rust-version = "1.95.0"
 description = "A small Rust linear algebra library with hyperreal-backed scalar, vector, and matrix types."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT"
-repository = "https://github.com/timschmidt/hyperlattice"
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/hyperlattice"
 readme = "README.md"
+include = ["/src/**", "/README.md", "/LICENSE*"]
 keywords = ["math", "blas", "matrices", "vectors", "linear-algebra"]
 categories = ["mathematics"]
 

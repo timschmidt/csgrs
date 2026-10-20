@@ -3,11 +3,14 @@ name = "hyperlimit"
 autobenches = false
 version = "0.4.1"
 edition = "2024"
+rust-version = "1.95.0"
 description = "Hyperreal-backed exact predicates with structural Real awareness."
 license = "MIT OR Apache-2.0"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
-repository = "https://github.com/timschmidt/hyperlimit"
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/hyperlimit"
 readme = "README.md"
+include = ["/src/**", "/README.md", "/LICENSE*"]
 keywords = ["exact", "geometric", "predicates", "boundary", "orientation"]
 categories = ["mathematics", "games", "simulation"]
 

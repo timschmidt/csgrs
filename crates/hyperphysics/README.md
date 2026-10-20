@@ -280,7 +280,8 @@ work informs the report models without implying source-code derivation.
 
 ## License and contributing
 
-Licensed under the [Apache License 2.0](LICENSE-APACHE).
+Licensed under the [MIT License](LICENSE) or the
+[Apache License 2.0](LICENSE-APACHE), at your option.
 
 Bug reports should include exact shape/material inputs, the operation, enabled
 features, and the complete report. Before proposing a change, run formatting,

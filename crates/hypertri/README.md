@@ -221,6 +221,7 @@ public predicate layer.
 | `runtime-select` | no | Enables runtime polygon algorithm selection. |
 | `f64-interop` | no | Enables finite-`f64` boundary adapters. |
 | `serde` | no | Serializes public exact topology records; retained facts are rebuilt when required. |
+| `dispatch-trace` | no | Records Hyperlimit/Hyperreal predicate-dispatch paths for tests and benchmarks. |
 
 Hypertri has no default features. Enable only the algorithm families your
 application uses.

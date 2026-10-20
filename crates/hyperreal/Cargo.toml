@@ -1,11 +1,14 @@
 [package]
 name = "hyperreal"
 description = "Exact rational and computable real arithmetic in Rust"
-license = "Apache-2.0"
-repository = "https://github.com/timschmidt/hyperreal/"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/hyperreal"
 version = "0.13.1"
 edition = "2024"
+rust-version = "1.95.0"
 readme = "README.md"
+include = ["/src/**", "/tests/support/**", "/README.md", "/LICENSE*"]
 keywords = ["real", "rational", "arithmetic", "exact", "math"]
 categories = ["mathematics", "science", "data-structures"]
 

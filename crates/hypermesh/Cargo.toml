@@ -2,11 +2,14 @@
 name = "hypermesh"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.95.0"
 description = "Hyperreal-backed exact mesh boolean primitives for Rust."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT"
-repository = "https://github.com/timschmidt/hypermesh"
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/hypermesh"
 readme = "README.md"
+include = ["/src/**", "/README.md", "/LICENSE*"]
 keywords = ["mesh", "boolean", "geometry", "exact", "csg"]
 categories = ["mathematics", "graphics", "algorithms"]
 

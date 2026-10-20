@@ -809,21 +809,24 @@ receipts, and decided/boundary/uncertain point-query status.
 ## Features
 
 Default features provide the common modeling and interchange surface. For
-smaller builds use `default-features = false`.
+smaller builds use `default-features = false`. Optional dependencies are not
+features of their own; enable the feature that names the capability.
 
-| Feature | Adds |
-|---|---|
-| `curve` | native curve grammar and curve-to-solid operations |
-| `attributed` | aligned metadata/authored-normal boundary carrier |
-| `stl-io`, `obj-io`, `ply-io`, `amf-io` | triangle interchange |
-| `gltf-io`, `vrml-io`, `dxf-io` | scene and CAD interchange |
-| `svg-io`, `gerber-io` | curve interchange |
-| `offset` | regularized planar offsets |
-| `truetype-text`, `hershey-text`, `image-io` | text and raster curve construction |
-| `metaballs`, `sdf` | sampled implicit geometry |
-| `bevymesh` | Bevy conversion |
-| `wasm` | WebAssembly/browser wrappers |
-| `dispatch-trace` | computation-path evidence for tests and benchmarks |
+| Feature | Default | Adds |
+|---|---|---|
+| `curve` | yes | native curve grammar and curve-to-solid operations |
+| `attributed` | no | aligned metadata/authored-normal boundary carrier |
+| `stl-io`, `obj-io`, `ply-io`, `amf-io` | yes | triangle interchange |
+| `gltf-io`, `vrml-io`, `dxf-io` | yes | scene and CAD interchange |
+| `gerber-io` | yes | Gerber curve interchange |
+| `svg-io` | no | SVG curve interchange |
+| `offset` | no | regularized planar offsets |
+| `truetype-text`, `hershey-text`, `image-io` | yes | text and raster curve construction |
+| `metaballs`, `sdf` | yes | sampled implicit geometry |
+| `bevymesh` | no | Bevy conversion |
+| `wasm` | no | WebAssembly/browser wrappers |
+| `dispatch-trace` | no | computation-path evidence for tests and benchmarks |
+| `bench-feature-pipeline` | no | internal: every feature the benchmark pipeline measures; not an API |
 
 A minimal curve-and-solid build is:
 
