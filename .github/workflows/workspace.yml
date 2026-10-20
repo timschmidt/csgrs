@@ -51,6 +51,10 @@ jobs:
           - hyperpath
           - hyperphysics
         include:
+          # The exact BREP corpus takes about 30 minutes in a debug build;
+          # keep debug assertions and give it room instead of using release.
+          - crate: hyperbrep
+            timeout: 90
           # The complex-project performance tests take over 40 minutes in a
           # debug build and about 35 in release.
           - crate: hyperdrc
