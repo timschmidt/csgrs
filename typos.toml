@@ -3,6 +3,8 @@ extend-exclude = [".git", "stl/**", "crates/**"]
 
 [default]
 locale = "en"
+# Abbreviated and full commit hashes cited by ledgers.
+extend-ignore-re = ["\\b[0-9a-f]{7,40}\\b"]
 
 [default.extend-words]
 # allow list / custom corrections
@@ -23,3 +25,6 @@ PN = "PN"
 hom = "hom"
 # Acronym for Level-of-Detail
 LOD = "LOD"
+
+# TrueType glyph location table tag
+loca = "loca"
