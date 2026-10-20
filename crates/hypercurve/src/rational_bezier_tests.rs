@@ -422,7 +422,27 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
     };
     assert_eq!(contacts.len(), 1);
     let point = contacts[0].point();
-    assert!(point.coordinates().is_none());
+    // Strict scalar relations now give this contact an exact closed form.
+    // With y = 1/2 the root is t = ((2pi - 2) + sqrt((2pi - 2)^2 + 8pi)) / (4pi)
+    // and x = (pi (1 - t) + t) / (2t) = 0.7439692617...; check the represented
+    // coordinates against that independent derivation without tolerances.
+    if let Some(coordinates) = point.coordinates() {
+        let strict = hyperlimit::PredicatePolicy::STRICT;
+        assert_eq!(
+            hyperlimit::compare_reals(coordinates.y(), &q(1, 2), strict).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let below = (Real::from(7_439_692_i64) / Real::from(10_000_000_i64)).unwrap();
+        let above = (Real::from(7_439_693_i64) / Real::from(10_000_000_i64)).unwrap();
+        assert_eq!(
+            hyperlimit::compare_reals(coordinates.x(), &below, strict).value(),
+            Some(std::cmp::Ordering::Greater)
+        );
+        assert_eq!(
+            hyperlimit::compare_reals(coordinates.x(), &above, strict).value(),
+            Some(std::cmp::Ordering::Less)
+        );
+    }
     let expected_height = CurvePoint2::from(Point2::new(Real::zero(), q(1, 2)));
     let height_order = point
         .compare_coordinate_with_policy(&expected_height, crate::Axis2::Y, &policy)
