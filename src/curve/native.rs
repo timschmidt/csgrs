@@ -2463,7 +2463,7 @@ fn validate_surface_mesh(
 ) -> Result<TriangleMesh, ValidationError> {
     let valid = decisions.consume_mesh(
         mesh.has_unique_nondegenerate_triangles(decisions.mesh_context())
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+            .map_err(ValidationError::from)?,
     );
     if valid {
         Ok(decisions.qualify_mesh(mesh))
@@ -2484,7 +2484,7 @@ fn validate_closed_mesh(
     }
     let closed = decisions.consume_mesh(
         mesh.is_closed_manifold_geometry(decisions.mesh_context())
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+            .map_err(ValidationError::from)?,
     );
     if closed {
         Ok(decisions.qualify_mesh(mesh))
@@ -4322,5 +4322,92 @@ mod tests {
         assert_eq!(left.end(), &Point2::new(Real::from(-4_i8), Real::from(-4_i8)));
         assert_eq!(right.start(), &Point2::new(Real::zero(), Real::from(5_u8)));
         assert_eq!(right.end(), &Point2::new(Real::from(4_u8), Real::from(-4_i8)));
+    }
+}
+
+#[cfg(test)]
+mod native_boundary_source_probe {
+    use super::*;
+    use crate::errors::ValidationErrorKind;
+    use hypermesh::Triangle;
+    use std::error::Error;
+
+    fn check(mesh: TriangleMesh, kind: ValidationErrorKind) {
+        let context = GeometryContext::STRICT;
+        let native = [
+            mesh.has_unique_nondegenerate_triangles(&context.mesh_context())
+                .unwrap_err(),
+            mesh.is_closed_manifold_geometry(&context.mesh_context())
+                .unwrap_err(),
+        ];
+        let decisions = GeometryDecisions::new(&context);
+        let modeled = [
+            validate_surface_mesh(mesh.clone(), &decisions).unwrap_err(),
+            validate_closed_mesh(mesh, false, &decisions).unwrap_err(),
+        ];
+        let mut retained = 0;
+        for (native, modeled) in native.into_iter().zip(modeled) {
+            let expected = ValidationError::from(native);
+            assert_eq!(expected.kind(), kind);
+            assert_eq!(modeled.to_string(), expected.to_string());
+            println!(
+                "native={expected:?}; modeled={modeled:?}; source={}",
+                modeled.source().is_some()
+            );
+            retained += usize::from(modeled == expected && modeled.source().is_some());
+        }
+        assert_eq!(
+            retained, 2,
+            "both validation helpers must preserve native causes"
+        );
+    }
+
+    #[test]
+    fn invalid_indices_remain_a_definite_failed_output_validation() {
+        let mesh = TriangleMesh::new(Vec::new(), vec![Triangle::new(0, 1, 2)]);
+        let context = GeometryContext::STRICT;
+        assert!(
+            !mesh
+                .has_unique_nondegenerate_triangles(&context.mesh_context())
+                .unwrap()
+                .value
+        );
+        assert!(
+            !mesh
+                .is_closed_manifold_geometry(&context.mesh_context())
+                .unwrap()
+                .value
+        );
+        let decisions = GeometryDecisions::new(&context);
+        for error in [
+            validate_surface_mesh(mesh.clone(), &decisions).unwrap_err(),
+            validate_closed_mesh(mesh, false, &decisions).unwrap_err(),
+        ] {
+            assert!(matches!(error, ValidationError::Geometry(_)));
+        }
+    }
+
+    #[test]
+    fn undecided_geometry_keeps_the_native_mesh_cause() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        check(
+            TriangleMesh::new(
+                vec![
+                    Point3::origin(),
+                    Point3::new(1.into(), 0.into(), 0.into()),
+                    Point3::new(0.into(), 1.into(), 0.into()),
+                    Point3::new(0.into(), 0.into(), zero),
+                ],
+                vec![
+                    Triangle::new(0, 2, 1),
+                    Triangle::new(0, 1, 3),
+                    Triangle::new(0, 3, 2),
+                    Triangle::new(1, 2, 3),
+                ],
+            ),
+            ValidationErrorKind::Undecided,
+        );
     }
 }

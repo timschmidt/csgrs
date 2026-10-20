@@ -173,10 +173,22 @@ pub enum GpuMeshError {
         /// Number of available source vertices.
         vertex_count: usize,
     },
-    /// An exact triangle has no certifiable finite unit normal.
+    /// An exact triangle is degenerate and has no unit normal.
     TriangleNormalUnavailable {
         /// Offset of the triangle in the source mesh.
         triangle: usize,
+    },
+    /// The normal's nonzero length could not be certified under strict policy.
+    TriangleNormalUndecided {
+        /// Offset of the triangle in the source mesh.
+        triangle: usize,
+    },
+    /// Scalar arithmetic failed while constructing a triangle's unit normal.
+    TriangleNormalFailed {
+        /// Offset of the triangle in the source mesh.
+        triangle: usize,
+        /// Original scalar failure, including resource exhaustion.
+        source: hyperreal::Problem,
     },
     /// An exact attribute could not be approximated as a finite floating-point row.
     AttributeApproximationFailed {
@@ -214,10 +226,17 @@ impl fmt::Display for GpuMeshError {
                 formatter,
                 "triangle {triangle} corner {corner} references source vertex {index}, but only {vertex_count} vertices exist"
             ),
-            Self::TriangleNormalUnavailable { triangle } => {
+            Self::TriangleNormalUnavailable { triangle }
+            | Self::TriangleNormalUndecided { triangle } => {
                 write!(
                     formatter,
                     "triangle {triangle} has no certifiable unit normal"
+                )
+            }
+            Self::TriangleNormalFailed { triangle, source } => {
+                write!(
+                    formatter,
+                    "triangle {triangle} normal construction failed: {source}"
                 )
             }
             Self::AttributeApproximationFailed { vertex, attribute } => {
@@ -230,7 +249,14 @@ impl fmt::Display for GpuMeshError {
     }
 }
 
-impl Error for GpuMeshError {}
+impl Error for GpuMeshError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::TriangleNormalFailed { source, .. } => Some(source),
+            _ => None,
+        }
+    }
+}
 
 /// Approximates exact render rows into backend-neutral GPU buffers.
 pub fn approximate_gpu_mesh_f32(
@@ -387,22 +413,29 @@ fn exact_gpu_triangle(
     let cross = (&b - &a).cross(&(&c - &a));
     let normal = match cross.normalize_checked() {
         Ok(normal) => normal,
+        Err(hyperreal::Problem::DivideByZero) => {
+            return Err(GpuMeshError::TriangleNormalUnavailable { triangle });
+        }
         // Structural facts cannot show that trigonometric or other computable
         // coordinates are nonzero, so certify the squared length by bounded
-        // exact refinement before normalizing. A degenerate or undecided
-        // triangle still has no normal.
-        Err(_) => match hyperlimit::compare_reals(
-            &cross.dot(&cross),
-            &Real::zero(),
-            hyperlimit::PredicatePolicy::STRICT,
-        )
-        .value()
-        {
-            Some(std::cmp::Ordering::Greater) => cross
-                .normalize()
-                .map_err(|_| GpuMeshError::TriangleNormalUnavailable { triangle })?,
-            _ => return Err(GpuMeshError::TriangleNormalUnavailable { triangle }),
-        },
+        // exact refinement before normalizing. A degenerate
+        // triangle must remain distinguishable from an undecided one.
+        Err(hyperreal::Problem::UnknownZero | hyperreal::Problem::UnknownCertificate) => {
+            match hyperlimit::compare_reals(
+                &cross.dot(&cross),
+                &Real::zero(),
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+            .value()
+            {
+                Some(std::cmp::Ordering::Greater) => cross
+                    .normalize()
+                    .map_err(|source| GpuMeshError::TriangleNormalFailed { triangle, source })?,
+                Some(_) => return Err(GpuMeshError::TriangleNormalUnavailable { triangle }),
+                None => return Err(GpuMeshError::TriangleNormalUndecided { triangle }),
+            }
+        }
+        Err(source) => return Err(GpuMeshError::TriangleNormalFailed { triangle, source }),
     };
     let normal = [
         normal.0[0].clone(),
@@ -664,6 +697,30 @@ mod tests {
         let [x, y, z] = gpu.normals[0];
         assert!((x * x + y * y + z * z - 1.0).abs() < 1e-12);
         assert_eq!(gpu.indices, [0, 1, 2]);
+    }
+
+    #[test]
+    fn exact_gpu_exports_keep_undecided_normals_distinct_from_degeneracy() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let positions = vec![
+            Point3::origin(),
+            Point3::new(1.into(), 0.into(), 0.into()),
+            Point3::new(0.into(), zero, 0.into()),
+        ];
+        let mesh = TriangleMesh::new(positions.clone(), vec![Triangle::new(0, 1, 2)]);
+        let result = BooleanMeshResult {
+            triangles: vec![[0, 1, 2]],
+            sources: Vec::new(),
+            exterior_inside: false,
+        };
+        for error in [
+            mesh.to_exact_gpu_mesh_buffers().unwrap_err(),
+            result.to_exact_gpu_mesh_buffers(&positions).unwrap_err(),
+        ] {
+            assert_eq!(error, GpuMeshError::TriangleNormalUndecided { triangle: 0 });
+        }
     }
 
     #[test]

@@ -47,6 +47,9 @@ pub type TriangleMeshI128 = ScalarMesh<I128>;
 /// error's [`kind`](crate::errors::ValidationError::kind) or follow
 /// [`std::error::Error::source`] to distinguish invalid input from an undecided
 /// predicate. This replaces text-only [`AdapterError::Validation`] failures.
+/// Polyhedron and graphics construction also retain native causes; graphics
+/// errors use [`crate::errors::ValidationError::Gpu`]. Point transforms retain
+/// scalar arithmetic failures through [`AdapterError::Hyperreal`].
 #[derive(Clone, Debug)]
 pub struct ScalarMesh<A>
 where
@@ -123,7 +126,7 @@ where
             .collect::<AdapterResult<Vec<_>>>()?;
         solid::polyhedron(&points, faces)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn union(&self, other: &Self) -> AdapterResult<Self> {
@@ -377,7 +380,7 @@ where
             .collect::<AdapterResult<Vec<_>>>()?;
         solid::polyhedron_with_context(&points, faces, context)
             .map(|outcome| outcome.map(Self::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn graphics_mesh(&self) -> AdapterResult<GraphicsMesh<A::Scalar>> {
@@ -402,7 +405,7 @@ where
         let mesh = self
             .inner
             .to_exact_gpu_mesh_buffers()
-            .map_err(|error| AdapterError::Validation(error.to_string()))?;
+            .map_err(AdapterError::from)?;
         let vertices = mesh
             .vertices
             .iter()
@@ -465,7 +468,7 @@ where
                 let [x, y, z] = point?;
                 let transformed = matrix
                     .transform_point3(&Point3::new(x, y, z))
-                    .map_err(|error| AdapterError::Validation(error.to_string()))?;
+                    .map_err(AdapterError::from)?;
                 point3_to_scalar::<A>(&transformed)
             })
             .collect()

@@ -39,7 +39,7 @@ pub struct AttributedMesh<M> {
     geometry: TriangleMesh,
     face_metadata: Vec<M>,
     authored_normals: Option<Vec<Vector3>>,
-    exact_gpu: Arc<OnceLock<Result<hypermesh::ExactGpuMeshBuffers, hypermesh::GpuMeshError>>>,
+    exact_gpu: Arc<OnceLock<hypermesh::ExactGpuMeshBuffers>>,
 }
 
 impl<M: PartialEq> PartialEq for AttributedMesh<M> {
@@ -121,48 +121,63 @@ impl<M> AttributedMesh<M> {
     ///
     /// This is an interchange/rendering boundary only. Native geometry does
     /// not absorb authored normals or depend on them for modeling predicates.
+    /// Successful buffers are shared by clones and metadata mappings for their
+    /// lifetime. Failures are returned by value and retried on the next call,
+    /// so stronger scalar evidence can make a formerly undecided export succeed.
+    /// Concurrent callers may compute the same exact rows before sharing the
+    /// first success. This cache retains one buffer, without a heap-byte limit.
+    ///
+    /// Migration: the error type is now owned `GpuMeshError`, replacing
+    /// `&GpuMeshError`; callers that previously cloned the error can remove that
+    /// conversion. Successful buffers are still borrowed from this sidecar.
     pub fn exact_gpu_mesh_buffers(
         &self,
-    ) -> Result<&hypermesh::ExactGpuMeshBuffers, &hypermesh::GpuMeshError> {
-        self.exact_gpu
-            .get_or_init(|| {
-                let Some(normals) = &self.authored_normals else {
-                    return self.geometry.to_exact_gpu_mesh_buffers();
-                };
-                for (triangle_offset, triangle) in self.geometry.triangles.iter().enumerate() {
-                    for (corner, index) in triangle.indices().into_iter().enumerate() {
-                        if index >= self.geometry.positions.len() {
-                            return Err(
-                                hypermesh::GpuMeshError::SourceTriangleIndexOutOfBounds {
-                                    triangle: triangle_offset,
-                                    corner,
-                                    index,
-                                    vertex_count: self.geometry.positions.len(),
-                                },
-                            );
-                        }
-                    }
+    ) -> Result<&hypermesh::ExactGpuMeshBuffers, hypermesh::GpuMeshError> {
+        if let Some(buffers) = self.exact_gpu.get() {
+            return Ok(buffers);
+        }
+        match self.build_exact_gpu_mesh_buffers() {
+            Ok(buffers) => Ok(self.exact_gpu.get_or_init(|| buffers)),
+            Err(error) => self.exact_gpu.get().ok_or(error),
+        }
+    }
+
+    fn build_exact_gpu_mesh_buffers(
+        &self,
+    ) -> Result<hypermesh::ExactGpuMeshBuffers, hypermesh::GpuMeshError> {
+        let Some(normals) = &self.authored_normals else {
+            return self.geometry.to_exact_gpu_mesh_buffers();
+        };
+        for (triangle_offset, triangle) in self.geometry.triangles.iter().enumerate() {
+            for (corner, index) in triangle.indices().into_iter().enumerate() {
+                if index >= self.geometry.positions.len() {
+                    return Err(hypermesh::GpuMeshError::SourceTriangleIndexOutOfBounds {
+                        triangle: triangle_offset,
+                        corner,
+                        index,
+                        vertex_count: self.geometry.positions.len(),
+                    });
                 }
-                let rows = self.geometry.triangles.iter().map(|triangle| {
-                    triangle.indices().map(|index| {
-                        let point = &self.geometry.positions[index];
-                        let normal = &normals[index];
-                        (
-                            [point.x.clone(), point.y.clone(), point.z.clone()],
-                            [
-                                normal.0[0].clone(),
-                                normal.0[1].clone(),
-                                normal.0[2].clone(),
-                            ],
-                        )
-                    })
-                });
-                hypermesh::ExactGpuMeshBuffers::from_triangles_with_capacity(
-                    self.geometry.triangles.len(),
-                    rows,
+            }
+        }
+        let rows = self.geometry.triangles.iter().map(|triangle| {
+            triangle.indices().map(|index| {
+                let point = &self.geometry.positions[index];
+                let normal = &normals[index];
+                (
+                    [point.x.clone(), point.y.clone(), point.z.clone()],
+                    [
+                        normal.0[0].clone(),
+                        normal.0[1].clone(),
+                        normal.0[2].clone(),
+                    ],
                 )
             })
-            .as_ref()
+        });
+        hypermesh::ExactGpuMeshBuffers::from_triangles_with_capacity(
+            self.geometry.triangles.len(),
+            rows,
+        )
     }
 }
 

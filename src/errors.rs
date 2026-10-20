@@ -63,6 +63,9 @@ pub enum ValidationError {
     /// A native mesh operation failed, retaining its typed cause.
     #[error("{0}")]
     Mesh(#[from] hypermesh::HypermeshError),
+    /// Native graphics-buffer construction failed, retaining its typed cause.
+    #[error("{0}")]
+    Gpu(#[from] hypermesh::GpuMeshError),
     /// A native exact curve operation failed, retaining its context and cause.
     #[error("{0}")]
     ExactCurve(#[from] ExactCurveError),
@@ -177,6 +180,24 @@ const fn curve_error_kind(source: &CurveError) -> ValidationErrorKind {
 impl ValidationError {
     pub const fn kind(&self) -> ValidationErrorKind {
         match self {
+            Self::Gpu(error) => match error {
+                hypermesh::GpuMeshError::TriangleNormalUndecided { .. }
+                | hypermesh::GpuMeshError::TriangleNormalFailed {
+                    source:
+                        hyperreal::Problem::UnknownZero | hyperreal::Problem::UnknownCertificate,
+                    ..
+                } => ValidationErrorKind::Undecided,
+                hypermesh::GpuMeshError::VertexCountExceededU32
+                | hypermesh::GpuMeshError::TriangleNormalFailed {
+                    source: hyperreal::Problem::Exhausted,
+                    ..
+                } => ValidationErrorKind::ResourceExhausted,
+                hypermesh::GpuMeshError::TriangleNormalFailed { .. }
+                | hypermesh::GpuMeshError::AttributeApproximationFailed { .. } => {
+                    ValidationErrorKind::Geometry
+                },
+                _ => ValidationErrorKind::InvalidInput,
+            },
             Self::Curve(source) => curve_error_kind(source),
             #[cfg(feature = "truetype-text")]
             Self::MissingFontGlyph { .. } => ValidationErrorKind::Unsupported,

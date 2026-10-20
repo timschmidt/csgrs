@@ -10,6 +10,15 @@ File formats and solid-modeling grammar belong in adapters such as CSGRS.
 
 This README describes crate version `0.1.0`.
 
+Exact GPU export now distinguishes proven degenerate triangles
+(`GpuMeshError::TriangleNormalUnavailable`) from normals whose nonzero length
+is undecided (`TriangleNormalUndecided`). `TriangleNormalFailed` retains a
+scalar arithmetic error, available through `std::error::Error::source`.
+Update exhaustive matches for these new variants. Successful exact rows and
+the strict certification policy are unchanged; a failed export publishes no
+partial buffer. `GpuMeshError` retains `Eq`, using the additive `Eq` implementation
+on `hyperreal::Problem`.
+
 ## Exactness and policy
 
 Extensions follow the stack-wide [admission protocol](../../docs/admission.md),

@@ -2311,6 +2311,109 @@ mod tests {
     use super::*;
 
     #[test]
+    fn undecided_native_normals_leave_abi_buffers_untouched_and_recover() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        for (height, expected) in [
+            (Real::zero(), CsgrsStatus::ValidationFailed),
+            (zero, CsgrsStatus::PredicateUndecided),
+        ] {
+            let mut mesh = csgrs::solid::polyhedron(
+                &[[0, 0, 0], [1, 0, 0], [0, 1, 0]].map(|row| row.map(Real::from)),
+                &[&[0, 1, 2]],
+            )
+            .unwrap();
+            std::sync::Arc::make_mut(&mut mesh.positions)[2].y = height;
+            let handle = triangle_mesh_handle::<RealFamily>(ScalarMesh::from_native(mesh));
+            let mut output = CsgrsGraphicsMeshReal {
+                vertices: ptr::null_mut(),
+                vertex_len: 17,
+                indices: ptr::null_mut(),
+                index_len: 19,
+            };
+            unsafe {
+                assert_eq!(
+                    csgrs_triangle_mesh_real_graphics_mesh(&handle, &mut output),
+                    expected
+                );
+                assert!(output.vertices.is_null() && output.indices.is_null());
+                assert_eq!((output.vertex_len, output.index_len), (17, 19));
+                assert_eq!(
+                    CStr::from_ptr(csgrs_last_error_message()).to_str().unwrap(),
+                    "triangle 0 has no certifiable unit normal"
+                );
+            }
+        }
+        let empty =
+            triangle_mesh_handle::<RealFamily>(ScalarMesh::from_native(csgrs::solid::empty()));
+        let mut output = CsgrsGraphicsMeshReal {
+            vertices: ptr::null_mut(),
+            vertex_len: 17,
+            indices: ptr::null_mut(),
+            index_len: 19,
+        };
+        unsafe {
+            assert_eq!(
+                csgrs_triangle_mesh_real_graphics_mesh(&empty, &mut output),
+                CsgrsStatus::Ok
+            );
+            assert_eq!((output.vertex_len, output.index_len), (0, 0));
+            assert!(CStr::from_ptr(csgrs_last_error_message()).is_empty());
+            csgrs_graphics_mesh_real_free(output);
+        }
+    }
+
+    #[test]
+    fn undecided_polyhedron_does_not_publish_a_model_handle() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = CsgrsReal {
+            inner: Real::zero(),
+        };
+        let one = CsgrsReal { inner: Real::one() };
+        let two = CsgrsReal { inner: 2.into() };
+        let uncertain = CsgrsReal {
+            inner: &sine * &sine + &cosine * &cosine - Real::one(),
+        };
+        let (z, o, t, u) = (
+            ptr::from_ref(&zero).cast_mut(),
+            ptr::from_ref(&one).cast_mut(),
+            ptr::from_ref(&two).cast_mut(),
+            ptr::from_ref(&uncertain).cast_mut(),
+        );
+        let points = [
+            CsgrsVec3Real { x: z, y: z, z },
+            CsgrsVec3Real { x: o, y: z, z },
+            CsgrsVec3Real { x: t, y: u, z },
+        ];
+        let indices = [0, 1, 2];
+        let offsets = [0, 3];
+        let mut output = ptr::null_mut();
+        unsafe {
+            assert_eq!(
+                csgrs_triangle_mesh_real_polyhedron(
+                    points.as_ptr(),
+                    points.len(),
+                    indices.as_ptr(),
+                    indices.len(),
+                    offsets.as_ptr(),
+                    offsets.len(),
+                    &mut output
+                ),
+                CsgrsStatus::PredicateUndecided
+            );
+            assert!(output.is_null());
+            assert!(
+                CStr::from_ptr(csgrs_last_error_message())
+                    .to_str()
+                    .unwrap()
+                    .contains("3D triangle degeneracy")
+            );
+        }
+    }
+
+    #[test]
     fn undecided_revolve_preserves_status_and_output_ownership() {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();

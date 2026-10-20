@@ -117,6 +117,14 @@ output handles and profile records untouched. Rust scalar adapters retain
 `AdapterError::Construction` and its native cause instead of a string-only
 `AdapterError::Validation`. No method signature or numeric status value changes.
 
+Polyhedron construction and graphics export also preserve native failure
+categories. Undecided triangulation or normal certification reports (5),
+replacing (4); malformed rings, invalid indices and proven degenerate normals
+remain (4). Failures leave output handles and graphics records untouched.
+Successful empty exports contain zero vertices and indices. The ABI signatures
+and status values are unchanged. Rust point-transform adapters now retain their
+original `hyperreal::Problem` through `AdapterError::Hyperreal`.
+
 Opaque handles may cross only the ABI version that created them. Callers must
 use the matching free function, must not mix scalar families, and must copy any
 borrowed last-error text before another ABI call. The wrappers are currently

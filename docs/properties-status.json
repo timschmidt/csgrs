@@ -29524,6 +29524,800 @@
     "review": "docs/evidence/2026-10-19-curve-adapter-failure-admission/review-v1.json",
     "checkpoint": "docs/evidence/2026-10-19-curve-adapter-failure-admission/checkpoint-v1.json",
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/curve-adapter-failure-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz"
+  },
+  "native_boundary_failure_admission": {
+    "classification": "Retained native boundary causes and retriable attributed GPU export failures.",
+    "baseline_revision": "82f2f94442e3f4a9d4ab7e3be16ec7414d77320f",
+    "owner": "Hypermesh normal certification and typed failure; CSGRS adapter/modeling conversion and attributed cache; Hyperreal error equality trait.",
+    "properties": [
+      "P4",
+      "P6",
+      "P18",
+      "P19",
+      "P25",
+      "P28",
+      "P29",
+      "P30",
+      "P35",
+      "P36",
+      "P39"
+    ],
+    "changed_paths": [
+      "bindings/README.md",
+      "crates/csgrs-ffi/README.md",
+      "crates/csgrs-ffi/src/lib.rs",
+      "crates/hypermesh/README.md",
+      "crates/hypermesh/src/gpu.rs",
+      "crates/hyperreal/src/problem.rs",
+      "src/adapter/mesh.rs",
+      "src/adapter/scalar.rs",
+      "src/attributed.rs",
+      "src/curve/native.rs",
+      "src/errors.rs",
+      "tests/ffi/native_boundary_failures.c",
+      "tests/ffi/native_boundary_failures.cpp",
+      "tests/ffi/native_boundary_failures.py",
+      "tests/native_boundary_failures.rs"
+    ],
+    "production_conversion_routes": 6,
+    "baseline_public_regressions": 5,
+    "baseline_private_helper_regressions": 1,
+    "baseline_semantic_success_controls": 1,
+    "baseline_test_v1_incorrect_expectation": "Rational noninteger projection already returns Hyperreal(NotAnInteger); preserved in v2. All v1 logs and test sources retained.",
+    "candidate_v2_clippy_failure": "One unnecessary clone in an integration test; v3 borrows the same point. Production source hashes remained identical at v3, and the changed test suite was rerun. Subsequent v4 only formats the GPU source and rebuilds affected targets.",
+    "test_lint_revision_evidence": {
+      "changes": {
+        "tests/native_boundary_failures.rs": {
+          "after": "cdb11768852c1064f0e5aa2cdc0bf89daaee3ea6b6231d8df14f86eb7d1dc121",
+          "before": "efc9e9a70330f638f3dd0b5871b3e886c56fa065db5e2af6bb19b56858d73da0"
+        }
+      },
+      "helper_console_label_correction": "The revision helper printed a reused local variable in changed_test_only; this manifest derives the actual changed path from the independently retained source-pin sets.",
+      "production_sources_unchanged": true,
+      "reason": "Use std::slice::from_ref in the point-transform test; unchanged operands and assertions."
+    },
+    "final_revision_evidence": {
+      "after_sha256": {
+        "crates/hypermesh/src/gpu.rs": "9777051c760bd3270abe7f384313f6792b3597474f13e245aec14e0643b058d1"
+      },
+      "before_sha256": {
+        "crates/hypermesh/src/gpu.rs": "045151dcd85e50733499c8935d8de9df69ec7a1cd3469a5532ff4b4b2658cc03"
+      },
+      "changed_paths": [
+        "crates/hypermesh/src/gpu.rs"
+      ],
+      "format_command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "fmt",
+        "-p",
+        "hypermesh"
+      ],
+      "prior_snapshots_retained": true,
+      "semantic_change": false
+    },
+    "candidate_v3_format_failure": "Initial formatting used root settings rather than crates/.rustfmt.toml. V4 applies the existing Hypermesh configuration only; the GPU source snapshot, failed fmt log and all affected final rechecks are retained.",
+    "candidate_v1_test_compile_failure": "Expected rows needed explicit Real types; source snapshot and diagnostics retained. Production implementation unchanged in v2.",
+    "failure_families_exercised": [
+      "RawReal",
+      "F32",
+      "F64",
+      "I128"
+    ],
+    "independent_semantics": {
+      "normal": "Triangle (0,0,0),(1,0,0),(0,3,4) has exact normal (0,-4/5,3/5); exact source rows checked; integer projection remains a typed rejection.",
+      "point_transform": "Affine translation (4,5,6) sends (1,2,3) to (5,7,9) in every family.",
+      "cache_recovery": "A triangle of height pi minus its -1024-bit lower rational enclosure exports after proving the same height positive at -1100 bits. Baseline native export recovered while AttributedMesh retained its old failure.",
+      "cache_states": [
+        "cold",
+        "warm",
+        "stronger-proof recovery",
+        "clone and metadata-map sharing",
+        "concurrent success",
+        "source mutation isolation",
+        "returned buffer mutation isolation",
+        "scalar-adapter cache eviction"
+      ],
+      "composition": "Canonical empty exports, repeated graphics consumption and unchanged full strict Boolean/composition corpus."
+    },
+    "candidate_test_executions": 1828,
+    "test_results": {
+      "native-boundary-baseline-private-tests-run": [
+        {
+          "passed": 1,
+          "failed": 1,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-baseline-public-tests-run": [
+        {
+          "passed": 0,
+          "failed": 6,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-baseline-public-tests-v2-run": [
+        {
+          "passed": 1,
+          "failed": 5,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-candidate-attributed-obj-tests": [
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-candidate-default-tests": [
+        {
+          "passed": 78,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 14,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 17,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 20,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 30,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 25,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 50,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-candidate-ffi-tests": [
+        {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-candidate-ffi-v4-tests": [
+        {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-candidate-focused-run": [
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-candidate-focused-v3-run": [
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-candidate-focused-v4-run": [
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-candidate-gpu-tests": [
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-candidate-gpu-v4-tests": [
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-candidate-hyperreal-tests": [
+        {
+          "passed": 840,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "native-boundary-candidate-root-tests": [
+        {
+          "passed": 53,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 14,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 20,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 30,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 25,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 50,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    "command_count": 115,
+    "warnings": [
+      {
+        "command": "native-boundary-candidate-root-clippy",
+        "diagnostic": "warning: build failed, waiting for other jobs to finish..."
+      }
+    ],
+    "real_native_consumer_executions": 36,
+    "native_consumer_languages": [
+      "C",
+      "C++",
+      "Python"
+    ],
+    "existing_native_consumers_preserved": 33,
+    "new_native_consumers": 3,
+    "ffi_output_ownership_checked": true,
+    "diagnostic_text_preserved_for_reproduced_cases": true,
+    "api_migration": "GpuMeshError adds TriangleNormalUndecided and TriangleNormalFailed with scalar cause; ValidationError adds Gpu. Problem gains Eq. AttributedMesh returns owned GpuMeshError and caches successes only. Polyhedron/graphics undecided ABI status changes from 4 to 5; invalid remains 4; signatures and numeric ABI values unchanged. Point adapters retain Problem.",
+    "coverage_qualifications": [
+      "Curve surface/closed validation failures reproduced through private helpers; public translated/rotated curve probes succeeded, so no public construction failure coverage is claimed for those helpers.",
+      "Opaque symbolic undecided polyhedron/graphics ABI inputs exercised by Rust FFI tests; real C/C++/Python consumers cover reachable invalid rings, exact-normal projection, empties and recovery.",
+      "Scalar normalization resource-cause propagation is implemented, but no genuine GPU scalar-exhaustion fixture is claimed.",
+      "Attributed cache retains one successful buffer per shared carrier, without a heap-byte limit; no reset/disable API.",
+      "PLY and glTF exports still flatten GPU causes; separately recorded as open follow-up candidates."
+    ],
+    "root_minimal_and_default_tests_passed": true,
+    "attributed_obj_consumer_tests_passed": true,
+    "ffi_tests_and_release_build_passed": true,
+    "strict_clippy_and_formatting_passed": true,
+    "msrv_all_targets_checked": "1.95.0",
+    "msrv_runtime_not_executed": true,
+    "wasm_host_feature_checked": true,
+    "wasm_runtime_not_rerun": false,
+    "wasm_consumers": {
+      "additional_frozen_consumer_replay": 1,
+      "frozen_package_sha256": {
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/frozen/wasm-consumers/construction_evidence.js": "ae920d3298628e6d8bdacb8fe5b9abc1df0efd75a656354c62d096739550a4d8",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/frozen/wasm-consumers/construction_evidence.ts": "139f243e7b108500f2d934eae9d5212269f36b7781e2250398b2d30cf35117b6",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/frozen/wasm-consumers/csgrs.d.ts": "bb394187c145a8e937f9444a1037d2441434cf76b908719b582b8d57ae510823",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/frozen/wasm-consumers/csgrs.js": "afb49733aafdae466dca3b46d36f4d4a726195a89e8a571aad38d4a994d15563",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/frozen/wasm-consumers/csgrs_bg.wasm": "0dcdc4daae9ef8a9b3df6e89ac9988f48ebabf65b6fe5d5b1dc734274db3c81f",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/frozen/wasm-consumers/csgrs_bg.wasm.d.ts": "731797b41205b804bdc65a0be559ce43392c53971581293331683c476c839c34",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/frozen/wasm-consumers/geometry_certainty.ts": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/frozen/wasm-consumers/io_contracts.js": "37fb65ed6e244e3e134178c1358f129f6fe33191028592e9e53043110b45fb19",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/frozen/wasm-consumers/io_contracts.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/frozen/wasm-consumers/mesh_errors.js": "5f133abd2e072712599372bdfcf2275b78c92b339c28e2e33a4d0877408f7efd",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/frozen/wasm-consumers/mesh_errors.ts": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614"
+      },
+      "full_ci_complete": false,
+      "hypervoxel_built": false,
+      "passed": true,
+      "real_compiled_typescript_runtime_consumers": 3,
+      "real_javascript_runtime_consumers": 5,
+      "typescript_declaration_checks": 4
+    },
+    "go_toolchain_unavailable": true,
+    "candidate_release_library_bytes": 19862096,
+    "matched_binary_size_comparison_claimed": false,
+    "performance_claimed": false,
+    "source_package_reverification_open": true,
+    "public_distribution_complete": false,
+    "full_ci_complete": false,
+    "full_plan_complete": false,
+    "historical_artifact_reaudit": false,
+    "hypervoxel_deferred_by_user": true,
+    "hypervoxel_built_or_packaged": false,
+    "all_adverse_results_retained": true,
+    "artifact_volume": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs",
+    "disk_b_allowance_gib": null,
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "storage_baselines_reset": false,
+    "next": "Reproduce and repair remaining PLY/glTF GPU error flattening and scalar-adapter index overflow conversion. Continue ordinary strict completion, provenance and current source-package/public release validation; Hypervoxel remains out of scope.",
+    "parent_revision": "82f2f94442e3f4a9d4ab7e3be16ec7414d77320f",
+    "review": "docs/evidence/2026-10-19-native-boundary-failure-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-native-boundary-failure-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz"
   }
 },
   "status_meanings": {

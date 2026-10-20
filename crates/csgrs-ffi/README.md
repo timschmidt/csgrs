@@ -99,6 +99,12 @@ finite region projections, and curve-to-solid operations.
   Nonempty zero-size bounds, invalid input, and undecided predicates remain
   distinct. Centering and floating preserve canonical empty geometry and
   propagate bounds errors without publishing a model handle.
+- Polyhedron and graphics-export errors preserve native categories. Undecided
+  triangulation and normal certification return `PREDICATE_UNDECIDED` (5),
+  replacing generic `VALIDATION_FAILED` (4). Invalid rings, indices and proven
+  degenerate normals remain (4). Failure leaves output handles and buffer
+  records untouched; successful empty graphics buffers have zero row counts.
+  ABI signatures and numeric status values are unchanged.
 - C++ exceptions retain the C status in `error::status()`; Python exceptions
   retain it in `CsgrsError.status`; Go retains it in `StatusError.Status`.
   WASM primitive constructors, transforms, bounds, and positioning throw a
