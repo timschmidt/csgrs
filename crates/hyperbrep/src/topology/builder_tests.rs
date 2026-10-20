@@ -237,3 +237,36 @@ fn builder_replayed_surface_edit_cannot_reuse_a_stale_sphere_proof() {
     );
     assert_eq!(original.to_json().unwrap(), json);
 }
+
+#[test]
+fn generic_point_classification_rejects_uncertified_curved_faces() {
+    let (cylinder, _) = construction::cylinder(2.into(), 3.into()).unwrap();
+    let (solid, _) = cylinder.solids().next().unwrap();
+    // Without its whole-solid family records, a curved shell reaches the
+    // generic planar ray classifier. That path has no curved-face support and
+    // must fail typed rather than assume every face is a plane.
+    let mut uncertified = cylinder.clone();
+    let data = Arc::make_mut(&mut uncertified.data);
+    let index = solid.index();
+    data.certified_cylinders[index] = None;
+    data.certified_spheres[index] = None;
+    data.certified_sphere_pairs[index] = None;
+    data.certified_cone_frustums[index] = None;
+    data.certified_tori[index] = None;
+    data.certified_revolutions[index] = None;
+    data.certified_lofts[index] = None;
+    data.certified_curve_sweeps[index] = None;
+    data.certified_prisms[index] = None;
+    data.certified_axial_shells[index] = None;
+    // An interior point is off both planar caps, so the curved wall decides.
+    let interior = point(0, 0, 1);
+    assert!(matches!(
+        uncertified.classify_point(solid, &interior),
+        Err(QueryError::Geometry(GeometryError::UnsupportedIntersection))
+    ));
+    // The certified model still answers through its family record.
+    assert_eq!(
+        cylinder.classify_point(solid, &interior).unwrap(),
+        SolidPointLocation::Inside
+    );
+}

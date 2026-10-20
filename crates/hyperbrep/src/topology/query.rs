@@ -930,11 +930,7 @@ impl ArenaModel {
     ) -> Result<Option<SolidPointLocation>, QueryError> {
         let mut crossings = 0_usize;
         for face_id in &self.shell(shell).expect("validated shell ID").faces {
-            let face = self.face(*face_id).expect("validated face ID");
-            let surface = self.surface(face.surface).expect("validated surface ID");
-            let (u, v) = surface
-                .plane_directions()
-                .expect("the current validated face matrix contains only planes");
+            let (_, u, v) = self.face_plane(*face_id)?;
             let denominator = u.cross(v).dot(direction);
             if decided_model_order(compare_reals(
                 &denominator,
@@ -1054,19 +1050,25 @@ impl ArenaModel {
         }
     }
 
+    // The generic point classifier below casts rays against planar faces.
+    // Solids with curved faces are classified by their certified family
+    // records; any other curved face is an unsupported intersection, not an
+    // invariant that admission guarantees.
+    fn face_plane(&self, face: FaceId) -> Result<(&Point3, &Vector3, &Vector3), GeometryError> {
+        let face = self.face(face).expect("validated face ID");
+        let surface = self.surface(face.surface).expect("validated surface ID");
+        match (surface.plane_origin(), surface.plane_directions()) {
+            (Some(origin), Some((u, v))) => Ok((origin, u, v)),
+            _ => Err(GeometryError::UnsupportedIntersection),
+        }
+    }
+
     pub(in crate::topology) fn face_plane_value(
         &self,
         face: FaceId,
         point: &Point3,
     ) -> Result<Real, GeometryError> {
-        let face = self.face(face).expect("validated face ID");
-        let surface = self.surface(face.surface).expect("validated surface ID");
-        let origin = surface
-            .plane_origin()
-            .expect("the current validated face matrix contains only planes");
-        let (u, v) = surface
-            .plane_directions()
-            .expect("the current validated face matrix contains only planes");
+        let (origin, u, v) = self.face_plane(face)?;
         Ok(u.cross(v).dot(&(point - origin)))
     }
 
@@ -1075,16 +1077,7 @@ impl ArenaModel {
         face: FaceId,
         point: &Point3,
     ) -> Result<Classification<ContourPointLocation>, GeometryError> {
-        let face_record = self.face(face).expect("validated face ID");
-        let surface = self
-            .surface(face_record.surface)
-            .expect("validated surface ID");
-        let origin = surface
-            .plane_origin()
-            .expect("the current validated face matrix contains only planes");
-        let (u, v) = surface
-            .plane_directions()
-            .expect("the current validated face matrix contains only planes");
+        let (origin, u, v) = self.face_plane(face)?;
         let displacement = point - origin;
         let uu = u.dot(u);
         let uv = u.dot(v);
