@@ -204,7 +204,15 @@ is ordinary strict-mode completion, the second milestone.
     moved to [`docs/MIGRATIONS.md`](docs/MIGRATIONS.md). New migrations are
     recorded there. Restructuring the README as target 9 describes remains
     open.
-22. **HyperBREP generality** - Admission is by shape-family recognizers, and
+22. **Pre-existing CI gates** - `hypersolve`'s production line coverage gate
+    requires 85%. It measured 76.24% on `main` before the merge and 77.52%
+    after. Closing it needs new tests, not a lower threshold. Separately,
+    `hypercurve.yml` runs only on `main` and pull requests, and on `main` its
+    tests were skipped because the Clippy step failed first. Regressions from
+    both merged branches therefore reached `hypercurve` without any CI run of
+    its tests. Run the dependent crates' suites on every branch that changes
+    a lower layer.
+23. **HyperBREP generality** - Admission is by shape-family recognizers, and
     surface intersection is a pairwise table. See the findings and acceptance
     gates in
     [`crates/hyperbrep/docs/DEVELOPMENT_PLAN.md`](crates/hyperbrep/docs/DEVELOPMENT_PLAN.md#review-findings-2026-10-20).
