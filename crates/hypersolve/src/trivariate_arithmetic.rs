@@ -922,7 +922,38 @@ pub fn trivariate_restrict_to_box_bounds(
     polynomial: &TrivariatePolynomial,
     bounds: [(&Real, &Real); 3],
 ) -> TrivariatePolynomial {
-    let mut restricted = polynomial.coefficients.clone();
+    // Ragged rows and planes denote omitted zero coefficients. Square the
+    // tensor first so the second- and third-axis passes reparameterize every
+    // coefficient column, not only those present in the first row or plane.
+    let rows_per_plane = polynomial
+        .coefficients
+        .iter()
+        .map(Vec::len)
+        .max()
+        .unwrap_or(0);
+    let row_length = polynomial
+        .coefficients
+        .iter()
+        .flatten()
+        .map(Vec::len)
+        .max()
+        .unwrap_or(0);
+    let mut restricted = polynomial
+        .coefficients
+        .iter()
+        .map(|rows| {
+            let mut rows = rows
+                .iter()
+                .map(|row| {
+                    let mut row = row.clone();
+                    row.resize(row_length, Real::zero());
+                    row
+                })
+                .collect::<Vec<_>>();
+            rows.resize(rows_per_plane, vec![Real::zero(); row_length]);
+            rows
+        })
+        .collect::<Vec<_>>();
     for rows in &mut restricted {
         for row in rows {
             *row = polynomial_restrict_to_interval(row, bounds[2].0, bounds[2].1);

@@ -835,6 +835,46 @@ fn box_restriction_reparameterizes_every_axis() {
     });
 }
 
+#[test]
+fn box_restriction_reparameterizes_ragged_tensors() {
+    // Omitted coefficients are zero. A short first row, a short later row and
+    // planes with different row counts must all restrict as the polynomial
+    // they denote; previously the first case lost a column and the second
+    // indexed past the end of a short row.
+    let cases = [
+        // 1 + 5yz with a short first row.
+        (vec![vec![vec![r(1)], vec![r(0), r(5)]]], [0, 1, 1]),
+        // 1 + 2z + 3y with a short later row.
+        (vec![vec![vec![r(1), r(2)], vec![r(3)]]], [0, 1, 1]),
+        // 2 - y + x(4 + 3yz), the second plane longer than the first.
+        (
+            vec![
+                vec![vec![r(2)], vec![r(-1)]],
+                vec![vec![r(4)], vec![r(0), r(3)]],
+            ],
+            [1, 1, 1],
+        ),
+    ];
+    let bounds = [(r(0), r(2)), (q(-1, 2), r(1)), (r(3), q(7, 2))];
+    for (coefficients, degrees) in cases {
+        let polynomial = TrivariatePolynomial { coefficients };
+        let restricted = trivariate_restrict_to_box_bounds(
+            &polynomial,
+            [
+                (&bounds[0].0, &bounds[0].1),
+                (&bounds[1].0, &bounds[1].1),
+                (&bounds[2].0, &bounds[2].1),
+            ],
+        );
+        assert_polynomial3(&restricted, degrees, |point| {
+            let mapped: [Real; 3] = std::array::from_fn(|axis| {
+                &bounds[axis].0 + (&bounds[axis].1 - &bounds[axis].0) * point[axis]
+            });
+            eval3(&polynomial, refs(&mapped))
+        });
+    }
+}
+
 /// Shared fixture: P = F * Q along `axis`, with F = (1 + u) + (2 - uw) t and
 /// Q = t^2 - u + 3w, together with F's bivariate coefficients.
 fn factored_fixture(axis: usize) -> ([BivariatePolynomial; 2], TrivariatePolynomial) {
