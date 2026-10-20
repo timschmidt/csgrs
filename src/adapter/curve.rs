@@ -80,28 +80,28 @@ where
         self.inner
             .boolean_region(&other.inner, hypercurve::BooleanOp::Union)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn difference(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .boolean_region(&other.inner, hypercurve::BooleanOp::Difference)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn intersection(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .boolean_region(&other.inner, hypercurve::BooleanOp::Intersection)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn xor(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .boolean_region(&other.inner, hypercurve::BooleanOp::Xor)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     /// Applies a checked transform whose image remains in the XY plane.
@@ -253,7 +253,7 @@ where
     ) -> AdapterResult<GeometryOutcome<ScalarMesh<A>>> {
         curve::revolve(&self.inner, A::into_real(angle_degrees)?, segments, context)
             .map(|outcome| outcome.map(ScalarMesh::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn region_profiles(
@@ -261,7 +261,7 @@ where
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Vec<RegionProfile<A::Scalar>>>> {
         curve::try_finite_profiles(&self.inner, context)
-            .map_err(|error| AdapterError::Validation(error.to_string()))?
+            .map_err(AdapterError::from)?
             .try_map(|profiles| {
                 profiles
                     .iter()

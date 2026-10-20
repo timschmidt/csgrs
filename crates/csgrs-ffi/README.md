@@ -87,6 +87,12 @@ finite region projections, and curve-to-solid operations.
   generic `VALIDATION_FAILED` (4); invalid inputs still report (4), even when
   paired with empty geometry. Diagnostic text is retained and failed Booleans
   publish no model handle. Signatures and numeric status values are unchanged.
+- Curve union, difference, intersection, xor, revolve and profile extraction
+  also retain native failure categories. Undecided operations report
+  `PREDICATE_UNDECIDED` (5), replacing generic `VALIDATION_FAILED` (4).
+  Invalid revolve parameters and non-finite profile projections still report
+  (4). Diagnostic text, signatures and numeric status values are unchanged;
+  failures leave output handles and profile records untouched.
 - Mesh and curve bounds return `NO_BOUNDS` (10) for a completed empty query.
   They require a valid output pointer but leave its record untouched; no
   opaque-real endpoints are allocated. Only `OK` writes an owned bounds record.

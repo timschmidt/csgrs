@@ -2311,6 +2311,38 @@ mod tests {
     use super::*;
 
     #[test]
+    fn undecided_revolve_preserves_status_and_output_ownership() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = CsgrsReal {
+            inner: &sine * &sine + &cosine * &cosine - Real::one(),
+        };
+        let square = curve_region_handle::<RealFamily>(ScalarCurve::from_native(
+            csgrs::curve::square(2.into()).unwrap(),
+        ));
+        let mut output = ptr::null_mut();
+        unsafe {
+            assert_eq!(
+                csgrs_curve_region_real_revolve(&square, &zero, 4, &mut output),
+                CsgrsStatus::PredicateUndecided
+            );
+            assert!(output.is_null());
+            assert!(
+                CStr::from_ptr(csgrs_last_error_message())
+                    .to_str()
+                    .unwrap()
+                    .contains("revolution angle sign is undecided")
+            );
+            let full = CsgrsReal { inner: 360.into() };
+            assert_eq!(
+                csgrs_curve_region_real_revolve(&square, &full, 1, &mut output),
+                CsgrsStatus::ValidationFailed
+            );
+            assert!(output.is_null());
+        }
+    }
+
+    #[test]
     fn bounds_absence_and_uncertainty_do_not_publish_real_values() {
         let null_point = CsgrsVec3Real {
             x: ptr::null_mut(),

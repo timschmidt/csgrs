@@ -28877,6 +28877,653 @@
     "review": "docs/evidence/2026-10-19-source-installation-admission/review-v1.json",
     "checkpoint": "docs/evidence/2026-10-19-source-installation-admission/checkpoint-v1.json",
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/source-installation-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz"
+  },
+  "curve_adapter_failure_admission": {
+    "classification": "Retained typed native curve failures through scalar adapters and native bindings.",
+    "baseline_revision": "832ec281e3d604717e595ff7fa4427b1962f088c",
+    "owner": "CSGRS scalar adapter error conversion; ValidationError owns existing category mapping.",
+    "properties": [
+      "P6",
+      "P18",
+      "P25",
+      "P28",
+      "P30",
+      "P35",
+      "P36",
+      "P39"
+    ],
+    "changed_paths": [
+      "bindings/README.md",
+      "crates/csgrs-ffi/README.md",
+      "crates/csgrs-ffi/src/lib.rs",
+      "src/adapter/curve.rs",
+      "src/adapter/scalar.rs",
+      "tests/adapter_curve_failures.rs",
+      "tests/ffi/curve_operation_failures.c",
+      "tests/ffi/curve_operation_failures.cpp",
+      "tests/ffi/curve_operation_failures.py"
+    ],
+    "production_conversion_routes": 6,
+    "shared_exact_curve_conversion_added": true,
+    "baseline_failed_regressions": 3,
+    "baseline_semantic_success_tests": 1,
+    "native_error_examples": {
+      "boolean": "Undecided Ordering for all four operations",
+      "revolve": [
+        "InvalidInput segments",
+        "Undecided angle sign"
+      ],
+      "profile": "InvalidInput non-finite projection"
+    },
+    "failure_families_exercised": [
+      "RawReal",
+      "F32",
+      "F64",
+      "I128"
+    ],
+    "independent_semantics": {
+      "inputs": "Axis-aligned squares [0,2]^2 and [1,3]^2",
+      "expected_areas": {
+        "union": 7,
+        "difference": 3,
+        "intersection": 1,
+        "xor": 6
+      },
+      "membership": "25 unit-cell centers per result; integer-boundary truth tables, exact rational coordinates",
+      "downstream": "union with empty, self-subtraction, accumulation from empty, repeated complete subtraction and recovery"
+    },
+    "candidate_test_executions": 907,
+    "test_results": {
+      "curve-adapter-baseline-regression-run": [
+        {
+          "passed": 1,
+          "failed": 3,
+          "ignored": 0
+        }
+      ],
+      "curve-adapter-candidate-default-tests": [
+        {
+          "passed": 76,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 14,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 17,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 20,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 30,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 25,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 50,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "curve-adapter-candidate-ffi-tests": [
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "curve-adapter-candidate-focused-run": [
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "curve-adapter-candidate-root-tests": [
+        {
+          "passed": 49,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 14,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 20,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 30,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 25,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 50,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    "command_count": 82,
+    "warnings": [],
+    "real_native_consumer_executions": 33,
+    "native_consumer_languages": [
+      "C",
+      "C++",
+      "Python"
+    ],
+    "existing_native_consumers_preserved": 30,
+    "new_native_consumers": 3,
+    "ffi_output_ownership_checked": true,
+    "diagnostic_text_preserved": true,
+    "api_migration": "Rust native failures now use AdapterError::Construction with source chain. Undecided C curve operations now report PredicateUndecided (5), previously ValidationFailed (4). Invalid input remains (4). Signatures and numeric status values are unchanged.",
+    "root_minimal_and_default_tests_passed": true,
+    "ffi_tests_and_release_build_passed": true,
+    "strict_clippy_and_formatting_passed": true,
+    "msrv_all_targets_checked": "1.95.0",
+    "msrv_runtime_not_executed": true,
+    "wasm_feature_host_checked": true,
+    "wasm_runtime_not_rerun": true,
+    "wasm_curve_wrappers_use_native_carrier": true,
+    "go_toolchain_unavailable": true,
+    "native_javascript_loader_supplied_externally": true,
+    "unsupported_and_budget_failures_not_forced_in_new_fixtures": true,
+    "no_kernel_algorithm_policy_or_manifest_changes": true,
+    "error_cost_scope": "Existing Construction variant reused; successful operation algorithms unchanged. No matched runtime/allocation benchmark or performance improvement claimed. Release library sizes recorded only as artifacts.",
+    "baseline_retained_release_library_bytes": 19878936,
+    "candidate_release_library_bytes": 19868104,
+    "matched_binary_size_comparison_claimed": false,
+    "hypervoxel_deferred_by_user": true,
+    "hypervoxel_built_or_packaged": false,
+    "source_package_reverification_open": true,
+    "public_distribution_complete": false,
+    "full_ci_complete": false,
+    "full_plan_complete": false,
+    "historical_artifact_reaudit": false,
+    "performance_claimed": false,
+    "all_adverse_results_retained": true,
+    "artifact_volume": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs",
+    "disk_b_allowance_gib": null,
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "storage_baselines_reset": false,
+    "next": "Reproduce remaining string-flattening candidates in mesh polyhedron/display and curve mesh validation before extending provenance. Ordinary strict completion, current package verification, public dependency availability and deferred Hypervoxel remain open.",
+    "parent_revision": "832ec281e3d604717e595ff7fa4427b1962f088c",
+    "review": "docs/evidence/2026-10-19-curve-adapter-failure-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-curve-adapter-failure-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/curve-adapter-failure-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz"
   }
 },
   "status_meanings": {

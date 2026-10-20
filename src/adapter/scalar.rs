@@ -52,6 +52,13 @@ impl From<hypermesh::HypermeshError> for AdapterError {
     }
 }
 
+#[cfg(feature = "curve")]
+impl From<hypercurve::ExactCurveError> for AdapterError {
+    fn from(value: hypercurve::ExactCurveError) -> Self {
+        Self::from(crate::errors::ValidationError::from(value))
+    }
+}
+
 impl From<Problem> for AdapterError {
     fn from(value: Problem) -> Self {
         Self::Hyperreal(value)

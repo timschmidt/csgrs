@@ -109,6 +109,14 @@ Boolean now returns `PREDICATE_UNDECIDED` (5), replacing generic
 operands paired with empty geometry. The diagnostic message is retained and
 failed operations publish no model handle; signatures are unchanged.
 
+Curve Booleans, revolve and profile extraction preserve the same native
+categories. Undecided curve operations now report status (5) instead of (4);
+invalid parameters and non-finite profile projections remain (4). C++ and
+Python expose those statuses with unchanged diagnostic text. Failures leave
+output handles and profile records untouched. Rust scalar adapters retain
+`AdapterError::Construction` and its native cause instead of a string-only
+`AdapterError::Validation`. No method signature or numeric status value changes.
+
 Opaque handles may cross only the ABI version that created them. Callers must
 use the matching free function, must not mix scalar families, and must copy any
 borrowed last-error text before another ABI call. The wrappers are currently
