@@ -1,10 +1,6 @@
 //! Extrude, vector-extrude, revolve, loft, and sweep curves into meshes.
 
-use csgrs::{
-    GeometryContext, TriangleMesh, curve,
-    io::stl::to_stl_binary,
-    solid::{self, SolidExt},
-};
+use csgrs::{GeometryContext, TriangleMesh, curve, io::stl::to_stl_binary, solid};
 use hyperlattice::{Point3, Real, Vector3};
 use std::{fs, path::Path};
 
@@ -29,11 +25,12 @@ fn main() {
             .into_value(),
         "star_vector_extrude",
     );
-    let revolved = curve::revolve(&circle, r(360.0), 48, &GeometryContext::STRICT)
+    // Revolution profiles must stay on one side of the axis; translate the
+    // circle first so the full turn produces a torus.
+    let profile = curve::translated(&circle, r(1.5), r(0.0)).expect("valid planar transform");
+    let revolved = curve::revolve(&profile, r(360.0), 48, &GeometryContext::STRICT)
         .unwrap()
-        .into_value()
-        .translated(r(1.5), r(0.0), r(0.0))
-        .expect("valid transform fixture");
+        .into_value();
     write_mesh(&revolved, "circle_revolve");
 
     let path = (0..40)
