@@ -310,7 +310,7 @@ pub(crate) fn finite_f64(
 /// Retain the legacy 17 fractional digits whenever sufficient. A dyadic
 /// significand times 2^e needs at most -e fractional decimal digits after its
 /// trailing binary zeros are removed; binary64 bounds this precision at 1074.
-#[cfg(any(feature = "obj-io", feature = "stl-io"))]
+#[cfg(any(feature = "obj-io", feature = "ply-io", feature = "stl-io"))]
 pub(crate) fn decimal_f64(value: f64) -> impl std::fmt::Display {
     struct Decimal(f64);
 

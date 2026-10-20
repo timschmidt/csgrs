@@ -1,6 +1,6 @@
 //! Stanford PLY export for native Hypermesh triangles.
 
-use super::{IoError, finite_f64, single_line_metadata};
+use super::{IoError, decimal_f64, finite_f64, single_line_metadata};
 use hyperlattice::Point3;
 use hypermesh::{Triangle, TriangleMesh};
 use std::cell::RefCell;
@@ -24,6 +24,11 @@ thread_local! {
 /// Native index and normal failures retain their category and cause through
 /// [`IoError::Construction`]. An undecided normal can be retried after obtaining
 /// stronger scalar evidence; only successful output is cached.
+///
+/// Positions and normals are projected to finite binary64 values, then spelled
+/// exactly in decimal. The existing 17 fractional digits are retained when
+/// sufficient; other values need up to 1074 fractional digits. This preserves
+/// the selected projection, not arbitrary exact source coordinates or topology.
 pub fn to_ply(mesh: &TriangleMesh, comment: &str) -> Result<String, IoError> {
     let comment = single_line_metadata(comment, "PLY", "comment")?;
     if let Some(output) = PLY_CACHE.with_borrow(|entries| {
@@ -54,13 +59,13 @@ pub fn to_ply(mesh: &TriangleMesh, comment: &str) -> Result<String, IoError> {
     );
     for (position, normal) in &buffers.vertices {
         output.push_str(&format!(
-            "{:.17} {:.17} {:.17} {:.17} {:.17} {:.17}\n",
-            finite_f64(&position[0], "PLY", "vertex x")?,
-            finite_f64(&position[1], "PLY", "vertex y")?,
-            finite_f64(&position[2], "PLY", "vertex z")?,
-            finite_f64(&normal[0], "PLY", "normal x")?,
-            finite_f64(&normal[1], "PLY", "normal y")?,
-            finite_f64(&normal[2], "PLY", "normal z")?,
+            "{} {} {} {} {} {}\n",
+            decimal_f64(finite_f64(&position[0], "PLY", "vertex x")?),
+            decimal_f64(finite_f64(&position[1], "PLY", "vertex y")?),
+            decimal_f64(finite_f64(&position[2], "PLY", "vertex z")?),
+            decimal_f64(finite_f64(&normal[0], "PLY", "normal x")?),
+            decimal_f64(finite_f64(&normal[1], "PLY", "normal y")?),
+            decimal_f64(finite_f64(&normal[2], "PLY", "normal z")?),
         ));
     }
     for face in buffers.indices.as_chunks::<3>().0 {

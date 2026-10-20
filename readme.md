@@ -777,6 +777,16 @@ strings; the entry limit is not a heap-byte bound, and no reset/disable API is
 provided. Export remains a format projection, with topology validation and
 source-geometry fidelity requiring their own checks.
 
+PLY writes each selected binary64 position and normal value exactly in decimal,
+using the same formatter as OBJ and ASCII STL. Migration: the previous fixed
+17 fractional digits could round small nonzero coordinates or normals to zero.
+Those digits are now extended where necessary, up to 1074 fractional digits;
+already exact spellings, headers and face rows retain their bytes. Affected
+file lengths and checksums therefore change, and some files become larger.
+This preserves the selected finite projection, not arbitrary exact source
+geometry. PLY carries no construction receipt; a consumer validating a parsed
+mesh establishes a new claim about its projected coordinates and topology.
+
 glTF supports canonical empty meshes, named empty scene objects, and scenes
 with no objects. Empty objects become named nodes without meshes; a scene
 with no objects omits its node list. No zero-count accessors or empty buffers
