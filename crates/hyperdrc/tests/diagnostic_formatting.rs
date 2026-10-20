@@ -13,10 +13,12 @@ impl log::Log for Logger {
 }
 static LOGGER: Logger = Logger(Mutex::new(Vec::new()));
 
+// An exact zero that no retained scalar relation proves. The scalar layer
+// now proves sin(a)^2 + cos(a)^2 = 1, so use the angle-addition identity.
 fn unresolved_zero() -> Scalar {
-    let sine = Scalar::e().sin();
-    let cosine = Scalar::e().cos();
-    &sine * &sine + &cosine * &cosine - Scalar::one()
+    (Scalar::e() + Scalar::one()).sin()
+        - Scalar::e().sin() * Scalar::one().cos()
+        - Scalar::e().cos() * Scalar::one().sin()
 }
 
 #[test]

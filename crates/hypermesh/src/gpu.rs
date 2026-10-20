@@ -703,7 +703,25 @@ mod tests {
     fn exact_gpu_exports_keep_undecided_normals_distinct_from_degeneracy() {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
-        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        // sin(a)^2 + cos(a)^2 = 1 is a retained scalar relation, so this
+        // height is a proved zero and the triangle is certified degenerate.
+        let pythagorean = &sine * &sine + &cosine * &cosine - Real::one();
+        let flat = TriangleMesh::new(
+            vec![
+                Point3::origin(),
+                Point3::new(1.into(), 0.into(), 0.into()),
+                Point3::new(0.into(), pythagorean, 0.into()),
+            ],
+            vec![Triangle::new(0, 1, 2)],
+        );
+        assert_eq!(
+            flat.to_exact_gpu_mesh_buffers(),
+            Err(GpuMeshError::TriangleNormalUnavailable { triangle: 0 })
+        );
+        // No retained relation proves the angle-addition zero.
+        let zero = (Real::e() + Real::one()).sin()
+            - &sine * Real::one().cos()
+            - &cosine * Real::one().sin();
         let positions = vec![
             Point3::origin(),
             Point3::new(1.into(), 0.into(), 0.into()),
