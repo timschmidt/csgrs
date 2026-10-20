@@ -89,7 +89,7 @@ finite exponent family, subnormals and small normal components. A third-party
 PLY reader reconstructs a tiny closed box for separate exact bounds/volume,
 topology, transform and strict Boolean checks. This is consumer-side
 reconstitution, not a new CSGRS PLY importer or proof of source intent.
-The serialization migration is described in the [README](../readme.md).
+The serialization migration is listed in [`MIGRATIONS.md`](MIGRATIONS.md#serialized-output-and-geometry).
 
 The strict success gates remain required successes. An undecided predicate,
 unsupported representation, invalid input, resource exhaustion or incorrect

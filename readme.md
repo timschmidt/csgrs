@@ -88,17 +88,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 The following is the useful public modeling surface. Generated API
 documentation contains complete signatures, feature conditions, and errors.
+API and serialization changes that need caller action are listed in
+[`docs/MIGRATIONS.md`](docs/MIGRATIONS.md).
 
 ### Filled regions and open curves
 
 Functions in `csgrs::curve` return native Hypercurve types.
 
 Rectangle, square, circle, ellipse, regular polygon, right triangle, polygon,
-and rounded-rectangle constructors now return `Result<CurveRegion2,
+and rounded-rectangle constructors return `Result<CurveRegion2,
 ValidationError>`. Their policy-taking variants and the compound constructors
-return `Result<GeometryOutcome<CurveRegion2>, ValidationError>`. This API
-migration replaces empty-on-error behavior: propagate `?` or handle the typed
-error explicitly. Negative dimensions, malformed rings, unresolved predicates,
+return `Result<GeometryOutcome<CurveRegion2>, ValidationError>`. Negative dimensions, malformed rings, unresolved predicates,
 and checked capacity/allocation failures remain failures through scalar
 adapters and bindings.
 
@@ -128,12 +128,11 @@ cached. The limit counts entries, not heap bytes; scalar growth, secondary
 kernel allocation, total work and cancellation remain unbounded internally.
 The sampled `arrow`, `trapezoid`, `star`, `teardrop`, `egg`, `squircle`,
 `pie_slice`, `heart`, and `supershape` constructors also return `Result`; each
-has a `_with_context` variant returning `GeometryOutcome`. Their existing
-positive-dimension restrictions and sampling formulas remain. An equal-width
-arrow now omits its duplicate shoulders and retains its shaft and triangular
-head. `teardrop_cylinder` propagates profile errors and joins construction and
+has a `_with_context` variant returning `GeometryOutcome`. Their
+positive-dimension restrictions apply. An equal-width arrow has no duplicate
+shoulders; it retains its shaft and triangular head. `teardrop_cylinder` propagates profile errors and joins construction and
 extrusion certainty. WASM star, teardrop, egg and heart constructors throw
-`GeometryError` with a diagnostic `code` instead of publishing failed profiles.
+`GeometryError` with a diagnostic `code` on failure.
 
 Stars require at least three tips and `outer_radius > inner_radius > 0`;
 teardrops require `length > width / 2` and at least two semicircle chords.
@@ -193,12 +192,12 @@ Rendered filled constructors:
 geometry. `polygon_points` constructs the same polygon family from native
 Hypercurve `Point2` values.
 
-The five gear/rack/airfoil constructors now return `Result`; propagate `?` or
-handle `ValidationError`. Their `_with_context` forms return `GeometryOutcome`
-and share validation and native ring construction with the strict defaults.
+The five gear/rack/airfoil constructors return `Result<_, ValidationError>`.
+Their `_with_context` forms return `GeometryOutcome` and share validation and
+native ring construction with the strict defaults.
 `solid::spur_gear_involute`, `spur_gear_cycloid`, and `helical_involute_gear`
 propagate construction errors and consumed certainty into extrusion. Invalid
-profiles no longer become successful empty solids, including at zero thickness.
+profiles are errors, including at zero thickness.
 
 Modules and chord lengths must be positive; clearance and backlash are
 nonnegative. Involute pressure angles lie strictly between 0 and 90 degrees.
@@ -225,9 +224,8 @@ Open constructors retain their native path/string topology:
 | <img src="docs/hilbert_strings.png" width="144" alt="Open Hilbert curve strings with visible edges and vertices"/> | `curve::hilbert_strings(boundary: &CurveRegion2, order: usize, padding: Real) -> Result<Vec<CurveString2>, ValidationError>` |
 | <img src="docs/hershey_strings.png" width="144" alt="Open Hershey text curve strings with visible edges and vertices"/> | `curve::hershey_strings(text: &str, font: &hypercurve::hershey::Font<'_>, size: Real) -> Result<Vec<CurveString2>, ValidationError>` |
 
-`bezier_path`, `bspline_path`, and `bezier_region` now return `Result`.
-Propagate `?` or handle `ValidationError`; missing paths and empty geometry
-are no longer substitutes for failed construction. Native line and spline
+`bezier_path`, `bspline_path`, and `bezier_region` return `Result`; failed
+construction is an error, never a missing path or empty geometry. Native line and spline
 errors retain their causes in `ValidationError::Curve` and `ExactCurve`.
 Invalid spline degree is `InvalidInput`, and unresolved closure is `Undecided`;
 match `kind()` instead of parsing diagnostic text. A successfully regularized
@@ -247,12 +245,11 @@ indices, parameter ranges, and boundary contacts. The retained curves can feed
 `CurvePath2::try_new` and further native operations without reconstructing
 selected endpoints. `hilbert_paths_with_context` also returns local certainty.
 
-`hilbert_strings` now returns `Result`; propagate `?` or handle the error.
+`hilbert_strings` returns `Result`.
 Its geometry-only view omits trim records and requires represented `Real`
 endpoints. Selected endpoints without that view return `Unsupported`;
-use `hilbert_paths` to retain them exactly. This replaces midpoint-only clipping
-and empty-on-error behavior. Output segmentation may change at actual contacts.
-Valid empty regions still yield empty collections after parameter validation.
+use `hilbert_paths` to retain them exactly. Clipping uses actual boundary
+contacts. Valid empty regions yield empty collections after parameter validation.
 Orders are 1–10; nonnegative padding insets the grid bounds and does not promise
 clearance from holes or other boundaries. The point-count cap is not a total
 work, memory, or cancellation budget. Neither API certifies inherited intent
@@ -261,21 +258,17 @@ of an earlier approximate boundary construction.
 The Hershey catalog is compiled into Hypercurve and exposed as
 `hypercurve::hershey::fonts`; no font files or runtime parser are required.
 
-Both text constructors now return `Result`; propagate `?` or handle the typed
-error. Their `_with_context` variants return `GeometryOutcome` with local
-certainty. Invalid fonts, missing glyphs, failed outlines and undecided scales
-no longer produce successful empty or partial text. Valid empty text, whitespace
-and blank glyphs remain empty after input validation. Hershey sizes may be
-negative but must be provably nonzero; Cartesian coordinates and the existing
-horizontal spacing are preserved. `parts::dimension::annotate` also returns
+Both text constructors return `Result`. Their `_with_context` variants return
+`GeometryOutcome` with local certainty. Invalid fonts, missing glyphs, failed
+outlines and undecided scales are errors, never successful empty or partial
+text. Valid empty text, whitespace and blank glyphs remain empty after input
+validation. Hershey sizes may be negative but must be provably nonzero;
+Cartesian coordinates and horizontal spacing are preserved. `parts::dimension::annotate` also returns
 `Result` and leaves the drawing unchanged if label construction fails.
 
-TrueType geometry has an explicit migration: native lines and quadratic/cubic
-Bézier curves replace the former eight-chord sampling. The requested positive
-`Real` point size and layout arithmetic remain exact, using exactly `127/360`
-millimeters per point instead of binary64 `0.3527777`. Represented sets, edge
-counts and serialized artifacts may therefore change; this is not a
-performance-only change. Use an explicit finite projection for display or an
+TrueType outlines are native lines and quadratic/cubic Bézier curves. The
+requested positive `Real` point size and layout arithmetic are exact, using
+exactly `127/360` millimeters per point. Use an explicit finite projection for display or an
 interchange format that requires polygons. Native curve construction certifies
 the represented outline topology; it does not certify a display projection or
 an extruded mesh that has not been separately validated.
@@ -292,7 +285,7 @@ pair adjustments, newline, carriage return and four-space tabs, not shaping or
 bidirectional text. Class-based pair adjustments respect glyph coverage. An
 outline failure is distinct from a proved blank glyph; CFF2 outline absence
 currently reports unsupported when blankness cannot be established. The
-`truetype-text` feature now includes `curve` and no longer uses `ttf-parser-utils`.
+`truetype-text` feature includes `curve`.
 Parsing and selected-glyph checks are not a complete font-file validator; the
 parser's lazy handling of other table contents remains outside that guarantee.
 Text buffers use checked reservations, but total computation, retained heap
@@ -310,11 +303,11 @@ Planar operations:
 `try_finite_profiles` is an explicit display/interchange projection. It is not a
 replacement for the native curve topology.
 
-The four `curve::transformed`/`translated`/`rotated`/`scaled` functions now
-return `Result<CurveRegion2, ValidationError>`; failures no longer become empty
-regions. Their `try_` aliases and context variants use the same error type,
+The four `curve::transformed`/`translated`/`rotated`/`scaled` functions return
+`Result<CurveRegion2, ValidationError>`; failures are errors, not empty regions.
+Their `try_` aliases and context variants use the same error type,
 retaining native causes in `ValidationError::ExactCurve`. Context variants
-return operation-local certainty. `contains_xy` now returns
+return operation-local certainty. `contains_xy` returns
 `Result<Option<bool>, ValidationError>`: `Some(true)`/`Some(false)` classify
 inside/outside, `Ok(None)` means a proved boundary, and an undecided query is
 an error. Canonical empty regions classify outside and remain composable under
@@ -401,12 +394,12 @@ edge-pair work; total work, heap bytes and cancellation remain unbounded interna
 `metaballs_with_diagnostics` and `sdf_with_diagnostics` produce the same shape
 families while returning sampling reports. `sdf_expr` and
 `sdf_expr_with_diagnostics` accept retained `hypersdf::SdfExpr` values and
-produce the same SDF shape family. All four SDF constructors now return `Result`:
+produce the same SDF shape family. All four SDF constructors return `Result`:
 use `?` to propagate failures before passing a mesh downstream. Successful
 empty level surfaces remain `Ok`; invalid expression domains, undecided
 construction or extraction, and capacity exhaustion are errors with retained
 native causes. `ValidationError::SdfSample` also records the failing grid index.
-Grid dimensions below two are rejected instead of silently increased. Diagnostic
+Grid dimensions below two are rejected. Diagnostic
 queries also fail when their requested sign or extrema cannot be established.
 
 `*_with_context` variants retain the certainty of the decisions consumed under
@@ -415,10 +408,9 @@ Expression construction remains strict under either meshing policy. Diagnostic
 previews remain lossy and preserve only strict sign evidence; they may withhold
 samples accepted approximately by the mesh operation. The display backend also
 uses a chunk boundary convention that can omit final-layer faces. The modeling
-path now uses Hypermesh's `surface_nets_standalone`, which includes all faces
-whose four incident cells are present in the grid. Hypermesh's existing
-`surface_nets` keeps its documented chunk convention. The modeling output
-correction is a contract migration, not a performance-only change.
+path uses Hypermesh's `surface_nets_standalone`, which includes all faces
+whose four incident cells are present in the grid. Hypermesh's
+`surface_nets` keeps its documented chunk convention.
 Numerical certification
 of the sampled level surface establishes neither closed topology nor fidelity
 to the continuous field. Check required topology separately and retain the
@@ -426,7 +418,7 @@ source expression when that distinction matters.
 
 The SDF sampling path checks primary buffer capacities and reservations. Scalar
 expression growth, secondary extraction/preview allocations, total work and
-cancellation do not yet have internal bounds. The 3D metaball constructors now share this native sampler and return `Result`.
+cancellation do not yet have internal bounds. The 3D metaball constructors share this native sampler and return `Result`.
 `MetaBall` reexports Hypersdf's retained `Metaball`; its `influence` returns a
 fallible exact inverse-square value, with no distant cutoff and a typed pole
 error at the center. `metaballs_with_context` and
@@ -434,36 +426,31 @@ error at the center. `metaballs_with_context` and
 Radii and iso values must be positive, padding nonnegative, and every requested
 grid dimension at least two, including for empty inputs.
 
-This is an explicit geometry migration: extraction samples
+Extraction samples
 `F = (iso - I)/(iso + I)`, where `I = sum(r² / distance²)`, and uses the exact
 continuous limit `F = -1` at centers. The normalization preserves the intended
 level set while making finite interpolation well-defined, including for
-coincident centers. The former cutoff, finite singularity sentinel and hidden
-`f32` vertex construction are removed from 3D modeling. Grid locations retain
-the existing conservative bounds and one-cell exterior border. Diagnostic sign
-counts and extrema describe F, with negative meaning inside. Output coordinates
-and serialized artifacts change; this is not a performance-only change or an
-analytic-surface fidelity guarantee.
+coincident centers. There is no distance cutoff, singularity sentinel or
+`f32` vertex construction. Grid locations use conservative bounds and a
+one-cell exterior border. Diagnostic sign counts and extrema describe F, with
+negative meaning inside. This is not an analytic-surface fidelity guarantee.
 
-The 2D `curve::metaballs` now returns `Result` and samples the same normalized
-native field, removing its cutoff, center sentinel, and empty-on-error fallback.
-`curve::metaballs_with_context` also retains predicate certainty. It preserves
-the existing core grid within the conservative bounds, without the 3D exterior
+The 2D `curve::metaballs` returns `Result` and samples the same normalized
+native field.
+`curve::metaballs_with_context` also retains predicate certainty. It uses
+the core grid within the conservative bounds, without the 3D exterior
 border. Hypercurve owns exact marching-squares edge crossings and material/hole
 arrangement. Ambiguous cells retain the center-sample-sum sign rule (zero is
 inside). Chords define a deterministic polygonal proposal, not an exact bilinear
 level curve or certified approximation of the continuous field. Boundary samples
 must be strictly exterior; unresolved decisions and unsupported arrangements
-remain typed failures. This migration changes 2D coordinates and serialized
-artifacts as well. Primary grid buffers are checked; total work, secondary
+remain typed failures. Primary grid buffers are checked; total work, secondary
 allocations, coefficient growth and cancellation remain internally unbounded.
 
-Triangulation and linear extrusion now use native certified line profiles and
+Triangulation and linear extrusion use native certified line profiles and
 Hypertri without finite-coordinate projection, including line-image Bézier
 boundaries, holes, rational coordinates, and coordinates beyond `f64` range.
-Their exact vertices and output artifacts can therefore differ from the former
-quantized output. Other profile representations retain the existing sampled
-finite path; source-curve fidelity and end-to-end provenance for that path remain
+Other profile representations use a sampled finite path; source-curve fidelity and end-to-end provenance for that path remain
 open targets. Rust extrusion adapters retain native errors, C-family bindings
 retain status categories, and WASM extrusion/triangulation expose `GeometryError`
 codes. Required topology is checked separately from numerical certainty.
@@ -516,24 +503,23 @@ next operation. Canonical empty geometry has neither positions nor triangles;
 a mesh missing just one of those arrays remains an input error. The other
 operand is still validated and regularized under the selected policy, even
 when the result is necessarily empty. Conversion from a shared Hypermesh
-Boolean batch now gives empty rows zero positions as well as zero triangles;
-nonempty rows continue sharing the batch's position allocation.
+Boolean batch gives empty rows zero positions as well as zero triangles;
+nonempty rows share the batch's position allocation.
 
 `ScalarMesh::{union, difference, intersection, xor}` and their context variants
-now preserve native Boolean failures as
-`AdapterError::Construction(ValidationError::Mesh(...))`, replacing text-only
-`AdapterError::Validation`. Callers that match errors should inspect
+preserve native Boolean failures as
+`AdapterError::Construction(ValidationError::Mesh(...))`. Inspect
 `ValidationError::kind()` or follow `std::error::Error::source`; the native
 diagnostic text is retained. In the C ABI and its C++/Python/Go wrappers,
-undecided mesh Booleans now report the existing `PREDICATE_UNDECIDED` (5) status
-instead of generic `VALIDATION_FAILED` (4). Invalid input still reports (4),
-including malformed operands paired with empty geometry. No failure publishes
+undecided mesh Booleans report `PREDICATE_UNDECIDED` (5), and invalid input
+reports `VALIDATION_FAILED` (4), including malformed operands paired with
+empty geometry. No failure publishes
 a successful model.
 
 Primitive constructors (`cube`, `cuboid`, `sphere`, `cylinder`, `ellipsoid`,
 `frustum`, `frustum_between`, `octahedron`, `icosahedron`, `arrow`, and `torus`)
-now return `Result<TriangleMesh, ValidationError>`. This is an API migration:
-propagate construction errors with `?` before transforming or composing a model.
+return `Result<TriangleMesh, ValidationError>`; propagate construction errors
+with `?` before transforming or composing a model.
 Negative dimensions/radii, invalid sample counts, undecided strict predicates,
 unsupported torus representations, and unrepresentable buffer capacities are
 errors, with structured variants retained by `AdapterError::Construction`.
@@ -560,23 +546,22 @@ the provenance of an earlier approximate construction. Transform work and
 allocation do not yet have an internal total-work, heap-byte, or cancellation bound.
 
 Bounds queries (`solid::bounding_box`, `curve::bounding_box`, their `try_`
-variants, and `SolidExt::exact_bounds`) now return `Result<Option<Aabb>,
+variants, and `SolidExt::exact_bounds`) return `Result<Option<Aabb>,
 ValidationError>`. Propagate errors with `?`, then handle `None` as a completed
 query on empty geometry. A point at the origin has `Some` zero-size bounds.
 Context queries retain the certainty receipt around the optional bounds.
 Scalar adapters follow the same optional-result contract. Mesh bounds validate
 indices before reusing retained position facts; a bounds query does not validate
-closed-solid topology. `solid::center` and `float` now return `Result`; they
+closed-solid topology. `solid::center` and `float` return `Result`; they
 preserve canonical empty geometry and propagate bounds failures.
 
 The six TPMS constructors (`gyroid`, `schwarz_p`, `schwarz_d`, and their `_solid`
-forms) also return `Result<TriangleMesh, ValidationError>`. Their sampling formulas
-and valid resolutions are unchanged. Resolutions below two are now rejected
-instead of silently clamped. Periods must be proved positive and solid wall
+forms) also return `Result<TriangleMesh, ValidationError>`. Resolutions below two
+are rejected. Periods must be proved positive and solid wall
 thickness must be proved nonnegative. Empty bounds and zero wall thickness
 produce canonical empty geometry after parameter validation. Undecided bounds,
-sample signs, interpolation, orientation, and native Surface Nets failures remain
-errors with their diagnostic category; they no longer produce an empty model.
+sample signs, interpolation, orientation, and native Surface Nets failures are
+errors with their diagnostic category, never an empty model.
 Certification concerns the sampled representation, not the continuous TPMS field.
 
 These constructors make strict numerical decisions and retain exact sampled
@@ -631,12 +616,10 @@ report. The existing convenience entry points retain their strict default.
 | Mesh imports | `io::obj::from_obj_with_context`, `from_obj_attributed_with_context`, `io::dxf::from_dxf_with_context`, `io::vrml::from_vrml_with_context` |
 | Gerber conversion | `io::gerber::import_gerber_with_context`, `export_gerber_with_options_and_context` |
 
-`solid::minkowski_sum` now adds the represented bounded closed-PWN solids,
+`solid::minkowski_sum` adds the represented bounded closed-PWN solids,
 including disconnected components and cavities. Unused positions do not change
-that set. Both operands are validated before empty identities. The former
-convexification of all stored vertex sums is explicitly available as
-`solid::minkowski_hull`; migrate point-cloud or intentional convex-hull callers
-to that name. Context variants preserve operation-local certainty and typed
+that set. Both operands are validated before empty identities. Convexification
+of all stored vertex sums is `solid::minkowski_hull`. Context variants preserve operation-local certainty and typed
 native failures. Bare meshes do not retain an earlier operation's provenance.
 
 `solid::minkowski_sum_with_options` accepts native `hypermesh::MinkowskiOptions`
@@ -652,8 +635,7 @@ Minkowski failures are `GeometryError` objects with a machine-readable `code`.
 Curve composites such as `ring`, `crescent`, and `circle_with_keyway` pass their
 existing context through component construction, transforms, and Booleans.
 `solid::merge` and the strict `distribute_linear`, `distribute_grid`, and
-`distribute_arc` wrappers now return `Result`; propagate `?` or handle the typed
-failure. Merge calls native `TriangleMesh::try_concatenate`: it validates and
+`distribute_arc` wrappers return `Result`. Merge calls native `TriangleMesh::try_concatenate`: it validates and
 rebases indices, preserves buffer order, open surfaces and winding multiplicity,
 and does not compute a Boolean union. Existing native PWN facts retain their
 qualification when concatenated; structural copying does not certify topology.
@@ -664,7 +646,7 @@ single-copy and disjoint layouts. Linear direction must be provably nonzero,
 including for an empty result. Signed/zero spacing and signed arc radius remain
 supported; a single arc copy uses the angular midpoint. Context forms preserve
 consumed certainty and native failure causes. Invalid input, undecided
-predicates and capacity exhaustion no longer become empty successful models.
+predicates and capacity exhaustion are typed errors, never empty successful models.
 
 Copy counts, aggregate buffer sizes and owned vector reservations are checked
 before creating copies. Empty sources require no copy buffers. These checks do
@@ -711,11 +693,8 @@ and opposite traversals cancel. The sections approached from above and below
 are united, preserving cuts through shared edges and coplanar caps. Isolated
 point contacts are omitted by this regularized area/wire carrier.
 
-Migration: both primary functions now return `Result`; propagate errors with
-`?` or handle them explicitly. Invalid indices and undecided predicates no
-longer become empty geometry. This is a correctness and API change, including
-corrected slice topology; prior slice serialization is not preserved. The
-context variants retain aggregate operation-local certainty. They do not
+Both functions return `Result`. Invalid indices and undecided predicates are
+errors, not empty geometry. The context variants retain aggregate operation-local certainty. They do not
 certify inherited construction intent or input manifoldness, nor impose an
 internal total-work, memory-byte or cancellation bound. Native Hypermesh
 section records retain source triangles, edges and exact interpolation
@@ -770,10 +749,8 @@ and invalid OBJ vertex references return `IoError::Construction`. Inspect
 diagnostics reach the corresponding `write_*` functions before any bytes are
 written; a later stream I/O error can leave a written prefix.
 
-Migration: these native failures previously used `IoError::Geometry` with only
-a string. Match `Construction` instead; its display prefix is now
-`"<format> construction failed:"`, followed by the native diagnostic. Successful
-serialization is unchanged by this error migration. PLY/glTF cache only
+The display prefix is `"<format> construction failed:"`, followed by the
+native diagnostic. PLY/glTF cache only
 successful output, so an undecided normal can be retried after stronger proof.
 Their four-entry, per-thread FIFO caches retain owned geometry and output
 strings; the entry limit is not a heap-byte bound, and no reset/disable API is
@@ -781,12 +758,8 @@ provided. Export remains a format projection, with topology validation and
 source-geometry fidelity requiring their own checks.
 
 PLY writes each selected binary64 position and normal value exactly in decimal,
-using the same formatter as OBJ and ASCII STL. Migration: the previous fixed
-17 fractional digits could round small nonzero coordinates or normals to zero.
-Those digits are now extended where necessary, up to 1074 fractional digits;
-already exact spellings, headers and face rows retain their bytes. Affected
-file lengths and checksums therefore change, and some files become larger.
-This preserves the selected finite projection, not arbitrary exact source
+using the same formatter as OBJ and ASCII STL, with up to 1074 fractional
+digits where a value needs them. This preserves the selected finite projection, not arbitrary exact source
 geometry. PLY carries no construction receipt; a consumer validating a parsed
 mesh establishes a new claim about its projected coordinates and topology.
 
@@ -798,22 +771,19 @@ canonical empty geometry, which can continue through transforms and Booleans.
 Positions without triangles remain invalid export input. Duplicate object
 names and native geometry failures still fail before writing output.
 
-Migration: empty glTF operations that previously returned `Geometry` now
-succeed. A document without a scene remains rejected, as `Unsupported` rather
-than `MalformedInput`: a glTF library asset can be valid without a scene to
+A document without a scene is rejected as `Unsupported`: a glTF library asset can be valid without a scene to
 flatten. Invalid node forests, zero-count accessors, invalid references, and
 unreadable or mistyped triangle indices return errors before traversal or
 reading; indices are never silently replaced. Valid scene traversal is
 iterative, including deep hierarchies. This does not establish internal total
 work, allocation, or cancellation bounds, or full glTF conformance.
 
-Import still flattens node transforms in binary64 from glTF binary32 inputs,
+Import flattens node transforms in binary64 from glTF binary32 inputs,
 then promotes the resulting coordinates to exact scalars. The imported mesh
 records missing source history and, when coordinates were consumed, coordinate
 projection. An empty import consumes no coordinates. A later strict proof
 establishes facts about the imported set; glTF carries no receipt certifying
-the source construction or preservation of its exact geometry. Nonempty
-export bytes and existing format projection semantics remain unchanged.
+the source construction or preservation of its exact geometry.
 
 ## Boundary adapters
 
