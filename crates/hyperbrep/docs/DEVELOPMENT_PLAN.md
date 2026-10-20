@@ -2526,6 +2526,72 @@ remain the numerical and geometric foundation. A reference's use of "exact"
 for a retained analytic/NURBS carrier does not establish exact arithmetic or
 certified topology throughout its operation.
 
+### Review findings (2026-10-20)
+
+An external review of the merged `brep` branch confirmed the topology
+refactor. That includes the immutable arena, revision-bound references,
+copy-on-write edits and typed errors, with no `unsafe` and no tolerances. It
+also found that nothing in the kernel is yet general. The plan above already
+says so (see the summary, WP07/WP08 and
+[validation independent of construction family](#validation-independent-of-construction-family)).
+The branch's commits nevertheless kept adding family-specific cases. Until
+the general paths below land, do not add new whole-solid recognizers or
+surface-pair intersection cases. Each such addition widens the special-case
+surface the general algorithms must later absorb.
+
+Structural gaps, in priority order:
+
+1. **Compositional admission (WP07).** About twelve shape-family recognizers
+   (the ten `certified_*` records plus planar polyhedra) are the only
+   admission path. A valid closed shell that matches none of them returns
+   `UnsupportedSolidShell`. Implement the compositional validation steps
+   above as the gate, and keep family records only as accelerators. Acceptance:
+   a valid mixed curved shell from a non-family construction publishes, and
+   its family-independent validation agrees with every existing family record
+   on the current corpus.
+2. **General quadric surface intersection (WP04/WP05).** Surface-surface
+   intersection is a pairwise match table. Two cylinders at any nonzero angle
+   return `UnsupportedIntersection`, so drilling a hole perpendicular into a
+   cylinder fails. Start with exact quadric-quadric intersection curves, such
+   as the pencil method with retained algebraic branches. Acceptance: a
+   perpendicular and an oblique cylindrical drill through a cylinder complete
+   under strict policy, replay cold, and continue through later Booleans.
+3. **Stitching retained parameters.** The general stitcher
+   (`copy_or_match_selected_edge` in `boolean_kernel.rs`) cannot consume the
+   retained algebraic-root parameters that most recent commits add. It must
+   match edges by retained root identity, not only by stored `Real` domains
+   and endpoints. Acceptance: a Boolean whose new edges carry only selected
+   roots stitches without a stored scalar view.
+4. **Certificate flag audit.** These sites set a certificate flag to `true`,
+   and later code trusts it without rechecking:
+   - `src/topology/builder.rs`: line 672
+   - `src/topology/edit/edge.rs`: lines 225, 232, 258, 267, 286
+   - `src/topology/edit/face.rs`: lines 517, 522
+   - `src/topology/edit/partition.rs`: lines 780, 1010, 1011
+   - `src/topology/edit/surface.rs`: lines 299, 305, 582, 588, 878, 884
+   - `src/topology/validation/wire.rs`: lines 633, 648
+
+   Each site must name the proof performed there, or the input certificate it
+   transfers. Add a test mode that re-runs the independent validator on every
+   model these edits publish and compares the flags it derives.
+5. **File organization (target 13).** `src/geometry.rs` (18.6k lines) and
+   `src/boolean_kernel.rs` (16.6k lines) need the split that
+   `topology/model.rs` received.
+6. **Downstream use.** CSGRS does not depend on HyperBREP yet, so it is a
+   second, disconnected kernel. Implement the optional `brep` feature
+   described under [csgrs grammar](#csgrs-grammar) before widening the kernel
+   further.
+
+Defects fixed during the merge:
+
+- `exact_edge_curve_equal` returned `true` for any two line curves. It was
+  correct only because its one line caller compared endpoints first. It now
+  compares the directed endpoints itself.
+- `face_plane_value`, the generic ray classifier and planar face
+  classification assumed every face of an uncertified solid is planar and
+  panicked otherwise. A shared accessor now returns
+  `GeometryError::UnsupportedIntersection`.
+
 ### Current implementation priority
 
 Apply the [upstream acceptance order](#acceptance-order-after-the-upstream-integration)

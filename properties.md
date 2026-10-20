@@ -152,3 +152,59 @@ For every patch, ask: **does it let users complete more trustworthy work, or com
 12. **Release** - All crates in the monorepo should be prepared for release, including the clean external consumer pipeline, documented feature configurations, minimum supported compiler, package dependencies, examples, and real affected bindings required by P37 and the admission protocol.
 13. **File organization** - Files should be organized, sized, and split / combined semantically such that finding relevant code is easy and no file is too long for reading.
 14. **Future work** - each crate may have documentation discussing crate-specific future work which is also in scope.
+
+### Review of 2026-10-20
+
+An external review of the merged stack added these targets. Each was
+reproduced on the merge revision. They sit inside the order above: the first
+is ordinary strict-mode completion, the second milestone.
+
+15. **Strict completion of the shipped examples** - Strict mode refuses the
+    repository's own examples. `boolean_operations` and `convex_hull` stop on
+    the 32×16 sampled sphere, whose trigonometric coordinates make coplanar
+    quads unprovable zeros. `extrude` stops because `try_sweep` reports an
+    undecided frame-transport rotation as `InvalidArguments`, which also
+    violates P6. CI now runs every example through `scripts/run-examples.sh`,
+    with these three as tracked known failures. The generator-side coplanarity
+    certificate in [`crates/hypermesh/FUTURE_WORK.md`](crates/hypermesh/FUTURE_WORK.md#convex-hulls-of-sampled-spheres)
+    is the highest-value fix in the stack. Acceptance: the known-failure list
+    is empty, and the sweep returns its true typed outcome.
+16. **Evidence retention** - Resolved in tree. Generated evidence (14 GB in
+    552,370 files) moved to the evidence repository with per-record digests
+    ([`docs/evidence-archive.md`](docs/evidence-archive.md)). P36 now has a
+    retention budget, and CI enforces it with
+    `scripts/check-repository-budget.sh`.
+17. **Dependency direction** - `hyperdrc` (PCB design-rule checks) and
+    `hypercircuit` (circuit simulation) are applications that depend upward
+    on `csgrs`. Move them to an application area outside the core release
+    graph, so no core crate's workspace build or release depends on them.
+18. **Reviewable size** - The stack has about 1.43 million lines of
+    first-party Rust across 22 crates, excluding vendored code and the
+    comparison harness. `hypercurve` alone has 476k lines. That includes the
+    58k-line `crates/hypercurve/src/bezier_offset/conversion_tests.rs` and
+    identifiers such as
+    `projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_limit`.
+    The month to 2026-10-20 had 1,367 commits; 246 of them begin with
+    "Record" or "Freeze". At that rate no person can review the code. Add a
+    per-file line budget enforced in CI (with target 13), an identifier
+    naming rule (with target 5), and change sets small enough to review.
+    Ledger-only commits do not advance a target (P37).
+19. **One owner per core type** - `Point2` is defined in `hypercurve`,
+    `hyperlattice` and `hypersolve`. `Aabb` is in `hyperlattice` and
+    `hypermesh`, `Sign` in `hyperlimit` and `hypertri`, and `Classification`
+    twice in `hypersolve` and once in `hypermesh`. This contradicts target 5.
+    Keep each concept in its lowest sufficient layer and re-export it
+    elsewhere, with explicit migrations.
+20. **API surface** - 110 public `*_with_context` functions pair with
+    context-free twins, doubling the surface. Choose one convention, such as
+    one entry point taking the context plus a documented convenience layer,
+    and migrate to it.
+21. **README as a migration log** - Resolved: the README describes current
+    behavior, and its accumulated migration and serialization-change notes
+    moved to [`docs/MIGRATIONS.md`](docs/MIGRATIONS.md). New migrations are
+    recorded there. Restructuring the README as target 9 describes remains
+    open.
+22. **HyperBREP generality** - Admission is by shape-family recognizers, and
+    surface intersection is a pairwise table. See the findings and acceptance
+    gates in
+    [`crates/hyperbrep/docs/DEVELOPMENT_PLAN.md`](crates/hyperbrep/docs/DEVELOPMENT_PLAN.md#review-findings-2026-10-20).
