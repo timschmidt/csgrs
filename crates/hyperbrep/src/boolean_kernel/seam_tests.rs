@@ -253,6 +253,24 @@ fn complete_circular_cone_cap_trim_replays_native_parameters() {
 }
 
 #[test]
+fn line_matching_compares_directed_endpoints() {
+    let line = |start, end| Curve3::line(start, end).unwrap();
+    let first = line(p(0, 0, 0), p(1, 0, 0));
+    assert!(exact_edge_curve_equal(&first, &line(p(0, 0, 0), p(1, 0, 0)), false).unwrap());
+    assert!(exact_edge_curve_equal(&line(p(1, 0, 0), p(0, 0, 0)), &first, true).unwrap());
+    assert!(!exact_edge_curve_equal(&line(p(1, 0, 0), p(0, 0, 0)), &first, false).unwrap());
+    // Disjoint, overlapping and parallel segments are different edge curves.
+    for other in [
+        line(p(0, 1, 0), p(1, 1, 0)),
+        line(p(0, 0, 0), p(2, 0, 0)),
+        line(p(0, 0, 0), p(0, 0, 1)),
+    ] {
+        assert!(!exact_edge_curve_equal(&first, &other, false).unwrap());
+        assert!(!exact_edge_curve_equal(&first, &other, true).unwrap());
+    }
+}
+
+#[test]
 fn complete_circle_matching_distinguishes_phase_support_and_traversal() {
     let half_pi = (Real::pi() / Real::from(2)).unwrap();
     let first = circle(Vector3::x(), Vector3::y(), Real::zero(), half_pi.clone());

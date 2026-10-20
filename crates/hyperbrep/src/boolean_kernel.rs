@@ -2879,8 +2879,13 @@ fn exact_edge_curve_equal(
     } else {
         candidate.clone()
     };
-    if candidate.kind() == crate::Curve3Kind::Line && existing.kind() == crate::Curve3Kind::Line {
-        return Ok(true);
+    // A line edge curve is the directed segment between its exact endpoints.
+    // Compare them here rather than relying on every caller to have done so.
+    if let (Curve3ExactData::Line(actual), Curve3ExactData::Line(expected)) =
+        (candidate.exact_data(), existing.exact_data())
+    {
+        return Ok(points_certifiably_equal(&actual.start, &expected.start)
+            && points_certifiably_equal(&actual.end, &expected.end));
     }
     if crate::topology::compare_curve3_exact_data(&candidate.exact_data(), &existing.exact_data())?
         == Ordering::Equal
