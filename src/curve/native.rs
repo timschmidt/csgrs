@@ -4443,14 +4443,13 @@ mod native_boundary_source_probe {
     fn undecided_geometry_keeps_the_native_mesh_cause() {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
-        let zero = &sine * &sine + &cosine * &cosine - Real::one();
-        check(
+        let tetrahedron = |height| {
             TriangleMesh::new(
                 vec![
                     Point3::origin(),
                     Point3::new(1.into(), 0.into(), 0.into()),
                     Point3::new(0.into(), 1.into(), 0.into()),
-                    Point3::new(0.into(), 0.into(), zero),
+                    Point3::new(0.into(), 0.into(), height),
                 ],
                 vec![
                     Triangle::new(0, 2, 1),
@@ -4458,8 +4457,17 @@ mod native_boundary_source_probe {
                     Triangle::new(0, 3, 2),
                     Triangle::new(1, 2, 3),
                 ],
-            ),
-            ValidationErrorKind::Undecided,
-        );
+            )
+        };
+        // The scalar layer proves sin(a)^2 + cos(a)^2 = 1, so this flat
+        // tetrahedron is certified degenerate.
+        let pythagorean = &sine * &sine + &cosine * &cosine - Real::one();
+        let flat = tetrahedron(pythagorean)
+            .has_unique_nondegenerate_triangles(&GeometryContext::STRICT.mesh_context())
+            .unwrap();
+        assert!(!flat.value);
+        // No retained relation proves the double-angle zero.
+        let zero = (Real::from(2) * Real::e()).sin() - Real::from(2) * &sine * &cosine;
+        check(tetrahedron(zero), ValidationErrorKind::Undecided);
     }
 }
