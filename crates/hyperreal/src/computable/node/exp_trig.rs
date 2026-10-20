@@ -19,9 +19,36 @@ impl Computable {
     fn integer_ratio_nearest(&self, divisor: Computable) -> BigInt {
         // A strict-error near-integer quotient: |self/divisor - n| < 1.
         // All callers use a positive shared divisor (pi, pi/2 or ln(2)).
-        // Refining the quotient as one expression accounts for divisor error
-        // at the numerator's magnitude, including huge opaque amplitudes.
-        self.clone().multiply(divisor.inverse()).approx_signal(&self.signal, 0)
+        // The cheap path rounds separate 1/16 approximations N and D. Each is
+        // off by less than one unit, so its rounded quotient is within 1 of
+        // self/divisor when 2 * (|N| + |D|) < (|D| - 1)^2. Keep that
+        // established selection there, so reduced representations and their
+        // serialized forms are unchanged.
+        let precision: Precision = -4;
+        let numerator = self.approx(precision);
+        let denominator = divisor.approx(precision);
+        let abs_numerator = numerator.magnitude();
+        let abs_denominator = denominator.magnitude();
+        if *abs_denominator > BigUint::one()
+            && (abs_numerator + abs_denominator) * 2_u32 < (abs_denominator - 1_u32).pow(2)
+        {
+            let mut quotient = abs_numerator / abs_denominator;
+            if abs_numerator % abs_denominator >= (abs_denominator >> 1) {
+                quotient += 1_u32;
+            }
+            let sign = if numerator.sign() == denominator.sign() {
+                Sign::Plus
+            } else {
+                Sign::Minus
+            };
+            return BigInt::from_biguint(sign, quotient);
+        }
+        // Otherwise refine the quotient as one expression. That accounts for
+        // divisor error at the numerator's magnitude, including huge opaque
+        // amplitudes.
+        self.clone()
+            .multiply(divisor.inverse())
+            .approx_signal(&self.signal, 0)
     }
 
     fn reduce_by_divisor(
