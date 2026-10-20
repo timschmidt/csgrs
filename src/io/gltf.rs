@@ -35,9 +35,9 @@ struct IndexedTriangleMesh3D {
 fn indexed_geometry(mesh: &TriangleMesh) -> Result<IndexedTriangleMesh3D, IoError> {
     let buffers = mesh
         .to_exact_gpu_mesh_buffers()
-        .map_err(|error| IoError::Geometry {
+        .map_err(|error| IoError::Construction {
             format: "glTF",
-            detail: error.to_string(),
+            source: error.into(),
         })?;
     let positions = buffers
         .vertices
@@ -397,6 +397,11 @@ fn exact_gltf_real(value: f64, field: &'static str) -> Result<Real, IoError> {
     })
 }
 
+/// Export native triangles with binary32 position and normal attributes.
+///
+/// Native index and normal failures retain their category and cause through
+/// [`IoError::Construction`]. Only successful output is cached, allowing retry
+/// after an undecided normal gains stronger scalar evidence.
 pub fn to_gltf(mesh: &TriangleMesh, object_name: &str) -> Result<String, IoError> {
     if let Some(output) = GLTF_CACHE.with_borrow(|entries| {
         entries
@@ -438,6 +443,7 @@ pub struct GltfSceneObject {
 
 impl GltfSceneObject {
     /// Captures one named indexed-triangle source for scene serialization.
+    /// Native failures use the same typed construction cause as [`to_gltf`].
     pub fn new(name: impl Into<String>, mesh: &TriangleMesh) -> Result<Self, IoError> {
         Ok(Self {
             name: name.into(),

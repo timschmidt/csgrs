@@ -2,21 +2,34 @@
 
 use csgrs::{
     GeometryCertainty, GeometryContext, Real, TriangleMesh,
+    errors::{ValidationError, ValidationErrorKind},
     io::{IoError, obj},
     solid::{self, SolidExt},
 };
 use hyperlattice::Point3;
-use hypermesh::{MeshCertainty, Triangle};
+use hypermesh::{HypermeshError, MeshCertainty, Triangle};
+use std::error::Error;
 
 fn malformed(index: usize) -> TriangleMesh {
     TriangleMesh::new(vec![Point3::origin()], vec![Triangle::new(0, index, 0)])
 }
 
 fn assert_missing_position(error: IoError, index: usize) {
-    let IoError::Geometry { format, detail } = error else {
-        panic!("expected an OBJ geometry error, got {error:?}");
+    let IoError::Construction { format, source } = error else {
+        panic!("expected an OBJ construction error, got {error:?}");
     };
     assert_eq!(format, "OBJ");
+    let native = HypermeshError::VertexIndexOutOfBounds {
+        index,
+        vertex_count: 1,
+    };
+    assert_eq!(source, ValidationError::Mesh(native.clone()));
+    assert_eq!(source.kind(), ValidationErrorKind::InvalidInput);
+    assert_eq!(
+        source.source().unwrap().downcast_ref::<HypermeshError>(),
+        Some(&native)
+    );
+    let detail = source.to_string();
     assert!(detail.contains(&index.to_string()), "{detail}");
 }
 

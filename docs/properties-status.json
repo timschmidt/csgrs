@@ -30318,6 +30318,716 @@
     "review": "docs/evidence/2026-10-19-native-boundary-failure-admission/review-v1.json",
     "checkpoint": "docs/evidence/2026-10-19-native-boundary-failure-admission/checkpoint-v1.json",
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/native-boundary-failure-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz"
+  },
+  "interchange_failure_admission": {
+    "classification": "Retained typed native causes at PLY/glTF graphics and OBJ vertex-reference boundaries.",
+    "baseline_revision": "291259adce256240eb8a0ff5a283388194c3b746",
+    "owner": "CSGRS format conversion; shared existing ValidationError conversions own category mapping, Hypermesh owns native failure.",
+    "properties": [
+      "P4",
+      "P6",
+      "P18",
+      "P25",
+      "P27",
+      "P29",
+      "P30",
+      "P35",
+      "P36",
+      "P37",
+      "P39"
+    ],
+    "changed_paths": [
+      "readme.md",
+      "src/io/gltf.rs",
+      "src/io/mod.rs",
+      "src/io/obj.rs",
+      "src/io/ply.rs",
+      "tests/interchange_failures.rs",
+      "tests/obj_export_failures.rs"
+    ],
+    "production_conversion_routes": 3,
+    "baseline_public_regressions": 4,
+    "baseline_semantic_success_controls": 5,
+    "baseline_existing_obj_tests_passed": 7,
+    "baseline_v1_compile_failure": "Probe subtracted Rational from Real without explicit promotion; v2 fixes that type conversion only. Compiler failure and both fixture versions retained.",
+    "candidate_v1_old_obj_assertion_failures": 3,
+    "existing_test_migration": {
+      "assertions_strengthened_with_typed_native_fields": true,
+      "changed_since_v1": [
+        "tests/obj_export_failures.rs"
+      ],
+      "old_error_variant_assertion_failures_on_candidate": 3,
+      "original_obj_tests_passed_on_baseline": 7,
+      "production_sources_unchanged": true,
+      "source_pins_sha256": "68d0af99f0d4dd8849cf4ea8501a1666db3b21c5095edbaa90227740b07f1c9c"
+    },
+    "candidate_v1_qualification": "Nine new tests and unchanged-success serialization comparison passed. Full minimal run then failed three existing OBJ assertions expecting the old Geometry string carrier. V2 strengthens them with exact native variant, index, vertex count, source chain, and InvalidInput; every original fixture and diagnostic/composition assertion is retained.",
+    "all_checks_after_final_test_edit": false,
+    "final_test_lint_revision": {
+      "changed_since_v2": [
+        "tests/interchange_failures.rs"
+      ],
+      "full_minimal_suite_repeated": false,
+      "production_sources_unchanged": true,
+      "source_pins_sha256": "2f2723a3feaa8b8c0aa5367a836568e16523d57bce2067e31f7bc83eb785942d",
+      "test_decoder_strengthened": true,
+      "v2_full_minimal_tests_passed": 251,
+      "v3_affected_tests_rerun": 9
+    },
+    "final_validation_timing": "V2 passed all 251 minimal tests. Clippy then required as_chunks in the independent glTF test decoder. V3 adds that and a no-remainder assertion; production hashes and all other files are identical. All nine affected tests, default IO/export suites and remaining lint/docs/feature/MSRV/WASM checks run after the final test edit.",
+    "candidate_test_executions": 293,
+    "test_results": {
+      "interchange-baseline-existing-obj-tests": [
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "interchange-baseline-public-tests-v2-run": [
+        {
+          "passed": 5,
+          "failed": 4,
+          "ignored": 0
+        }
+      ],
+      "interchange-candidate-focused-tests": [
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "interchange-candidate-minimal-full-tests": [
+        {
+          "passed": 36,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 3,
+          "ignored": 0
+        }
+      ],
+      "interchange-candidate-v2-focused-tests": [
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "interchange-candidate-v2-minimal-full-tests": [
+        {
+          "passed": 36,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 50,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "interchange-candidate-v3-default-integration-tests": [
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "interchange-candidate-v3-default-io-tests": [
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "interchange-candidate-v3-focused-tests": [
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    "command_count": 37,
+    "warnings": [
+      {
+        "command": "interchange-candidate-v2-minimal-clippy",
+        "diagnostic": "warning: build failed, waiting for other jobs to finish..."
+      }
+    ],
+    "independent_semantics": {
+      "normal": "Open triangle (0,0,0),(1,0,0),(0,3,4) has normal (0,-4/5,3/5); independent PLY text and glTF buffer decoding check expected finite projections.",
+      "closed_geometry": "Unit cube OBJ/glTF roundtrips retain closed PWN/manifold checks, exact coordinate bounds and oriented volume 1, union with empty and self-difference then downstream recovery.",
+      "empty": "PLY empty serialization and OBJ empty roundtrip/union pass. glTF empty export is still rejected and separately reproduced.",
+      "cache_recovery": "Unresolved positive height pi minus its -1024-bit lower enclosure gains proof at -1100 bits. Exports retry successfully; the test certifies normal availability, not topology or fidelity of the tiny quantized coordinates.",
+      "cache_states": [
+        "cold",
+        "warm",
+        "evicted",
+        "mutated source positions",
+        "mutated source triangles",
+        "returned String mutation",
+        "concurrent per-thread output",
+        "stronger-proof retry"
+      ]
+    },
+    "native_failure_domain": [
+      "invalid source triangle indices",
+      "proved degenerate normal",
+      "undecided normal"
+    ],
+    "unreproduced_categories": [
+      "No genuine GPU resource-exhaustion or scalar-domain failure fixture is claimed."
+    ],
+    "writer_contract": "Geometry conversion errors leave preexisting sink bytes unchanged; stream failures remain StdIo. Streaming errors may publish a prefix.",
+    "api_migration": "Existing IoError::Construction replaces IoError::Geometry for these three native sources. source.kind() and Error::source() preserve categories and context. Display prefix changes to <format> construction failed:, followed by the original diagnostic. Signatures and success serialization unchanged.",
+    "serialization_comparison": {
+      "baseline_sha256": "41bc5200730aa195432e9fe2685cf2dfa0d15665891c45d17bcd9b8a6c21ffa9",
+      "candidate_sha256": "41bc5200730aa195432e9fe2685cf2dfa0d15665891c45d17bcd9b8a6c21ffa9",
+      "compared_bytes": 10907,
+      "fixtures": [
+        "open triangle with exact normal (0,-4/5,3/5)",
+        "unit cube"
+      ],
+      "formats": [
+        "PLY",
+        "glTF",
+        "OBJ"
+      ],
+      "identical_bytes": true,
+      "independent_semantics": "Nine regression tests independently check decoded normal/position rows and exact volume/topology/composition."
+    },
+    "adjacent_findings": {
+      "gltf_empty": {
+        "error": "Geometry { format: \"glTF\", detail: \"cannot export empty scene object \\\"empty\\\"\" }",
+        "source_retained": false
+      },
+      "index_conversion": [
+        {
+          "error": "Validation(\"native mesh index exceeds u32: out of range integral type conversion attempted\")",
+          "family": "real",
+          "fixture_is_malformed": true,
+          "source_retained": false
+        },
+        {
+          "error": "Validation(\"native mesh index exceeds u32: out of range integral type conversion attempted\")",
+          "family": "f32",
+          "fixture_is_malformed": true,
+          "source_retained": false
+        },
+        {
+          "error": "Validation(\"native mesh index exceeds u32: out of range integral type conversion attempted\")",
+          "family": "f64",
+          "fixture_is_malformed": true,
+          "source_retained": false
+        },
+        {
+          "error": "Validation(\"native mesh index exceeds u32: out of range integral type conversion attempted\")",
+          "family": "i128",
+          "fixture_is_malformed": true,
+          "source_retained": false
+        }
+      ],
+      "ply_tiny": {
+        "binary64_projection_preserved": false,
+        "serialized_height": 0.0,
+        "source_height": 8.470329472543003e-22
+      },
+      "scope": "Adjacent findings reproduced only; not repaired or admitted by E104."
+    },
+    "scope_limits": [
+      "PLY fixed decimal formatting loses a representable 2^-70 coordinate; reproduced and still open.",
+      "glTF empty mesh export returns a Geometry error; reproduced and still open.",
+      "ScalarMesh index conversion erases TryFromIntError for usize exceeding u32 in a malformed native carrier; valid billion-vertex input not allocated or claimed.",
+      "Other format/triangulation conversions may still flatten native errors; this patch does not establish global completion."
+    ],
+    "cache_budget": "Four successful strings and owned Arc identities per thread, FIFO; no heap-byte bound or reset/disable API. Cache implementation unchanged.",
+    "internal_total_work_memory_cancellation_complete": false,
+    "validation": {
+      "affected_suite_rerun_after_final_edit": true,
+      "foreign_runtime_executions": 0,
+      "full_ci_complete": false,
+      "full_default_runtime_repeated": false,
+      "full_minimal_tests_before_test_only_lint_edit": 251,
+      "hypervoxel_built": false,
+      "msrv_all_targets_checked": "1.95.0",
+      "msrv_runtime_executed": false,
+      "new_public_tests": 9,
+      "passed": true,
+      "public_release_acceptance_open": true,
+      "serialization_byte_equality": true,
+      "source_pins_sha256": "2f2723a3feaa8b8c0aa5367a836568e16523d57bce2067e31f7bc83eb785942d",
+      "wasm_target_compiled": true
+    },
+    "prepared_matrix": {
+      "all_failure_attempts_retained": true,
+      "baseline_revision": "291259adce256240eb8a0ff5a283388194c3b746",
+      "changes": [
+        "readme.md",
+        "src/io/mod.rs",
+        "src/io/ply.rs",
+        "src/io/gltf.rs",
+        "src/io/obj.rs",
+        "tests/interchange_failures.rs",
+        "tests/obj_export_failures.rs"
+      ],
+      "configurations": [
+        "nine public regressions, native cause chain, independent normal and coordinate oracle, cache recovery and isolation, format-specific reimport/topology/composition",
+        "complete no-default obj-io,ply-io,gltf-io tests and doctests",
+        "default-feature IO unit tests and interchange/export-projection integration tests",
+        "strict Clippy all targets combined IO and default features",
+        "individual format all-target checks and no-feature check",
+        "Rust 1.95.0 combined IO all-target check",
+        "rustdoc -D warnings affected features",
+        "actual wasm32 feature compile/Clippy",
+        "cargo fmt all check",
+        "separate Rust consumer snapshots compared exactly with unchanged revision"
+      ],
+      "foreign_consumer_qualification": "No current C/C++/Python/JS format exports for PLY/glTF/OBJ; STL consumers unchanged. No new foreign-runtime coverage claimed.",
+      "fresh_final_build": true,
+      "full_default_runtime_repeated": false,
+      "hypervoxel_excluded": true,
+      "limits": {
+        "cargo_jobs": 2,
+        "child_address_space_gib": 8,
+        "focused_seconds": 60,
+        "full_seconds": 1800,
+        "logs_mib": 200
+      },
+      "owner": "CSGRS format boundary retaining existing Hypermesh GPU and index failures",
+      "performance_claim": false,
+      "properties": [
+        "P4",
+        "P6",
+        "P18",
+        "P25",
+        "P27",
+        "P29",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "public_distribution_acceptance_open": true,
+      "revision": "Only the independent glTF test decoder changes: as_chunks plus explicit no-remainder assertion satisfies Clippy and strengthens validation. Production and every other source remain identical. Rerun all nine affected tests and remaining full matrix; completed 251-test minimal suite remains v2 evidence, before this test-only edit.",
+      "source_pins_sha256": "2f2723a3feaa8b8c0aa5367a836568e16523d57bce2067e31f7bc83eb785942d",
+      "validation_scope_reason": "Only three native error conversions and public documentation change; full affected IO feature tests plus default IO/export tests, all-target lint and feature/MSRV/WASM compilation. E103 full default completion remains prior-revision evidence only."
+    },
+    "foreign_runtime_consumers_executed": 0,
+    "foreign_boundary_qualification": "Current native/JS bindings do not expose the three changed format exports; actual wasm32 feature compile/Clippy checked. No new foreign-runtime acceptance claimed.",
+    "full_default_runtime_repeated": false,
+    "full_default_previous_revision_only": "E103 at 291259adc",
+    "msrv_all_targets_checked": "1.95.0",
+    "msrv_runtime_not_executed": true,
+    "source_package_reverification_open": true,
+    "public_distribution_complete": false,
+    "full_ci_complete": false,
+    "full_plan_complete": false,
+    "historical_artifact_reaudit": false,
+    "hypervoxel_deferred_by_user": true,
+    "hypervoxel_built_or_packaged": false,
+    "performance_claimed": false,
+    "all_adverse_results_retained": true,
+    "artifact_volume": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs",
+    "disk_b_allowance_gib": null,
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "storage_baselines_reset": false,
+    "next": "Repair reproduced glTF empty-output composition and PLY coordinate fidelity, then classify scalar-adapter index projection and remaining native format conversion gaps. Continue strict completion, provenance and current source-package/public release validation; Hypervoxel remains out of scope.",
+    "parent_revision": "291259adce256240eb8a0ff5a283388194c3b746",
+    "review": "docs/evidence/2026-10-19-interchange-failure-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-interchange-failure-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/interchange-failure-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz"
   }
 },
   "status_meanings": {

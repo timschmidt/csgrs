@@ -76,6 +76,9 @@ pub enum IoError {
         detail: String,
     },
     /// A native modeling operation or validation failed at a format boundary.
+    /// Inspect `source.kind()` for the category and its native cause for context.
+    /// Includes graphics construction during PLY/glTF export and vertex-reference
+    /// validation during OBJ export; no serialized geometry is returned on failure.
     #[error("{format} construction failed: {source}")]
     Construction {
         format: &'static str,

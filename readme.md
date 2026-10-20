@@ -760,6 +760,23 @@ filled, string, and path carriers where the source format can contain more
 than one topology kind. Mesh exporters accept `TriangleMesh` directly, and
 planar exporters accept native `CurveRegion2` values.
 
+Native graphics failures in PLY/glTF export (including `GltfSceneObject::new`)
+and invalid OBJ vertex references return `IoError::Construction`. Inspect
+`source.kind()` to distinguish invalid input from an undecided predicate, and
+`std::error::Error::source()` to inspect the retained native cause. The same
+diagnostics reach the corresponding `write_*` functions before any bytes are
+written; a later stream I/O error can leave a written prefix.
+
+Migration: these native failures previously used `IoError::Geometry` with only
+a string. Match `Construction` instead; its display prefix is now
+`"<format> construction failed:"`, followed by the native diagnostic. Successful
+serialization is unchanged by this error migration. PLY/glTF cache only
+successful output, so an undecided normal can be retried after stronger proof.
+Their four-entry, per-thread FIFO caches retain owned geometry and output
+strings; the entry limit is not a heap-byte bound, and no reset/disable API is
+provided. Export remains a format projection, with topology validation and
+source-geometry fidelity requiring their own checks.
+
 ## Boundary adapters
 
 `csgrs::adapter` provides opt-in primitive-scalar wrappers over native
