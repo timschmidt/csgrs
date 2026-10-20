@@ -1,5 +1,8 @@
 #![cfg(all(feature = "obj-io", feature = "ply-io", feature = "gltf-io"))]
 
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use base64::Engine;
 use csgrs::errors::{ValidationError, ValidationErrorKind};
 use csgrs::io::{IoError, gltf, obj, ply};
@@ -34,7 +37,7 @@ fn normal_fixture() -> TriangleMesh {
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 fn failures() -> [(TriangleMesh, ValidationErrorKind); 3] {

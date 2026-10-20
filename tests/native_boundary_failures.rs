@@ -1,4 +1,7 @@
 use csgrs::adapter::{AdapterError, F32, F64, I128, RawReal, ScalarAdapter, ScalarMesh};
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::errors::{ValidationError, ValidationErrorKind};
 use csgrs::{GeometryContext, Real, TriangleMesh, solid};
 use hyperlattice::{Matrix4, Point3};
@@ -9,7 +12,7 @@ use std::error::Error;
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 fn triangle(height: Real) -> TriangleMesh {

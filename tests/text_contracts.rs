@@ -1,5 +1,8 @@
 #![cfg(any(feature = "truetype-text", feature = "hershey-text"))]
 
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     GeometryCertainty, GeometryContext, Real, curve,
     errors::{ValidationError, ValidationErrorKind},
@@ -18,7 +21,7 @@ fn exact(left: &Real, right: &Real) {
 fn unresolved_zero() -> Real {
     let s = Real::e().sin();
     let c = Real::e().cos();
-    &s * &s + &c * &c - r(1)
+    uncertainty::terminal_zero(&s * &s + &c * &c - r(1))
 }
 
 #[cfg(feature = "truetype-text")]

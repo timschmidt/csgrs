@@ -1,3 +1,6 @@
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     GeometryCertainty, GeometryContext, Real, TriangleMesh,
     errors::{ValidationError, ValidationErrorKind},
@@ -233,7 +236,7 @@ fn invalid_faces_and_sections_fail_before_publishing_geometry() {
 fn support_predicate_cause_survives_and_approximate_evidence_stays_qualified() {
     let sin = Real::e().sin();
     let cos = Real::e().cos();
-    let zero = &sin * &sin + &cos * &cos - r(1);
+    let zero = uncertainty::terminal_zero(&sin * &sin + &cos * &cos - r(1));
     let points = [
         [r(0), r(0), r(0)],
         [r(1), r(0), r(0)],
@@ -381,7 +384,7 @@ fn original_readme_polyhedron_and_three_section_loft_keep_their_meaning() {
 fn approximate_section_coalescing_retains_its_qualification() {
     let sin = Real::e().sin();
     let cos = Real::e().cos();
-    let zero = &sin * &sin + &cos * &cos - r(1);
+    let zero = uncertainty::terminal_zero(&sin * &sin + &cos * &cos - r(1));
     let square = [(0, 0), (2, 0), (2, 2), (0, 2)];
     let lower = section(&square, 0);
     let repeated = lower

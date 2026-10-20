@@ -1,6 +1,9 @@
 //! Format-valid empty scenes, hostile input, and continued exact modeling.
 #![cfg(feature = "gltf-io")]
 
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
 use csgrs::{
     GeometryCertainty, GeometryContext, Real, TriangleMesh,
@@ -228,7 +231,7 @@ fn empty_roundtrip_preserves_qualified_history_through_strict_identities() {
     let cosine = Real::e().cos();
     let mut points = cube.positions.to_vec();
     points.push(Point3::new(
-        &sine * &sine + &cosine * &cosine - Real::one(),
+        uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one()),
         0.into(),
         0.into(),
     ));

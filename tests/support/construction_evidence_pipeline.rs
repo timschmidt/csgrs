@@ -9,7 +9,7 @@ fn q(n: i64, d: u64) -> Real {
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    crate::uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 fn check_box(mesh: &TriangleMesh, low: [Real; 3], high: [Real; 3]) {
     for p in mesh.positions.iter() {

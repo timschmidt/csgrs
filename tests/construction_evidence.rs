@@ -1,4 +1,7 @@
 //! Construction qualifications are independent of geometry equality and local proofs.
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     ConstructionEvidence as Evidence, GeometryCertainty, GeometryContext, Real, TriangleMesh,
     solid,
@@ -10,7 +13,7 @@ use std::{num::NonZeroU32, sync::Arc};
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 fn approximate_mesh() -> TriangleMesh {

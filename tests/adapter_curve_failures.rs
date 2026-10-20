@@ -1,5 +1,8 @@
 #![cfg(feature = "curve")]
 
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     GeometryContext, Real,
     adapter::{AdapterError, F32, F64, I128, RawReal, ScalarAdapter, ScalarCurve},
@@ -19,7 +22,7 @@ const OPERATIONS: [BooleanOp; 4] = [
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 fn boolean<A: ScalarAdapter>(
