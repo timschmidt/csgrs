@@ -81,4 +81,4 @@ This implements inverse primitives; sn/cn/dn, complex Jacobi continuation,
 the Thompson/Lee mapping and the later Earth/sky stages remain required work.
 
 Executed validation and its limitations are recorded in the
-[inverse Legendre evidence bundle](../../hyperspatial/verification/2026-10-19-e2-inverse-legendre/README.md).
+[inverse Legendre evidence bundle](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-inverse-legendre/README.md).

@@ -65,7 +65,7 @@ performance-only refactor.
 
 ## Execution evidence
 
-The [evidence directory](../../verification/2026-10-18-e2-ellipsoidal/)
+The [evidence directory](https://github.com/timschmidt/csgrs-evidence/tree/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e2-ellipsoidal)
 retains the missing-API compiler failure, analytic/domain tests, representation
 and oracle tests, command logs, production coverage, directed traces, sanitizer
 reports and measured benchmark output. `source_revision` in development reports
@@ -98,7 +98,7 @@ binary64 angle ingress to both implementations. Native evaluation keeps its
 strict 3×10^-14-radian assertion and exact represented model. The comparator's
 inverse misses that criterion: residual 2.3314683517128287×10^-13 radians.
 The initial assertion failure is retained in
-[`oracle-benchmark-bound-failure.log`](../../verification/2026-10-18-e2-ellipsoidal/oracle-benchmark-bound-failure.log).
+[`oracle-benchmark-bound-failure.log`](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e2-ellipsoidal/oracle-benchmark-bound-failure.log).
 The final report records zero accepted comparator completions at that bound;
 it does not loosen the native criterion or claim the comparator passed it.
 This is consistent with the pinned oracle's `math/phi2.rs` stopping its
@@ -115,7 +115,7 @@ These are cost observations, not an exact-contract speed ranking or an
 optimization claim. Other validation ran concurrently. A fresh process
 (preparation, warmup and one measured operation per implementation) took
 5.35 ms wall time, reached 16,328 KiB peak RSS, and used a 2,772,792-byte
-executable. The [manifest](../../verification/2026-10-18-e2-ellipsoidal/benchmark-manifest.json)
+executable. The [manifest](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e2-ellipsoidal/benchmark-manifest.json)
 records compiler, inputs, source/executable digests and measurement scope.
 
 Production coverage is 1,303/1,323 lines (98.49%), 1,728/1,840 regions
@@ -161,7 +161,7 @@ reduced. Existing 60-second target budgets remain intact.
 | `zizmor --pedantic --strict-collection .` | Passed with offline audits |
 | Changed shell/Python drivers and local documentation links | Syntax/links checked; directed/fuzz drivers also executed |
 
-The [command ledger](../../verification/2026-10-18-e2-ellipsoidal/commands.json)
+The [command ledger](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e2-ellipsoidal/commands.json)
 records actual commands and exit codes, including the initial expected missing
 API failure and the retained comparator accuracy failure. No push or full
 repository pre-push matrix is claimed. Context counters still do not bound

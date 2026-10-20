@@ -108,7 +108,7 @@ suppression was added.
 
 All checks below passed on x86_64 Linux. Raw outputs, coverage and campaign
 records are retained in
-[the verification directory](../../verification/2026-10-18-e2-mercator/).
+[the verification directory](https://github.com/timschmidt/csgrs-evidence/tree/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e2-mercator).
 
 | Check | Result |
 | --- | --- |

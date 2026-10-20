@@ -175,6 +175,6 @@ same guarded quadratic proof and keeps the degree-12 limit. The unit regression
 requires all three relations at both signs. Add all 484 negative-parameter
 ordered pairs to the spatial matrix alongside the existing positive pairs.
 
-The [verification record](../../hyperspatial/verification/2026-10-19-e2-complex-jacobi/README.md)
+The [verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-complex-jacobi/README.md)
 records executed acceptance, unchanged proof budgets, all four cache layouts,
 the independent relation-helper coverage gate and retained diagnostic failures.

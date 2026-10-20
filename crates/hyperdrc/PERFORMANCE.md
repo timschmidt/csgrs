@@ -14,7 +14,7 @@ the area of report chords. Five focused regressions cover invalid placeholders,
 warm and cold budget denial, retry, concurrent preview/budget scopes, and an
 unsupported degree-five rational cap. The complete release library suite passed
 1,119 tests; strict all-target Clippy and rustdoc also passed. The
-[validation manifest](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json)
+[validation manifest](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-manifest.json)
 retains commands, failures, source hashes, and the separate Gerber lint cleanup.
 
 Five alternating baseline/candidate process pairs measured the same three valid
@@ -37,7 +37,7 @@ probe supports no general speedup claim. Whole-process peak RSS was
 9,756–9,844 KiB for the baseline and 9,672–9,996 KiB for the candidate. Linked probe
 sizes were 18,658,032 and 18,650,496 bytes. These are process and executable
 measurements, not allocation counts or a library-size comparison. The
-[raw runs and replay inputs](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/manifest.json)
+[raw runs and replay inputs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-probe/manifest.json)
 retain all observations and limitations.
 
 This repair covers the measurement boundary. Readiness consumers that discard
@@ -52,7 +52,7 @@ on each copper layer, and profile bounds come from authoritative regions. The
 configured `cargo test --locked -p hyperdrc --release` command passed 1,126 library
 tests, two README integration tests, and two doctests. Strict all-target Clippy,
 rustdoc, and formatting pass. The
-[source and validation record](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-manifest.json)
+[source and validation record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-manifest.json)
 retains the original failing source-via case and the unchanged million-sample
 fixture alongside the completed checks.
 
@@ -78,7 +78,7 @@ library-size delta was measured.
 This is capability cost evidence: the former chord constructor represented a
 different exact region. Small-case and warm timings varied substantially, so no
 general speedup is claimed. The
-[raw probe and replay inputs](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-cost/manifest.json)
+[raw probe and replay inputs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-geometry/circle-cost/manifest.json)
 retain every trial. Native clearance consumers, projection/component failures,
 conservative spatial rejection, and readiness uncertainty propagation remain
 open; the source-circle repair does not certify those paths.
@@ -92,7 +92,7 @@ retained pre-fix failures cover circle/chord disagreement, a hole, an internal
 union seam, an unsupported rational boundary, and an exhausted warm query.
 The release gate passed 1,138 library tests, two README integration tests and
 two doctests; strict all-feature/all-target Clippy, rustdoc and formatting pass.
-The [manifest](../../docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json)
+The [manifest](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-distance/manifest.json)
 retains the source hashes, failures, commands, and scope limitations.
 
 Five fresh processes pinned to CPU 0 measured the unchanged 2,000-square,
@@ -104,7 +104,7 @@ was 65,088–65,608 KiB. The test executable was 51,646,568 bytes.
 
 One full fixture smoke run, also pinned to CPU 0, passed in 65.446 seconds with
 1,483,976 KiB peak RSS; its executable was 42,051,792 bytes. The
-[raw cost record](../../docs/evidence/2026-10-08-hyperdrc-native-distance/cost/manifest.json)
+[raw cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-distance/cost/manifest.json)
 includes every trial and both executable hashes. These are candidate capability
 costs: corrected native answers can differ from report-chord answers. No matched
 speedup, allocation count or library-size delta is claimed. Original rectangle
@@ -127,7 +127,7 @@ queries native bounds even without parser-attached bounds; unavailable width no
 longer becomes zero.
 
 Five original failing regressions and the consumer width failure are retained in
-the [evidence manifest](../../docs/evidence/2026-10-08-hyperdrc-projection/manifest.json).
+the [evidence manifest](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-projection/manifest.json).
 The final configured DRC release command passed 1,154 library tests, two README
 integration tests and two doctests, including sixteen new regressions. Strict
 all-feature/all-target Clippy, rustdoc and formatting pass. Consumer validation
@@ -141,7 +141,7 @@ finding IDs flips the clearance threshold decision between native boundaries and
 the retained report-chord metric. Exhaustive native segment comparisons covered
 202 matching feature pairs with zero decision mismatches. This cross-check shares
 Hypercurve certificates with production; it is not an independent-library proof.
-The [snapshot audit](../../docs/evidence/2026-10-08-hyperdrc-projection/snapshot-audit/summary.json)
+The [snapshot audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-projection/snapshot-audit/summary.json)
 retains exact values, source feature identities, old/new hashes and replay code.
 The fast gate's existing zone omission and all native fixtures are unchanged.
 
@@ -166,7 +166,7 @@ RSS was 54,992–55,336 KiB; the linked probe was 22,798,256 bytes.
 
 The unchanged full fixture smoke gate passed in 60.113 seconds against its
 120-second limit, with 1,466,320 KiB peak RSS and a 42,234,920-byte executable.
-The [raw cost record](../../docs/evidence/2026-10-08-hyperdrc-projection/cost/manifest.json)
+The [raw cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-projection/cost/manifest.json)
 retains every trial, source hash and artifact identity. These are candidate
 capability costs, with no matched speedup, allocation count or library-size
 delta claim. Sub-microsecond warm timings have limited precision.
@@ -188,7 +188,7 @@ construction, and migrated envelope-dimension consumers retain uncertainty
 through findings and readiness receipts. The former panicking circle adapter,
 origin-box fallback and ambiguous membership alias are removed.
 
-The [evidence manifest](../../docs/evidence/2026-10-08-hyperdrc-operations/manifest.json)
+The [evidence manifest](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-operations/manifest.json)
 retains nine failing pre-fix regressions. Sixteen final regressions include exact
 Boolean sets, eroded components, boundary/empty distinctions, unknown queries
 inside preview, concurrent preview/denied scopes, and readiness propagation.
@@ -200,7 +200,7 @@ Consumer validation passed nine tests selected by `hyperdrc` and all five
 curved-outline tests, with strict all-feature/all-target Clippy. All six
 Easyduino fast-DRC snapshots preserve their finding rows and counts; only the
 shared implementation version changes from 3 to 4. The
-[version audit](../../docs/evidence/2026-10-08-hyperdrc-operations/snapshot-versions.json)
+[version audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-operations/snapshot-versions.json)
 records the old/new hashes and exact field-only comparison.
 
 Five fresh processes pinned to CPU 0 measured the following median query costs,
@@ -226,7 +226,7 @@ process RSS was 10,336–10,608 KiB; the linked probe was 23,386,088 bytes.
 
 The full, unchanged two-board and Gerber fixture gate passed in 60.283 seconds
 against its 120-second limit, with 1,483,620 KiB peak RSS and a 42,319,320-byte
-executable. The [raw cost record](../../docs/evidence/2026-10-08-hyperdrc-operations/cost/manifest.json)
+executable. The [raw cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-operations/cost/manifest.json)
 retains all trials, source hashes, output witnesses and artifact identities.
 These are candidate capability costs; no matched speedup, allocation count or
 library-size delta is claimed.
@@ -248,7 +248,7 @@ families use balanced native union while line/arc batches retain their bulk
 path. Net-length measurement failures produce uncertainty and prevent partial
 net or pair totals from appearing complete.
 
-The [evidence manifest](../../docs/evidence/2026-10-08-hyperdrc-handoff/manifest.json)
+The [evidence manifest](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-handoff/manifest.json)
 retains seven original failures and the already-passing exhaustion control.
 Seventeen final regressions cover handoff/replacement, exact quadratic unions,
 report-coordinate independence, preview/concurrent budget scopes, retry and
@@ -262,7 +262,7 @@ curved-outline tests, with strict all-feature/all-target Clippy. One test needed
 migration to checked emptiness; its initial compiler error and final replay are
 retained. The six Easyduino snapshots preserve all finding rows and counts;
 only implementation-version fields change from 4 to 5. The
-[version audit](../../docs/evidence/2026-10-08-hyperdrc-handoff/snapshot-versions.json)
+[version audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-handoff/snapshot-versions.json)
 records the exact field-only comparison and both hashes.
 
 Five sequential fresh processes pinned to CPU 0 measured median query costs
@@ -296,7 +296,7 @@ claimed.
 
 The unchanged full two-board and Gerber fixture gate passed in 59.603 seconds
 against its 120-second limit, with 1,343,616 KiB peak RSS. The
-[raw cost record](../../docs/evidence/2026-10-08-hyperdrc-handoff/cost/manifest.json)
+[raw cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-handoff/cost/manifest.json)
 retains all trials, source hashes, witnesses and artifact identities.
 
 At this checkpoint, required Polygon-area consumers and report filtering still
@@ -321,7 +321,7 @@ intersections. Windowpane counts use full aperture components before clipping,
 so duplicates and copper holes cannot create extra openings. KiCad retains
 failed pad geometry for diagnostics and excludes certified empty pads.
 
-The [evidence manifest](../../docs/evidence/2026-10-08-hyperdrc-area/manifest.json)
+The [evidence manifest](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-area/manifest.json)
 retains nine failures on the prior production revision, one passing source-error
 control, and four further duplicate-coverage failures from the recorded staged
 worktree. Both baseline source reconstructions match every retained hash.
@@ -335,7 +335,7 @@ Consumer validation passes nine tests selected by `hyperdrc` and five
 curved-outline tests, plus strict all-feature/all-target Clippy. All six
 Easyduino snapshots preserve finding rows and counts; their implementation
 version fields alone change from 5 to 6, as recorded in the
-[snapshot audit](../../docs/evidence/2026-10-08-hyperdrc-area/snapshot-versions.json).
+[snapshot audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-area/snapshot-versions.json).
 This is the targeted consumer suite, not the entire HyperCircuit suite.
 
 Five sequential fresh processes pinned to CPU 0 measured these median costs
@@ -364,13 +364,13 @@ previous 14 operation witnesses are unchanged. Whole-process peak RSS was
 58,648–58,900 KiB, including the million-sample fixture. The linked probe was
 23,994,272 bytes. These are capability costs; no matched speedup, allocation
 count or library-size delta is claimed. The
-[raw cost record](../../docs/evidence/2026-10-08-hyperdrc-area/cost/manifest.json)
+[raw cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-area/cost/manifest.json)
 retains commands, source hashes, artifacts and all trials.
 
 The unchanged full two-board and Gerber fixture workload passed in 64.778
 seconds against its 120-second gate, with 1,388,444 KiB peak RSS. CPArti's
 layer-sanity count increases from four to five; the other eight logged check
-counts are unchanged. The [full-board audit](../../docs/evidence/2026-10-08-hyperdrc-area/fixture-audit/manifest.json)
+counts are unchanged. The [full-board audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-area/fixture-audit/manifest.json)
 certifies that parsed In1.Cu and B.Cu both have native area 10,000 and an empty
 native symmetric difference. Their authored-area sums differ, so the old
 area-equality gate missed the duplicate. The full board is preserved. This
@@ -404,7 +404,7 @@ predicates, removing the quantized report-area signature that missed identical
 circles with different sample counts. Native envelope filters reject pairs only
 on certified separating axes.
 
-The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-bounds/manifest.json)
+The [evidence record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-bounds/manifest.json)
 retains fourteen reproduced production failures, three already-passing controls,
 and twenty-four final regressions. All 1,241 configured tests pass: 1,236 library,
 two README and three doctests. Strict all-feature/all-target Clippy, rustdoc,
@@ -436,12 +436,12 @@ retain identical 3,212-byte output across all five trials, and the preceding
 24 rows are unchanged. Peak process RSS was 58,804–59,284 KiB, including the
 million-sample fixture; the linked probe was 24,097,696 bytes. These are capability
 costs, without a matched speedup, allocation count or library-size claim. The
-[cost manifest](../../docs/evidence/2026-10-08-hyperdrc-bounds/cost/manifest.json)
+[cost manifest](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-bounds/cost/manifest.json)
 retains all trials and source/artifact hashes.
 
 The unchanged full two-board and Gerber fixture passed in 65.072 seconds against
 its 120-second gate, with 1,339,172 KiB peak RSS. All nine logged check counts are
-unchanged. The [rendered-report audit](../../docs/evidence/2026-10-08-hyperdrc-bounds/cost/fixture-report-audit.json)
+unchanged. The [rendered-report audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-bounds/cost/fixture-report-audit.json)
 preserves every finding's geometry, messages and coordinates after explicit
 normalization: temporary paths and IDs are excluded, finding rows are sorted,
 and four CPArti duplicate markers are reordered. Their exact coordinates are
@@ -470,7 +470,7 @@ a known first match does not inspect later entries. An unresolved earlier match
 remains uncertainty. Via report anchors use checked finite projection, removing
 the projection panic at that boundary.
 
-The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-stencil-points/manifest.json)
+The [evidence record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-stencil-points/manifest.json)
 retains six reproduced production failures, including two panics, and five
 already-passing controls. Sixteen final regressions cover threshold boundaries,
 unknown orders, huge/tiny/radical coordinates, candidate retention, budget
@@ -502,14 +502,14 @@ evidence may be warm. All 40 witness rows retain identical 4,024-byte output
 across five trials, including the previous 32 unchanged witnesses. Peak process
 RSS was 58,744–59,228 KiB, including the million-sample report fixture; the linked
 probe was 24,260,128 bytes. These are capability costs, without a matched speedup,
-allocation count or library-size claim. The [raw cost record](../../docs/evidence/2026-10-08-hyperdrc-stencil-points/cost/manifest.json)
+allocation count or library-size claim. The [raw cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-stencil-points/cost/manifest.json)
 retains commands, source/artifact hashes and all trials.
 
 The unchanged full two-board and Gerber fixture passed in 68.097 seconds against
 its 120-second gate, with 1,334,628 KiB peak RSS. All nine logged check counts are
-unchanged. The [report audit](../../docs/evidence/2026-10-08-hyperdrc-stencil-points/cost/fixture-report-audit.json)
+unchanged. The [report audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-stencil-points/cost/fixture-report-audit.json)
 found a duplicate-layer row with reversed layer order and different optional
-markers. The [full-board witness](../../docs/evidence/2026-10-08-hyperdrc-stencil-points/fixture-order-audit/manifest.json)
+markers. The [full-board witness](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-stencil-points/fixture-order-audit/manifest.json)
 reproduces both variants by reversing the In1.Cu/B.Cu inputs. The relevant source
 files are unchanged: layer collection iterates a `HashMap`, and duplicate-layer
 markers come from the left source's first authored profiles. Both native layers
@@ -532,7 +532,7 @@ construction on its returned polygon; leaving an exhausted scope cannot turn
 that polygon into valid geometry. Retrying from the original source in a fresh
 budget remains possible. Report rings are transformed separately.
 
-The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-affine/manifest.json)
+The [evidence record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-affine/manifest.json)
 retains four baseline failures: two public transforms escaped an exhausted
 budget, the private helper accepted a failed source, and an enclosing preview
 changed an unresolved native transform diagnosis into an invalid-transform
@@ -567,21 +567,21 @@ transform medians, in microseconds:
 Input construction and first/last native area, bounds and report fingerprints
 are outside timers. Report allocation is timed; native evidence may be warm.
 Bounds are checked with STRICT numeric comparisons because scalar structural
-equality does not prove numeric inequality. The [rejected probe draft](../../docs/evidence/2026-10-08-hyperdrc-affine/draft/cost-structural-equality/manifest.json)
+equality does not prove numeric inequality. The [rejected probe draft](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-affine/draft/cost-structural-equality/manifest.json)
 records that corrected harness mistake; it is excluded from final trials.
 
 All 48 witness rows preserve identical 4,788-byte output across the five trials,
 including the previous 40 unchanged rows. Peak process RSS was 58,736–59,404 KiB,
 including the existing million-sample report fixture. The linked probe was
 24,309,000 bytes. These are capability costs, without a matched speedup,
-allocation count or library-size comparison. The [raw cost record](../../docs/evidence/2026-10-08-hyperdrc-affine/cost/manifest.json)
+allocation count or library-size comparison. The [raw cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-affine/cost/manifest.json)
 retains commands, source/artifact hashes and every trial.
 
 The unchanged full two-board and Gerber fixture passed in 64.971 seconds against
 its 120-second gate, with 1,390,436 KiB peak RSS. All nine logged check counts and
 every rendered finding match after explicit temporary-path/ID and finding-row
-normalization. The [report audit](../../docs/evidence/2026-10-08-hyperdrc-affine/cost/fixture-report-audit.json)
-records row-order differences and no marker changes. The [known-variant audit](../../docs/evidence/2026-10-08-hyperdrc-affine/cost/known-order-audit.json)
+normalization. The [report audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-affine/cost/fixture-report-audit.json)
+records row-order differences and no marker changes. The [known-variant audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-affine/cost/known-order-audit.json)
 also checks the duplicate-layer row against the previously reproduced full-board
 variants, retaining its geometry, message and header counts. It reuses that
 native witness; original report order and path-independent IDs remain unproved.
@@ -603,7 +603,7 @@ queries the authoritative outline boundary. All five former drill-index
 consumers use the shared STRICT and work-budget guard, with typed failures
 carried into readiness receipts.
 
-The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-native-drills/manifest.json)
+The [evidence record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-drills/manifest.json)
 retains ten baseline failures and two passing controls. Failures include finite
 projection panics, an omitted huge drill, shifted IPC source identity, skipped
 unresolved matches and definite findings from unresolved orders. Twenty-one
@@ -643,16 +643,16 @@ including the previous 48 unchanged rows. Output is 6,019 bytes with SHA-256
 `6585bd062e2fd2273da3364f4c92527b9141589af0b0b6df47e10928fdf537d2`.
 Whole-process RSS was 58,856–59,508 KiB, including the existing million-sample
 fixture; the linked probe was 24,548,144 bytes. The
-[raw cost record](../../docs/evidence/2026-10-08-hyperdrc-native-drills/cost/manifest.json)
+[raw cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-drills/cost/manifest.json)
 retains every trial. These are capability costs, without a matched speedup,
 allocation count or library-size comparison.
 
 The unchanged full two-board/Gerber fixture passed in 65.027 seconds against its
 120-second gate, with 1,338,864 KiB peak RSS. All nine logged check counts and
 every rendered finding match after temporary-path/ID and finding-row
-normalization. The [report audit](../../docs/evidence/2026-10-08-hyperdrc-native-drills/cost/fixture-report-audit.json)
+normalization. The [report audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-drills/cost/fixture-report-audit.json)
 records row-order differences and no marker changes. The
-[known-variant audit](../../docs/evidence/2026-10-08-hyperdrc-native-drills/cost/known-order-audit.json)
+[known-variant audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-drills/cost/known-order-audit.json)
 reuses the prior full-board duplicate-layer witness; original report order and
 path-independent IDs remain unproved.
 
@@ -674,7 +674,7 @@ candidates when no match is proved, and checks required report projections.
 These operations and the unchanged IPC diameter check share `checks/board/ipc`;
 their existing public paths remain available through re-exports.
 
-The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-ipc-native/manifest.json)
+The [evidence record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-ipc-native/manifest.json)
 retains twelve baseline failures and two controls. Twenty-three final
 regressions cover projection panics, partial metadata updates, invalid copied
 diameters, unresolved matching, exhausted scopes and retry, first-record
@@ -712,22 +712,22 @@ rows match across trials, including the previous 60 unchanged rows. Output is
 `206693d04e0527aee3c748ece3c60eaf02fc91967132a355afadf95874d76816`.
 Whole-process RSS was 58,992–59,760 KiB, including the retained million-sample
 fixture; the linked probe was 24,605,840 bytes. The
-[raw cost record](../../docs/evidence/2026-10-08-hyperdrc-ipc-native/cost/manifest.json)
+[raw cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-ipc-native/cost/manifest.json)
 retains every observation. These are capability costs without a matched speedup,
 allocation count or library-size comparison.
 
 The unchanged full two-board/Gerber fixture passed in 63.000 seconds against its
 120-second gate, with 1,336,444 KiB peak RSS. All nine logged check counts match.
-The [report audit](../../docs/evidence/2026-10-08-hyperdrc-ipc-native/cost/fixture-report-audit.json)
+The [report audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-ipc-native/cost/fixture-report-audit.json)
 records row-order differences and a changed duplicate-layer finding. The
-[known-variant audit](../../docs/evidence/2026-10-08-hyperdrc-ipc-native/cost/known-order-audit.json)
+[known-variant audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-ipc-native/cost/known-order-audit.json)
 checks its two layer/marker variants against the previously reproduced full-board
 witness. Its remaining header counts, geometry and message, and every other
 finding match after path/ID and finding-row normalization. That native witness
 was reused, not rerun; original report order and path-independent IDs remain
 unproved.
 
-A [syntactic inventory](../../docs/evidence/2026-10-08-hyperdrc-ipc-native/remaining-index-sites.json)
+A [syntactic inventory](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-ipc-native/remaining-index-sites.json)
 still finds eight legacy point-index and 54 copper-index constructor sites in
 check implementations. Their required predicates, remaining drill decisions,
 source geometry, width/density proxies and total resource bounds remain open.
@@ -742,7 +742,7 @@ pair order and the authored source of optional markers. Authored geometry order
 within a layer is retained; equal names keep caller order. Native predicates,
 report geometry and marker formulas are unchanged.
 
-The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-layer-order/manifest.json) retains five baseline failures,
+The [evidence record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-layer-order/manifest.json) retains five baseline failures,
 two controls and a fresh full-board reproduction: the two CPArti layers have
 native area 10,000 and empty XOR, but reversed input previously changed IDs and
 markers. Seven final regressions pass. The configured release command passes
@@ -756,7 +756,7 @@ Two fresh processes serialize the complete public Report at identical source
 paths for both full KiCad boards and the existing Gerber edge-cuts smoke subset.
 Every byte matches, including IDs, coverage, diagnostics, findings and geometry.
 No field or row is normalized. Serialized payloads are retained in the
-[replay record](../../docs/evidence/2026-10-08-hyperdrc-layer-order/report-replay/manifest.json):
+[replay record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-layer-order/report-replay/manifest.json):
 
 | Report | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -790,7 +790,7 @@ Whole-process peak RSS is 58,940–59,392 KiB, including the prior million-sampl
 fixture; the linked probe is 24,690,440 bytes. The unchanged two-board/Gerber
 fixture passes in 66.278 seconds against its 120-second gate, with
 1,387,592 KiB peak RSS and unchanged counts for all nine logged checks.
-The [cost record](../../docs/evidence/2026-10-08-hyperdrc-layer-order/cost/manifest.json) retains every trial.
+The [cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-layer-order/cost/manifest.json) retains every trial.
 These are capability costs without a matched speedup, allocation count or
 library-size comparison. Other geometry consumers, complete report identity,
 resource bounds and the full properties/future-work scope remain open.
@@ -808,7 +808,7 @@ Mouse-bite diameter and pitch decisions retain uncertainty, while optional
 nearest-bad-pair ordering cannot erase an already certified violation. All seven
 checks run under the shared STRICT and work-budget guard, including empty paths.
 
-The [evidence record](../../docs/evidence/2026-10-09-hyperdrc-point-consumers/manifest.json)
+The [evidence record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-point-consumers/manifest.json)
 retains 27 baseline failures and four controls. The failures include projection
 panics, lost sub-ULP separations, negative radii accepted after squaring,
 unresolved thresholds becoming absence, a dropped diameter, and irrelevant
@@ -837,7 +837,7 @@ fixtures at fixed source paths. Every byte of each public Report matches,
 including IDs, coverage, diagnostics, messages, markers and geometry. Against
 the verified reused baseline library, only seven literal implementation-version
 fields change per board; every other byte matches. The
-[complete reports](../../docs/evidence/2026-10-09-hyperdrc-point-consumers/report-replay/manifest.json)
+[complete reports](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-point-consumers/report-replay/manifest.json)
 are retained without normalization:
 
 | Report | Findings | Bytes | SHA-256 |
@@ -872,14 +872,14 @@ one of the previous 75 rows and iteration counts. The payload is
 Whole-process peak RSS is 59,172–59,672 KiB, including the prior million-sample
 fixture; the probe is 24,894,960 bytes. These are candidate capability costs,
 without a matched speedup, allocation count or library-size comparison. The
-[cost manifest](../../docs/evidence/2026-10-09-hyperdrc-point-consumers/cost/manifest.json)
+[cost manifest](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-point-consumers/cost/manifest.json)
 retains every trial, binary hash and input definition.
 
 The unchanged two-board/Gerber smoke fixture passes in 64.782 seconds against
 its 120-second gate, with 1,387,736 KiB peak RSS. All nine logged check counts
 and complete rendered reports remain unchanged after the explicitly retained
 path/ID normalization; no row or marker sorting is needed for this comparison.
-The [constructor inventory](../../docs/evidence/2026-10-09-hyperdrc-point-consumers/constructor-inventory.json)
+The [constructor inventory](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-point-consumers/constructor-inventory.json)
 finds zero legacy point-index sites and 54 remaining copper-index sites. This is
 a syntactic inventory, not a complete audit of all geometric consumers. Source
 adapters, width/density proxies, other drill/distribution logic, universal report
@@ -908,7 +908,7 @@ are independent of authored centers, except the connector check's required
 native edge selection. Required connector, decoupling and mounting diagnostic
 numbers use the explicit six-place fixed-decimal view.
 
-The [checkpoint record](../../docs/evidence/2026-10-09-hyperdrc-authored-centers/manifest.json)
+The [checkpoint record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-authored-centers/manifest.json)
 retains 28 baseline failures and five controls, reconstructible from 122 Rust
 source hashes. Failures include coordinate/radius projection panics, unresolved
 radius and diameter decisions becoming ordinary findings or ineligibility,
@@ -927,7 +927,7 @@ Two fresh processes run all eight affected checks on both complete KiCad boards
 at fixed input paths. Their complete public Reports match byte for byte. The
 initial version-only baseline gate correctly rejected six CPArti connector
 message changes: `0.000000e0` becomes `0.000000` through explicit fixed-decimal
-presentation. The [exact delta audit](../../docs/evidence/2026-10-09-hyperdrc-authored-centers/report-replay/baseline-delta-audit.json)
+presentation. The [exact delta audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-authored-centers/report-replay/baseline-delta-audit.json)
 permits those six specific messages and eight version fields per board.
 Every other byte, including finding IDs, order, coverage, markers and geometry,
 is preserved. The original failed gate, raw trial manifest and complete
@@ -960,14 +960,14 @@ are outside timers; query argument construction is included and native evidence
 may be warm. Whole-process peak RSS is 59,412–59,624 KiB, including the retained
 million-sample geometry. The linked probe is 25,035,192 bytes. These are candidate
 capability costs, with no matched speedup, allocation count or library-size
-comparison. The [cost record](../../docs/evidence/2026-10-09-hyperdrc-authored-centers/cost/manifest.json)
+comparison. The [cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-authored-centers/cost/manifest.json)
 retains raw trials, source and binary hashes.
 
 The unchanged full two-board/Gerber smoke fixture passes in 65.943 seconds
 against its 120-second gate, with 1,387,960 KiB peak RSS. Its nine ordered check
 counts and complete rendered reports are unchanged after the explicitly
 recorded temporary-path/ID normalization; no finding or marker sorting is
-needed. The [constructor inventory](../../docs/evidence/2026-10-09-hyperdrc-authored-centers/constructor-inventory.json)
+needed. The [constructor inventory](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-authored-centers/constructor-inventory.json)
 records 54 to 48 legacy copper-index sites and 14 to 19 native point-index sites;
 a shared bonding constructor serves two public checks. This is a syntactic
 inventory. Derived cluster centers, remaining copper-shape indices and required
@@ -997,7 +997,7 @@ ordering and division. A certified exclusion can settle eligibility after an
 unknown dimension comparison. Report numbers use the explicit six-place
 fixed-decimal view and never decide geometry.
 
-The [checkpoint record](../../docs/evidence/2026-10-09-hyperdrc-dense-clusters/manifest.json)
+The [checkpoint record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-dense-clusters/manifest.json)
 retains 19 failures and two passing controls reproduced at `e0e2a984d`, with all
 126 baseline source hashes reconstructed. The final 38 regressions cover large
 centers, required markers, unresolved pitch/radius/dimensions, qualified
@@ -1015,7 +1015,7 @@ The expanded suite initially exposed a finite-source rectangle limitation:
 a width of 16,384 at x=1e20 rounds its corners together before native admission,
 retaining an insufficient-vertices construction failure. The original staged
 source and failed test remain in the
-[fixture correction record](../../docs/evidence/2026-10-09-hyperdrc-dense-clusters/expanded-validation/fixture-correction.json).
+[fixture correction record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-dense-clusters/expanded-validation/fixture-correction.json).
 The grid test now constructs two unit-wide rectangles directly from native
 vertices at 1e20 and 1e20+1, preserving their exact closed contact. Cost probes
 also retain the original finite construction failure. This checkpoint repairs
@@ -1026,7 +1026,7 @@ retained separately; the corrected probe uses public checked bounds.
 Complete public reports for all four checks on the full CPArti and HVP109A
 boards are byte-identical across two fresh processes at fixed input paths.
 The initial version-only gate failed on presentation changes. The
-[exact delta audit](../../docs/evidence/2026-10-09-hyperdrc-dense-clusters/report-replay/baseline-delta-audit.json)
+[exact delta audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-dense-clusters/report-replay/baseline-delta-audit.json)
 permits exactly four version fields per board plus twelve CPArti and three
 HVP109A messages changing zero from `0.000000e0` to `0.000000`.
 Every other report byte, including findings, IDs, geometry, markers, receipts
@@ -1070,14 +1070,14 @@ queries include small fixed rule-argument construction and native evidence may
 be warm. Process peak RSS ranges from 59,404 to 59,720 KiB and includes
 the prior million-sample geometry. These are capability costs without a matched
 speedup, allocation count or library-size comparison. The
-[cost record](../../docs/evidence/2026-10-09-hyperdrc-dense-clusters/cost/manifest.json)
+[cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-dense-clusters/cost/manifest.json)
 retains raw trials and source/binary hashes.
 
 The unchanged full two-board/Gerber smoke fixture passes in 67.049 seconds
 against its 120-second gate, with 1,388,100 KiB peak RSS. Its nine ordered check
 counts and rendered reports remain unchanged after the recorded temporary-path
 and ID normalization; no finding or marker sorting is needed. The
-[constructor inventory](../../docs/evidence/2026-10-09-hyperdrc-dense-clusters/constructor-inventory.json)
+[constructor inventory](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-dense-clusters/constructor-inventory.json)
 records legacy copper-index sites falling from 48 to 43, native point sites
 rising from 19 to 23, and two new native shape-index sites. The shared native
 pitch constructor serves all four dense checks. This is a syntactic inventory,
@@ -1115,7 +1115,7 @@ uncertainty instead of silently omitting candidates or emitting an asserted hit.
 All four checks enforce shared STRICT/budget guards, including empty and warm
 paths. Numeric displays use six-place fixed decimals and do not decide geometry.
 
-The [checkpoint record](../../docs/evidence/2026-10-09-hyperdrc-fixture-access/manifest.json)
+The [checkpoint record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-fixture-access/manifest.json)
 retains 20 failures and four passing controls at `3b3fd8c34`, with 129 baseline
 source hashes reconstructed. The final 48 regressions and 39 existing IPC,
 thermal and drill tests pass. The full release DRC gate passes 1,502 tests:
@@ -1132,7 +1132,7 @@ boards are byte-identical across two fresh processes at fixed input paths.
 Both runs use the retained synthetic seven-record IPC sidecar, not an original
 board-exported IPC file. The initial version-only comparison failed on numeric
 display changes. The
-[exact delta audit](../../docs/evidence/2026-10-09-hyperdrc-fixture-access/report-replay/baseline-delta-audit.json)
+[exact delta audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-fixture-access/report-replay/baseline-delta-audit.json)
 permits four version fields per board plus 2,412 CPArti and 426 HVP109A messages.
 Each board has 23 accessibility display changes, including ten gaps independently
 checked from the sidecar; the remaining changes render the unchanged thermal
@@ -1146,7 +1146,7 @@ witness rows. All previous 166 rows and iteration counts are unchanged; the
 27 new rows exercise these consumers. The identity artifact is 19,723 bytes with
 SHA-256 `54adc61223ce7a47678f140d1fc2ed5d638ce31f64878ca9099936c3f814f7a8`.
 Selected medians are microseconds per query; all rows remain in the
-[cost record](../../docs/evidence/2026-10-09-hyperdrc-fixture-access/cost/manifest.json).
+[cost record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-fixture-access/cost/manifest.json).
 
 | Query | µs/query |
 | --- | ---: |
@@ -1178,7 +1178,7 @@ smoke fixture passes in 70.038 seconds against its 120-second gate, with
 unchanged after the recorded temporary-path and ID normalization; finding and
 marker sorting are unnecessary.
 
-The [constructor inventory](../../docs/evidence/2026-10-09-hyperdrc-fixture-access/constructor-inventory.json)
+The [constructor inventory](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-fixture-access/constructor-inventory.json)
 records legacy copper-index sites falling from 43 to 40, native point sites
 rising from 23 to 25, native shape sites from two to three and two native circle
 sites. The inventory filter now includes production `testpoint.rs` and excludes
@@ -1209,7 +1209,7 @@ A finite zero must be backed by an exact source-zero certificate: a nonzero
 `1e-400` dimension cannot silently disappear after float underflow. Admitted
 custom primitives do not require an unused size.
 
-The [checkpoint record](../../docs/evidence/2026-10-09-hyperdrc-native-rectangles/manifest.json)
+The [checkpoint record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-rectangles/manifest.json)
 retains nine failing tests and three passing controls against `5e94512ea`, with
 135 baseline source hashes reconstructed. Twenty rectangle and six KiCad
 regressions were added; the final focused gate passes 20 rectangle and 42 KiCad
@@ -1232,7 +1232,7 @@ Five sequential release processes pinned to CPU 0 produce 205 identical witness
 rows. All 193 prior workload inputs and iteration counts remain; 188 rows are
 unchanged. The same original large rectangle now certifies, removing three
 construction-uncertainty findings and changing two diagnostics from `certified`
-to `nearest`. The [row audit](../../docs/evidence/2026-10-09-hyperdrc-native-rectangles/cost/row-delta-audit.json)
+to `nearest`. The [row audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-rectangles/cost/row-delta-audit.json)
 replays all five cases against both verified libraries and checks their complete
 serialized findings against the measured witnesses. Twelve new rows measure
 complete rectangle construction or warm measurements, with exact independent
@@ -1265,7 +1265,7 @@ byte-for-byte across two fresh processes on both full boards at fixed paths.
 The same synthetic seven-record IPC sidecar is retained. CPArti keeps 2,610
 findings and changes only twelve version fields. HVP109A keeps 658 findings;
 its initial version-only comparison fails on three findings. The
-[exact report audit](../../docs/evidence/2026-10-09-hyperdrc-native-rectangles/report-replay/baseline-delta-audit.json)
+[exact report audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-rectangles/report-replay/baseline-delta-audit.json)
 accepts twelve version fields, two via-overlap report polygons with four area
 fields and six coordinate components changed, and one selected mask pair with
 four marker components and both IDs changed. Direct native replay reproduces
@@ -1297,13 +1297,13 @@ trapezoid deltas retain failures; valid zero dimensions denote empty geometry.
 Construction and warm queries retain STRICT and shared-budget guards.
 
 Trapezoids use half the opposing-edge delta and the corrected lower-edge signs,
-following the [primary KiCad source references](../../docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/reference-sources.json).
+following the [primary KiCad source references](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/reference-sources.json).
 The finite API imports binary64 values exactly; it does not imitate KiCad's
 integer-unit truncation. Report drawings stay separate from native geometry,
 including when finite corners collapse or cannot be represented. The original
 x=1e20, size 16384 case remains unchanged for all three shape families.
 
-The [checkpoint record](../../docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/manifest.json)
+The [checkpoint record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/manifest.json)
 retains 16 failing baseline tests and four passing controls against `7f922aca6`,
 with all 138 baseline source hashes reconstructed. Thirty-three new regressions
 cover 28 primitive cases, three KiCad handoffs and two overlap-bound cases.
@@ -1324,7 +1324,7 @@ existing optional-marker regression (1,555 passed, one failed); that run and its
 exact source bytes are preserved. The corrected focused gate includes all
 24 bounds regressions.
 
-The [original-pair replay](../../docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/area-bound/manifest.json)
+The [original-pair replay](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/area-bound/manifest.json)
 links both verified libraries against the same full board. Its native geometry
 and unavailable integral remain unchanged while the duplicate decision becomes
 certified. An independent rational reconstruction of the input boxes, together
@@ -1522,7 +1522,7 @@ unit suite; this environmental linker failure is not counted as a passing test.
 
 ## Original rounded-pad overlap integral (2026-10-09)
 
-The shared Hypercurve [admission record](../../docs/evidence/2026-10-09-hypercurve-retained-circular-area/manifest.json) now evaluates the exact
+The shared Hypercurve [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hypercurve-retained-circular-area/manifest.json) now evaluates the exact
 area of the full-board CPArti A5/A6 intersection (copper indices 1723/1724) and
 exposes its native contour view. The independent rounded-pad area, overlap-box
 cap and certified non-duplicate result remain unchanged. The optional duplicate
@@ -1538,7 +1538,7 @@ readiness consumers and general integration/resource closure remain open.
 
 ## Exact KiCad pad sources (2026-10-09)
 
-The [pad-source record](../../docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/manifest.json)
+The [pad-source record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/manifest.json)
 retains exact decimal pad centers, dimensions, ratios and placement arithmetic,
 including sizes outside binary64 range. It corrects pad rotation, mixed rounded
 and chamfered corners, and the `F&B.Cu` outer-layer alias. Required copper/drill
@@ -1569,8 +1569,8 @@ drill-spacing findings. The existing circular proxy for slot drills remains.
 
 Two fresh processes emit identical complete reports: 2,605 CPArti findings and
 654 HVP109A findings. Every changed finding and metadata field is retained in
-the [report audit](../../docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/report-replay/finding-audit.json),
-with [scoped review](../../docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/report-replay/review.json).
+the [report audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/report-replay/finding-audit.json),
+with [scoped review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/report-replay/review.json).
 All prior geometry-uncertainty findings remain identical. The record preserves
 the failing baseline, eager-marker regression, version-only snapshot failures,
 and the complete-board alias failure discovered after the earlier suite passed.

@@ -314,6 +314,24 @@ executed, what passed, what remains blocked, and the evidence supporting each
 correctness or performance claim. A paper must distinguish proved statements,
 measured results, and open questions and link each claim to reproducible data.
 
+### Retention budget
+
+Evidence must stay proportionate to the claim it supports. In this repository,
+an admission record is a short Markdown summary. It gives the contract, the
+commands run, their results and blockers, and the digests of the evidence it
+relies on. Raw material goes to the evidence repository described in
+[`evidence-archive.md`](evidence-archive.md). That covers command logs,
+samples, traces, replay bundles, audit corpora and checkpoint archives. Add
+each new record's digest to [`evidence-archive.tsv`](evidence-archive.tsv)
+with `scripts/evidence_archive.py`. Cite a source revision by commit instead
+of copying its tree. Record third-party package archives by name, version and
+digest instead of redistributing them.
+
+`scripts/check-repository-budget.sh` enforces the in-repository side of this
+budget in CI. Archived evidence roots stay untracked, the tracked tree stays
+within 256 MiB, and no tracked file exceeds 4 MiB except the allowances it
+lists.
+
 ### The shipped user path
 
 A capability is delivered only when an external consumer can use it through the

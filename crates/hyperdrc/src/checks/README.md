@@ -95,7 +95,7 @@ readiness uncertainty; they cannot trigger reconstruction from display chords.
 The shared copper index retains unavailable native bounds and measures the
 whole shape about its authored anchor. Other finite index, heuristic and
 non-metric `Option` consumers remain under audit. The
-[projection evidence](../../../../docs/evidence/2026-10-08-hyperdrc-projection/manifest.json)
+[projection evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-projection/manifest.json)
 records those remaining boundaries and the full validation run.
 
 Required copper/drill marker conversions also return typed uncertainty instead
@@ -105,7 +105,7 @@ native bounds; aggregation keeps the source features and requests finite
 markers only when it emits a finding. Missing finite query anchors retain
 spatial candidates. These changes do not certify the remaining finite narrow
 predicates or complete the legacy index audit. The
-[pad-source evidence](../../../../docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/manifest.json)
+[pad-source evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/manifest.json)
 records the boundary coverage.
 
 Native Boolean/offset operations and point classification also use the shared
@@ -115,7 +115,7 @@ construction errors, including negative or unresolved radii. Checked native
 envelope dimensions replace origin/zero placeholders and failed optional
 measurements in the migrated board, differential, assembly, power and thermal
 consumers. Offset bounds belong to the resulting set, including empty erosion.
-The [operation evidence](../../../../docs/evidence/2026-10-08-hyperdrc-operations/manifest.json)
+The [operation evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-operations/manifest.json)
 records coverage and the remaining measurement/threshold and source-adapter audit.
 
 ```mermaid

@@ -6,9 +6,9 @@ Audit date: 2026-07-28
 
 The historical ownership review below does not establish that every downstream
 adapter preserves authored geometry. The retained
-[HyperDRC regressions](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/manifest.json)
+[HyperDRC regressions](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-geometry/manifest.json)
 show that via copper is rebuilt from sampled chords. The separate
-[measurement failures](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-failures/manifest.json)
+[measurement failures](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-geometry/measurement-failures/manifest.json)
 show a finite report area replacing an unavailable native area, and successful
 measurements escaping failed construction or an exhausted operation. Those
 consumers need authoritative geometry, conservative bounds, and propagated

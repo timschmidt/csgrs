@@ -64,7 +64,7 @@ evaluation change explicitly rather than promising identical midpoint bits.
 Measure the original complete consumer, including all six enclosures and exact
 downstream identities; a faster incomplete evaluation is not acceptance.
 
-The [verification record](../../hyperspatial/verification/2026-10-19-e2-complex-jacobi/README.md)
+The [verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-complex-jacobi/README.md)
 retains the original timeout and slow unit, unfavorable optimization probes,
 final complete-consumer measurements, native suites and the passing mutation
 campaign under the unchanged ten-second input limit. These measurements do

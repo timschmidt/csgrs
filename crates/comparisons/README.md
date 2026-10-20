@@ -5,7 +5,7 @@ This harness now lives in the CSGRS monorepo. See the
 current validation, external oracle location, and historical-evidence limits.
 
 The standalone code and evidence from the later exactCorelib, constructive-real,
-and exact-real ecosystem audits are consolidated in [audits/](audits/README.md).
+and exact-real ecosystem audits are consolidated in [audits/](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/comparisons/audits/README.md).
 That index documents the qualification suites, recovered experiments, source
 snapshots, dependencies, and byte-for-byte migration verification.
 

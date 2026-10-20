@@ -50,7 +50,7 @@ proof selection and retains its complete cross-product fallback. Borrowed
 digit comparisons still depend on input size. This adds no internal work or
 heap bound.
 
-The [admission evidence](../../docs/evidence/2026-10-18-point-equality-facts/README.md)
+The [admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-18-point-equality-facts/README.md)
 preserves independent fraction/cross-product oracles, symbolic uncertainty,
 all earlier proposals, and every raw cost row. The matched direct Rational
 control uses the actual native-build dependency features, Rust 1.98.1, CPU 6
@@ -134,7 +134,7 @@ The complete Hypercurve comparison retained all 88 invocations and 856 lane
 records. Selected-fiber replay cost +3.94%; the seven additional native pairs
 showed cold conic/cubic contacts +6.96%, candidates +6.00%, and region process
 time +1.22%. Both favorable and unfavorable lanes, plus two superseded scalar
-variants, remain in the [evaluation checkpoint](benchmarks/checkpoints/2026-09-06-rational-equality.json).
+variants, remain in the [evaluation checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-06-rational-equality.json).
 The prespecified within-binary whole-process range guard passed; desktop,
 frequency and thermal effects remain uncontrolled.
 
@@ -2588,7 +2588,7 @@ of fractional places without proving a nonzero scientific leading bit. Native
 values and predicates are unchanged. General alternate/scientific formatting
 still needs a separate bounded-failure audit.
 
-The [point-consumer campaign](../../docs/evidence/2026-10-09-hyperdrc-point-consumers/manifest.json)
+The [point-consumer campaign](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-point-consumers/manifest.json)
 retains a timed formatting-stall witness, five scalar regressions, a doctest,
 all-feature scalar tests, strict Clippy and documentation checks. Five sequential
 release processes pinned to CPU 0 measured 1,000 repeated calls to
@@ -2611,7 +2611,7 @@ the sole coefficient out before inversion. This removes vector copies while
 preserving arithmetic and insertion order, recognition limits, and fallback.
 Public APIs, scalar layouts, persistent caches, and decision strata are unchanged.
 
-The [admission record](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-17.json)
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-17.json)
 compares production revision `86b6212d9` with only this scalar file changed.
 An independent Fraction oracle verifies 126 identities. Five fresh processes
 per version measure construction and first, warm, and cloned public normal-form
@@ -2650,7 +2650,7 @@ still fails the original runtime gate and remains provisional.
 
 ## Initial Laurent reconstruction prototype (rejected)
 
-The [bounded reconstruction trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-27.json)
+The [bounded reconstruction trial](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-27.json)
 reuses the current π-Laurent recognizer to rebuild rational/radical coefficients
 without increasing its depth or work limits. Five focused tests pass, including
 50 independent binomial identities, rational cancellation, abort retention and
@@ -2663,14 +2663,14 @@ The initial scalar API and implementation were held as prototypes pending curve
 integration, complete validation and cost/allocation/size evidence. These results
 established a focused completeness opportunity, with no speedup claim.
 
-The [sign-retention counterexample](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-29.json)
+The [sign-retention counterexample](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-29.json)
 rejects that prototype as written. Two near-zero expressions retain certified
 positive/negative signs before reconstruction but lose them afterward, even at
 a later 512-bit query. The repair must transfer the existing valid sign proof
 to the equal reconstructed payload, preserve scaling and abort state, and keep
 the original query budgets. The full counterexamples are retained; that version was not admitted.
 
-The [sign-proof repair validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-31.json)
+The [sign-proof repair validation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-31.json)
 transfers an already valid exact-sign certificate to the equal reconstructed
 payload. Both original near-zero counterexamples now retain their signs at
 precision 0 and -512, including negative outer scaling and repeated compaction.
@@ -2692,7 +2692,7 @@ eight-radical limits are unchanged. General exp/log integer-power graphs remain
 outside the recognizer. Three curve loop-area consumers use this optional result
 to keep subsequent exact sums representable.
 
-The [admission record](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-33.json)
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-33.json)
 retains this as a completeness repair with measured costs. The complete forty-loop
 analytic area is now exactly decidable. Validation includes 768 default and 855
 all-feature scalar library tests, 950 all-feature scalar library/integration
@@ -2714,7 +2714,7 @@ performance table for representative rows and the complete raw cost record for
 all samples. No uniform optimization, statistical significance or application
 speedup is claimed. No broader native-stroke prototype is admitted here.
 
-The [post-repair native profile](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-35.json)
+The [post-repair native profile](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-35.json)
 recovers 10,493 cycle samples with zero losses. Bounded polynomial normalization
 accounts for 50.399% of sampled cycles and the explicit compaction path 0.754%
 in recovered stacks; inclusive groups overlap. Comparison, zero, point equality
@@ -2725,7 +2725,7 @@ The no-inline decoder can omit wrappers, so named caller groups do not measure
 complete check durations. A reuse diagnostic is planned before considering any
 persistent certificate cache; no such cache is admitted by this profile.
 
-The [full-fixture reuse diagnostic](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-36.json)
+The [full-fixture reuse diagnostic](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-36.json)
 observes 290,920,402 compound-form computations. Of these, 98.613% produce
 rational/radical Laurent forms without opaque atoms; 214,338,451 computations
 (73.676%) repeat a previously covered expression identity within bounded windows.
@@ -2741,7 +2741,7 @@ memory use or admission. Top-level reuse still needs to be separated before
 choosing a cache location, and any candidate must preserve cold/warm decisions,
 proof limits, abort behavior and serialization. No persistent cache is retained.
 
-The [root-query diagnostic](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-37.json)
+The [root-query diagnostic](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-37.json)
 separates entry-point calls from recursive work. Among 20,118,580 root queries,
 116,711 (0.580%) repeat a recognized expression at the identical depth budget
 within the tracking windows. Those repeated queries consume 3,114,953 of
@@ -2761,16 +2761,16 @@ profile; no persistent certificate cache or performance improvement is admitted.
 All seven memo experiments below are rejected. Production runtime is unchanged.
 
 Three isolated sharing trials preserve 19,140 recognition-frontier receipts but
-fail the measured resource tradeoff. [Term-vector sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
-slows 20 of 24 timing medians; [whole-result sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-62.json)
+fail the measured resource tradeoff. [Term-vector sharing](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
+slows 20 of 24 timing medians; [whole-result sharing](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-62.json)
 slows 14 and retains the extra allocation in two query families.
-[Caller-directed sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-63.json)
+[Caller-directed sharing](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-63.json)
 removes those allocation regressions but slows 19 medians, including several
 first/warm queries with nonoverlapping sample ranges. All three are rejected.
 Raw timings, allocations, binary sizes, source patches and failed comparisons
 remain available; no persistent cache or sharing representation is retained.
 
-The [unused-root-entry trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-64.json)
+The [unused-root-entry trial](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-64.json)
 keeps the original owned representation and omits only the final root memo entry,
 which would be dropped before any lookup could consume it. All 19,140 query
 results, work-budget outcomes and recursive entries match. The raw receipts
@@ -2789,7 +2789,7 @@ allocation executables grow 3,416 and 3,432 bytes. This trial advanced to broade
 validation on that evidence; the production measurements below determine
 retention.
 
-The [broader native check](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-65.json)
+The [broader native check](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-65.json)
 passes 880 serde-enabled scalar test invocations, 12 tests in three focused curve
 integration binaries, and strict release curve/DRC Clippy. Both complete boards
 retain 12/197 findings, but the unchanged 120-second gate fails at 195.668 worker
@@ -2797,7 +2797,7 @@ CPU seconds. This single run establishes no application speedup. The following
 gate isolates the scalar omission against admitted production source. Full native
 curve/DRC validation, native-source admission and the complete plan remain open.
 
-The [production-only validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-66.json)
+The [production-only validation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-66.json)
 passes 768 default scalar library tests, 950 all-feature scalar library/integration
 invocations, 2,430 curve tests (28 existing ignored), and 1,559 DRC library plus 35
 integration tests. The scalar counts overlap. Formatting, strict Clippy/rustdoc
@@ -2807,7 +2807,7 @@ configuration/fixture files from exact blobs before validation; its initial
 failure is preserved. No Rust file differed from the committed baseline before
 the one-file scalar patch.
 
-The [production resource gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-67.json)
+The [production resource gate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-67.json)
 rejects root-entry omission. Fifteen of 24 timing medians are slower. Conjugate
 construction, first and cloned queries regress 3.5%, 10.5% and 4.6% with
 nonoverlapping sample ranges; the warm median is 9.6% slower with overlap. All
@@ -2819,29 +2819,29 @@ timing differences is unestablished, and no uniform or application speedup is
 claimed. Complete report replay was not run after this rejection; its prepared
 runner is retained.
 
-[Memo-index borrowing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-68.json)
+[Memo-index borrowing](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-68.json)
 uses a fresh production baseline with the original root memo behavior. Both
 variants pass four focused tests and strict checks; all 19,140 raw frontier
 receipts match each other and the earlier diagnostic corpus. The
-[resource gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-69.json)
+[resource gate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-69.json)
 rejects this version: 20 of 24 timing medians are slower, the median ratio is
 1.140, and the maximum is 1.274. Thirteen query regressions have nonoverlapping
 sample ranges. Nine query rows save allocations: two per multiradical fixture,
 three per pi-transport fixture and one per opaque-linear fixture. Retained and
 peak bytes are unchanged throughout. Executables grow 1,864/1,880 bytes. Every
 sample remains available, and no broader suites or reports were run after this
-rejection. A [static result-consumer alternative](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/memo-consumer-candidate.json)
+rejection. A [static result-consumer alternative](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/memo-consumer-candidate.json)
 has now passed the focused gate below; the timing cause remains unestablished.
 
 
-[Static memo consumers](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-70.json)
+[Static memo consumers](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-70.json)
 retain the owned return type and original root entry. Multiply, square and
 square-root consumers can borrow nonempty closed entries from the existing memo;
 opaque results keep the original ownership path. Four fresh focused tests and
 strict checks pass, with the unchanged baseline validation reused by verified
 hash. All 19,140 raw recognition-frontier receipts remain byte-identical.
 
-The [resource review](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-71.json)
+The [resource review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-71.json)
 retains five initial alternating process pairs per mode and one bounded ten-pair
 timing follow-up on the same executables and workload. The initial radical-Laurent
 construction median regresses 3.3% with nonoverlapping ranges; the follow-up ratio
@@ -2860,7 +2860,7 @@ resource gate below determines retention. The wider native prototype and the
 complete property plan stay open.
 
 
-The [production validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-72.json)
+The [production validation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-72.json)
 removes only the diagnostic test module from that candidate. It passes 768 default
 and 950 all-feature scalar test invocations (overlapping sets), 2,430 curve tests
 with 28 existing ignored, and 1,559 DRC library plus 35 integration tests. Formatting,
@@ -2872,7 +2872,7 @@ This single board run establishes no application speedup. The following resource
 gate determines retention; complete report replay was still pending at this stage.
 
 
-The [fresh production resource gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-73.json)
+The [fresh production resource gate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-73.json)
 rejects static consumers. Fifteen of 24 timing medians are slower; the median
 ratio is 1.0167 and the maximum is 1.3783. Quadratic-reciprocal first and warm
 queries regress 11.5% and 37.8%, with nonoverlapping sample ranges; cloned queries
@@ -2887,12 +2887,12 @@ per variant, and retained/peak bytes remain unchanged. Both executables grow
 The earlier focused measurements, bounded follow-up and complete passing
 production validation are retained. Full report replay was not run after the
 rejection; its prepared runner remains available. A
-[shared compound-expansion helper](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/memo-shared-expansion-candidate.json)
+[shared compound-expansion helper](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/memo-shared-expansion-candidate.json)
 was recorded as a separate hypothesis with the same exactness and resource
 gates. It is not an established explanation or fix for these measurements.
 
 
-The [shared-expansion focused gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-74.json)
+The [shared-expansion focused gate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-74.json)
 moves only the compound-expression match and its existing opaque fallback into
 a nongeneric helper. Cheap recognition, arithmetic order, memo completion and
 budget charging remain unchanged. Four fresh focused tests and strict checks
@@ -2904,7 +2904,7 @@ A separate production source tree removes only the diagnostic module and verifie
 library from the outset. The focused checks alone do not admit it.
 
 
-The [shared-expansion production resource gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-75.json)
+The [shared-expansion production resource gate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-75.json)
 rejects this seventh memo variant. Fourteen of 24 timing medians are slower, with
 a median ratio of 1.0100 and maximum 1.0461. Conjugate first/warm/cloned queries
 regress 3.6%/3.9%/4.6%; warm ranges do not overlap. Opaque-linear construction/warm
@@ -2926,7 +2926,7 @@ The separately profiled arc-membership endpoint path is the next source review;
 removing a later equality retry must not be assumed to preserve completeness.
 
 
-The [formatting frontier audit](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/assessment.json)
+The [formatting frontier audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-10-hyperreal-formatting-frontier/assessment.json)
 returns to the preserved unresolved-hypot formatting stall after the endpoint
 experiment was closed. It links the unchanged admitted scalar library and runs
 96 separate processes: twelve input families, four formatting modes, and fresh
@@ -2954,16 +2954,16 @@ memory bound. Deeper preparation, rounding carries and existing downstream
 report bytes remain required coverage before any retention.
 
 The isolated checked scientific formatter now passes
-[complete scalar validation](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-scalar-validation.json):
+[complete scalar validation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-scalar-validation.json):
 858 default-feature tests, 962 all-feature tests and 26 doctests, with no ignores.
 Its earlier focused record includes strict Clippy, rustdoc and formatting checks.
-The [expanded frontier](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-frontier.json)
+The [expanded frontier](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-frontier.json)
 preserves all 3,816 receipts across two process orders, preparation, cloning and
 concurrent queries. Every returned string matches independent exact reference
 bounds. Twelve old scientific-format process cutoffs become typed `UnknownZero`
 outcomes; the six alternate-format cutoffs remain outside this checked API.
 
-The [resource characterization](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-cost.json)
+The [resource characterization](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-cost.json)
 retains five fresh alternating samples per variant and measurement mode. Twelve
 of 22 common timing medians improve and ten cost more. Pi queries cost about
 3.7 times the existing approximate formatter; first queries on 1,000 huge/tiny
@@ -2979,7 +2979,7 @@ measured costs do not establish that query as their cause. Its proof receipts,
 resource tradeoff and downstream compatibility still need verification; the
 existing formatting traits and the complete property plan remain open.
 
-The [exact-class zero precheck](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-cost.json)
+The [exact-class zero precheck](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-cost.json)
 is not retained. Its separate source passes the complete scalar suites and all
 3,816 receipts in both process orders, but every allocation, retained-byte and
 peak-byte measurement is identical to the first checked candidate. Twenty-one
@@ -2991,7 +2991,7 @@ sampling is closed. Downstream validation proceeds with the first checked
 formatter, whose explicit certification costs remain as reported above.
 
 The first checked formatter now passes
-[downstream validation](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/downstream-checked-scientific.json):
+[downstream validation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-10-hyperreal-formatting-frontier/downstream-checked-scientific.json):
 2,430 curve tests with 28 documented ignores, 1,559 DRC library tests, 35 DRC
 integration tests, and strict curve/DRC Clippy and documentation checks. The
 unchanged original board gate passes at 54.44 process CPU seconds. Both fresh
@@ -3000,7 +3000,7 @@ repeat byte-for-byte and match the admitted reports: CPArti has 1,543,306 bytes
 and 2,605 findings; HVP109A has 291,822 bytes and 654 findings. This is downstream
 compatibility evidence, not a matched application speedup or native admission.
 
-An additional [exact rational audit](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/rounding-cell-audit.json)
+An additional [exact rational audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-10-hyperreal-formatting-frontier/rounding-cell-audit.json)
 verifies all 2,256 returned corpus strings against their nearest-even rounding
 cells, including asymmetric decade carries and exact tie inclusion. It uses
 only rational arithmetic and independent reference enclosures, strengthening
@@ -3010,7 +3010,7 @@ retaining this API. Existing formatting traits and broader property work remain
 open.
 
 The first checked formatter is now
-[retained](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/retention.json).
+[retained](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-10-hyperreal-formatting-frontier/retention.json).
 The separate native combination passes 860 default-feature scalar tests, 964
 all-feature tests, 26 doctests, 72 focused native curve/DRC tests and strict
 checks. Its 3,816 receipts match the production candidate in both process orders.
@@ -3022,7 +3022,7 @@ That review initially found a documentation-only mismatch: the native snapshot
 had omitted the existing `cached_rational_interval` README table row. The failed
 review is retained, and the corrected check preserves exactly that row without
 including it in this API commit. No runtime or test change resolved this metadata
-failure. The [updated main source guard](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/integrated-main/sources.json)
+failure. The [updated main source guard](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-10-hyperreal-formatting-frontier/integrated-main/sources.json)
 records the resulting worktree, including its still-unadmitted native prototype.
 The original native performance failure, existing formatting-trait stalls,
 underlying total-work limits and the wider property plan remain open. No complete
@@ -3056,7 +3056,7 @@ measurement per case; exact selection regex, raw samples and estimates are saved
 These are short affected-group probes, not full-catalogue or controlled-host
 speedup claims. Executable sizes change by -520/+4,464 bytes respectively.
 
-The [source-bound admission](../hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
+The [source-bound admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
 retains full native/curve/import comparisons, including the initial unfavorable
 geometry series and its one predefined complete replication. Exact semantic,
 replay and negative controls, 1,050 all-feature and 937 minimal-feature scalar

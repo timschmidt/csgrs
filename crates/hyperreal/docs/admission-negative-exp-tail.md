@@ -10,7 +10,7 @@ a longitude with normalized easting `10^320`. The independent public scalar
 consumer `atan(exp(-10^320)).certified_rational_interval(-128)` reproduces the
 abort on the default Rust thread stack, without Hyperspatial in its dependency
 graph. The baseline is retained in
-[`atan-negative-exp-baseline.log`](../../hyperspatial/verification/2026-10-18-e2-transverse/atan-negative-exp-baseline.log).
+[`atan-negative-exp-baseline.log`](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e2-transverse/atan-negative-exp-baseline.log).
 Standalone exponential refinement succeeds; composition reaches the deferred
 Computable exponential kernel. Its failed logarithmic reduction falls back to
 a nested square graph whose depth grows with the input's magnitude.
@@ -50,7 +50,7 @@ Two kernel tests cover precision endpoints and 315 directed-MPFR comparisons
 around the proof threshold (nine precisions, 35 inputs each).
 
 Executed evidence is retained with the
-[transverse validation bundle](../../hyperspatial/verification/2026-10-18-e2-transverse/README.md):
+[transverse validation bundle](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e2-transverse/README.md):
 the full Hyperreal test run has 1,115 passing executions; the final focused
 cache matrix has 28 executions including the two kernel tests. The later
 ordinary-integer-collapse regression is included in that focused matrix.

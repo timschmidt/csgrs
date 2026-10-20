@@ -40,7 +40,7 @@ the release benchmark profile. Times are medians after two warmup batches.
 
 On 15 October 2026, CSGRS retained reuse of a signed-winding proof when the
 above and below sections contain identical directed native segment records.
-The [paired probe and acceptance record](docs/evidence/2026-10-15-section-proof-reuse/README.md)
+The [paired probe and acceptance record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-15-section-proof-reuse/README.md)
 preserve all 25 section regressions and 43 byte-identical snapshots, including
 the original sphere and frustum fixtures, public boundary evidence and certainty.
 Both versions link the same native library bytes. The instrumented cube probe
@@ -69,7 +69,7 @@ during scaling, multiplication by one term, and inversion. Four of six focused
 query families allocate less; construction and retained bytes are unchanged.
 The [scalar measurements](crates/hyperreal/PERFORMANCE.md#owned-polynomial-coefficients-2026-10-09)
 record all samples and size costs without claiming an application speedup.
-The [isolated admission](docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-17.json)
+The [isolated admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-17.json)
 preserves all 231 historical capability rows and complete report bytes from two
 full boards across both versions and repetitions, and passes the original
 full-board runtime gate. Other native-source prototypes remain provisional.
@@ -81,7 +81,7 @@ probe on 8 October 2026 measured 36.202 ns/call before and 36.293 ns/call after
 retention-control change with no claimed speedup. Exact rows and certainty are
 checked independently across warm, cold, and disabled caches in
 `tests/solid_cache.rs`; the probe itself checks only triangle counts. The
-[raw samples, binary hashes, and reproduction instructions](benchmarks/baselines/2026-10-08-properties/README.md)
+[raw samples, binary hashes, and reproduction instructions](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md)
 also retain the earlier unpinned, uninlined experiment and delimit coverage.
 
 TriangleMesh broad-phase disjoint and point-outside tests now consume Hyperlimit's

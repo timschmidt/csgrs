@@ -101,7 +101,7 @@ remains unchanged. These different output contracts do not support an
 exact-kernel versus point-arithmetic speed ratio.
 
 Final commands, results and source hashes are recorded in the
-[verification bundle](../../hyperspatial/verification/2026-10-19-e2-elliptic/README.md).
+[verification bundle](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-elliptic/README.md).
 This prerequisite does not claim a completed ellipsoidal Transverse Mercator
 projection, Jacobi functions, complex continuation, new bindings or a published
 release. Existing earlier capabilities and the complete development plan remain

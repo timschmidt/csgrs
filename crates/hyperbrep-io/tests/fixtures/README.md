@@ -20,12 +20,12 @@ Representation #502 owns the body items, #9003 owns the unit context, and
 #9500–#9508 provide basic product/root metadata for an independent reader.
 Native tests deliberately select #502 and report the untraversed product records.
 
-[Independent OCCT reader results and file hashes](../../../hyperbrep/docs/evidence/2026-10-15-step-faceted/occt-read.json)
+[Independent OCCT reader results and file hashes](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-faceted/occt-read.json)
 check each file's solid validity, unique entity counts and floating-point volume.
 Exact volume assertions use the recipes above in Rust, not OCCT values.
 This is four elementary original fixtures read by an independent tool; it is
 not a corpus of files supplied by independent CAD exporters. The external
-[writer probe](../../../hyperbrep/docs/evidence/2026-10-15-step-faceted/occt-writer-experiment.json)
+[writer probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-faceted/occt-writer-experiment.json)
 records why the attempted OCCT faceted export was not used as an input oracle.
 
 ## Independently exported advanced inputs
@@ -63,7 +63,7 @@ twice), three faces and one solid. Expected geometry comes from these recipes:
 | [oblique-cylinder.step](oblique-cylinder.step) | Rotate by `(x,y,z) -> (x,(3*y-4*z)/5,(4*y+3*z)/5)` | `175*pi` | `120*pi` |
 | [radical-frame-cylinder.step](radical-frame-cylinder.step) | Radius 5, axis `(0,1,1)`, reference `(1,1,0)`, height `7*sqrt(2)`; rational source coordinates require irrational normalized frames | `175*sqrt(2)*pi` | `(50+70*sqrt(2))*pi` |
 
-The [variant generator and independent OCCT reader](../../../hyperbrep/docs/evidence/2026-10-15-step-circles/axis_variants.py)
+The [variant generator and independent OCCT reader](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-circles/axis_variants.py)
 retain the complete source recipes and floating-point interoperability checks.
 Their outputs are byte-identical to the corresponding native fixtures. The
 [shared acceptance tests](../support/analytic_cylinder.rs) also construct partial
@@ -72,7 +72,7 @@ near-incidence variants. None modifies the original files.
 
 [occt-cylinder-off-carrier.step](occt-cylinder-off-carrier.step) is a byte-identical
 copy of the original OCP 7.9.3.1 `BRepPrimAPI_MakeCylinder(2,4)` export retained in
-the [periodic-cylinder research](../../../hyperbrep/docs/evidence/2026-10-15-periodic-cylinder/research/occt-cylinder.step).
+the [periodic-cylinder research](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-periodic-cylinder/research/occt-cylinder.step).
 It declares millimetres. Its tiny nonzero decimal seam coordinate is not exactly
 on the declared circle, so native import must reject it. It remains an independent
 exporter input and exact-fidelity rejection, never a healed success fixture.
@@ -84,7 +84,7 @@ and `prism-ring-cover.step` are byte-identical copies of the four STEP outputs
 captured at BREP revision `5495a63e07abee7c769969330975a4332d7c1cf4` before
 native circular-prism preservation. They are original Apache-2.0 test geometry,
 not external CAD models. Source recipes and hashes are retained in
-[prism continuation evidence](../../../hyperbrep/docs/evidence/2026-10-16-prism-continuation/).
+[prism continuation evidence](https://github.com/timschmidt/csgrs-evidence/tree/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-prism-continuation).
 
 The box occupies `[-5,5]^2 x [0,6]`. The covering cutter occupies
 `[0,20] x [-20,20] x [-20,20]`; the tiny-gap variant ends at `6-10^-12`.

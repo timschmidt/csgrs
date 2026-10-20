@@ -192,7 +192,7 @@ spatial executions in 51 suites, eight independent README consumers, strict
 Clippy and benchmarks. All four primitive-cache configurations pass 640
 executions in 128 suites. Native documentation and WASM check/Clippy pass.
 The unchanged source is required at target integration; the
-[verification record](../../hyperspatial/verification/2026-10-19-e2-parameter-encodings/README.md)
+[verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-parameter-encodings/README.md)
 records command exits, hashes and subsequent root checks.
 
 The new domain helper measures 156/157 executable lines (99.36%); the complete

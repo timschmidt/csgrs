@@ -66,6 +66,6 @@ evidence that the implementation satisfies it. Thompson/Lee mapping, its
 certified inverse and the remaining Earth/sky plan stay open.
 
 Executed acceptance and remaining limits are recorded in the
-[complex Jacobi verification](../../hyperspatial/verification/2026-10-19-e2-complex-jacobi/README.md),
+[complex Jacobi verification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-complex-jacobi/README.md),
 including independent enclosures, strict spatial compositions, both compilers,
 all cache configurations, coverage and the completed sanitizer campaign.

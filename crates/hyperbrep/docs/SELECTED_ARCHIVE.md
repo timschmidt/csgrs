@@ -79,8 +79,8 @@ demand substantial work. In particular, `solver_steps` does not sum controls or
 bound total solver work, live heap or cancellation. Metadata parsing and error reporting may allocate;
 only the initial syntax scanner has an allocation-free claim. Native
 `serde_stacker` remains in the decoder, and configurable depth alone does not
-prove a safe WASM call stack. See the [syntax admission evidence](evidence/2026-10-15-archive-admission/README.md)
-and [structural admission evidence](evidence/2026-10-15-archive-structure/README.md).
+prove a safe WASM call stack. See the [syntax admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-archive-admission/README.md)
+and [structural admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-archive-structure/README.md).
 
 ## Records and deterministic ordering
 
@@ -104,7 +104,7 @@ period and actual endpoint agreement; it does not trust an archive flag.
 Circular cap and periodic cylinder edge uses also replay their complete
 pcurve-image, direction and shell certificates. Distinct adjacency, parameter
 maps, split/reflection and forged-record rejection are covered in the
-[closed-edge evidence](evidence/2026-10-15-closed-edges/README.md).
+[closed-edge evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-closed-edges/README.md).
 
 `selection.parameters` contains three node forms:
 
@@ -162,11 +162,11 @@ does not prove a valid face or solid; model validation remains required.
 This is a breaking format. The 13→14 corpus migration changes only the version
 header and appends `maps: []` to each existing polynomial-branch definition.
 All other old bytes must match. New rational maps have independent semantic,
-guard, composition and deterministic replay tests. The [section evidence](evidence/2026-10-19-plane-tensor-sections/README.md)
+guard, composition and deterministic replay tests. The [section evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-plane-tensor-sections/README.md)
 records full-image validation after affine transport and cold replay as well as
 the exact corpus migration. There is no compatibility
 reader. The earlier 12→13 migration added only the version header and empty
-`polynomial_sources` collection; its [whole-branch replay evidence](evidence/2026-10-19-polynomial-branch-replay/README.md)
+`polynomial_sources` collection; its [whole-branch replay evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-polynomial-branch-replay/README.md)
 remains unchanged.
 
 Pcurves also retain `AnalyticParallel { source, distance, range, reversed }`.
@@ -215,7 +215,7 @@ consume record limits recursively before scalar decoding. No side, incidence
 or certainty flags are trusted. Rational coordinate images reuse their shared
 original selected root and polynomials; affine extraction uses the same owner
 operation during construction and replay. Other records retain their existing
-meaning. See the [coaxial qualification](evidence/2026-10-19-coaxial-procedural/README.md)
+meaning. See the [coaxial qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-coaxial-procedural/README.md)
 for nested limit/recovery checks and deterministic artifact evidence.
 
 `Rotation` curves add an origin (`Coordinates` or `CurveImage`), authored axis
@@ -223,7 +223,7 @@ origin/unit direction, angular domain, direction sign and offset to schema 10.
 Selected source and parameter identities use the existing graph. Cold admission
 reconstructs the nonzero-radius proof, complete boundary images and profile-axis
 clearance; no serialized certificate flag is trusted. Each origin and nested
-source is charged before scalar decoding. The [revolution qualification](evidence/2026-10-18-selected-revolution/README.md)
+source is charged before scalar decoding. The [revolution qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-revolution/README.md)
 retains all prior corpus bytes and repeated new archives. No old record is
 reinterpreted and no compatibility reader is introduced.
 
@@ -236,7 +236,7 @@ no image certificate. Similarities inside affine point-query definitions are
 composed when authored and replayed so both encodings use the same recipe.
 Version 10 is an intentional schema break, not a byte-preserving optimization.
 
-The [selected-patch correction](evidence/2026-10-18-selected-surface-patches/README.md)
+The [selected-patch correction](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-surface-patches/README.md)
 preserves existing pcurve definitions unless analytic-arc export canonicalizes
 an incident spatial vertex. This prevents reproduced growth during cold planar
 replay. Schema 10 remains unchanged, but fresh scalar expression encodings may
@@ -250,9 +250,9 @@ sources cannot refer to spatial sources or other pcurve restrictions, so the
 new dependency is acyclic. Every inline planar source consumes a record and its
 source-specific metadata budget before scalar decoding. This is not a bound
 on scalar reconstruction or subsequent geometric validation. The
-[planar lift evidence](evidence/2026-10-18-planar-curve-lift/README.md)
+[planar lift evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-planar-curve-lift/README.md)
 records the original lift workflows and costs. The
-[selected-image admission](evidence/2026-10-18-selected-planar-images/README.md)
+[selected-image admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-planar-images/README.md)
 adds spatial point images at selected roots and selected topology trims. They
 used the earlier source and parameter graph without a trusted flag. Version 10
 extends that graph to selected carrier domains and procedural-profile construction.
@@ -332,7 +332,7 @@ references, poles, wrong spatial selectors, reversed/out-of-domain pcurve
 ranges, wrong maps, forged proof flags and trailing JSON. Native persistence
 fixtures remain part of the complete HyperBRep test suite.
 
-The [spline replay qualification](evidence/2026-10-15-spline-replay/README.md)
+The [spline replay qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md)
 adds native-then-selected-then-selected cuts of rational Bezier, rational
 quadratic and single-/multi-span NURBS boundaries, reflected replay, differently
 authored pcurve/spatial NURBS charts with both map signs, and five successive
@@ -346,10 +346,10 @@ edge and all twelve together), their affine shears/reflections, and cylinder
 axial subdivisions (one and all four). The saved topology counts and selected
 vertices survive; exact volume/classification, another split, another reload
 and cold/warm archive-byte equality are exercised. The
-[solid replay qualification](evidence/2026-10-15-selected-solids/README.md)
+[solid replay qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-selected-solids/README.md)
 records these cases and their measured costs.
 
-The [periodic-cylinder qualification](evidence/2026-10-15-periodic-cylinder/README.md)
+The [periodic-cylinder qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-periodic-cylinder/README.md)
 also reconstructs cylinders with one, two, three or four rectangular side faces,
 unequal angular widths, shifted periodic charts and mixed axial partitions.
 One spatial seam can have two opposite uses on the same face. Replay preserves
@@ -388,7 +388,7 @@ Finite curve/plane contacts now feed the same selected-point and parameter
 archive authority. Higher-degree native contacts retain the original spatial
 curve and selected parameter; planar contacts also retain their planar source
 point and frame. No new contact-specific saved model format or validity flag
-is introduced. The [contact admission](evidence/2026-10-18-retained-plane-contacts/README.md)
+is introduced. The [contact admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-retained-plane-contacts/README.md)
 exercises actual contact parameters through shared edge splitting, cold replay,
 exact reflected transforms, slab cuts, reunion and empty recovery. Finite
 restrictions of signed-weight planar sources query only the consumed interval.
@@ -415,7 +415,7 @@ budget exhaustion/recovery preserve the certainty contract. The full clipped
 profile currently reaches the STEP writer's attributed
 `UnsupportedCurve(PlanarImage)` frontier; native replay remains separate.
 Qualification and its remaining limits are tracked in the
-[selected procedural-profile evidence](evidence/2026-10-18-selected-procedural-profiles/contract.md).
+[selected procedural-profile evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-procedural-profiles/contract.md).
 
 ## Algorithm reference
 
@@ -431,7 +431,7 @@ Full procedural revolutions reuse schema 10's existing PlanarImage, Rotation,
 selected graph and Coordinate records. No constructor certificate is persisted:
 cold validation reconstructs the single-cover shell and positive-radius simple
 profile, including selected cavity endpoints. Existing native images keep their
-encoding; the [solid-revolution evidence](evidence/2026-10-18-procedural-revolution/README.md)
+encoding; the [solid-revolution evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-procedural-revolution/README.md)
 records replay and the unchanged procedural STEP boundary.
 
 Selected iso pcurves now use a degree-one native NURBS source with the original
@@ -440,14 +440,14 @@ Certified scalar bounds choose only a finite source support. They never replace
 the selected endpoints. This reuses the existing archive schema and cold
 validation; that increment did not admit arbitrary generated rational fragments
 or whole implicit branches. Version 13 adds the polynomial branch records above.
-See the [parameter-map record](evidence/2026-10-19-selected-pcurve-maps/README.md).
+See the [parameter-map record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-selected-pcurve-maps/README.md).
 
 Selected section UV evaluations now feed exact chord endpoint definitions in the
 existing retained point graph. Rational Bezier/NURBS section roots, restrictions
 and reversal replay cold with independently checked UV images. The same models
 retain their spatial selected point through transform/replay. That pcurve increment introduced no new schema.
 Arbitrary generated rational curve carriers remain a separate persistence target.
-See the [evaluation record](evidence/2026-10-19-pcurve-evaluation/README.md).
+See the [evaluation record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-pcurve-evaluation/README.md).
 
 Version 11 introduced a generic translation `origin` in place of the earlier
 `source`/`parameter` pair. Plane images preserve joint polynomial-fiber and selected rational UV
@@ -455,7 +455,7 @@ evidence through point queries, affine transforms, sweeps and cold replay.
 That increment covered plane point images; nonlinear surface images and whole
 surface-intersection branches remained open. Existing payloads were compared
 after only the declared schema migration, alongside unchanged exact geometric assertions.
-See the [surface archive evidence](evidence/2026-10-19-surface-evaluation/README.md).
+See the [surface archive evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-surface-evaluation/README.md).
 
 Version 12 added `AffineImage { source, transform }` to spatial curves. The source
 is the complete embedded spatial curve definition and `transform` is an exact
@@ -471,4 +471,4 @@ and rebuilds coefficient maps. Affine-transformed rotation edges retain this
 point authority through their embedded source. That increment rejected versions
 through 11 without a legacy decoder. Its preserved archive corpus comparison
 permitted only the top-level 11→12 header change and required all other bytes to match.
-See the [rational surface and affine curve evidence](evidence/2026-10-19-rational-surface-evaluation/README.md).
+See the [rational surface and affine curve evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-rational-surface-evaluation/README.md).

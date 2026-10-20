@@ -3,12 +3,18 @@
 The active harness and complete tracked archive were imported from
 [`timschmidt/exactcore-hyper-comparison`](https://github.com/timschmidt/exactcore-hyper-comparison)
 at `1e3b1f7a8114b6bcf5078c31706719b054d87d46`.
-[`integration/provenance.json`](integration/provenance.json) identifies every
+[`integration/provenance.json`](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/comparisons/integration/provenance.json) identifies every
 adapted upstream file. The accompanying tree inventory records every upstream
 path, executable mode, Git object ID, and the SHA-256/size of each LFS payload.
 Licenses and notices remain with their original sources.
 
-The historical `audits/` tree is immutable evidence. Its scripts, absolute paths,
+The historical `audits/` tree and the `integration/` import inventory are
+immutable evidence. Both live in the
+[evidence repository](../../docs/evidence-archive.md) at their original paths,
+together with a copy of the verification scripts. Run
+`scripts/verify-import.py` and `scripts/consolidate-audits.py` from
+`crates/comparisons` in a checkout of that repository. The script self-tests
+run here. The archived corpus's scripts, absolute paths,
 dependency links, and recorded results describe their original environment.
 Read the corresponding record before running a historical campaign. New runs
 belong in a separate output directory and must identify the current source,
@@ -22,11 +28,11 @@ to the full security audit.
 
 ## Reproduce current checks
 
-The [validation record](integration/validation/manifest.json) retains command
+The [validation record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/comparisons/integration/validation/manifest.json) retains command
 outputs for the current import: 78 passing native tests, 19 existing ignored
 tests, and 480 successful Criterion fixture executions in `--test` mode.
 These smoke executions supply no new comparative timing claim. The external
-oracle's [source/header hashes](integration/exactcore-inputs.json) identify the
+oracle's [source/header hashes](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/comparisons/integration/exactcore-inputs.json) identify the
 inputs used in this run.
 
 This harness has its own workspace and lockfile because it requires a native
@@ -55,7 +61,8 @@ from timed Criterion measurements. Existing ignored tests are retained known
 contract differences or failures; they do not count as passing comparisons.
 
 The archive contains five LFS payloads. Fetch those payloads when checking out
-the monorepo; `verify-import.py` rejects a pointer in place of its full content.
+the evidence repository; `verify-import.py` rejects a pointer in place of its
+full content.
 Git retains executable bits but does not retain owner/group permission bits.
 The legacy migration verifier's `--git-modes` option checks that portable
 contract without relaxing content hashes.

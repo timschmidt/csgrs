@@ -87,7 +87,7 @@ and source consumers. UTM fixtures must exercise all 60 ordinary zones and
 exact/near Norway, Svalbard, equator, coverage and antimeridian boundaries.
 
 The implementation is retained with
-[execution evidence](../../verification/2026-10-18-e2-transverse/README.md).
+[execution evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e2-transverse/README.md).
 The public APIs are `SphericalTransverseMercator`, its parameters and explicit
 longitude policy, and `UtmSelection`/`UtmZone`/`Hemisphere`. The unpublished
 `GeodeticSource` enum adds a transverse source variant; exhaustive consumers

@@ -98,7 +98,7 @@ global caches may be warm. Warm rows prime all six enclosures. Independent
 MPFR rows have the stated finite-enclosure contract but a different evaluation
 algorithm. Concurrent validation can affect timing; no speed ratio is claimed.
 
-The [verification record](../../verification/2026-10-19-e2-complex-jacobi/README.md)
+The [verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-complex-jacobi/README.md)
 records final commands, hashes, completed test counts, all eight coverage gates,
 directed selection and the completed sanitizer campaign. It preserves diagnostic
 failures, the MSRV storage-recovery execution and the limits of these checks.

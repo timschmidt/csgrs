@@ -101,6 +101,16 @@ jobs:
           persist-credentials: false
       - uses: crate-ci/typos@5e38bf262baaf477ca9f241b3a7cd3d277fd7df8 # master
 
+  repository-budget:
+    name: Repository budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Keep generated evidence in the evidence repository
+        run: bash scripts/check-repository-budget.sh
+
   wasm-bindings:
     name: WASM JavaScript and TypeScript
     runs-on: ubuntu-latest

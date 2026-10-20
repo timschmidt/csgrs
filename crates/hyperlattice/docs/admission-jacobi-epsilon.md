@@ -107,7 +107,7 @@ fixed-input logs must also fail. This does not change any campaign budget.
 
 ## Final verification
 
-The [verification record](../../hyperspatial/verification/2026-10-19-e2-jacobi-epsilon/README.md)
+The [verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-jacobi-epsilon/README.md)
 retains all commands, process exits and frozen source hashes. Stable/MSRV,
 native/downstream suites, all four primitive-cache configurations, independent
 coverage gates, source consumers, WASM compilation and benchmarks pass.

@@ -59,7 +59,7 @@ constructor; both diagnostics are retained rather than treating that earlier
 failure as proof of the distinct signal defect. The final admitted regression
 suite remains unchanged. Complete stable/MSRV, native/downstream, cache,
 coverage and sanitizer checks pass; the
-[verification record](../../hyperspatial/verification/2026-10-19-e2-complex-atanh/README.md)
+[verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-complex-atanh/README.md)
 retains all failures and commands. Complete-function line coverage is 42/43
 for the changed Real atan2 functions and 13/13 for deferred atan. All 1,936
 before/after serialized rows remain byte-identical. These results do not

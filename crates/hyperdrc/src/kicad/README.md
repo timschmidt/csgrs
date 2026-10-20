@@ -32,7 +32,7 @@ Important consequences:
   to `(y, -x)` at 90 degrees. Selected chamfers replace their corners while
   the remaining corners keep their rounding. The pinned source references
   and independent regression witnesses are in the
-  [pad-source record](../../../../docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/reference-sources.json).
+  [pad-source record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/reference-sources.json).
   These exact source formulas do not reproduce KiCad's integer-unit rounding.
 - Wildcard copper layers are expanded from the board layer table when that
   evidence is present, because readiness checks need the fabricated copper

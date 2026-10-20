@@ -36,3 +36,13 @@ pkg/
 *.obj
 *.amf
 *.ply
+
+# Generated evidence belongs in the evidence repository; see
+# docs/evidence-archive.md. Keep local records out of this repository.
+/docs/evidence/
+/benchmarks/baselines/
+/crates/*/docs/evidence/
+/crates/comparisons/audits/
+/crates/comparisons/integration/
+/crates/hyperspatial/verification/
+/crates/hyperreal/benchmarks/checkpoints/

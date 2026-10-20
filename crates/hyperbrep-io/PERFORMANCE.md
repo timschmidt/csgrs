@@ -2,7 +2,7 @@
 
 ## 2026-10-17: partial-depth axial shells and continued modeling
 
-Kept for exact capability and downstream consumption. [Admission evidence](../hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md)
+Kept for exact capability and downstream consumption. [Admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md)
 retains the four original blocked result cases, their complete continuations,
 and the original shear and periodic failures. Native extrusion carriers and
 some native/STEP artifacts intentionally migrate; this is not performance-only
@@ -10,21 +10,21 @@ work.
 
 All 184 preceding cases across 21 full benchmark corpora retain original inputs, iterations, assertions and materialization; 6 changed receipts are explicit representation migrations, with deterministic per-revision output and separate semantic acceptance. Eight new complete workflows have absolute cost only. Three alternating pairs per old corpus and three new-corpus processes total 129 fresh processes. Median case ratio 1.000016, range 0.782783–1.753610; 3 rows exceed the 10% review marker and 85 have increased allocation requests. All raw/adverse observations, CPU/wall/RSS, requested allocation bytes and executable sizes remain. Exact capability and continued consumption justify retention as a feature, not an optimization or all-cohort performance admission. Shared-host timings do not establish significance; allocation requests do not bound live heap and harness sizes are not distribution sizes. The NURBS-boundary path-extrusion probe regresses from 0.690851 to 1.211483 ms (1.753610x), with all three candidate samples slower than all three baselines; butt-region exchange regresses by 13.3% and 15.3%. These adverse results require follow-up isolation, not dismissal as timer noise. New complete workflows take about 2.1-3.1 seconds and request about 0.75-1.13 GB cumulatively; eight-row process peak RSS is 23,572-24,036 KiB.
 
-[All adverse rows and new absolute costs](../hyperbrep/docs/evidence/2026-10-17-axial-shells/costs.md) retain the full
-workloads and all raw samples. [Artifact and receipt review](../hyperbrep/docs/evidence/2026-10-17-axial-shells/migration-review.md)
+[All adverse rows and new absolute costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/costs.md) retain the full
+workloads and all raw samples. [Artifact and receipt review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/migration-review.md)
 separates deterministic representation changes from semantic preservation.
 Source qualification, resource, package and historical performance obligations
 remain open. All 28 work packages remain open/in progress.
 
 ## 2026-10-17: axial intersection and cold continuation prerequisites
 
-Kept for exact capability and downstream consumption. [Admission evidence](../hyperbrep/docs/evidence/2026-10-17-partial-prism/README.md)
+Kept for exact capability and downstream consumption. [Admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-partial-prism/README.md)
 retains all original failed cases, the reversed-bore regression and the circular
 parameter-map failure. Genuine partial-depth shells remain unsupported.
 
 The matched campaign retains all 180 preceding case receipts across twenty full corpora in three alternating pairs; four new complete workflow rows have absolute costs in three further processes (123 processes total). Median case ratio 1.001813, range 0.801846–1.053511; 0 rows exceed the 10% review marker and 25 have increased allocation requests. All adverse rows, raw logs, process CPU/wall/RSS, allocator requests and executable sizes remain published. The new exact domain and continued consumption justify feature retention; this is not an optimization or an all-cohort performance-gate claim. Shared-host timing, requested allocation bytes and harness sizes do not establish speedup significance, retained-heap bounds or distribution size.
 
-[All adverse rows and new absolute costs](../hyperbrep/docs/evidence/2026-10-17-partial-prism/costs.md) include the complete
+[All adverse rows and new absolute costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-partial-prism/costs.md) include the complete
 four-workflow native/STEP consumer, with one warmup and three measured iterations
 per process. Existing source qualification, resource, package and historical
 performance obligations remain open. All 28 work packages remain open/in progress.
@@ -66,7 +66,7 @@ paired comparison. The upstream-parser probes are correctness
 comparisons only: their floating numeric carriers fail the exact-input contract,
 so they are not interchangeable performance baselines.
 
-[Reproduction, sources and raw evidence](../hyperbrep/docs/evidence/2026-10-15-step-syntax/README.md)
+[Reproduction, sources and raw evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-syntax/README.md)
 include native tests, four restored fault controls and execution of a WASM probe.
 The older HyperBRep archive-admission timing issue remains open; this new-crate
 comparison does not qualify that historical change.
@@ -115,7 +115,7 @@ for byte rejection), so their quotient would distort the observed timing.
 The isolated syntax executable grows from 656,008 to 3,020,240 bytes with native
 geometry dependencies. This is a measured dependency cost, not a code-size win.
 
-[Raw costs, sources, controls and reproduction](../hyperbrep/docs/evidence/2026-10-15-step-faceted/README.md)
+[Raw costs, sources, controls and reproduction](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-faceted/README.md)
 support this selected-domain increment. Generic STEP documents, independent
 exporter corpora, all native validation domains and global work/memory admission
 remain open. The earlier archive-admission timing gate is unchanged.
@@ -158,7 +158,7 @@ count is preserved. Importer executable sizes are 20,928,888 → 20,927,880 byte
 median process RSS is 41,772 → 41,628 KiB. These samples do not establish a
 statistically significant speedup or costs on large arbitrary models.
 
-[Sources, raw trials, checks and reproduction](../hyperbrep/docs/evidence/2026-10-15-step-export/README.md)
+[Sources, raw trials, checks and reproduction](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-export/README.md)
 bind this increment to its exact code. No additional optimization was benchmarked
 and rejected in this increment. The prior archive-admission timing gate remains
 open; new IO evidence does not qualify that historical change.
@@ -206,7 +206,7 @@ are unchanged. The harness executable grows from 20,937,304 to 21,094,504 bytes;
 median process RSS grows from 41,252 to 42,508 KiB. These are admitted costs of
 the broader exact exchange contract, not a memory optimization.
 
-[Source-bound evidence and reproduction](../hyperbrep/docs/evidence/2026-10-15-step-advanced/README.md)
+[Source-bound evidence and reproduction](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-advanced/README.md)
 include six deliberate implementation faults and three receipt-reader controls.
 No further optimization experiment was retained or rejected in this increment.
 Global scalar/work/heap limits and the historical archive-admission timing gate
@@ -248,15 +248,15 @@ Faceted allocator requests are unchanged. The advanced/faceted executables grow
 by 63,920/64,032 bytes. These observations retain the cost of new representation
 support; they are not an optimization or a whole-stack performance claim.
 
-[Admission, final sources, independent readers and all raw observations](../hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
+[Admission, final sources, independent readers and all raw observations](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
 include the rejected broad scalar prototype and the separate native/arc repeat.
 Curved supplied pcurves, other analytic/spline/assembly mappings, curved STEP
 export and internal total-work/memory/cancellation admission remain open.
 
 ## Selected analytic export (2026-10-16)
 
-The [admission record](../hyperbrep/docs/evidence/2026-10-16-step-analytic-export/README.md)
-and [manifest](../hyperbrep/docs/evidence/2026-10-16-step-analytic-export/manifest.json)
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-step-analytic-export/README.md)
+and [manifest](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-step-analytic-export/manifest.json)
 retain frozen baselines, two complete matched campaigns, all failed/adverse
 observations and three trials of each new workload. All 115 existing case
 receipts and fixture facts survive. The intermediate shared-header implementation
@@ -277,7 +277,7 @@ a total retained-memory, scalar-work or cancellation bound. All broader gates st
 
 ## Native analytic similarities (2026-10-16)
 
-The [source-bound admission record](../hyperbrep/docs/evidence/2026-10-16-analytic-similarity/README.md) retains the exact metric/chart,
+The [source-bound admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-analytic-similarity/README.md) retains the exact metric/chart,
 profile-reflection, archive and torus-measurement changes. No surrounding
 implementation was changed. All 123 prior case receipts and fixture facts agree
 across 60 alternating processes; seven previous STEP files are byte-identical.
@@ -299,7 +299,7 @@ The source-path WASM consumer and optional OCCT reader do not close release gate
 
 ## Seam-aligned analytic cuts (2026-10-16)
 
-The [source-bound record](../hyperbrep/docs/evidence/2026-10-16-seam-cuts/README.md) qualifies the original full-size seam cuts
+The [source-bound record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-seam-cuts/README.md) qualifies the original full-size seam cuts
 and their replay dependencies. The complete final 66-process campaign preserves
 131 of 132 prior receipts. One radical-cylinder archive has an explicit exact
 expression migration: all 32 changed scalar values prove equal, every non-scalar
@@ -326,7 +326,7 @@ All broader work-package, typed-frontier and delivery gates remain open.
 
 ## Repeated curved composition (2026-10-16)
 
-The [source-bound record](../hyperbrep/docs/evidence/2026-10-16-curved-coplanar/README.md) qualifies native recuts, canonical-empty
+The [source-bound record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-curved-coplanar/README.md) qualifies native recuts, canonical-empty
 recovery and complementary reconstruction on three original full-size torus/cone
 half cuts, both applicable orders and six exact similarities. All 138 preserved
 cases run in twelve complete corpora, three alternating CPU-0 pairs each, without
@@ -352,7 +352,7 @@ resource/provenance and delivery gates remain open.
 
 ## Exact ring-torus exchange (2026-10-17)
 
-The [complete admission record](../hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md) qualifies exact selected torus support, both angular maps, seams and repeated native composition. The [native performance record](../hyperbrep/PERFORMANCE.md#exact-ring-torus-exchange-2026-10-17) lists every adverse timing row and the supporting scalar observations.
+The [complete admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md) qualifies exact selected torus support, both angular maps, seams and repeated native composition. The [native performance record](../hyperbrep/PERFORMANCE.md#exact-ring-torus-exchange-2026-10-17) lists every adverse timing row and the supporting scalar observations.
 
 The complete 105-process campaign compares 167 preserved cases in seventeen corpora and records three new completed torus workflows separately. 162 old exact receipts are unchanged; five archive receipts have explicitly reviewed exact representation migrations. Their complete artifact comparison is linked in the admission record. The original no-migration gate remains failed. All 54 separately retained STEP/archive artifacts agree byte-for-byte. The maximum preserved-case median latency ratio is 1.807459; 15 rows exceed 10%. 65 rows change allocation observations, including 35 increases in calls or requested bytes. All raw samples, unfavorable results, allocation requests, process resources and executable sizes remain in the evidence. These shared-host observations do not establish a general speedup or close earlier cost gates.
 
@@ -375,7 +375,7 @@ All 175 preceding main benchmark cases retain their exact receipts across 18 pre
 
 The new completed workflow has median 2850.531 ms per call, 19204391 allocation requests and 1213465037 requested bytes. It includes exact checks, STEP materialization/reimport, source maps, cold native replay, repeated Booleans and empty recovery. The prior unsupported result is not a successful-work comparison.
 
-The unchanged geometric contracts retain their inputs and receipts. Consumer cost also includes additional source-map provenance and the extended graph/formula oracle; this is not a pure-kernel optimization claim. Every adverse timing, allocation and size observation remains in the report. Shared-host timings, allocator requests, process RSS and harness sizes do not prove aggregate speedups or retained-heap/package bounds. See the [admission record](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md), [main costs](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/benchmark-summary.json) and [dependency costs](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/dependency-costs-v1/summary.json).
+The unchanged geometric contracts retain their inputs and receipts. Consumer cost also includes additional source-map provenance and the extended graph/formula oracle; this is not a pure-kernel optimization claim. Every adverse timing, allocation and size observation remains in the report. Shared-host timings, allocator requests, process RSS and harness sizes do not prove aggregate speedups or retained-heap/package bounds. See the [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md), [main costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-exchange/benchmark-summary.json) and [dependency costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-exchange/dependency-costs-v1/summary.json).
 
 
 ## Public normalized-region extrusion (2026-10-17)
@@ -391,4 +391,4 @@ Three fresh benchmark processes each execute one warmup and three measured itera
 
 This exposes the existing native component constructor through a strict model-owning API. It does not add general rational-path area, a new planar arrangement or broader Boolean/analytic closure. A local strict construction does not certify an earlier approximate source intent; complete source-qualification delivery remains open. Solver budgets do not bound total work, expression growth, retained heap or cancellation. Source-path native/WASM consumers and optional OCCT reads do not establish package/MSRV, actual C/Python/JavaScript bindings, formal proofs, coverage, runtime fuzz/ASan/lexicase, release or the full pre-push matrix. All 28 work packages remain open or in progress. No push is included.
 
-See the [source-bound admission record](../hyperbrep/docs/evidence/2026-10-17-region-extrusion/README.md) for complete samples and reproduction.
+See the [source-bound admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-region-extrusion/README.md) for complete samples and reproduction.

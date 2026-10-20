@@ -100,7 +100,7 @@ scope; nested scopes also charge their parents. The two counters do not bound
 all scalar or geometry work, coefficient growth, memory or time. Worker
 allocations, cancellation and full proof-stage receipts remain separate
 requirements. See the [operation-scope contract](../ARCHITECTURE.md#operation-scopes)
-and [qualification evidence](../evidence/2026-10-14-operation-context/manifest.json).
+and [qualification evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-14-operation-context/manifest.json).
 
 ### Outcomes
 

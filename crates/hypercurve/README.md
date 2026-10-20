@@ -249,7 +249,7 @@ exact signatures.
 - `Curve2::has_certified_injective_image` supplies a strict sufficient proof
   for complete images, including connected native spans with one common
   monotone coordinate. A missing certificate does not imply self-intersection.
-  [Qualification](../hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md)
+  [Qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md)
   covers its use in independent BREP replay and its explicit limits.
 - Bézier analysis includes cusp and inflection classification, monotone spans,
   line/curve contacts, curve/curve intersection, length bounds, exact

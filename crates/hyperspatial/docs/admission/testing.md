@@ -43,7 +43,7 @@ README doctest, including 64 generated invariant cases.
 | `bash scripts/bench-reports.sh hyperspatial`; Rust 1.95 `cargo bench --locked --offline -p hyperspatial --bench forward_local` | Both optimized probes complete all rows; no comparative speed claim. |
 | `zizmor --pedantic --strict-collection .`, cached Zizmor 1.31.1 | No findings. Zizmor's default offline audit mode does not perform online audits. |
 
-[Coverage data](../../verification/2026-10-18-e1-coverage.json) records every
+[Coverage data](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e1-coverage.json) records every
 production file, counts, source digests, compiler, features and exclusions.
 The first measurement was 600/655 lines; the public provenance and diagnostic
 assertions raised it without excluding source or lowering the 95% floor.
@@ -55,7 +55,7 @@ smoke replay under `-runs=1000 -seed=20261018 -max_len=6 -timeout=10
 -rss_limit_mb=2048`. Its 918 initial six-byte inputs were
 `[a,b,latitude,longitude,axes,3]`, with `(a,b)` from `[(4,2),(2,4),(3,3)]`,
 latitude indices 0..9, longitude indices 0..17, and axes 0..2 (exclusive ends).
-The [raw log](../../verification/2026-10-18-e1-fuzz-smoke.txt) retains the
+The [raw log](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e1-fuzz-smoke.txt) retains the
 sanitizer/coverage warnings: this was an **uninstrumented corpus replay**, not
 an ASan campaign or coverage-guided fuzzing result. An earlier unseeded smoke
 run did not exercise the six-byte domain and is not credited as coverage.

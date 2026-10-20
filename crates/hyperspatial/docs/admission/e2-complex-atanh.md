@@ -27,7 +27,7 @@ benchmarks, source consumer, cache configurations, directed selection and a
 sanitizer campaign that actually reaches mutation. Existing 10-second input
 and 2048 MiB RSS limits remain external containment, not native bounds.
 
-The [final-source verification](../../verification/2026-10-19-e2-complex-atanh/README.md)
+The [final-source verification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-complex-atanh/README.md)
 passes stable/MSRV checks, all four cache configurations, native/downstream
 suites, twelve independent coverage gates and completed benchmark rows.
 Directed selection runs 176 cases in 22 buckets; ASan advances from 260

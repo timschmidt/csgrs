@@ -115,7 +115,7 @@ Boolean results can carry Bezier and conic fragments that cut their source at al
 - `scenes::tests::multi_boolean_defaults_resolve_all_boolean_modes`;
 - `scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes`.
 
-The [retained demo-result record](../../docs/evidence/2026-10-09-hypercurve-demo-retained-results/manifest.json)
+The [retained demo-result record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hypercurve-demo-retained-results/manifest.json)
 repairs both using the existing `project_to_finite_curve_paths` display boundary,
 while retaining the original exact region and paths for subsequent operations.
 The original three full scene pairs decide all four Boolean modes; seven formerly
@@ -173,7 +173,7 @@ Keep these in mind when measuring:
 
 ## Native circular endpoint projection follow-up (2026-10-09)
 
-The [retained circular-area record](../../docs/evidence/2026-10-09-hypercurve-retained-circular-area/manifest.json) certifies the original full
+The [retained circular-area record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hypercurve-retained-circular-area/manifest.json) certifies the original full
 CPArti A5/A6 overlap and adds shared native arc lowering for retained endpoints.
 The narrow quadratic view strictly replays its selected root and does not enter
 the general scalar-witness cache. General implicit projection was rejected after

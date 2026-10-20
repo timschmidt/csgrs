@@ -45,5 +45,5 @@ The candidate's 732 frozen runtime, test, README and tooling files match
 the integrated tree byte for byte. Complete stable/MSRV checks, native suites,
 all four cache configurations, directed/ASan campaigns, twelve independent
 coverage floors and all thirteen root integration checks pass. The
-[verification record](../../hyperspatial/verification/2026-10-19-e2-complex-atanh/README.md)
+[verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-complex-atanh/README.md)
 records commands, failures, hashes, benchmark scope and remaining limits.

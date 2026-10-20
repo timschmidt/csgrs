@@ -7,8 +7,6 @@ authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/timschmidt/hyperbrep"
 readme = "README.md"
-# Historical acceptance records remain available in the source repository.
-exclude = ["/docs/evidence"]
 keywords = ["brep", "cad", "geometry", "exact", "topology"]
 categories = ["mathematics", "graphics", "data-structures"]
 

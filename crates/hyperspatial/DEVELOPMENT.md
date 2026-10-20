@@ -33,7 +33,7 @@ and exact relations reusable by strict spatial consumers. Its
 [complex admission](../hyperlattice/docs/admission-complex-jacobi.md) and
 [scalar relation admission](../hyperreal/docs/admission-jacobi-rational-relations.md)
 record the construction and proof budgets. The
-[verification record](verification/2026-10-19-e2-complex-jacobi/README.md)
+[verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-complex-jacobi/README.md)
 records passing stable/MSRV checks, all four cache configurations, eight
 independent coverage gates, directed selection and the completed ASan campaign.
 Native real and complex Jacobi epsilon preserve
@@ -41,7 +41,7 @@ quasi-periods, finite quarter-period values and pole diagnostics. Its
 [admission](../hyperlattice/docs/admission-jacobi-epsilon.md) and
 [spatial consumer contract](docs/admission/e2-jacobi-epsilon.md) record the
 independent ODE oracle and scalar endpoint/quotient fixes. The
-[verification record](verification/2026-10-19-e2-jacobi-epsilon/README.md)
+[verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-jacobi-epsilon/README.md)
 records passing stable/MSRV checks, four cache configurations, nine independent
 coverage gates and actual sanitizer mutation after seed replay. Thompson/Lee mapping and its selected
 inverse maps, and a complete ellipsoidal transverse projection, remain open.
@@ -50,7 +50,7 @@ coordinate reconstruction. Its [native admission](../hyperlattice/docs/admission
 [checked atan2 contract](../hyperreal/docs/admission-atan2-right-half-plane.md)
 and [spatial consumer contract](docs/admission/e2-complex-atanh.md) record cut
 semantics, an independent interval-series oracle, quadrant completion and
-cancellation fixes. Its [verification record](verification/2026-10-19-e2-complex-atanh/README.md)
+cancellation fixes. Its [verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-complex-atanh/README.md)
 records passing stable/MSRV checks, four cache configurations, twelve independent
 coverage floors and actual sanitizer mutation. Thompson/Lee inversion remains
 open after this prerequisite.
@@ -59,7 +59,7 @@ cold JSON/CBOR replay across all 22 scalar families. Hyperreal's optional
 root-completion proof follows its original native strategy within the same
 remaining proof budget. The [scalar admission](../hyperreal/docs/admission-bounded-parameter-encodings.md),
 [spatial contract](docs/admission/e2-parameter-encodings.md) and
-[verification record](verification/2026-10-19-e2-parameter-encodings/README.md)
+[verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-parameter-encodings/README.md)
 record 1,496 generated downstream workflows, stable/MSRV and four-cache
 checks, fourteen independent coverage floors and actual ASan mutation.
 This increment does not add a Thompson map or inverse.
@@ -209,7 +209,7 @@ retained exact value from finite evaluation bounds. Native `jacobi_sncndn`
 now shares that amplitude, reduces its periods with a certified quotient,
 and retains unit/elliptic square relations and the positive dn branch. Its
 [admission](../hyperreal/docs/admission-jacobi.md) records the real parameter
-domain and bounded relation recognition; [verification](verification/2026-10-19-e2-jacobi/README.md)
+domain and bounded relation recognition; [verification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-jacobi/README.md)
 records executed evidence and limits. Hyperlattice's `Complex::jacobi_sncndn`
 continues these functions using complementary and reciprocal modulus
 transformations, including negative parameters and finite quarter-period
@@ -223,7 +223,7 @@ continuation preserves quasi-periods, finite quarter-period values and pole
 diagnostics. Its argument differs from the amplitude accepted by incomplete
 Legendre E. The [epsilon admission](../hyperlattice/docs/admission-jacobi-epsilon.md)
 records the construction and independent ODE reference; the
-[verification record](verification/2026-10-19-e2-jacobi-epsilon/README.md)
+[verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-jacobi-epsilon/README.md)
 records completed acceptance and retained slow inputs. Next, admit the Thompson/Lee mapping and its certified
 inverse. The two intermediate-map inversions need
 certified enclosures and a named chart or sheet; convergence of ordinary
@@ -234,7 +234,7 @@ to reconstruct the isometric coordinate from Jacobi data. It excludes the real
 cuts and propagates unresolved membership as typed exhaustion. Its
 [admission](../hyperlattice/docs/admission-complex-atanh.md) records the
 independent oracle and required acceptance. The
-[verification record](verification/2026-10-19-e2-complex-atanh/README.md)
+[verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-complex-atanh/README.md)
 records the completed checks and remaining resource limits.
 Bounded parameter payloads now replay their exact source identities after
 serialization: `r = sqrt(m/(1-m))`, `a = v/sqrt(1-v*v)` and `tau = asin(u)`

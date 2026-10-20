@@ -88,7 +88,7 @@ documentation and WASM check/Clippy pass. The directed campaign completes 176
 cases; ASan performs actual mutations after initialization and finishes 11,268
 runs without new failure artifacts. The native benchmark accepts all 2,200
 evaluations in 220 rows on both compilers. The
-[verification record](../../verification/2026-10-19-e2-parameter-encodings/README.md)
+[verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-parameter-encodings/README.md)
 retains source hashes, command exits, coverage diagnostics, earlier failures,
 resource measurements and target integration checks.
 

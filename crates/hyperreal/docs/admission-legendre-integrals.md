@@ -13,7 +13,7 @@ Its tests retain cancellation and distinguish offsets of 1e-60; the
 records the reproduced missing certificate and required downstream checks.
 New constructions can serialize as the equivalent complete formula; existing
 wire tags and previously serialized mathematical definitions stay unchanged.
-The [epsilon verification record](../../hyperspatial/verification/2026-10-19-e2-jacobi-epsilon/README.md)
+The [epsilon verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-jacobi-epsilon/README.md)
 records final-source acceptance, including 137/138 forward-Legendre production
 lines covered, native/downstream tests and retained representation migrations.
 
@@ -93,7 +93,7 @@ the large second-kind result). Oracle agreement is not a proof of the native
 implementation or of MPFR's finite-precision error.
 
 Executed checks and retained evidence are in the
-[verification bundle](../../hyperspatial/verification/2026-10-19-e2-legendre/README.md).
+[verification bundle](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-legendre/README.md).
 Carlson and Legendre retain independent 95% production-line gates; Hyperspatial
 and the inverse-isometric subset keep their existing independent gates.
 This prerequisite

@@ -59,7 +59,7 @@ The initial three failing inputs also remain sanitizer seeds.
 
 ## Final verification
 
-The [verification record](../../verification/2026-10-19-e2-jacobi-epsilon/README.md)
+The [verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-jacobi-epsilon/README.md)
 records passing stable/MSRV validation, six independent source consumers,
 532 executions across four cache configurations and all nine independent
 coverage floors. Every configuration retains all 1,144 epsilon workflows.

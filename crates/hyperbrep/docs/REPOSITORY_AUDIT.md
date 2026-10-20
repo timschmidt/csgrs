@@ -22,7 +22,7 @@ test result or claiming that the proposed algorithms have landed.
 
 Upstream was subsequently integrated at
 `7cf9d82acee6f152047eb37e5ff2e6dcece51a0d` on 2026-10-15. The
-[integration record](evidence/2026-10-15-upstream-integration/README.md)
+[integration record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-upstream-integration/README.md)
 records the changed acceptance contract, reviewed dependency changes,
 source-specific requalification and inherited open failures. This audit's
 baseline counts and source observations remain historical. Consult the current

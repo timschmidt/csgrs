@@ -62,9 +62,9 @@ criterion tied in this corpus; dispatch counts ranged from 1,265 to 29,596.
 The timing criterion is intentionally noisy discovery pressure. No comparative
 speed claim follows from these samples.
 
-The [selection report](../../verification/2026-10-18-e1-directed/report.json)
+The [selection report](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e1-directed/report.json)
 retains source digests, compiler, build flags, seed, all selections and scores.
-[Compressed raw observations](../../verification/2026-10-18-e1-directed/observations.jsonl.gz)
+[Compressed raw observations](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e1-directed/observations.jsonl.gz)
 retain every outcome and dispatch path across seven native layers. Hardware:
 Intel Xeon E5-2680 v2 @ 2.80 GHz, x86_64 Linux. Failures/timeouts are retained and
 fail the driver; they cannot be selected as fast successful computations.
@@ -73,7 +73,7 @@ fail the driver; they cannot be selected as fast successful computations.
 
 The corpus now contains 36 integration tests plus the README doctest. All
 checks below passed; raw outputs are in
-[the verification directory](../../verification/2026-10-18-e1-directed/).
+[the verification directory](https://github.com/timschmidt/csgrs-evidence/tree/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e1-directed).
 
 | Check | Result |
 | --- | --- |
@@ -115,10 +115,10 @@ sanitizer diagnostic, and both logs contain coverage-increasing mutations:
 | `forward_local` | 918 original cases | 1,822 in 61 seconds | 8,198 / 24,381 | 619 MiB |
 | `normal_offset` | 44 family seeds + 40 selected cases | 511 in 61 seconds | 9,200 / 23,362 | 658 MiB |
 
-The [ASan report](../../verification/2026-10-18-e1-directed/asan-report.json)
+The [ASan report](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e1-directed/asan-report.json)
 contains exact before/after corpus bytes, source digests, commands, compiler and
-artifact inventories. [Forward/local log](../../verification/2026-10-18-e1-directed/asan-forward_local.log)
-and [normal-offset log](../../verification/2026-10-18-e1-directed/asan-normal_offset.log)
+artifact inventories. [Forward/local log](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e1-directed/asan-forward_local.log)
+and [normal-offset log](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e1-directed/asan-normal_offset.log)
 retain the raw observations. These counters cover the whole instrumented fuzz
 binary, not the production line/branch denominator. RSS includes sanitizer
 overhead and is not a native heap allocation bound. No native failure was found

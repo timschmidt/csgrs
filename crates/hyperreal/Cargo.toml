@@ -6,8 +6,6 @@ repository = "https://github.com/timschmidt/hyperreal/"
 version = "0.13.1"
 edition = "2024"
 readme = "README.md"
-# Full validation replay bundles remain in the repository.
-exclude = ["/benchmarks/checkpoints/*.tar.gz"]
 keywords = ["real", "rational", "arithmetic", "exact", "math"]
 categories = ["mathematics", "science", "data-structures"]
 

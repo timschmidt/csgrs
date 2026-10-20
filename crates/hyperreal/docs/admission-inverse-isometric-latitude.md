@@ -86,7 +86,7 @@ and all 484 ordered pairs of the existing 22 public scalar recipes. This is a
 development oracle: no MPFR value enters a production result. The oracle's
 adapter initially parsed Hyperreal's mixed-fraction Display text incorrectly;
 `1 2/3` became `12/3`. The retained
-[failure](../../hyperspatial/verification/2026-10-18-e2-isometric/oracle-adapter-failure.log)
+[failure](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e2-isometric/oracle-adapter-failure.log)
 and regression show why numerator, denominator and sign are now transferred
 explicitly. No mathematical fixture or error threshold was relaxed.
 
@@ -105,7 +105,7 @@ directed/fuzz inputs also vary both families, axis ratio, height and meridian.
 The README consumer executes an independent oblate identity through ECEF and
 local frames using only the Hyperspatial source dependency.
 
-The [verification directory](../../hyperspatial/verification/2026-10-18-e2-isometric/)
+The [verification directory](https://github.com/timschmidt/csgrs-evidence/tree/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e2-isometric)
 retains actual logs, coverage denominators, traces, sampled timings and campaign
 configuration. Completed checks on stable Rust 1.99.0 include:
 
@@ -188,7 +188,7 @@ including coverage-increasing mutations after initialization: 10,201 counters,
 There was no crash, timeout or sanitizer diagnostic and no new failure artifact
 to minimize. These counters describe the instrumented fuzz binary, not
 production line/branch coverage. The before/after bytes and full log are in
-[the extended report](../../hyperspatial/verification/2026-10-18-e2-isometric/asan-mutations/report.json).
+[the extended report](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e2-isometric/asan-mutations/report.json).
 
 The initial runs of the existing targets also completed with mutations and no
 new failure:

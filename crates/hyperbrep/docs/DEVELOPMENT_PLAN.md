@@ -3,7 +3,7 @@
 Status: implementation blueprint. Updated 2026-10-19 for retained surface
 evaluation, upstream `dbe99e3cc` and concurrent development ownership.
 
-The [procedural solid-revolution increment](evidence/2026-10-18-procedural-revolution/README.md)
+The [procedural solid-revolution increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-procedural-revolution/README.md)
 advances WP02/WP07/WP09/WP13 by consuming retained latitude generators in closed
 solids. Unified regions include holes, components and empty results. Ordinary
 admission replays a complete product-shell proof independently of optional
@@ -12,7 +12,7 @@ composable; general surface intersections, face arrangements, curved Booleans,
 fillets and shelling remain implementation priorities. All 28 work packages
 remain incomplete, and production release/pre-push gates remain separate.
 
-The [selected revolution increment](evidence/2026-10-18-selected-revolution/README.md)
+The [selected revolution increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-revolution/README.md)
 advances WP02/WP03/WP09/WP13 with retained circular orbits, selected meridian
 endpoints and ordinary complete image/axis-clearance admission. Reflected
 similarities, selected meridian splits, latitude splits, full-period standalone
@@ -22,7 +22,7 @@ bytes. General surface regularity/embedding, selected angular fields, solid CAD
 closure and release/resource gates remain open. All 28 work packages remain
 incomplete; the finite evidence does not change their broader acceptance gates.
 
-The [selected surface-patch increment](evidence/2026-10-18-selected-surface-patches/README.md)
+The [selected surface-patch increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-surface-patches/README.md)
 advances WP02/WP09/WP13 with public planar faces and finite extrusion patches
 whose endpoints retain selected parameters. Ordinary builder admission proves
 complete coordinate boundary images. Holes, reversal, affine transforms, selected
@@ -32,14 +32,14 @@ first-export expression changes and their adverse size/time costs are explicitly
 audited. The revolution increment above extends selected latitude generators;
 general embedding and CAD closure remain open; no complete work package or release gate is closed.
 
-The [planar lift increment](evidence/2026-10-18-planar-curve-lift/README.md)
+The [planar lift increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-planar-curve-lift/README.md)
 advances WP02/WP07/WP08/WP13 with retained planar spatial curves, complete
 source/frame/chart agreement, native replay and original nonlinear parallel-cap
 extrusion. Authored paths, planar faces, holes/components, edge splits,
 nonuniform reflected affine transforms and repeated supported slab operations
 consume the result. All seven original profile recipes now reach native cold
 replay; the nonlinear cap's unavailable metric remains a separate typed query.
-The [selected planar-image increment](evidence/2026-10-18-selected-planar-images/README.md)
+The [selected planar-image increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-planar-images/README.md)
 adds retained spatial points at selected roots, correlated affine queries,
 selected edge splitting and cold replay, followed by the same supported solid
 operations. Hypercurve owns affine-form and range-injectivity proofs; BRep owns
@@ -49,7 +49,7 @@ frontier. Broader selected surface fields, unlike procedural-source ordering,
 general intersections and STEP encodings remain dependencies. These finite
 extensions do not close a complete work package.
 
-The [finite plane-contact increment](evidence/2026-10-18-retained-plane-contacts/README.md)
+The [finite plane-contact increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-retained-plane-contacts/README.md)
 advances WP02/WP05b/WP06/WP08. Curve/surface contact results now retain exact
 `Parameter` and `GeometricPoint3` values, first-derivative contact kind, and
 complete mixed point/range components. Higher-degree rational Bézier/NURBS
@@ -60,7 +60,7 @@ solid continuation. General selected surface fields remain dependencies of
 broader modeling closure. The retained STEP encoding boundary remains explicit.
 This API break adds no compatibility layer and closes no complete work package.
 
-The [selected procedural-profile increment](evidence/2026-10-18-selected-procedural-profiles/README.md)
+The [selected procedural-profile increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-procedural-profiles/README.md)
 advances WP02/WP05b/WP06/WP08/WP13. Spatial domains retain selected parameters;
 planar source charts, translated selected origins and coordinate-based side
 correspondences construct and replay the original nonlinear cap after exact
@@ -154,7 +154,7 @@ native, feature, WASM and composition paths after integration. Keep a fixed
 revision throughout checks and matched measurements; refresh source-specific
 evidence before making claims on the merged code.
 
-The [equality integration](evidence/2026-10-18-equality-upstream-integration/README.md)
+The [equality integration](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-equality-upstream-integration/README.md)
 keeps shared exact rational facts in Hyperreal and their consumption in
 Hypercurve. Reuse a sufficient fact and preserve the original proof fallback
 when it is inconclusive. A false point equality result is not, by itself, a
@@ -166,7 +166,7 @@ binding evidence retains its own source/domain and does not qualify the current
 BRep distribution. Historical adverse costs and rejected scalar experiments
 remain recorded; unrelated work remains with the concurrent thread.
 
-The [prism admission cost increment](evidence/2026-10-17-prism-admission-cost/README.md)
+The [prism admission cost increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-prism-admission-cost/README.md)
 preserves the complete current domain and deterministic outputs while reducing
 redundant proof work. Keep necessary topology checks before irrelevant support
 queries, and put shared exact geometric relations in the geometry owner.
@@ -179,11 +179,11 @@ visible. The selected planar-image increment at the start of this plan
 identifies the latest artifact baseline. General CAD functionality and delivery remain
 the project objective, with all work-package completion gates still open.
 
-The [retained-region diagnostic](evidence/2026-10-17-retained-region-extrusion/README.md)
+The [retained-region diagnostic](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-retained-region-extrusion/README.md)
 preserves the seven original profile recipes. The
-[native image increment](evidence/2026-10-18-native-boundary-images/README.md)
+[native image increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-native-boundary-images/README.md)
 resolved retained-chord construction, replay and common-profile continuation.
-The [exact spline exchange increment](evidence/2026-10-18-spline-exchange/README.md)
+The [exact spline exchange increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-spline-exchange/README.md)
 now completes the original mixed profile through STEP, including holes,
 disconnected components, reversed and affine profiles and repeated cuts/restoration.
 HyperBRep owns native spline inspection, plane projection, extrusion point location
@@ -196,7 +196,7 @@ later selected-profile extension is recorded below. General selected-parameter
 integration, broader procedural extrusion, spline surfaces, arbitrary pcurves
 and release delivery remain open.
 
-The [measurement admission increment](evidence/2026-10-18-measurement-admission/README.md)
+The [measurement admission increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-measurement-admission/README.md)
 advances WP12 by separating absent represented integrals from native prism
 validity. Hypercurve owns simple-loop orientation from topology and winding;
 HyperBRep owns cap pairing, positive material, shell orientation and optional
@@ -207,7 +207,7 @@ in further builders and importers. Do not require coordinate materialization or
 an elementary integral merely to admit valid topology. Fully deferred metrics,
 certified integration and retained non-native spatial carriers are still open.
 
-The [selected-profile increment](evidence/2026-10-18-selected-profile-extrusion/README.md)
+The [selected-profile increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/README.md)
 adds `Curve2::native_image()` in Hypercurve. Complete exact subcurve substitution
 admits selected quadratic endpoints without replacing their source/root authority
 or using endpoint chords. The original difference/XOR and affine profiles now
@@ -218,12 +218,12 @@ faces and tiny positive overlaps remain distinct. The original nonlinear paralle
 cap remains unsupported, and irrational STEP vertices remain explicitly
 unencodable. Preserve the 289 preceding artifacts and the 40 new native archives
 plus eight typed encoding diagnostics. Follow the
-[next-domain obligations](evidence/2026-10-18-selected-profile-extrusion/next-domains.md)
+[next-domain obligations](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/next-domains.md)
 for retained spatial carriers, general selected fields, full authoring provenance
 and conforming interchange. This finite extension does not close those gates.
 
 The retained diagonal STEP case also has a
-[schema and exact-coordinate feasibility review](evidence/2026-10-17-prism-admission-cost/future-step-research.md).
+[schema and exact-coordinate feasibility review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-prism-admission-cost/future-step-research.md).
 Do not replace its irrational Cartesian vertices with points-on-curves inside
 the current advanced-face profile. Nor can one affine instance transform make
 all of that fixture's existing vertices finite-decimal. Any exact representation
@@ -231,7 +231,7 @@ normalization, alternate conforming profile or explicit lossy exchange route
 requires its own contract, source mapping and complete admission evidence.
 
 Upstream `7ed435017` adds package/license and README corrections. The
-[package integration](evidence/2026-10-17-package-upstream-integration/README.md)
+[package integration](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-package-upstream-integration/README.md)
 preserves production source and dependencies, excludes historical acceptance
 archives from the HyperBRep crate payload, and supplies the already-declared
 Apache text in both BREP packages. Keep evidence in the source repository.
@@ -241,7 +241,7 @@ Carry these requirements into subsequent package and feature work while the
 existing runtime and performance qualification remains tied to its source.
 
 Upstream `3b69af324` corrects the interpretation of its metadata-order trial:
-the [storage identity audit](../../../docs/evidence/2026-10-16-native-metadata-isolation/progress-v2.md)
+the [storage identity audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-16-native-metadata-isolation/progress-v2.md)
 failed because nested FUSE build views could alias distinct Cargo artifact
 paths. Preserved executable bytes do not establish which dependency bytes the
 compiler consumed. Keep those observations and failures as historical evidence,
@@ -255,7 +255,7 @@ guidance applies to future merges and evidence collection as well as the current
 increment. Upstream's full-board and copper-neck runtime gates and its 35-file
 pending candidate remain unadmitted; unrelated repairs retain upstream ownership.
 
-The [preceding format integration](evidence/2026-10-16-upstream-format-integration/README.md)
+The [preceding format integration](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-upstream-format-integration/README.md)
 preserves the qualified prism implementation while incorporating upstream
 `c9410688b`. OBJ now resolves all triangle indices before emitting any bytes,
 using Hypermesh's existing resolver; this is not a general topology certificate.
@@ -269,17 +269,17 @@ surface require separate evidence. A validated imported mesh is not itself
 an exact analytic reconstruction, and exact promotion cannot recover values
 lost at an earlier format boundary.
 
-The [physical requalification](../../../docs/evidence/2026-10-16-physical-build-requalification/progress-v1.md)
+The [physical requalification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-16-physical-build-requalification/progress-v1.md)
 retains full-board worker CPU of 191.224524234 seconds against a 120-second gate,
 and copper-neck check-body wall time of 86.843039677 seconds against 60 seconds.
 Those gates remain failed; subsequent format corrections do not admit the
 35 pending native files or repair missing historical artifacts. The current
-[STL record](../../../docs/evidence/2026-10-16-stl-native-validation/progress-v3.md)
+[STL record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-16-stl-native-validation/progress-v3.md)
 retains the historical tiny-coordinate text and projected-face collapse failures.
 The documented `basic_shapes` feature combination includes both `curve` and
 `stl-io`.
 
-The [preceding WASM integration](evidence/2026-10-16-upstream-wasm-integration/README.md)
+The [preceding WASM integration](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-upstream-wasm-integration/README.md)
 incorporates `3d335db43` and `99b88f707`. OBJ/ASCII STL now encode the chosen
 finite binary64 projection as exact terminating decimals; affected fractional
 text, lengths and checksums intentionally migrate. Binary STL proves each
@@ -295,12 +295,12 @@ This mesh-format boundary does not authorize routing authoritative BREP values
 or exact STEP serialization through binary64; those remain native exact paths
 in BREP and BREP IO.
 
-The [stroke integration](evidence/2026-10-17-stroke-upstream-integration/README.md)
+The [stroke integration](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-stroke-upstream-integration/README.md)
 incorporates upstream `be2a0c37b` after the conical STEP increment. Hypercurve
 owns the exact single-line butt/round stroke fast path. Its regularized region
 and certified native contour view remain the authority for extrusion; boundary
 subdivision can change without changing the represented set. The
-[normalized-region extrusion increment](evidence/2026-10-17-region-extrusion/README.md)
+[normalized-region extrusion increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-region-extrusion/README.md)
 adds `builder::extrude_curve_region`, reusing the native component constructor
 under a strict scope. Four butt/round stroke workflows and two nested/disconnected
 material workflows complete exact measurement, native replay, STEP, Boolean reuse
@@ -311,7 +311,7 @@ measurement blocker remains an independent open case. A local strict decision
 does not certify an earlier approximate source's intent; full source-qualification
 delivery and general persistent-curve measurement remain separate obligations.
 
-The [axial-shell continuation](evidence/2026-10-17-axial-shells/README.md) completes the four
+The [axial-shell continuation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md) completes the four
 original partial-depth result cases through exact native admission, cold replay,
 STEP and further modeling. Whole-band wall structure, per-loop oriented winding,
 exact cap differences, shared geometric contacts and connected vertex links
@@ -360,11 +360,11 @@ geometry-only strings. Padding insets the Hilbert grid bounds; it is not a
 boundary-clearance guarantee. These APIs remain CSGRS/Hypercurve responsibilities;
 BREP consumers compose them without duplicating the curve kernel.
 
-The [preceding native integration](evidence/2026-10-16-upstream-native-integration/README.md)
+The [preceding native integration](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-upstream-native-integration/README.md)
 qualifies the unchanged BREP implementation against upstream `73472622d`, including
 the scalar root-square/eighth-angle proofs and BREP's earcut configuration. Its
 complete preserved corpus includes the oblique continuation; inherited failures
-and adverse cost observations remain explicit. The [preceding integration record](evidence/2026-10-16-upstream-corrections/README.md) remains historical evidence.
+and adverse cost observations remain explicit. The [preceding integration record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-upstream-corrections/README.md) remains historical evidence.
 Both 45-degree cone reconstruction orders now return native results in the
 wider diagnostic. Promote them with independent exact set/topology and
 composition expectations before claiming semantic admission; counts and replay
@@ -399,13 +399,13 @@ Upstream's separately pending 35-file native workload remains unadmitted: its
 original full-board and copper-neck runtime gates still fail. Its source review
 and profiling are diagnostic evidence, not performance acceptance. The previous
 parked scalar investigation remains preserved and unapplied. The
-[conic comparison reuse](evidence/2026-10-16-conic-comparison-reuse/README.md)
+[conic comparison reuse](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-conic-comparison-reuse/README.md)
 keeps certified interval orderings within one helper call and preserves the
 existing exact domain. Its evidence remains the historical optimization baseline;
 all prior adverse observations remain visible. Any new persistent proof cache
 needs separate identity, lifetime, resource and state-matrix admission.
 
-The [prism continuation record](evidence/2026-10-16-prism-continuation/README.md)
+The [prism continuation record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-prism-continuation/README.md)
 covers directed subtraction when the cutter's axial slab contains the source's.
 Native line/circle extrusion, signed conic cap integration and validated common
 right-prism frames preserve recuts, holes, subdivision and replay. Exact linear
@@ -416,7 +416,7 @@ the original oversized cutters and all formerly supported planar exports;
 never broaden the shortcut from close endpoint values or corner samples.
 Future extensions must continue through the supported interchange path. A native
 Boolean followed by a typed export blocker is not a completed STEP workflow.
-The [builder proof-reuse increment](evidence/2026-10-16-builder-certificates/README.md)
+The [builder proof-reuse increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-builder-certificates/README.md)
 retains positive admission facts without changing that feature domain. Its
 matched 167-case campaign preserves every receipt and all 54 retained artifacts;
 fresh/reused circular import improves locally, while all adverse timing,
@@ -425,15 +425,15 @@ validated-transfer proof sets have distinct semantics. Keep secondary prism
 derivation, cavity scope, failed-admission recovery and edit invalidation.
 This does not close earlier cost regressions or total-work/heap/cancellation
 contracts. Further STEP families need exact chart and scalar-encoding proofs;
-the [cone/torus exchange notes](evidence/2026-10-16-builder-certificates/next-exchange-research.md)
+the [cone/torus exchange notes](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-builder-certificates/next-exchange-research.md)
 identify parameter-convention and representability questions for reproduction
-before implementation. The [ring-torus exchange increment](evidence/2026-10-16-torus-exchange/README.md)
+before implementation. The [ring-torus exchange increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md)
 implements the selected circular latitude/meridian domain with both angular
 units, explicit seams and exact finite-decimal encoding. It preserves repeated
 native subdivision/replay through a necessary shared inverse-angle certificate
 and native contact/image facts. Preserve the scalar baseline, rejected BREP
 recognizers and all performance/representation observations. The
-[conical LINE exchange increment](evidence/2026-10-17-cone-exchange/README.md)
+[conical LINE exchange increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md)
 adds native generator/axis recognition, branch-preserving charts, exact per-face
 source maps and finite generator anchors. General torus trims, further conical
 source charts and clean package delivery remain separate work.
@@ -475,7 +475,7 @@ writing this plan does not verify or close a property or target.
 
 ### Acceptance order after the upstream integration
 
-The [integration record](evidence/2026-10-15-upstream-integration/README.md)
+The [integration record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-upstream-integration/README.md)
 identifies the merged revisions, checks and remaining gaps. It supplements
 the historical audit rather than relabeling its old observations as current.
 The root [agent rules](../../../AGENTS.md), properties and admission protocol
@@ -485,7 +485,7 @@ apply to each subsequent patch; these application notes do not replace them.
    target source, identify the owning layer and missing acceptance test, then
    implement the smallest coherent repair. The integration baseline's Boolean
    front doors took two `SolidRef` values and could not consume empty results.
-   The [BodySet increment](evidence/2026-10-15-body-set/admission.md) changes
+   The [BodySet increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-body-set/admission.md) changes
    the public operand/result contract and exercises empty/disconnected/overlapping
    selections through further operations. Preserve those successes and extend
    full geometric and evidentiary closure before treating additional primitive
@@ -1156,7 +1156,7 @@ completeness over the original face domains.
    Complete positive-radius revolutions with a common axis already reduce to
    the owning Hypercurve filled-region Boolean, including retained procedural
    and selected profiles. Preserve its
-   [qualification corpus](evidence/2026-10-19-coaxial-procedural/README.md)
+   [qualification corpus](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-coaxial-procedural/README.md)
    while extending the general fallback; this product-domain proof does not
    supply missing branches for noncoaxial surfaces or singular axis contacts.
 3. For rational surfaces, decompose at knots, establish denominator signs,
@@ -1195,7 +1195,7 @@ release risk, not something a sampling fallback resolves.
 Separate regular isolated branches from singular/common-component work in
 both implementation and capability reporting.
 
-The [rational polynomial cell prototype](evidence/2026-10-19-bivariate-cell-prototype/README.md)
+The [rational polynomial cell prototype](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-bivariate-cell-prototype/README.md)
 now provides the first WP05a implementation in Hypersolve. It retains complete
 projection/event fibers and proves branch adjacency with root-free connection
 strips, including interior loops and singular incidence. Its tests replay
@@ -1206,7 +1206,7 @@ feeds the native branch carrier described below. That prototype alone did not co
 section. The later complete plane/tensor increment now admits that full target. WP05a is in progress;
 its complete gate and G3/G4 remain open.
 
-The [native polynomial-branch increment](evidence/2026-10-19-polynomial-branches/README.md)
+The [native polynomial-branch increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-polynomial-branches/README.md)
 now consumes that graph as `PolynomialCurveSet2`, native `Curve2` branches and
 isolated `CurvePoint2` values. Selected fiber evaluation, subdivision, reversal,
 similarity, conservative bounds and point-definition replay retain the original
@@ -1214,12 +1214,12 @@ chart and shared equation. BRep's public archive admits these point definitions
 as retained-chord endpoints with degree/element accounting and checked singleton
 replay. At that increment, the public surface section was still unsupported; the
 plane/tensor integration below now supplies its complete admitted domain. Follow the new
-[next domains](evidence/2026-10-19-polynomial-branches/next-domains.md) for selected
+[next domains](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-polynomial-branches/next-domains.md) for selected
 rational functions, regular derivatives/maps, spatial/dual-chart images,
 whole-branch replay, components and arrangements. General filled topology and
 all complete work-package/release gates remain open.
 
-The [selected-fiber image increment](evidence/2026-10-19-selected-fiber-images/README.md)
+The [selected-fiber image increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-selected-fiber-images/README.md)
 now computes mixed affine coordinates of polynomial-fiber points in their
 retained algebraic field. Hypersolve owns local rational-image norms; Hypercurve
 owns source selection, denominator checks and replayable affine recipes. BRep
@@ -1231,10 +1231,10 @@ record describes an affine projection domain for general height equations that
 can reuse BRep's existing planar spatial lift. General rational maps, further
 regularity/derivative support and patch-pair spatial images remain later work.
 Follow the associated
-[next domains](evidence/2026-10-19-selected-fiber-images/next-domains.md) before
+[next domains](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-selected-fiber-images/next-domains.md) before
 claiming a complete section or trim arrangement. No work package is closed.
 
-The [selected pcurve parameter-map increment](evidence/2026-10-19-selected-pcurve-maps/README.md)
+The [selected pcurve parameter-map increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-selected-pcurve-maps/README.md)
 now maps native pcurve parameters to retained spatial `Parameter` values with
 strict domain checks, including selected endpoints. Retained and iso mappings
 materialize selected restrictions with checked archive replay. Hypercurve owns
@@ -1244,10 +1244,10 @@ The API break is direct: `spatial_parameter_at(&CurveParameter2) -> Parameter`
 and pcurve `subcurve(&Parameter, &Parameter)`. Consumers needing stored scalar
 views explicitly request them. General retained pcurve/surface evaluation,
 whole-branch/event replay and complete section topology remain open; follow the
-[associated next domains](evidence/2026-10-19-selected-pcurve-maps/next-domains.md).
+[associated next domains](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-selected-pcurve-maps/next-domains.md).
 No work package or release gate is closed by this increment.
 
-The [retained pcurve evaluation increment](evidence/2026-10-19-pcurve-evaluation/README.md)
+The [retained pcurve evaluation increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-pcurve-evaluation/README.md)
 now evaluates selected spatial parameters into retained UV images, with direct
 caller migration and no legacy overload. Native rational sections/projections,
 retained/iso mappings and admitted planar-source similarity projections preserve
@@ -1255,21 +1255,21 @@ source evidence through queries and point-graph replay. Face classification
 consumes the retained UV point directly. `geometry/pcurve.rs` owns these maps;
 Hypercurve retains scalar and point proof authority. Selected nonlinear `Surface::point_at`
 images, whole-section selected restriction and branch/event persistence remain
-required next steps. Follow the [associated next domains](evidence/2026-10-19-pcurve-evaluation/next-domains.md).
+required next steps. Follow the [associated next domains](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-pcurve-evaluation/next-domains.md).
 No work package or release gate is closed by this increment.
 
-The [retained surface evaluation increment](evidence/2026-10-19-surface-evaluation/README.md)
+The [retained surface evaluation increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-surface-evaluation/README.md)
 now takes a joint Hypercurve UV point and returns `GeometricPoint3`. Plane images
 retain their source surface and UV evidence directly; shared affine queries,
 transforms, straight/rotational sweep origins and checked archive 11 replay
 consume the result. Represented formulas remain in one private coefficient
 evaluator. Nonlinear selected images fail typed after domain checks. Archive 11
 uses a generic sweep origin and has no legacy decoder. Follow the
-[current next domains](evidence/2026-10-19-surface-evaluation/next-domains.md)
+[current next domains](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-surface-evaluation/next-domains.md)
 for source-bound nonlinear maps, complete selected section restrictions and
 branch/event persistence. Work-package and publication gates remain open.
 
-The [rational surface evaluation increment](evidence/2026-10-19-rational-surface-evaluation/README.md) extends this boundary
+The [rational surface evaluation increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-rational-surface-evaluation/README.md) extends this boundary
 to positive-weight Bézier/NURBS tensor patches and native rational-profile
 extrusions. Hypercurve owns original-source rational queries; Hypersolve owns
 polynomial/basis arithmetic; HyperBRep retains surface/UV authority, prepared
@@ -1281,16 +1281,16 @@ interior-loop success assertion. Selected angular images, general procedural
 profiles, full resource bounds and release/push gates remain open.
 
 The current integration supersedes the historical dependency frontiers above.
-[Complete plane/tensor sections](evidence/2026-10-19-plane-tensor-sections/README.md)
+[Complete plane/tensor sections](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-plane-tensor-sections/README.md)
 now include the original full interior-loop target, nonlinear weighted images,
 selected restrictions, isolated contacts, both pcurves, and whole-image validation
-through affine replay. [Section differentials](evidence/2026-10-19-section-differentials/README.md)
+through affine replay. [Section differentials](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-section-differentials/README.md)
 add regular implicit jets, smooth-event directions, exact spatial vectors,
 selected native rational derivatives and explicit chart transport. Hypercurve
 owns joint differential evaluation; BRep owns spatial lifting and affine transport.
 No independent coordinate roots or sampled tangent chords become authority.
 
-The [surface differential increment](evidence/2026-10-19-surface-differentials/README.md)
+The [surface differential increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-surface-differentials/README.md)
 adds joint surface partials, exact unit normals and spatial vector products over
 proved common sources. Hypercurve owns original-source rational-form arithmetic
 and oriented parallel directions; BRep owns the surface Jacobian, positive-root
@@ -1311,7 +1311,7 @@ failure and subsequent modeling consumers. A finite cusp derivative is a limit
 operation, not permission to cancel an original zero denominator. General NURBS
 and patch-pair sections, fillets/shelling/sweeps, STEP, assemblies/history and all
 other work packages retain their existing requirements. Use the current
-[next domains](evidence/2026-10-19-surface-differentials/next-domains.md) to choose
+[next domains](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-surface-differentials/next-domains.md) to choose
 implementation order; older records remain evidence for their own revisions.
 
 Apply [research gates G2–G5](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)
@@ -1720,7 +1720,7 @@ native splitting, replay and empty-result composition consume the imported
 model. Shared scalar quarter-turn and rational-coefficient certificates own the
 required inverse-trigonometric identities. The
 [mapping contract](../../hyperbrep-io/docs/STEP_MAPPING.md#direct-circular-edges-and-cylindrical-faces)
-and [admission evidence](evidence/2026-10-15-step-circles/README.md) define this
+and [admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-circles/README.md) define this
 subset. Supplied surface representations must also be admitted; they must not
 be ignored to accept the spatial representation. WP14a and WP14b remain open,
 including independent exporter corpora, other analytic families, exact curved
@@ -1729,7 +1729,7 @@ export and the resource/delivery gates.
 The native `ModelBuilder::validate_edge_image` query now supplies the shared
 whole-curve check needed before selecting supplied pcurves. Its circle
 certificate compares complete angular frames, including radial phase and plane;
-the [repair and API evidence](evidence/2026-10-15-edge-image-proof/README.md)
+the [repair and API evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-edge-image-proof/README.md)
 records the prior false proofs. The supplied-pcurve increment uses this native
 boundary for planar circular and cylindrical linear pcurves on spatial
 `CIRCLE`/`LINE` edges. It retains the master selector and every directed source
@@ -1739,7 +1739,7 @@ its exact oriented affine-line proof. Source maps belong to the immutable
 imported revision; transformed models do not inherit an unproved map.
 
 The [mapping contract](../../hyperbrep-io/docs/STEP_MAPPING.md#supplied-analytic-pcurves)
-and [qualification record](evidence/2026-10-15-step-pcurves/README.md) cover this
+and [qualification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-pcurves/README.md) cover this
 subset. A reproduced partial-arc source-map blocker required a narrow shared
 scalar certificate for odd multiples of `pi/4 +/- atan(x)`; failed importer
 normalizations were removed. Native/WASM checks and preserved downstream
@@ -1766,7 +1766,7 @@ period. Pcurves, history and unused geometry remain native archive data.
 distinct supported encoding and deterministic receipts.
 
 The [mapping contract](../../hyperbrep-io/docs/STEP_MAPPING.md#exact-native-analytic-export)
-and [admission record](evidence/2026-10-16-step-analytic-export/README.md)
+and [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-step-analytic-export/README.md)
 qualify this subset through independent graph/formula checks, native replay,
 continued composition, OCCT interoperability and real WASM execution. Retain
 the measured header-allocation repair and both cost campaigns. Exact decimal
@@ -1775,7 +1775,7 @@ No general AP, scalar-work, heap, binding or release gate closes here.
 
 The original unit workflow failed at native frame transport for scales
 `1/1000` and `127/5000`. The
-[similarity increment](evidence/2026-10-16-analytic-similarity/README.md) retains
+[similarity increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-analytic-similarity/README.md) retains
 that failure and implements the metric proof, unit frames, radii, axial chart
 coordinates, pcurve maps and solid certificates at the BREP owner. Its completed
 workflows include export/reimport/replay/composition, selected axial subdivisions
@@ -1786,17 +1786,17 @@ Continue from this domain without weakening its exact tests: general curved
 axial pcurves require an exact affine image carrier, and nonuniform analytic
 transforms need explicit family promotion. Preserve the separately reproduced
 original seam-aligned torus/cone cut failures in
-[the cut frontier](evidence/2026-10-16-analytic-similarity/cut-frontier.md).
-The [seam-cut increment](evidence/2026-10-16-seam-cuts/README.md) now completes
+[the cut frontier](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-analytic-similarity/cut-frontier.md).
+The [seam-cut increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-seam-cuts/README.md) now completes
 those inputs, both intersection orders, directed subtraction, rational/radical
 similarities and split/transform/archive continuation. It retains boundary
 coverage and source revisions, periodic chart lifts and full circle matching at
-the native BREP owners. The [curved-composition increment](evidence/2026-10-16-curved-coplanar/README.md)
+the native BREP owners. The [curved-composition increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-curved-coplanar/README.md)
 now completes recuts, canonical-empty subtraction/recovery and complementary
 reconstruction on these three original fixtures and six exact similarities.
 Native circular overlap, actual source-preimage transport, equal cone/torus
 charts, full circle coverage and geometric shell-carrier equality own the proofs.
-The [sector/band increment](evidence/2026-10-16-sector-cuts/README.md)
+The [sector/band increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-sector-cuts/README.md)
 continues the five remaining quarter/band cases through native annular partition,
 mixed circular traces, exact clipping correspondence and complete convex-sector
 coverage. Its five original and thirty transformed configurations independently
@@ -2539,10 +2539,10 @@ candidate status, unresolved tests or missing cost admission remains visible
 when inherited; merging it does not prove whole-stack acceptance.
 
 Preserve the admitted closed-edge, pcurve, analytic-transform, repeated-cut
-and [sector/band corpora](evidence/2026-10-16-sector-cuts/README.md), including
+and [sector/band corpora](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-sector-cuts/README.md), including
 their original failures, exact expectations and adverse cost observations.
 The original fifteen-case continuation diagnostic continues to return native
-results for every case. The [oblique increment](evidence/2026-10-16-oblique-cuts/README.md)
+results for every case. The [oblique increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-oblique-cuts/README.md)
 adds distant conic chart queries and a 45-degree torus half/band workflow with
 reconstruction, exact transforms and replay. Preserve its complete nine-fixture
 diagnostic, including its historical oversized cylinder subtraction/clear
@@ -2565,21 +2565,21 @@ their own supported-domain proofs. Retain the selected ring-torus workflows,
 independent exact measures, supplied two-axis source maps, seam/malformed-input
 controls and four native split/reload cycles. Do not credit
 source-path WASM or an optional floating-point oracle as shipped release coverage.
-The [earlier cone encoding feasibility note](evidence/2026-10-16-torus-exchange/future-cone-exchange.md)
+The [earlier cone encoding feasibility note](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-torus-exchange/future-cone-exchange.md)
 identified an exact swept-surface candidate and its schema constraints. The
-[conical LINE exchange record](evidence/2026-10-17-cone-exchange/README.md)
+[conical LINE exchange record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md)
 now qualifies its selected source charts and complete native continuation;
 other generator and trim families still require their own proofs.
 The torus increment also improves two original rational-sector diagnostics;
 independent native probes check both through split/replay, recut and empty
-recovery. Preserve the [two-slot review](evidence/2026-10-16-torus-exchange/frontier-migration.json),
+recovery. Preserve the [two-slot review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-torus-exchange/frontier-migration.json),
 including its unresolved direct torus measure comparison and exact normalized
-oracle. The [rotated reconstruction increment](evidence/2026-10-17-curved-continuation/README.md)
+oracle. The [rotated reconstruction increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-curved-continuation/README.md)
 extends both exhausted torus union orders through two complete split/reload/
 recut/reunion/empty-recovery cycles with independent exact measures and point
 expectations. Its certified rounding and function-congruence proofs belong in
 Hyperreal; BREP keeps strict incidence and archive validation. The 81-slot
-inventory now has 81 native results after the [cone continuation increment](evidence/2026-10-17-cone-continuation/README.md).
+inventory now has 81 native results after the [cone continuation increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-continuation/README.md).
 Its three formerly undecided cone workflows also have independent full-size
 analytic measures, near-boundary classification and two complete continuation
 cycles. These diagnostic counts do not replace semantic acceptance.
@@ -2591,7 +2591,7 @@ Preserve all 175 completed BREP/curve/STEP benchmark cases and every historical
 adverse row. General expanded-coordinate queries remain an open domain; do not
 discard an available endpoint witness and demand that scalar algebra recreate
 it. Exact conical LINE-revolution exchange now follows the
-[updated feasibility note](evidence/2026-10-17-cone-continuation/future-cone-step.md)
+[updated feasibility note](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-continuation/future-cone-step.md)
 with native slant-distance semantics kept distinct from source generator V.
 The native `ConicalRevolution` proof owns carrier incidence, branch selection
 and the reversible chart. HyperBRep IO applies declared units, retains
@@ -2607,7 +2607,7 @@ performance baseline.
 
 Continue native contact/arrangement work toward broader Booleans and the
 intersection/embedding prerequisites for fillets, shelling and sweeps. The
-[next-domain obligations](evidence/2026-10-17-cone-exchange/next-domains.md)
+[next-domain obligations](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-exchange/next-domains.md)
 separate finite B-spline generator recognition, singular apex topology, direct
 conical charts, source persistence and delivery/resource gates. Each requires
 its native proof and complete edited consumer path. No finite exchange subset

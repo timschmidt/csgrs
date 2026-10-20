@@ -19,7 +19,7 @@ policies, and supported inputs are preserved. A rational coordinate alone does
 not certify equality of a mixed symbolic point. The acceptance tests allow
 warming to establish a stronger proof and reject contradictory facts.
 
-The [admission evidence](../../docs/evidence/2026-10-18-point-equality-facts/README.md)
+The [admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-18-point-equality-facts/README.md)
 retains the same nine-family input construction and B-C-C-B probe: 36 processes,
 72 first/repeated rows, and independently derived exact equality labels. The
 full `1e12000 + i*1e-400` case remains unchanged. Repeated-traversal observations
@@ -58,7 +58,7 @@ failed the original timing gates; an inline/importer combination was not run.
 `CurveString2` now restricts its zero-chord guard to lines. Equal endpoints of a
 `CircularArc2` denote a full circle; arc validity and exact-query certification
 remain owned by the existing carrier. The
-[closed-edge evidence](../hyperbrep/docs/evidence/2026-10-15-closed-edges/README.md)
+[closed-edge evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-closed-edges/README.md)
 retains the original runtime failure and unchanged zero-line rejection, and
 checks full-circle winding, area, first moment, Booleans, annular difference
 and offset reversal through `CurveRegion2`.
@@ -91,7 +91,7 @@ exact joins and one common direction. It never caches a negative result or
 uses provisional near-equality. `false` means no certificate, not a proven
 self-intersection. The implementation adds no solver or global cache.
 
-The [qualification](../hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md)
+The [qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md)
 records positive/reversed/restricted weighted NURBS cases, backtracking and
 disconnected-span rejection, strict behavior in a provisional scope, and three
 rejected injectivity faults. A fourth fault tests BREP spline-image agreement.
@@ -107,7 +107,7 @@ allocation count, statistically established speedup or complete growth bound.
 
 ## Rejected strict-scope entry fast path
 
-The [scope-entry experiment](../hyperbrep/docs/evidence/2026-10-14-strict-scope-fast-path/manifest.json)
+The [scope-entry experiment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-14-strict-scope-fast-path/manifest.json)
 skipped frame save/restore when the ambient state was already strict and had
 no preview context. The candidate passed the focused policy and budget tests
 and all 238 HyperBRep tests. Three alternating, CPU-0-pinned trials preserved
@@ -124,13 +124,13 @@ isolation remains in force without this optimization.
 
 `Segment2::distance_squared` and `point_distance_squared` measure exact native
 lines and circular arcs using endpoint, intersection, and stationary candidates.
-The [admission record](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json)
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-manifest.json)
 retains independent distance oracles, both predicate policies, tiny separations,
 large translations, reversal, degeneracies, preview isolation, and resource
 failure tests. This adds a primitive measurement capability; HyperDRC's source
 geometry and readiness consumers still need integration.
 
-The [six-fixture probe](../../docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-probe/manifest.json)
+The [six-fixture probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-08-hyperdrc-native-geometry/metric-probe/manifest.json)
 contains five sequential CPU-0-pinned trials of 1,000 iterations per row. Medians
 are descriptive; the slower third trial is retained and no speedup or statistical
 regression ceiling is asserted. There is no prior native metric implementation
@@ -159,7 +159,7 @@ paths are documented in `hypersolve::work_budget`; this is not yet a complete
 time or memory bound for curve operations.
 
 The retained counters inline their scope lookups and admission helper. The
-[paired probe](../../benchmarks/baselines/2026-10-08-properties/README.md#curve-work-budget-accounting)
+[paired probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#curve-work-budget-accounting)
 preserves every reported workload count and trace value across 11 unbudgeted
 parameter workloads. The foundation's median changes range from -3.74% to +2.91%; the
 initial variant's deepest isolation row was +5.28%. Both experiments and raw
@@ -171,10 +171,10 @@ five-root stationary-distance quintic.
 
 The subsequent shared-isolator extension checks a thread-local activity flag
 before accessing the budget stack. Its
-[curve probe](../../benchmarks/baselines/2026-10-08-properties/curve-budget-fast/manifest.json)
+[curve probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/curve-budget-fast/manifest.json)
 again preserves all reported evidence, with medians from -4.18% to +3.95%
 against the same pre-budget executable. The separate
-[selected-fiber measurements](../../benchmarks/baselines/2026-10-08-properties/README.md#shared-ordered-field-and-selected-fiber-isolators)
+[selected-fiber measurements](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#shared-ordered-field-and-selected-fiber-isolators)
 retain both the initial overhead and the activity-flag variant. These focused
 probes do not establish a full-suite regression ceiling or a time bound.
 
@@ -183,14 +183,14 @@ coordinate and arithmetic adapters. A denied coordinate promotion leaves a
 lazy point unresolved and retryable; a completed exact point remains reusable
 with no additional budget. Solver image timings and the constant-image
 overhead experiment are recorded in the
-[image-promotion gate](../../benchmarks/baselines/2026-10-08-properties/README.md#represented-root-image-promotions).
+[image-promotion gate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#represented-root-image-promotions).
 
 Selected-fiber image and quotient adapters also preserve typed budget failure.
 The analytic-point adapter stops after a denied coordinate projection, and
 selected-fiber helpers retain exact saturation evidence on a larger-budget
 retry. This prevents a resource denial from starting a general-resultant or
 global-scalar fallback. The associated solver
-[projection measurements](../../benchmarks/baselines/2026-10-08-properties/README.md#selected-fiber-projection-promotions)
+[projection measurements](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#selected-fiber-projection-promotions)
 cover inactive accounting overhead, not a complete curve-operation bound.
 
 Shared bivariate and tensor-axis resultants now expose resource exhaustion
@@ -201,7 +201,7 @@ evidence with an unbudgeted query. These additional hooks also increase the
 admitted work counted inside existing tensor-image and tagged projections;
 the counters describe the instrumented algorithm and retained evidence, rather
 than a fixed cost for each public API call. See the
-[elimination measurements](../../benchmarks/baselines/2026-10-08-properties/README.md#shared-bivariate-and-tensor-elimination)
+[elimination measurements](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#shared-bivariate-and-tensor-elimination)
 for the selected solver workloads.
 
 Fixed-rank norm and subresultant adapters now preserve the same resource
@@ -209,7 +209,7 @@ blocker. Curve regressions retain an even contact whose target degree drops
 only in the selected source factor, and recover the exact projected parameter
 after a denied three-variable norm. Both policies return certified results
 after retry; exhaustion does not authorize a tensor or approximate fallback.
-The [fixed-rank solver probe](../../benchmarks/baselines/2026-10-08-properties/README.md#fixed-rank-norms-and-subresultants)
+The [fixed-rank solver probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#fixed-rank-norms-and-subresultants)
 records selected inactive-accounting timings and executable size, with exact
 retry evidence tested separately.
 
@@ -218,7 +218,7 @@ and stops alternate lift attempts after a resource denial. Its operation cache
 leaves denied reports uncached, then retains a completed exact report for reuse
 without another promotion. Regressions cover both policies, cached proof reuse,
 an already exhausted scope, and certified pairing after a larger-budget retry.
-The [native lift probe](../../benchmarks/baselines/2026-10-08-properties/README.md#cofactor-parameter-lifts)
+The [native lift probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#cofactor-parameter-lifts)
 measures cofactor construction; it does not time the entire curve replay/cache
 path.
 
@@ -229,7 +229,7 @@ support cannot become a completed component result. Trivariate factor replay
 also propagates normalization failure before an alternate factor or approximate
 policy attempt. Both policies have exact retry regressions, including denial
 after a previously extracted factor. The
-[component probe](../../benchmarks/baselines/2026-10-08-properties/README.md#common-components-and-axis-factors)
+[component probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#common-components-and-axis-factors)
 measures the native solver paths; it does not establish timing or allocation
 bounds for those complete curve consumers.
 
@@ -9387,7 +9387,7 @@ evidence for the portion that can be adopted independently.
 
 ## Retained circular endpoint projection (2026-10-09)
 
-The [admission record](../../docs/evidence/2026-10-09-hypercurve-retained-circular-area/manifest.json) adds exact signed-area and native-contour
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hypercurve-retained-circular-area/manifest.json) adds exact signed-area and native-contour
 views for retained circular fragments with representable endpoints. The source
 curve, selected polynomial, isolator and traversal direction remain authoritative.
 The original complete CPArti board's A5/A6 overlap now has an exact integral.
@@ -9439,7 +9439,7 @@ all ignored workloads, and total resource bounds remain open.
 
 ## Full capsule area expression diagnosis
 
-The [forty-capsule diagnostic](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-26.json)
+The [forty-capsule diagnostic](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-26.json)
 keeps the complete translated fixture from the pending native-stroke prototype.
 Every individual area proves equal to its independent analytic formula, but
 the aggregate equality remains Unknown. Separating chord and sector terms is
@@ -9453,7 +9453,7 @@ proof budgets. It admits no optimization or new area implementation and does
 not resolve the native prototype's board runtime failure. The next candidate is
 bounded scalar normal-form reconstruction before loop-area accumulation.
 
-The [loop-integration candidate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-28.json)
+The [loop-integration candidate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-28.json)
 now makes the original forty-capsule aggregate exactly decidable. Ten focused
 tests pass, including independent analytic contours, reversal, region rebuilding
 and forty holes. Both new public regressions fail with Unknown against admitted
@@ -9461,7 +9461,7 @@ production libraries. This establishes a scoped completeness improvement;
 isolated validation, board/report replay and resource costs remain admission
 requirements. The candidate was held for the validation and measurements below.
 
-The [repaired isolated candidate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-31.json)
+The [repaired isolated candidate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-31.json)
 preserves certified scalar signs and passes the complete 2,420-test curve run,
 with 28 existing ignored cases, strict Clippy and docs. Its unchanged full-board
 gate passes in 57.33 seconds of process CPU (57.62 seconds wall time); worker CPU
@@ -9480,7 +9480,7 @@ regressions fail with Unknown on the prior production libraries. Unsupported
 forms retain their original exact value and all existing proof limits remain
 unchanged. Already certified scalar signs survive reconstruction.
 
-The [admission record](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-33.json)
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-33.json)
 includes the complete scalar/curve/DRC validation, 231 unchanged historical
 capability witnesses, and byte-identical complete twelve-check reports for both
 full boards in two fresh processes per version. An independent Git-object audit
@@ -9512,7 +9512,7 @@ not printed. General retained integration, higher moments, the 28 ignored curve
 cases, total resource bounds and the separate native-stroke runtime gate remain
 open. This is not the complete workspace or pre-push validation matrix.
 
-The [combined native-prototype replay](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-34.json)
+The [combined native-prototype replay](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-34.json)
 passes 42 focused scalar/curve/DRC invocations but still fails the unchanged
 120-worker-CPU-second full-board gate at 207.576 seconds. Counts remain 12/197;
 process CPU is 207.91 seconds and peak RSS is 1,625,476 KiB. Layer sanity costs
@@ -9520,7 +9520,7 @@ process CPU is 207.91 seconds and peak RSS is 1,625,476 KiB. Layer sanity costs
 boards. The exact-area repair therefore does not admit the wider native-stroke
 prototype. This single replay is not a matched speedup result.
 
-The [initial bounding-box pair trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-38.json)
+The [initial bounding-box pair trial](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-38.json)
 uses one certified comparison per axis to establish the first two points' extrema.
 Singleton boxes reuse the original point. This isolated candidate passes 29 focused
 tests, formatting and strict Clippy, including 864 independently ordered boxes with
@@ -9542,7 +9542,7 @@ size will test whether the short-case result persists without earlier singleton
 allocator activity. That explanation is a hypothesis. Production isolation,
 downstream report replay and runtime admission remain pending.
 
-The [focused follow-ups](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-39.json)
+The [focused follow-ups](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-39.json)
 retain five fresh paired processes for each questioned case. At 32,768 rational
 pairs, unconditioned first/warm/cloned medians improve by 4.8%/15.6%/8.0%.
 The 1,024-pair processes still vary substantially, including a 43.3% increase in
@@ -9557,7 +9557,7 @@ remain identical throughout. These are conditioned-processor measurements, not
 cold-start latency claims. The candidate advances to isolated production checks
 and report replay; no main runtime source or persistent cache is admitted yet.
 
-The [production-isolated validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-40.json)
+The [production-isolated validation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-40.json)
 checks 990 committed Rust/Cargo inputs across eleven workspace packages. Only
 bounding-box initialization and the two new regression tests differ. All 2,422
 curve tests and 1,559 DRC tests pass, with 28 existing curve ignores. Formatting,
@@ -9569,7 +9569,7 @@ report replay and paired production costs remain pending before runtime retentio
 The linked record also names three unimplemented follow-up hypotheses from
 read-only inspection; none is included in this candidate.
 
-The [production comparison and admission](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-41.json)
+The [production comparison and admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-41.json)
 retains this two-file change. Initial bounds use one certified comparison per
 axis; singleton bounds reuse the immutable input point. All 231 historical
 capability rows remain identical. The complete twelve-check reports repeat byte
@@ -9597,7 +9597,7 @@ the dependency-path harness failure remain available. The two admitted source
 files are checked against the compiled production archive; the broader native
 stroke prototype still requires its own original board gate and final admission.
 
-The subsequent [native-prototype gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-42.json)
+The subsequent [native-prototype gate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-42.json)
 still fails the original 120-second limit at 200.284163321 worker CPU seconds
 (200.60 process CPU seconds, 1,626,672 KiB peak RSS). Both full fixtures finish
 with the unchanged 12/197 findings. The earlier native run took 207.576353903
@@ -9610,7 +9610,7 @@ floating-point ray filter, which will be checked before further optimization.
 
 ### Finite-intermediate ray filtering
 
-The [ray-filter counterexample record](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-43.json)
+The [ray-filter counterexample record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-43.json)
 confirms an existing exactness defect before further optimization. A verbatim
 copy of the committed private filter rejects 16 of 34 independently known
 finite-input box/ray witnesses. Finite coordinates can overflow during midpoint
@@ -9630,7 +9630,7 @@ fallback. Focused/full validation and resource/report checks precede admission.
 No tolerance, scalar proof budget, public API or main runtime source has changed
 at this checkpoint; the broader native prototype remains unadmitted.
 
-The [focused isolated repair](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-44.json)
+The [focused isolated repair](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-44.json)
 passes all four new tests and formatting. The source audit checks 991 committed
 Rust/Cargo inputs and freezes 24,424 workspace files; only the private guard and
 two test modules differ. The matrix verifies 32 known box intersections, two
@@ -9640,7 +9640,7 @@ It covers both policies, eleven signed/extreme frames, unit/retained charts,
 reversal, prepared inputs, and first/repeated/cloned queries. Full production
 suites, report replay and resource checks are still pending before admission.
 
-The [complete isolated production validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-45.json)
+The [complete isolated production validation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-45.json)
 passes 2,426 curve tests across 49 binaries and all 1,559 DRC tests. The 28
 existing curve ignores remain. Strict release/all-target Clippy for both crates,
 strict all-feature curve documentation, and formatting pass. The separate
@@ -9649,7 +9649,7 @@ seconds and 892,152 KiB peak RSS; worker CPU is not printed on success. This
 single gate run is not a matched speedup result. Complete report/capability
 replay and paired resource comparisons remain pending before runtime admission.
 
-The [matched production comparison and admission](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-46.json)
+The [matched production comparison and admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-46.json)
 retains the guard and its two regression modules as an exactness repair. Four
 retained-chart configurations previously constructed empty regions: positive,
 negative and mixed ±1e308 translations at scale 1e307, and a mixed translation
@@ -9682,7 +9682,7 @@ yet been measured or included in this repair.
 
 ### Conservative contact-index ranges
 
-The [contact-index counterexamples](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-47.json)
+The [contact-index counterexamples](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-47.json)
 confirm that nearest-rounded interval widths can omit a certified-equal contact.
 Two independently isolated representations of the same degree-five root produce
 valid but different point enclosures; the old range search skips the wider one.
@@ -9691,13 +9691,13 @@ the private index. A complete public Boolean wrong-answer example has not been
 established. Raw signed-zero ordering also disagrees with mathematical interval
 ordering and can make the tree range invalid.
 
-The [retained repair](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-58.json)
+The [retained repair](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-58.json)
 uses the subtraction residual to round a width upward only when required. Exact
 widths, including `f64::MAX`, remain exact. Nonfinite intermediates retain the
 conservative fallback. Integer order keys identify both signed zeros and preserve
 the mathematical order of non-NaN endpoints. No public API, scalar proof budget,
 index field or tolerance changes. The
-[focused evidence](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-55.json)
+[focused evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-55.json)
 includes four production tests, 94,442 independent exact-rational width checks,
 and 6,354,216 independently evaluated interval-overlap comparisons. These are
 deterministic corpora with an algebraic argument, not exhaustive binary64
@@ -9705,16 +9705,16 @@ enumeration or a machine-checked proof.
 
 Earlier candidates remain recorded. Unconditionally increasing every width
 caused avoidable infinity saturation and a 3.62x first-query median in the
-[initial resource trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-50.json).
+[initial resource trial](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-50.json).
 A zero-endpoint exception fixed that case but still visited 65 entries instead
 of one for an exact symmetric MAX-width enclosure; the
-[counterexample](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-52.json)
+[counterexample](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-52.json)
 uses an actual selected-point producer. The general residual fixes both cases.
-The [first residual candidate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-54.json)
+The [first residual candidate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-54.json)
 also retained two ordinary timing regressions; replacing its float zero check
 with integer keys was evaluated before full admission.
 
-The [final matched resource trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-56.json)
+The [final matched resource trial](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-56.json)
 covers forty construction/first/warm/cloned rows in five alternating fresh
 processes per version and measurement mode. Twelve query witnesses recover
 previously omitted contacts. All twenty-eight unchanged witnesses preserve all
@@ -9727,7 +9727,7 @@ comparison. Corrected queries retain their required output vectors: 32 bytes
 for a singleton or 512 bytes for 64 contacts. Timing/allocation probe ELF sizes
 increase by 392/424 bytes. These costs are accepted for the exactness repair.
 
-[Production validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-57.json)
+[Production validation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-57.json)
 passes 2,430 curve tests across 49 binaries and all 1,559 DRC tests, strict
 Clippy/docs, and formatting; 28 existing curve ignores remain. The unchanged
 board gate passes with 12/201 findings, 54.25 process CPU seconds and 892,248 KiB
@@ -9735,14 +9735,14 @@ peak RSS. Worker CPU is not printed on success, and this single gate run is not
 a matched speedup measurement. All 231 historical capability rows and both
 complete twelve-check board reports remain byte-identical across versions and
 repetitions, preserving their prior sizes and checksums. The
-[installation check](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-admission/admission.json)
+[installation check](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-admission/admission.json)
 verifies that the two staged source files equal the tested archive and that all
 unrelated native-prototype edits survive byte for byte. Broader native admission,
 the full workspace/pre-push matrix, and the remaining properties stay open.
 
 ### Closed normal-form memo sharing: rejected experiments
 
-The [combined native-prototype recheck](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-59.json)
+The [combined native-prototype recheck](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-59.json)
 passes the eight recent ray-filter/contact-index regressions but still fails the
 original board gate: 198.598573827 worker CPU seconds against 120, with the same
 12/197 findings. All 1,155 recorded source/Cargo/fixture inputs remain frozen
@@ -9753,7 +9753,7 @@ The earlier sampled profile identified substantial coefficient cloning inside
 the bounded, per-call polynomial memo. Two isolated experiments share only closed
 rational/radical polynomials: opaque coefficients retain ordinary cloning so
 their expression-node reference counts and memo eligibility stay unchanged.
-The [first experiment](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-60.json)
+The [first experiment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-60.json)
 shares term vectors, restoring ownership before mutation. The second shares
 whole immutable polynomial results and retains the original vector arithmetic.
 Both pass four selected scalar tests, strict all-target scalar Clippy and
@@ -9764,8 +9764,8 @@ ordered memo entries and remaining work. Recognition also preserves graph owner
 counts and approximation caches. These are scoped differential checks, not an
 exhaustive proof or full scalar/curve/DRC validation.
 
-The [term-vector resource trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
-and [whole-result trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-62.json)
+The [term-vector resource trial](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
+and [whole-result trial](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-62.json)
 each preserve all twenty-four witnesses in five fresh alternating processes per
 version and measurement mode. Their public identities have 126 independent
 exact-rational algebra checks. Twenty of twenty-four timing medians regress in
@@ -9781,14 +9781,14 @@ sizes grow by 5,088/5,088 bytes for term-vector sharing and 4,112/4,128 bytes fo
 whole-result sharing. Neither experiment establishes a sufficient resource
 improvement, so both are rejected before full application validation. The raw
 samples, source archives and recognition receipts remain preserved. Main runtime
-source is unchanged. The [subsequent memo record](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-75.json)
+source is unchanged. The [subsequent memo record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-75.json)
 closes all seven variants as rejected; the scalar performance ledger retains
 their individual frontier, validation and resource results.
 
 
 ### Arc endpoint retry diagnostic (2026-10-10)
 
-The [complete-fixture diagnostic](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-76.json)
+The [complete-fixture diagnostic](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-76.json)
 observes the original endpoint checks before and after the radius query. It
 preserves all original comparisons and mathematical operations; thread-local
 integer counters record their outcomes by policy. Strict curve Clippy and
@@ -9810,7 +9810,7 @@ Both boards retain 12/197 findings. The unchanged 120-second gate fails at
 makes this unsuitable for admitting a performance change. Full native suites
 and complete report-byte replay were not run for this diagnostic.
 
-A [local exact-negative certificate candidate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate-candidate.json)
+A [local exact-negative certificate candidate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate-candidate.json)
 is now isolated in separate production source trees. It reuses only a qualified
 exact negative endpoint result in the same membership call, retaining unknown,
 approximate and preview retries. The existing conservative Point2 equality path remains authoritative.
@@ -9819,7 +9819,7 @@ resources and full downstream gates are required before admission. The wider
 native prototype and complete property plan remain open.
 
 
-The [focused differential gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-77.json)
+The [focused differential gate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-77.json)
 passes 36 selected test invocations per variant, strict all-target curve Clippy
 and formatting. All 63,652 receipt rows match, containing 445,564 membership,
 sweep, endpoint, location, point-equality and circle-incidence query receipts.
@@ -9846,7 +9846,7 @@ frontier preservation are not established by this corpus. The native prototype
 and the wider property plan remain open.
 
 
-The [early production resource gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-78.json)
+The [early production resource gate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-78.json)
 uses libraries without diagnostic Rust. Five fresh alternating processes per
 variant and mode preserve every witness across twelve public membership families.
 Construction and first/warm/cloned queries are separate; timing executables have
@@ -9875,7 +9875,7 @@ unavailable-interval assertion and a cache-warming/flag-clear sequence, is
 required before runtime admission.
 
 
-The [production validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-79.json)
+The [production validation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-79.json)
 passes all 2,430 configured curve tests across 49 binaries, with 28 documented
 ignores; 1,559 DRC library and 35 integration tests also pass. Strict curve/DRC
 Clippy, rustdoc and workspace formatting pass. The original 120-second worker
@@ -9883,7 +9883,7 @@ CPU gate succeeds with 12/201 findings and 55.2 process CPU seconds. This single
 smoke run is not a matched application speedup or a complete report-byte replay.
 Both production trees and the main prototype retain their recorded source hashes.
 
-The [separate final-coordinate abort gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-80.json)
+The [separate final-coordinate abort gate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-80.json)
 attaches flags after all query-coordinate arithmetic. Every active non-rational
 coordinate refuses certified intervals before and after the query sequence,
 including after warming and reenabling its flag. All 210 rows match in three
@@ -9895,11 +9895,11 @@ input; the test does not require every aborted query to become uncertain.
 The original intermediate-flag probes and their corrected coverage interpretation
 remain preserved. Complete historical witness and report replay, followed by a
 separate native-prototype recheck, are still required before runtime admission.
-The [local reuse argument and provenance](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate-proof.json)
+The [local reuse argument and provenance](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate-proof.json)
 distinguish the mathematical negative certificate from operational cache behavior.
 
 
-The [complete production replay](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-81.json)
+The [complete production replay](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-81.json)
 preserves all 231 historical capability witnesses in five fresh processes per
 variant. Both complete twelve-check reports repeat byte-for-byte in two fresh
 processes per variant and equal the admitted contact-index checkpoint: CPArti
@@ -9916,7 +9916,7 @@ is excluded. That review and the separate native recheck remain ahead of any
 runtime retention decision.
 
 
-The [fixed follow-up](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-82.json)
+The [fixed follow-up](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-82.json)
 retains all fifteen samples per variant and preserves every historical witness.
 The independent extension and combined set have no nonoverlapping slower ranges;
 that is not interpreted as proof of no regression. Huge-center proximity,
@@ -9933,7 +9933,7 @@ runtime retention is claimed. Further sample extension for these binaries is
 excluded. The separate native-prototype recheck is the next outstanding gate.
 
 
-The [clean native comparison](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-83.json)
+The [clean native comparison](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-83.json)
 preserves 24,693 inputs per variant, with only the endpoint patch differing.
 Both variants pass 72 focused tests, formatting and strict curve/DRC Clippy.
 Their original 120-second worker CPU gates both fail: baseline takes 195.283
@@ -9942,7 +9942,7 @@ seconds and candidate 195.493 seconds, each with 12/197 findings. Peak RSS is
 This single pair shows no application gain; it does not establish a universal
 performance ratio or complete native report-byte identity.
 
-The [final retention review](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-84.json)
+The [final retention review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-84.json)
 closes this candidate as **not retained**. All scoped correctness and complete
 production report evidence remains valid, as do the targeted 18.4–42.3% query
 savings and allocation reductions. Those gains do not establish an acceptable
@@ -9960,19 +9960,19 @@ stall, retaining its original unresolved-hypot input and precision contract.
 
 ## Exact retained Bezier images for BRep (2026-10-18)
 
-The [admission record](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/README.md) extends exact completion through native subcurve images and supported product-solid continuation. This is a capability extension, not an optimization.
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/README.md) extends exact completion through native subcurve images and supported product-solid continuation. This is a capability extension, not an optimization.
 
 Three alternating pairs preserve all 22 existing consumer groups in 18 processes, with original assertions, iterations and outcomes. Time ratios range 0.981471–1.224120; 1 exceed the 10% review marker and 3 increase allocation calls or requested bytes. Eleven new complete groups have absolute costs from three processes. All adverse observations remain. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or internal resource bound. The unequal_holes expected-rejection group rises from 2.696819 to 3.301229 ms (1.224120 ratio), with allocation calls 9123 to 11483; this adverse cost remains an explicit open obligation, not a speedup claim.
 
-The [adverse review](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/adverse-review.md) explains the retained rejection cost and the separate proof-search experiment required before any optimization.
+The [adverse review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/adverse-review.md) explains the retained rejection cost and the separate proof-search experiment required before any optimization.
 
-[Every cost row](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/costs.md) and the [resource review](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/resource-review.json) retain slower observations, allocation requests, process RSS, executable sizes and forty exact archive states. New completed workflows have absolute costs only. Prior rejected ideas and adverse cost obligations remain attached to their original revisions. Allocation requests, archive nesting and process RSS do not bound retained heap, coefficient growth, total work or cancellation. All distribution and broader work-package gates remain open.
+[Every cost row](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/costs.md) and the [resource review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/resource-review.json) retain slower observations, allocation requests, process RSS, executable sizes and forty exact archive states. New completed workflows have absolute costs only. Prior rejected ideas and adverse cost obligations remain attached to their original revisions. Allocation requests, archive nesting and process RSS do not bound retained heap, coefficient growth, total work or cancellation. All distribution and broader work-package gates remain open.
 
 
 ## Procedural parallel definitions for BRep replay (2026-10-18)
 
-The [admission record](../hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/README.md) adds exact native persistence of analytic parallels and supported planar continuation. This is a capability extension; it introduces no new geometry solver or optimization.
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/README.md) adds exact native persistence of analytic parallels and supported planar continuation. This is a capability extension; it introduces no new geometry solver or optimization.
 
 Three alternating pairs preserve all 33 preceding consumer groups in 24 processes, with original assertions, iterations and outcomes. Time ratios range 0.979430–1.065905; 0 exceed the 10% review marker and 5 increase allocation calls or requested bytes. Seven new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
-[All cost rows](../hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/costs.md) and the [resource review](../hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/resource-review.json) retain timing, allocation, RSS, executable size and 25 exact archive observations. The previous selected-profile unequal-hole rejection cost and all earlier adverse obligations remain open. These finite samples do not bound arbitrary composition, retained heap, coefficient growth, total work or cancellation. Spatial parallel-cap extrusion and broader release gates remain open.
+[All cost rows](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/costs.md) and the [resource review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/resource-review.json) retain timing, allocation, RSS, executable size and 25 exact archive observations. The previous selected-profile unequal-hole rejection cost and all earlier adverse obligations remain open. These finite samples do not bound arbitrary composition, retained heap, coefficient growth, total work or cancellation. Spatial parallel-cap extrusion and broader release gates remain open.

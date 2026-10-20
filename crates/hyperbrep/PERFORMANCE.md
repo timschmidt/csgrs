@@ -4,8 +4,8 @@
 
 Three alternating pairs of each complete six-group native, nine-group spline and seven-group measurement consumer preserve every outcome, assertion and iteration count (22 groups; 18 processes). Observed time ratios range 0.773215–1.036326, with median 0.986173; 0 exceed the 10% review marker and 0 increase allocation requests. All slower and adverse rows remain. This is a finite downstream comparison on a shared host, not a rerun of the preceding 192-case catalogue, a general speedup, statistical significance or an internal resource bound.
 
-The [integration record](docs/evidence/2026-10-18-equality-upstream-integration/README.md)
-and [complete observations](docs/evidence/2026-10-18-equality-upstream-integration/costs.md)
+The [integration record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-equality-upstream-integration/README.md)
+and [complete observations](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-equality-upstream-integration/costs.md)
 retain every row, allocation request, RSS observation and executable/WASM size.
 BRep/IO production source is unchanged; the comparison measures the updated
 scalar/Point2 dependency path. Historical adverse costs remain open, including
@@ -13,47 +13,47 @@ upstream direct Rational comparison. No release or pre-push completion claim.
 
 ## 2026-10-18: exact prism admission with optional measurements
 
-The [admission record](docs/evidence/2026-10-18-measurement-admission/README.md)
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-measurement-admission/README.md)
 qualifies native rational prisms, cold replay and STEP continuation without a
 represented area/volume integral. Existing represented measurements remain;
 unavailable queries return their typed error.
 
 All 192 original receipts and iterations remain across 22 corpora and 72 processes. 38 cases in seven affected corpora have three alternating pairs; 154 cases in fifteen corpora have one pair as preservation probes. Across all rows the median observed ratio is 0.999352, range 0.818567–1.236156; One row exceeds the 10% review marker; 10 rows increase allocation requests. The six preceding native and nine preceding spline groups have separate three-pair comparisons. Seven new complete groups have absolute costs from three processes, with no ratio against former failures. Every unfavorable observation remains. Shared-host observations and single pairs establish no general speedup or controlled-host timing admission. A fixed three-pair full-arc follow-up retains all twelve receipts; structural-fact replay then has ratio 0.983872, with the original 1.236156 single-pair observation retained separately. Neither campaign establishes a causal or significance claim.
 
-The [complete costs](docs/evidence/2026-10-18-measurement-admission/costs.md) and
-[resource review](docs/evidence/2026-10-18-measurement-admission/resource-review.md)
+The [complete costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-measurement-admission/costs.md) and
+[resource review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-measurement-admission/resource-review.md)
 retain all adverse rows, allocator requests, process RSS and binary sizes. Earlier
 cost regressions remain open. This feature establishes no new resource bound
 or release/pre-push qualification.
 
 ## 2026-10-18: exact spline exchange feature admission
 
-The [qualification](docs/evidence/2026-10-18-spline-exchange/README.md) completes exact profile interchange
+The [qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-spline-exchange/README.md) completes exact profile interchange
 and continued modeling. All 192 original receipts remain across 22 full corpora and 132 fresh processes. Median case ratio 0.996668; range 0.853556–1.162079. 1 timing rows exceed the 10% review marker; 45 rows increase allocation requests. The preceding six native workflow groups have three further alternating paired processes. Nine new full acceptance groups have separate absolute observations from three fresh processes; former unsupported work is never a speedup baseline. All raw unfavorable observations remain. The 192-case median ratio is 0.996668, with range 0.853556–1.162079. The one row above the 10% review marker is faceted/step/units_2000: 4.458330 to 5.180932 ms (+16.21%), with identical allocation counts and requested bytes. Its original baseline samples include both 4.42–4.46 ms and 5.23 ms. Three additional alternating pairs of the complete seven-case faceted harness retain all original fixtures, iterations, receipts and allocation records; units_2000 is then 5.211703 to 5.226788 ms (ratio 1.002895). This follow-up does not reproduce the original gap and does not erase it or establish a controlled-host performance claim. All six preceding native/control groups retain their outcomes and assertions. Eight-profile and planar-replay allocations are unchanged (timing ratios 0.998414 and 0.996350). Cut/restoration rises from 6.045088 to 6.374779 ms (+5.45%), with 1,054 more allocation calls (+5.19%) and 62,386 more requested bytes (+2.39%). Thin/touching components have ratio 1.005446, +0.413% calls and −1.021% bytes. The unequal-hole expected rejection rises from 2.371594 to 2.788615 ms (+17.58%), with 1,354 more calls (+17.05%) and 153,676 more bytes (+14.75%). Self-intersection rejection has ratio 1.015412 and unchanged allocations. The added native enclosure path explains additional work by source inspection; this is not a profiler attribution. The expensive rejection is retained explicitly as an expected typed control, not counted as a successful solid workflow or hidden in the 192-case aggregate. Across the original 192 cases, 45 rows increase allocation requests; the largest relative increases are similarity/profile_families at +0.118344% calls and +0.083462% requested bytes. The separate native-group increases above are larger and remain open costs. The unchanged arc executable is byte-identical; the other 21 harnesses grow by 1,232–67,216 bytes. The same 138-group WASM harness grows 54,518 bytes (0.258%). Observed maximum process RSS in the main campaign is 43,656 KiB baseline and 42,336 KiB candidate; these are not retained-heap bounds. The new nine-group consumer peaks at 18,656–19,604 KiB. Its eight-profile exchange/cut group costs 230.643 ms and the ten independently authored variant/unit workflows together cost 99.705 ms per full group. All nine absolute groups and every raw sample remain in the report; there is no ratio to a former unsupported result. These are shared-host local observations. No performance-only optimization, significant speedup, retained-heap bound or distribution-size improvement is claimed; historical cost obligations remain open.
 
-The [full report](docs/evidence/2026-10-18-spline-exchange/costs.md), [new absolute costs](docs/evidence/2026-10-18-spline-exchange/new-cost-summary.json),
-[prior native comparisons](docs/evidence/2026-10-18-spline-exchange/prior-native-cost-summary.json) and
-[resource review](docs/evidence/2026-10-18-spline-exchange/resource-review.md) retain every observation.
+The [full report](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-spline-exchange/costs.md), [new absolute costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-spline-exchange/new-cost-summary.json),
+[prior native comparisons](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-spline-exchange/prior-native-cost-summary.json) and
+[resource review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-spline-exchange/resource-review.md) retain every observation.
 This feature does not close historical resource, delivery or project gates.
 
 ## 2026-10-18: native boundary image feature admission
 
-The [complete qualification](docs/evidence/2026-10-18-native-boundary-images/README.md) extends retained-profile
+The [complete qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-native-boundary-images/README.md) extends retained-profile
 construction and continued modeling. This is a capability extension, with
 previous successful routes and all deterministic receipts preserved.
 
 All 192 original case receipts are preserved across 22 full corpora and 132 fresh processes (three alternating CPU-pinned pairs). Median case ratio 1.003374; range 0.803214–1.139206. 1 rows exceed the 10% review marker; 12 rows increase allocation requests. Every adverse row, raw process sample, allocation and executable/WASM size is retained and reviewed. Six new complete native regression groups have separate absolute costs from three fresh processes, with four completion groups distinguished from two expected-rejection controls. No faster-error comparison or speedup claim. The one above-marker row measures 5.22210 to 5.94905 ns, a 0.72695 ns difference on a nanosecond-scale structural-fact replay. It remains an unfavorable observation; these shared-host trials do not establish a significant speed change or its cause. The largest allocation-request increase is 1,149.000 calls (0.044397%) and 72,800.000 requested bytes (0.035288%) in similarity/primitive_matrix. Native harness size deltas range from -23,816 to +20,752 bytes; the unchanged 138-group WASM harness changes by -41,188 bytes. These small observed costs are retained for the expanded exact native workflow. No performance-only optimization, significant speedup, retained-heap bound or distribution-size improvement is claimed; historical cost obligations remain open.
 
-The [full report](docs/evidence/2026-10-18-native-boundary-images/costs.md),
-[new absolute costs](docs/evidence/2026-10-18-native-boundary-images/new-cost-summary.json) and
-[resource review](docs/evidence/2026-10-18-native-boundary-images/resource-review.md) retain every observation.
+The [full report](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-native-boundary-images/costs.md),
+[new absolute costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-native-boundary-images/new-cost-summary.json) and
+[resource review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-native-boundary-images/resource-review.md) retain every observation.
 Allocation requests and process RSS are not retained-heap bounds; harness sizes
 are not distribution sizes. Historical regressions remain tied to their source
 and are not erased by this campaign. All project completion gates remain open.
 
 ## 2026-10-17: exact prism admission proof scheduling
 
-Kept after the [complete qualification](docs/evidence/2026-10-17-prism-admission-cost/README.md).
+Kept after the [complete qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-prism-admission-cost/README.md).
 The necessary shared internal-edge condition precedes a wall support query.
 Native plane grouping shares the full intersection relation proof and omits
 unused transverse intersection-line construction. Exact topology, strict
@@ -62,14 +62,14 @@ remain unchanged.
 
 The matched campaign preserves all 192 original case receipts across 22 full corpora in 132 fresh processes (three alternating CPU-pinned pairs per corpus). Median case ratio 0.995179; range 0.625531–1.059740. No case-median ratio exceeds 1.10. NURBS boundary extrusion measures 1.207123 to 0.844273 ms (0.699410x); butt-region ratios are 0.896605 and 0.883451. There are 4 rows with increased allocation requests; all raw/adverse rows, process CPU/wall/RSS and executable/WASM sizes remain. The largest allocation-request increase is 1,363 calls (0.052635%) and 85,128 requested bytes (0.041245%) in the primitive-matrix workflow. Native harness size changes range from -1,104 to +5,712 bytes; the same 138-group WASM harness is 7,958 bytes smaller. The resource review retains these tradeoffs without claiming a heap bound. The two preliminary full-harness pilots and pre-edit historical reproduction stay separate. Retain the measured reduction in redundant proof work against the complete current domain; shared-host samples establish neither broad speedup significance nor a retained-heap/distribution-size bound. Earlier cost observations remain open.
 
-[All cost observations](docs/evidence/2026-10-17-prism-admission-cost/costs.md) retain every case and raw sample.
+[All cost observations](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-prism-admission-cost/costs.md) retain every case and raw sample.
 All 211 preceding final native/STEP artifacts agree byte-for-byte. Broader
 geometry, resource, coverage, delivery and historical cost obligations remain
 open; all 28 work packages remain open or in progress.
 
 ## 2026-10-17: partial-depth axial shells and continued modeling
 
-Kept for exact capability and downstream consumption. [Admission evidence](docs/evidence/2026-10-17-axial-shells/README.md)
+Kept for exact capability and downstream consumption. [Admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md)
 retains the four original blocked result cases, their complete continuations,
 and the original shear and periodic failures. Native extrusion carriers and
 some native/STEP artifacts intentionally migrate; this is not performance-only
@@ -77,28 +77,28 @@ work.
 
 All 184 preceding cases across 21 full benchmark corpora retain original inputs, iterations, assertions and materialization; 6 changed receipts are explicit representation migrations, with deterministic per-revision output and separate semantic acceptance. Eight new complete workflows have absolute cost only. Three alternating pairs per old corpus and three new-corpus processes total 129 fresh processes. Median case ratio 1.000016, range 0.782783–1.753610; 3 rows exceed the 10% review marker and 85 have increased allocation requests. All raw/adverse observations, CPU/wall/RSS, requested allocation bytes and executable sizes remain. Exact capability and continued consumption justify retention as a feature, not an optimization or all-cohort performance admission. Shared-host timings do not establish significance; allocation requests do not bound live heap and harness sizes are not distribution sizes. The NURBS-boundary path-extrusion probe regresses from 0.690851 to 1.211483 ms (1.753610x), with all three candidate samples slower than all three baselines; butt-region exchange regresses by 13.3% and 15.3%. These adverse results require follow-up isolation, not dismissal as timer noise. New complete workflows take about 2.1-3.1 seconds and request about 0.75-1.13 GB cumulatively; eight-row process peak RSS is 23,572-24,036 KiB.
 
-[All adverse rows and new absolute costs](docs/evidence/2026-10-17-axial-shells/costs.md) retain the full
-workloads and all raw samples. [Artifact and receipt review](docs/evidence/2026-10-17-axial-shells/migration-review.md)
+[All adverse rows and new absolute costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/costs.md) retain the full
+workloads and all raw samples. [Artifact and receipt review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/migration-review.md)
 separates deterministic representation changes from semantic preservation.
 Source qualification, resource, package and historical performance obligations
 remain open. All 28 work packages remain open/in progress.
 
 ## 2026-10-17: axial intersection and cold continuation prerequisites
 
-Kept for exact capability and downstream consumption. [Admission evidence](docs/evidence/2026-10-17-partial-prism/README.md)
+Kept for exact capability and downstream consumption. [Admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-partial-prism/README.md)
 retains all original failed cases, the reversed-bore regression and the circular
 parameter-map failure. Genuine partial-depth shells remain unsupported.
 
 The matched campaign retains all 180 preceding case receipts across twenty full corpora in three alternating pairs; four new complete workflow rows have absolute costs in three further processes (123 processes total). Median case ratio 1.001813, range 0.801846–1.053511; 0 rows exceed the 10% review marker and 25 have increased allocation requests. All adverse rows, raw logs, process CPU/wall/RSS, allocator requests and executable sizes remain published. The new exact domain and continued consumption justify feature retention; this is not an optimization or an all-cohort performance-gate claim. Shared-host timing, requested allocation bytes and harness sizes do not establish speedup significance, retained-heap bounds or distribution size.
 
-[All adverse rows and new absolute costs](docs/evidence/2026-10-17-partial-prism/costs.md) include the complete
+[All adverse rows and new absolute costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-partial-prism/costs.md) include the complete
 four-workflow native/STEP consumer, with one warmup and three measured iterations
 per process. Existing source qualification, resource, package and historical
 performance obligations remain open. All 28 work packages remain open/in progress.
 
 ## 2026-10-16: retain positive builder admission proofs
 
-Kept after the [source-bound qualification](docs/evidence/2026-10-16-builder-certificates/README.md).
+Kept after the [source-bound qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-builder-certificates/README.md).
 The builder reuses successful strict admission proofs, retries missing families,
 and preserves complete validated-transfer semantics. No validation, output
 materialization, policy, representation or artifact migration is changed.
@@ -125,7 +125,7 @@ with these ratios. All 28 work-package gates remain open or in progress.
 
 ## 2026-10-15: direct circular STEP composition and scalar certificates
 
-The [source-bound evidence](docs/evidence/2026-10-15-step-circles/README.md)
+The [source-bound evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
 qualifies exact direct circle/cylinder import through native splitting, archive
 replay, reflection, disconnected Boolean composition and empty continuation.
 Hyperreal owns the added quarter-turn/reconstructed-angle proof; topology uses
@@ -167,7 +167,7 @@ All work-package, complete resource, release, formal and coverage gates remain o
 ## 2026-10-15: native closed circles and ellipses
 
 Kept for exact closed-edge and full-circle contour completeness. The
-[evidence](docs/evidence/2026-10-15-closed-edges/README.md) starts from
+[evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-closed-edges/README.md) starts from
 `d60bd1cf4`, after the upstream acceptance integration and BodySet migration.
 All 64 existing default-feature BREP receipts match in three alternating CPU-0
 pairs. The median of case median time ratios is **1.020399**, with range
@@ -221,7 +221,7 @@ and iteration counts were not weakened to obtain completion.
 ## 2026-10-15: shared archive structure admission
 
 Kept as partial WP13 resource-contract work. The
-[qualification](docs/evidence/2026-10-15-archive-structure/README.md) compares
+[qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-archive-structure/README.md) compares
 against `155f15e4f` in three alternating process pairs pinned to CPU 0.
 All 66 native receipts match. The median of case median timing ratios is
 0.995768; the largest is 1.073196, within the default 10% budget. Three further
@@ -261,7 +261,7 @@ decoding remain open. This is a resource-contract extension, not a speedup claim
 
 Kept as a WP13 resource-contract extension with an architectural cost
 exception. **Pooled native timing qualification remains unresolved.** The
-[qualification and decision](docs/evidence/2026-10-15-archive-admission/README.md)
+[qualification and decision](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-archive-admission/README.md)
 retain every sample and explain why an iterative pre-deserialization guard is
 required. No optimization or full regression-budget pass is claimed.
 
@@ -296,7 +296,7 @@ frozen unguarded baseline and failed pooled timing evidence remain available.
 ## 2026-10-15: trimmed spline replay and complete-image injectivity
 
 Kept for exact native/selected spline trim replay. The
-[qualification](docs/evidence/2026-10-15-spline-replay/README.md) compares against
+[qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md) compares against
 `7091576d8` in three alternating process pairs pinned to CPU 0. All 66 native
 receipts retain case order, iterations, units and checksums. The median of
 per-case median timing ratios is 0.989699; the largest is 1.073174 for
@@ -333,7 +333,7 @@ comparison or general growth bound is claimed.
 ## 2026-10-15: independent selected solid proofs
 
 Kept for exact selected-solid replay and composition. The
-[qualification](docs/evidence/2026-10-15-selected-solids/README.md) compares
+[qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-selected-solids/README.md) compares
 against `340d51bce` in three alternating process pairs pinned to CPU 0.
 All 66 native receipts preserve case order, iteration count, unit and checksum.
 The median of per-case median timing ratios is 1.011113; the largest is 1.093023
@@ -371,7 +371,7 @@ to the reported native comparison or final feature medians.
 
 ## 2026-10-15: selected archive replay
 
-[Evidence and commands](docs/evidence/2026-10-15-selected-archive/README.md)
+[Evidence and commands](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-selected-archive/README.md)
 cover format 9 graph persistence and independent sheet validation. Three
 alternating pinned process pairs preserve all 66 native benchmark receipts
 against `3426a3a43`. The median of case median timing ratios is **1.00163**;
@@ -453,7 +453,7 @@ baseline.
 ## Selected topology — 2026-10-15
 
 Kept for exact selected vertices, trims, shared-edge subdivision and pcurve
-composition. The [qualification](docs/evidence/2026-10-15-selected-topology/README.md)
+composition. The [qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-selected-topology/README.md)
 records ten public regressions, four rejected mutants and all native/WASM-build
 checks. The first native-mapping prototype exceeded the default budget in
 three editing cohorts and was replaced with direct stored-scalar formulas.
@@ -463,8 +463,8 @@ All 66 existing receipts agree across three alternating process pairs. The
 median of case median ratios is **1.011410**, with a maximum of **1.058066**;
 all cohorts stay within 10%. Binary size grows **67,040 bytes**; median process
 peak RSS is **21,472 → 21,808 KiB**. The
-[comparison](docs/evidence/2026-10-15-selected-topology/comparison.json) and
-[rejected prototype](docs/evidence/2026-10-15-selected-topology/prototype/comparison.json)
+[comparison](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-selected-topology/comparison.json) and
+[rejected prototype](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-selected-topology/prototype/comparison.json)
 retain every sample. No allocation-count or statistical significance is claimed.
 
 The new four-row topology harness measures native/selected splits, sixteen
@@ -484,10 +484,10 @@ keeps the selector, without adding point-wrapper depth. The tests cover source
 lifetime, concurrent readers and retry after stronger scalar evidence. This
 is a capability extension, not a claimed optimization.
 
-The [qualification record](docs/evidence/2026-10-15-retained-spatial-points/manifest.json)
+The [qualification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-spatial-points/manifest.json)
 binds sources, commands, four rejected mutants, executables and raw logs.
 The kernel harness has a direct public-API migration at six call sites;
-[the audit](docs/evidence/2026-10-15-retained-spatial-points/migration-audit.json)
+[the audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-spatial-points/migration-audit.json)
 verifies unchanged fixtures, iterations and assertions. It is not byte-identical
 source. All **66 receipts** agree across three alternating process pairs.
 The median of case median ratios is **1.00352**; the largest is **1.07127** for
@@ -495,7 +495,7 @@ The median of case median ratios is **1.00352**; the largest is **1.07127** for
 budget. Binary size increases by **25,232 bytes**. Whole-process median peak
 RSS is **21,468 → 21,736 KiB**. These descriptive samples establish neither
 allocation counts nor statistical significance. All samples and rows remain in
-[comparison.json](docs/evidence/2026-10-15-retained-spatial-points/comparison.json).
+[comparison.json](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-spatial-points/comparison.json).
 
 The new `retained_points` harness runs 1,000 exact-assertion iterations per row.
 Three-run median costs are:
@@ -514,7 +514,7 @@ Root isolation is outside these timings; even the cold-carrier row shares a
 prepared selector. These are feature costs, not baseline speedups. The four
 retained-parameter and four migrated work-budget receipts also agree in three
 runs each. See
-[feature-cost.json](docs/evidence/2026-10-15-retained-spatial-points/feature-cost.json).
+[feature-cost.json](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-spatial-points/feature-cost.json).
 
 ## Retained inverse parameters — 2026-10-15
 
@@ -525,7 +525,7 @@ evaluation check. A second projection is built only when a selected candidate
 needs a nonconstant third-coordinate proof, and is shared across that query's
 candidates. This is a capability extension, not a claimed optimization.
 
-The [qualification record](docs/evidence/2026-10-15-retained-inverse-parameters/manifest.json)
+The [qualification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-inverse-parameters/manifest.json)
 binds sources, commands, three rejected mutants, executable hashes and logs.
 All 66 unchanged kernel receipts agree across three alternating process pairs.
 The median of case median ratios is **0.97391**; the largest is **1.05369** for
@@ -533,7 +533,7 @@ The median of case median ratios is **0.97391**; the largest is **1.05369** for
 Binary size increases by **18,096 bytes**. Whole-process median peak RSS is
 **21,712 → 21,784 KiB**. These are descriptive samples, without statistical or
 allocation-count claims. Every row and sample remains in
-[comparison.json](docs/evidence/2026-10-15-retained-inverse-parameters/comparison.json).
+[comparison.json](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-inverse-parameters/comparison.json).
 
 The new `retained_parameters` release harness includes exact assertions and
 runs 250 iterations per row. Three-run median costs are **44.280 µs** for a
@@ -542,7 +542,7 @@ quintic root query, **126.885 µs** for a weighted spatial quintic,
 two authored NURBS spans. These capabilities were unavailable in the baseline;
 the measurements are feature costs. The migrated work-budget harness preserves
 its four receipts as well. See
-[feature-cost.json](docs/evidence/2026-10-15-retained-inverse-parameters/feature-cost.json).
+[feature-cost.json](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-inverse-parameters/feature-cost.json).
 
 ## Initial kernel baseline
 
@@ -747,7 +747,7 @@ compatibility target.
 
 ## Native analytic similarities (2026-10-16)
 
-The [source-bound admission record](docs/evidence/2026-10-16-analytic-similarity/README.md) retains the exact metric/chart,
+The [source-bound admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-analytic-similarity/README.md) retains the exact metric/chart,
 profile-reflection, archive and torus-measurement changes. No surrounding
 implementation was changed. All 123 prior case receipts and fixture facts agree
 across 60 alternating processes; seven previous STEP files are byte-identical.
@@ -769,7 +769,7 @@ The source-path WASM consumer and optional OCCT reader do not close release gate
 
 ## Seam-aligned analytic cuts (2026-10-16)
 
-The [source-bound record](docs/evidence/2026-10-16-seam-cuts/README.md) qualifies the original full-size seam cuts
+The [source-bound record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-seam-cuts/README.md) qualifies the original full-size seam cuts
 and their replay dependencies. The complete final 66-process campaign preserves
 131 of 132 prior receipts. One radical-cylinder archive has an explicit exact
 expression migration: all 32 changed scalar values prove equal, every non-scalar
@@ -796,7 +796,7 @@ All broader work-package, typed-frontier and delivery gates remain open.
 
 ## Repeated curved composition (2026-10-16)
 
-The [source-bound record](docs/evidence/2026-10-16-curved-coplanar/README.md) qualifies native recuts, canonical-empty
+The [source-bound record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-curved-coplanar/README.md) qualifies native recuts, canonical-empty
 recovery and complementary reconstruction on three original full-size torus/cone
 half cuts, both applicable orders and six exact similarities. All 138 preserved
 cases run in twelve complete corpora, three alternating CPU-0 pairs each, without
@@ -822,7 +822,7 @@ resource/provenance and delivery gates remain open.
 
 ## Analytic sector and band continuation (2026-10-16)
 
-The [source-bound record](docs/evidence/2026-10-16-sector-cuts/README.md) retains the complete preserved corpus, new successful workflows and affected scalar costs.
+The [source-bound record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-sector-cuts/README.md) retains the complete preserved corpus, new successful workflows and affected scalar costs.
 
 The complete 78-process campaign compares all 149 preserved cases across thirteen corpora, with no receipt waiver. The largest case-median candidate/baseline ratio is 1.3891891098983489; 5 rows exceed 10%, and 51 rows change allocator observations. Every timing sample, allocator request, process resource and executable size is retained. Seven new successful workflows have separate absolute costs across three processes, including full materialization, exact checks, replay and the thirty-configuration matrix. The affected inverse-trigonometric corpus has 33 cases and 12 alternating baseline/candidate processes with raw Criterion samples. Scalar costs retain their original construction/approximation boundaries; they are not topology receipts. No failed operation is used as a speedup baseline. Shared-host observations do not close controlled-host or statistical performance admission. Prior spline, archive and cached-arc timing exceptions remain open.
 
@@ -845,7 +845,7 @@ that observation is not a controlled-host performance gate.
 
 ## Periodic conic continuation (2026-10-16)
 
-The [source-bound record](docs/evidence/2026-10-16-oblique-cuts/README.md) retains complete before/after outputs and the original failed fixtures.
+The [source-bound record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-oblique-cuts/README.md) retains complete before/after outputs and the original failed fixtures.
 
 The full 84-process campaign compares 156 preserved cases in fourteen corpora; every receipt agrees. The largest case-median candidate/baseline ratio is 1.248962; 3 rows exceed 10%, and 37 rows change allocator observations. Every adverse row, raw sample, allocation request, process resource and executable size is retained. Three newly successful torus continuation workloads have separate absolute costs across three processes, with exact checks and full output materialization inside timing. No failed operation serves as a speedup baseline. Shared-host measurements do not close controlled-host/statistical gates or earlier timing exceptions.
 
@@ -861,7 +861,7 @@ The new periodic lifting helper repeats certified membership/end-point compariso
 
 ## Upstream native integration (2026-10-16)
 
-The [integration evidence](docs/evidence/2026-10-16-upstream-native-integration/README.md) compares the same completed BREP contracts before and after the dependency merge.
+The [integration evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-upstream-native-integration/README.md) compares the same completed BREP contracts before and after the dependency merge.
 
 The full 90-process campaign preserves all receipts across 159 cases and fifteen corpora. Maximum case-median candidate/baseline latency is 1.148357; 3 rows exceed 10%, and 25 rows change allocation observations. All raw samples, allocation requests, process resources, executable sizes and adverse rows are retained. These shared-host observations do not establish a statistical speedup, total-resource bound or closure of prior performance gates.
 
@@ -875,7 +875,7 @@ Prior pcurve, provenance, archive, spline and cached-arc observations remain vis
 
 ## Per-call conic comparison reuse (2026-10-16)
 
-The [comparison record](docs/evidence/2026-10-16-conic-comparison-reuse/README.md) isolates one BREP helper against the qualified upstream integration.
+The [comparison record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-conic-comparison-reuse/README.md) isolates one BREP helper against the qualified upstream integration.
 
 Retained after the complete preserved correctness and cost campaign. The helper reuses strict decided orderings for the same immutable value/domain and changes no accepted geometry, endpoint identity or deterministic output contract. Both partial pcurve cases remove 656 allocation calls and 45,904 requested bytes per operation; their observed full-campaign time ratios are 0.971130 and 0.977347. All 159 cases preserve their receipts and no case-median time ratio exceeds 1.035024. The two similarity matrices with increased allocation observations remain visible; each increase is less than 0.075% of its corresponding baseline. Native harness growth of up to 1,208 bytes and WASM growth of 275 bytes are retained as adverse size observations. These shared-host samples justify this limited local reuse; they do not establish a general speedup, universal allocation reduction or closure of earlier performance, resource, correctness or release gates.
 
@@ -908,7 +908,7 @@ The original focused probe and all unfavorable rows remain in the evidence. No p
 
 ## Exact prism continuation (2026-10-16)
 
-The [source-bound record](docs/evidence/2026-10-16-prism-continuation/README.md) retains original failures, the full preserved corpus and reviewed representation migrations.
+The [source-bound record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-prism-continuation/README.md) retains original failures, the full preserved corpus and reviewed representation migrations.
 
 The complete 96-process campaign measures 159 preserved cases in fifteen corpora and eight new completed workflows. 8 old case receipts and 1 fixture-fact records have individually reviewed migrations. Maximum preserved-case median latency ratio is 1.713776; 19 rows exceed 10%. 68 rows change allocation observations, including 60 increases in calls or requested bytes. All raw samples, adverse rows, output receipts, process resources and executable sizes remain. Native harness size changes range from 4336 to 67920 bytes; the WASM harness grows 492304 bytes and includes twelve new test groups. Shared-host observations do not establish a general speedup, controlled-host performance, isolated scalar primitive costs, shipped binary size or closure of earlier cost gates.
 
@@ -953,7 +953,7 @@ Requested allocation bytes and process RSS do not bound retained heap or total w
 
 ## Exact ring-torus exchange (2026-10-17)
 
-The [source-bound admission record](docs/evidence/2026-10-16-torus-exchange/README.md) retains the original exchange/replay failures, shared scalar proof, native contact/image facts, rejected alternatives and explicit capability migrations.
+The [source-bound admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md) retains the original exchange/replay failures, shared scalar proof, native contact/image facts, rejected alternatives and explicit capability migrations.
 
 The complete 105-process campaign compares 167 preserved cases in seventeen corpora and records three new completed torus workflows separately. 162 old exact receipts are unchanged; five archive receipts have explicitly reviewed exact representation migrations. Their complete artifact comparison is linked in the admission record. The original no-migration gate remains failed. All 54 separately retained STEP/archive artifacts agree byte-for-byte. The maximum preserved-case median latency ratio is 1.807459; 15 rows exceed 10%. 65 rows change allocation observations, including 35 increases in calls or requested bytes. All raw samples, unfavorable results, allocation requests, process resources and executable sizes remain in the evidence. These shared-host observations do not establish a general speedup or close earlier cost gates.
 
@@ -991,12 +991,12 @@ Native harness size changes range from 6,880 to 65,176 bytes. The WASM harness c
 
 The separate dependency microcost supplement records 175 cases in 12 processes, with 5 median ratios above 1.10 and maximum 1.452677. Its scalar baseline was reconstructed after the blocker was discovered; it was not frozen prospectively. Criterion alone supplies no geometric completion or allocation receipt. The four complete dependency library suites preserve all 3,514 named outcomes (3,508 passed, six ignored); the separately reproduced inherited zero-factor debug failures remain.
 
-The [follow-up experiment](docs/evidence/2026-10-16-torus-exchange/future-angle-costs.md) targets repeated proof work while preserving every successful workflow. No individual helper's contribution has yet been isolated. Prior archive, spline, cached-arc, pcurve, provenance and prism cost observations remain open. All broader work-package, resource and delivery gates remain open.
+The [follow-up experiment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-torus-exchange/future-angle-costs.md) targets repeated proof work while preserving every successful workflow. No individual helper's contribution has yet been isolated. Prior archive, spline, cached-arc, pcurve, provenance and prism cost observations remain open. All broader work-package, resource and delivery gates remain open.
 
 
 ## Exact rotated reconstruction (2026-10-17)
 
-The [source-bound record](docs/evidence/2026-10-17-curved-continuation/README.md)
+The [source-bound record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-curved-continuation/README.md)
 qualifies two formerly exhausted full-size torus reconstructions and their
 repeated native composition. This is an exact-completion extension, not an
 optimization. Existing successful proof paths remain first; later exact
@@ -1038,7 +1038,7 @@ workflows, and WASM adds four groups. These are harness observations, not
 package sizes, controlled-host performance or total-resource bounds. Earlier
 cost gates remain open; later favorable rows do not discharge them.
 
-Follow the [proof-cost investigation](docs/evidence/2026-10-17-curved-continuation/future-proof-costs.md).
+Follow the [proof-cost investigation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-curved-continuation/future-proof-costs.md).
 Measure repeated exact proof attempts against this complete feature baseline
 before changing scheduling or caching. A new proof attempt's contribution to
 any observed slowdown has not been isolated. Preserve every original input,
@@ -1047,7 +1047,7 @@ successful receipt, invalid-input control and explicit unresolved outcome.
 
 ## Exact rotated cone continuation (2026-10-17)
 
-The [admission record](docs/evidence/2026-10-17-cone-continuation/README.md)
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-continuation/README.md)
 qualifies the original cone band and both complementary reconstruction orders,
 including two further native continuation cycles. This extends exact completion;
 it is not an optimization. The additional algebra attempt follows every previous
@@ -1096,7 +1096,7 @@ All 175 preceding main benchmark cases retain their exact receipts across 18 pre
 
 The new completed workflow has median 2850.531 ms per call, 19204391 allocation requests and 1213465037 requested bytes. It includes exact checks, STEP materialization/reimport, source maps, cold native replay, repeated Booleans and empty recovery. The prior unsupported result is not a successful-work comparison.
 
-The unchanged geometric contracts retain their inputs and receipts. Consumer cost also includes additional source-map provenance and the extended graph/formula oracle; this is not a pure-kernel optimization claim. Every adverse timing, allocation and size observation remains in the report. Shared-host timings, allocator requests, process RSS and harness sizes do not prove aggregate speedups or retained-heap/package bounds. See the [admission record](docs/evidence/2026-10-17-cone-exchange/README.md), [main costs](docs/evidence/2026-10-17-cone-exchange/benchmark-summary.json) and [dependency costs](docs/evidence/2026-10-17-cone-exchange/dependency-costs-v1/summary.json).
+The unchanged geometric contracts retain their inputs and receipts. Consumer cost also includes additional source-map provenance and the extended graph/formula oracle; this is not a pure-kernel optimization claim. Every adverse timing, allocation and size observation remains in the report. Shared-host timings, allocator requests, process RSS and harness sizes do not prove aggregate speedups or retained-heap/package bounds. See the [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md), [main costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-exchange/benchmark-summary.json) and [dependency costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-exchange/dependency-costs-v1/summary.json).
 
 
 ## Public normalized-region extrusion (2026-10-17)
@@ -1112,60 +1112,60 @@ Three fresh benchmark processes each execute one warmup and three measured itera
 
 This exposes the existing native component constructor through a strict model-owning API. It does not add general rational-path area, a new planar arrangement or broader Boolean/analytic closure. A local strict construction does not certify an earlier approximate source intent; complete source-qualification delivery remains open. Solver budgets do not bound total work, expression growth, retained heap or cancellation. Source-path native/WASM consumers and optional OCCT reads do not establish package/MSRV, actual C/Python/JavaScript bindings, formal proofs, coverage, runtime fuzz/ASan/lexicase, release or the full pre-push matrix. All 28 work packages remain open or in progress. No push is included.
 
-See the [source-bound admission record](docs/evidence/2026-10-17-region-extrusion/README.md) for complete samples and reproduction.
+See the [source-bound admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-region-extrusion/README.md) for complete samples and reproduction.
 
 
 ## Selected-profile native extrusion (2026-10-18)
 
-The [admission record](docs/evidence/2026-10-18-selected-profile-extrusion/README.md) extends exact completion through native subcurve images and supported product-solid continuation. This is a capability extension, not an optimization.
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/README.md) extends exact completion through native subcurve images and supported product-solid continuation. This is a capability extension, not an optimization.
 
 Three alternating pairs preserve all 22 existing consumer groups in 18 processes, with original assertions, iterations and outcomes. Time ratios range 0.981471–1.224120; 1 exceed the 10% review marker and 3 increase allocation calls or requested bytes. Eleven new complete groups have absolute costs from three processes. All adverse observations remain. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or internal resource bound. The unequal_holes expected-rejection group rises from 2.696819 to 3.301229 ms (1.224120 ratio), with allocation calls 9123 to 11483; this adverse cost remains an explicit open obligation, not a speedup claim.
 
-The [adverse review](docs/evidence/2026-10-18-selected-profile-extrusion/adverse-review.md) explains the retained rejection cost and the separate proof-search experiment required before any optimization.
+The [adverse review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/adverse-review.md) explains the retained rejection cost and the separate proof-search experiment required before any optimization.
 
-[Every cost row](docs/evidence/2026-10-18-selected-profile-extrusion/costs.md) and the [resource review](docs/evidence/2026-10-18-selected-profile-extrusion/resource-review.json) retain slower observations, allocation requests, process RSS, executable sizes and forty exact archive states. New completed workflows have absolute costs only. Prior rejected ideas and adverse cost obligations remain attached to their original revisions. Allocation requests, archive nesting and process RSS do not bound retained heap, coefficient growth, total work or cancellation. All distribution and broader work-package gates remain open.
+[Every cost row](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/costs.md) and the [resource review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/resource-review.json) retain slower observations, allocation requests, process RSS, executable sizes and forty exact archive states. New completed workflows have absolute costs only. Prior rejected ideas and adverse cost obligations remain attached to their original revisions. Allocation requests, archive nesting and process RSS do not bound retained heap, coefficient growth, total work or cancellation. All distribution and broader work-package gates remain open.
 
 
 ## Exact procedural pcurve replay (2026-10-18)
 
-The [admission record](docs/evidence/2026-10-18-parallel-pcurve-replay/README.md) adds exact native persistence of analytic parallels and supported planar continuation. This is a capability extension; it introduces no new geometry solver or optimization.
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/README.md) adds exact native persistence of analytic parallels and supported planar continuation. This is a capability extension; it introduces no new geometry solver or optimization.
 
 Three alternating pairs preserve all 33 preceding consumer groups in 24 processes, with original assertions, iterations and outcomes. Time ratios range 0.979430–1.065905; 0 exceed the 10% review marker and 5 increase allocation calls or requested bytes. Seven new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
-[All cost rows](docs/evidence/2026-10-18-parallel-pcurve-replay/costs.md) and the [resource review](docs/evidence/2026-10-18-parallel-pcurve-replay/resource-review.json) retain timing, allocation, RSS, executable size and 25 exact archive observations. The previous selected-profile unequal-hole rejection cost and all earlier adverse obligations remain open. These finite samples do not bound arbitrary composition, retained heap, coefficient growth, total work or cancellation. Spatial parallel-cap extrusion and broader release gates remain open.
+[All cost rows](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/costs.md) and the [resource review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/resource-review.json) retain timing, allocation, RSS, executable size and 25 exact archive observations. The previous selected-profile unequal-hole rejection cost and all earlier adverse obligations remain open. These finite samples do not bound arbitrary composition, retained heap, coefficient growth, total work or cancellation. Spatial parallel-cap extrusion and broader release gates remain open.
 
 
 ## Retained planar curves and nonlinear cap extrusion (2026-10-18)
 
-The [admission record](docs/evidence/2026-10-18-planar-curve-lift/README.md) adds exact planar spatial images and the original full nonlinear parallel-cap extrusion, replay and supported solid continuation. This is a capability extension.
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-planar-curve-lift/README.md) adds exact planar spatial images and the original full nonlinear parallel-cap extrusion, replay and supported solid continuation. This is a capability extension.
 
 Three alternating pairs preserve all 40 preceding consumer groups in 30 processes, with original assertions, iterations and outcomes. Time ratios range 0.965088–1.121568; 1 of 40 groups exceed the 10% review marker and 20 increase allocation calls or requested bytes. Twelve new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
-All [cost rows](docs/evidence/2026-10-18-planar-curve-lift/costs.md) and [resource observations](docs/evidence/2026-10-18-planar-curve-lift/resource-review.json) are retained. Earlier selected-profile unequal-hole rejection and other adverse costs remain open; this is no general performance or bounded-resource claim.
+All [cost rows](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-planar-curve-lift/costs.md) and [resource observations](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-planar-curve-lift/resource-review.json) are retained. Earlier selected-profile unequal-hole rejection and other adverse costs remain open; this is no general performance or bounded-resource claim.
 
 
 ## Selected planar spatial images (2026-10-18)
 
-The [admission](docs/evidence/2026-10-18-selected-planar-images/README.md) extends exact selected point queries, trim replay and supported solid continuation. It is a capability extension.
+The [admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-planar-images/README.md) extends exact selected point queries, trim replay and supported solid continuation. It is a capability extension.
 
 Three alternating pairs preserve 51 unchanged preceding consumer groups in 36 processes; one migrated control is recorded separately without a time ratio, with original assertions, iterations and outcomes. Time ratios range 0.768883–1.338501; 1 of 51 groups exceed the 10% review marker and 7 increase allocation calls or requested bytes. Fourteen new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
-[All raw costs](docs/evidence/2026-10-18-selected-planar-images/consumer-costs.json), [absolute new costs](docs/evidence/2026-10-18-selected-planar-images/new-costs.json) and [resource observations](docs/evidence/2026-10-18-selected-planar-images/resource-review.json) retain adverse results. The migrated mixed control has no matched ratio; earlier adverse obligations remain.
+[All raw costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-planar-images/consumer-costs.json), [absolute new costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-planar-images/new-costs.json) and [resource observations](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-planar-images/resource-review.json) retain adverse results. The migrated mixed control has no matched ratio; earlier adverse obligations remain.
 
 
 ## Retained finite curve/plane contacts (2026-10-18)
 
-The [admission](docs/evidence/2026-10-18-retained-plane-contacts/README.md) extends exact contacts, source-bound parameter/point queries and supported split/replay/solid continuation. It is a capability extension and public API migration.
+The [admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-retained-plane-contacts/README.md) extends exact contacts, source-bound parameter/point queries and supported split/replay/solid continuation. It is a capability extension and public API migration.
 
 Three alternating pairs per cohort cover 64 unchanged preceding consumer groups in 42 processes, retaining their full assertions, iterations and outcomes. Two migrated controls are recorded separately without time ratios. Time ratios range 0.976042–1.262197; 1 of 64 groups exceed the 10% review marker and 17 increase allocation calls or requested bytes. Fourteen new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
-[All raw costs](docs/evidence/2026-10-18-retained-plane-contacts/consumer-costs.json), [absolute new costs](docs/evidence/2026-10-18-retained-plane-contacts/new-costs.json) and [resource observations](docs/evidence/2026-10-18-retained-plane-contacts/resource-review.json) retain adverse results. The two migrated groups have no matched ratios; earlier adverse obligations remain.
+[All raw costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-retained-plane-contacts/consumer-costs.json), [absolute new costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-retained-plane-contacts/new-costs.json) and [resource observations](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-retained-plane-contacts/resource-review.json) retain adverse results. The two migrated groups have no matched ratios; earlier adverse obligations remain.
 
 
 ## Selected procedural-profile construction (2026-10-18)
 
-The [admission](docs/evidence/2026-10-18-selected-procedural-profiles/README.md) extends exact construction and supported edit/replay/slab continuation, with direct API/archive migration.
+The [admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-procedural-profiles/README.md) extends exact construction and supported edit/replay/slab continuation, with direct API/archive migration.
 
 Three alternating pairs per cohort cover 79 preceding semantic-workflow groups in 48 processes, retaining their full assertions, iterations and outcomes. One capability-migrated control is recorded separately without time ratios. Time ratios range 0.950832–3.131993; 3 of 79 groups exceed the 10% review marker and 63 increase allocation calls or requested bytes. Twelve new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. Archive-version migration changes serialization work; these are the same complete semantic workflows, not identical encoded bytes. Candidate includes upstream dbe99e3cc and cannot isolate the feature effect. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
-[Complete costs](docs/evidence/2026-10-18-selected-procedural-profiles/costs.md) and [resource observations](docs/evidence/2026-10-18-selected-procedural-profiles/resource-review.json) retain every adverse result. The capability-migrated control has no ratio. Earlier adverse obligations and whole-operation resource gates remain open.
+[Complete costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-procedural-profiles/costs.md) and [resource observations](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-procedural-profiles/resource-review.json) retain every adverse result. The capability-migrated control has no ratio. Earlier adverse obligations and whole-operation resource gates remain open.

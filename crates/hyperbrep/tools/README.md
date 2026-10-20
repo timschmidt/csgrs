@@ -24,5 +24,5 @@ Supply `--source` when checking a historical harness revision.
 The first three implementation summaries omitted a `c0` fixture because of
 an overly restrictive parser. Their original logs contained all 66 rows;
 the corrected manifests preserve those logs and name the correction. The
-[scope experiment](../docs/evidence/2026-10-14-strict-scope-fast-path/manifest.json)
+[scope experiment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-14-strict-scope-fast-path/manifest.json)
 uses the complete checker and retains a rejected candidate.

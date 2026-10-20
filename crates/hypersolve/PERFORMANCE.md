@@ -13,7 +13,7 @@ and cannot authorize an approximate result. Native tests check total work
 across root refinements, tensor-image promotion plus its internal refinement,
 larger-budget retry, thread isolation, and unwind restoration.
 
-The [curve consumer probe](../../benchmarks/baselines/2026-10-08-properties/README.md#curve-work-budget-accounting)
+The [curve consumer probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#curve-work-budget-accounting)
 retains both the initial and inlined accounting variants, exact executable
 identities, all reported evidence, and timing samples. It measures inactive
 budget overhead in that consumer, not active-budget solver throughput or a
@@ -23,7 +23,7 @@ gaps.
 The subsequent shared-isolator extension also charges ordered-field Bernstein
 subdivision, selected-fiber Sturm isolation, reusable fiber-root refinement,
 and local-field source refinement. The
-[five-pair Criterion probe](../../benchmarks/baselines/2026-10-08-properties/README.md#shared-ordered-field-and-selected-fiber-isolators)
+[five-pair Criterion probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#shared-ordered-field-and-selected-fiber-isolators)
 retains its isolated build provenance, full Criterion data, and rejected
 initial variant. A thread-local activity flag avoids borrowing the frame stack
 when no budget is active. Final medians across the three selected-fiber workloads
@@ -40,7 +40,7 @@ promotion charge. Budgeted rational maps read existing elimination caches but
 do not populate them, so a resource denial cannot permanently reject a later
 request for the same map or another root of its source polynomial.
 
-The [image-promotion gate](../../benchmarks/baselines/2026-10-08-properties/README.md#represented-root-image-promotions)
+The [image-promotion gate](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#represented-root-image-promotions)
 records the selected Criterion measurements, source provenance, and a change
 to avoid checking exhaustion twice on a constant-image path. This changes the
 resource contract without claiming a general performance improvement.
@@ -51,7 +51,7 @@ constrained-axis eliminations and final quotient norm. Reports discard partial
 coefficients and retained relations after exhaustion. Regression tests compare
 complete retry reports, including saturated foreign factors, both retained
 axes, both predicate policies, and repeated degree-six carriers. The
-[projection probe](../../benchmarks/baselines/2026-10-08-properties/README.md#selected-fiber-projection-promotions)
+[projection probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#selected-fiber-projection-promotions)
 records the cost of these additional admission checks on existing workloads.
 
 Bivariate system resultants and constrained tensor-axis resultants now charge
@@ -61,7 +61,7 @@ Tensor reductions that remove an independent axis also need no resultant.
 Native tests preserve full reports and correlated-product multiplicity after
 retry; the curve tests cover both a two-norm sum and a one-norm product, where
 quotient reduction removes the remaining source axis. The
-[elimination probe](../../benchmarks/baselines/2026-10-08-properties/README.md#shared-bivariate-and-tensor-elimination)
+[elimination probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#shared-bivariate-and-tensor-elimination)
 records the inactive accounting cost on the existing resultant workloads.
 
 Three- and four-variable constrained norms and subresultants now share that
@@ -70,7 +70,7 @@ order admission. A terminal-order subresultant reuses an input polynomial
 without a new charge, but cannot publish evidence in an already exhausted
 scope. Native regressions compare complete exact reports across all three
 trivariate axes, the fourth-axis norm, nested scopes, and larger-budget
-retries. The [fixed-rank probe](../../benchmarks/baselines/2026-10-08-properties/README.md#fixed-rank-norms-and-subresultants)
+retries. The [fixed-rank probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#fixed-rank-norms-and-subresultants)
 measures the two existing constrained-trivariate workloads and two unchanged
 controls. It does not measure every subresultant or four-variable path.
 
@@ -80,7 +80,7 @@ allowance. Regressions compare every map, cofactor row, degree bound, and
 orientation after retry, including samples with vanishing leading
 coefficients. Four dedicated Criterion fixtures exercise both retained axes
 with and without a specialized degree drop. The
-[lift probe](../../benchmarks/baselines/2026-10-08-properties/README.md#cofactor-parameter-lifts)
+[lift probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#cofactor-parameter-lifts)
 uses identical new fixtures in the baseline and candidate; exact reports are
 checked separately from timing.
 
@@ -93,7 +93,7 @@ exact trivariate division after resource denial. Rootless-axis saturation now
 returns `Classification<Option<_>>`, and the trivariate factor APIs return
 `Result<Option<_>, BudgetExceeded>` so callers can distinguish exhaustion from
 an unavailable factor. The
-[component probe](../../benchmarks/baselines/2026-10-08-properties/README.md#common-components-and-axis-factors)
+[component probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/benchmarks/baselines/2026-10-08-properties/README.md#common-components-and-axis-factors)
 uses six identical new fixtures in the baseline and candidate; it covers
 native construction with no active budget, with exact retries tested separately.
 

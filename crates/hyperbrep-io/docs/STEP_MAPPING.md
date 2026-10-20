@@ -129,7 +129,7 @@ There is no legacy import alias or parallel geometry carrier. Full EXPRESS/AP
 conformance, native arbitrary-shell completeness, global arithmetic/work/heap
 admission and general curved/periodic STEP exchange remain unfinished. Independent OCCT
 inputs and the exact/rejection/composition evidence are recorded in the
-[advanced mapping qualification](../../hyperbrep/docs/evidence/2026-10-15-step-advanced/README.md).
+[advanced mapping qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-advanced/README.md).
 
 ## Direct circular edges and cylindrical faces
 
@@ -175,7 +175,7 @@ must finish admission before any result is
 published; all source entities remain interpreted or raw-retained. The exact
 faceted writer rejects these curved models. Native archive replay is a separate
 lossless operation, not a curved STEP round trip. See the
-[circular mapping evidence](../../hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
+[circular mapping evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
 and [runnable example](../examples/circular_step.rs).
 
 ## Supplied analytic pcurves
@@ -234,7 +234,7 @@ definition IDs report `MissingEntity`, rather than the former unsupported-family
 guard. Original malformed fixtures remain failures with their exact missing IDs
 asserted. The [supplied fixture](../tests/fixtures/supplied-cylinder.step),
 [example](../examples/supplied_step.rs) and
-[acceptance evidence](../../hyperbrep/docs/evidence/2026-10-15-step-pcurves/README.md)
+[acceptance evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-pcurves/README.md)
 record exact source-map evaluation, consumption and the remaining limits.
 
 ## Units and text
@@ -435,10 +435,10 @@ work and cancellation remain outside the writer's cardinality/encoding bounds.
 
 The common input name is now `StepBody`, replacing `FacetedBody` without an alias.
 `write_faceted` remains a distinct encoding with unchanged output contracts.
-The [analytic admission record](../../hyperbrep/docs/evidence/2026-10-16-step-analytic-export/README.md)
+The [analytic admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-step-analytic-export/README.md)
 retains exact graph checks, parameter maps, composition, source-bound checks and
 the original native uniform-scaling failure. The subsequent
-[native similarity increment](../../hyperbrep/docs/evidence/2026-10-16-analytic-similarity/README.md)
+[native similarity increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-analytic-similarity/README.md)
 adds exact physical scaling, reflected chart transport, native replay and
 unit-aware export/reimport. Physical scaling occurs in HyperBRep; output unit
 selection remains an independent exchange operation.
@@ -467,7 +467,7 @@ some valid native torus bands therefore remain `NonRational` export failures.
 Horn/spindle tori, other torus circle families, general trims and full EXPRESS/AP
 validation remain open. The finite-decimal seam controls cover both U and V.
 
-The [torus admission record](../../hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md)
+The [torus admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md)
 retains the original unsupported controls and their explicit capability migration,
 independent surface/measure checks, source maps, repeated modeling, native replay,
 malformed inputs and resource limits. The [example](../examples/torus_step.rs)
@@ -536,7 +536,7 @@ B-spline generators, arbitrary revolution/trim exchange, apex-ending solids,
 void shells and broader Boolean closure remain open.
 
 The [example](../examples/cone_step.rs) uses the public API. The
-[admission record](../../hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md)
+[admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md)
 retains the original unsupported inputs as stronger successes, independent
 negative controls, source-map/formula checks and the full measured workflows.
 This finite extension does not close WP14a/b or the distribution gates.
@@ -551,7 +551,7 @@ shell validation, coefficient/work bounds, fuzz/ASan/lexicase qualification,
 full workspace checks and release work are also open. A source syntax round trip
 and native JSON replay do not count as an edited geometry STEP round trip.
 
-The [export qualification](../../hyperbrep/docs/evidence/2026-10-15-step-export/README.md)
+The [export qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-export/README.md)
 checks edited geometry STEP round trips, raw emitted coordinates/edge uses/oriented
 normals, representability and admission, executed WASM, original native examples
 read independently by OCCT, fault controls and export/import costs. These are
@@ -559,7 +559,7 @@ selected-domain observations, not a completed work package or general CAD releas
 
 Four original fixture recipes (box, two bodies, through-hole and oblique
 tetrahedron) are read by OCCT and mapped natively with exact volume and incidence
-checks. The [qualification](../../hyperbrep/docs/evidence/2026-10-15-step-faceted/README.md)
+checks. The [qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-faceted/README.md)
 retains tests, runtime probes, fault controls, source hashes and cost observations.
 
 
@@ -624,5 +624,5 @@ and supported repeated slab cuts. Native orientation and topology are proved
 independently of volume. Measurement queries return `UnsupportedMeasurement`;
 no numerical integration supplies native authority. Errors while attempting
 an available integral still propagate. The
-[acceptance evidence](../../hyperbrep/docs/evidence/2026-10-18-measurement-admission/README.md)
+[acceptance evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-measurement-admission/README.md)
 records this finite extension and the remaining integration limits.

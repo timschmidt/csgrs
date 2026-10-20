@@ -95,7 +95,7 @@ also checks native forward/local display coordinates within 3e-8 m and heights
 within 5e-7 m. These bounds are test evidence, not native predicate tolerances
 or physical accuracy claims.
 
-The full [map_3d error inventory](../../verification/2026-10-18-map3d-inverse-errors.csv)
+The full [map_3d error inventory](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-map3d-inverse-errors.csv)
 retains all 175 cases of its own forward/inverse cycle. Its 30 latitude
 discrepancies at 1,000 km are explicit expected oracle limitations in the
 unchanged corpus, with a separate 55-degree regression. No native precision
@@ -114,8 +114,8 @@ oracle outputs are rejected before constructing native coordinates.
 | Seeded `forward_local` fuzz executable, expanded with inverse/independent-forward assertions | The same 918 six-byte cases and 1,000-run smoke complete under time/RSS limits. This is uninstrumented replay, not ASan or adaptive coverage-guided evidence. |
 | `zizmor --pedantic --strict-collection .`, Zizmor 1.31.1 default offline audits | No findings after the workflow's optimized probe gate was extended. |
 
-[Coverage data](../../verification/2026-10-18-e1-inverse-coverage.json) retains the
-source digests and instrumented denominator. [Fuzz replay output](../../verification/2026-10-18-e1-inverse-fuzz-smoke.txt)
+[Coverage data](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e1-inverse-coverage.json) retains the
+source digests and instrumented denominator. [Fuzz replay output](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-18-e1-inverse-fuzz-smoke.txt)
 retains the missing-sanitizer/coverage warnings. [Inverse cost rows](../../benchmarks/2026-10-18-inverse.csv)
 measure five warm trials of 100 complete inverse/evidence/display/source-return
 workflows. [A fresh-process probe](../../benchmarks/2026-10-18-inverse-resources.json)

@@ -1,7 +1,7 @@
 # HyperBRep IO
 
 Exact plane/cylinder partial-depth results complete STEP export, cold import and
-continued Booleans in the [axial-shell corpus](../hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md).
+continued Booleans in the [axial-shell corpus](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md).
 Native line/circle extrusion walls now retain analytic carriers and their actual
 orientation; this is an intentional serialization migration. General affine,
 fillet and other unsupported carrier families retain their own open gates.
@@ -38,7 +38,7 @@ Hypercurve proves simple-loop orientation and HyperBRep proves complete plane
 incidence and shell orientation. The independent degree-five rational fixture
 completes import, native replay, export and slab cuts in both source directions
 and metre/mm units; volume remains an explicit `UnsupportedMeasurement`.
-See the [measurement admission evidence](../hyperbrep/docs/evidence/2026-10-18-measurement-admission/README.md).
+See the [measurement admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-measurement-admission/README.md).
 
 The syntax layer retains numeric lexemes without binary floating-point conversion, unknown
 entity records, complex instances, forward references, multiple DATA sections,
@@ -237,7 +237,7 @@ coordinates in radians. Whole tori, axial/longitudinal halves, supported quarter
 and the rational 10/5-radius band cut at height 3 have exchange and continuation
 checks, including archive replay after subdivision. The
 [torus example](examples/torus_step.rs) exports, reimports and recuts these shapes.
-The [admission record](../hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md)
+The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md)
 separates native, STEP and resource evidence. Horn/spindle tori, other torus-curve
 families and loops requiring additional periodic subdivision remain unsupported.
 Radii, vertices and frame encodings must satisfy the existing exact-number
@@ -256,6 +256,6 @@ The [cone example](examples/cone_step.rs) exports and reimports a whole frustum,
 rotated halves, an axial band, both reunion orders and a nonterminating apex,
 then checks native continuation and archive replay. See the
 [mapping contract](docs/STEP_MAPPING.md#conical-line-revolutions) and
-[admission evidence](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md).
+[admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md).
 Direct `CONICAL_SURFACE`, B-spline generators, general revolution mappings,
 apex-ending solids and arbitrary cone trims remain outside this exchange subset.

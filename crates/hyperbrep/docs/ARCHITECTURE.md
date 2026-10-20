@@ -27,11 +27,11 @@ including intrinsic span injectivity and directed endpoint parameters.
 Cap pairing and transverse translation then use the existing prism validator.
 No represented area or volume is required to certify that topology.
 
-The [planar lift admission](evidence/2026-10-18-planar-curve-lift/README.md)
+The [planar lift admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-planar-curve-lift/README.md)
 covers the original full nonlinear parallel cap, its quadratic closing spans,
 planar faces, path/region extrusion, holes/components, exact queries, edge
 splits, affine replay and repeated same-profile slab cuts/restoration. The
-[selected-image admission](evidence/2026-10-18-selected-planar-images/README.md)
+[selected-image admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-planar-images/README.md)
 extends point queries and topology splits to retained selected roots. A point
 owns its original spatial source, parameter and planar point evidence. Frame
 linear forms delegate to Hypercurve's `CurvePointAffineForm2`; no independent
@@ -69,7 +69,7 @@ An ambiguous full-multiplicity planar spline joint retains the owner's typed
 from the jump remain consumable. Coefficient-only consumers explicitly request optional scalar
 views and preserve typed failures. A boundary mapper can reuse its supplied
 represented parameter only after exact equality proves it is the retained root.
-The [contact admission](evidence/2026-10-18-retained-plane-contacts/README.md)
+The [contact admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-retained-plane-contacts/README.md)
 records this public API migration and the supported topology/format consumers.
 
 The shared surface-pcurve materializer also consumes a contained planar image
@@ -133,7 +133,7 @@ Selected revolution patches use it for their latitude boundaries. Ordinary
 face admission checks complete coordinate images and profile-axis clearance,
 including during cold reconstruction. Those checks do not certify general
 rank-two surface regularity, global embedding or solid interior. The
-[finite evidence](evidence/2026-10-18-selected-revolution/README.md) records composition and replay.
+[finite evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-revolution/README.md) records composition and replay.
 
 ## Closed edges and periodic seam uses
 
@@ -163,7 +163,7 @@ unknown structural facts still require certification by exact consumers.
 `CurveString2` rechecks zero-length chords only for lines, which can
 be constructed unchecked. Full-circle contours use the existing single
 `CurveRegion2` carrier, winding, Boolean and offset algorithms. See the
-[closed-edge qualification](evidence/2026-10-15-closed-edges/README.md).
+[closed-edge qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-closed-edges/README.md).
 
 Disconnected selected solids retain these records through the shared topology
 transfer. A finite cylinder trim has a conservative face bound from its boundary
@@ -193,7 +193,7 @@ Bezier-span decomposition and Hypercurve's affine root transport to retain
 authored knot parameters; exact comparison deduplicates shared seams.
 Partly constant preimages remain an explicit unsupported result.
 
-The [inverse-query qualification record](evidence/2026-10-15-retained-inverse-parameters/manifest.json)
+The [inverse-query qualification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-inverse-parameters/manifest.json)
 records that increment's covered cases and limits. The selected spatial
 evaluation added subsequently is described below.
 
@@ -232,7 +232,7 @@ transforms certify invertibility, transform the source controls and reuse the
 selector; they do not add a chain of point-expression wrappers.
 
 The
-[qualification record](evidence/2026-10-15-retained-spatial-points/manifest.json)
+[qualification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-spatial-points/manifest.json)
 records that increment's covered cases and limits. The topology transfer
 implemented subsequently is described below.
 
@@ -267,7 +267,7 @@ Spatial transforms reuse the transformed arena curve for retained vertices;
 the source lookup is built only when a selected vertex needs it. Bounds union
 selected-point enclosures with the existing conservative curve bounds.
 
-The [topology qualification](evidence/2026-10-15-selected-topology/README.md)
+The [topology qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-selected-topology/README.md)
 covers shared-edge splits, repeated edits, rational/NURBS charts, reflections
 and retained solid queries. [Archive version 12](SELECTED_ARCHIVE.md) retains
 selected roots, flattened charts, spatial curve images and authored pcurve
@@ -280,7 +280,7 @@ wire lacks scalar vertex coordinates, the planar signed-volume proof integrates
 its checked boundary image; native scalar triangle fans remain the fast path.
 Cylinder proofs reconstruct parameter rectangles from checked boundary images.
 All topology records survive, and archives supply no trusted solid proof flags.
-See [solid replay evidence](evidence/2026-10-15-selected-solids/README.md).
+See [solid replay evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-selected-solids/README.md).
 General selected solid/surface/contact graphs and Boolean transfer remain open. Native
 coefficient subdivision and angular conic evaluation retain their explicit
 scalar requirements. WP02/G1 and WP13 are not complete.
@@ -303,7 +303,7 @@ can therefore replay after prior native subdivision without requiring the
 source pcurve to span the entire spatial curve. The archive contract also
 defines Hypercurve's complete-image injectivity gate for boundary reassembly;
 connected multi-span NURBS with one common strict monotone coordinate can pass.
-See [composition evidence](evidence/2026-10-15-spline-replay/README.md).
+See [composition evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md).
 
 Archive decoding requires explicit `ArchiveLimits` for input bytes, JSON depth,
 tokens, records, degrees, variable geometry elements and topology references.
@@ -348,7 +348,7 @@ only. A predicate or resource failure belongs to its query, so later requests
 can benefit from stronger scalar evidence. Concurrent cold readers may repeat
 the calculation; publication keeps one successful value, and a failed reader
 uses a success published before its final cache check. Warm reads do not
-recompute. See the [cache regression evidence](evidence/2026-10-14-retryable-caches/manifest.json).
+recompute. See the [cache regression evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-14-retryable-caches/manifest.json).
 
 ## Operation scopes
 
@@ -500,7 +500,7 @@ preserves its certified cases while avoiding doubled inverse-angle phases for
 reversed imported circles. Matching only the center and one tangent is
 insufficient: a wrong phase or tilted circle can pass that test. Six such false proofs were
 reproduced and repaired; the
-[image validation evidence](evidence/2026-10-15-edge-image-proof/README.md)
+[image validation evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-edge-image-proof/README.md)
 retains the failures, parameterization matrix and downstream qualification.
 
 `builder::tensor_patch_shell` applies the same whole-curve certificate before
@@ -574,7 +574,7 @@ Edits invalidate certificates before replay. The private line-pcurve rewrite
 cannot reach an admitted boundary, and later appended faces cannot change a
 shell-scoped proof. Retention is one owned record per solid, with no global key
 or eviction policy; this does not bound retained bytes, total work or cancellation.
-See the [proof-scope review and executed evidence](evidence/2026-10-16-builder-certificates/README.md).
+See the [proof-scope review and executed evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-builder-certificates/README.md).
 
 Torus certification derives longitude/latitude rectangles from the current
 trimmed topology. Longitude cells must cover one complete period. Latitude
@@ -877,7 +877,7 @@ reuse their source authority. Planar procedural projections currently require a
 similarity of the source chart. Face classification accepts the retained UV
 point directly; coordinate algorithms explicitly request an optional view.
 Selected angular/procedural surface images and full selected section restriction remain
-open boundaries, documented in the [evaluation record](evidence/2026-10-19-pcurve-evaluation/README.md).
+open boundaries, documented in the [evaluation record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-pcurve-evaluation/README.md).
 `Surface::point_at(&hypercurve::CurvePoint2)` returns `GeometricPoint3`.
 `geometry/surface_point.rs` validates retained UV domains; plane evaluation stores
 the immutable surface and the joint UV point directly. Spatial affine-form
@@ -887,7 +887,7 @@ surface evaluator remains the common coefficient path. Endpoint image validation
 consumes retained pcurve and surface points directly. Archive 12 persists surface
 point definitions and generic translation/rotation origins through
 `persistence/spatial_points.rs`; nested shape admission precedes scalar decoding.
-See the [surface evaluation record](evidence/2026-10-19-surface-evaluation/README.md).
+See the [surface evaluation record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-surface-evaluation/README.md).
 Retained pcurves may run in either source direction; materialization preserves
 that affine direction exactly for lines, rational Béziers, and NURBS curves.
 For an authored-frame-aligned coaxial sphere/cylinder pair, each intersection
@@ -1175,7 +1175,7 @@ endpoints from the actual emitted vertex coordinates rather than runtime vertice
 replaced by curve-derived canonical coordinates.
 This keeps radical scale/inverse replay deterministic. It does not reconstruct
 selected coordinate images or change their authority. The
-[admission evidence](evidence/2026-10-16-analytic-similarity/README.md) records
+[admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-analytic-similarity/README.md) records
 original failures, exact expectations, composition, archive effects and cost.
 The source/work/heap/cancellation limits of the existing kernel still apply;
 this transform extension does not establish global resource admission.
@@ -1193,7 +1193,7 @@ subtraction is unchanged; retaining two solids for union additionally requires
 two separate planar material components. This continuation follows existing
 optimized and graph paths. Native geometry replay and a complete persistent
 authoring graph remain separate contracts. The
-[selected-profile proof record](evidence/2026-10-18-selected-profile-extrusion/proofs.md)
+[selected-profile proof record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/proofs.md)
 states the admitted domain and remaining limits.
 
 ## Seam-aligned analytic cuts
@@ -1248,7 +1248,7 @@ square root of a squared area. Unrecognized forms retain the original exact
 values; no recognition budget, predicate policy or archive limit is increased.
 Canonical expression bytes can change under the existing archive schema.
 
-The [evidence record](evidence/2026-10-16-seam-cuts/README.md) retains the original
+The [evidence record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-seam-cuts/README.md) retains the original
 full-size seam failures and the subsequent repeated-use failures, including the
 70 MB swapped-cone line archive. The repeated-composition extension below addresses those specific cap/recut/reunion
 failures. Arbitrary periodic traces, general Boolean closure, general torus/cone STEP
@@ -1305,7 +1305,7 @@ similarities: 63 configurations and 126 continuation outputs. Independent exact
 volume/area, inside/outside/boundary and near-offset classification, opposite
 paired edge uses, deterministic untrusted replay, subdivision and reflected
 rescaling accompany every nonempty result. The
-[evidence](evidence/2026-10-16-curved-coplanar/README.md) preserves the complete
+[evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-curved-coplanar/README.md) preserves the complete
 fifteen-case diagnostic frontier, failed candidates and cost observations.
 The sector extension below continues the five quarter/band cases. Differently
 parameterized coincident surfaces, general curved shells, complete operation
@@ -1385,7 +1385,7 @@ establish arbitrary-angle or general Boolean closure. That historical increment
 kept ten typed unsupported torus/cone STEP controls. Ring-torus exchange now
 admits the exactly representable torus cases; cones and nonrepresentable scalar
 encodings retain typed diagnostics and same-context supported recovery. See the
-[evidence record](evidence/2026-10-16-sector-cuts/README.md) for executed commands,
+[evidence record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-sector-cuts/README.md) for executed commands,
 failed candidates, costs and remaining gates.
 
 ## Exact ring-torus exchange and repeated angular replay
@@ -1412,8 +1412,8 @@ an exactly rational sine, first-quadrant complementary acos arguments and
 reconstructed rational scales through its existing bounded Laurent authority.
 This necessary dependency repair replaces a rejected BREP multiplier cascade.
 It introduces no numeric carrier, tolerance, terminal or larger recognition
-budget. See the [ownership/proof review](evidence/2026-10-16-torus-exchange/review.md)
-and [executed evidence](evidence/2026-10-16-torus-exchange/README.md), including
+budget. See the [ownership/proof review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-torus-exchange/review.md)
+and [executed evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md), including
 four split/reload cycles, wrong-quadrant controls and preserved adverse results.
 
 ## Performance contract
@@ -1447,7 +1447,7 @@ comparisons. An undecided comparison still fails explicitly; the two endpoint
 identities of a complete period remain distinct. This reuse lasts only for one
 helper call and adds no persistent cache. The ordering cascade already proves
 the structural endpoint equality previously checked by `ParameterDomain::contains`.
-The [comparison evidence](evidence/2026-10-16-conic-comparison-reuse/README.md)
+The [comparison evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-conic-comparison-reuse/README.md)
 retains the complete output contracts and observed costs; no general resource
 bound follows from fewer comparisons or allocations.
 
@@ -1481,7 +1481,7 @@ caps contribute 2S. The complement uses the remaining disk area and adds the
 same shared axial cap. These expectations are derived independently of BREP
 measurement; the exact similarity cases apply the corresponding square/cube
 scaling laws and transformed point tables.
-The [evidence](evidence/2026-10-16-oblique-cuts/README.md) also retains all nine
+The [evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-16-oblique-cuts/README.md) also retains all nine
 wider oblique fixtures and their failures. This extends parameter evidence
 reuse; it does not supply a general curved-shell embedding proof or general
 oblique Boolean closure.
@@ -1514,7 +1514,7 @@ only partition the existing face and preserve original intersection incidences.
 
 Native line/circle extrusion walls now publish planes/cylinders with explicit
 chart and orientation maps. This is a greenfield representation/API migration,
-with the measured artifact differences recorded in the [feature evidence](evidence/2026-10-17-axial-shells/README.md).
+with the measured artifact differences recorded in the [feature evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md).
 Before a supported non-similarity transform of a certified prism, exact
 [carrier promotion](../src/topology/transform/affine_prisms.rs) restores a finite
 extrusion representation over the actual angular trims. Its equation and pcurves
@@ -1532,7 +1532,7 @@ simplicity and winding plus strictly positive radial bounds prove the product
 shell's embedding. Area/volume formulas are separate optional queries. Native
 primitive/path fast paths keep their existing carriers. `revolve_curve_region`
 uses the unified region's material components and hole ownership, including
-empty input. The [admission record](evidence/2026-10-18-procedural-revolution/README.md)
+empty input. The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-procedural-revolution/README.md)
 limits this proof to its supported domain; general shell embedding remains open.
 
 ## Rational surface points and affine curve images
@@ -1571,7 +1571,7 @@ Archive 12 stores the complete source curve and matrix and admits nested source
 metadata before decoding scalars. Rational surface maps are recomputed from
 source definitions during replay. Versions through 11 are deliberately rejected,
 without an adapter. Source-path native/WASM consumers and preserved complete
-workflows are recorded in the [admission evidence](evidence/2026-10-19-rational-surface-evaluation/README.md). Installed
+workflows are recorded in the [admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-rational-surface-evaluation/README.md). Installed
 distributions, full release/push gates and complete BRep modeling remain open.
 
 
@@ -1611,5 +1611,5 @@ archive byte identity. They do not prove whole-section differential agreement
 at singular events or complete trim topology. Vector proofs are transient;
 archive 14 stays unchanged. Original shared guards can still grow with the input
 composition: degree shortcuts and solver counters are not total-work, heap,
-stack or cancellation bounds. The [admission record](evidence/2026-10-19-surface-differentials/README.md)
+stack or cancellation bounds. The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-surface-differentials/README.md)
 retains these limits and the full previous corpus.

@@ -30,7 +30,7 @@ Any proposed tradeoff must be supported by measurements and assessed in the
 priority order above. In particular, smaller code, binaries or memory cannot
 justify a performance regression. The repository's
 [equality evaluation](../PERFORMANCE.md#rational-equality-unification-evaluation-2026-09-06)
-and its [checkpoint](../benchmarks/checkpoints/2026-09-06-rational-equality.json)
+and its [checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-06-rational-equality.json)
 provide the established comparison precedent.
 
 ## Required qualification evidence
@@ -65,16 +65,16 @@ results and require new comparisons with the fixed reference.
 ## Current status
 
 Qualification is **pending**, and the full Verus proof is **incomplete**.
-The [initial comparison checkpoint](../benchmarks/checkpoints/2026-09-17-verus-baseline.json)
+The [initial comparison checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-baseline.json)
 records the native-dyadic candidate `598f059`, three alternating pilot pairs,
 the complete local candidate validation matrix, allocation/heap/stack profiles,
 dispatch traces, native/WASM sizes and source counts. The complete nine-suite
 screen measured 1,449 matching cases; longer alternating repeats include
 four pairs with identical executable and output paths. The
-[compressed raw pilot samples](../benchmarks/checkpoints/2026-09-17-verus-baseline-pilot.json.gz)
-and the [complete screen](../benchmarks/checkpoints/2026-09-17-verus-screen.json.gz),
-[longer repeats](../benchmarks/checkpoints/2026-09-17-verus-confirmations.json.gz)
-and [matched-path repeats](../benchmarks/checkpoints/2026-09-17-verus-matched-confirmations.json.gz)
+[compressed raw pilot samples](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-baseline-pilot.json.gz)
+and the [complete screen](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-screen.json.gz),
+[longer repeats](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-confirmations.json.gz)
+and [matched-path repeats](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-matched-confirmations.json.gz)
 are retained with the checkpoint. Short timing runs identify follow-up cases;
 they do not establish parity. A persistent `pi_pow` cloning slowdown, unstable
 cached conversion measurements and other screen flags remain unresolved.
@@ -85,7 +85,7 @@ All six saved fuzz corpora pass with the corrected harness on both revisions;
 the frozen inputs are retained. Downstream qualification and final repeated
 performance comparisons remain open.
 
-The subsequent [cache investigation](../benchmarks/checkpoints/2026-09-17-verus-cache-diagnostics.json)
+The subsequent [cache investigation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-cache-diagnostics.json)
 compares the fraction-reduction runtime `8c74849` with the same fixed baseline.
 Six balanced original Criterion rounds retain a median 4.19% `pi_pow` clone
 slowdown. A native cached-conversion probe also consistently regresses.
@@ -94,7 +94,7 @@ the clone finding; that overlay remains experimental. Raw counters, samples,
 assembly and the completed pinned Hypercurve follow-up failures are retained
 with the checkpoint. No live Hypercurve files were changed.
 
-The [shared-clone checkpoint](../benchmarks/checkpoints/2026-09-17-verus-shared-clone.json)
+The [shared-clone checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-shared-clone.json)
 records the subsequently adopted runtime `561e36a`. Cloning symbolic reals
 reuses an existing immutable computable graph, and the primitive cache getter
 is inlined. Six alternating original Criterion pairs show median time changes
@@ -113,10 +113,10 @@ and 65 model theorems, while all 13 full-crate obligation groups remain open.
 The prior square-root metadata checkpoint retains the rejected clone variants
 and the failures that led to the metadata and fixed-decimal precision repairs.
 
-The [complete shared-clone screen](../benchmarks/checkpoints/2026-09-17-verus-shared-clone-screen.json)
+The [complete shared-clone screen](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-shared-clone-screen.json)
 retains 1,449 matching cases across all nine suites. Its 236 positive
 nonoverlapping within-run interval flags, including external comparator rows,
-were followed up in [four alternating pairs](../benchmarks/checkpoints/2026-09-17-verus-shared-clone-confirmations.json).
+were followed up in [four alternating pairs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-shared-clone-confirmations.json).
 All 64 processes succeeded, with identical selected cases and frozen binaries.
 Forty-seven cases were slower in all four pairs, including external comparator
 rows. Persistent Hyperreal signals include the square-root MSD query (+40.90%
@@ -125,7 +125,7 @@ from a small signed integer (+9.94%). Every selected case, paired estimate,
 raw sample and comparator movement is retained. Other flags did not persist
 across all pairs; that alone does not establish parity. The remaining
 regressions require investigation, and this follow-up is not acceptance.
-The [resource checkpoint](../benchmarks/checkpoints/2026-09-17-verus-shared-clone-resources.json)
+The [resource checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-shared-clone-resources.json)
 records the completed release, lint, documentation, fuzz-build, WASM and
 seven-configuration coverage checks. Production executable-line coverage is
 91.10%, which is separate from formal proof coverage. Allocation counts fall
@@ -136,13 +136,13 @@ size increases are also retained for assessment. The interrupted first coverage
 attempt and truncated diagnostic profile are explicitly excluded from passing
 results; the complete rerun and compact matched profiles succeeded.
 
-The subsequent [cancellation induction proof](../benchmarks/checkpoints/2026-09-17-verus-cancel-pair-proof.json)
+The subsequent [cancellation induction proof](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-cancel-pair-proof.json)
 verifies 364 units and 66 model theorems. Normal expanded Rust is byte-identical
 to `561e36a`; the production cross-cancellation traversal and its caller
 preconditions still require refinement proofs. All 13 obligation groups and
 final baseline acceptance remain open.
 
-The [production cancellation kernel](../benchmarks/checkpoints/2026-09-17-verus-cross-cancel-kernel.json)
+The [production cancellation kernel](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-cross-cancel-kernel.json)
 in `da3a6fd` now proves the complete native pair traversal and ordered product
 checks, including the existing fallback when overflow precedes a later zero.
 The official proof passes 374 units, 54 production contracts and 66 model
@@ -154,14 +154,14 @@ retained. New native binaries are built, but this runtime's timing, resource,
 size, coverage and downstream qualification remain pending. Importing native
 parts from `BigUint` and proving the callers' invariants also remain open.
 
-The [unit-scale shortcut trial](../benchmarks/checkpoints/2026-09-17-verus-unit-scale-trial.json)
+The [unit-scale shortcut trial](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-unit-scale-trial.json)
 remains unadopted. Six balanced orders improve the square-root structural
 query by 30.30% against the baseline, but tau and a non-unit dense expression
 are slower in every pair (median +3.97% and +5.76%). Its passing correctness
 checks and all raw timing data are retained; the faster unit cases do not
 dismiss those regressions.
 
-The [magnitude-range repair](../benchmarks/checkpoints/2026-09-17-verus-magnitude-range.json)
+The [magnitude-range repair](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-magnitude-range.json)
 in `ee773bb` fixes observed baseline errors. With pinned dependencies, a debug
 query of `2^2147483647` panics despite its representable exponent. In release,
 `2^2147483648` receives a false exact exponent of `-2147483648`. The repaired
@@ -178,7 +178,7 @@ dependency resolution and the mutation driver's corrected textual anchor are
 retained explicitly. This is an exactness repair; the full source/caller/
 dependency proof remains incomplete.
 
-The [magnitude resource checkpoint](../benchmarks/checkpoints/2026-09-17-verus-magnitude-resources.json)
+The [magnitude resource checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-magnitude-resources.json)
 records all twelve remaining build/check steps for `ee773bb`, including strict
 documentation, both WASM builds, seven coverage configurations and benchmark
 fixtures. Production executable-line coverage is 26,018 of 28,555 lines
@@ -196,7 +196,7 @@ differences remain assessment items; the twenty-form workload does not prove
 full resource parity. Current native timings and downstream qualification
 remain pending.
 
-The [magnitude model checkpoint](../benchmarks/checkpoints/2026-09-17-verus-magnitude-model.json)
+The [magnitude model checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-magnitude-model.json)
 in `f7e256c` connects the executable exponent specification to a unique rational
 binary interval and proves signed binary scaling. The official proof passes
 395 units, 55 production contracts and 71 model theorems. All 77 executable
@@ -208,7 +208,7 @@ diagnostic. That invocation and the successful corrected suite are retained.
 BigUint bit-length/comparison refinement and all thirteen broader obligation
 groups remain open.
 
-The [fixed consumer supplement](../benchmarks/checkpoints/2026-09-17-verus-consumer-fixed-inputs.json)
+The [fixed consumer supplement](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-fixed-inputs.json)
 builds four benchmark-only overlays on both the baseline and `ee773bb`.
 Every variant replays the same 400 stored inputs in their original order.
 All eight builds and all eight 101-row fixture replays pass; each consumer's
@@ -216,7 +216,7 @@ aggregate row repeats its same 100 inputs. This removes timing-based promotion
 from the supplemental comparison while preserving the original adaptive
 harness. Native timings remain pending.
 
-The [current consumer build checkpoint](../benchmarks/checkpoints/2026-09-17-verus-consumer-magnitude-builds.json)
+The [current consumer build checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-magnitude-builds.json)
 contains all **41** non-tracing benchmark targets in the pinned baseline
 manifests; the earlier working count of 42 was incorrect. Five additional
 feature-gated tracing targets belong to the separate trace checks. Current
@@ -226,7 +226,7 @@ complete release suite and long cases, the remaining consumer validation
 matrices and native comparisons remain pending. All temporary sources were
 restored, and live Hypercurve was untouched.
 
-The [bounded peak attribution](../benchmarks/checkpoints/2026-09-17-verus-magnitude-peak.json)
+The [bounded peak attribution](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-magnitude-peak.json)
 reproduces the 176-byte whole-process increase with deeper allocation stacks.
 Its 160 heap bytes comprise 112 bytes allocated through cache publication and
 48 through approximation evaluation; allocator bookkeeping adds 16 bytes and
@@ -235,7 +235,7 @@ change responsible for their lifetimes. Per-case allocation windows subtract
 warmed starting live bytes, whereas the whole-process peak includes warmup
 and process caches. The resource assessment remains open.
 
-The [magnitude runtime screen](../benchmarks/checkpoints/2026-09-17-verus-magnitude-screen.json)
+The [magnitude runtime screen](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-magnitude-screen.json)
 compares the fixed baseline with `ee773bbf` across all nine ordinary benchmark
 suites: 18 successful processes and 1,449 matching cases. All workload files
 match both revisions. The short screen flags 281 positive, nonoverlapping
@@ -244,7 +244,7 @@ open pending longer alternating repeats; suite averages cannot dismiss them.
 The archive preserves all cases and raw Criterion output. It establishes
 neither performance parity nor acceptance of the runtime.
 
-The [limb bit-length model](../benchmarks/checkpoints/2026-09-17-verus-bit-length-model.json)
+The [limb bit-length model](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-bit-length-model.json)
 passes 402 official verification units at `31f6977`, with 55 production
 contracts and 75 model theorems. Its four additional theorems connect normalized
 mathematical limbs to exact bit lengths, shifted widths and width-based ordering.
@@ -252,7 +252,7 @@ All source hashes match that commit. Runtime sources and Cargo inputs are
 unchanged from the preceding magnitude proof; actual `BigUint` import and caller
 refinements remain open. Seven acceptance guard tests also pass.
 
-The [cold precision probes](../benchmarks/checkpoints/2026-09-17-verus-precision-counterexamples.json)
+The [cold precision probes](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-precision-counterexamples.json)
 expose the same two debug failures in the fixed baseline and `ee773bbf`:
 `pi().approx(i32::MAX)` overflows a related-cache precision and
 `zero().approx(i32::MIN)` overflows precision negation. Four debug/release builds
@@ -260,7 +260,7 @@ and all 20 process outcomes are retained, including four panics. The release
 cases tested here return permitted values; these observations do not qualify
 precision arithmetic generally. These counterexamples motivated the repair below.
 
-The [precision repair](../benchmarks/checkpoints/2026-09-17-verus-precision-repair.json)
+The [precision repair](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-precision-repair.json)
 at `7b95cac` preserves the full integer-leaf shift range and checks the Pi/Tau
 related-cache precision before lookup. Extended probes also expose a release
 error in the fixed baseline: both `1` and `-1` approximate to zero at
@@ -282,7 +282,7 @@ contract and separately passes all four default/all-features debug/release
 combinations. Earlier timing flags remain unresolved; this correctness milestone
 does not establish baseline acceptance.
 
-The [precision runtime resource checkpoint](../benchmarks/checkpoints/2026-09-17-verus-precision-resources.json)
+The [precision runtime resource checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-precision-resources.json)
 completes the remaining 13 build/check steps, the coverage matrix and all 6,492
 frozen ASan inputs across six fuzz targets for `7b95cac`. Coverage reports 26,068
 of 28,605 executable lines hit (91.13%); this is testing coverage, not a formal
@@ -297,19 +297,19 @@ has 36,105 lines versus 35,597 in the baseline. All rows and raw profiles are
 retained. Current native timing, pinned-consumer qualification and the overall
 resource assessment remain open.
 
-The [precision consumer builds](../benchmarks/checkpoints/2026-09-17-verus-consumer-precision-builds.json)
+The [precision consumer builds](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-precision-builds.json)
 cover all 41 non-tracing targets at the pinned consumer revisions. Completed
 release suites report Hyperlattice 204, Hyperlimit 361, Hypertri 191, Hypersolve
 860 and Hypermesh 222 passed, with seven Hypermesh tests ignored. Hypercurve's
 build uses only pinned `8228394`; its full release and long-running tests remain
-pending. The [fixed-input supplement](../benchmarks/checkpoints/2026-09-17-verus-consumer-precision-fixed-inputs.json)
+pending. The [fixed-input supplement](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-precision-fixed-inputs.json)
 also builds and replays all 101 rows in each of the four prepared consumer
 harnesses: 400 distinct stored inputs plus the aggregate scores reusing them.
 The unchanged baseline fixed-input builds are retained from the earlier
 checkpoint. The temporary consumer trees are restored clean after these runs.
 Neither build/replay checkpoint establishes native timing parity.
 
-The [real approximation model](../benchmarks/checkpoints/2026-09-17-verus-real-approximation-model.json)
+The [real approximation model](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-real-approximation-model.json)
 at `49f2b8f` passes 431 official verification units, with 56 production contracts
 and 87 model theorems. All 116 proof-input hashes match that commit. Nine added
 theorems connect the integer plan to exact real denotations and establish
@@ -322,7 +322,7 @@ precision arithmetic, transcendental bounds, domain validity, abort behavior,
 concurrency and convergence still require refinement proofs. All 13 complete
 obligation groups remain open.
 
-The [precision consumer core checks](../benchmarks/checkpoints/2026-09-17-verus-consumer-precision-core.json)
+The [precision consumer core checks](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-precision-core.json)
 retain all 51 commands for `7b95cac`: 41 pass and ten fail. Every failing command
 also failed in the historical baseline run, whose original environment and
 outcomes are retained. These failures include a Symbolica instance conflict,
@@ -332,7 +332,7 @@ run. The historical baseline's different Trunk environment and allocation
 failure prevent treating those outcomes as a matched runtime improvement.
 Live Hypercurve was untouched; failures remain unresolved.
 
-The [computable metadata repair](../benchmarks/checkpoints/2026-09-17-verus-computable-metadata.json)
+The [computable metadata repair](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-computable-metadata.json)
 at `cdc6d3a` removes wrapped integer exponents and preserves nonzero bounds when
 the exact exponent cannot fit `i32`. Both the baseline and previous runtime
 panic in debug on integer `2^i32::MAX` metadata and falsely certify an exact
@@ -352,7 +352,7 @@ still need refinement proofs. Other approximation kernels' precision limits
 remain open. Build, coverage, fuzz, resource, native timing and pinned-consumer
 qualification for this runtime are in progress; this is not baseline acceptance.
 
-The [metadata resource checkpoint](../benchmarks/checkpoints/2026-09-17-verus-metadata-resources.json)
+The [metadata resource checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-metadata-resources.json)
 completes the remaining nine build/check steps and all 6,492 frozen ASan inputs
 for `cdc6d3a`. Checks already covered by its exact-source root matrix were not
 repeated. Coverage is 26,140 of 28,672 executable lines (91.17%). All resource
@@ -363,15 +363,15 @@ increase. Callgrind reports 28,722,126 instructions versus 29,845,483. WASM is
 Ordinary expanded Rust contains 36,100 lines versus 35,597. These differences
 remain assessment items; profiler durations do not establish native performance.
 
-The [metadata consumer builds](../benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-builds.json)
+The [metadata consumer builds](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-builds.json)
 pass all 41 non-tracing targets and the same five complete release suites
 (204/361/191/860/222 passed, with seven Hypermesh tests ignored).
-The [fixed-input replay](../benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-fixed-inputs.json)
+The [fixed-input replay](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-fixed-inputs.json)
 passes four builds and four 101-row fixture runs on the unchanged 400 stored
 inputs. Hypercurve remains pinned to `8228394`; its full release and long cases,
 the remaining consumer checks and native comparisons are still pending.
 
-The [typed bound refinement](../benchmarks/checkpoints/2026-09-17-verus-bound-refinement.json)
+The [typed bound refinement](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-bound-refinement.json)
 at `1514ad4` includes nine production bound functions directly in the proof
 target. Their contracts preserve complete typed results, checked inverse
 exponents, floor-halved square-root exponents, zero sentinels and available
@@ -391,7 +391,7 @@ denotations, rational import, mapping, addition, square, multiplication, public
 magnitude conversion, constants and concurrency remain outside the added proof
 boundary. All thirteen whole-implementation obligation groups remain open.
 
-The [metadata runtime screen](../benchmarks/checkpoints/2026-09-17-verus-metadata-screen.json)
+The [metadata runtime screen](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-metadata-screen.json)
 compares `cdc6d3a` with the fixed pre-Verus baseline across all nine ordinary
 benchmark suites. All eighteen processes pass, with 1,449 matching cases and
 unchanged workload hashes. The short screen flags 157 positive, nonoverlapping
@@ -399,7 +399,7 @@ within-run intervals, including external comparator rows. Every case and raw
 sample is retained. These flags require longer alternating repeats; the screen
 does not establish performance parity or final acceptance.
 
-The [bound denotation checkpoint](../benchmarks/checkpoints/2026-09-17-verus-bound-denotation.json)
+The [bound denotation checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-bound-denotation.json)
 at `3030b12` connects eight real-number lemmas to the checked production bound
 contracts. Valid input certificates remain sound through construction,
 negation, inversion and square root. The square-root binade proof covers
@@ -418,7 +418,7 @@ runtime erasure comparison with `cdc6d3a`. Expression-graph inputs, rational
 import, inexact planning bounds, cache validity and production callers remain
 open, along with all thirteen whole-implementation obligation groups.
 
-The [magnitude mapping checkpoint](../benchmarks/checkpoints/2026-09-17-verus-bound-mapping.json)
+The [magnitude mapping checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-bound-mapping.json)
 at `2d8cb1a` verifies the unchanged production `BoundInfo::map_msd` body and
 adds two binary-scaling refinements. Mapping preserves signs, zero/unknown
 states, exactness flags and every callback result. A checked exponent offset
@@ -435,7 +435,7 @@ Strict all-feature all-target Clippy passes, and the annotations erase to
 byte-identical ordinary Rust relative to `cdc6d3a`. All thirteen broader proof
 groups and baseline acceptance remain incomplete.
 
-The [fresh consumer core comparison](../benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-core.json)
+The [fresh consumer core comparison](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-core.json)
 records all 51 commands on both `a2da8e2` and `cdc6d3a`, with identical commands,
 controlled environments, working directories and pinned consumer sources.
 The baseline passes 40 and fails eleven; the candidate passes 41 and fails ten.
@@ -452,7 +452,7 @@ peak increase. The remaining feature/coverage, trace, long-case and native
 consumer comparisons were not complete at this checkpoint. Live Hypercurve
 remains untouched, and all failures are retained as unresolved outcomes.
 
-The [cache codec checkpoint](../benchmarks/checkpoints/2026-09-17-verus-cache-codecs.json)
+The [cache codec checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-cache-codecs.json)
 at `9418f85` verifies three pure methods from the actual production representation
 file. Bound encoding preserves all typed states, signs, optional signed exponents
 and exactness flags; a separate decoder specification proves lossless packing.
@@ -468,7 +468,7 @@ bound inputs retain their earlier 85 and 25 mutation results; no fresh combined
 ordinary expanded Rust remains byte-identical to `cdc6d3a`. All thirteen broader
 proof groups and baseline acceptance remain incomplete.
 
-The [public carrier checkpoint](../benchmarks/checkpoints/2026-09-17-verus-public-carriers.json)
+The [public carrier checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-public-carriers.json)
 at `4a162ed` verifies six certificate accessors, five dependency-mask operations
 and seven mask constants from the actual public production file. Every known
 answer and unknown state is preserved; masks support every `u16`, including bits
@@ -486,7 +486,7 @@ mutation results; no fresh combined 144-mutation run is claimed. Ordinary
 expanded Rust remains byte-identical to `cdc6d3a`. All thirteen broader proof
 groups and baseline acceptance remain incomplete.
 
-The [public bound adapter checkpoint](../benchmarks/checkpoints/2026-09-17-verus-public-bounds.json)
+The [public bound adapter checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-public-bounds.json)
 at `3d17187` verifies the unchanged public/private sign conversion bodies and
 `BoundInfo::magnitude_bits`. Negative, zero and positive signs convert without
 loss, and magnitude export preserves both the exponent and its exactness flag.
@@ -504,7 +504,7 @@ and successful documented script invocation are both retained. Callers,
 certificate producers, all thirteen broader proof groups and baseline
 acceptance remain incomplete.
 
-The [deep consumer comparison](../benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-deep.json)
+The [deep consumer comparison](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-deep.json)
 records all 256 Hypertri feature checks and all 256 feature test configurations
 passing on both revisions. The initial baseline test run exhausted the per-user
 temporary-filesystem quota at configuration 125; its partial output and isolated
@@ -532,7 +532,7 @@ report, leaving a separate count capture outstanding. Live Hypercurve remains
 untouched; its long-case partition, native comparisons and final acceptance
 are still pending at this checkpoint.
 
-The [isolated consumer supplements](../benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-supplements.json)
+The [isolated consumer supplements](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-supplements.json)
 retain the subsequent fixture checks for `cdc6d3a`. Adding the sine triangle
 restores Hypertri coverage to 6,271/6,600 on both revisions without changing
 production code or the 95% gate. Correcting Hypersolve's expected canonical
@@ -546,7 +546,7 @@ built on both revisions but have not been timed. These results concern the
 intermediate `cdc6d3a` runtime; the later certified-precision repair requires
 fresh affected qualification. No live consumer source was changed.
 
-The [certified-precision checkpoint](../benchmarks/checkpoints/2026-09-17-verus-certified-planning.json)
+The [certified-precision checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-certified-planning.json)
 records two numerical defects found while auditing those metadata results.
 Both the baseline and `cdc6d3a` return 5,102 for `(16 + 512*pi)*pi` at precision
 zero, outside the required one-unit error from approximately 5,103.50294.
@@ -560,7 +560,7 @@ baseline and this revision incorrectly collapse a perturbation exceeding 1,552
 to `Equal` at tolerance 32. Commit `b3a23a4` applies the same certificate
 requirement to this shortcut; known signs still supply exact ordering.
 
-The [bound composition proof](../benchmarks/checkpoints/2026-09-17-verus-bound-composition.json)
+The [bound composition proof](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-bound-composition.json)
 then checks the actual square, multiply and add propagation operations. The
 complete target verifies 563 units, 94 production contracts and 107 model
 theorems. All 54 bound mutation guards and ten acceptance tests pass. Default
@@ -570,7 +570,7 @@ conditional on valid incoming bounds. Inexact hints acquire no magnitude
 accuracy claim. Producer, graph, cache and caller obligations remain open,
 and current resource, timing and consumer qualification is separate.
 
-The [coverage accounting correction](../benchmarks/checkpoints/2026-09-17-verus-coverage-accounting.json)
+The [coverage accounting correction](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-coverage-accounting.json)
 excludes dedicated test files and named trailing test modules that the old
 script counted as production. Reclassifying the preserved completed reports
 gives 24,871/27,357 baseline production lines and 25,202/27,734 for `89c89e2`,
@@ -580,7 +580,7 @@ a failure. Original reports are retained. These corrected counts replace the
 production-only interpretation of the two listed legacy reports; neither
 coverage measure is a formal proof percentage.
 
-The [pinned Hypercurve partition](../benchmarks/checkpoints/2026-09-17-verus-hypercurve-metadata-partition.json)
+The [pinned Hypercurve partition](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-hypercurve-metadata-partition.json)
 completes the earlier `cdc6d3a` comparison with identical unsuccessful outcomes
 on both revisions: the remaining suite times out after 900 seconds, five
 isolated cases time out after 120 seconds each, and the retained mixed fillet
@@ -588,7 +588,7 @@ fails on the same Boolean predicate blocker. These are not passing suites or
 native timing measurements. The temporary source is restored and live
 Hypercurve remains untouched.
 
-The [current resource checkpoint](../benchmarks/checkpoints/2026-09-17-verus-bound-composition-resources.json)
+The [current resource checkpoint](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-bound-composition-resources.json)
 qualifies runtime `c61d6d8` with all nine remaining build/check steps and all
 6,492 frozen ASan inputs passing. Corrected production coverage is
 25,219/27,737 (90.92%). Every allocation row is retained: the Log10 and Log2
@@ -601,7 +601,7 @@ increase is 17,760 bytes. These costs remain assessment items. Separate cache
 query and multiplication scheduling experiments are unadopted and do not
 replace this checkpoint's measured candidate.
 
-The [cache field milestone](../benchmarks/checkpoints/2026-09-17-verus-cache-fields.json)
+The [cache field milestone](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-cache-fields.json)
 checks the construction and update word expressions using the production
 masks and verified encoder contracts. It verifies 583 units, 94 production
 contracts and 112 model theorems; all 19 cache mutation checks and ten
@@ -621,7 +621,7 @@ and completeness; interpreting measurements and resolving regressions still
 requires the audits above. Proof coverage itself is not an improvement in the
 baseline's supported behavior and cannot justify a runtime regression.
 
-The [asymmetric product proof](../benchmarks/checkpoints/2026-09-17-verus-asymmetric-product.json)
+The [asymmetric product proof](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-asymmetric-product.json)
 is bound to `6124684`: 604 verification units, 94 production contracts and
 117 model theorems pass with `--no-cheating`. Five new conditional real-error
 lemmas cover signed scaling, cached bit-length upper bounds, asymmetric
@@ -633,7 +633,7 @@ All production, manifest and lockfile bytes still match `c61d6d8`. These
 models do not verify the graph, BigInt operations, machine precision arithmetic
 or all comparison separation conditions; thirteen obligation groups remain open.
 
-The [current consumer matrix](../benchmarks/checkpoints/2026-09-17-verus-consumer-bound-matrix.json)
+The [current consumer matrix](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-bound-matrix.json)
 records all 41 ordinary benchmark builds, five release suites, 400 fixed-input
 fixtures plus their four aggregate rows, 51 core commands, both 256-configuration
 Hypertri powersets and five dispatch runs for `c61d6d8`. Core results are
@@ -641,13 +641,13 @@ Hypertri powersets and five dispatch runs for `c61d6d8`. Core results are
 the fixed baseline. Original Hypertri coverage is 94.97%, below its 95% gate;
 Hyperlattice and Hypersolve coverage fail for the previously recorded license
 and fixture reasons. The
-[isolated supplemental controls](../benchmarks/checkpoints/2026-09-17-verus-consumer-bound-supplements.json)
+[isolated supplemental controls](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-consumer-bound-supplements.json)
 pass both corrected fixture coverages and capture identical four-workload
 Hyperlattice trace summaries. They do not relabel the original failures.
 The pinned Hypercurve long-case partition and native timings remain pending;
 live Hypercurve has not been changed.
 
-The [allocation experiments](../benchmarks/checkpoints/2026-09-17-verus-anchor-experiments.json)
+The [allocation experiments](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-anchor-experiments.json)
 remain isolated overlays. The second certified-anchor version preserves shared
 constant cache routing, avoids copying cached integers for magnitude queries,
 and schedules an unknown multiplication operand directly from one certified
@@ -662,7 +662,7 @@ resource measurements, not native speed or acceptance evidence. The earlier
 experiments, complete patches and unresolved costs are retained. No experiment
 has been adopted; native comparisons remain pending.
 
-The [strict-error follow-up](../benchmarks/checkpoints/2026-09-17-verus-strict-product.json)
+The [strict-error follow-up](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-strict-product.json)
 binds 610 passing verification units, 94 production contracts and 118 model
 theorems to `0d056af`. It strengthens the product result to a strict one-unit
 bound under an open sampled-magnitude bound, and proves that a two-integer
@@ -672,12 +672,12 @@ targeted product/order mutations and the assumption-bypass control are
 rejected; ten acceptance/dependency tests pass. Production callers still need
 to establish the premises. No runtime byte changed and all thirteen obligation
 groups remain open. The
-[detailed experimental peak profiles](../benchmarks/checkpoints/2026-09-17-verus-anchor-peak-diagnostics.json)
+[detailed experimental peak profiles](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-anchor-peak-diagnostics.json)
 retain allocation trees at each variant's whole-process peak; different peak
 locations and compiler inlining prevent attributing their differences to one
 source change. The measured 72-byte increase remains unresolved.
 
-The [cache-refinement sign theorem](../benchmarks/checkpoints/2026-09-17-verus-cache-refinement.json)
+The [cache-refinement sign theorem](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-cache-refinement.json)
 raises the checked target to 613 verification units, 94 production contracts
 and 119 model theorems. If two cache entries validly approximate the same real
 and the later entry has a strictly smaller unit, it retains the nonzero sign
@@ -688,7 +688,7 @@ rejected, and ten acceptance/dependency tests pass. Runtime bytes remain those
 of `c61d6d8`; concurrency, ownership and all thirteen obligation groups remain
 open.
 
-The [completed pinned Hypercurve partition](../benchmarks/checkpoints/2026-09-17-verus-hypercurve-bound-partition.json)
+The [completed pinned Hypercurve partition](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-hypercurve-bound-partition.json)
 records the final `c61d6d8` outcomes against the unchanged baseline controls:
 the remaining suite times out at 900 seconds, five isolated cases time out at
 120 seconds each, and the retained rational-arc/analytic-parallel fillet case
@@ -696,7 +696,7 @@ fails. All seven exit outcomes match the fixed baseline. None is counted as a
 completed passing command. The temporary dependency checkout is restored and
 the pinned Hypercurve inputs remain byte-identical; live Hypercurve is untouched.
 
-The [three-way native screen](../benchmarks/checkpoints/2026-09-17-verus-anchor-screen.json)
+The [three-way native screen](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperreal/benchmarks/checkpoints/2026-09-17-verus-anchor-screen.json)
 completes all 27 serial runs across nine suites, retaining 1,449 matching cases
 per variant and every comparator. Against the fixed baseline, 321 committed
 runtime cases and 322 experimental cases have positive, nonoverlapping

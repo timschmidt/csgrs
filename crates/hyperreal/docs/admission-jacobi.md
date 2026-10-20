@@ -86,7 +86,7 @@ representation campaigns, sanitizer workloads, benchmarks and consumers.
 Record executed results separately; this contract is not validation evidence.
 
 Executed commands, diagnostic failures, completed checks and remaining limits
-are recorded in the [Jacobi verification record](../../hyperspatial/verification/2026-10-19-e2-jacobi/README.md).
+are recorded in the [Jacobi verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-jacobi/README.md).
 
 Complex Jacobi continuation, ellipsoidal Transverse Mercator/UTM, geodesics,
 and the remaining E1–E4/A1–A5 requirements stay open.
@@ -98,6 +98,6 @@ E(am(u|m)|m). It owns the shared amplitude and retains the existing separate
 APIs. The [epsilon admission](../../hyperlattice/docs/admission-jacobi-epsilon.md)
 records the failing sanitizer workload, serialized-equivalence requirement,
 cancellation and exact downstream relations. No precision or campaign budget
-is relaxed. The [epsilon verification record](../../hyperspatial/verification/2026-10-19-e2-jacobi-epsilon/README.md)
+is relaxed. The [epsilon verification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperspatial/verification/2026-10-19-e2-jacobi-epsilon/README.md)
 records passing stable/MSRV tests, independent coverage floors, all four cache
 configurations, exact serialized equivalence and actual sanitizer mutations.

@@ -235,7 +235,7 @@ reusing Hypercurve's XY/XZ image predicates. This preserves correlation
 without independent coordinate elimination. Both image preparations are
 demand-driven and share the source's lifetime. This is our implementation
 choice; the literature does not establish its cost. The
-[qualification](evidence/2026-10-15-retained-spatial-points/README.md) measures
+[qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-spatial-points/README.md) measures
 it and keeps the selected edge/pcurve/archive gate open. Generic geometric
 DAG laziness motivates such sharing, but does not justify accumulating a new
 transform wrapper for each edit.
@@ -368,7 +368,7 @@ These are reviewed source changes, not independent mathematical verification
 or BREP performance results. Upstream labels the polynomial/quotient/shared
 proof work as candidates with admission still open; its full-resolution
 16/32-segment drilled compositions remain regression obligations. The
-[integration evidence](evidence/2026-10-15-upstream-integration/README.md)
+[integration evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-upstream-integration/README.md)
 records target-source checks. Subsequent experiments must freeze a baseline
 with these dependencies, preserve all existing successes and report completed
 contracts and certainty beside cost. Old pre-integration binaries cannot
@@ -540,26 +540,26 @@ results and cannot be counted as a passing exact solution.
 | G6 — offsets/fillets, WP10–WP11 | Analytic cases followed by one declared non-rational parallel, self-contact and a completed corner network | Intended distance/material set, complete rails/rims/corners, composition/save-load/query/meshing closure and typed excessive-radius outcomes |
 | G7 — derived output, WP12/WP15 | Regular trimmed mixed-carrier body, near-contact bodies and chart singularities | Separate integration bounds, geometric approximation bounds, joint-contact limits and mesh conformity; source topology unaffected by display resolution |
 
-The [2026-10-15 G1 prerequisite probe](evidence/2026-10-15-retained-parameter-feasibility/README.md)
+The [2026-10-15 G1 prerequisite probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-parameter-feasibility/README.md)
 exercises the retained quintic parameter in Hypercurve and records BREP's
 `UnrepresentableParameter` boundary at revision `678c8072e`. Planar split/reverse/transform
 composition passes without a stored scalar view. Spatial topology, dual
 pcurves and graph persistence/replay remain unimplemented by that probe;
 G1 remains open.
 
-The subsequent [retained inverse-query increment](evidence/2026-10-15-retained-inverse-parameters/README.md)
+The subsequent [retained inverse-query increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-inverse-parameters/README.md)
 removes that query boundary: spatial Bézier/NURBS queries retain selected
 roots, certify the remaining coordinate at the same root, and preserve authored
 knot charts. It reuses the existing Hypercurve affine chart implementation.
 Topology transfer still reports unavailable materialization explicitly; this
 does not complete the G1 edge/pcurve/archive composition gate.
 
-The [spatial-point increment](evidence/2026-10-15-retained-spatial-points/README.md)
+The [spatial-point increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-spatial-points/README.md)
 adds selected evaluation, exact spatial comparisons, bounds and affine
 composition. Vertices, edge domains, dual-pcurve subdivision and selected
 archive graph replay remained that increment's next G1 obligations.
 
-The [selected-topology increment](evidence/2026-10-15-selected-topology/README.md)
+The [selected-topology increment](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-selected-topology/README.md)
 now carries those parameters into vertices, trim ranges and both incident
 pcurve uses. Repeated subdivision retains the source chart; reversal changes
 traversal independently. A reflection regression caught the distinction between
@@ -693,7 +693,7 @@ independent scalar coordinates. HyperBRep format 9 reconstructs those premises
 through Hypercurve, retaining flattened chart relations and shared curve sources.
 The implementation, exact boundary-reassembly conditions and remaining selected
 solid/resource limits are in the [archive contract](SELECTED_ARCHIVE.md).
-[Measured evidence](evidence/2026-10-15-selected-archive/README.md) covers selected
+[Measured evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-selected-archive/README.md) covers selected
 sheet replay and composition; it does not close G1 or establish general surface
 intersection feasibility.
 
@@ -717,7 +717,7 @@ native scalar vertices retain their triangle-fan path. This is a mathematical
 specialization, not an imported implementation or a claim about general curved
 surface integration.
 
-[Qualification](evidence/2026-10-15-selected-solids/README.md) covers cuboid
+[Qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-selected-solids/README.md) covers cuboid
 subdivisions, affine transforms, cylinder axial subdivisions and independent
 reload/split/query composition. It does not prove general selected-solid,
 contact/fiber, Boolean-transfer or resource-boundary closure. The external
@@ -743,7 +743,7 @@ shared endpoint. Individual span injectivity is insufficient, as backtracking
 can revisit earlier points. Hypercurve owns the complete-image certificate;
 BREP consumes it only to reassemble a boundary image for validation. This is a
 sufficient condition, not a complete self-intersection algorithm. The
-[qualification](evidence/2026-10-15-spline-replay/README.md) records the initial
+[qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md) records the initial
 failures, regressions, deliberate faults and measured costs. The cited teaching
 material supports the parameter-domain reasoning; it is not a test oracle.
 
@@ -762,7 +762,7 @@ except inside quoted strings; escape handling prevents an escaped quote from
 ending the string. The scan needs constant auxiliary storage and at most one
 pass over the supplied bytes. It is not a replacement JSON parser and does
 not bound scalar reconstruction or later replay. The
-[qualification](evidence/2026-10-15-archive-admission/README.md) checks limits
+[qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-archive-admission/README.md) checks limits
 against an independently parsed JSON tree, records rejected faults and measures
 scan overhead and early-rejection allocations. Full iterative coefficient and
 record decoding remains open; no external implementation was copied.
@@ -781,7 +781,7 @@ Its allocation-instrumented cuboid decode/encode median was 580.281 microseconds
 against a 379.363 microsecond baseline, a 1.529619 ratio. It retained exact
 receipts but was superseded by combined version/metadata admission. The error
 path can separately diagnose unsupported versions without admitting old record
-schemas. The [experiment and final evidence](evidence/2026-10-15-archive-structure/README.md)
+schemas. The [experiment and final evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-archive-structure/README.md)
 retain all observations and allocation counts. Scalar bit/work limits, iterative
 WASM-safe decoding and the inherited controlled-host timing follow-up remain
 open; these counters alone cannot certify hostile-input runtime safety.
@@ -819,7 +819,7 @@ and repeated linear membership scans, but arithmetic and native validation can
 still dominate runtime. No global linear-time or hostile-input memory guarantee
 is inferred from the graph design.
 
-The [qualification](evidence/2026-10-15-step-faceted/README.md) includes native
+The [qualification](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-faceted/README.md) includes native
 and executed WASM cases, a 20,000-link chain, restored semantic faults, independent
 OCCT reader checks, and allocation-instrumented import/validation/archive costs.
 OCCT is only an optional test oracle. Its faceted writer probe faults on the
@@ -857,7 +857,7 @@ coefficient-dependent costs. Pre-product integer admission bounds those encoders
 not all native arithmetic or memory. Further optimization needs matched receipts
 and measured allocation evidence under the governing property ladder.
 
-The [export evidence](evidence/2026-10-15-step-export/README.md) records original
+The [export evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-export/README.md) records original
 native box, split-edge, holed, reflected, concave, multi-body and inch-unit files
 read by OCCT, native exact graph checks and actual WASM execution. OCCT is an
 independent floating-point interoperability check, not an exactness proof.
@@ -871,7 +871,7 @@ The published [`advanced_face`](https://www.steptools.com/stds/stp_aim/html/t_ad
 [`cylindrical_surface`](https://www.steptools.com/stds/stp_aim/html/t_cylindrical_surface.html)
 schemas separate face bounds, oriented spatial edges and analytic support.
 An original OCCT cylinder export retained in the
-[research evidence](evidence/2026-10-15-periodic-cylinder/research/occt-cylinder.step)
+[research evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-periodic-cylinder/research/occt-cylinder.step)
 has one periodic side face, two single-edge circular cap loops and two opposite
 uses of one seam. Native cylinder certification previously required four
 quarter-turn strips. The restored-restriction control demonstrates that this
@@ -899,7 +899,7 @@ checks 100 million implicit cells using 19,999 rectangles.
 
 The retained OCCT coordinates also identify a separate exactness issue. Its
 radius-two cap vertex `(2, -4.898587196589E-16, z)` has a strictly positive exact
-radial residual. The [rational audit](evidence/2026-10-15-periodic-cylinder/research/fixture-audit.json)
+radial residual. The [rational audit](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-periodic-cylinder/research/fixture-audit.json)
 preserves that discrepancy; no tolerance silently moves the vertex. Future
 analytic STEP work must account for closed-curve edge subdivision, all 3D/UV
 curve evidence, units, bound orientation and provenance. Explicit healing is
@@ -945,7 +945,7 @@ outer boundary and holes even when all bounds are `FACE_BOUND` and a hole comes
 first. Reversing a bound reverses both use order and direction. The final native
 shell validation remains mandatory; schema traversal is not a validity proof.
 
-The [advanced STEP evidence](evidence/2026-10-15-step-advanced/README.md) includes
+The [advanced STEP evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-advanced/README.md) includes
 original independent exporter files, deliberate nonmaster inconsistencies,
 reparameterization, explicit-identity substitutions, coordinates above binary64
 integer precision, directed-use limits, native replay and actual WASM execution.
@@ -988,7 +988,7 @@ lines. `CircularArc2` already represents full circles and owns arc validity
 checks; unknown structural facts still require exact-query certification. Restricting
 the chord test to lines restores composition with native contours, winding,
 moments, `CurveRegion2` Booleans and offsets without introducing a second region
-carrier. The [closed-edge evidence](evidence/2026-10-15-closed-edges/README.md)
+carrier. The [closed-edge evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-closed-edges/README.md)
 retains the original failures, runtime fault controls, archive mutations,
 native/WASM checks and matched default-feature kernel/arc cost samples.
 
@@ -1037,7 +1037,7 @@ frames, every master/sense choice, reversed and non-radian charts, altered
 alternate curves, exact source-map replay and measured proof reuse. The native
 closed-edge tests in this increment do not establish those import properties.
 
-A subsequent [native seam probe](evidence/2026-10-15-closed-edges/seam_frame_probe.rs)
+A subsequent [native seam probe](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-closed-edges/seam_frame_probe.rs)
 checks the current APIs without implementing exchange. For `(±3,±4)` on a
 radius-5 circle, all four quadrants and period shifts `-2, 0, 3` construct and
 replay both a fixed frame with `Real::try_atan2` and a frame anchored at the seam:
@@ -1045,8 +1045,8 @@ replay both a fixed frame with `Real::try_atan2` and a frame anchored at the sea
 the arctangent relation; these cases do not need a new angle carrier. Moving
 the y coordinate by `1/10^12` fails endpoint agreement in the fixed frame and
 frame normalization in the anchored frame. The
-[raw outcomes](evidence/2026-10-15-closed-edges/seam-frame-probe.log) and
-[source/library identity](evidence/2026-10-15-closed-edges/seam-frame-probe.json)
+[raw outcomes](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-closed-edges/seam-frame-probe.log) and
+[source/library identity](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-closed-edges/seam-frame-probe.json)
 are retained. The initial probe's Vector3 constructor arity error is a setup
 failure, not a runtime kernel result.
 
@@ -1059,7 +1059,7 @@ or claiming an import workflow.
 
 ## Direct circular STEP mapping and shared scalar closure (2026-10-15)
 
-The [follow-up implementation](evidence/2026-10-15-step-circles/README.md) admits
+The [follow-up implementation](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-step-circles/README.md) admits
 selected direct `CIRCLE`/`LINE` edges on planes and cylinders through ordinary
 native validation. It preserves source frames and directed source parameter
 maps, converts angle and length units independently, and retains distinct seam
@@ -1124,7 +1124,7 @@ Our implementation order is an inference from these sources and the reproduced
 section failures: keep regular jets cheap; develop singular germs and exact
 one-sided ordering only where required, then integrate complete trim graphs.
 External kernels remain optional test oracles, never production dependencies.
-The [current differential record](evidence/2026-10-19-section-differentials/next-domains.md)
+The [current differential record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-section-differentials/next-domains.md)
 defines concrete next fixtures and owners. No cited complexity theorem is credited
 as a proof of this implementation or a completed release gate.
 
@@ -1155,7 +1155,7 @@ addition. This is a limited expression-growth property, not a general resource
 bound. A pcurve chart `t=s*p+b` requires division by `s` when comparing its lifted
 velocity with the spatial derivative, including negative `s` after reversal.
 
-The [surface differential evidence](evidence/2026-10-19-surface-differentials/README.md)
+The [surface differential evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-surface-differentials/README.md)
 separates the complete fixtures, prototype failures, final qualification and
 matched preserved-workflow costs. Neither these identities nor isolated timing
 improvements close earlier adverse latency observations, singular branch germs,
