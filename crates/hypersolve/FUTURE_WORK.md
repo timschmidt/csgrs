@@ -20,3 +20,14 @@ result for current callers.
   with base-level components therefore embeds as `None`. Downstream callers
   pair these embeddings with `RecursiveQuadraticValue::rebased_to_equivalent_base`
   instead. Composing them directly would remove that two-step requirement.
+
+## Represented-root completeness
+
+`represented_strict_sign` refines a represented value's image interval at
+most 16 times. A tiny but nonzero value, such as `p√3 - q` near `2^-78` for
+consecutive Pell numbers, stays undecided. Nested and tensor ratios with such
+a denominator then return `Predicate`, although the quotient is well defined.
+The answer is honest but incomplete. `tests/represented_roots.rs`
+(`nearly_vanishing_denominators_are_never_misclassified`) accepts either the
+correct value or `Predicate`. A deeper refinement schedule, or an exact
+algebraic sign for the denominator, would decide these cases.
