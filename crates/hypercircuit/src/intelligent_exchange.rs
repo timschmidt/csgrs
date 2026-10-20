@@ -428,18 +428,14 @@ pub fn inspect_ipc2581_xml(
                     ));
                 }
                 if root.is_none() {
-                    let local = std::str::from_utf8(element.local_name().as_ref())
-                        .map_err(|error| IntelligentPcbExchangeError::Xml(error.to_string()))?
-                        .to_owned();
+                    let local = element.local_name().as_ref().to_owned();
                     let mut namespace = None;
                     let mut revision = None;
                     for attribute in element.attributes().with_checks(true) {
                         let attribute = attribute
                             .map_err(|error| IntelligentPcbExchangeError::Xml(error.to_string()))?;
-                        let name = std::str::from_utf8(attribute.key.as_ref())
-                            .map_err(|error| IntelligentPcbExchangeError::Xml(error.to_string()))?;
-                        let value = std::str::from_utf8(attribute.value.as_ref())
-                            .map_err(|error| IntelligentPcbExchangeError::Xml(error.to_string()))?;
+                        let name: &str = attribute.key.as_ref();
+                        let value: &str = attribute.value.as_ref();
                         if name == policy.namespace_attribute {
                             namespace = Some(value.to_owned());
                         }
@@ -497,7 +493,8 @@ pub fn inspect_ipc2581_xml(
                 }
             }
             Event::Text(text) => {
-                let bytes: &[u8] = text.as_ref();
+                let text: &str = text.as_ref();
+                let bytes = text.as_bytes();
                 if depth == 0 && bytes.iter().any(|byte| !byte.is_ascii_whitespace()) {
                     return Err(IntelligentPcbExchangeError::Xml(
                         "non-whitespace content outside the root element".into(),
@@ -658,6 +655,17 @@ mod tests {
             )
             .is_err()
         );
+        // Invalid UTF-8 in a name or an attribute value is an XML error, not
+        // a lossy decode.
+        for invalid in [
+            &b"<IPC-2581\xff xmlns=\"urn:fixture:ipc2581\" revision=\"C\"/>"[..],
+            &b"<IPC-2581 xmlns=\"urn:fixture:ipc2581\" revision=\"C\xff\"/>"[..],
+        ] {
+            assert!(matches!(
+                inspect_ipc2581_xml(invalid, &policy),
+                Err(IntelligentPcbExchangeError::Xml(_))
+            ));
+        }
     }
 
     proptest! {

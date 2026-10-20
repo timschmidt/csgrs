@@ -40,8 +40,8 @@ serde_json = "1.0"
 sha2 = "0.10.9"
 tar = "0.4"
 zip = { version = "2.2", default-features = false, features = ["deflate"] }
-calamine = "0.35.0"
-quick-xml = "0.39.4"
+calamine = "0.37"
+quick-xml = "0.42"
 rusqlite = { version = "0.39.0", features = ["bundled"] }
 
 [dev-dependencies]

@@ -57,7 +57,7 @@ sha2 = { version = "0.10.9", optional = true }
 toml = { version = "1.1.2", optional = true }
 ring = { version = "0.17.14", optional = true }
 zip = { version = "2.4.2", default-features = false, features = ["deflate"], optional = true }
-quick-xml = { version = "0.39.4", optional = true }
+quick-xml = { version = "0.42", optional = true }
 unicode-normalization = "0.1.24"
 [dev-dependencies]
 proptest = "1.7.0"

@@ -6483,11 +6483,15 @@ struct Ipc2581XmlSummary {
 }
 
 fn ipc2581_xml_summary(text: &str) -> Result<Ipc2581XmlSummary, quick_xml::Error> {
+    use quick_xml::XmlVersion;
     use quick_xml::events::Event;
     use quick_xml::reader::Reader as XmlReader;
     use std::collections::BTreeSet;
 
     let mut summary = Ipc2581XmlSummary::default();
+    // Attribute values are normalized as the document's declared XML version
+    // requires; a document without a declaration is XML 1.0.
+    let mut xml_version = XmlVersion::default();
     let mut layer_names = BTreeSet::new();
     let mut net_names = BTreeSet::new();
     let mut refdes_values = BTreeSet::new();
@@ -6499,7 +6503,7 @@ fn ipc2581_xml_summary(text: &str) -> Result<Ipc2581XmlSummary, quick_xml::Error
     loop {
         match reader.read_event()? {
             Event::Start(element) | Event::Empty(element) => {
-                let name = String::from_utf8_lossy(element.local_name().as_ref()).to_string();
+                let name = element.local_name().as_ref().to_owned();
                 if summary.root_name.is_none() {
                     summary.root_name = Some(name.clone());
                 }
@@ -6528,9 +6532,8 @@ fn ipc2581_xml_summary(text: &str) -> Result<Ipc2581XmlSummary, quick_xml::Error
                     summary.package_like_count += 1;
                 }
                 for attribute in element.attributes().with_checks(false).flatten() {
-                    let key = String::from_utf8_lossy(attribute.key.local_name().as_ref())
-                        .to_ascii_lowercase();
-                    let Ok(value) = attribute.decode_and_unescape_value(reader.decoder()) else {
+                    let key = attribute.key.local_name().as_ref().to_ascii_lowercase();
+                    let Ok(value) = attribute.normalized_value(xml_version) else {
                         continue;
                     };
                     let value = value.trim();
@@ -6616,6 +6619,11 @@ fn ipc2581_xml_summary(text: &str) -> Result<Ipc2581XmlSummary, quick_xml::Error
                         summary.thickness_like_count += 1;
                         thickness_values.insert(value.to_string());
                     }
+                }
+            }
+            Event::Decl(declaration) => {
+                if let Ok(version) = declaration.xml_version() {
+                    xml_version = version;
                 }
             }
             Event::Eof => break,
@@ -6989,13 +6997,13 @@ fn svg_drawing_summary(text: &str) -> Result<SvgDrawingSummary, quick_xml::Error
     loop {
         match reader.read_event()? {
             Event::Start(element) | Event::Empty(element) => {
-                let name = String::from_utf8_lossy(element.local_name().as_ref()).to_string();
+                let name = element.local_name().as_ref().to_owned();
                 if summary.root_name.is_none() {
                     summary.root_name = Some(name.clone());
                 }
                 for attribute in element.attributes().flatten() {
-                    let key = String::from_utf8_lossy(attribute.key.as_ref()).to_string();
-                    let value = String::from_utf8_lossy(attribute.value.as_ref()).to_string();
+                    let key = attribute.key.as_ref().to_owned();
+                    let value = attribute.value.as_ref().to_owned();
                     if name == "svg" {
                         match key.as_str() {
                             "width" => summary.width = Some(value.clone()),
@@ -7373,9 +7381,19 @@ fn spreadsheet_parser_diagnostics(
     diagnostics.extend(xlsx_metadata_diagnostics(path, kind, &source));
 
     if let Sheets::Xlsx(xlsx) = &mut workbook {
-        match xlsx.load_merged_regions() {
-            Ok(()) => {
-                let merged_region_count = xlsx.merged_regions().len();
+        // Count merged regions across every worksheet. A sheet entry without a
+        // readable worksheet part has none, as in calamine's former
+        // workbook-wide scan.
+        let merged_regions =
+            xlsx.sheet_names().iter().try_fold(0_usize, |count, name| {
+                match xlsx.merge_cells_by_sheet_name(name) {
+                    Ok(cells) => Ok(count + cells.len()),
+                    Err(calamine::XlsxError::WorksheetNotFound(_)) => Ok(count),
+                    Err(error) => Err(error),
+                }
+            });
+        match merged_regions {
+            Ok(merged_region_count) => {
                 if merged_region_count > 0 {
                     diagnostics.push(Diagnostic {
                         source: source.clone(),
@@ -7895,7 +7913,7 @@ fn count_xml_elements(xml: &str, names: &[&[u8]]) -> Result<Vec<usize>, quick_xm
             Event::Start(element) | Event::Empty(element) => {
                 let local_name = element.local_name();
                 for (index, name) in names.iter().enumerate() {
-                    if local_name.as_ref() == *name {
+                    if local_name.as_ref().as_bytes() == *name {
                         counts[index] += 1;
                     }
                 }
