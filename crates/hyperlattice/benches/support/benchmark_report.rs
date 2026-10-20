@@ -465,7 +465,8 @@ mod tests {
     fn manifest_catalog_matches_registered_targets() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let suites = super::read_bench_suites(root).unwrap();
-        assert_eq!(suites.len(), 4);
+        assert_eq!(suites.len(), 7);
+        assert!(suites.iter().any(|suite| suite.name == "complex_jacobi"));
         assert!(suites.iter().any(|suite| suite.name == "mathbench"));
         assert!(suites.iter().any(|suite| !suite.criterion));
     }

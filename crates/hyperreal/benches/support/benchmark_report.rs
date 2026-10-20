@@ -464,7 +464,12 @@ mod tests {
     fn manifest_catalog_matches_registered_targets() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let suites = super::read_bench_suites(root).unwrap();
-        assert_eq!(suites.len(), 10);
+        assert_eq!(suites.len(), 15);
+        assert!(
+            suites
+                .iter()
+                .any(|suite| suite.name == "elliptic_integrals")
+        );
         assert!(suites.iter().any(|suite| suite.name == "gmp_api"));
         assert!(suites.iter().any(|suite| !suite.criterion));
     }
