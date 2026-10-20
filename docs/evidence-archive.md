@@ -10,7 +10,7 @@ This repository keeps a digest for each archived record in
 | --- | --- |
 | Evidence repository | <https://github.com/timschmidt/csgrs-evidence> |
 | Archived commit | `b20000e377626a41b6ff8e6f87aee2b20ebd7865` |
-| Extracted from | CSGRS `7e3c36c1248823a8bb36b2b161068660cea2ebf3` (2026-10-20, before the archive split) |
+| Extracted from | CSGRS `7e3c36c1248823a8bb36b2b161068660cea2ebf3`, a pre-rewrite commit ID (see [history rewrite](#history-rewrite)) |
 | Records | 309 records, 552,370 files, 13.96 GB |
 
 The archived commit keeps the original paths and the history of every archived
@@ -33,6 +33,18 @@ The archive also carries the comparison crate's audit verifiers
 can be rechecked from an evidence checkout. Five audit results are Git LFS
 payloads; run `git lfs pull` after cloning. Their pointers, which embed each
 payload's SHA-256, are what the record digests cover.
+
+## History rewrite
+
+On 2026-10-20 the archived roots were also removed from all CSGRS history
+with `git filter-repo`. The packed repository shrank from about 1.4 GiB to
+173 MiB. That gave 2,033 commits new IDs and dropped 218 commits that only
+changed evidence. Commits that never touched an archived root, tags, and the
+`pages` and `v0.20.0` branches keep their IDs.
+[`history-rewrite-2026-10-20.tsv`](history-rewrite-2026-10-20.tsv) maps each
+changed pre-rewrite commit ID to its new ID; dropped commits map to zeros. Use
+it to translate commit IDs cited by ledgers, performance records and older
+documentation.
 
 ## Verifying a record
 

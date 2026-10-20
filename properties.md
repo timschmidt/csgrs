@@ -171,7 +171,8 @@ is ordinary strict-mode completion, the second milestone.
     is empty, and the sweep returns its true typed outcome.
 16. **Evidence retention** - Resolved in tree. Generated evidence (14 GB in
     552,370 files) moved to the evidence repository with per-record digests
-    ([`docs/evidence-archive.md`](docs/evidence-archive.md)). P36 now has a
+    ([`docs/evidence-archive.md`](docs/evidence-archive.md)) and was removed
+    from history, with a commit map for old IDs. P36 now has a
     retention budget, and CI enforces it with
     `scripts/check-repository-budget.sh`.
 17. **Dependency direction** - `hyperdrc` (PCB design-rule checks) and
