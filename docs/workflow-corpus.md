@@ -68,6 +68,20 @@ approximate construction intent.
 
 ## Scope and resource limits
 
+The format-boundary workflow in
+[`tests/gltf_empty_composition.rs`](../tests/gltf_empty_composition.rs) runs
+under `gltf-io`: empty JSON/GLB scenes and named or mixed empty objects continue
+through import, transform, strict Boolean identities, complete subtraction,
+and export. Exact box boundary planes and signed volume supply independent
+geometry expectations; closed-PWN and manifold checks remain separate.
+Missing source history survives subsequent local certification. The suite
+also preserves exact rows for implicit and unsigned indices, interleaved and
+sparse positions, nested transforms, scene selection, and the original
+10,000-node chain. Malformed accessor and graph fixtures must return errors,
+including when no triangles could otherwise be published. Serialized byte
+stability and independent format validation are recorded separately by the
+change's admission evidence.
+
 The strict success gates remain required successes. An undecided predicate,
 unsupported representation, invalid input, resource exhaustion or incorrect
 result is a separate outcome, never a substitute passing status. Approximate

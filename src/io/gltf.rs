@@ -7,6 +7,7 @@ use hashbrown::{HashMap, HashSet};
 use hyperlattice::{Point3, Real, Vector3};
 use hypermesh::{Triangle, TriangleMesh};
 use serde_json::json;
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::io::Write;
 use std::sync::Arc;
@@ -33,6 +34,12 @@ struct IndexedTriangleMesh3D {
 }
 
 fn indexed_geometry(mesh: &TriangleMesh) -> Result<IndexedTriangleMesh3D, IoError> {
+    if mesh.triangles.is_empty() && !mesh.positions.is_empty() {
+        return Err(IoError::Geometry {
+            format: "glTF",
+            detail: "positions without triangles are not canonical empty geometry".into(),
+        });
+    }
     let buffers = mesh
         .to_exact_gpu_mesh_buffers()
         .map_err(|error| IoError::Construction {
@@ -100,36 +107,42 @@ pub struct GltfMeshImport {
 /// policy. Node transforms are flattened into positions before exact promotion.
 /// Skins, morph targets, and non-triangle primitives fail explicitly instead
 /// of being silently ignored.
+/// Scenes without mesh instances import as canonical empty geometry. Missing
+/// source history remains explicit, including after subsequent certified work.
 pub fn from_gltf(bytes: &[u8]) -> Result<GltfMeshImport, IoError> {
-    let asset = gltf::Gltf::from_slice(bytes).map_err(|error| {
-        IoError::MalformedInput(format!("glTF document validation failed: {error}"))
-    })?;
+    let asset = parse_gltf(bytes)?;
+    validate_node_forest(&asset)?;
     let buffers = gltf_buffers(&asset)?;
     let scene = asset
         .default_scene()
         .or_else(|| asset.scenes().next())
-        .ok_or_else(|| IoError::MalformedInput("glTF document has no scene".into()))?;
+        .ok_or_else(|| IoError::Unsupported {
+            format: "glTF",
+            detail: "document has no scene to flatten".into(),
+        })?;
     let scene_index = scene.index();
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
     let mut mesh_node_count = 0usize;
     let mut primitive_count = 0usize;
-    for node in scene.nodes() {
-        import_gltf_node(
-            node,
-            &identity_matrix(),
+    let mut pending = scene
+        .nodes()
+        .map(|node| (node, identity_matrix()))
+        .collect::<Vec<_>>();
+    pending.reverse();
+    while let Some((node, parent)) = pending.pop() {
+        let transform = import_gltf_node(
+            node.clone(),
+            &parent,
             &buffers,
             &mut positions,
             &mut triangles,
             &mut mesh_node_count,
             &mut primitive_count,
         )?;
-    }
-    if triangles.is_empty() {
-        return Err(IoError::Geometry {
-            format: "glTF",
-            detail: "selected scene contains no triangle primitives".into(),
-        });
+        let first_child = pending.len();
+        pending.extend(node.children().map(|child| (child, transform)));
+        pending[first_child..].reverse();
     }
 
     let mut native_triangles = Vec::with_capacity(triangles.len());
@@ -146,9 +159,13 @@ pub fn from_gltf(bytes: &[u8]) -> Result<GltfMeshImport, IoError> {
         let _ = normal;
         native_triangles.push(Triangle::new(a, b, c));
     }
-    let mesh = TriangleMesh::new(positions, native_triangles).with_inherited_construction(
-        hypermesh::ConstructionEvidence::UNTRACKED.with_coordinate_projection(),
-    );
+    let evidence = if positions.is_empty() {
+        hypermesh::ConstructionEvidence::UNTRACKED
+    } else {
+        hypermesh::ConstructionEvidence::UNTRACKED.with_coordinate_projection()
+    };
+    let mesh =
+        TriangleMesh::new(positions, native_triangles).with_inherited_construction(evidence);
 
     Ok(GltfMeshImport {
         mesh,
@@ -156,6 +173,171 @@ pub fn from_gltf(bytes: &[u8]) -> Result<GltfMeshImport, IoError> {
         mesh_node_count,
         primitive_count,
     })
+}
+
+fn gltf_document_error(error: impl std::fmt::Display) -> IoError {
+    IoError::MalformedInput(format!("glTF document validation failed: {error}"))
+}
+
+/// Bridge the parser's required Scene.nodes field to glTF's optional property,
+/// then retain its native document validation. Never serialize the internal
+/// empty array: a present scene.nodes array must contain at least one entry.
+fn parse_gltf(bytes: &[u8]) -> Result<gltf::Gltf, IoError> {
+    let (json_bytes, blob) = if bytes.starts_with(b"glTF") {
+        let glb = gltf::binary::Glb::from_slice(bytes).map_err(gltf_document_error)?;
+        (glb.json, glb.bin.map(Cow::into_owned))
+    } else {
+        (Cow::Borrowed(bytes), None)
+    };
+    let mut value: serde_json::Value =
+        serde_json::from_slice(&json_bytes).map_err(gltf_document_error)?;
+    for field in [
+        "scenes",
+        "nodes",
+        "meshes",
+        "accessors",
+        "buffers",
+        "bufferViews",
+    ] {
+        if value
+            .get(field)
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(Vec::is_empty)
+        {
+            return Err(gltf_document_error(format!(
+                "{field} must be omitted or nonempty"
+            )));
+        }
+    }
+    if let Some(scenes) = value
+        .get_mut("scenes")
+        .and_then(serde_json::Value::as_array_mut)
+    {
+        for scene in scenes {
+            if let Some(object) = scene.as_object_mut() {
+                if object
+                    .get("nodes")
+                    .and_then(serde_json::Value::as_array)
+                    .is_some_and(Vec::is_empty)
+                {
+                    return Err(gltf_document_error(
+                        "scene.nodes must be omitted or nonempty",
+                    ));
+                }
+                object.entry("nodes").or_insert_with(|| json!([]));
+            }
+        }
+    }
+    let root: gltf::json::Root = serde_json::from_value(value).map_err(gltf_document_error)?;
+    // The dependency's primitive validation hook dereferences POSITION before
+    // returning index-validation errors. Check that precondition first.
+    for (mesh_index, mesh) in root.meshes.iter().enumerate() {
+        if mesh.primitives.is_empty() {
+            return Err(gltf_document_error(format!(
+                "mesh {mesh_index} has no primitives"
+            )));
+        }
+        for primitive in &mesh.primitives {
+            for index in primitive.attributes.values() {
+                if index.value() >= root.accessors.len() {
+                    return Err(gltf_document_error(format!(
+                        "mesh {mesh_index} references missing accessor {}",
+                        index.value()
+                    )));
+                }
+            }
+        }
+    }
+    for accessor in &root.accessors {
+        if accessor.count.0 == 0 {
+            return Err(gltf_document_error("accessor count must be positive"));
+        }
+        platform_size(accessor.count.0)?;
+        platform_size(accessor.byte_offset.map_or(0, |value| value.0))?;
+        if let Some(sparse) = &accessor.sparse {
+            if sparse.count.0 == 0 || sparse.count.0 > accessor.count.0 {
+                return Err(gltf_document_error(
+                    "sparse count must be positive and no greater than accessor count",
+                ));
+            }
+            platform_size(sparse.count.0)?;
+            platform_size(sparse.indices.byte_offset.0)?;
+            platform_size(sparse.values.byte_offset.0)?;
+        }
+    }
+    for buffer in &root.buffers {
+        if buffer.byte_length.0 == 0 {
+            return Err(gltf_document_error("buffer byteLength must be positive"));
+        }
+        platform_size(buffer.byte_length.0)?;
+    }
+    for view in &root.buffer_views {
+        if view.byte_length.0 == 0 {
+            return Err(gltf_document_error("bufferView byteLength must be positive"));
+        }
+        platform_size(view.byte_length.0)?;
+        platform_size(view.byte_offset.map_or(0, |value| value.0))?;
+    }
+    Ok(gltf::Gltf {
+        document: gltf::Document::from_json(root).map_err(gltf_document_error)?,
+        blob,
+    })
+}
+
+fn platform_size(value: u64) -> Result<usize, IoError> {
+    usize::try_from(value).map_err(|_| IoError::SizeOverflow {
+        format: "glTF",
+        limit: "platform buffer/accessor size",
+    })
+}
+
+/// Validate the document's forest without recursive calls or repeated traversal
+/// of shared subtrees. The same root may appear in different scenes.
+fn validate_node_forest(asset: &gltf::Gltf) -> Result<(), IoError> {
+    let mut parents = vec![None; asset.nodes().len()];
+    for node in asset.nodes() {
+        for child in node.children() {
+            if parents[child.index()].replace(node.index()).is_some() {
+                return Err(gltf_document_error(format!(
+                    "node {} has multiple parent references",
+                    child.index()
+                )));
+            }
+        }
+    }
+    let mut pending = parents
+        .iter()
+        .enumerate()
+        .filter_map(|(index, parent)| parent.is_none().then_some(index))
+        .collect::<Vec<_>>();
+    let mut visited = 0;
+    while let Some(index) = pending.pop() {
+        visited += 1;
+        pending.extend(
+            asset
+                .nodes()
+                .nth(index)
+                .expect("validated node index")
+                .children()
+                .map(|child| child.index()),
+        );
+    }
+    if visited != parents.len() {
+        return Err(gltf_document_error("node hierarchy contains a cycle"));
+    }
+    for scene in asset.scenes() {
+        let mut roots = HashSet::new();
+        for node in scene.nodes() {
+            if parents[node.index()].is_some() || !roots.insert(node.index()) {
+                return Err(gltf_document_error(format!(
+                    "scene {} contains a duplicate or non-root node {}",
+                    scene.index(),
+                    node.index()
+                )));
+            }
+        }
+    }
+    Ok(())
 }
 
 fn gltf_buffers(asset: &gltf::Gltf) -> Result<Vec<Vec<u8>>, IoError> {
@@ -205,6 +387,113 @@ fn decode_gltf_data_uri(uri: &str) -> Result<Vec<u8>, IoError> {
     })
 }
 
+fn validate_accessor_layout(
+    accessor: &gltf::Accessor<'_>,
+    buffers: &[Vec<u8>],
+    item_size: usize,
+    alignment: usize,
+) -> Result<(), IoError> {
+    if let Some(view) = accessor.view() {
+        validate_view_layout(
+            &view,
+            accessor.offset(),
+            accessor.count(),
+            item_size,
+            alignment,
+        )?;
+    }
+    if let Some(sparse) = accessor.sparse() {
+        let indices = sparse.indices();
+        let index_view = indices.view();
+        let index_size = indices.index_type().size();
+        let values = sparse.values();
+        if index_view.stride().is_some() || values.view().stride().is_some() {
+            return Err(gltf_document_error(
+                "sparse buffer views must not specify byteStride",
+            ));
+        }
+        validate_view_layout(
+            &index_view,
+            indices.offset(),
+            sparse.count(),
+            index_size,
+            index_size,
+        )?;
+        validate_view_layout(
+            &values.view(),
+            values.offset(),
+            sparse.count(),
+            item_size,
+            alignment,
+        )?;
+        let start = index_view.offset() + indices.offset();
+        let bytes = &buffers[index_view.buffer().index()];
+        let mut previous = None;
+        for slot in 0..sparse.count() {
+            let offset = start + slot * index_size;
+            let index = match indices.index_type() {
+                gltf::accessor::sparse::IndexType::U8 => u32::from(bytes[offset]),
+                gltf::accessor::sparse::IndexType::U16 => u32::from(u16::from_le_bytes(
+                    bytes[offset..offset + 2]
+                        .try_into()
+                        .expect("validated sparse index width"),
+                )),
+                gltf::accessor::sparse::IndexType::U32 => u32::from_le_bytes(
+                    bytes[offset..offset + 4]
+                        .try_into()
+                        .expect("validated sparse index width"),
+                ),
+            };
+            if index as usize >= accessor.count() || previous.is_some_and(|last| index <= last)
+            {
+                return Err(gltf_document_error(
+                    "sparse indices must increase strictly within accessor bounds",
+                ));
+            }
+            previous = Some(index);
+        }
+    }
+    Ok(())
+}
+
+fn validate_view_layout(
+    view: &gltf::buffer::View<'_>,
+    offset: usize,
+    count: usize,
+    item_size: usize,
+    alignment: usize,
+) -> Result<(), IoError> {
+    let overflow = || IoError::SizeOverflow {
+        format: "glTF",
+        limit: "buffer-view/accessor byte range",
+    };
+    let view_end = view
+        .offset()
+        .checked_add(view.length())
+        .ok_or_else(overflow)?;
+    let stride = view.stride().unwrap_or(item_size);
+    let end = count
+        .checked_sub(1)
+        .and_then(|last| last.checked_mul(stride))
+        .and_then(|last| last.checked_add(offset))
+        .and_then(|last| last.checked_add(item_size))
+        .ok_or_else(overflow)?;
+    let absolute_offset = view.offset().checked_add(offset).ok_or_else(overflow)?;
+    if view_end > view.buffer().length()
+        || end > view.length()
+        || stride < item_size
+        || !stride.is_multiple_of(alignment)
+        || !offset.is_multiple_of(alignment)
+        || !absolute_offset.is_multiple_of(alignment)
+    {
+        return Err(gltf_document_error(format!(
+            "buffer view {} does not contain the aligned accessor range",
+            view.index()
+        )));
+    }
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 fn import_gltf_node(
     node: gltf::Node<'_>,
@@ -214,7 +503,7 @@ fn import_gltf_node(
     triangles: &mut Vec<[usize; 3]>,
     mesh_node_count: &mut usize,
     primitive_count: &mut usize,
-) -> Result<(), IoError> {
+) -> Result<Matrix4, IoError> {
     if node.skin().is_some() {
         return Err(IoError::Unsupported {
             format: "glTF",
@@ -223,6 +512,19 @@ fn import_gltf_node(
     }
     let local = f32_matrix_to_f64(node.transform().matrix())?;
     let transform = multiply_matrix(parent, &local);
+    if !transform.iter().flatten().all(|value| value.is_finite())
+        || [
+            transform[0][3],
+            transform[1][3],
+            transform[2][3],
+            transform[3][3],
+        ] != [0.0, 0.0, 0.0, 1.0]
+    {
+        return Err(IoError::Unsupported {
+            format: "glTF",
+            detail: "node transform is non-finite or non-affine".into(),
+        });
+    }
     if let Some(mesh) = node.mesh() {
         *mesh_node_count = (*mesh_node_count)
             .checked_add(1)
@@ -254,6 +556,25 @@ fn import_gltf_node(
             }
             let reader =
                 primitive.reader(|buffer| buffers.get(buffer.index()).map(Vec::as_slice));
+            let position_accessor =
+                primitive.get(&gltf::Semantic::Positions).ok_or_else(|| {
+                    gltf_document_error("triangle primitive has no POSITION attribute")
+                })?;
+            if position_accessor.dimensions() != gltf::accessor::Dimensions::Vec3 {
+                return Err(gltf_document_error("POSITION accessor must have VEC3 type"));
+            }
+            if position_accessor.data_type() != gltf::accessor::DataType::F32 {
+                return Err(IoError::Unsupported {
+                    format: "glTF",
+                    detail: "only FLOAT POSITION accessors are supported".into(),
+                });
+            }
+            if position_accessor.normalized() {
+                return Err(gltf_document_error(
+                    "FLOAT POSITION accessors must not be normalized",
+                ));
+            }
+            validate_accessor_layout(&position_accessor, buffers, 12, 4)?;
             let source_positions = reader.read_positions().ok_or_else(|| {
                 IoError::MalformedInput(format!(
                     "mesh {} primitive {} has no POSITION attribute",
@@ -266,14 +587,39 @@ fn import_gltf_node(
                 positions.push(transform_gltf_position(&transform, position)?);
             }
             let vertex_count = positions.len() - base;
-            let indices = reader
-                .read_indices()
-                .map(|indices| indices.into_u32().collect::<Vec<_>>())
-                .unwrap_or_else(|| {
-                    (0..vertex_count)
-                        .map_while(|index| u32::try_from(index).ok())
-                        .collect()
-                });
+            let indices = if let Some(accessor) = primitive.indices() {
+                if accessor.dimensions() != gltf::accessor::Dimensions::Scalar
+                    || !matches!(
+                        accessor.data_type(),
+                        gltf::accessor::DataType::U8
+                            | gltf::accessor::DataType::U16
+                            | gltf::accessor::DataType::U32
+                    )
+                    || accessor.normalized()
+                {
+                    return Err(gltf_document_error(
+                        "triangle indices must be non-normalized unsigned SCALAR values",
+                    ));
+                }
+                if accessor.view().is_some_and(|view| view.stride().is_some()) {
+                    return Err(gltf_document_error(
+                        "index buffer view must not specify byteStride",
+                    ));
+                }
+                let size = accessor.data_type().size();
+                validate_accessor_layout(&accessor, buffers, size, size)?;
+                reader
+                    .read_indices()
+                    .ok_or_else(|| {
+                        gltf_document_error("triangle index accessor cannot be read")
+                    })?
+                    .into_u32()
+                    .collect::<Vec<_>>()
+            } else {
+                (0..vertex_count)
+                    .map_while(|index| u32::try_from(index).ok())
+                    .collect()
+            };
             if indices.len() != vertex_count && primitive.indices().is_none() {
                 return Err(IoError::SizeOverflow {
                     format: "glTF",
@@ -319,18 +665,7 @@ fn import_gltf_node(
                     })?;
         }
     }
-    for child in node.children() {
-        import_gltf_node(
-            child,
-            &transform,
-            buffers,
-            positions,
-            triangles,
-            mesh_node_count,
-            primitive_count,
-        )?;
-    }
-    Ok(())
+    Ok(transform)
 }
 
 const fn identity_matrix() -> Matrix4 {
@@ -402,6 +737,8 @@ fn exact_gltf_real(value: f64, field: &'static str) -> Result<Real, IoError> {
 /// Native index and normal failures retain their category and cause through
 /// [`IoError::Construction`]. Only successful output is cached, allowing retry
 /// after an undecided normal gains stronger scalar evidence.
+/// Canonical empty geometry exports as a named node without a mesh. Positions
+/// without triangles remain invalid input, rather than becoming an empty node.
 pub fn to_gltf(mesh: &TriangleMesh, object_name: &str) -> Result<String, IoError> {
     if let Some(output) = GLTF_CACHE.with_borrow(|entries| {
         entries
@@ -453,18 +790,12 @@ impl GltfSceneObject {
 }
 
 /// Serializes multiple independently named geometry objects into one glTF 2.0
-/// scene with an embedded binary buffer.
+/// scene with an embedded binary buffer when geometry is present. Empty objects
+/// retain their names as meshless nodes; a scene with no objects omits its nodes.
 pub fn to_gltf_scene(
     scene_name: &str,
     objects: &[GltfSceneObject],
 ) -> Result<String, IoError> {
-    if objects.is_empty() {
-        return Err(IoError::Geometry {
-            format: "glTF",
-            detail: "cannot export an empty scene".into(),
-        });
-    }
-
     let mut buffer = Vec::new();
     let mut buffer_views = Vec::with_capacity(objects.len() * 3);
     let mut accessors = Vec::with_capacity(objects.len() * 3);
@@ -482,10 +813,10 @@ pub fn to_gltf_scene(
         }
         let indexed = &object.indexed;
         if indexed.faces.is_empty() {
-            return Err(IoError::Geometry {
-                format: "glTF",
-                detail: format!("cannot export empty scene object {:?}", object.name),
-            });
+            let node_index = checked_u32(nodes.len(), "u32 node index")?;
+            nodes.push(json!({"name": object.name}));
+            scene_nodes.push(node_index);
+            continue;
         }
 
         let mut vertices = Vec::<([f32; 3], [f32; 3])>::new();
@@ -638,22 +969,26 @@ pub fn to_gltf_scene(
         scene_nodes.push(node_index);
     }
 
-    let byte_length = checked_u32(buffer.len(), "u32 buffer length")?;
-    let uri = format!(
-        "data:application/octet-stream;base64,{}",
-        BASE64_ENGINE.encode(buffer)
-    );
-
-    let document = json!({
+    let mut document = json!({
         "asset": {"version": "2.0", "generator": "csgrs"},
-        "buffers": [{"byteLength": byte_length, "uri": uri}],
-        "bufferViews": buffer_views,
-        "accessors": accessors,
-        "meshes": meshes,
-        "nodes": nodes,
-        "scenes": [{"name": scene_name, "nodes": scene_nodes}],
+        "scenes": [{"name": scene_name}],
         "scene": 0
     });
+    if !nodes.is_empty() {
+        document["nodes"] = json!(nodes);
+        document["scenes"][0]["nodes"] = json!(scene_nodes);
+    }
+    if !buffer.is_empty() {
+        let byte_length = checked_u32(buffer.len(), "u32 buffer length")?;
+        let uri = format!(
+            "data:application/octet-stream;base64,{}",
+            BASE64_ENGINE.encode(buffer)
+        );
+        document["buffers"] = json!([{"byteLength": byte_length, "uri": uri}]);
+        document["bufferViews"] = json!(buffer_views);
+        document["accessors"] = json!(accessors);
+        document["meshes"] = json!(meshes);
+    }
     serde_json::to_string_pretty(&document).map_err(|error| IoError::Geometry {
         format: "glTF",
         detail: error.to_string(),

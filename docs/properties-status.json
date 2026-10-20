@@ -31028,6 +31028,2782 @@
     "review": "docs/evidence/2026-10-19-interchange-failure-admission/review-v1.json",
     "checkpoint": "docs/evidence/2026-10-19-interchange-failure-admission/checkpoint-v1.json",
     "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/interchange-failure-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz"
+  },
+  "gltf_empty_composition_admission": {
+    "classification": "Retained glTF empty-result composition, validated reader preconditions and iterative scene traversal.",
+    "baseline_revision": "04fd2ddf173cc68108777178305d292d2a211db3",
+    "owner": "CSGRS glTF format boundary; native triangle carriers, gltf parser/document validation and shared scalar/mesh implementations retained.",
+    "properties": [
+      "P4",
+      "P6",
+      "P18",
+      "P19",
+      "P25",
+      "P26",
+      "P27",
+      "P29",
+      "P30",
+      "P35",
+      "P36",
+      "P37",
+      "P39"
+    ],
+    "changed_paths": [
+      "docs/workflow-corpus.md",
+      "readme.md",
+      "src/io/gltf.rs",
+      "tests/gltf_empty_composition.rs"
+    ],
+    "baseline": {
+      "baseline_revision": "04fd2ddf173cc68108777178305d292d2a211db3",
+      "core_dumps_disabled": true,
+      "prlimit_sha256": "a3d1b9a04a850115f088326bc481e145eb98278713b50a4c4cdf05fe94d891a9",
+      "production_sources_unchanged": true,
+      "results": {
+        "bad_position_reference": {
+          "exit_code": 0,
+          "observation": {
+            "mode": "bad_position_reference",
+            "panic": true
+          },
+          "stderr": "\nthread 'main' (1874039) panicked at /run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/cargo-home/registry/src/index.crates.io-1949cf8c6b5b557f/gltf-json-1.4.1/src/mesh.rs:151:43:\nindex out of bounds: the len is 3 but the index is 999\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+        },
+        "cycle": {
+          "exit_code": 134,
+          "observation": null,
+          "stderr": "\nthread 'main' (1874108) has overflowed its stack\nfatal runtime error: stack overflow, aborting\n"
+        },
+        "deep": {
+          "exit_code": 134,
+          "observation": null,
+          "stderr": "\nthread 'main' (1874249) has overflowed its stack\nfatal runtime error: stack overflow, aborting\n"
+        },
+        "empty": {
+          "exit_code": 0,
+          "observation": {
+            "error": "MalformedInput(\"glTF document validation failed: missing field `nodes` at line 1 column 49\")",
+            "mode": "empty",
+            "success": false
+          },
+          "stderr": ""
+        },
+        "empty_primitives": {
+          "exit_code": 0,
+          "observation": {
+            "error": "Geometry { format: \"glTF\", detail: \"selected scene contains no triangle primitives\" }",
+            "mode": "empty_primitives",
+            "success": false
+          },
+          "stderr": ""
+        },
+        "export": {
+          "exit_code": 0,
+          "observation": {
+            "error": "Geometry { format: \"glTF\", detail: \"cannot export empty scene object \\\"empty\\\"\" }",
+            "mode": "export",
+            "success": false
+          },
+          "stderr": ""
+        },
+        "float_indices": {
+          "exit_code": 0,
+          "observation": {
+            "mode": "float_indices",
+            "panic": true
+          },
+          "stderr": "\nthread 'main' (1874018) panicked at /run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/cargo-home/registry/src/index.crates.io-1949cf8c6b5b557f/gltf-1.4.1/src/mesh/mod.rs:396:22:\ninternal error: entered unreachable code\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+        },
+        "missing_scene": {
+          "exit_code": 0,
+          "observation": {
+            "error": "MalformedInput(\"glTF document has no scene\")",
+            "mode": "missing_scene",
+            "success": false
+          },
+          "stderr": ""
+        },
+        "mixed": {
+          "exit_code": 0,
+          "observation": {
+            "error": "Geometry { format: \"glTF\", detail: \"cannot export empty scene object \\\"empty\\\"\" }",
+            "mode": "mixed",
+            "success": false
+          },
+          "stderr": ""
+        },
+        "node": {
+          "exit_code": 0,
+          "observation": {
+            "error": "Geometry { format: \"glTF\", detail: \"selected scene contains no triangle primitives\" }",
+            "mode": "node",
+            "success": false
+          },
+          "stderr": ""
+        },
+        "nonaffine": {
+          "exit_code": 0,
+          "observation": {
+            "error": "Geometry { format: \"glTF\", detail: \"selected scene contains no triangle primitives\" }",
+            "mode": "nonaffine",
+            "success": false
+          },
+          "stderr": ""
+        },
+        "normal": {
+          "exit_code": 0,
+          "observation": {
+            "mesh_nodes": 1,
+            "mode": "normal",
+            "positions": 36,
+            "primitives": 1,
+            "scene_index": 0,
+            "success": true,
+            "triangles": 12
+          },
+          "stderr": ""
+        },
+        "root_child": {
+          "exit_code": 0,
+          "observation": {
+            "error": "Geometry { format: \"glTF\", detail: \"selected scene contains no triangle primitives\" }",
+            "mode": "root_child",
+            "success": false
+          },
+          "stderr": ""
+        },
+        "scene": {
+          "exit_code": 0,
+          "observation": {
+            "error": "Geometry { format: \"glTF\", detail: \"cannot export an empty scene\" }",
+            "mode": "scene",
+            "success": false
+          },
+          "stderr": ""
+        },
+        "shared": {
+          "exit_code": 0,
+          "observation": {
+            "error": "Geometry { format: \"glTF\", detail: \"selected scene contains no triangle primitives\" }",
+            "mode": "shared",
+            "success": false
+          },
+          "stderr": ""
+        },
+        "unreadable_indices": {
+          "exit_code": 0,
+          "observation": {
+            "mesh_nodes": 1,
+            "mode": "unreadable_indices",
+            "positions": 36,
+            "primitives": 1,
+            "scene_index": 0,
+            "success": true,
+            "triangles": 12
+          },
+          "stderr": ""
+        },
+        "zero_indices": {
+          "exit_code": 0,
+          "observation": {
+            "mode": "zero_indices",
+            "panic": true
+          },
+          "stderr": "\nthread 'main' (1873995) panicked at /run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/cargo-home/registry/src/index.crates.io-1949cf8c6b5b557f/gltf-1.4.1/src/accessor/util.rs:384:48:\nattempt to subtract with overflow\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+        },
+        "zero_positions": {
+          "exit_code": 0,
+          "observation": {
+            "mode": "zero_positions",
+            "panic": true
+          },
+          "stderr": "\nthread 'main' (1873993) panicked at /run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/cargo-home/registry/src/index.crates.io-1949cf8c6b5b557f/gltf-1.4.1/src/accessor/util.rs:384:48:\nattempt to subtract with overflow\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+        }
+      },
+      "v1_runner_expectation_corrected": "bwrap reports abort as exit 134 rather than raw signal -6. No fixture or process limit changed."
+    },
+    "candidate": {
+      "all_expected_results": true,
+      "cases": 18,
+      "core_dumps_disabled": true,
+      "full_scale_inputs_byte_identical": true,
+      "results": {
+        "bad_position_reference": {
+          "error": "MalformedInput(\"glTF document validation failed: mesh 0 references missing accessor 999\")",
+          "mode": "bad_position_reference",
+          "success": false
+        },
+        "cycle": {
+          "error": "MalformedInput(\"glTF document validation failed: node hierarchy contains a cycle\")",
+          "mode": "cycle",
+          "success": false
+        },
+        "deep": {
+          "mesh_nodes": 0,
+          "mode": "deep",
+          "positions": 0,
+          "primitives": 0,
+          "scene_index": 0,
+          "success": true,
+          "triangles": 0
+        },
+        "empty": {
+          "mesh_nodes": 0,
+          "mode": "empty",
+          "positions": 0,
+          "primitives": 0,
+          "scene_index": 0,
+          "success": true,
+          "triangles": 0
+        },
+        "empty_primitives": {
+          "error": "MalformedInput(\"glTF document validation failed: mesh 0 has no primitives\")",
+          "mode": "empty_primitives",
+          "success": false
+        },
+        "export": {
+          "mode": "export",
+          "success": true,
+          "text": "{\n  \"asset\": {\n    \"generator\": \"csgrs\",\n    \"version\": \"2.0\"\n  },\n  \"nodes\": [\n    {\n      \"name\": \"empty\"\n    }\n  ],\n  \"scene\": 0,\n  \"scenes\": [\n    {\n      \"name\": \"empty\",\n      \"nodes\": [\n        0\n      ]\n    }\n  ]\n}"
+        },
+        "float_indices": {
+          "error": "MalformedInput(\"glTF document validation failed: triangle indices must be non-normalized unsigned SCALAR values\")",
+          "mode": "float_indices",
+          "success": false
+        },
+        "missing_scene": {
+          "error": "Unsupported { format: \"glTF\", detail: \"document has no scene to flatten\" }",
+          "mode": "missing_scene",
+          "success": false
+        },
+        "mixed": {
+          "mode": "mixed",
+          "success": true,
+          "text": "{\n  \"accessors\": [\n    {\n      \"bufferView\": 0,\n      \"componentType\": 5126,\n      \"count\": 36,\n      \"max\": [\n        1.0,\n        1.0,\n        1.0\n      ],\n      \"min\": [\n        0.0,\n        0.0,\n        0.0\n      ],\n      \"type\": \"VEC3\"\n    },\n    {\n      \"bufferView\": 1,\n      \"componentType\": 5126,\n      \"count\": 36,\n      \"type\": \"VEC3\"\n    },\n    {\n      \"bufferView\": 2,\n      \"componentType\": 5125,\n      \"count\": 36,\n      \"type\": \"SCALAR\"\n    }\n  ],\n  \"asset\": {\n    \"generator\": \"csgrs\",\n    \"version\": \"2.0\"\n  },\n  \"bufferViews\": [\n    {\n      \"buffer\": 0,\n      \"byteLength\": 432,\n      \"byteOffset\": 0,\n      \"target\": 34962\n    },\n    {\n      \"buffer\": 0,\n      \"byteLength\": 432,\n      \"byteOffset\": 432,\n      \"target\": 34962\n    },\n    {\n      \"buffer\": 0,\n      \"byteLength\": 144,\n      \"byteOffset\": 864,\n      \"target\": 34963\n    }\n  ],\n  \"buffers\": [\n    {\n      \"byteLength\": 1008,\n      \"uri\": \"data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAgD8AAAAAAACAPwAAAAAAAAAAAAAAAAAAAAAAAIA/AACAPwAAAAAAAIA/AACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AACAPwAAgD8AAIA/AAAAAAAAgD8AAIA/AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAgD8AAIA/AACAPwAAgD8AAIA/AAAAAAAAgD8AAAAAAACAPwAAgD8AAIA/AACAPwAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAgD8AAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAIA/AAAAAAAAgD8AAAAAAACAPwAAAAAAAAAAAACAPwAAgD8AAAAAAACAPwAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAgD8AAIA/AACAPwAAAAAAAIA/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAEAAAACAAAAAwAAAAQAAAAFAAAABgAAAAcAAAAIAAAACQAAAAoAAAALAAAADAAAAA0AAAAOAAAADwAAABAAAAARAAAAEgAAABMAAAAUAAAAFQAAABYAAAAXAAAAGAAAABkAAAAaAAAAGwAAABwAAAAdAAAAHgAAAB8AAAAgAAAAIQAAACIAAAAjAAAA\"\n    }\n  ],\n  \"meshes\": [\n    {\n      \"name\": \"cube\",\n      \"primitives\": [\n        {\n          \"attributes\": {\n            \"NORMAL\": 1,\n            \"POSITION\": 0\n          },\n          \"indices\": 2\n        }\n      ]\n    }\n  ],\n  \"nodes\": [\n    {\n      \"name\": \"empty\"\n    },\n    {\n      \"mesh\": 0,\n      \"name\": \"cube\"\n    }\n  ],\n  \"scene\": 0,\n  \"scenes\": [\n    {\n      \"name\": \"mixed\",\n      \"nodes\": [\n        0,\n        1\n      ]\n    }\n  ]\n}"
+        },
+        "node": {
+          "mesh_nodes": 0,
+          "mode": "node",
+          "positions": 0,
+          "primitives": 0,
+          "scene_index": 0,
+          "success": true,
+          "triangles": 0
+        },
+        "nonaffine": {
+          "error": "Unsupported { format: \"glTF\", detail: \"node transform is non-finite or non-affine\" }",
+          "mode": "nonaffine",
+          "success": false
+        },
+        "normal": {
+          "mesh_nodes": 1,
+          "mode": "normal",
+          "positions": 36,
+          "primitives": 1,
+          "scene_index": 0,
+          "success": true,
+          "triangles": 12
+        },
+        "root_child": {
+          "error": "MalformedInput(\"glTF document validation failed: scene 0 contains a duplicate or non-root node 1\")",
+          "mode": "root_child",
+          "success": false
+        },
+        "scene": {
+          "mode": "scene",
+          "success": true,
+          "text": "{\n  \"asset\": {\n    \"generator\": \"csgrs\",\n    \"version\": \"2.0\"\n  },\n  \"scene\": 0,\n  \"scenes\": [\n    {\n      \"name\": \"empty\"\n    }\n  ]\n}"
+        },
+        "shared": {
+          "error": "MalformedInput(\"glTF document validation failed: node 2 has multiple parent references\")",
+          "mode": "shared",
+          "success": false
+        },
+        "unreadable_indices": {
+          "error": "MalformedInput(\"glTF document validation failed: buffer view 2 does not contain the aligned accessor range\")",
+          "mode": "unreadable_indices",
+          "success": false
+        },
+        "zero_indices": {
+          "error": "MalformedInput(\"glTF document validation failed: accessor count must be positive\")",
+          "mode": "zero_indices",
+          "success": false
+        },
+        "zero_positions": {
+          "error": "MalformedInput(\"glTF document validation failed: accessor count must be positive\")",
+          "mode": "zero_positions",
+          "success": false
+        }
+      }
+    },
+    "baseline_accessor_compatibility": {
+      "fixture_unchanged": true,
+      "library_source": "04fd2ddf173cc68108777178305d292d2a211db3",
+      "passed": true,
+      "valid_accessor_combinations": 24
+    },
+    "candidate_revisions": [
+      {
+        "all_failures_retained": true,
+        "changed_paths": [
+          "src/io/gltf.rs",
+          "tests/gltf_empty_composition.rs"
+        ],
+        "reason": "Compile fixes: gltf scene root iterator has no DoubleEndedIterator; reverse collected root stack to preserve DFS order. Test Arc slices cannot push; replace owned buffers for mutation fixture. No policy or fixture-domain change.",
+        "source_pins_sha256": "b3df649984e6a761f1f9391dc0f9bf956377a955e97ab62d16236c7dddc7abd2"
+      },
+      {
+        "all_failures_retained": true,
+        "changed_paths": [
+          "src/io/gltf.rs"
+        ],
+        "reason": "Child iterator also lacks DoubleEndedIterator; reverse only the newly appended stack segment. Original DFS ordering retained.",
+        "source_pins_sha256": "2bca9e8760d849c4f9c7b0f8892927ecce4129d18dde0c139b8c62da26743142"
+      },
+      {
+        "all_original_assertions_retained": true,
+        "changed_paths": [
+          "tests/gltf_empty_composition.rs"
+        ],
+        "production_unchanged_since_v3": true,
+        "reason": "Strengthen the disconnected mixed-scene oracle: partition all triangles by disjoint exact box bounds and independently check each complete component, its boundary planes, signed volume and topology before any Boolean operation.",
+        "source_pins_sha256": "f18fda7ce0b99db695402479ae4faa53b8a9da4899e2991b731f3abd76b5de13"
+      }
+    ],
+    "probe_library_retention": {
+      "all_original_bytes_recovered": true,
+      "libraries_sha256": {
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/frozen/probe-libraries-v3/libbase64-770eede3ae76e1a5.rlib": "8c386fc4a4d5ebf9ec6093982df8adaea21c917424390b7ca8b00e3310cc78a3",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/frozen/probe-libraries-v3/libcsgrs.rlib": "53ee32f10fdfddc3c02bc459cf0d59a130aaf8e3e7e790290b2923cf73af162d",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/frozen/probe-libraries-v3/libhyperlattice-d4e300eb25ac27e0.rlib": "4b82531ca1a36566cbdfc0d52acc91bff7ba86daed21cfd1797e48fea4e213fb",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/frozen/probe-libraries-v3/libhypermesh-bcef32fa2e0ba350.rlib": "252310a28fe4cb0024147d135c7bf46c76a819ab941fb59cc32e39db633f71e7",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/frozen/probe-libraries-v3/libhyperreal-26f4c4758b2d5aaa.rlib": "e1b2a4f1502b4ed8500246c508817f3305cae2faa34d52ab4c21640ebf104568",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/frozen/probe-libraries-v3/libserde_json-29c635fd13f23429.rlib": "d95cbbd7bc45ccf477af20bd0b2ef5fb8322babc0cd8e804392d8de6bb0e64cd"
+      },
+      "original_binary_inputs_reproducible": true,
+      "overwritten_original_paths": [
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/target-candidate/debug/deps/libcsgrs.rlib"
+      ]
+    },
+    "intermediate_library_replacement": {
+      "binary_and_format_results_already_preserved": true,
+      "changed_intermediate_outputs": {
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/target-candidate/debug/deps/libcsgrs.rlib": {
+          "after_broader_feature_checks_sha256": "154724272ebe065c75e5a272932f0081d9ca4eff676e853ad9c05615bf4baf25",
+          "probe_input_sha256": "53ee32f10fdfddc3c02bc459cf0d59a130aaf8e3e7e790290b2923cf73af162d"
+        }
+      },
+      "final_source_pins_sha256": "f18fda7ce0b99db695402479ae4faa53b8a9da4899e2991b731f3abd76b5de13",
+      "original_probe_library_hashes": {
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/target-candidate/debug/deps/libbase64-770eede3ae76e1a5.rlib": "8c386fc4a4d5ebf9ec6093982df8adaea21c917424390b7ca8b00e3310cc78a3",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/target-candidate/debug/deps/libcsgrs.rlib": "53ee32f10fdfddc3c02bc459cf0d59a130aaf8e3e7e790290b2923cf73af162d",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/target-candidate/debug/deps/libhyperlattice-d4e300eb25ac27e0.rlib": "4b82531ca1a36566cbdfc0d52acc91bff7ba86daed21cfd1797e48fea4e213fb",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/target-candidate/debug/deps/libhypermesh-bcef32fa2e0ba350.rlib": "252310a28fe4cb0024147d135c7bf46c76a819ab941fb59cc32e39db633f71e7",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/target-candidate/debug/deps/libhyperreal-26f4c4758b2d5aaa.rlib": "e1b2a4f1502b4ed8500246c508817f3305cae2faa34d52ab4c21640ebf104568",
+        "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/target-candidate/debug/deps/libserde_json-29c635fd13f23429.rlib": "d95cbbd7bc45ccf477af20bd0b2ef5fb8322babc0cd8e804392d8de6bb0e64cd"
+      },
+      "reason": "Cargo uses an unqualified libcsgrs.rlib path across feature configurations. Read-only final audit found that the legitimate default-feature checks replaced this intermediate after frozen probes were compiled and executed. Rebuild the original configuration under identical production pins and retain exact library copies. No source or test change."
+    },
+    "candidate_compile_failures": "V1 assumed reversible gltf scene iterators; V2 also exposed the child iterator restriction. Collected stack segments are reversed in V3 to preserve DFS order. The baseline compatibility probe initially attempted push on Arc slices; V2 replaces the owned buffers. Original failures are retained.",
+    "final_validation_timing": "Production and documentation are unchanged since V3. V4 strengthens only the disconnected-component semantic oracle. All 12 affected tests and strict minimal lint pass again at V4; full affected runtime, default IO/export tests, remaining lint/docs/feature/MSRV/WASM checks follow that final edit. V3 format-validator, isolated probes and serialization comparisons exercise identical production hashes.",
+    "candidate_test_executions": 320,
+    "test_results": {
+      "gltf-empty-baseline-valid-accessor-compatibility-v2": [
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "gltf-empty-candidate-v3-focused-tests": [
+        {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "gltf-empty-candidate-v4-default-integrations": [
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "gltf-empty-candidate-v4-default-io-tests": [
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "gltf-empty-candidate-v4-focused-tests": [
+        {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "gltf-empty-candidate-v4-minimal-full-tests": [
+        {
+          "passed": 36,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 50,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    "command_count": 83,
+    "warnings": [],
+    "independent_semantics": {
+      "empty": "Schema-valid empty scene, named empty node, JSON-only GLB; canonical empty import -> transform -> strict regularized-set identities -> export/import, union and complete repeated subtraction.",
+      "nonempty": "Exact box boundary planes and signed volume, separately checked for each disconnected component before Booleans; strict PWN/manifold checks. Native TRIANGLES index order and exact integer positions checked across 24 unsigned/implicit/interleaved/sparse JSON and GLB combinations.",
+      "provenance": "Approximate hull -> strict full subtraction -> export -> import -> transform/strict Boolean -> export/import. Import reports missing source history, and subsequent local certification does not erase it. Empty import consumes no coordinates and does not add a projection flag. The format does not preserve the original construction receipt.",
+      "malformed": "Zero counts, missing references, wrong index type, unreadable ranges, alignment/overflow, sparse order/count/bounds, cycles/multiple parents/non-root scene nodes, present empty arrays and invalid transforms return errors. Invalid native geometry and duplicate names cannot become successful empty output.",
+      "full_scale": "The unchanged 10000-node valid hierarchy completes. The baseline aborts with stack overflow; the independent Khronos validator also overflows on this fixture. No reduced fixture replaces it.",
+      "caches": [
+        "cold",
+        "warm",
+        "evicted",
+        "source position replacement",
+        "source triangle replacement",
+        "returned String mutation",
+        "concurrent per-thread export"
+      ]
+    },
+    "independent_validator": {
+      "all_zero_errors": true,
+      "baseline_deep_validator_limit_retained": true,
+      "documents": 32,
+      "reports": [
+        {
+          "fixture": "accessor-0-false-false.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 36,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-0-false-false.glb",
+            "validatedAt": "2026-10-20T03:08:49.373Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-0-false-false.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 36,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-0-false-false.gltf",
+            "validatedAt": "2026-10-20T03:08:49.386Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-0-false-true.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 28,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-0-false-true.glb",
+            "validatedAt": "2026-10-20T03:08:49.389Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-0-false-true.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 28,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-0-false-true.gltf",
+            "validatedAt": "2026-10-20T03:08:49.390Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-0-true-false.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 48,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-0-true-false.glb",
+            "validatedAt": "2026-10-20T03:08:49.393Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-0-true-false.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 48,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-0-true-false.gltf",
+            "validatedAt": "2026-10-20T03:08:49.394Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5121-false-false.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 40,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-5121-false-false.glb",
+            "validatedAt": "2026-10-20T03:08:49.396Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5121-false-false.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 39,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-5121-false-false.gltf",
+            "validatedAt": "2026-10-20T03:08:49.397Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5121-false-true.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 32,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-5121-false-true.glb",
+            "validatedAt": "2026-10-20T03:08:49.399Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5121-false-true.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 31,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-5121-false-true.gltf",
+            "validatedAt": "2026-10-20T03:08:49.401Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5121-true-false.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 52,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-5121-true-false.glb",
+            "validatedAt": "2026-10-20T03:08:49.402Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5121-true-false.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 51,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-5121-true-false.gltf",
+            "validatedAt": "2026-10-20T03:08:49.403Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5123-false-false.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 44,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-5123-false-false.glb",
+            "validatedAt": "2026-10-20T03:08:49.404Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5123-false-false.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 42,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-5123-false-false.gltf",
+            "validatedAt": "2026-10-20T03:08:49.405Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5123-false-true.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 36,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-5123-false-true.glb",
+            "validatedAt": "2026-10-20T03:08:49.406Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5123-false-true.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 34,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-5123-false-true.gltf",
+            "validatedAt": "2026-10-20T03:08:49.407Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5123-true-false.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 56,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-5123-true-false.glb",
+            "validatedAt": "2026-10-20T03:08:49.407Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5123-true-false.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 54,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-5123-true-false.gltf",
+            "validatedAt": "2026-10-20T03:08:49.408Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5125-false-false.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 48,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-5125-false-false.glb",
+            "validatedAt": "2026-10-20T03:08:49.409Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5125-false-false.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 48,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-5125-false-false.gltf",
+            "validatedAt": "2026-10-20T03:08:49.410Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5125-false-true.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 40,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-5125-false-true.glb",
+            "validatedAt": "2026-10-20T03:08:49.410Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5125-false-true.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 40,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-5125-false-true.gltf",
+            "validatedAt": "2026-10-20T03:08:49.411Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5125-true-false.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 60,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "accessor-5125-true-false.glb",
+            "validatedAt": "2026-10-20T03:08:49.412Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "accessor-5125-true-false.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 60,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 1,
+              "totalVertexCount": 3,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "accessor-5125-true-false.gltf",
+            "validatedAt": "2026-10-20T03:08:49.412Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "cube.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 2,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 1008,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 12,
+              "totalVertexCount": 36,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "cube.glb",
+            "validatedAt": "2026-10-20T03:08:49.413Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "cube.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 2,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 1008,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 12,
+              "totalVertexCount": 36,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "cube.gltf",
+            "validatedAt": "2026-10-20T03:08:49.415Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "mixed.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 2,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 1008,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "glb"
+                }
+              ],
+              "totalTriangleCount": 12,
+              "totalVertexCount": 36,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "NODE_EMPTY",
+                  "message": "Empty node encountered.",
+                  "pointer": "/nodes/0",
+                  "severity": 2
+                }
+              ],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 1,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "mixed.glb",
+            "validatedAt": "2026-10-20T03:08:49.416Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "mixed.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 2,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 1008,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 12,
+              "totalVertexCount": 36,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "NODE_EMPTY",
+                  "message": "Empty node encountered.",
+                  "pointer": "/nodes/0",
+                  "severity": 2
+                }
+              ],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 1,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "mixed.gltf",
+            "validatedAt": "2026-10-20T03:08:49.417Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "named-empty.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "NODE_EMPTY",
+                  "message": "Empty node encountered.",
+                  "pointer": "/nodes/0",
+                  "severity": 2
+                }
+              ],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 1,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "named-empty.glb",
+            "validatedAt": "2026-10-20T03:08:49.417Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "named-empty.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "NODE_EMPTY",
+                  "message": "Empty node encountered.",
+                  "pointer": "/nodes/0",
+                  "severity": 2
+                }
+              ],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 1,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "named-empty.gltf",
+            "validatedAt": "2026-10-20T03:08:49.418Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "no-objects.glb",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf-binary",
+            "uri": "no-objects.glb",
+            "validatedAt": "2026-10-20T03:08:49.418Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        {
+          "fixture": "no-objects.gltf",
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "no-objects.gltf",
+            "validatedAt": "2026-10-20T03:08:49.419Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        }
+      ],
+      "script_sha256": "e7531802c67c160bfc35c91072677e6551e42eb801d8d7c958787f2d97ccc021",
+      "validator_version": "2.0.0-dev.3.10"
+    },
+    "baseline_independent_validator": {
+      "raw_reports_retained_in_primary_logs": true,
+      "results": {
+        "bad_position_reference": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 1,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 1008,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 12,
+              "totalVertexCount": 36,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "UNRESOLVED_REFERENCE",
+                  "message": "Unresolved reference: 999.",
+                  "pointer": "/meshes/0/primitives/0/attributes/POSITION",
+                  "severity": 0
+                },
+                {
+                  "code": "UNUSED_OBJECT",
+                  "message": "This object may be unused.",
+                  "pointer": "/accessors/0",
+                  "severity": 2
+                }
+              ],
+              "numErrors": 1,
+              "numHints": 0,
+              "numInfos": 1,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "bad_position_reference.gltf",
+            "validatedAt": "2026-10-20T02:47:35.594Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "cycle": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "SCENE_NON_ROOT_NODE",
+                  "message": "Node 0 is not a root node.",
+                  "pointer": "/scenes/0/nodes/0",
+                  "severity": 0
+                },
+                {
+                  "code": "NODE_LOOP",
+                  "message": "Node is a part of a node loop.",
+                  "pointer": "/nodes/0",
+                  "severity": 0
+                }
+              ],
+              "numErrors": 2,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "cycle.gltf",
+            "validatedAt": "2026-10-20T02:47:38.567Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "deep": {
+          "stderr": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/validator/package/gltf_validator.dart.js:1961\nthrow a\n^\n\nRangeError: Maximum call stack size exceeded\n    at b_.dh (/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/validator/package/gltf_validator.dart.js:6451:3)\n    at b_.C (/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/validator/package/gltf_validator.dart.js:6450:51)\n    at ap.cd (/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/validator/package/gltf_validator.dart.js:8198:6)\n    at ap.cd (/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/validator/package/gltf_validator.dart.js:8201:14)\n    at ap.cd (/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/validator/package/gltf_validator.dart.js:8201:14)\n    at ap.cd (/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/validator/package/gltf_validator.dart.js:8201:14)\n    at ap.cd (/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/validator/package/gltf_validator.dart.js:8201:14)\n    at ap.cd (/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/validator/package/gltf_validator.dart.js:8201:14)\n    at ap.cd (/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/validator/package/gltf_validator.dart.js:8201:14)\n    at ap.cd (/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/validator/package/gltf_validator.dart.js:8201:14) {\n  dartException: dO {}\n}\n\nNode.js v22.22.2\n",
+          "validatorError": "Independent validator overflows its own stack on the original 10,000-node valid chain; full-scale fixture retained."
+        },
+        "empty": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "empty.gltf",
+            "validatedAt": "2026-10-20T02:49:22.281Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "empty_primitives": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 1008,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "EMPTY_ENTITY",
+                  "message": "Entity cannot be empty.",
+                  "pointer": "/meshes/0/primitives",
+                  "severity": 0
+                },
+                {
+                  "code": "UNUSED_OBJECT",
+                  "message": "This object may be unused.",
+                  "pointer": "/accessors/0",
+                  "severity": 2
+                },
+                {
+                  "code": "UNUSED_OBJECT",
+                  "message": "This object may be unused.",
+                  "pointer": "/accessors/1",
+                  "severity": 2
+                },
+                {
+                  "code": "UNUSED_OBJECT",
+                  "message": "This object may be unused.",
+                  "pointer": "/accessors/2",
+                  "severity": 2
+                }
+              ],
+              "numErrors": 1,
+              "numHints": 0,
+              "numInfos": 3,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "empty_primitives.gltf",
+            "validatedAt": "2026-10-20T02:49:25.271Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "float_indices": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 2,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 1008,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 12,
+              "totalVertexCount": 36,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "MESH_PRIMITIVE_INDICES_ACCESSOR_INVALID_FORMAT",
+                  "message": "Invalid indices accessor format '{SCALAR, FLOAT}'. Must be one of ('{SCALAR, UNSIGNED_BYTE}', '{SCALAR, UNSIGNED_SHORT}', '{SCALAR, UNSIGNED_INT}').",
+                  "pointer": "/meshes/0/primitives/0/indices",
+                  "severity": 0
+                }
+              ],
+              "numErrors": 1,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "float_indices.gltf",
+            "validatedAt": "2026-10-20T02:49:28.263Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "missing_scene": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "hasDefaultScene": false,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "missing_scene.gltf",
+            "validatedAt": "2026-10-20T02:49:31.213Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "node": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "NODE_EMPTY",
+                  "message": "Empty node encountered.",
+                  "pointer": "/nodes/0",
+                  "severity": 2
+                }
+              ],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 1,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "node.gltf",
+            "validatedAt": "2026-10-20T02:49:34.187Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "nonaffine": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "NODE_MATRIX_NON_TRS",
+                  "message": "Matrix must be decomposable to TRS.",
+                  "pointer": "/nodes/0/matrix",
+                  "severity": 0
+                },
+                {
+                  "code": "NODE_EMPTY",
+                  "message": "Empty node encountered.",
+                  "pointer": "/nodes/0",
+                  "severity": 2
+                }
+              ],
+              "numErrors": 1,
+              "numHints": 0,
+              "numInfos": 1,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "nonaffine.gltf",
+            "validatedAt": "2026-10-20T02:49:37.137Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "normal": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 2,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 1008,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 12,
+              "totalVertexCount": 36,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [],
+              "numErrors": 0,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "normal.gltf",
+            "validatedAt": "2026-10-20T02:49:40.149Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "root_child": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "SCENE_NON_ROOT_NODE",
+                  "message": "Node 1 is not a root node.",
+                  "pointer": "/scenes/0/nodes/0",
+                  "severity": 0
+                },
+                {
+                  "code": "NODE_EMPTY",
+                  "message": "Empty node encountered.",
+                  "pointer": "/nodes/1",
+                  "severity": 2
+                },
+                {
+                  "code": "UNUSED_OBJECT",
+                  "message": "This object may be unused.",
+                  "pointer": "/nodes/0",
+                  "severity": 2
+                }
+              ],
+              "numErrors": 1,
+              "numHints": 0,
+              "numInfos": 2,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "root_child.gltf",
+            "validatedAt": "2026-10-20T02:49:43.137Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "shared": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 0,
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 0,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "totalTriangleCount": 0,
+              "totalVertexCount": 0,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "NODE_PARENT_OVERRIDE",
+                  "message": "Value overrides parent of node 2.",
+                  "pointer": "/nodes/1/children/0",
+                  "severity": 0
+                },
+                {
+                  "code": "NODE_EMPTY",
+                  "message": "Empty node encountered.",
+                  "pointer": "/nodes/2",
+                  "severity": 2
+                }
+              ],
+              "numErrors": 1,
+              "numHints": 0,
+              "numInfos": 1,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "shared.gltf",
+            "validatedAt": "2026-10-20T02:49:46.111Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "unreadable_indices": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 2,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 1008,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 12,
+              "totalVertexCount": 36,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "ACCESSOR_TOO_LONG",
+                  "message": "Accessor (offset: 1000000, length: 144) does not fit referenced bufferView [2] length 144.",
+                  "pointer": "/accessors/2/byteOffset",
+                  "severity": 0
+                }
+              ],
+              "numErrors": 1,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "unreadable_indices.gltf",
+            "validatedAt": "2026-10-20T02:49:49.109Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "zero_indices": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 2,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 1008,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 0,
+              "totalVertexCount": 36,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "VALUE_NOT_IN_RANGE",
+                  "message": "Value 0 is out of range.",
+                  "pointer": "/accessors/2/count",
+                  "severity": 0
+                }
+              ],
+              "numErrors": 1,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "zero_indices.gltf",
+            "validatedAt": "2026-10-20T02:49:52.107Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        },
+        "zero_positions": {
+          "report": {
+            "info": {
+              "animationCount": 0,
+              "drawCallCount": 1,
+              "generator": "csgrs",
+              "hasDefaultScene": true,
+              "hasMorphTargets": false,
+              "hasSkins": false,
+              "hasTextures": false,
+              "materialCount": 0,
+              "maxAttributes": 2,
+              "maxInfluences": 0,
+              "maxUVs": 0,
+              "resources": [
+                {
+                  "byteLength": 1008,
+                  "mimeType": "application/gltf-buffer",
+                  "pointer": "/buffers/0",
+                  "storage": "data-uri"
+                }
+              ],
+              "totalTriangleCount": 12,
+              "totalVertexCount": 36,
+              "version": "2.0"
+            },
+            "issues": {
+              "messages": [
+                {
+                  "code": "VALUE_NOT_IN_RANGE",
+                  "message": "Value 0 is out of range.",
+                  "pointer": "/accessors/0/count",
+                  "severity": 0
+                },
+                {
+                  "code": "MESH_PRIMITIVE_UNEQUAL_ACCESSOR_COUNT",
+                  "message": "All accessors of the same primitive must have the same count.",
+                  "pointer": "/meshes/0/primitives/0/attributes/POSITION",
+                  "severity": 0
+                }
+              ],
+              "numErrors": 2,
+              "numHints": 0,
+              "numInfos": 0,
+              "numWarnings": 0,
+              "truncated": false
+            },
+            "mimeType": "model/gltf+json",
+            "uri": "zero_positions.gltf",
+            "validatedAt": "2026-10-20T02:49:55.087Z",
+            "validatorVersion": "2.0.0-dev.3.10"
+          }
+        }
+      },
+      "tool_inputs_verified": true,
+      "validator_version": "2.0.0-dev.3.10"
+    },
+    "serialization_comparison": {
+      "baseline_path": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/interchange-failure-admission-20261019-v1/logs/interchange-baseline-snapshots/stdout",
+      "baseline_sha256": "41bc5200730aa195432e9fe2685cf2dfa0d15665891c45d17bcd9b8a6c21ffa9",
+      "candidate_sha256": "41bc5200730aa195432e9fe2685cf2dfa0d15665891c45d17bcd9b8a6c21ffa9",
+      "compared_bytes": 10907,
+      "fixtures": [
+        "open triangle with exact normal (0,-4/5,3/5)",
+        "unit cube"
+      ],
+      "formats": [
+        "PLY",
+        "glTF",
+        "OBJ"
+      ],
+      "identical_bytes": true,
+      "semantic_oracles_separate": true
+    },
+    "writer_contract": "Geometry and duplicate-name failures leave preexisting sink bytes unchanged. Later stream failures may publish a prefix.",
+    "api_migration": "Valid empty scenes/objects now succeed. An asset without a scene is still rejected, now Unsupported instead of MalformedInput because library assets can be valid. Malformed forest/accessor/count/range cases now diagnose before readers/traversal; unreadable indices are not silently replaced. Nonempty serialization is byte-identical in the retained six-artifact comparison.",
+    "parser_bridge": "The gltf-json dependency requires Scene.nodes although glTF permits omission. Normalize that one optional property internally, reject explicitly empty node arrays, then reuse its typed Root and native document validation. Prevalidate accessor references before its unchecked POSITION hook and consumed byte ranges before its readers. No replacement geometry kernel.",
+    "cache_budget": "Four successful strings and owned Arc identities per thread, FIFO; no heap-byte bound or reset/disable API. Cache implementation unchanged.",
+    "deep_fixture_resources": {
+      "comparative_speedup_claim": false,
+      "completed": true,
+      "fixture_bytes": 198948,
+      "fixture_nodes": 10000,
+      "internal_total_work_memory_cancellation_guarantees": false,
+      "maximum_resident_set_kib": 23060,
+      "measurement_scope": "One complete diagnostic process, including fixture generation, JSON serialization, parsing, forest validation, scene import and result reporting. GNU time maximum RSS on Linux; not allocator accounting or a heap bound.",
+      "timer_output_sha256": "50e185a7ae142c3a5485618118a52f8b33da645624c40fb782fe70953af7d0a2"
+    },
+    "internal_total_work_memory_cancellation_complete": false,
+    "validation": {
+      "affected_tests_and_matrix_after_final_edit": true,
+      "foreign_binding_runtime_executions": 0,
+      "format_probes_use_unchanged_v3_production": true,
+      "full_ci_complete": false,
+      "full_default_runtime_repeated": false,
+      "hypervoxel_built": false,
+      "independent_javascript_format_validator_executed": true,
+      "independently_validated_documents": 32,
+      "isolated_probes": 18,
+      "msrv_all_targets_checked": "1.95.0",
+      "msrv_runtime_executed": false,
+      "new_public_tests": 12,
+      "passed": true,
+      "public_release_acceptance_open": true,
+      "serialization_byte_equality": true,
+      "source_pins_sha256": "f18fda7ce0b99db695402479ae4faa53b8a9da4899e2991b731f3abd76b5de13",
+      "wasm_target_compiled": true
+    },
+    "prepared_matrix": {
+      "baseline_independent_validator_limitation": "Official validator itself stack-overflows on the unchanged 10000-node valid chain; retain its failure and use independently generated forest plus native completion without reducing the fixture.",
+      "baseline_revision": "04fd2ddf173cc68108777178305d292d2a211db3",
+      "changes": [
+        "src/io/gltf.rs",
+        "tests/gltf_empty_composition.rs",
+        "readme.md",
+        "docs/workflow-corpus.md"
+      ],
+      "checks": [
+        "new public semantic and malformed-input regressions",
+        "same 18 isolated baseline probes, including original 10000-node hierarchy",
+        "Khronos validator on new JSON and GLB fixtures",
+        "unchanged nonempty serialization snapshots",
+        "full minimal obj-io,ply-io,gltf-io runtime and doctests",
+        "default IO and affected export integrations",
+        "strict Clippy all-target minimal/default",
+        "gltf-only all-target check and no-feature check",
+        "Rust 1.95 all-target affected IO check",
+        "rustdoc -D warnings",
+        "wasm32 Clippy",
+        "workspace fmt"
+      ],
+      "contract_migrations": [
+        "valid empty operations now succeed",
+        "valid library asset without scene rejected as Unsupported rather than MalformedInput",
+        "invalid arrays/accessors/graphs rejected before native reader/traversal; unreadable indices cannot become implicit indices"
+      ],
+      "foreign_runtime_qualification": "Current C/JS APIs do not expose these glTF functions; actual Node Khronos consumer validates files, not bindings.",
+      "full_ci_complete": false,
+      "full_default_runtime_repeated": false,
+      "hypervoxel_excluded": true,
+      "limits": {
+        "artifact_volume_allowance": "unlimited with 1 GiB free guard",
+        "build_seconds": 1800,
+        "cargo_jobs": 2,
+        "child_address_space_gib": 8,
+        "focused_seconds": 60,
+        "logs_mib": 200
+      },
+      "owner": "CSGRS glTF format boundary",
+      "performance_claim": false,
+      "properties": [
+        "P4",
+        "P6",
+        "P18",
+        "P19",
+        "P25",
+        "P26",
+        "P27",
+        "P29",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "public_distribution_open": true,
+      "source_pins_sha256": "f9313ae8e76ad742cea57c29bd5d53c98ff6720b3ae0ac2081c22181dc3e0cc9"
+    },
+    "foreign_binding_runtime_consumers_executed": 0,
+    "foreign_boundary_qualification": "Current native/JS bindings do not expose these glTF functions; wasm32 compile/Clippy checked. Actual Node Khronos validator consumes generated JSON/GLB files; this is format validation, not binding acceptance.",
+    "full_default_runtime_repeated": false,
+    "full_default_previous_revision_only": "E103 at 291259adc",
+    "msrv_all_targets_checked": "1.95.0",
+    "msrv_runtime_not_executed": true,
+    "source_package_reverification_open": true,
+    "public_distribution_complete": false,
+    "full_ci_complete": false,
+    "full_plan_complete": false,
+    "historical_artifact_reaudit": false,
+    "hypervoxel_deferred_by_user": true,
+    "hypervoxel_built_or_packaged": false,
+    "performance_claimed": false,
+    "all_adverse_results_retained": true,
+    "artifact_volume": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs",
+    "disk_b_allowance_gib": null,
+    "disk_b_physical_free_guard_bytes": 1073741824,
+    "tmp_allowance_gib": 58,
+    "logs_allowance_mib": 200,
+    "storage_baselines_reset": false,
+    "scope_limits": [
+      "No claim of full glTF schema compliance or arbitrary input allocation/cancellation bounds.",
+      "Unselected unsupported primitive representations are not flattened. Existing transform float projection and native normal-certification failure shape remain unchanged.",
+      "The official independent validator cannot complete the unchanged 10000-node valid fixture; its raw error is preserved.",
+      "No new full default runtime, foreign binding runtime, package or public-release acceptance is claimed."
+    ],
+    "next": "Repair reproduced PLY tiny-coordinate loss, then classify scalar-adapter index projection and remaining native format failures. Continue strict completion, provenance and current source-package/public release validation. Hypervoxel remains out of scope.",
+    "parent_revision": "04fd2ddf173cc68108777178305d292d2a211db3",
+    "review": "docs/evidence/2026-10-19-gltf-empty-composition-admission/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-19-gltf-empty-composition-admission/checkpoint-v1.json",
+    "artifact_expectations": "/run/media/tim/93da2fa3-3c70-400e-ab48-a5799246bb6a/csgrs/gltf-empty-composition-admission-20261019-v1/external-evidence/artifact-expectations-v1.json.gz"
   }
 },
   "status_meanings": {

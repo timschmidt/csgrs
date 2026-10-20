@@ -777,6 +777,31 @@ strings; the entry limit is not a heap-byte bound, and no reset/disable API is
 provided. Export remains a format projection, with topology validation and
 source-geometry fidelity requiring their own checks.
 
+glTF supports canonical empty meshes, named empty scene objects, and scenes
+with no objects. Empty objects become named nodes without meshes; a scene
+with no objects omits its node list. No zero-count accessors or empty buffers
+are emitted. Self-contained JSON and GLB imports accept these scenes as
+canonical empty geometry, which can continue through transforms and Booleans.
+Positions without triangles remain invalid export input. Duplicate object
+names and native geometry failures still fail before writing output.
+
+Migration: empty glTF operations that previously returned `Geometry` now
+succeed. A document without a scene remains rejected, as `Unsupported` rather
+than `MalformedInput`: a glTF library asset can be valid without a scene to
+flatten. Invalid node forests, zero-count accessors, invalid references, and
+unreadable or mistyped triangle indices return errors before traversal or
+reading; indices are never silently replaced. Valid scene traversal is
+iterative, including deep hierarchies. This does not establish internal total
+work, allocation, or cancellation bounds, or full glTF conformance.
+
+Import still flattens node transforms in binary64 from glTF binary32 inputs,
+then promotes the resulting coordinates to exact scalars. The imported mesh
+records missing source history and, when coordinates were consumed, coordinate
+projection. An empty import consumes no coordinates. A later strict proof
+establishes facts about the imported set; glTF carries no receipt certifying
+the source construction or preservation of its exact geometry. Nonempty
+export bytes and existing format projection semantics remain unchanged.
+
 ## Boundary adapters
 
 `csgrs::adapter` provides opt-in primitive-scalar wrappers over native
