@@ -51,6 +51,30 @@ fn univariate_coordinates_select_the_strictly_monotone_root() {
 }
 
 #[test]
+fn univariate_coordinates_reject_intervals_without_a_root() {
+    // x^2 - 2 is strictly increasing on [2, 3] but positive at both ends,
+    // so the interval holds no root; publishing one would be a wrong answer.
+    let provenance = sqrt2();
+    assert_eq!(
+        uncertain(represented_univariate_coordinate(
+            &ints(&[-2, 0, 1]),
+            &int(2),
+            &int(3),
+            &provenance,
+        )),
+        UncertaintyReason::Unsupported
+    );
+    // A root at an endpoint still exists: x^2 - 4 on [2, 3] selects 2.
+    let endpoint = decided(represented_univariate_coordinate(
+        &ints(&[-4, 0, 1]),
+        &int(2),
+        &int(3),
+        &provenance,
+    ));
+    assert_selects(&endpoint, &int(2));
+}
+
+#[test]
 fn univariate_point_coordinates_replay_the_polynomial_exactly() {
     let provenance = sqrt2();
     let point = decided(represented_univariate_coordinate(

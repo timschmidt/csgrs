@@ -79,6 +79,19 @@ pub fn represented_univariate_coordinate(
         if !derivative_nonzero {
             return Classification::Uncertain(UncertaintyReason::Predicate);
         }
+        // The signed derivative makes the polynomial strictly monotone here,
+        // so a root exists exactly when the endpoint values do not share a
+        // nonzero sign. Callers' constructions normally guarantee one; check
+        // it rather than publish a root that is not there.
+        match (
+            strict_real_sign(&Real::eval_poly(coefficients, &interval.lower)),
+            strict_real_sign(&Real::eval_poly(coefficients, &interval.upper)),
+        ) {
+            (Some(RealSign::Zero), _) | (_, Some(RealSign::Zero)) => {}
+            (Some(lower), Some(upper)) if lower != upper => {}
+            (Some(_), Some(_)) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            _ => return Classification::Uncertain(UncertaintyReason::Predicate),
+        }
         coefficients.to_vec()
     };
     let mut representation = AlgebraicRootRepresentation {
