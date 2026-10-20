@@ -421,9 +421,7 @@ fn scalar_families_and_large_unrolled_longitude_use_native_values() {
 #[test]
 fn inherited_approximate_epoch_and_input_qualification_survive_inverse_and_local_use() {
     let mut strict = context();
-    let s = Real::e().sin();
-    let c = Real::e().cos();
-    let zero = &s * &s + &c * &c - Real::one();
+    let zero = unresolved_zero();
     let surface = Arc::new(Ellipsoid::sphere(Length::metres(1.into()), &mut strict).unwrap());
     let projection = SphericalMercator::new(
         surface.clone(),

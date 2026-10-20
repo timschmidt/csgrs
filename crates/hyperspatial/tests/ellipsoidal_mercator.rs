@@ -301,9 +301,7 @@ fn poles_scale_and_reference_mismatches_fail_without_fabricating_coordinates() {
 #[test]
 fn inherited_approximate_epoch_and_input_qualification_survive_inverse_and_local_use() {
     let mut strict = context();
-    let s = Real::e().sin();
-    let c = Real::e().cos();
-    let zero = &s * &s + &c * &c - Real::one();
+    let zero = unresolved_zero();
     let surface = Arc::new(Ellipsoid::sphere(Length::metres(1.into()), &mut strict).unwrap());
     let projection = EllipsoidalMercator::new(
         surface.clone(),
@@ -598,9 +596,7 @@ fn retained_relation_is_only_reused_for_the_same_axis_ratio() {
 #[test]
 fn unprovable_shape_stays_unknown_and_approximate_preparation_stays_qualified() {
     let mut ctx = context();
-    let s = Real::e().sin();
-    let c = Real::e().cos();
-    let zero = &s * &s + &c * &c - Real::one();
+    let zero = unresolved_zero();
     let ellipsoid = Arc::new(
         Ellipsoid::from_axes(
             Length::metres(Real::one()),

@@ -4,6 +4,14 @@ use hyperreal::Real;
 use hyperspatial::*;
 use std::sync::Arc;
 
+/// An exact zero that no retained scalar relation proves. The scalar layer
+/// proves sin(a)^2 + cos(a)^2 = 1, so tests of unresolved decisions use the
+/// angle-addition identity sin(e + 1) - sin(e) cos(1) - cos(e) sin(1).
+pub fn unresolved_zero() -> Real {
+    (Real::e() + Real::one()).sin()
+        - Real::e().sin() * Real::one().cos()
+        - Real::e().cos() * Real::one().sin()
+}
 pub fn context() -> Context {
     Context::new(PredicatePolicy::STRICT, Limits::default())
 }

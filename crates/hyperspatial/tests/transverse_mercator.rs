@@ -431,9 +431,7 @@ fn domain_mismatch_batches_cancellation_and_unknown_boundaries_remain_typed() {
             Err(Error::InvalidInput(_))
         ));
     }
-    let s = Real::e().sin();
-    let c = Real::e().cos();
-    let zero = &s * &s + &c * &c - Real::one();
+    let zero = unresolved_zero();
     assert!(matches!(
         projection.position(
             Point3::new(
@@ -524,9 +522,7 @@ fn domain_mismatch_batches_cancellation_and_unknown_boundaries_remain_typed() {
 #[test]
 fn longitude_qualification_survives_new_positions_projection_parameters_and_pole_conventions() {
     let mut strict = context();
-    let sine = Real::e().sin();
-    let cosine = Real::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let zero = unresolved_zero();
     let projection = SphericalTransverseMercator::new(
         Length::metres(1.into()),
         ReferenceFrame::at_julian_year("epoch", 2000.into()).unwrap(),
@@ -744,9 +740,7 @@ fn inverse_switch_and_tiny_eastings_preserve_fresh_cartesian_identities() {
 fn approximate_strip_equality_cannot_become_a_strict_endpoint_certificate() {
     let mut strict = context();
     let projection = chart(&mut strict);
-    let sine = Real::e().sin();
-    let cosine = Real::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let zero = unresolved_zero();
     let y = (Real::pi() / Real::from(2)).unwrap() + zero;
     let coordinates = Point3::new(1.into(), y.clone(), 0.into());
     assert!(matches!(
@@ -777,9 +771,7 @@ fn approximate_strip_equality_cannot_become_a_strict_endpoint_certificate() {
 fn unresolved_internal_switch_uses_an_overlapping_certified_formula_domain() {
     let mut ctx = context();
     let projection = chart(&mut ctx);
-    let sine = Real::e().sin();
-    let cosine = Real::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let zero = unresolved_zero();
     for eta in [Real::one() + &zero, -Real::one() - zero] {
         let point = projection
             .position(

@@ -8,10 +8,12 @@ use std::{
     sync::{Arc, atomic::Ordering},
 };
 
+// An exact zero that no retained scalar relation proves. The scalar layer
+// now proves sin(a)^2 + cos(a)^2 = 1, so use the angle-addition identity.
 fn terminal_zero() -> Real {
-    let sine = Real::e().sin();
-    let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    (Real::e() + Real::one()).sin()
+        - Real::e().sin() * Real::one().cos()
+        - Real::e().cos() * Real::one().sin()
 }
 
 #[test]

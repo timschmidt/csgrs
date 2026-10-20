@@ -387,9 +387,7 @@ fn inverse_budget_cancellation_recovery_and_retained_source_compose() {
 #[test]
 fn approximate_inverse_branch_evidence_survives_latitude_and_forward_reuse() {
     let mut strict = context();
-    let s = Real::e().sin();
-    let c = Real::e().cos();
-    let a = &s * &s + &c * &c;
+    let a = Real::one() + unresolved_zero();
     let ellipsoid = Arc::new(
         Ellipsoid::from_axes(Length::metres(a), Length::metres(Real::one()), &mut strict).unwrap(),
     );

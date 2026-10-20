@@ -145,9 +145,7 @@ fn exact_zone_edges_and_special_areas_obey_half_open_intervals() {
 fn unresolved_selection_stays_unknown_and_approximate_parameter_evidence_is_sticky() {
     let mut strict = context();
     let sphere = Arc::new(Ellipsoid::sphere(Length::metres(1.into()), &mut strict).unwrap());
-    let sine = Real::e().sin();
-    let cosine = Real::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let zero = unresolved_zero();
     let source = position(
         56.into(),
         Real::from(3) + zero,
