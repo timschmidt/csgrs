@@ -12,6 +12,31 @@ pub(super) fn order_sign(order: Ordering) -> RealSign {
 }
 
 impl CurveVector2 {
+    /// Returns coordinates of a vector positively proportional to this vector.
+    ///
+    /// This preserves orientation and zeros, but does not promise the original
+    /// derivative magnitude. For a selected parallel, the certified nonzero
+    /// speed-ratio sign selects the orientation of its source velocity; only a
+    /// positive factor is discarded. Other carriers retain their coordinates.
+    pub fn direction_image(&self) -> ExactCurveResult<CurvePoint2> {
+        let CurveVectorData2::SelectedParallel(parallel) = &self.data else {
+            return self.coordinate_image();
+        };
+        let sign = Real::from(if parallel.ratio_sign == RealSign::Negative {
+            -1
+        } else {
+            1
+        });
+        let result = resolve_certified_operation(&crate::policy::principal_context(), |policy| {
+            parallel.velocity.coordinate_image(&sign, policy)
+        })
+        .map(crate::CurveOutcome::into_value)
+        .map_err(|cause| {
+            ExactCurveError::invalid_unattributed(CurveOperation2::Evaluation, cause)
+        })?;
+        ExactCurveError::decided(CurveOperation2::Evaluation, result)
+    }
+
     /// Returns this vector's coordinates as one exact point image.
     ///
     /// This owns the original joint source, not two independently reconstructed

@@ -151,6 +151,21 @@ impl PolynomialPoint2 {
         Some(pair)
     }
 
+    pub(crate) fn source_query(
+        &self,
+        numerator: &BivariatePolynomial,
+        denominator: &BivariatePolynomial,
+    ) -> Option<crate::bezier_offset::PointFormSource2> {
+        let (numerator, denominator) = self.pullback(numerator, denominator)?;
+        let mut source = self.clone();
+        source.maps.clear();
+        Some(crate::bezier_offset::PointFormSource2::new(
+            CurvePoint2(CurvePointData2::Polynomial(std::sync::Arc::new(source))),
+            numerator,
+            denominator,
+        ))
+    }
+
     pub(crate) fn coordinate_parameter(
         &self,
         axis: Axis2,

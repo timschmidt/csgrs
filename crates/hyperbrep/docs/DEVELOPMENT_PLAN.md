@@ -1290,18 +1290,28 @@ selected native rational derivatives and explicit chart transport. Hypercurve
 owns joint differential evaluation; BRep owns spatial lifting and affine transport.
 No independent coordinate roots or sampled tangent chords become authority.
 
+The [surface differential increment](evidence/2026-10-19-surface-differentials/README.md)
+adds joint surface partials, exact unit normals and spatial vector products over
+proved common sources. Hypercurve owns original-source rational-form arithmetic
+and oriented parallel directions; BRep owns the surface Jacobian, positive-root
+vector divisors and chain-rule consumers. Both pcurves of the complete regular
+circle and projective sections consume the new API, including selected inputs
+and negative reversal scales. Original pole guards survive arithmetic and cold
+replay. This is a direct API migration, with archive 14 unchanged.
+
 Next, Hypersolve must provide branch-specific singular limits and local-series
 certificates in the selected coefficient field; Hypercurve must bind those
-certificates to incident graph arcs and supply exact contact ordering and joint
-vector products. BRep must extend selected surface partials/normals, prove
-spatial/dual-pcurve differential agreement, and assemble complete trim arrangements.
+certificates to incident graph arcs and supply exact contact ordering. Extend
+joint vector algebra to the remaining field/radical joins without dropping
+source correlation. BRep must prove differential agreement over whole sections,
+including singular event limits, and assemble complete trim arrangements.
 Nodes, cusps, tacnodes, higher contact, stationary rational images, periodic seams
 and algebraic event parameters all need independent fixtures, typed resource
 failure and subsequent modeling consumers. A finite cusp derivative is a limit
 operation, not permission to cancel an original zero denominator. General NURBS
 and patch-pair sections, fillets/shelling/sweeps, STEP, assemblies/history and all
 other work packages retain their existing requirements. Use the current
-[next domains](evidence/2026-10-19-section-differentials/next-domains.md) to choose
+[next domains](evidence/2026-10-19-surface-differentials/next-domains.md) to choose
 implementation order; older records remain evidence for their own revisions.
 
 Apply [research gates G2–G5](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)

@@ -1392,6 +1392,46 @@ impl RationalBezierAlgebraicPointImage2 {
             },
         ))
     }
+
+    pub(crate) fn rational_query_source(
+        &self,
+        numerator: &hypersolve::BivariatePolynomial,
+        denominator: &hypersolve::BivariatePolynomial,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<crate::bezier_offset::PointFormSource2>> {
+        use hypersolve::BivariatePolynomial;
+        let evaluator = match self.predicate_evaluator(policy)? {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let lift =
+            |p: &[Real]| BivariatePolynomial::new(p.iter().map(|c| vec![c.clone()]).collect());
+        let map = crate::RationalMap2::new(
+            [lift(evaluator.x_numerator), lift(evaluator.y_numerator)],
+            lift(evaluator.denominator),
+        );
+        let Some((numerator, denominator)) = map.pullback(numerator, denominator) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let source = match &evaluator.parameter {
+            BezierParameter2::Exact(value) => {
+                crate::Point2::new(value.clone(), Real::zero()).into()
+            }
+            BezierParameter2::Algebraic(parameter) => match rational_point_image_from_power_basis(
+                parameter,
+                vec![Real::zero(), Real::one()],
+                Vec::new(),
+                vec![Real::one()],
+                policy,
+            )? {
+                Classification::Decided(point) => point.into(),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            },
+        };
+        Ok(Classification::Decided(
+            crate::bezier_offset::PointFormSource2::new(source, numerator, denominator),
+        ))
+    }
 }
 
 impl RationalBezierAlgebraicPointPredicate2<'_> {

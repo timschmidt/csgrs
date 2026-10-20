@@ -3,6 +3,72 @@
 use super::*;
 use hypersolve::bivariate_arithmetic::bivariate_compose;
 
+pub(crate) struct PointFormSource2 {
+    pub(crate) source: CurvePoint2,
+    pub(crate) numerator: BivariatePolynomial,
+    pub(crate) denominator: BivariatePolynomial,
+}
+
+impl PointFormSource2 {
+    pub(crate) fn new(
+        source: CurvePoint2,
+        numerator: BivariatePolynomial,
+        denominator: BivariatePolynomial,
+    ) -> Self {
+        Self {
+            source,
+            numerator,
+            denominator,
+        }
+    }
+}
+
+/// Pulls a query into its original coordinate field. The public form retains
+/// its original operands/guards; this is not a replacement point definition.
+pub(crate) fn point_form_source(
+    source: &CurvePoint2,
+    numerator: &BivariatePolynomial,
+    denominator: &BivariatePolynomial,
+    policy: &CurveContext,
+) -> CurveResult<Classification<PointFormSource2>> {
+    match &source.0 {
+        CurvePointData2::Polynomial(point) => {
+            Ok(match point.source_query(numerator, denominator) {
+                Some(query) => Classification::Decided(query),
+                None => Classification::Uncertain(UncertaintyReason::Unsupported),
+            })
+        }
+        CurvePointData2::Algebraic(image) => {
+            image.rational_query_source(numerator, denominator, policy)
+        }
+        CurvePointData2::Similarity(image) => {
+            if !policy.accepts_retained_policy(image.data.policy) {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            point_form_source(
+                &image.data.source,
+                &pullback(numerator, &image.data.transform),
+                &pullback(denominator, &image.data.transform),
+                policy,
+            )
+        }
+        CurvePointData2::Endpoint(endpoint) => match endpoint.resolve(policy)? {
+            Classification::Decided(Some(point)) => {
+                point_form_source(&point, numerator, denominator, policy)
+            }
+            Classification::Decided(None) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        },
+        _ => Ok(Classification::Decided(PointFormSource2::new(
+            source.clone(),
+            numerator.clone(),
+            denominator.clone(),
+        ))),
+    }
+}
+
 pub(crate) fn point_rational_denominator_sign(
     source: &CurvePoint2,
     denominator: &BivariatePolynomial,

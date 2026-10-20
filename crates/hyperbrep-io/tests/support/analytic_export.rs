@@ -213,7 +213,14 @@ pub fn source_maps(file: &StepFile<'_>, imported: &ImportedRepresentation) {
                         .unwrap(),
                     &Point3::new(point.x * length, point.y * length, point.z * length),
                 );
-                let mut native = face.face.surface().normal_at(&uv).unwrap();
+                let mut native = face
+                    .face
+                    .surface()
+                    .normal_at(&hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into())
+                    .unwrap()
+                    .try_coordinates()
+                    .unwrap()
+                    .clone();
                 if argument(file, face.source, 3).kind() == ValueKind::Enumeration("F") {
                     normal = -normal;
                 }
@@ -441,7 +448,17 @@ pub fn graph(output: &AdvancedStep<'_>, scale: &Real) {
                 ) {
                     // Independently compare oriented geometric normals, rather
                     // than assuming that changing charts preserves face sense.
-                    let mut native_normal = face.source.surface().normal_at(&native_uv).unwrap();
+                    let mut native_normal = face
+                        .source
+                        .surface()
+                        .normal_at(
+                            &hypercurve::Point2::new(native_uv.x.clone(), native_uv.y.clone())
+                                .into(),
+                        )
+                        .unwrap()
+                        .try_coordinates()
+                        .unwrap()
+                        .clone();
                     if face.source.orientation() == Orientation::Reversed {
                         native_normal = -native_normal;
                     }

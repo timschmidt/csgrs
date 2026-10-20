@@ -1,8 +1,10 @@
 //! Exact spatial vectors with a represented view or a retained joint source.
 
 use super::*;
-use hypercurve::CurveVector2;
+use hypercurve::{CurvePointRationalForm2, CurveVector2};
 use hyperreal::RealSign;
+
+mod algebra;
 
 /// An exact spatial vector, including derivatives at selected parameters.
 ///
@@ -21,6 +23,23 @@ enum VectorData3 {
     Represented(Vector3),
     Planar(Box<PlanarVector3>),
     NativeDerivative(Box<NativeDerivative3>),
+    Joint(Box<JointVector3>),
+    RootScaled(Box<RootScaledVector3>),
+}
+
+#[derive(Clone, Debug)]
+struct JointVector3 {
+    coordinates: [CurvePointRationalForm2; 3],
+}
+
+/// The form is strictly positive by construction, not an approximate hint.
+#[derive(Clone, Debug)]
+struct PositiveForm(CurvePointRationalForm2);
+
+#[derive(Clone, Debug)]
+struct RootScaledVector3 {
+    source: GeometricVector3,
+    divisor_squared: PositiveForm,
 }
 
 #[derive(Clone, Debug)]
@@ -101,6 +120,7 @@ impl GeometricVector3 {
                     .expect("positive derivative order")
                     .compare_linear_form(&Real::one(), &Real::zero(), rhs)?)
             }
+            VectorData3::Joint(_) | VectorData3::RootScaled(_) => self.linear_query(direction, rhs),
         })
     }
 
@@ -158,6 +178,15 @@ impl GeometricVector3 {
                         }),
                     })),
                 },
+                VectorData3::Joint(image) => {
+                    Self::from_forms(algebra::transform_forms(&image.coordinates, transform)?)
+                }
+                VectorData3::RootScaled(image) => Self {
+                    data: VectorData3::RootScaled(Box::new(RootScaledVector3 {
+                        source: image.source.affine_image(transform)?,
+                        divisor_squared: image.divisor_squared.clone(),
+                    })),
+                },
             })
         })
     }
@@ -168,6 +197,12 @@ impl GeometricVector3 {
         }
         Self {
             data: VectorData3::Planar(Box::new(PlanarVector3 { value, u, v })),
+        }
+    }
+
+    pub(super) fn from_forms(coordinates: [CurvePointRationalForm2; 3]) -> Self {
+        Self {
+            data: VectorData3::Joint(Box::new(JointVector3 { coordinates })),
         }
     }
 

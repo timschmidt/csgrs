@@ -1931,8 +1931,8 @@ impl SurfaceDomain {
 /// First partial derivatives of a parametric surface.
 #[derive(Clone, Debug)]
 pub struct SurfacePartials {
-    u: Vector3,
-    v: Vector3,
+    u: GeometricVector3,
+    v: GeometricVector3,
 }
 
 /// Exact intersection between a finite spatial curve and a surface.
@@ -2769,13 +2769,45 @@ impl SurfaceIntersectionParameterRay {
 
 impl SurfacePartials {
     /// Returns the partial derivative in the surface `u` direction.
-    pub const fn u(&self) -> &Vector3 {
+    pub const fn u(&self) -> &GeometricVector3 {
         &self.u
     }
 
     /// Returns the partial derivative in the surface `v` direction.
-    pub const fn v(&self) -> &Vector3 {
+    pub const fn v(&self) -> &GeometricVector3 {
         &self.v
+    }
+
+    fn from_coordinates(u: Vector3, v: Vector3) -> Self {
+        Self {
+            u: GeometricVector3::from_coordinates(u),
+            v: GeometricVector3::from_coordinates(v),
+        }
+    }
+
+    /// Applies the Jacobian to an exact velocity in this surface's UV chart.
+    /// Shared source fields remain correlated; unavailable field joins or
+    /// radical derivative magnitudes return a typed blocker.
+    pub fn apply_direction(
+        &self,
+        direction: &hypercurve::CurveVector2,
+    ) -> GeometryResult<GeometricVector3> {
+        crate::context::strict(|| GeometricVector3::chain_rule(&self.u, &self.v, direction))
+    }
+
+    /// The unit normal induced by the authored u/v order. Positive speed
+    /// factors may cancel during normalization, but orientation never does.
+    pub fn normal(&self) -> GeometryResult<GeometricVector3> {
+        crate::context::strict(|| {
+            let normal = self
+                .u
+                .normal_direction()?
+                .cross(&self.v.normal_direction()?)?;
+            if normal.is_zero()? {
+                return Err(GeometryError::SingularSurfaceParameter);
+            }
+            normal.normalized()
+        })
     }
 }
 
@@ -3845,65 +3877,62 @@ impl Surface {
         })
     }
 
-    /// Returns exact first partial derivatives.
-    pub fn partials_at(&self, parameter: &Point2) -> GeometryResult<SurfacePartials> {
+    fn represented_partials(&self, parameter: &Point2) -> GeometryResult<SurfacePartials> {
         crate::context::strict(|| {
             validate_surface_parameter(&self.data.domain, parameter)?;
             match &self.data.geometry {
-                SurfaceGeometry::Plane(plane) => Ok(SurfacePartials {
-                    u: plane.u.clone(),
-                    v: plane.v.clone(),
-                }),
+                SurfaceGeometry::Plane(plane) => Ok(SurfacePartials::from_coordinates(
+                    plane.u.clone(),
+                    plane.v.clone(),
+                )),
                 SurfaceGeometry::Cylinder(surface) => {
                     let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
-                    Ok(SurfacePartials {
-                        u: surface.frame.x.clone() * (-&surface.radius * sin_u)
+                    Ok(SurfacePartials::from_coordinates(
+                        surface.frame.x.clone() * (-&surface.radius * sin_u)
                             + surface.frame.y.clone() * (&surface.radius * cos_u),
-                        v: surface.frame.z.clone(),
-                    })
+                        surface.frame.z.clone(),
+                    ))
                 }
                 SurfaceGeometry::Sphere(surface) => {
                     let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
                     let (sin_v, cos_v) = (parameter.y.clone().sin(), parameter.y.clone().cos());
-                    Ok(SurfacePartials {
-                        u: surface.frame.x.clone() * (-&surface.radius * &cos_v * &sin_u)
+                    Ok(SurfacePartials::from_coordinates(
+                        surface.frame.x.clone() * (-&surface.radius * &cos_v * &sin_u)
                             + surface.frame.y.clone() * (&surface.radius * &cos_v * &cos_u),
-                        v: surface.frame.x.clone() * (-&surface.radius * &sin_v * &cos_u)
+                        surface.frame.x.clone() * (-&surface.radius * &sin_v * &cos_u)
                             + surface.frame.y.clone() * (-&surface.radius * &sin_v * &sin_u)
                             + surface.frame.z.clone() * (&surface.radius * cos_v),
-                    })
+                    ))
                 }
                 SurfaceGeometry::Cone(surface) => {
                     let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
                     let sin_angle = surface.semi_angle.clone().sin();
                     let cos_angle = surface.semi_angle.clone().cos();
-                    Ok(SurfacePartials {
-                        u: surface.frame.x.clone() * (-&parameter.y * &sin_angle * &sin_u)
+                    Ok(SurfacePartials::from_coordinates(
+                        surface.frame.x.clone() * (-&parameter.y * &sin_angle * &sin_u)
                             + surface.frame.y.clone() * (&parameter.y * &sin_angle * &cos_u),
-                        v: surface.frame.x.clone() * (&sin_angle * cos_u)
+                        surface.frame.x.clone() * (&sin_angle * cos_u)
                             + surface.frame.y.clone() * (&sin_angle * sin_u)
                             + surface.frame.z.clone() * cos_angle,
-                    })
+                    ))
                 }
                 SurfaceGeometry::Torus(surface) => {
                     let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
                     let (sin_v, cos_v) = (parameter.y.clone().sin(), parameter.y.clone().cos());
                     let radial_distance = &surface.major_radius + &surface.minor_radius * &cos_v;
-                    Ok(SurfacePartials {
-                        u: surface.frame.x.clone() * (-&radial_distance * &sin_u)
+                    Ok(SurfacePartials::from_coordinates(
+                        surface.frame.x.clone() * (-&radial_distance * &sin_u)
                             + surface.frame.y.clone() * (&radial_distance * &cos_u),
-                        v: surface.frame.x.clone() * (-&surface.minor_radius * &sin_v * &cos_u)
+                        surface.frame.x.clone() * (-&surface.minor_radius * &sin_v * &cos_u)
                             + surface.frame.y.clone() * (-&surface.minor_radius * &sin_v * &sin_u)
                             + surface.frame.z.clone() * (&surface.minor_radius * cos_v),
-                    })
+                    ))
                 }
                 SurfaceGeometry::Extrusion(surface) => Ok(SurfacePartials {
                     u: surface
                         .profile
-                        .derivative_at(&parameter.x.clone().into(), 1)?
-                        .require_coordinates()?
-                        .clone(),
-                    v: surface.direction.clone(),
+                        .derivative_at(&parameter.x.clone().into(), 1)?,
+                    v: GeometricVector3::from_coordinates(surface.direction.clone()),
                 }),
                 SurfaceGeometry::Revolution(surface) => {
                     let profile_point = surface.profile.evaluate_real(&parameter.y)?;
@@ -3920,7 +3949,7 @@ impl Surface {
                     let u = radial.clone() * -sin + surface.axis.cross(&radial) * cos;
                     let v =
                         rotate_vector_about_axis(&profile_derivative, &surface.axis, &parameter.x);
-                    Ok(SurfacePartials { u, v })
+                    Ok(SurfacePartials::from_coordinates(u, v))
                 }
                 SurfaceGeometry::RationalBezier(surface) => {
                     evaluate_tensor_bezier_partials(surface.homogeneous_controls(), parameter)
@@ -3936,20 +3965,11 @@ impl Surface {
     ///
     /// Poles, cone apices, revolution-axis contacts, and other rank-deficient
     /// parameters return [`GeometryError::SingularSurfaceParameter`].
-    pub fn normal_at(&self, parameter: &Point2) -> GeometryResult<Vector3> {
-        crate::context::strict(|| {
-            let partials = self.partials_at(parameter)?;
-            let normal = partials.u.cross(&partials.v);
-            if decided_order(compare_reals(
-                &normal.norm_squared(),
-                &Real::zero(),
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Equal
-            {
-                return Err(GeometryError::SingularSurfaceParameter);
-            }
-            normal.normalize().map_err(GeometryError::Numeric)
-        })
+    pub fn normal_at(
+        &self,
+        parameter: &hypercurve::CurvePoint2,
+    ) -> GeometryResult<GeometricVector3> {
+        crate::context::strict(|| self.partials_at(parameter)?.normal())
     }
 
     /// Splits a supported finite tensor-product surface along interior `u`.
@@ -10096,10 +10116,10 @@ fn evaluate_tensor_bezier_partials(
         .ok_or(GeometryError::InvalidControlNetShape)?;
     let v_derivative = evaluate_homogeneous_bezier_derivative_value(&u_values, &parameter.y)
         .ok_or(GeometryError::InvalidControlNetShape)?;
-    Ok(SurfacePartials {
-        u: project_homogeneous_derivative(&value, &u_derivative)?,
-        v: project_homogeneous_derivative(&value, &v_derivative)?,
-    })
+    Ok(SurfacePartials::from_coordinates(
+        project_homogeneous_derivative(&value, &u_derivative)?,
+        project_homogeneous_derivative(&value, &v_derivative)?,
+    ))
 }
 
 fn evaluate_tensor_nurbs(
@@ -10118,10 +10138,10 @@ fn evaluate_tensor_nurbs_partials(
 ) -> GeometryResult<SurfacePartials> {
     let (value, u_derivative, v_derivative) =
         evaluate_tensor_nurbs_homogeneous(surface, domain, parameter)?;
-    Ok(SurfacePartials {
-        u: project_homogeneous_derivative(&value, &u_derivative)?,
-        v: project_homogeneous_derivative(&value, &v_derivative)?,
-    })
+    Ok(SurfacePartials::from_coordinates(
+        project_homogeneous_derivative(&value, &u_derivative)?,
+        project_homogeneous_derivative(&value, &v_derivative)?,
+    ))
 }
 
 fn evaluate_tensor_nurbs_homogeneous(
@@ -11826,9 +11846,11 @@ mod tests {
         let surface = Surface::plane(p(1, 2, 3), Vector3::x(), Vector3::z()).unwrap();
         let parameter = Point2::new(r(4), r(5));
         assert_points_equal(&surface.evaluate_real(&parameter).unwrap(), &p(5, 2, 8));
-        let partials = surface.partials_at(&parameter).unwrap();
-        assert_eq!(partials.u().0, Vector3::x().0);
-        assert_eq!(partials.v().0, Vector3::z().0);
+        let partials = surface
+            .partials_at(&hypercurve::Point2::new(parameter.x.clone(), parameter.y.clone()).into())
+            .unwrap();
+        assert_eq!(partials.u().try_coordinates().unwrap().0, Vector3::x().0);
+        assert_eq!(partials.v().try_coordinates().unwrap().0, Vector3::z().0);
     }
 
     #[test]
@@ -11844,9 +11866,17 @@ mod tests {
             &surface.evaluate_real(&middle).unwrap(),
             &Point3::new(r(1), r(2), q(1, 2)),
         );
-        let partials = surface.partials_at(&middle).unwrap();
-        assert_points_equal(&Point3::from(partials.u().clone()), &p(2, 0, 1));
-        assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 4, 1));
+        let partials = surface
+            .partials_at(&hypercurve::Point2::new(middle.x.clone(), middle.y.clone()).into())
+            .unwrap();
+        assert_points_equal(
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
+            &p(2, 0, 1),
+        );
+        assert_points_equal(
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
+            &p(0, 4, 1),
+        );
         let SurfaceBounds::Bounded(bounds) = surface.bounds().unwrap() else {
             panic!("finite spline surface must be bounded");
         };
@@ -11864,9 +11894,17 @@ mod tests {
         assert_eq!(extrusion.kind(), SurfaceKind::Extrusion);
         let parameter = Point2::new(q(1, 2), r(2));
         assert_points_equal(&extrusion.evaluate_real(&parameter).unwrap(), &p(1, 6, 0));
-        let partials = extrusion.partials_at(&parameter).unwrap();
-        assert_points_equal(&Point3::from(partials.u().clone()), &p(2, 0, 0));
-        assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 3, 0));
+        let partials = extrusion
+            .partials_at(&hypercurve::Point2::new(parameter.x.clone(), parameter.y.clone()).into())
+            .unwrap();
+        assert_points_equal(
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
+            &p(2, 0, 0),
+        );
+        assert_points_equal(
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
+            &p(0, 3, 0),
+        );
         assert!(matches!(
             extrusion.bounds().unwrap(),
             SurfaceBounds::Unbounded
@@ -11882,9 +11920,17 @@ mod tests {
         let half_pi = (Real::pi() / r(2)).unwrap();
         let parameter = Point2::new(half_pi, q(1, 2));
         assert_points_equal(&revolution.evaluate_real(&parameter).unwrap(), &p(0, 2, 0));
-        let partials = revolution.partials_at(&parameter).unwrap();
-        assert_points_equal(&Point3::from(partials.u().clone()), &p(-2, 0, 0));
-        assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 0, 2));
+        let partials = revolution
+            .partials_at(&hypercurve::Point2::new(parameter.x.clone(), parameter.y.clone()).into())
+            .unwrap();
+        assert_points_equal(
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
+            &p(-2, 0, 0),
+        );
+        assert_points_equal(
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
+            &p(0, 0, 2),
+        );
         let SurfaceBounds::Bounded(bounds) = revolution.bounds().unwrap() else {
             panic!("finite revolution must have conservative bounds");
         };
@@ -12293,13 +12339,15 @@ mod tests {
             &surface.evaluate_real(&middle).unwrap(),
             &Point3::new(r(1), r(2), q(1, 2)),
         );
-        let partials = surface.partials_at(&middle).unwrap();
+        let partials = surface
+            .partials_at(&hypercurve::Point2::new(middle.x.clone(), middle.y.clone()).into())
+            .unwrap();
         assert_points_equal(
-            &Point3::from(partials.u().clone()),
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
             &Point3::new(r(1), r(0), q(1, 2)),
         );
         assert_points_equal(
-            &Point3::from(partials.v().clone()),
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
             &Point3::new(r(0), r(2), q(1, 2)),
         );
     }
@@ -18394,9 +18442,17 @@ mod tests {
             &cylinder.evaluate_real(&Point2::new(r(0), r(5))).unwrap(),
             &p(3, 2, 8),
         );
-        let partials = cylinder.partials_at(&Point2::new(r(0), r(5))).unwrap();
-        assert_points_equal(&Point3::from(partials.u().clone()), &p(0, 2, 0));
-        assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 0, 1));
+        let partials = cylinder
+            .partials_at(&hypercurve::Point2::new(r(0), r(5)).into())
+            .unwrap();
+        assert_points_equal(
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
+            &p(0, 2, 0),
+        );
+        assert_points_equal(
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
+            &p(0, 0, 1),
+        );
 
         let sphere = Surface::sphere(
             Point3::origin(),
@@ -18410,16 +18466,31 @@ mod tests {
             &sphere.evaluate_real(&Point2::new(r(0), r(0))).unwrap(),
             &p(2, 0, 0),
         );
-        let partials = sphere.partials_at(&Point2::new(r(0), r(0))).unwrap();
-        assert_points_equal(&Point3::from(partials.u().clone()), &p(0, 2, 0));
-        assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 0, 2));
+        let partials = sphere
+            .partials_at(&hypercurve::Point2::new(r(0), r(0)).into())
+            .unwrap();
         assert_points_equal(
-            &Point3::from(sphere.normal_at(&Point2::new(r(0), r(0))).unwrap()),
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
+            &p(0, 2, 0),
+        );
+        assert_points_equal(
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
+            &p(0, 0, 2),
+        );
+        assert_points_equal(
+            &Point3::from(
+                sphere
+                    .normal_at(&hypercurve::Point2::new(r(0), r(0)).into())
+                    .unwrap()
+                    .try_coordinates()
+                    .unwrap()
+                    .clone(),
+            ),
             &p(1, 0, 0),
         );
         assert_eq!(
             sphere
-                .normal_at(&Point2::new(r(0), (Real::pi() / r(2)).unwrap()))
+                .normal_at(&hypercurve::Point2::new(r(0), (Real::pi() / r(2)).unwrap()).into())
                 .unwrap_err(),
             GeometryError::SingularSurfaceParameter
         );
@@ -18443,7 +18514,8 @@ mod tests {
             &p(1, 2, 3),
         );
         assert_eq!(
-            cone.normal_at(&Point2::new(r(7), r(0))).unwrap_err(),
+            cone.normal_at(&hypercurve::Point2::new(r(7), r(0)).into())
+                .unwrap_err(),
             GeometryError::SingularSurfaceParameter
         );
         assert_eq!(

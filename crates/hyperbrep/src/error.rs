@@ -85,6 +85,8 @@ pub enum GeometryError {
     SurfaceParameterOutsideDomain,
     /// Surface first partials are linearly dependent at this parameter.
     SingularSurfaceParameter,
+    /// A zero vector has no unit direction.
+    DegenerateVector,
     /// The requested derivative is not implemented for this curve family.
     UnsupportedDerivative,
     /// Curve derivatives use positive orders; order zero denotes a point.
@@ -192,6 +194,7 @@ impl fmt::Display for GeometryError {
                 formatter.write_str("parameter lies outside the exact surface domain")
             }
             Self::SingularSurfaceParameter => formatter.write_str("surface parameter is singular"),
+            Self::DegenerateVector => formatter.write_str("zero vector has no unit direction"),
             Self::UnsupportedDerivative => formatter.write_str("curve derivative is unsupported"),
             Self::InvalidDerivativeOrder => {
                 formatter.write_str("curve derivative order must be positive")

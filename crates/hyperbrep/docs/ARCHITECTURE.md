@@ -1573,3 +1573,43 @@ source definitions during replay. Versions through 11 are deliberately rejected,
 without an adapter. Source-path native/WASM consumers and preserved complete
 workflows are recorded in the [admission evidence](evidence/2026-10-19-rational-surface-evaluation/README.md). Installed
 distributions, full release/push gates and complete BRep modeling remain open.
+
+
+## Joint surface differentials and unit-vector queries
+
+The public differential boundary takes `CurvePoint2` directly and returns
+`GeometricVector3` partials and normals. One private represented evaluator keeps
+the original analytic formulas. Selected rational tensors differentiate their
+original homogeneous coordinate maps in `geometry/surface_point/rational.rs`;
+profile extrusions retain the profile derivative. Native NURBS span ownership
+and original denominator checks precede publication. A unit normal is distinct
+from a merely oriented tangent direction.
+
+`geometry/vector/algebra.rs` composes coordinate forms in Hypercurve's common
+source field. That owner pulls back polynomial-fiber maps, native parameter
+images, similarities and resolved endpoints; different selected branches cannot
+be joined just because their base coordinate agrees. Binary forms retain an
+immutable pair of original operands, including their checked pole guards.
+Structural common denominators stay shared during sums. Debug output does not
+expand the operand DAG recursively. No new cache or coordinate-root authority
+is introduced.
+
+A private positive-form proof retains the squared divisor of a root-scaled
+vector. Sign and squared-polynomial identities compare its coordinates, dot
+products and length without independently constructing square-root coordinates.
+Affine transport changes the numerator vector and retains that divisor;
+renormalization proves a new positive length. A surface's normal is computed
+from its authored partial order, so a reflection carries the determinant sign.
+Hypercurve's direction image discards only positive scale and permits parallel
+unit normals and zero-dot products without claiming unavailable radical speeds.
+
+`SurfacePartials::apply_direction` evaluates the Jacobian on a retained UV
+velocity. Materialized pcurves use `Parameter::curve_parameter` and their exact
+spatial-parameter correspondence; reversing that chart can require a negative
+scale. Pointwise chain identities and cold replay are tested independently from
+archive byte identity. They do not prove whole-section differential agreement
+at singular events or complete trim topology. Vector proofs are transient;
+archive 14 stays unchanged. Original shared guards can still grow with the input
+composition: degree shortcuts and solver counters are not total-work, heap,
+stack or cancellation bounds. The [admission record](evidence/2026-10-19-surface-differentials/README.md)
+retains these limits and the full previous corpus.

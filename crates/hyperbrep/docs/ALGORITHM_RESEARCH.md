@@ -1127,3 +1127,38 @@ External kernels remain optional test oracles, never production dependencies.
 The [current differential record](evidence/2026-10-19-section-differentials/next-domains.md)
 defines concrete next fixtures and owners. No cited complexity theorem is credited
 as a proof of this implementation or a completed release gate.
+
+
+### Joint surface Jacobians and positive-root vector queries
+
+CGAL's algebraic kernel documents sign queries at retained bivariate algebraic
+points, while its exact kernel with square roots makes the required scalar
+extension explicit. These are useful ownership and capability precedents;
+neither supplies an implementation or speed proof for HyperBRep.
+[Algebraic-kernel manual](https://doc.cgal.org/latest/Algebraic_kernel_d/index.html),
+[exact square-root kernel](https://doc.cgal.org/latest/Kernel_23/classCGAL_1_1Exact__predicates__exact__constructions__kernel__with__sqrt.html).
+
+Our query derivation retains `L/sqrt(Q)` with a proof that `Q>0`. Compare signs
+with an authored `c` first. Equal positive signs reduce to the sign of
+`L²-c²Q`; equal negative signs reverse that order. Comparing two root-scaled
+coordinates similarly uses `a²Qb-b²Qa` after signs agree. Cross and dot products
+multiply positive squared divisors. Normalization removes only a positive scale,
+so a selected parallel's certified speed-ratio sign is enough for its oriented
+unit normal or a zero-dot comparison, but not its derivative magnitude.
+
+For a homogeneous surface coordinate `N/W`, differentiate in the original UV
+chart: `(dN*W-N*dW)/W²`. A field-reduced representative is not a function that
+can be differentiated in place of that source. Pullback of already-derived
+queries belongs in Hypercurve, with original operands/poles retained. Shared
+structural denominators prevent finite sums from raising their degree at every
+addition. This is a limited expression-growth property, not a general resource
+bound. A pcurve chart `t=s*p+b` requires division by `s` when comparing its lifted
+velocity with the spatial derivative, including negative `s` after reversal.
+
+The [surface differential evidence](evidence/2026-10-19-surface-differentials/README.md)
+separates the complete fixtures, prototype failures, final qualification and
+matched preserved-workflow costs. Neither these identities nor isolated timing
+improvements close earlier adverse latency observations, singular branch germs,
+complete trim arrangements, general field joins or release gates. External
+kernels remain validation oracles only; native and WASM production paths use
+Rust owners.

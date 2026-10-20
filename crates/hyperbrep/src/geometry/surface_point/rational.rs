@@ -19,6 +19,35 @@ pub(in crate::geometry) struct RationalSurfacePoint {
 }
 
 impl RationalSurfacePoint {
+    pub(in crate::geometry) fn partials(
+        &self,
+        uv: &hypercurve::CurvePoint2,
+    ) -> GeometryResult<SurfacePartials> {
+        use hypersolve::bivariate_arithmetic::{
+            bivariate_parameter_derivative as derivative, bivariate_subtract,
+        };
+        let partial = |axis| -> GeometryResult<GeometricVector3> {
+            let weight_derivative = derivative(&self.weight, axis);
+            let denominator = bivariate_multiply(&self.weight, &self.weight);
+            let component = |i: usize| -> GeometryResult<hypercurve::CurvePointRationalForm2> {
+                let numerator = bivariate_subtract(
+                    &bivariate_multiply(&derivative(&self.coordinates[i], axis), &self.weight),
+                    &bivariate_multiply(&self.coordinates[i], &weight_derivative),
+                );
+                Ok(uv.rational_form(numerator, denominator.clone())?)
+            };
+            Ok(GeometricVector3::from_forms([
+                component(0)?,
+                component(1)?,
+                component(2)?,
+            ]))
+        };
+        Ok(SurfacePartials {
+            u: partial(hypersolve::CurveResultantParameter::First)?,
+            v: partial(hypersolve::CurveResultantParameter::Second)?,
+        })
+    }
+
     pub(in crate::geometry) fn new(
         surface: &Surface,
         uv: &hypercurve::CurvePoint2,

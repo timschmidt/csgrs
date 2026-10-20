@@ -35,30 +35,7 @@ impl Surface {
                     .evaluate_real(&Point2::new(point.x().clone(), point.y().clone()))
                     .map(GeometricPoint3::from_coordinates);
             }
-            for (domain, axis) in [(&self.data.domain.u, 0), (&self.data.domain.v, 1)] {
-                if matches!(
-                    domain,
-                    SurfaceParameterDomain::Unbounded | SurfaceParameterDomain::Periodic { .. }
-                ) {
-                    continue;
-                }
-                let form =
-                    parameter.affine_form(Real::from(1 - axis), Real::from(axis), Real::zero());
-                let contained = match domain {
-                    SurfaceParameterDomain::Closed(range) => {
-                        range.contains(&Parameter::from_curve(&form.parameter()?)?)?
-                    }
-                    SurfaceParameterDomain::LowerBounded { start } => {
-                        form.compare_to_real(start)? != Ordering::Less
-                    }
-                    SurfaceParameterDomain::Unbounded | SurfaceParameterDomain::Periodic { .. } => {
-                        true
-                    }
-                };
-                if !contained {
-                    return Err(GeometryError::SurfaceParameterOutsideDomain);
-                }
-            }
+            self.validate_selected_uv(parameter)?;
             match &self.data.geometry {
                 SurfaceGeometry::Plane(_) => Ok(GeometricPoint3::from_surface_image(
                     self.clone(),
@@ -77,6 +54,71 @@ impl Surface {
                 _ => Err(GeometryError::UnsupportedSelectedEvaluation),
             }
         })
+    }
+
+    /// Exact first partials in the authored UV chart, retaining joint selected
+    /// values. Planes, rational tensors and admitted profile extrusions accept
+    /// selected parameters. Every represented analytic family remains supported.
+    /// NURBS use the native right-owned knot span (the final closed endpoint
+    /// uses the last span); this is not a claim of two-sided differentiability
+    /// at a nonsmooth knot. Selected angular fields remain typed blockers.
+    pub fn partials_at(
+        &self,
+        parameter: &hypercurve::CurvePoint2,
+    ) -> GeometryResult<SurfacePartials> {
+        crate::context::strict(|| {
+            if let Some(point) = parameter.coordinates() {
+                return self
+                    .represented_partials(&Point2::new(point.x().clone(), point.y().clone()));
+            }
+            self.validate_selected_uv(parameter)?;
+            match &self.data.geometry {
+                SurfaceGeometry::Plane(plane) => Ok(SurfacePartials::from_coordinates(
+                    plane.u.clone(),
+                    plane.v.clone(),
+                )),
+                SurfaceGeometry::Extrusion(surface) => {
+                    let u = Parameter::from_curve(
+                        &parameter
+                            .affine_form(Real::one(), Real::zero(), Real::zero())
+                            .parameter()?,
+                    )?;
+                    Ok(SurfacePartials {
+                        u: surface.profile.derivative_at(&u, 1)?,
+                        v: GeometricVector3::from_coordinates(surface.direction.clone()),
+                    })
+                }
+                SurfaceGeometry::RationalBezier(_) | SurfaceGeometry::Nurbs(_) => {
+                    RationalSurfacePoint::new(self, parameter)?.partials(parameter)
+                }
+                _ => Err(GeometryError::UnsupportedSelectedEvaluation),
+            }
+        })
+    }
+
+    fn validate_selected_uv(&self, parameter: &hypercurve::CurvePoint2) -> GeometryResult<()> {
+        for (domain, axis) in [(&self.data.domain.u, 0), (&self.data.domain.v, 1)] {
+            if matches!(
+                domain,
+                SurfaceParameterDomain::Unbounded | SurfaceParameterDomain::Periodic { .. }
+            ) {
+                continue;
+            }
+            let form = parameter.affine_form(Real::from(1 - axis), Real::from(axis), Real::zero());
+            let contained = match domain {
+                SurfaceParameterDomain::Closed(range) => {
+                    range.contains(&Parameter::from_curve(&form.parameter()?)?)?
+                }
+                SurfaceParameterDomain::LowerBounded { start } => {
+                    form.compare_to_real(start)? != Ordering::Less
+                }
+                SurfaceParameterDomain::Unbounded | SurfaceParameterDomain::Periodic { .. } => true,
+            };
+            if !contained {
+                return Err(GeometryError::SurfaceParameterOutsideDomain);
+            }
+        }
+        Ok(())
     }
 }
 

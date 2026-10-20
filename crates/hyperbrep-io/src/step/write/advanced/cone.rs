@@ -36,9 +36,15 @@ fn anchor(
         }
     }
     let velocity = surface
-        .partials_at(uv)
+        .partials_at(&hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into())
         .map_err(|error| out.site.error(WriteErrorKind::Geometry(error)))?
         .v()
+        .try_coordinates()
+        .ok_or_else(|| {
+            out.site.error(WriteErrorKind::Geometry(
+                hyperbrep::GeometryError::UnsupportedSelectedEvaluation,
+            ))
+        })?
         .clone();
     let ratios = geometry::direction_values(&velocity, out)?;
     for i in 0..3 {

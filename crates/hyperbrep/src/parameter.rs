@@ -74,7 +74,11 @@ impl Parameter {
         })
     }
 
-    pub(crate) fn curve_parameter(&self) -> hypercurve::CurveParameter2 {
+    /// Returns the retained Hypercurve parameter for consuming materialized
+    /// pcurves and constructing joint parameter images. This preserves the
+    /// original exact source; it does not reconstruct scalar coordinates or
+    /// certify membership in a different curve's domain.
+    pub fn curve_parameter(&self) -> hypercurve::CurveParameter2 {
         self.value.clone()
     }
 

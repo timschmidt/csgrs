@@ -1,6 +1,6 @@
 use hyperbrep::{
-    Curve3, CurveParameterLocation, Direction, Matrix4, OperationContext, Orientation, Point2,
-    Point3, Real, SolidRef, Vector3, WorkBudget, builder,
+    Curve3, CurveParameterLocation, Direction, Matrix4, OperationContext, Orientation, Point3,
+    Real, SolidRef, Vector3, WorkBudget, builder,
 };
 use hyperbrep_io::{
     part21::{NumberLimits, Value, ValueKind},
@@ -74,9 +74,9 @@ fn check_graph(output: &FacetedStep<'_>, scale: &Real) {
             let authored = face
                 .source
                 .surface()
-                .normal_at(&Point2::new(Real::zero(), Real::zero()))
+                .normal_at(&hypercurve::Point2::new(Real::zero(), Real::zero()).into())
                 .unwrap();
-            let signed = normal.dot(&authored);
+            let signed = normal.dot(authored.try_coordinates().unwrap());
             assert!(match face.source.orientation() {
                 Orientation::Forward => signed > Real::zero(),
                 Orientation::Reversed => signed < Real::zero(),

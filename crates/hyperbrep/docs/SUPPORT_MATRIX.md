@@ -207,6 +207,26 @@ interior. See the [finite qualification](evidence/2026-10-18-selected-revolution
 | Tensor rational Bézier | Closed × closed | Control hull | Exact iso-boundary rational Bézier curves and subintervals | Affine | Exact |
 | Tensor NURBS | Active closed domains | Control hull | Exact iso-boundary NURBS curves and subintervals | Affine | Exact |
 
+
+`partials_at` and `normal_at` take a joint Hypercurve UV point. First partials
+and unit normals are exact spatial vectors with optional stored coordinates.
+Selected planes, positive-weight rational tensors and native/admitted retained
+profile extrusions are supported; selected angular surfaces and unavailable
+profile fields remain typed frontiers. NURBS preserve native knot ownership,
+including nonsmooth internal knots and the closed final endpoint. The derivative
+at a nonsmooth knot is the owned span's derivative, not a two-sided limit.
+
+Shared-field spatial cross/dot/length/equality and normalization queries retain
+positive root branches. Parallel-offset unit normals and zero-dot comparisons
+can discard a proved positive speed factor; full radical derivative magnitudes
+and their chain-rule consumers remain unsupported. `apply_direction` consumes
+admitted UV derivatives, with explicit pcurve/spatial parameter correspondence.
+The complete circle, cubic and projective fixtures supply both consumers.
+Zero vectors, rank-deficient surfaces, invalid UV domains and unavailable field
+joins remain distinct failures. See the [finite acceptance record](evidence/2026-10-19-surface-differentials/README.md).
+These queries do not complete singular germs, trim arrangements or curved-solid
+Booleans. The native model archive remains 14.
+
 Extrusion-face measurement is exact for line profiles, circles swept normal to
 their plane, and complete rectangular trims of planar rational Bézier/NURBS
 profiles with certified transverse-monotone positive-weight controls. Other

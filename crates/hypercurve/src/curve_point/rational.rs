@@ -10,17 +10,38 @@ use crate::{
     ExactCurveResult, Real,
 };
 
+mod arithmetic;
+
 /// The source-bound rational query `numerator(x,y) / denominator(x,y)`.
 ///
 /// Both polynomials are evaluated at the same retained point. In particular,
 /// a selected fiber keeps its base root and fiber selector. The original
 /// denominator must be nonzero even when the quotient admits cancellation.
 /// This query view does not reconstruct independent coordinate roots.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct CurvePointRationalForm2 {
     source: CurvePoint2,
     numerator: BivariatePolynomial,
     denominator: BivariatePolynomial,
+    // A derived common-field query keeps both original source/denominator
+    // authorities. Their checked immutable guards must not disappear when a
+    // coordinate map is pulled back or a constant operand is embedded.
+    operands: Option<std::sync::Arc<[Self; 2]>>,
+}
+
+impl std::fmt::Debug for CurvePointRationalForm2 {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // The operand DAG can share the same child many times. A diagnostic
+        // must not recursively expand it into an exponentially larger tree.
+        // Callers can inspect original guards explicitly through operands().
+        formatter
+            .debug_struct("CurvePointRationalForm2")
+            .field("source", &self.source)
+            .field("numerator", &self.numerator)
+            .field("denominator", &self.denominator)
+            .field("has_operands", &self.operands.is_some())
+            .finish()
+    }
 }
 
 impl CurvePoint2 {
@@ -38,6 +59,7 @@ impl CurvePoint2 {
             source: self.clone(),
             numerator,
             denominator,
+            operands: None,
         };
         resolve(CurveOperation2::Construction, |policy| {
             crate::bezier_offset::point_rational_denominator_sign(
@@ -51,6 +73,11 @@ impl CurvePoint2 {
 }
 
 impl CurvePointRationalForm2 {
+    /// Original operands of a binary query, when this form was constructed by
+    /// arithmetic. Their source points and original pole guards remain owned.
+    pub fn operands(&self) -> Option<(&Self, &Self)> {
+        self.operands.as_deref().map(|pair| (&pair[0], &pair[1]))
+    }
     /// Borrows the complete correlated source point.
     pub const fn source(&self) -> &CurvePoint2 {
         &self.source

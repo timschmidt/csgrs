@@ -796,10 +796,48 @@ polynomial sections. Its direction follows increasing spatial parameter and is
 not normalized. Hypercurve branch reversal keeps the source chart; BRep reversal
 reflects its public chart, so derivatives and directions use the explicit chart
 scale. Gradient-zero nodes/cusps, singular image limits, general selected angular
-families, and general vector products remain open. Selected analytic parallels
+families, and unavailable joins of independent selected vector fields remain open. Selected analytic parallels
 admit direction/zero tests, while comparisons against a nonzero scalar still
 need their radical speed magnitude. No successful zero vector substitutes for
 an unresolved tangent. The [section differential record](docs/evidence/2026-10-19-section-differentials/README.md)
 separates the admitted domain from these limits and the remaining trim-arrangement
 work. The native archive stays at version 14; vector queries do not change model
 records or add a compatibility decoder.
+
+
+`Surface::partials_at(&CurvePoint2)` now returns `SurfacePartials` whose `u()`
+and `v()` are `GeometricVector3` values. `normal_at` returns a unit
+`GeometricVector3` in authored UV order. Represented analytic families keep their
+coordinate view. Selected planes, positive-weight Bézier/NURBS tensors and
+admitted profile extrusions keep the entire correlated source. NURBS partials
+use the right-owned internal knot span and the final span at the closed upper
+endpoint; this does not assert two-sided smoothness at a nonsmooth knot.
+
+Vectors expose `cross`, `normalized`, `equals`, `compare_dot` and
+`compare_squared_length` without requiring separate coordinate roots. A selected
+unit vector retains its positive squared-length divisor. An affine image of a
+unit vector need not stay unit; normalize the transported vector when required.
+A surface normal instead follows the cross product of its authored partials,
+including orientation reversal under reflection. Zero-vector normalization
+returns `DegenerateVector`; rank-deficient surface normals return
+`SingularSurfaceParameter`.
+
+`SurfacePartials::apply_direction` consumes a Hypercurve UV velocity in the
+same retained field. `Parameter::curve_parameter()` exposes the retained owner
+value for materialized pcurves. Apply the pcurve's explicit parameter scale in
+chain-rule comparisons, including negative scales after reversal. The full
+circle and projective section fixtures exercise both surface consumers,
+selected parameters, restrictions, reversals and cold geometry replay.
+
+Hypercurve rational-form arithmetic keeps original operands and pole guards,
+pulls image queries into a proved common source and retains one structurally
+shared denominator in finite sums. Debug output describes the current query
+without recursively expanding its operand DAG. Selected parallels provide a
+positively proportional direction image; this admits unit normals and zero-dot
+comparisons while their radical speed magnitudes remain unavailable. Selected
+angular fields, singular branch limits, general independent-field joins and
+complete trim arrangements remain open. Internal controls do not bound total
+work, retained heap, stack or cancellation. See the
+[surface differential record](docs/evidence/2026-10-19-surface-differentials/README.md)
+for the admitted domain, corrections, qualification and remaining work. Archive
+14 is unchanged; transient vector queries add no saved-model carrier or shim.

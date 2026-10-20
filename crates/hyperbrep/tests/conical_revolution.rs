@@ -186,12 +186,33 @@ fn conical_revolution_maps_both_branches_and_oriented_partials() {
                         let recovered = chart.source_parameters(&native).unwrap();
                         equal(&recovered.x, &angle);
                         equal(&recovered.y, &t);
-                        let partials = chart.surface().partials_at(&native).unwrap();
+                        let partials = chart
+                            .surface()
+                            .partials_at(
+                                &hypercurve::Point2::new(native.x.clone(), native.y.clone()).into(),
+                            )
+                            .unwrap();
                         let u_partial = axis.cross(&(&expected - &center));
                         let v_partial = rotate(&velocity, &axis, &angle);
-                        equal_vector(&(partials.u().clone() * chart.angular_scale()), &u_partial);
-                        equal_vector(&(partials.v().clone() * chart.slant_scale()), &v_partial);
-                        let normal = chart.surface().normal_at(&native).unwrap();
+                        equal_vector(
+                            &(partials.u().try_coordinates().unwrap().clone()
+                                * chart.angular_scale()),
+                            &u_partial,
+                        );
+                        equal_vector(
+                            &(partials.v().try_coordinates().unwrap().clone()
+                                * chart.slant_scale()),
+                            &v_partial,
+                        );
+                        let normal = chart
+                            .surface()
+                            .normal_at(
+                                &hypercurve::Point2::new(native.x.clone(), native.y.clone()).into(),
+                            )
+                            .unwrap()
+                            .try_coordinates()
+                            .unwrap()
+                            .clone();
                         let source_normal = u_partial.cross(&v_partial);
                         equal(&normal.cross(&source_normal).norm_squared(), &Real::zero());
                         assert!(
@@ -238,7 +259,12 @@ fn conical_revolution_maps_both_branches_and_oriented_partials() {
                     &apex,
                 );
                 assert_eq!(
-                    chart.surface().normal_at(&at_apex).unwrap_err(),
+                    chart
+                        .surface()
+                        .normal_at(
+                            &hypercurve::Point2::new(at_apex.x.clone(), at_apex.y.clone()).into()
+                        )
+                        .unwrap_err(),
                     GeometryError::SingularSurfaceParameter
                 );
                 assert_eq!(
