@@ -276,13 +276,24 @@ fn retained_incident_domains_admit_exterior_affine_endpoints() {
             &policy,
             "exterior incident endpoint field",
         );
-        let Classification::Decided(recursive) =
+        // The incident parameter comes from the point's shared source root.
+        // The recursive projective form must agree as an independent carrier.
+        let Classification::Decided(source) =
             affine_line_parameter_at_incident_point(&line, &point, &policy).unwrap()
         else {
             panic!("the independent selected point must retain its affine parameter");
         };
+        let Classification::Decided(recursive) =
+            recursive_affine_line_parameter_at_incident_point(&line, &point, &policy).unwrap()
+        else {
+            panic!("the independent selected point must retain its recursive parameter");
+        };
         assert!(recursive.as_recursive_projective().is_some());
-        for base in [CurveParameter2::from_selected_fiber(selected), recursive] {
+        for base in [
+            CurveParameter2::from_selected_fiber(selected),
+            source,
+            recursive,
+        ] {
             for shift in [-2, 2] {
                 let Classification::Decided(endpoint) = base
                     .affine_image_unbounded(&Real::one(), &Real::from(shift), &policy)

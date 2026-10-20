@@ -8592,25 +8592,26 @@ impl BezierAlgebraicChordRationalOverlap2 {
 
 /// Extracts the affine parameter of a point whose incidence on this line
 /// is already certified. Its coordinates stay in their existing shared field.
+fn incident_line_axis(line: &LineSeg2, policy: &CurveContext) -> Option<(Axis2, RealSign)> {
+    let (dx, dy) = line.delta();
+    [(Axis2::X, dx), (Axis2::Y, dy)]
+        .into_iter()
+        .find_map(
+            |(axis, delta)| match real_sign(&delta, &policy.strict_counterpart()) {
+                Some(direction @ (RealSign::Positive | RealSign::Negative)) => {
+                    Some((axis, direction))
+                }
+                _ => None,
+            },
+        )
+}
+
 pub(crate) fn affine_line_parameter_at_incident_point(
     line: &LineSeg2,
     point: &CurvePoint2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurveParameter2>> {
-    let original_point = point.clone();
-    let (dx, dy) = line.delta();
-    let Some((axis, direction)) =
-        [(Axis2::X, dx), (Axis2::Y, dy)]
-            .into_iter()
-            .find_map(
-                |(axis, delta)| match real_sign(&delta, &policy.strict_counterpart()) {
-                    Some(direction @ (RealSign::Positive | RealSign::Negative)) => {
-                        Some((axis, direction))
-                    }
-                    _ => None,
-                },
-            )
-    else {
+    let Some((axis, direction)) = incident_line_axis(line, policy) else {
         return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
     };
     if let CurvePoint2(CurvePointData2::Exact(point)) = point {
@@ -8633,6 +8634,16 @@ pub(crate) fn affine_line_parameter_at_incident_point(
     if matches!(point.0, CurvePointData2::Algebraic(_)) {
         // Rational coordinate images and their replayed expressions must
         // extract the same affine parameter from their shared source root.
+        // Strict construction and replay therefore use that canonical form.
+        // Under an approximate policy, later sign decisions on the source
+        // root can settle at the 512-bit terminal although the recursive
+        // projective form decides them exactly, so prefer that form there.
+        if *policy != CurveContext::STRICT
+            && let recursive @ Classification::Decided(_) =
+                recursive_line_parameter_at_incident_point(line, point, axis, direction, policy)?
+        {
+            return Ok(recursive);
+        }
         let (start, delta) = match axis {
             Axis2::X => (line.start().x(), line.end().x() - line.start().x()),
             Axis2::Y => (line.start().y(), line.end().y() - line.start().y()),
@@ -8643,8 +8654,40 @@ pub(crate) fn affine_line_parameter_at_incident_point(
             Axis2::X => (scale, Real::zero()),
             Axis2::Y => (Real::zero(), scale),
         };
-        return point_affine_form_parameter(point, &[a, b, offset], policy);
+        // Try the source root under strict predicates only, so this form
+        // never consumes approximate evidence; otherwise use the recursive
+        // projective parameter below.
+        if let Classification::Decided(parameter) =
+            point_affine_form_parameter(point, &[a, b, offset], &policy.strict_counterpart())?
+        {
+            return Ok(Classification::Decided(parameter));
+        }
     }
+    recursive_line_parameter_at_incident_point(line, point, axis, direction, policy)
+}
+
+/// The recursive projective form of an incident point's affine line
+/// parameter, independent of any retained source root.
+#[cfg(test)]
+pub(crate) fn recursive_affine_line_parameter_at_incident_point(
+    line: &LineSeg2,
+    point: &CurvePoint2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<CurveParameter2>> {
+    let Some((axis, direction)) = incident_line_axis(line, policy) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+    };
+    recursive_line_parameter_at_incident_point(line, point, axis, direction, policy)
+}
+
+fn recursive_line_parameter_at_incident_point(
+    line: &LineSeg2,
+    point: &CurvePoint2,
+    axis: Axis2,
+    direction: RealSign,
+    policy: &CurveContext,
+) -> CurveResult<Classification<CurveParameter2>> {
+    let original_point = point.clone();
     let points = match recursive_projective_evidence_points(&[point], policy)? {
         Classification::Decided(Some(points)) => points,
         Classification::Decided(None) => {
