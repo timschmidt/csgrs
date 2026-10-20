@@ -23,6 +23,9 @@ impl<'a> RingRecognition<'a> {
         numerator: &RingPolynomial,
         denominator: &RingPolynomial,
     ) -> Option<RingPolynomial> {
+        if self.native_relations {
+            return self.divide_graded_polynomial(numerator, denominator);
+        }
         self.charge()?;
         let leading = self.leading_polynomial_term(denominator)?;
         let (divisor_term, divisor_coefficient) = &denominator.terms[leading];

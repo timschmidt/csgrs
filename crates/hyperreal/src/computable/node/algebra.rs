@@ -1727,6 +1727,13 @@ impl Computable {
 
     /// Multiply this number by some other number.
     pub fn multiply(self, other: Computable) -> Computable {
+        if let Some(result) = self.shared_square_quotient(&other) {
+            crate::trace_dispatch!("computable", "multiply", "shared-square-quotient");
+            return result;
+        }
+        if self.jacobi_square_product(&other) {
+            return self.square();
+        }
         if let Approximation::Negate(child) = &self.internal.approximation {
             return child.clone().multiply(other).negate();
         }
@@ -2007,6 +2014,9 @@ impl Computable {
     /// Add some other number to this number.
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, other: Computable) -> Computable {
+        if let Some(value) = self.jacobi_square_sum(&other) {
+            return value;
+        }
         fn affine_offset_eq(left: &Computable, right: &Computable) -> bool {
             let left_parts = left.rational_offset_parts(&mut 8);
             let right_parts = right.rational_offset_parts(&mut 8);

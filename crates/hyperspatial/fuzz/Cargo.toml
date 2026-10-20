@@ -1,0 +1,109 @@
+[package]
+name = "hyperspatial-fuzz"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[[bin]]
+name = "jacobi_epsilon"
+path = "fuzz_targets/jacobi_epsilon.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complex_jacobi"
+path = "fuzz_targets/complex_jacobi.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "jacobi"
+path = "fuzz_targets/jacobi.rs"
+test = false
+doc = false
+bench = false
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hyperspatial = { path = ".." }
+hyperreal = { path = "../../hyperreal", features = ["serde"] }
+serde_json = "=1.0.149"
+hyperlattice = { path = "../../hyperlattice" }
+hyperlimit = { path = "../../hyperlimit", default-features = false, features = ["std"] }
+
+[[bin]]
+name = "inverse_legendre"
+path = "fuzz_targets/inverse_legendre.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "elliptic"
+path = "fuzz_targets/elliptic.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "forward_local"
+path = "fuzz_targets/forward_local.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "transverse_mercator"
+path = "fuzz_targets/transverse_mercator.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "inverse_isometric"
+path = "fuzz_targets/inverse_isometric.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normal_offset"
+path = "fuzz_targets/normal_offset.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mercator"
+path = "fuzz_targets/mercator.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "ellipsoidal_mercator"
+path = "fuzz_targets/ellipsoidal_mercator.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complex_atanh"
+path = "fuzz_targets/complex_atanh.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "parameter_encodings"
+path = "fuzz_targets/parameter_encodings.rs"
+test = false
+doc = false
+bench = false

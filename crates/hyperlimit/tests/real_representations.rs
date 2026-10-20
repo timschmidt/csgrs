@@ -1046,7 +1046,69 @@ fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
         ),
         (
             "CoscSmall",
-            computable_from_internal(serde_json::json!({ "CoscSmall": child })),
+            computable_from_internal(serde_json::json!({ "CoscSmall": child.clone() })),
+        ),
+        (
+            "InverseIsometricLatitude",
+            computable_from_internal(serde_json::json!({ "InverseIsometricLatitude": {
+                "psi": child.clone(), "log_axis_ratio": one
+            }})),
+        ),
+        (
+            "EllipticRf",
+            computable_from_internal(serde_json::json!({ "EllipticRf": [
+                child.clone(), serialized_computable(&Computable::zero()),
+                serialized_computable(&Computable::zero())
+            ] })),
+        ),
+        (
+            "EllipticRd",
+            computable_from_internal(serde_json::json!({ "EllipticRd": [
+                child.clone(), serialized_computable(&Computable::zero()),
+                serialized_computable(&Computable::zero())
+            ] })),
+        ),
+        (
+            "EllipticF",
+            computable_from_internal(serde_json::json!({ "EllipticF": [
+                child.clone(), serialized_computable(&Computable::zero())
+            ] })),
+        ),
+        (
+            "EllipticE",
+            computable_from_internal(serde_json::json!({ "EllipticE": [
+                child.clone(), serialized_computable(&Computable::zero())
+            ] })),
+        ),
+        (
+            "JacobiAmplitude",
+            computable_from_internal(serde_json::json!({ "JacobiAmplitude": [
+                child.clone(), serialized_computable(&Computable::zero())
+            ] })),
+        ),
+        (
+            "InverseEllipticE",
+            computable_from_internal(serde_json::json!({ "InverseEllipticE": [
+                child.clone(), serialized_computable(&Computable::zero())
+            ] })),
+        ),
+        (
+            "JacobiSn",
+            computable_from_internal(serde_json::json!({ "JacobiSn": [
+                child.clone(), serialized_computable(&Computable::zero())
+            ] })),
+        ),
+        (
+            "JacobiCn",
+            computable_from_internal(serde_json::json!({ "JacobiCn": [
+                child.clone(), serialized_computable(&Computable::zero())
+            ] })),
+        ),
+        (
+            "JacobiDn",
+            computable_from_internal(serde_json::json!({ "JacobiDn": [
+                child, serialized_computable(&Computable::zero())
+            ] })),
         ),
     ]
 }
@@ -1056,7 +1118,7 @@ fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
 fn every_computable_node_and_shared_constant_representation_crosses_predicates() {
     use hyperreal::Computable;
 
-    const NODE_NAMES: [&str; 60] = [
+    const NODE_NAMES: [&str; 70] = [
         "Int",
         "One",
         "Constant",
@@ -1117,6 +1179,16 @@ fn every_computable_node_and_shared_constant_representation_crosses_predicates()
         "NthRoot",
         "SincSmall",
         "CoscSmall",
+        "InverseIsometricLatitude",
+        "EllipticRf",
+        "EllipticRd",
+        "EllipticF",
+        "EllipticE",
+        "JacobiAmplitude",
+        "InverseEllipticE",
+        "JacobiSn",
+        "JacobiCn",
+        "JacobiDn",
     ];
     const SHARED_CONSTANT_NAMES: [&str; 18] = [
         "E",

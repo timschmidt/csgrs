@@ -81,9 +81,9 @@ mod ring_polynomial_tests {
             .collect();
         let mut recognition = RingRecognition::new(&atoms[0]);
         for atom in &atoms[..32] {
-            assert!(recognition.atom(atom).is_some());
+            assert!(recognition.atom(atom, RingRecognition::MAX_DEPTH).is_some());
         }
-        assert!(recognition.atom(&atoms[32]).is_none());
+        assert!(recognition.atom(&atoms[32], RingRecognition::MAX_DEPTH).is_none());
         let mut polynomial = RingPolynomial::default();
         let monomials: Vec<_> = (0_u8..12)
             .flat_map(|a| (a..12).map(move |b| vec![a, b]))

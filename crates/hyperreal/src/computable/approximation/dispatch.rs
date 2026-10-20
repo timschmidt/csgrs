@@ -101,6 +101,18 @@ impl Approximation {
             ),
             SincSmall(c) => sinc_small(signal, c, p),
             CoscSmall(c) => cosc_small(signal, c, p),
+            InverseIsometricLatitude { psi, log_axis_ratio } => {
+                inverse_isometric_latitude(signal, psi, log_axis_ratio, p)
+            }
+            EllipticRf(arguments) => elliptic_carlson(signal, arguments, false, p),
+            EllipticRd(arguments) => elliptic_carlson(signal, arguments, true, p),
+            EllipticF(arguments) => elliptic_legendre(signal, arguments, false, p),
+            EllipticE(arguments) => elliptic_legendre(signal, arguments, true, p),
+            JacobiAmplitude(arguments) => inverse_legendre(signal, arguments, false, p),
+            InverseEllipticE(arguments) => inverse_legendre(signal, arguments, true, p),
+            JacobiSn(arguments) => jacobi(signal, arguments, 0, p),
+            JacobiCn(arguments) => jacobi(signal, arguments, 1, p),
+            JacobiDn(arguments) => jacobi(signal, arguments, 2, p),
         }
     }
 }

@@ -118,6 +118,22 @@ impl Real {
     /// Earlier successful proofs retain their original paths and budgets.
     /// This attempt may also project rational quarter-turn atan trigonometry
     /// and apply `sin(a)^2 + cos(a)^2 = 1` for certified equal arguments.
+    /// After those attempts decline, a final attempt can use matching native Jacobi square relations,
+    /// square roots with nonnegative radicand evidence, and exact inverse
+    /// exponential relations. Its degree limit is 12; the other outer limits
+    /// also cover derived arithmetic parsing and substitution. Logarithm
+    /// replay and exponential matching have separate bounded helper budgets.
+    /// Rational relations clear the same proved-nonzero factor on both sides
+    /// of a quotient. A proposed rational constant is accepted only when its
+    /// complete residual has an exact zero proof. At most 32 parameter
+    /// quotients may remain opaque after their inverse domains are checked.
+    /// Derived atoms and parameter-basis choices live only for this query;
+    /// no refinement occurs and a declined attempt supplies no negative fact.
+    /// A completed final-attempt rational proof is retained in the existing
+    /// exact-reduction cache for subsequent arithmetic; the original
+    /// expression and its serialized form remain unchanged. This proof cache
+    /// shares the owning node's lifetime and is distinct from the temporary
+    /// per-query polynomial memoization described above.
     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
         if let Some(rational) = self.exact_rational() {
             return Some(rational);
@@ -129,7 +145,8 @@ impl Real {
             .or_else(|| computable.bounded_quotient_rational())
             .or_else(|| computable.bounded_root_square_rational())
             .or_else(|| computable.bounded_trig_congruence_rational())
-            .or_else(|| computable.bounded_relation_rational())?;
+            .or_else(|| computable.bounded_relation_rational())
+            .or_else(|| computable.bounded_native_relation_rational())?;
         Some(rational * &self.rational)
     }
 

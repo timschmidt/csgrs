@@ -196,6 +196,30 @@ pub(super) enum Approximation {
     // Keep new variants after NthRoot to preserve every existing binary index.
     SincSmall(Computable),
     CoscSmall(Computable),
+    // Unique inverse of ellipsoidal isometric latitude. Store the logarithm
+    // of b/a: exp(2*log_axis_ratio) is positive for every finite payload,
+    // including after serde replay. Append to preserve existing enum indices.
+    InverseIsometricLatitude {
+        psi: Computable,
+        log_axis_ratio: Computable,
+    },
+    // Append for binary serde compatibility. Domain-safe payload is
+    // [sqrt(x), ln(y), ln(z)] after the optional zero is permuted to x.
+    // Boxing preserves the size of the common expression variants.
+    EllipticRf(Box<[Computable; 3]>),
+    EllipticRd(Box<[Computable; 3]>),
+    // All real amplitudes, parameter m = 1-exp(log_complement) < 1.
+    // Keep appended: existing binary serialization indices remain unchanged.
+    EllipticF(Box<[Computable; 2]>),
+    EllipticE(Box<[Computable; 2]>),
+    // Unwrapped inverse integrals: [value, ln(1-m)], intrinsically in-domain.
+    JacobiAmplitude(Box<[Computable; 2]>),
+    InverseEllipticE(Box<[Computable; 2]>),
+    // Shared amplitude and ln(1-m), intrinsically valid for all finite payloads.
+    // Appended variants preserve the existing binary serialization indices.
+    JacobiSn(Box<[Computable; 2]>),
+    JacobiCn(Box<[Computable; 2]>),
+    JacobiDn(Box<[Computable; 2]>),
 }
 
 #[cfg(feature = "serde")]

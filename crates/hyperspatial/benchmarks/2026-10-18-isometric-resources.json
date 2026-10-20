@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/mnt/development/hyperspatial/csgrs/target/release/deps/inverse_isometric-9f7bbe19c323592c",
+    "--test"
+  ],
+  "status": 0,
+  "stdout": "operation,trial,iterations,elapsed_ns,completed,certainty\ninverse_isometric_ecef_local,0,1,36357085,1,Exact\n",
+  "stderr": "",
+  "wall_ns": 75854208,
+  "peak_rss_kib": 16128,
+  "executable_bytes": 2782672,
+  "executable_sha256": "a096b96bca34e9879b8c609fdfb0c378c720ab7a3cd3bdbca14a5a00654f3edf",
+  "source_revision": "456586bcea127fda16a99a2c5ddba577f5e79610",
+  "source_revision_role": "Base checkout; measured working-tree files are identified by their digests.",
+  "source_sha256": {
+    "Cargo.lock": "9c7eca5b48c8e0fbf222cc0c638932f6da49e84d21af5667b8a7a87761341a78",
+    "crates/hyperspatial/benches/inverse_isometric.rs": "f8bf7fef4e1d2a84d07eb715663720d62aae1fe1e64eba79430a4b416266859c",
+    "crates/hyperspatial/dev/inverse_isometric.rs": "62b96458691cea8b390c1ef4d5000288fa1365517e6f01be4c778249efeabd00",
+    "crates/hyperreal/src/computable/approximation/inverse_isometric_latitude.rs": "dac5cf57376379491d01fcf842436193e5ed09dc7f9af772fa86f4c5a52b93e7",
+    "crates/hyperreal/src/real/arithmetic/isometric_latitude.rs": "95ba14e4119d9b4834cafdf0bcbc34e37b9ca97f60309324575f8135d81f99e7"
+  },
+  "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "platform": "Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+  "cpu": "model name\t: Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+  "scope": "Fresh native process, one warmup plus one complete checked inverse/ECEF/local workflow; peak RSS is for this child only. No per-allocation or native heap/time bound; concurrent validation, no speedup claim."
+}

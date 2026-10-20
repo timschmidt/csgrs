@@ -8,7 +8,7 @@
 #
 # Usage: scripts/bench-reports.sh [crate ...]
 #   With no arguments, regenerates hyperreal, hyperlattice, hyperlimit,
-#   hypersolve and hypertri. Set BENCH_REPORTS_SKIP_CGAL=1 to skip
+#   hypersolve, hypertri and hyperspatial. Set BENCH_REPORTS_SKIP_CGAL=1 to skip
 #   hypersolve's CGAL comparison.
 set -euo pipefail
 
@@ -64,13 +64,26 @@ hypertri() {
   bench hypertri --bench dispatch_trace --features all-algorithms,runtime-select,dispatch-trace
 }
 
+hyperspatial() {
+  # This native workflow probe emits CSV on stdout instead of Criterion files.
+  bench hyperspatial --bench forward_local
+  bench hyperspatial --bench inverse
+  bench hyperspatial --bench mercator
+  bench hyperspatial --bench inverse_isometric
+  bench hyperspatial --bench ellipsoidal_mercator
+  bench hyperspatial --bench transverse_mercator
+  bench hyperreal --bench elliptic_integrals
+  bench hyperreal --bench legendre_integrals
+  bench hyperreal --bench bounded_parameter_encodings --features serde
+}
+
 crates=("$@")
 if ((${#crates[@]} == 0)); then
-  crates=(hyperreal hyperlattice hyperlimit hypersolve hypertri)
+  crates=(hyperreal hyperlattice hyperlimit hypersolve hypertri hyperspatial)
 fi
 for crate in "${crates[@]}"; do
   case "$crate" in
-    hyperreal | hyperlattice | hyperlimit | hypersolve | hypertri) "$crate" ;;
+    hyperreal | hyperlattice | hyperlimit | hypersolve | hypertri | hyperspatial) "$crate" ;;
     *)
       echo "no tracked benchmark reports for $crate" >&2
       exit 2

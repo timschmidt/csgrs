@@ -211,15 +211,18 @@ impl Computable {
         let high_ln_limit = signed::TWENTY_FOUR.deref();
 
         let low_prec = -4;
-        let (known_sign, planning_msd) = self.planning_sign_and_msd();
+        // A planning hint can drift through sums and reciprocals. Using one
+        // as a range certificate can recurse on an unchanged zero-shift
+        // operand; only certified magnitudes justify these rewrites.
+        let (known_sign, certified_msd) = self.certified_sign_and_msd();
         if known_sign == Some(Sign::Minus) {
             crate::trace_dispatch!("computable", "ln", "domain-negative-structural");
             panic!("ArithmeticException");
         }
-        if let Some(msd) = planning_msd.flatten() {
+        if let Some(msd) = certified_msd.flatten() {
             if known_sign == Some(Sign::Plus) && msd <= -2 {
-                // Rewriting ln(x) -> -ln(1/x) is safe once |x| <= 1/4;
-                // msd <= -2 guarantees that without extra probing.
+                // Rewriting ln(x) -> -ln(1/x) is safe below 1/2;
+                // a certified msd <= -2 guarantees that without probing.
                 crate::trace_dispatch!("computable", "ln", "small-inverse-rewrite-structural");
                 return self.inverse().ln().negate();
             }

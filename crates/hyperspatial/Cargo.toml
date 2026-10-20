@@ -1,0 +1,59 @@
+[package]
+name = "hyperspatial"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95.0"
+description = "Geospatial and astronomical coordinate transformations for the Hyper stack"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/timschmidt/csgrs"
+readme = "README.md"
+keywords = ["geodesy", "astronomy", "coordinates", "geometry", "transformations"]
+categories = ["science", "mathematics", "simulation"]
+# Unpublished while the development/admission plan is being implemented.
+publish = false
+
+[features]
+default = []
+# Optional native diagnostics; no alternative numeric backend.
+dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit/dispatch-trace", "hyperlattice/hyperreal-dispatch-trace"]
+
+[dependencies]
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+hyperreal = { version = "0.13.1", path = "../hyperreal", features = ["serde"] }
+proptest = "1.7.0"
+map_3d = "=0.1.7"
+serde_json = "=1.0.149"
+proj4rs = { version = "=0.2.1", default-features = false }
+
+[[bench]]
+name = "forward_local"
+harness = false
+
+[[bench]]
+name = "inverse"
+harness = false
+
+[[example]]
+name = "e1_probe"
+required-features = ["dispatch-trace"]
+
+[[bench]]
+name = "mercator"
+harness = false
+
+[[bench]]
+name = "inverse_isometric"
+harness = false
+
+[[bench]]
+name = "ellipsoidal_mercator"
+harness = false
+
+[[bench]]
+name = "transverse_mercator"
+harness = false

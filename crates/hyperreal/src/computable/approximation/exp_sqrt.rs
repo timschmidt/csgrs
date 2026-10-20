@@ -6,6 +6,17 @@ fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // can fail. Serialized nodes also reach this boundary directly. Prove the
     // small-series domain before its coarse-zero shortcut or fixed error budget.
     let rough = (!c.exp_argument_is_known_small()).then(|| c.approx_signal(signal, -4));
+    // |16*c - rough| < 1. If rough < 16*min(p,0), then c < min(p,0)
+    // and 0 < exp(c) < 2^p, since e > 2. Answer this precision request
+    // without constructing a magnitude-dependent nested square graph. The
+    // represented exponential and its strict positive sign remain unchanged.
+    // BigInt arithmetic also covers precision endpoints without overflow.
+    if rough
+        .as_ref()
+        .is_some_and(|value| value < &(BigInt::from(p.min(0)) << 4))
+    {
+        return Zero::zero();
+    }
     if let Some(rough) = rough.filter(|value| value.magnitude() > signed::EIGHT.magnitude()) {
         if should_stop(signal) {
             return Zero::zero();

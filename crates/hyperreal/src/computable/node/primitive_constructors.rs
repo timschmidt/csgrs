@@ -16,6 +16,7 @@ impl Computable {
                 (&'a Computable, &'a Computable),
                 (&'a Computable, &'a Computable),
             ),
+            Three([(&'a Computable, &'a Computable); 3]),
         }
 
         #[inline(always)]
@@ -154,6 +155,21 @@ impl Computable {
                 {
                     NodeComparison::One((&left.p, &right.p))
                 }
+                (
+                    Approximation::InverseIsometricLatitude { psi: l, log_axis_ratio: lr },
+                    Approximation::InverseIsometricLatitude { psi: r, log_axis_ratio: rr },
+                ) => NodeComparison::Two((l, r), (lr, rr)),
+                (Approximation::EllipticRf(left), Approximation::EllipticRf(right))
+                | (Approximation::EllipticRd(left), Approximation::EllipticRd(right)) =>
+                    NodeComparison::Three(std::array::from_fn(|i| (&left[i], &right[i]))),
+                (Approximation::EllipticF(left), Approximation::EllipticF(right))
+                | (Approximation::EllipticE(left), Approximation::EllipticE(right))
+                | (Approximation::JacobiAmplitude(left), Approximation::JacobiAmplitude(right))
+                | (Approximation::JacobiSn(left), Approximation::JacobiSn(right))
+                | (Approximation::JacobiCn(left), Approximation::JacobiCn(right))
+                | (Approximation::JacobiDn(left), Approximation::JacobiDn(right))
+                | (Approximation::InverseEllipticE(left), Approximation::InverseEllipticE(right)) =>
+                    NodeComparison::Two((&left[0], &right[0]), (&left[1], &right[1])),
                 _ => NodeComparison::Decided(false),
             }
         }
@@ -173,6 +189,15 @@ impl Computable {
             match compare_nodes(left, right) {
                 NodeComparison::Decided(equal) => Some(equal),
                 NodeComparison::One((left, right)) => compare_bounded(left, right, remaining),
+                NodeComparison::Three(pairs) => {
+                    for (left, right) in pairs {
+                        match compare_bounded(left, right, remaining) {
+                            Some(true) => {},
+                            other => return other,
+                        }
+                    }
+                    Some(true)
+                }
                 NodeComparison::Two((left, left_rhs), (right, right_rhs)) => {
                     match compare_bounded(left, left_rhs, remaining) {
                         Some(true) => compare_bounded(right, right_rhs, remaining),
@@ -212,6 +237,7 @@ impl Computable {
                     }
                     match children {
                         NodeComparison::One(pair) => pending.push(pair),
+                        NodeComparison::Three(pairs) => pending.extend(pairs.into_iter().rev()),
                         NodeComparison::Two(first, second) => {
                             pending.push(second);
                             pending.push(first);

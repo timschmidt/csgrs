@@ -3596,7 +3596,9 @@ impl Rational {
         positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
     ) -> Option<Self> {
-        debug_assert!(FACTORS > 0);
+        if FACTORS == 0 {
+            return Some(Self::signed_product_sum(positive_terms, terms));
+        }
         let mut signs = [NoSign; TERMS];
         let mut nonzero_count = 0_usize;
         let mut shared_denominator = None::<&BigUint>;
@@ -4603,7 +4605,12 @@ impl Rational {
         // for exact cofactor and determinant kernels, while predicate and
         // triangulation crates should consume only the resulting exact signs or
         // values through their own abstraction boundaries.
-        debug_assert!(FACTORS > 0);
+        // An empty product is one. Handle that identity before schedules
+        // which inspect a factor or assume a nonempty denominator plan.
+        if FACTORS == 0 {
+            let positive = positive_terms.iter().filter(|sign| **sign).count();
+            return Self::from_bigint(BigInt::from(positive) - BigInt::from(TERMS - positive));
+        }
         let mut signs = [NoSign; TERMS];
         let mut nonzero_count = 0_usize;
         for i in 0..TERMS {
@@ -4954,7 +4961,10 @@ impl Rational {
         positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
     ) -> Ordering {
-        debug_assert!(FACTORS > 0);
+        if FACTORS == 0 {
+            let positive = positive_terms.iter().filter(|sign| **sign).count();
+            return positive.cmp(&(TERMS - positive));
+        }
         // Expanded affine and 2D orientation determinants have four or six
         // pair products and overwhelmingly stay in the word-sized dyadic
         // envelope. Use the fourth affine factor as a conservative admission

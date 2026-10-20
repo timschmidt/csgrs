@@ -158,6 +158,11 @@ All entries below are methods on `Real`:
 | Trigonometric | `sin`, `cos`, `tan`, `cot`, `sin_pi`, `cos_pi`, `tan_pi`, `cot_pi`, `sinc`, `sinc_pi`, `cosc` |
 | Inverse trigonometric | `asin`, `acos`, `atan`, `atan2` |
 | Hyperbolic | `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh` |
+| Ellipsoidal latitude | `inverse_isometric_latitude` (positive polar/equatorial axis ratio; exact retained inverse equation) |
+| Elliptic integrals | `Real::elliptic_rf`, `Real::elliptic_rd` (Carlson integrals on their real nonnegative domains; exact retained integrals with certified refinement) |
+| Legendre elliptic integrals | `Real::elliptic_k`, `Real::elliptic_e_complete`, `elliptic_f`, `elliptic_e` (parameter m < 1; incomplete integrals retain every real, unwrapped amplitude) |
+| Inverse Legendre integrals | `jacobi_amplitude`, `inverse_elliptic_e` (parameter m < 1; continuous unwrapped inverses retaining their defining equations) |
+| Jacobi functions | `jacobi_sncndn` (shared exact amplitude, parameter m < 1, positive dn and retained square-sum relations); `jacobi_epsilon` (E of the continuous unwrapped amplitude, preserving additive quasi-periods); `jacobi_sncndn_epsilon` (all four outputs sharing one exact amplitude) |
 | Cancellation helpers | `sqrt1pm1`, `sqrt1m1`, `hypot_minus` |
 | Fused algebra | `mul_add`, `sum_products`, `diff_of_products`, `eval_poly`, `eval_rational_poly` |
 | Vector-length helpers | `hypot2`, `hypot3`, `dot2_refs`, `dot3_refs`, `dot4_refs` |

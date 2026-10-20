@@ -1,0 +1,224 @@
+name: hyperspatial
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "crates/hyperspatial/**"
+      - "crates/hyperreal/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperspatial.yml"
+  pull_request:
+    paths:
+      - "crates/hyperspatial/**"
+      - "crates/hyperreal/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlimit/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperspatial.yml"
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  checks:
+    name: Native checks (${{ matrix.toolchain }})
+    runs-on: ubuntu-latest
+    # Full unoptimized spatial matrices include both signs of the complex
+    # Jacobi pair corpus, followed by native and benchmark checks.
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: [stable, 1.95.0]
+    env:
+      RUSTUP_TOOLCHAIN: ${{ matrix.toolchain }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal --component clippy --component rustfmt
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: hyperspatial-${{ matrix.toolchain }}
+      - name: Run native checks and source consumer
+        run: bash crates/hyperspatial/scripts/checks.sh
+      - name: Run optimized workflow probes
+        run: cargo bench --locked -p hyperspatial --benches
+      - name: Verify native elliptic integrals and run completion-checked references
+        run: |
+          cargo test --locked -p hyperreal --test elliptic_integrals --test legendre_integrals --test inverse_legendre --test jacobi --test jacobi_prepared --test atan2_right_half_plane --test bounded_parameter_encodings --features serde
+          cargo test --locked -p hyperlattice --test complex_jacobi --test jacobi_epsilon --test complex_atanh --all-features
+          cargo test --locked -p hyperlimit --test real_representations --all-features
+          cargo bench --locked -p hyperreal --bench elliptic_integrals
+          cargo bench --locked -p hyperreal --bench legendre_integrals
+          cargo bench --locked -p hyperreal --bench inverse_legendre
+          cargo bench --locked -p hyperreal --bench jacobi
+          cargo bench --locked -p hyperlattice --bench complex_jacobi
+          cargo bench --locked -p hyperlattice --bench jacobi_epsilon
+          cargo bench --locked -p hyperlattice --bench complex_atanh
+          cargo bench --locked -p hyperreal --bench bounded_parameter_encodings --features serde
+
+  representations:
+    name: Scalar representations and caches
+    runs-on: ubuntu-latest
+    # Preserve every spatial test in all four primitive-cache configurations.
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal --component clippy
+      - name: Exercise scalar configurations
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: bash crates/hyperspatial/scripts/representation-checks.sh
+
+  directed:
+    name: Directed cases and ASan
+    runs-on: ubuntu-latest
+    timeout-minutes: 225
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust and fuzz driver
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup toolchain install nightly --profile minimal
+          cargo +stable install --locked cargo-fuzz --version 0.13.2
+      - name: Select costly valid cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py
+      - name: Select projection cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload mercator --output target/hyperspatial-directed-mercator
+      - name: Select inverse-isometric cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload inverse_isometric --output target/hyperspatial-directed-isometric
+      - name: Select ellipsoidal projection cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload ellipsoidal_mercator --output target/hyperspatial-directed-ellipsoidal
+      - name: Select transverse chart cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload transverse_mercator --output target/hyperspatial-directed-transverse
+      - name: Select elliptic cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload elliptic --output target/hyperspatial-directed-elliptic
+      - name: Select inverse-integral cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload inverse_legendre --output target/hyperspatial-directed-inverse-legendre
+      - name: Select Jacobi cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload jacobi --output target/hyperspatial-directed-jacobi
+      - name: Select complex Jacobi cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload complex_jacobi --output target/hyperspatial-directed-complex-jacobi
+      - name: Select epsilon cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload jacobi_epsilon --output target/hyperspatial-directed-epsilon
+      - name: Select complex atanh cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload complex_atanh --output target/hyperspatial-directed-atanh
+      - name: Select bounded-parameter replay cases in independent representation buckets
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: python3 crates/hyperspatial/scripts/directed.py --workload parameter_encodings --output target/hyperspatial-directed-encodings
+      - name: Mutate and replay with address sanitizer
+        run: python3 crates/hyperspatial/scripts/fuzz-smoke.py --selected-corpus target/hyperspatial-directed/corpus --mercator-corpus target/hyperspatial-directed-mercator/corpus --isometric-corpus target/hyperspatial-directed-isometric/corpus --ellipsoidal-corpus target/hyperspatial-directed-ellipsoidal/corpus --transverse-corpus target/hyperspatial-directed-transverse/corpus --elliptic-corpus target/hyperspatial-directed-elliptic/corpus --inverse-legendre-corpus target/hyperspatial-directed-inverse-legendre/corpus --jacobi-corpus target/hyperspatial-directed-jacobi/corpus --complex-jacobi-corpus target/hyperspatial-directed-complex-jacobi/corpus --epsilon-corpus target/hyperspatial-directed-epsilon/corpus --atanh-corpus target/hyperspatial-directed-atanh/corpus --encodings-corpus target/hyperspatial-directed-encodings/corpus
+      - name: Retain campaign evidence and failure inputs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: hyperspatial-directed-evidence
+          path: |
+            target/hyperspatial-directed/
+            target/hyperspatial-directed-mercator/
+            target/hyperspatial-directed-isometric/
+            target/hyperspatial-directed-ellipsoidal/
+            target/hyperspatial-directed-transverse/
+            target/hyperspatial-directed-elliptic/
+            target/hyperspatial-directed-inverse-legendre/
+            target/hyperspatial-directed-jacobi/
+            target/hyperspatial-directed-complex-jacobi/
+            target/hyperspatial-directed-epsilon/
+            target/hyperspatial-directed-atanh/
+            target/hyperspatial-directed-encodings/
+            target/hyperspatial-asan/
+            crates/hyperspatial/fuzz/artifacts/
+          retention-days: 30
+
+  wasm:
+    name: WASM library build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust and WASM target
+        run: rustup toolchain install stable --profile minimal --component clippy --target wasm32-unknown-unknown
+      - name: Check native library on WASM
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: cargo check --locked -p hyperspatial --lib --all-features --target wasm32-unknown-unknown
+      - name: Lint native library on WASM
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: cargo clippy --locked -p hyperspatial --lib --all-features --target wasm32-unknown-unknown -- -D warnings
+
+  coverage:
+    name: Production coverage
+    runs-on: ubuntu-latest
+    # Instrumentation also covers complex continuation, its exact proof
+    # helpers and the full scalar-pair spatial corpus.
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust and LLVM tools
+        run: rustup toolchain install stable --profile minimal --component llvm-tools-preview
+      - name: Measure production coverage
+        env:
+          RUSTUP_TOOLCHAIN: stable
+          # Run the full corpus with the same profile as the cache matrix.
+          # Native checks separately retain unoptimized debug execution.
+          CARGO_PROFILE_TEST_OPT_LEVEL: "1"
+          CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: "true"
+          CARGO_PROFILE_TEST_OVERFLOW_CHECKS: "true"
+        run: |
+          python3 crates/hyperspatial/scripts/coverage-gates.py
+          python3 crates/hyperspatial/scripts/test_function_coverage.py
+          python3 crates/hyperspatial/scripts/coverage.py

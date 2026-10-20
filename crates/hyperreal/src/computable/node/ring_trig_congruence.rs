@@ -74,7 +74,7 @@ impl<'a> RingRecognition<'a> {
             return None;
         }
         let index = self.atoms.len() as u8;
-        self.atoms.push(value);
+        self.atoms.push(std::borrow::Cow::Borrowed(value));
         self.trig_arguments.as_mut()?.push((index, argument));
         if self.rational_squares.is_some() {
             self.register_unit_circle_pair(index)?;

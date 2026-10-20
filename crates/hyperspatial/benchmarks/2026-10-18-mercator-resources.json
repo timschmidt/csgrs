@@ -1,0 +1,35 @@
+{
+  "command": [
+    "target/release/deps/mercator-1e3aa8781730a368",
+    "--test"
+  ],
+  "elapsed_seconds": 0.004483303986489773,
+  "peak_rss_kib": 16620,
+  "user_seconds": 0.004144,
+  "system_seconds": 0.0,
+  "executable_bytes": 2712424,
+  "executable_sha256": "6978f4f546979f8c7af887a43b6e3fd0fef6d7cf05ce6985b735562af5483768",
+  "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "platform": "Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+  "cpu": "Intel Xeon E5-2680 v2 @ 2.80GHz",
+  "source_revision": "ce66e164f94931c8b3e3a343d56fd5b2a7cbda98",
+  "source_sha256": {
+    "crates/hyperspatial/src/context.rs": "7e95d4bb303d2a46a60cc38be21c39690b0cfe738864cee5a62e549b4fe5f9cb",
+    "crates/hyperspatial/src/error.rs": "96a623c8b6d9004b1ea4cfe2527c4620b7c8c8b2f31cd8955d7ad7bbc7da41f2",
+    "crates/hyperspatial/src/evidence.rs": "aade1f8c5df8ba4befc5141aaa54a6d325b1ac6e8afb2a3a9b89b46750fc7f3a",
+    "crates/hyperspatial/src/geodesy.rs": "c41ce3c462432ed61a76f7a6c29208e95513f9efe658d3463a379452549e1d00",
+    "crates/hyperspatial/src/inverse.rs": "c15c2e789e04cd90cf7d1e10bc811324397f1fd1b3045ab2aad1991b2bcdd399",
+    "crates/hyperspatial/src/lib.rs": "fef2919796254a42691305519be2a801c0dc259bd06788c044bf199156fe41a4",
+    "crates/hyperspatial/src/local.rs": "8d174240cdd918d1c80dd417b9ab767a7353439b4e13ca0f86c76e7f52e6425b",
+    "crates/hyperspatial/src/mercator.rs": "32acee45e890d4d34b47c358c3414a776a8d9c4d073d2b7c261b831b2aebfca8",
+    "crates/hyperspatial/src/units.rs": "6657e3ae1a08a9509f79741ca1cd355a8b0d0bbf5b87ee0965482c34e7cfa89f",
+    "crates/hyperspatial/benches/mercator.rs": "4cd6b03411005588fdb13ec643e1b130d01cfd8339425fbbfcab6541916d43b3",
+    "Cargo.lock": "9c7eca5b48c8e0fbf222cc0c638932f6da49e84d21af5667b8a7a87761341a78"
+  },
+  "profile": "release; default features; pinned development dependencies",
+  "policy": "STRICT",
+  "cache": "fresh process, prepared projection, one warmup and one measured full workflow",
+  "limitations": "Focused native cost observation. No comparative speed or heap-allocation bound. Peak RSS includes process/runtime. Concurrent validation may affect timing.",
+  "stdout": "operation,trial,iterations,elapsed_ns,completed,certainty\nmercator_inverse_local_display,0,1,1144008,1,Exact\n",
+  "stderr": ""
+}

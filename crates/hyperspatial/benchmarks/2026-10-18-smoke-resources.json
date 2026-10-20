@@ -1,0 +1,15 @@
+{
+  "command": [
+    "target/release/deps/forward_local-dace2fa623a22e3c",
+    "--test"
+  ],
+  "exit_code": 0,
+  "elapsed_ns": 3557054,
+  "child_peak_rss_kib": 11220,
+  "executable_bytes": 2528024,
+  "stdout": "operation,trial,iterations,elapsed_ns,completed,certainty\nprepare,0,1,298023,1,Exact\nforward_local_display,0,1,462368,1,Exact\n",
+  "rustc": "1.99.0 (b940084d7 2026-09-28)",
+  "host": "x86_64-unknown-linux-gnu",
+  "cpu": "Intel Xeon E5-2680 v2 @ 2.80GHz",
+  "scope": "one fresh process, one prepare and one forward/local/display iteration; process RSS is not an allocation count or a proven memory bound"
+}

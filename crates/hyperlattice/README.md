@@ -41,7 +41,7 @@ belongs to an exact or explicitly uncertain predicate.
 
 | Type | Purpose |
 | --- | --- |
-| `Complex` | Exact complex arithmetic and integer powers. |
+| `Complex` | Exact complex arithmetic, integer powers and Jacobi sn/cn/dn and epsilon for real m < 1. |
 | `Vector2`, `Vector3`, `Vector4` | Fixed-size exact vectors with dot, norm, interpolation, and checked normalization operations. |
 | `Point2`, `Point3` | Affine points kept distinct from displacement vectors. |
 | `Matrix3`, `Matrix4` | Fixed-size exact matrices, transforms, determinants, and checked inverses. |
@@ -53,6 +53,13 @@ belongs to an exact or explicitly uncertain predicate.
 
 `Rational`, `Real`, and their principal structural types are re-exported from
 Hyperreal for convenience.
+
+The workspace's `Complex::jacobi_sncndn(&m)` continues native real Jacobi
+functions to complex arguments, including negative real parameters. Known
+poles fail with `DivideByZero`; an unproved denominator fails with `UnknownZero`.
+The components retain `Real` expressions and exact norm relations. Complex dn
+can be zero or negative. See the [admission](docs/admission-complex-jacobi.md)
+for the domain and verification contract. This addition has not been published.
 
 ## Quick start
 
@@ -92,6 +99,21 @@ the test suite, and compared with the README block.
 
 ## API guide
 
+`Complex::jacobi_epsilon(&m)` supplies the meromorphic primitive of `dn²`
+that vanishes at zero. It preserves additive quasi-periods and supports the
+same real parameter domain and pole diagnostics as the triplet. Its argument
+is the Jacobi argument; the real-axis implementation uses
+`Real::jacobi_epsilon`, composing Legendre E with the continuous amplitude.
+See the [epsilon admission](docs/admission-jacobi-epsilon.md) for the native
+construction and independent development oracle.
+
+`Complex::atanh()` evaluates the principal analytic inverse hyperbolic tangent.
+It excludes the real cuts outside (-1,1), reports the poles as `Infinity`,
+and keeps unresolved domain decisions typed. Components remain native Real
+expressions. The [atanh admission](docs/admission-complex-atanh.md) records
+independent series and reciprocal references, cut-bank tests, and the
+[checked scalar quadrant extension](../hyperreal/docs/admission-atan2-right-half-plane.md).
+
 ### Scalar and complex operations
 
 | Task | API |
@@ -102,7 +124,7 @@ the test suite, and compared with the README block.
 | Structural checked reciprocal | `reciprocal_checked`, `reciprocal_ref_checked` |
 | Elementary functions | Native `Real` methods: `sqrt`, `exp`, `ln`, `log10`, `sin`, `cos`, `tan`, `sinh`, `cosh`, `tanh` |
 | Inverse functions | Native `Real` methods: `asin`, `acos`, `atan`, `asinh`, `acosh`, `atanh` |
-| Complex values | `Complex::new`, `zero`, `one`, `i`, `conjugate`, `norm_squared`, `reciprocal`, `powi`, checked division variants |
+| Complex values | `Complex::new`, `zero`, `one`, `i`, `conjugate`, `norm_squared`, `reciprocal`, `powi`, checked division variants, `atanh` |
 
 Hyperreal owns scalar arithmetic, domain checks, and structural type names;
 Hyperlattice does not wrap or rename those APIs. Attach cancellation directly

@@ -29,6 +29,65 @@ mod certified_planning_tests {
     }
 
     #[test]
+    fn logarithm_ignores_inexact_magnitude_hints() {
+        crate::mpfr_test::cleanup_on_thread_exit();
+        for hint in [-32, -2, 2, 32] {
+            for numerator in [1, 3, 5, 16] {
+                // Multiplication retains the exact value q while preventing
+                // the rational-leaf shortcut. These are legal planning hints,
+                // not certificates about q's actual magnitude.
+                let value = Computable {
+                    internal: Arc::new(Node::new(
+                        Approximation::Multiply(
+                            Computable::rational(Rational::fraction(numerator, 4).unwrap()),
+                            Computable::one(),
+                        ),
+                        BoundCache::Valid(BoundInfo::NonZero {
+                            sign: Some(Sign::Plus),
+                            msd: Some(hint),
+                            exact_msd: false,
+                        }),
+                        ExactSignCache::Valid(Sign::Plus),
+                    )),
+                    signal: None,
+                };
+                let logarithm = value.ln();
+                let mut lower = Float::with_val(256, numerator);
+                lower /= 4;
+                let mut upper = lower.clone();
+                lower.ln_round(Round::Down);
+                upper.ln_round(Round::Up);
+                for precision in [-32, -160, -32] {
+                    let mut scaled_lower = lower.clone();
+                    let mut scaled_upper = upper.clone();
+                    scaled_lower <<= -precision;
+                    scaled_upper <<= -precision;
+                    assert_enclosed(logarithm.approx(precision), scaled_lower, scaled_upper,
+                        "logarithm with an inexact magnitude hint");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn symbolic_jacobi_parameter_logarithm_remains_consumable() {
+        use crate::Real;
+        let pi = Real::pi();
+        let first = &pi * &pi * Real::e();
+        let second = Real::new(Rational::fraction(1, 5).unwrap()).sin_pi();
+        let parameter = (&first / (Real::from(4) * (&first + &second))).unwrap();
+        // Preserve the complementary construction from the original spatial
+        // failure. The generic logarithm must consume this exact expression.
+        let complement = Real::one() - &parameter;
+        let input = Real::one() - complement;
+        let logarithm = input.clone().ln().unwrap();
+        let residual = logarithm.exp().unwrap() - input;
+        let [lower, upper] = residual.certified_rational_interval(-160).unwrap();
+        assert!(lower <= Rational::zero() && upper >= Rational::zero());
+        assert!(upper - lower < Rational::fraction(1, 1_u64 << 60).unwrap());
+    }
+
+    #[test]
     fn chained_sum_product_uses_certified_precision() {
         crate::mpfr_test::cleanup_on_thread_exit();
         for terms in [32, 128, 512, 1024] {

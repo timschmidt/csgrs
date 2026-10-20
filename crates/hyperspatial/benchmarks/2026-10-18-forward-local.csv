@@ -1,0 +1,11 @@
+operation,trial,iterations,elapsed_ns,completed,certainty
+prepare,0,100,6504170,100,Exact
+forward_local_display,0,100,42688585,100,Exact
+prepare,1,100,5205483,100,Exact
+forward_local_display,1,100,42147179,100,Exact
+prepare,2,100,5222969,100,Exact
+forward_local_display,2,100,42078727,100,Exact
+prepare,3,100,5202272,100,Exact
+forward_local_display,3,100,42102278,100,Exact
+prepare,4,100,5204951,100,Exact
+forward_local_display,4,100,42145303,100,Exact

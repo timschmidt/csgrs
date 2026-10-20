@@ -60,6 +60,22 @@ name = "borrowed_ops"
 harness = false
 
 [[bench]]
+name = "elliptic_integrals"
+harness = false
+
+[[bench]]
+name = "inverse_legendre"
+harness = false
+
+[[bench]]
+name = "jacobi"
+harness = false
+
+[[bench]]
+name = "legendre_integrals"
+harness = false
+
+[[bench]]
 name = "dispatch_trace"
 harness = false
 required-features = ["dispatch-trace"]
@@ -96,3 +112,8 @@ harness = false
 [[bench]]
 name = "real_representations"
 harness = false
+
+[[bench]]
+name = "bounded_parameter_encodings"
+harness = false
+required-features = ["serde"]

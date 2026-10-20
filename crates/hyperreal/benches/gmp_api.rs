@@ -21,6 +21,14 @@ use rug::{
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
 
+#[path = "../tests/support/inverse_legendre_oracle.rs"]
+mod inverse_legendre_oracle;
+use inverse_legendre_oracle as inverse_oracle;
+#[path = "../tests/support/jacobi_oracle.rs"]
+mod jacobi_oracle;
+#[path = "../tests/support/legendre_oracle.rs"]
+mod legendre_oracle;
+
 const GMP_PRECISION: u32 = 128;
 
 fn real(value: f64) -> Real {
@@ -192,6 +200,43 @@ fn gmp_erfinv(target: Float) -> Float {
 fn gmp_standard_normal_quantile(probability: Float) -> Float {
     let erf_argument = probability * 2 - 1;
     gmp_sqrt_two() * gmp_erfinv(erf_argument)
+}
+
+// Independent benchmark oracle: direct latitude bisection at 256 working
+// bits, then a 128-bit result. This is a rounded value, not Hyperreal's
+// retained exact equation or certificate; timings cannot compare those claims.
+fn gmp_inverse_isometric_latitude(psi: Float, axis_ratio: Float) -> Float {
+    let psi = Float::with_val(256, psi);
+    let square = Float::with_val(256, axis_ratio).square();
+    let oblate = square < 1;
+    let eccentricity = (Float::with_val(256, 1) - square).abs().sqrt();
+    let mut hi: Float = Float::with_val(256, Constant::Pi) / 2;
+    let mut lo = -hi.clone();
+    for _ in 0..160 {
+        let midpoint: Float = Float::with_val(256, &lo + &hi) / 2;
+        let argument = Float::with_val(256, &eccentricity * midpoint.clone().sin());
+        let correction = Float::with_val(
+            256,
+            &eccentricity
+                * if oblate {
+                    argument.atanh()
+                } else {
+                    argument.atan()
+                },
+        );
+        let value = if oblate {
+            midpoint.clone().tan().asinh() - correction
+        } else {
+            midpoint.clone().tan().asinh() + correction
+        };
+        if value < psi {
+            lo = midpoint;
+        } else {
+            hi = midpoint;
+        }
+    }
+    let midpoint: Float = (lo + hi) / 2;
+    Float::with_val(GMP_PRECISION, midpoint)
 }
 
 fn gmp_hermite_probabilists(n: usize, x: &Float) -> Float {
@@ -662,6 +707,225 @@ fn bench_real_arithmetic_api(c: &mut Criterion) {
 
 fn bench_real_elementary_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_real_elementary_api");
+
+    let argument: Real = "0.75".parse().unwrap();
+    let parameter: Real = "0.5".parse().unwrap();
+    let native = || argument.clone().jacobi_epsilon(&parameter).unwrap();
+    let reference = || {
+        let amplitude = inverse_legendre_oracle::inverse(&argument, &parameter, false);
+        legendre_oracle::series(&legendre_oracle::native(amplitude), &parameter)[1].clone()
+    };
+    let [lo, hi] = (native() - legendre_oracle::native(reference()))
+        .certified_rational_interval(-144)
+        .unwrap();
+    let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+    assert!(lo >= -tolerance.clone() && hi <= tolerance);
+    group.bench_function(
+        BenchmarkId::new("hyperreal_evaluated_p128", "jacobi_epsilon"),
+        |b| b.iter(|| black_box(native().certified_rational_interval(-128).unwrap())),
+    );
+    group.bench_function(
+        BenchmarkId::new("mpfr1024_point_reference", "jacobi_epsilon"),
+        |b| b.iter(|| black_box(reference())),
+    );
+
+    let native = || {
+        let (sn, cn, dn, epsilon) = argument.clone().jacobi_sncndn_epsilon(&parameter).unwrap();
+        [sn, cn, dn, epsilon]
+    };
+    let reference = || {
+        let [sn, cn, dn] = jacobi_oracle::values(&argument, &parameter);
+        let amplitude = inverse_legendre_oracle::inverse(&argument, &parameter, false);
+        let epsilon =
+            legendre_oracle::series(&legendre_oracle::native(amplitude), &parameter)[1].clone();
+        [sn, cn, dn, epsilon]
+    };
+    for (actual, expected) in native().into_iter().zip(reference()) {
+        let [lo, hi] = (actual - legendre_oracle::native(expected))
+            .certified_rational_interval(-144)
+            .unwrap();
+        let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+        assert!(lo >= -tolerance.clone() && hi <= tolerance);
+    }
+    group.bench_function(
+        BenchmarkId::new("hyperreal_evaluated_p128", "jacobi_sncndn_epsilon"),
+        |b| b.iter(|| black_box(native().map(|v| v.certified_rational_interval(-128).unwrap()))),
+    );
+    group.bench_function(
+        BenchmarkId::new("mpfr1024_point_reference", "jacobi_sncndn_epsilon"),
+        |b| b.iter(|| black_box(reference())),
+    );
+
+    let native = || {
+        let (sn, cn, dn) = argument.clone().jacobi_sncndn(&parameter).unwrap();
+        [sn, cn, dn]
+    };
+    let reference = || jacobi_oracle::values(&argument, &parameter);
+    for (actual, expected) in native().into_iter().zip(reference()) {
+        let [lo, hi] = (actual - legendre_oracle::native(expected))
+            .certified_rational_interval(-144)
+            .unwrap();
+        let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+        assert!(lo >= -tolerance.clone() && hi <= tolerance);
+    }
+    group.bench_function(
+        BenchmarkId::new("hyperreal_evaluated_p128", "jacobi_sncndn"),
+        |b| b.iter(|| black_box(native().map(|v| v.certified_rational_interval(-128).unwrap()))),
+    );
+    group.bench_function(
+        BenchmarkId::new("mpfr1024_point_reference", "jacobi_sncndn"),
+        |b| b.iter(|| black_box(reference())),
+    );
+
+    for (name, second) in [("jacobi_amplitude", false), ("inverse_elliptic_e", true)] {
+        let parameter: Real = "0.5".parse().unwrap();
+        let argument: Real = "0.75".parse().unwrap();
+        let native = || {
+            if second {
+                argument.clone().inverse_elliptic_e(&parameter)
+            } else {
+                argument.clone().jacobi_amplitude(&parameter)
+            }
+            .unwrap()
+        };
+        let reference = || inverse_legendre_oracle::inverse(&argument, &parameter, second);
+        let expected = legendre_oracle::native(reference());
+        let [lo, hi] = (native() - expected)
+            .certified_rational_interval(-144)
+            .unwrap();
+        let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+        assert!(lo >= -tolerance.clone() && hi <= tolerance);
+        group.bench_function(BenchmarkId::new("hyperreal_evaluated_p128", name), |b| {
+            b.iter(|| black_box(native().certified_rational_interval(-128).unwrap()))
+        });
+        group.bench_function(BenchmarkId::new("mpfr1024_point_reference", name), |b| {
+            b.iter(|| black_box(reference()))
+        });
+    }
+
+    // All four native APIs are evaluated, with independent AGM / integrand
+    // series point references. These different contracts imply no speed ratio.
+    for name in [
+        "elliptic_k",
+        "elliptic_e_complete",
+        "elliptic_f",
+        "elliptic_e",
+    ] {
+        let parameter: Real = "0.5".parse().unwrap();
+        let amplitude: Real = "0.75".parse().unwrap();
+        let native = || {
+            match name {
+                "elliptic_k" => Real::elliptic_k(&parameter),
+                "elliptic_e_complete" => Real::elliptic_e_complete(&parameter),
+                "elliptic_f" => amplitude.clone().elliptic_f(&parameter),
+                _ => amplitude.clone().elliptic_e(&parameter),
+            }
+            .unwrap()
+        };
+        let reference = || {
+            let values = if matches!(name, "elliptic_k" | "elliptic_e_complete") {
+                legendre_oracle::complete(&(Real::one() - &parameter))
+            } else {
+                legendre_oracle::series(&amplitude, &parameter)
+            };
+            values[usize::from(matches!(name, "elliptic_e" | "elliptic_e_complete"))].clone()
+        };
+        let expected = legendre_oracle::native(reference());
+        let [lo, hi] = (native() - expected)
+            .certified_rational_interval(-144)
+            .unwrap();
+        let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+        assert!(lo >= -tolerance.clone() && hi <= tolerance);
+        group.bench_function(BenchmarkId::new("hyperreal_evaluated_p128", name), |b| {
+            b.iter(|| black_box(native().certified_rational_interval(-128).unwrap()))
+        });
+        group.bench_function(BenchmarkId::new("mpfr1024_point_reference", name), |b| {
+            b.iter(|| black_box(reference()))
+        });
+    }
+
+    // Carlson circular limits RF(0,1,1)=pi/2 and RD(0,1,1)=3*pi/4.
+    // Both native rows force refinement. MPFR evaluates the independent
+    // circular identity, not a general Carlson implementation; the standalone
+    // elliptic_integrals bench additionally compares noncircular RF with AGM.
+    for (name, second) in [("elliptic_rf", false), ("elliptic_rd", true)] {
+        let native = || {
+            if second {
+                Real::elliptic_rd(&Real::zero(), &Real::one(), &Real::one())
+            } else {
+                Real::elliptic_rf(&Real::zero(), &Real::one(), &Real::one())
+            }
+            .unwrap()
+        };
+        let oracle = || -> Float {
+            Float::with_val(GMP_PRECISION, Constant::Pi) * if second { 3 } else { 1 }
+                / if second { 4 } else { 2 }
+        };
+        let expected = oracle().to_rational().unwrap();
+        let expected: Real = expected.to_string().parse().unwrap();
+        let [lo, hi] = (native() - expected)
+            .certified_rational_interval(-144)
+            .unwrap();
+        let tolerance = Rational::fraction(1, 2).unwrap().powi(124.into()).unwrap();
+        assert!(lo >= -tolerance.clone() && hi <= tolerance);
+        group.bench_function(BenchmarkId::new("hyperreal_evaluated_p128", name), |b| {
+            b.iter(|| black_box(native().certified_rational_interval(-128).unwrap()))
+        });
+        group.bench_function(BenchmarkId::new("mpfr_circular_identity", name), |b| {
+            b.iter(|| black_box(oracle()))
+        });
+    }
+
+    // Force evaluated output on both sides. The existing general helper times
+    // lazy Real construction; that would not exercise this inverse solver.
+    let isometric_input = real(0.5);
+    let isometric_axis = real(0.6);
+    let oracle = gmp_inverse_isometric_latitude(gmp(0.5), gmp(0.6));
+    let expected = oracle.to_rational().unwrap();
+    let expected = Real::new(
+        Rational::from_bigint_fraction(
+            expected.numer().to_string().parse().unwrap(),
+            expected.denom().to_string().parse().unwrap(),
+        )
+        .unwrap(),
+    );
+    let actual = isometric_input
+        .clone()
+        .inverse_isometric_latitude(&isometric_axis)
+        .unwrap();
+    let [lo, hi] = (&actual - &expected)
+        .certified_rational_interval(-144)
+        .unwrap();
+    let error = Rational::fraction(1, 2)
+        .unwrap()
+        .powi(BigInt::from(124))
+        .unwrap();
+    assert!(lo >= -error.clone() && hi <= error);
+    group.bench_function(
+        BenchmarkId::new("hyperreal_evaluated_p128", "inverse_isometric_latitude"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(isometric_input.clone())
+                        .inverse_isometric_latitude(black_box(&isometric_axis))
+                        .unwrap()
+                        .certified_rational_interval(-128)
+                        .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(
+        BenchmarkId::new("mpfr256_bisection_to128", "inverse_isometric_latitude"),
+        |b| {
+            b.iter(|| {
+                black_box(gmp_inverse_isometric_latitude(
+                    black_box(gmp(0.5)),
+                    black_box(gmp(0.6)),
+                ))
+            })
+        },
+    );
 
     macro_rules! unary_result {
         ($name:literal, $input:expr, $hyper:ident, $gmp:ident) => {

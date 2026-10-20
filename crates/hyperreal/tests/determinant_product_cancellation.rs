@@ -151,3 +151,52 @@ fn other_arities_keep_their_mathematical_values() {
         two
     );
 }
+
+#[test]
+fn empty_product_identity_is_shared_by_all_rational_entry_points() {
+    use std::cmp::Ordering;
+    for (signs, expected, ordering) in [
+        ([true, true, true], 3, Ordering::Greater),
+        ([true, false, true], 1, Ordering::Greater),
+        ([false, true, false], -1, Ordering::Less),
+        ([false, false, false], -3, Ordering::Less),
+    ] {
+        let terms: [[&Rational; 0]; 3] = [[], [], []];
+        assert_eq!(
+            Rational::signed_product_sum(signs, terms),
+            Rational::new(expected)
+        );
+        assert_eq!(
+            Rational::signed_product_sum_shared_denominator(signs, terms),
+            Some(Rational::new(expected))
+        );
+        assert_eq!(
+            Rational::signed_product_sum_ordering(signs, terms),
+            ordering
+        );
+        assert_eq!(
+            Real::signed_product_sum(signs, [[], [], []]),
+            Real::from(expected)
+        );
+        assert_eq!(
+            Real::active_signed_product_sum(signs, [[], [], []]),
+            Real::from(expected)
+        );
+    }
+    assert_eq!(
+        Rational::signed_product_sum::<0, 0>([], []),
+        Rational::zero()
+    );
+    assert_eq!(
+        Rational::signed_product_sum_shared_denominator::<0, 0>([], []),
+        Some(Rational::zero())
+    );
+    assert_eq!(
+        Rational::signed_product_sum_ordering::<0, 0>([], []),
+        Ordering::Equal
+    );
+    assert_eq!(
+        Rational::signed_product_sum_ordering::<2, 0>([true, false], [[], []]),
+        Ordering::Equal
+    );
+}

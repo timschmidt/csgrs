@@ -10,7 +10,7 @@ struct RingPolynomial {
 }
 
 struct RingRecognition<'a> {
-    atoms: Vec<&'a Computable>,
+    atoms: Vec<std::borrow::Cow<'a, Computable>>,
     // Used only by quotient recognition. The borrowed root keeps these node
     // identities alive for the attempt; no entry survives the query.
     quotients: std::collections::HashMap<*const Node, RingQuotient>,
@@ -33,6 +33,17 @@ struct RingRecognition<'a> {
     unit_circle_pairs: Vec<(u8, u8)>,
     rational_trig_values: Vec<(&'a Computable, Rational)>,
     additional_relation_used: bool,
+    // A separate optional attempt admits triangular native square relations.
+    // Ordinary ring and quotient recognition retain their original limits.
+    native_relations: bool,
+    // Root-branch completion follows the original native strategy and uses
+    // only its remaining node and operation budget.
+    root_completion: bool,
+    native_signs: Vec<Option<RealSign>>,
+    relations: Vec<Option<NativeRingRelation>>,
+    root_relation_seen: bool,
+    jacobi_bases: Vec<(Computable, bool)>,
+    parameter_atoms: Vec<Computable>,
 }
 
 impl<'a> RingRecognition<'a> {
@@ -60,7 +71,18 @@ impl<'a> RingRecognition<'a> {
             unit_circle_pairs: Vec::new(),
             rational_trig_values: Vec::new(),
             additional_relation_used: false,
+            native_relations: false,
+            root_completion: false,
+            native_signs: Vec::new(),
+            relations: Vec::new(),
+            root_relation_seen: false,
+            jacobi_bases: Vec::new(),
+            parameter_atoms: Vec::new(),
         }
+    }
+
+    fn degree_limit(&self) -> usize {
+        if self.native_relations { 12 } else { Self::MAX_DEGREE }
     }
 
     // Charges coefficient operations, term insertion and atom comparisons.
@@ -104,7 +126,7 @@ impl<'a> RingRecognition<'a> {
         coefficient: Rational,
     ) -> Option<()> {
         self.charge()?;
-        if !Self::coefficient_fits(&coefficient) || monomial.len() > Self::MAX_DEGREE {
+        if !Self::coefficient_fits(&coefficient) || monomial.len() > self.degree_limit() {
             return None;
         }
         if coefficient.is_zero() {
@@ -148,11 +170,26 @@ impl<'a> RingRecognition<'a> {
         left: &RingPolynomial,
         right: &RingPolynomial,
     ) -> Option<RingPolynomial> {
+        if self.native_relations {
+            self.charge()?;
+            // Both polynomial operands already passed admission. Reusing an
+            // identity operand avoids reconstructing and reinserting its
+            // unchanged coefficients during native relation substitution.
+            let is_one = |value: &RingPolynomial| matches!(value.terms.as_slice(),
+                [(monomial, coefficient)] if monomial.is_empty() && coefficient.is_one());
+            if is_one(left) { return Some(right.clone()); }
+            if is_one(right) { return Some(left.clone()); }
+        }
         let mut result = RingPolynomial::default();
         for (a, x) in &left.terms {
             for (b, y) in &right.terms {
                 self.charge()?;
-                if a.len() + b.len() > Self::MAX_DEGREE {
+                if self.native_relations && self.root_completion && self.root_relation_seen {
+                    let (monomial, coefficient) = self.multiply_native_root_terms(a, b, x * y)?;
+                    self.insert(&mut result, monomial, coefficient)?;
+                    continue;
+                }
+                if a.len() + b.len() > self.degree_limit() {
                     return None;
                 }
                 let mut monomial = Vec::with_capacity(a.len() + b.len());
@@ -214,13 +251,16 @@ impl<'a> RingRecognition<'a> {
         self.multiply(&polynomial, &Self::constant(value)?)
     }
 
-    fn atom(&mut self, value: &'a Computable) -> Option<RingPolynomial> {
+    fn atom(&mut self, value: &'a Computable, depth: usize) -> Option<RingPolynomial> {
         if self.rational_only {
             return None;
         }
+        if self.native_relations {
+            return self.native_relation_atom(std::borrow::Cow::Borrowed(value), depth);
+        }
         for index in 0..self.atoms.len() {
             self.charge()?;
-            if Computable::internal_structural_eq(self.atoms[index], value) {
+            if Computable::internal_structural_eq(self.atoms[index].as_ref(), value) {
                 return Some(RingPolynomial {
                     terms: vec![(vec![index as u8], Rational::one())],
                 });
@@ -230,7 +270,7 @@ impl<'a> RingRecognition<'a> {
             return None;
         }
         let index = self.atoms.len() as u8;
-        self.atoms.push(value);
+        self.atoms.push(std::borrow::Cow::Borrowed(value));
         Some(RingPolynomial {
             terms: vec![(vec![index], Rational::one())],
         })
@@ -296,7 +336,7 @@ impl<'a> RingRecognition<'a> {
             // Roots, other transcendental functions and opaque inverses retain
             // their identity. No algebraic independence is assumed: a zero
             // polynomial is zero for any valid real values of its atoms.
-            _ => self.atom(value),
+            _ => self.atom(value, depth - 1),
         }
     }
 }

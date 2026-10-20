@@ -18,7 +18,7 @@ impl<'a> RingRecognition<'a> {
             self.additional_relation_used = true;
             return Self::constant(root);
         }
-        let atom = self.atom(value)?;
+        let atom = self.atom(value, depth)?;
         let index = atom.terms[0].0[0];
         for entry in 0..self.rational_squares.as_ref()?.len() {
             self.charge()?;

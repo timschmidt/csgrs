@@ -8024,12 +8024,9 @@ impl<'a> BatchTransform4<'a> {
                 Vector4HomogeneousKind::Unknown => has_unknown = true,
             }
 
-            // If all three kinds appear, a mixed batch is certain and we stop
+            // If any two kinds appear, a mixed batch is certain and we stop
             // early; we still classify again below only when mixed is true.
-            if (has_direction && has_point)
-                || (has_direction && has_unknown)
-                || (has_point && has_unknown)
-            {
+            if (has_direction && (has_point || has_unknown)) || (has_point && has_unknown) {
                 break;
             }
         }

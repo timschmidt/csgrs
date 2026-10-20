@@ -249,6 +249,9 @@ impl Node {
             | Approximation::IntegralAtan(_)
             | Approximation::PrescaledAtan(_)
             | Approximation::AtanDeferred(_)
+            | Approximation::InverseIsometricLatitude { .. }
+            | Approximation::JacobiAmplitude(_)
+            | Approximation::InverseEllipticE(_)
             | Approximation::AcosPositive(_)
             | Approximation::AcosPositiveRational(_)
             | Approximation::AcosNegativeRational(_) => true,
