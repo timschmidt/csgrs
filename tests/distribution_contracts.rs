@@ -177,7 +177,22 @@ fn native_causes_and_consumed_certainty_survive_strict_approximate_strict() {
     let cube = solid::cube(r(1)).unwrap();
     let s = Real::e().sin();
     let c = Real::e().cos();
-    let step = r(1) + &s * &s + &c * &c - r(1);
+    // The scalar layer now proves sin(a)^2 + cos(a)^2 = 1 for equal
+    // arguments, so this exactly touching spacing completes strictly.
+    let pythagorean = r(1) + &s * &s + &c * &c - r(1);
+    let certified = solid::distribute_grid_with_context(
+        &cube,
+        1,
+        2,
+        pythagorean,
+        r(1),
+        &GeometryContext::STRICT,
+    )
+    .unwrap();
+    assert_eq!(certified.certainty, GeometryCertainty::Certified);
+    // The double-angle identity is not a retained relation: this spacing is
+    // also exactly one, but strict contact decisions cannot certify it.
+    let step = (r(2) * Real::e()).sin() - r(2) * &s * &c + r(1);
     let build = |context| {
         solid::distribute_grid_with_context(&cube, 1, 2, step.clone(), r(1), context)
     };
