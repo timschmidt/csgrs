@@ -80,9 +80,20 @@ fn add_live_bytes(bytes: usize) {
 }
 
 fn subtract_live_bytes(bytes: usize) {
-    let _ = LIVE_BYTES.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |live| {
-        Some(live.saturating_sub(bytes))
-    });
+    // Keep the relaxed saturating update compatible with both the MSRV and
+    // toolchains that have deprecated fetch_update in favor of try_update.
+    let mut live = LIVE_BYTES.load(Ordering::Relaxed);
+    loop {
+        match LIVE_BYTES.compare_exchange_weak(
+            live,
+            live.saturating_sub(bytes),
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+        ) {
+            Ok(_) => break,
+            Err(observed) => live = observed,
+        }
+    }
 }
 
 #[derive(Clone, Copy)]

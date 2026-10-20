@@ -984,3 +984,51 @@ proptest! {
         }
     }
 }
+
+#[test]
+fn polygon_input_counts_edges_with_unknown_zero_status() {
+    // sin(2e) - 2 sin(e) cos(e) + 1 is exactly one, but no structural fact
+    // proves either coordinate difference zero or nonzero.
+    let e = Real::e();
+    let one = (Real::from(2) * e.clone()).sin() - Real::from(2) * e.clone().sin() * e.cos()
+        + Real::from(1);
+    let input = hypertri::PolygonInput::new(
+        vec![p(0, 0), Point2::new(one, Real::from(0)), p(1, 1)],
+        vec![],
+    );
+    let facts = input.facts();
+    assert_eq!(facts.rings[0].unknown_edge_zero_status, 2);
+    assert_eq!(facts.rings[0].known_degenerate_edges, 0);
+    assert_eq!(facts.unknown_edge_zero_status_count(), 2);
+}
+
+#[test]
+#[cfg(feature = "earcut")]
+fn simple_ring_rejects_a_zero_length_first_edge() {
+    let context = TriangulationContext::new(PredicatePolicy::STRICT);
+    let result =
+        hypertri::triangulate_simple_ring(&context, &[p(0, 0), p(0, 0), p(2, 0), p(2, 2), p(0, 2)]);
+    assert!(
+        matches!(
+            result,
+            Err(hypertri::Error::InvalidInput {
+                reason: "simple ring has a zero-length edge"
+            })
+        ),
+        "{result:?}"
+    );
+}
+
+#[test]
+#[cfg(feature = "cdt")]
+fn topological_triangulation_rejects_collinear_point_sets() {
+    let context = TriangulationContext::new(PredicatePolicy::STRICT);
+    let points = [p(0, 0), p(1, 0), p(2, 0), p(3, 0)];
+    let result = hypertri::cdt::constrained_triangulation_convex_hull(&context, &points, &[]);
+    assert!(matches!(
+        result,
+        Err(hypertri::Error::InvalidInput {
+            reason: "point set is collinear"
+        })
+    ));
+}
