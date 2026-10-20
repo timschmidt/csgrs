@@ -12,7 +12,15 @@ cd "${root}"
 # InvalidArguments (extrude).
 known_failures=(boolean_operations convex_hull extrude)
 
-cargo build --locked --examples
+# Build every example: an example whose required features are not enabled is
+# silently skipped by `cargo build --examples`, leaving no fresh binary.
+features=$(cargo metadata --locked --no-deps --format-version 1 | python3 -c '
+import json, sys
+package = next(p for p in json.load(sys.stdin)["packages"] if p["name"] == "csgrs")
+print(",".join(sorted({feature for target in package["targets"]
+                       if "example" in target["kind"]
+                       for feature in target.get("required-features", [])})))')
+cargo build --locked --examples --features "${features}"
 examples_dir="${CARGO_TARGET_DIR:-${root}/target}/debug/examples"
 work=$(mktemp -d)
 trap 'rm -rf "${work}"' EXIT
