@@ -108,6 +108,16 @@ impl Real {
     /// reduce pairs of the built-in `sqrt(2)` and `sqrt(3)` atoms to 2 and 3.
     /// Other atoms remain opaque. Every scan and coefficient reduction consumes
     /// work; inverse-domain obligations and cancellation remain enforced.
+    /// A subsequent attempt with the same limits may identify sine or
+    /// cosine values whose arguments have equal admitted quotient forms. Nested
+    /// argument proofs share the remaining budgets and enforce inverse domains;
+    /// different functions and unresolved argument equalities remain distinct.
+    /// A final attempt also admits nonnegative rational square-root radicands
+    /// and the built-in `pi * inv_pi = 1` relation. Radicand admission, relation
+    /// scans and coefficient arithmetic share that attempt's remaining limits.
+    /// Earlier successful proofs retain their original paths and budgets.
+    /// This attempt may also project rational quarter-turn atan trigonometry
+    /// and apply `sin(a)^2 + cos(a)^2 = 1` for certified equal arguments.
     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
         if let Some(rational) = self.exact_rational() {
             return Some(rational);
@@ -117,7 +127,9 @@ impl Real {
             .bounded_laurent_rational(64)
             .or_else(|| computable.bounded_ring_rational())
             .or_else(|| computable.bounded_quotient_rational())
-            .or_else(|| computable.bounded_root_square_rational())?;
+            .or_else(|| computable.bounded_root_square_rational())
+            .or_else(|| computable.bounded_trig_congruence_rational())
+            .or_else(|| computable.bounded_relation_rational())?;
         Some(rational * &self.rational)
     }
 

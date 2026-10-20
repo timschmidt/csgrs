@@ -1,3 +1,6 @@
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     GeometryContext, Real, TriangleMesh,
     adapter::{AdapterError, F32, F64, I128, RawReal, ScalarAdapter, ScalarMesh},
@@ -137,7 +140,7 @@ fn undecided_cases<A: ScalarAdapter>() -> (usize, usize) {
     let cube = solid::cube(Real::one()).unwrap();
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let zero = uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     let shifted = cube.translated(zero, Real::zero(), Real::zero()).unwrap();
     preserves_failure::<A>(
         cube,

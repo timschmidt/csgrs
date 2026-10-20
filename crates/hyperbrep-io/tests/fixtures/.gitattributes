@@ -1,0 +1,2 @@
+# Keep independently generated STEP input bytes, including exporter whitespace.
+occt-advanced-*.step -whitespace

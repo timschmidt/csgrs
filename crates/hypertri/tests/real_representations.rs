@@ -5,6 +5,9 @@
 //! retain one constructor for every class and deliberately fail when that
 //! inventory changes without a corresponding triangulation fixture.
 
+#[path = "../src/test_uncertainty.rs"]
+mod test_uncertainty;
+
 use hyperreal::{Rational, Real, StructuralKind};
 use hypertri::{Point2, PredicatePolicy, TriangulationContext};
 
@@ -515,7 +518,10 @@ fn serialized_certificate_tags_make_the_private_inventory_drift_detecting() {
 fn unresolved_opaque_terminal_form_still_crosses_policy_boundary() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let left = &sine * &sine + &cosine * &cosine + Real::from(2);
+    let left = Real::from(3)
+        + test_uncertainty::terminal_zero(
+            (&sine * &sine + &cosine * &cosine + Real::from(2)) - Real::from(3),
+        );
     let right = Real::from(3);
     let vertices = vec![
         Point2::new(left.clone(), Real::zero()),

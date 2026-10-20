@@ -95,15 +95,24 @@ fn polynomial_factor_division_preserves_small_nonzero_denominators() {
 }
 
 #[test]
-fn an_unproved_zero_denominator_keeps_its_typed_failure() {
+fn proved_and_unproved_zero_denominators_keep_typed_failures() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let denominator = &sine * &sine + &cosine * &cosine - Real::one();
+    // The original denominator has a new proof. Its inverse is still invalid.
+    assert_eq!(
+        denominator.exact_rational_normal_form(),
+        Some(Rational::zero())
+    );
+    assert_eq!(denominator.inverse_ref(), Err(Problem::DivideByZero));
+
+    // Preserve the unresolved-domain contract with an independent zero whose
+    // angle-addition identity is outside the admitted exact normal form.
+    let denominator = (Real::e() + Real::one()).sin()
+        - Real::e().sin() * Real::one().cos()
+        - Real::e().cos() * Real::one().sin();
     assert_eq!(denominator.exact_rational_normal_form(), None);
-    assert!(matches!(
-        denominator.inverse_ref(),
-        Err(Problem::UnknownZero)
-    ));
+    assert_eq!(denominator.inverse_ref(), Err(Problem::UnknownZero));
 }
 
 #[test]

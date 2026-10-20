@@ -4,6 +4,8 @@ use super::*;
 
 #[cfg(test)]
 mod budget_tests;
+#[cfg(test)]
+mod image_tests;
 
 impl BezierAlgebraicSelectedFiberAuthority2 {
     pub(super) fn new(
@@ -50,6 +52,7 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
                 authority: self.clone(),
                 root,
                 representations: Arc::new(BezierSelectedFiberRepresentations2::default()),
+                affine_form: None,
             }),
         }
     }
@@ -108,6 +111,244 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
 }
 
 impl BezierAlgebraicSelectedFiberParameter2 {
+    pub(crate) fn affine_form_source(&self) -> Option<&crate::CurvePointAffineForm2> {
+        self.data.affine_form.as_deref()
+    }
+
+    pub(crate) fn with_affine_form_identity(mut self, form: crate::CurvePointAffineForm2) -> Self {
+        Arc::make_mut(&mut self.data).affine_form = Some(Arc::new(
+            super::affine_form::canonical_affine_form_definition(form),
+        ));
+        self
+    }
+
+    /// Selects one finite rational image in the same coefficient field.
+    /// The local norm only enumerates candidates. Outward enclosures of this
+    /// particular source select the unique image; no midpoint becomes a value.
+    pub(crate) fn rational_image_in_retained_field(
+        &self,
+        numerator: &BivariatePolynomial,
+        denominator: &BivariatePolynomial,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        self.validate_policy(policy)?;
+        let strict = policy.strict_counterpart();
+        policy.strict_predicate_pass(|| {
+            match self.predicate_sign(denominator, &strict)? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(hyperreal::Problem::DivideByZero.into());
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+            let retained = &self.data.authority.data.retained_parameter;
+            let report = hypersolve::project_algebraic_fiber_rational_image_relation(
+                &self.data.authority.data.incidence,
+                CurveResultantParameter::First,
+                numerator,
+                denominator,
+                &parameter_representation(retained, &strict),
+                AlgebraicFiberPolynomialImageProjectionConfig {
+                    max_fiber_degree: usize::MAX,
+                    max_retained_degree: usize::MAX,
+                    max_image_degree_bound: usize::MAX,
+                },
+                hypersolve::PredicatePolicy::STRICT,
+            );
+            if report.status == AlgebraicFiberPolynomialImageProjectionStatus::BudgetExhausted {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
+            if report.status == AlgebraicFiberPolynomialImageProjectionStatus::InvalidEvidence {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            if report.certainty != PredicateCertainty::Exact {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+            if let Some(factor) = report.identically_zero_fiber_factor {
+                match self.predicate_sign(&factor, &strict)? {
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                    Classification::Decided(RealSign::Zero) => {
+                        return Err(CurveError::InvalidBezierAlgebraicParameter);
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            let Some(incidence) = report.retained_relation else {
+                return Ok(Classification::Uncertain(match report.status {
+                    AlgebraicFiberPolynomialImageProjectionStatus::UnsupportedCoefficient
+                    | AlgebraicFiberPolynomialImageProjectionStatus::DegreeLimitExceeded => {
+                        UncertaintyReason::Unsupported
+                    }
+                    _ => UncertaintyReason::Predicate,
+                }));
+            };
+            let mut steps = 0_usize;
+            loop {
+                let source = match self.refined(steps, &strict)? {
+                    Classification::Decided(value) => value,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let base = BezierParameter2::Algebraic(retained.clone())
+                    .refined_isolating_interval(steps, &strict);
+                let base_bounds = real_interval_from_parameter(&base);
+                let (lower, upper) = source.isolating_bounds();
+                let fiber_bounds = RealInterval {
+                    lower: lower.clone(),
+                    upper: upper.clone(),
+                };
+                let enclose = |polynomial| {
+                    RealInterval::evaluate_bivariate_power_basis(
+                        polynomial,
+                        &base_bounds,
+                        &fiber_bounds,
+                    )
+                };
+                let numerator_bounds = enclose(numerator);
+                let denominator_bounds = enclose(denominator);
+                let image_bounds = numerator_bounds
+                    .zip(denominator_bounds)
+                    .and_then(|(n, d)| n.divide(&d));
+                if let Some(bounds) = image_bounds {
+                    let roots = if bounds.lower == bounds.upper {
+                        vec![IsolatedRootInterval {
+                            lower: bounds.lower.clone(),
+                            upper: bounds.upper,
+                            exact_root: Some(bounds.lower),
+                            distinct_root_count: 1,
+                        }]
+                    } else {
+                        match selected_fiber_root_intervals_in_interval(
+                            &incidence,
+                            base,
+                            &bounds.lower,
+                            &bounds.upper,
+                            &strict,
+                        )? {
+                            Classification::Decided(Some(roots)) => roots,
+                            Classification::Decided(None) => {
+                                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                            }
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    };
+                    if roots.len() == 1 {
+                        // Check the singleton against the new equation as well.
+                        // A serialized count or interval alone never suffices.
+                        return Ok(Self::from_checked_roots(
+                            incidence,
+                            retained.clone(),
+                            &roots,
+                            &strict,
+                        )?
+                        .map(|mut roots| roots.pop().expect("one checked image")));
+                    }
+                    if roots.is_empty() {
+                        return Err(CurveError::InvalidBezierAlgebraicParameter);
+                    }
+                }
+                if hypersolve::work_budget::exhaustion().is_some() {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
+                }
+                steps = steps
+                    .checked_mul(2)
+                    .and_then(|steps| steps.checked_add(1))
+                    .ok_or_else(|| {
+                        CurveError::Topology("selected-fiber image refinement overflow".into())
+                    })?;
+            }
+        })
+    }
+
+    /// Imports checked singleton fibers while sharing their defining equation
+    /// and selected coefficient field. Serialized root-count flags alone are
+    /// never admission evidence.
+    pub(crate) fn from_checked_roots(
+        incidence: BivariatePolynomial,
+        retained_parameter: BezierAlgebraicParameter2,
+        roots: &[IsolatedRootInterval],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<Self>>> {
+        let root = parameter_representation(&retained_parameter, policy);
+        let mut refiner = match hypersolve::AlgebraicFiberRootRefiner::try_new(
+            &incidence,
+            CurveResultantParameter::First,
+            &root,
+            policy.predicate_policy(),
+        ) {
+            Ok(refiner) => refiner,
+            Err(report) => {
+                if matches!(
+                    report.status,
+                    AlgebraicFiberRootIsolationStatus::InvalidEvidence
+                        | AlgebraicFiberRootIsolationStatus::InvalidInterval
+                        | AlgebraicFiberRootIsolationStatus::NoRoots
+                        | AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber
+                ) {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                return Ok(Classification::Uncertain(
+                    if report.status == AlgebraicFiberRootIsolationStatus::BudgetExhausted {
+                        UncertaintyReason::BudgetExhausted
+                    } else {
+                        UncertaintyReason::Predicate
+                    },
+                ));
+            }
+        };
+        let authority =
+            BezierAlgebraicSelectedFiberAuthority2::new(incidence, retained_parameter, policy);
+        let mut parameters = Vec::with_capacity(roots.len());
+        for root in roots {
+            let mut report = refiner.refine(root, 0);
+            if matches!(
+                report.status,
+                AlgebraicFiberRootIsolationStatus::InvalidEvidence
+                    | AlgebraicFiberRootIsolationStatus::InvalidInterval
+                    | AlgebraicFiberRootIsolationStatus::NoRoots
+                    | AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber
+            ) {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            if report.status != AlgebraicFiberRootIsolationStatus::Isolated
+                || report.certainty != PredicateCertainty::Exact
+            {
+                return Ok(Classification::Uncertain(
+                    if report.status == AlgebraicFiberRootIsolationStatus::BudgetExhausted {
+                        UncertaintyReason::BudgetExhausted
+                    } else {
+                        UncertaintyReason::Predicate
+                    },
+                ));
+            }
+            parameters.push(
+                authority.parameter(
+                    report
+                        .intervals
+                        .pop()
+                        .ok_or(CurveError::InvalidBezierAlgebraicParameter)?,
+                ),
+            );
+        }
+        Ok(Classification::Decided(parameters))
+    }
+
+    pub(crate) fn defining_fiber(&self) -> (&BivariatePolynomial, &BezierAlgebraicParameter2) {
+        (
+            &self.data.authority.data.incidence,
+            &self.data.authority.data.retained_parameter,
+        )
+    }
+
     pub(super) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
         if !policy.accepts_retained_policy(self.data.authority.data.policy) {
             return Err(CurveError::Topology(
@@ -117,7 +358,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         Ok(())
     }
 
-    pub(super) fn root(&self) -> &IsolatedRootInterval {
+    pub(crate) fn root(&self) -> &IsolatedRootInterval {
         &self.data.root
     }
 
@@ -736,19 +977,28 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             RealSign::Negative => (second, first),
             RealSign::Zero => unreachable!(),
         };
-        Ok(Classification::Decided(
-            authority.parameter(IsolatedRootInterval {
-                lower,
-                upper,
-                exact_root: self
-                    .data
-                    .root
-                    .exact_root
-                    .as_ref()
-                    .map(|root| scale * root + offset),
-                distinct_root_count: self.data.root.distinct_root_count,
-            }),
-        ))
+        let result = authority.parameter(IsolatedRootInterval {
+            lower,
+            upper,
+            exact_root: self
+                .data
+                .root
+                .exact_root
+                .as_ref()
+                .map(|root| scale * root + offset),
+            distinct_root_count: self.data.root.distinct_root_count,
+        });
+        Ok(Classification::Decided(match self.affine_form_source() {
+            Some(form) => {
+                let [a, b, c] = form.coefficients();
+                result.with_affine_form_identity(form.source().affine_form(
+                    scale * a,
+                    scale * b,
+                    scale * c + offset,
+                ))
+            }
+            None => result,
+        }))
     }
 
     /// Applies `(n0 + n1*u) / (d0 + d1*u)` without constructing the selected
@@ -889,6 +1139,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 authority: self.data.authority.clone(),
                 root,
                 representations: self.data.representations.clone(),
+                affine_form: self.data.affine_form.clone(),
             }),
         }))
     }

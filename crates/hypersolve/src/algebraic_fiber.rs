@@ -2224,8 +2224,7 @@ pub fn project_algebraic_fiber_polynomial_image(
     finalize_fiber_image_projection(project_algebraic_fiber_polynomial_image_internal(
         fiber_equation,
         retained_parameter,
-        image_relation,
-        image_parameter,
+        FiberImageRelation::Polynomial(image_relation, image_parameter),
         retained_root,
         config,
         policy,
@@ -2254,13 +2253,51 @@ pub fn project_algebraic_fiber_polynomial_image_relation(
     finalize_fiber_image_projection(project_algebraic_fiber_polynomial_image_internal(
         fiber_equation,
         retained_parameter,
-        image_relation,
-        image_parameter,
+        FiberImageRelation::Polynomial(image_relation, image_parameter),
         retained_root,
         config,
         policy,
         false,
     ))
+}
+
+/// Retains the image relation for `z = N(alpha, u) / D(alpha, u)`.
+///
+/// All three input polynomials use the same axis order. The result uses the
+/// selected base as its first variable and the image as its second. The local
+/// norm of `D*z-N` shares the coefficient field of `fiber_equation`; no global
+/// norm through the base-root polynomial is constructed.
+///
+/// This enumerates possible images, not the image of a selected fiber root.
+/// The consumer must certify its denominator is nonzero and select the image
+/// using its retained source. A common source factor where both `N` and `D`
+/// vanish is saturated and reported explicitly; it is not a removable-pole
+/// permission. Degree limits and promotion/refinement budgets have the same
+/// meaning as in [`project_algebraic_fiber_polynomial_image_relation`]. They
+/// do not bound total work, coefficient size, heap bytes or cancellation time.
+pub fn project_algebraic_fiber_rational_image_relation(
+    fiber_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    numerator: &BivariatePolynomial,
+    denominator: &BivariatePolynomial,
+    retained_root: &AlgebraicRootRepresentation,
+    config: AlgebraicFiberPolynomialImageProjectionConfig,
+    policy: PredicatePolicy,
+) -> AlgebraicFiberPolynomialImageProjectionReport {
+    finalize_fiber_image_projection(project_algebraic_fiber_polynomial_image_internal(
+        fiber_equation,
+        retained_parameter,
+        FiberImageRelation::Rational(numerator, denominator),
+        retained_root,
+        config,
+        policy,
+        false,
+    ))
+}
+
+enum FiberImageRelation<'a> {
+    Polynomial(&'a BivariatePolynomial, CurveResultantParameter),
+    Rational(&'a BivariatePolynomial, &'a BivariatePolynomial),
 }
 
 fn finalize_fiber_image_projection(
@@ -2278,12 +2315,10 @@ fn finalize_fiber_image_projection(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn project_algebraic_fiber_polynomial_image_internal(
     fiber_equation: &BivariatePolynomial,
     retained_parameter: CurveResultantParameter,
-    image_relation: &BivariatePolynomial,
-    image_parameter: CurveResultantParameter,
+    image: FiberImageRelation<'_>,
     retained_root: &AlgebraicRootRepresentation,
     config: AlgebraicFiberPolynomialImageProjectionConfig,
     policy: PredicatePolicy,
@@ -2357,25 +2392,18 @@ fn project_algebraic_fiber_polynomial_image_internal(
         );
     }
 
-    // Coefficients are indexed first by source-fiber power, then by image
-    // power. Strictly proved zero storage does not contribute either degree;
-    // an unsupported coefficient remains in the exact determinant.
-    let mut image_coefficients = fiber_coefficient_polynomials(image_relation, image_parameter);
-    for coefficient in &mut image_coefficients {
-        trim_strict_exact_zero_storage(coefficient);
-    }
-    while image_coefficients.len() > 1
-        && image_coefficients
-            .last()
-            .is_some_and(|coefficient| coefficient.iter().all(strict_exact_zero_for_storage))
-    {
-        image_coefficients.pop();
-    }
-    if image_coefficients
-        .iter()
-        .flatten()
-        .all(strict_exact_zero_for_storage)
-    {
+    let image_coefficients = match local_image_coefficients(image, retained_parameter, &mut field) {
+        Ok(coefficients) => coefficients,
+        Err(error) => {
+            return algebraic_fiber_polynomial_image_error_report(
+                error,
+                fiber_degree,
+                0,
+                field.certainty,
+            );
+        }
+    };
+    let Some(image_coefficients) = image_coefficients else {
         return report(
             AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroImageRelation,
             Vec::new(),
@@ -2383,12 +2411,8 @@ fn project_algebraic_fiber_polynomial_image_internal(
             0,
             field.certainty,
         );
-    }
-    let image_degree = image_coefficients
-        .iter()
-        .map(|coefficient| coefficient.len().saturating_sub(1))
-        .max()
-        .unwrap_or(0);
+    };
+    let image_degree = image_coefficients.degree();
     let image_degree_bound = match fiber_degree.checked_mul(image_degree) {
         Some(bound) => bound,
         None => {
@@ -2410,20 +2434,7 @@ fn project_algebraic_fiber_polynomial_image_internal(
             field.certainty,
         );
     }
-    // A scalar polynomial is already below every validated retained modulus,
-    // so no quotient reduction or fallible collection is needed here.
-    let image_coefficients = image_coefficients
-        .into_iter()
-        .map(|coefficient| {
-            coefficient
-                .into_iter()
-                .map(|coefficient| LocalFieldElement {
-                    numerator: vec![coefficient],
-                    denominator: None,
-                })
-                .collect()
-        })
-        .collect::<Vec<_>>();
+    let image_coefficients = image_coefficients.into_field();
     let mut norm_fiber = fiber;
     let mut identically_zero_fiber_factor = None;
     if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
@@ -2569,6 +2580,97 @@ fn project_algebraic_fiber_polynomial_image_internal(
             image_degree_bound,
             certainty: field.certainty,
         },
+    }
+}
+
+enum LocalImageCoefficients {
+    Scalars(Vec<Vec<Real>>),
+    Field(Vec<LocalImagePolynomial>),
+}
+
+impl LocalImageCoefficients {
+    fn degree(&self) -> usize {
+        match self {
+            Self::Scalars(rows) => rows.iter().map(|row| row.len().saturating_sub(1)).max(),
+            Self::Field(rows) => rows.iter().map(|row| row.len().saturating_sub(1)).max(),
+        }
+        .unwrap_or(0)
+    }
+
+    fn into_field(self) -> Vec<LocalImagePolynomial> {
+        match self {
+            // Preserve the existing degree guard before allocating a field
+            // element for every coefficient of an ordinary image equation.
+            Self::Scalars(rows) => rows
+                .into_iter()
+                .map(|row| {
+                    row.into_iter()
+                        .map(|coefficient| LocalFieldElement {
+                            numerator: vec![coefficient],
+                            denominator: None,
+                        })
+                        .collect()
+                })
+                .collect(),
+            Self::Field(rows) => rows,
+        }
+    }
+}
+
+/// Source-fiber powers outside, image powers inside. Ordinary polynomial
+/// images retain their scalar-coefficient path; rational maps specialize
+/// both authored polynomials into the same selected coefficient field.
+fn local_image_coefficients(
+    image: FiberImageRelation<'_>,
+    retained_parameter: CurveResultantParameter,
+    field: &mut LocalAlgebraicField,
+) -> Result<Option<LocalImageCoefficients>, LocalFieldError> {
+    match image {
+        FiberImageRelation::Polynomial(relation, image_parameter) => {
+            let mut coefficients = fiber_coefficient_polynomials(relation, image_parameter);
+            for row in &mut coefficients {
+                trim_strict_exact_zero_storage(row);
+            }
+            while coefficients.len() > 1
+                && coefficients
+                    .last()
+                    .is_some_and(|row| row.iter().all(strict_exact_zero_for_storage))
+            {
+                coefficients.pop();
+            }
+            if coefficients
+                .iter()
+                .flatten()
+                .all(strict_exact_zero_for_storage)
+            {
+                return Ok(None);
+            }
+            Ok(Some(LocalImageCoefficients::Scalars(coefficients)))
+        }
+        FiberImageRelation::Rational(numerator, denominator) => {
+            let mut numerator = local_fiber_polynomial(numerator, retained_parameter, field)?;
+            let mut denominator = local_fiber_polynomial(denominator, retained_parameter, field)?;
+            let length = numerator.len().max(denominator.len());
+            numerator.resize_with(length, LocalFieldElement::zero);
+            denominator.resize_with(length, LocalFieldElement::zero);
+            let mut coefficients = Vec::with_capacity(length);
+            for (mut n, d) in numerator.into_iter().zip(denominator) {
+                n.negate();
+                let mut row = vec![n, d];
+                trim_local_polynomial(&mut row, field)?;
+                coefficients.push(row);
+            }
+            while coefficients.len() > 1
+                && local_polynomial_is_zero(coefficients.last().expect("nonempty"), field)?
+            {
+                coefficients.pop();
+            }
+            if coefficients.len() == 1 && local_polynomial_is_zero(&coefficients[0], field)? {
+                Ok(None)
+            } else {
+                Ok(Some(LocalImageCoefficients::Field(coefficients)))
+            }
+        }
     }
 }
 

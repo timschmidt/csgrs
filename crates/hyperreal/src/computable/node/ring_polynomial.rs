@@ -23,6 +23,16 @@ struct RingRecognition<'a> {
     root_square_used: bool,
     // Imported endpoint proofs cannot assume opaque atoms denote valid reals.
     rational_only: bool,
+    // Present only in the later function-congruence attempt. Argument
+    // projections share this attempt's atoms, budgets and lifetime.
+    trig_arguments: Option<Vec<(u8, RingQuotient)>>,
+    trig_congruence_used: bool,
+    // Present only in the later rational-root/reciprocal attempt. Each
+    // square is certified from an admitted nonnegative rational radicand.
+    rational_squares: Option<Vec<(u8, Rational)>>,
+    unit_circle_pairs: Vec<(u8, u8)>,
+    rational_trig_values: Vec<(&'a Computable, Rational)>,
+    additional_relation_used: bool,
 }
 
 impl<'a> RingRecognition<'a> {
@@ -44,6 +54,12 @@ impl<'a> RingRecognition<'a> {
             root_squares: false,
             root_square_used: false,
             rational_only: false,
+            trig_arguments: None,
+            trig_congruence_used: false,
+            rational_squares: None,
+            unit_circle_pairs: Vec::new(),
+            rational_trig_values: Vec::new(),
+            additional_relation_used: false,
         }
     }
 
@@ -149,6 +165,9 @@ impl<'a> RingRecognition<'a> {
                 let mut coefficient = x * y;
                 if self.root_squares {
                     self.reduce_root_squares(&mut monomial, &mut coefficient)?;
+                }
+                if self.rational_squares.is_some() {
+                    self.reduce_additional_relations(&mut monomial, &mut coefficient)?;
                 }
                 self.insert(&mut result, monomial, coefficient)?;
             }
@@ -266,7 +285,15 @@ impl<'a> RingRecognition<'a> {
                 }
                 Some(sum)
             }
-            // Roots, transcendental functions and opaque inverses retain
+            Approximation::PrescaledSin(argument) | Approximation::PrescaledCos(argument)
+                if self.trig_arguments.is_some() =>
+            {
+                self.trig_atom(value, argument, depth - 1)
+            }
+            Approximation::Sqrt(radicand) if self.rational_squares.is_some() => {
+                self.rational_sqrt_atom(value, radicand, depth - 1)
+            }
+            // Roots, other transcendental functions and opaque inverses retain
             // their identity. No algebraic independence is assumed: a zero
             // polynomial is zero for any valid real values of its atoms.
             _ => self.atom(value),

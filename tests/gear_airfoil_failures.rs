@@ -1,5 +1,8 @@
 #![cfg(feature = "curve")]
 
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     GeometryCertainty, GeometryContext, GeometryOutcome, Real, TriangleMesh, curve,
     errors::{ValidationError, ValidationErrorKind},
@@ -19,7 +22,7 @@ fn q(n: i32, d: i32) -> Real {
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - r(1)
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - r(1))
 }
 fn failure<T: std::fmt::Debug>(result: Result<T, ValidationError>, kind: ValidationErrorKind) {
     assert_eq!(

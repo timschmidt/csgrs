@@ -304,6 +304,8 @@ impl std::error::Error for ExactCurveError {
 pub enum CurveError {
     /// A line segment has equal endpoints.
     ZeroLengthLine,
+    /// Two parallel or coincident supporting lines do not define one point.
+    ParallelLineSupports,
     /// A circular arc has zero radius.
     ZeroRadiusArc,
     /// A rational Bezier weight is structurally zero.
@@ -331,6 +333,8 @@ pub enum CurveError {
     },
     /// A NURBS homogeneous denominator is exactly zero at an evaluation parameter.
     ZeroNurbsDenominator,
+    /// A rational query has a zero denominator at its original retained point.
+    ZeroRationalPointDenominator,
     /// A circular arc start/end pair does not lie on a common supplied circle.
     RadiusMismatch,
     /// Circular-arc endpoint/orientation evidence does not define a valid finite sweep.
@@ -413,6 +417,7 @@ impl fmt::Display for CurveError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::ZeroLengthLine => write!(f, "line segment has zero length"),
+            Self::ParallelLineSupports => write!(f, "line supports are parallel or coincident"),
             Self::ZeroRadiusArc => write!(f, "circular arc has zero radius"),
             Self::ZeroRationalBezierWeight => {
                 write!(f, "rational Bezier weight is structurally zero")
@@ -513,6 +518,9 @@ impl fmt::Display for CurveError {
             }
             Self::NonFiniteProjectionPoint => write!(f, "finite projection point is not finite"),
             Self::Topology(message) => write!(f, "topology operation failed: {message}"),
+            Self::ZeroRationalPointDenominator => {
+                write!(f, "rational point query has a zero denominator")
+            }
             Self::Real(message) => write!(f, "Real operation failed: {message}"),
         }
     }

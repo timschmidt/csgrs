@@ -1,4 +1,7 @@
 //! Solid containment must validate its source before query shortcuts can answer.
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use std::sync::Arc;
 
 use csgrs::{GeometryCertainty, GeometryContext, Real, TriangleMesh, solid};
@@ -203,7 +206,8 @@ fn approximate_topology_fact_keeps_its_receipt_and_cannot_certify_strict_queries
     let source = tetrahedron();
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let unresolved_zero =
+        uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     let mut positions = source.positions.to_vec();
     positions.push(Point3::new(unresolved_zero, Real::zero(), Real::zero()));
     let mut triangles = source.triangles.to_vec();

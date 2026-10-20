@@ -1,3 +1,6 @@
+#[path = "../src/test_uncertainty.rs"]
+mod test_uncertainty;
+
 use std::num::NonZeroU32;
 
 use hyperlattice::Matrix4;
@@ -14,7 +17,8 @@ fn terminal_equality() -> (Real, Real) {
     let left = Real::e().sin();
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let unresolved_zero =
+        test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     let right = left.clone() + unresolved_zero;
     (left, right)
 }

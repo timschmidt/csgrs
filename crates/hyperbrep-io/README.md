@@ -1,0 +1,261 @@
+# HyperBRep IO
+
+Exact plane/cylinder partial-depth results complete STEP export, cold import and
+continued Booleans in the [axial-shell corpus](../hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md).
+Native line/circle extrusion walls now retain analytic carriers and their actual
+orientation; this is an intentional serialization migration. General affine,
+fillet and other unsupported carrier families retain their own open gates.
+
+Pure Rust CAD exchange for the Hyper geometry stack. This crate owns syntax,
+source-entity accounting and exchange policy; authoritative geometry belongs to
+HyperBRep and exact scalar arithmetic belongs to Hyperreal.
+
+The crate reads and writes bounded Part 21 syntax, imports an explicitly
+selected faceted or supported advanced representation into strictly validated
+native HyperBRep solids, and exports selected planar/cylindrical/conical/ring-torus solids with
+line/circle and supported spline boundaries to STEP.
+Advanced import includes circular edges on planes, cylinders and ring tori and supplied
+planar/cylindrical/toroidal pcurves and conical LINE revolutions with supplied
+line pcurves. Positive-weight clamped NURBS also import on planar caps and
+linear-extrusion walls, with independently validated isoparametric LINE pcurves. Coordinates
+and authored unit conversions remain exact. Whole-document/product traversal,
+other analytic/spline-surface mappings, cavity shells and approximate export remain unfinished.
+
+Rational Bezier and finite clamped NURBS curves export as exact rational
+B-splines with their authored weights and knots. Spline extrusion walls retain
+their generator and the complete extrusion vector; both surface parameters
+remain in the authored chart. Import requires uniquely located represented
+vertices, preserves directed source parameter maps, and validates complete
+edge/pcurve/surface images. The retained parabolic-profile workflow includes
+holes, disconnected components, reversal, affine profiles, cold replay and
+cuts/restoration after exchange. Selected-root trims without a stored scalar,
+ambiguous vertex preimages and other unsupported carriers fail explicitly.
+See the [spline mapping contract](docs/STEP_MAPPING.md#exact-splines-and-linear-extrusions)
+and [independent acceptance fixtures](tests/support/spline_exchange.rs).
+
+Native spline prism admission does not require a represented area integral.
+Hypercurve proves simple-loop orientation and HyperBRep proves complete plane
+incidence and shell orientation. The independent degree-five rational fixture
+completes import, native replay, export and slab cuts in both source directions
+and metre/mm units; volume remains an explicit `UnsupportedMeasurement`.
+See the [measurement admission evidence](../hyperbrep/docs/evidence/2026-10-18-measurement-admission/README.md).
+
+The syntax layer retains numeric lexemes without binary floating-point conversion, unknown
+entity records, complex instances, forward references, multiple DATA sections,
+empty aggregates, typed parameters and encoded string tokens. Every view is
+scoped to its source exchange. Nested values use flat storage and explicit
+stacks for parsing and writing; cloning and dropping do not recurse through a
+parameter tree.
+
+```rust
+use hyperbrep_io::part21::{parse, NumberLimits, ReadLimits, ValueKind};
+use hyperreal::Real;
+
+let input = b"ISO-10303-21;HEADER;FILE_DESCRIPTION((),'2;1');FILE_NAME('','',(),(),'','','');FILE_SCHEMA(('TEST'));ENDSEC;DATA;#1=POINT(9007199254740993.0);ENDSEC;END-ISO-10303-21;";
+let exchange = parse(input, &ReadLimits::default())?;
+let component = exchange.entity(1).unwrap().components().next().unwrap();
+if let ValueKind::Real(number) = component.arguments().next().unwrap().kind() {
+    assert_eq!(number.to_real(&NumberLimits::default())?,
+               Real::from(9_007_199_254_740_993_u64));
+}
+assert_eq!(exchange.unresolved_references().count(), 0);
+let output = exchange.to_step(4096)?;
+assert!(output.contains("9007199254740993.0"));
+# Ok::<(), hyperbrep_io::part21::Error>(())
+```
+
+`part21::parse` borrows UTF-8/ASCII input and requires explicit `ReadLimits`.
+Limits cover bytes, tokens, token length, nesting, values, records, instances and
+DATA sections. Dynamic parser/writer collections reserve fallibly. Number
+materialization separately requires digit/exponent limits and produces exact
+rational `Real` values. These counts do not bound all work or allocation inside
+Hyperreal. Syntax parsing does not materialize numbers.
+
+`Exchange::unresolved_references` reports every missing target with its source
+entity and byte span. Cycles are retained: whether a cycle is legal depends on
+the later entity schema. Duplicate IDs fail, including IDs with different leading
+zeros. IDs must be nonzero. Lookup uses a sorted compact index, never storage
+sized by the largest ID. Binary tokens retain their encoding and require valid
+leading zero padding.
+
+`Exchange::to_step` requires an output byte allowance. It preserves primitive
+lexemes, record/component/section order and unknown records while normalizing
+trivia. Encoded strings remain quoted tokens: apostrophes and Unicode/code-page
+control directives are preserved, not decoded or semantically validated. This
+allows subsequent text decoding to report unsupported/invalid directives without
+losing their source. Numeric lexemes such as `1.E400` survive syntax round trips.
+
+The typed `step` layer adds structurally checked standard headers, decoded text,
+unit-graph resolution and selected faceted/advanced representation import.
+It preserves all bodies and face holes in that selection and uses the ordinary native
+model builder and validator. It neither applies source uncertainty as a tolerance
+nor heals orientation, near-coincidence or nonplanarity.
+
+Faceted polygons share exact rational coordinate aliases. Advanced planar faces
+retain explicit `VERTEX_POINT` and `EDGE_CURVE` identity without welding. Their
+spatial lines and every supplied planar pcurve must describe the same oriented
+line exactly. Different parameterizations are supported: `explicit_edges()`
+returns source parameter maps and the declared master representation. Bound
+orientation and edge sense remain distinct; winding identifies finite outer
+bounds even when the file only contains `FACE_BOUND` records. `VertexSource` and
+`EdgeUseSource` distinguish implicit polygons from explicit topology.
+
+Direct `CIRCLE` edges retain the source angular frame, traversal and parameter
+map, including a closed edge with one vertex and distinct seam uses. Cylinder
+charts use native radians and metres; source angle units are converted exactly
+and independently of length units. Native validation proves the complete
+edge/pcurve image. Selected `SURFACE_CURVE` records admit planar `CIRCLE` and
+cylindrical/toroidal `LINE` pcurves, with every alternate checked and its parameter map
+retained. `SEAM_CURVE` additionally requires two pcurves at opposite exact
+parameter bounds on the same surface. Decimal approximations to a full angular
+period remain typed rejections; there is no inferred `pi` or implicit repair.
+See the [supplied-pcurve example](examples/supplied_step.rs) and
+[mapping contract](docs/STEP_MAPPING.md#supplied-analytic-pcurves).
+
+```rust
+use hyperbrep::{OperationContext, WorkBudget};
+use hyperbrep_io::step::{ImportLimits, StepFile, StepReadOptions};
+
+let input = include_bytes!("../tests/fixtures/faceted-through-hole.step");
+let file = StepFile::read(input, &StepReadOptions::default())?;
+let context = OperationContext::strict(WorkBudget {
+    refinements: 10_000,
+    promotions: 1_000,
+});
+let attempt = file.import_representation(502, &ImportLimits::default(), &context);
+let imported = attempt.result??; // Solver exhaustion and mapping errors stay distinct.
+assert_eq!(imported.bodies().len(), 1);
+assert_eq!(imported.bodies()[0].model().counts().faces, 10);
+assert!(imported.retained_entities().contains(&9503)); // Product remains in the source.
+# Ok::<(), Box<dyn std::error::Error>>(())
+```
+
+Successful import certifies the selected native bodies within HyperBRep's current
+validation domain. It does not establish complete EXPRESS/AP conformance or
+import an assembly. The [mapping contract and frontier](docs/STEP_MAPPING.md)
+list accepted entities, exact unit conventions, budgets and remaining work.
+Unselected/unsupported records remain in the source exchange, with every entity
+listed as interpreted or retained. `Model::to_json` is native archival replay;
+`Exchange::to_step` is syntax serialization.
+
+`step::write_faceted` exports selected native geometry, including edited edges,
+holes, reflected solids and multiple body occurrences. It emits the common AP214
+faceted subset and reports every source face, wire, vertex and directed edge use.
+Shared points follow native identity within each body. Plane charts are rebuilt
+exactly from directed boundaries; original pcurves/history require a native archive.
+
+```rust
+use hyperbrep::{builder, OperationContext, Point3, Real, WorkBudget};
+use hyperbrep_io::step::{StepBody, StepWriteOptions, write_faceted};
+
+// Native exchange coordinates are metres. An eighth is exactly decimal-representable.
+let eighth = (Real::one() / Real::from(8))?;
+let bodies = builder::cuboid(Point3::origin(),
+    Point3::new(eighth, Real::one(), Real::one()))?;
+let input = StepBody { solid: bodies.bodies().next().unwrap(), name: "Block" };
+let context = OperationContext::strict(WorkBudget { refinements: 0, promotions: 0 });
+let options = StepWriteOptions::new("block.step", "2026-10-15T00:00:00");
+let artifact = write_faceted(&[input], &options, &context).result??;
+assert_eq!(artifact.bodies()[0].edge_uses().len(), 24);
+assert!(artifact.text().contains("FACETED_BREP"));
+# Ok::<(), Box<dyn std::error::Error>>(())
+```
+
+Both writers reject `1/3`, irrational coordinates, unmaterialized selected points,
+unmapped families and cavity shells with typed source-addressable errors. They never
+round, fit, heal or drop unsupported geometry. `StepWriteOptions` makes units,
+metadata and allowances explicit; the caller supplies the timestamp. Exporting
+metres as inches can itself make a coordinate nonrepresentable. The
+[native export example](examples/faceted_step.rs) writes seven original
+construction recipes for independent readers. The
+[advanced import example](examples/advanced_step.rs) reads independent planar
+STEP bodies, splits and reflects a holed solid, exports faceted STEP, and
+checks exact native reimport. This changes the exchange encoding while retaining
+the planar line geometry; it is not curved-face tessellation.
+The [circular import example](examples/circular_step.rs) imports an exact
+non-cardinal cylinder, splits a circular edge and validates native archive replay.
+It checks the exact volume and deterministic archive replay independently of
+STEP output; the faceted writer rejects its curved carriers.
+
+`step::write_advanced` emits explicit `VERTEX_POINT`/`EDGE_CURVE` identities,
+directed uses, bounds and `ADVANCED_FACE` records on native planes, cylinders, cones and ring tori.
+It retains straight lines and circular arcs, including closed circular edges,
+shared seams and partial arcs. The borrowed `AdvancedStep` report maps every
+used native entity to its output entity and retains exact output curve parameter
+intervals and native-to-output surface chart maps. Direct spatial curves are
+valid in this selected STEP encoding; native face-local pcurves and history
+remain in the original model/archive.
+
+```rust
+use hyperbrep::{builder, OperationContext, WorkBudget};
+use hyperbrep_io::step::{StepBody, StepWriteOptions, write_advanced};
+let native = builder::cylinder(5.into(), 7.into())?;
+let context = OperationContext::strict(WorkBudget { refinements: 0, promotions: 0 });
+let output = write_advanced(&[StepBody {
+    solid: native.bodies().next().unwrap(), name: "Cylinder",
+}], &StepWriteOptions::new("cylinder.step", "2026-10-16T00:00:00"), &context).result??;
+assert!(output.text().contains("CYLINDRICAL_SURFACE"));
+assert!(output.bodies()[0].edges().iter().any(|e| e.source.curve().circular_geometry().is_some()));
+# Ok::<(), Box<dyn std::error::Error>>(())
+```
+
+The [analytic export example](examples/analytic_step.rs) exercises native/imported
+cylinders, radical frames, edge splitting, reflection, exact export and reimport.
+The [native similarity example](examples/analytic_similarity.rs) scales a
+cylinder exactly, including reflection, before exporting in millimetres or
+inches. Native physical scaling and output unit selection are separate operations;
+unit selection does not change the source model. The shared input selection is now
+`StepBody`; the former `FacetedBody` name was removed without an alias. Existing
+faceted encoding and its deterministic output contract remain supported.
+
+The [normalized-region example](examples/region_extrusion_step.rs) takes
+Hypercurve butt and round strokes directly through
+`builder::extrude_curve_region`, preserving their certified native circle
+geometry. It checks exact measures, translation, cold archive replay, STEP
+reimport, Boolean reuse and empty recovery in both traversal directions:
+
+```sh
+cargo run -p hyperbrep-io --example region_extrusion_step --release -- /tmp/region-step
+```
+
+This route retains the region's component proof and native contour view.
+General rational Bézier extrusion-face measurement remains a separate
+restriction of `builder::extrude_path`; converting a region to boundary paths
+does not preserve every available native circle specialization.
+
+ANCHOR, REFERENCE,
+SIGNATURE sections, scoped/value/constant references return explicit blockers.
+Schema-independent syntax success grants no geometric authority.
+
+[Dependency review](docs/PARSER_REVIEW.md) records why Ruststep and `step-p21`
+were not adopted for this boundary. [Performance](PERFORMANCE.md) records measured
+costs and the limits of the evidence. Extensions follow the stack's
+[admission protocol](../../docs/admission.md).
+
+Ring-torus exchange admits exact latitude/meridian boundaries with both UV
+coordinates in radians. Whole tori, axial/longitudinal halves, supported quarters
+and the rational 10/5-radius band cut at height 3 have exchange and continuation
+checks, including archive replay after subdivision. The
+[torus example](examples/torus_step.rs) exports, reimports and recuts these shapes.
+The [admission record](../hyperbrep/docs/evidence/2026-10-16-torus-exchange/README.md)
+separates native, STEP and resource evidence. Horn/spindle tori, other torus-curve
+families and loops requiring additional periodic subdivision remain unsupported.
+Radii, vertices and frame encodings must satisfy the existing exact-number
+contract; irrational band boundaries are not rounded. General Boolean closure
+and package/binding release qualification remain open.
+
+Cone exchange uses `SURFACE_OF_REVOLUTION`, a `LINE` generator and
+`AXIS1_PLACEMENT`. Native `ConicalRevolution` recognition proves the carrier and
+branch; ordinary native validation proves whole boundary images and the solid.
+Source LINE V retains its authored origin, magnitude and sign. Each imported
+`SourceFace::parameters` exposes the support entity and exact affine map from
+native UV to source UV, including declared units and periodic lifts.
+The writer can use a finite cap anchor when an exact apex has no finite decimal
+encoding. It never approximates the semi-angle or an unencodable split vertex.
+The [cone example](examples/cone_step.rs) exports and reimports a whole frustum,
+rotated halves, an axial band, both reunion orders and a nonterminating apex,
+then checks native continuation and archive replay. See the
+[mapping contract](docs/STEP_MAPPING.md#conical-line-revolutions) and
+[admission evidence](../hyperbrep/docs/evidence/2026-10-17-cone-exchange/README.md).
+Direct `CONICAL_SURFACE`, B-spline generators, general revolution mappings,
+apex-ending solids and arbitrary cone trims remain outside this exchange subset.

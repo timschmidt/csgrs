@@ -9,6 +9,44 @@ mod point;
 mod rational_kernel;
 
 impl BezierParallel2 {
+    pub(crate) fn checked_native_point(
+        &self,
+        parameter: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> crate::ExactCurveResult<CurvePoint2> {
+        let operation = crate::CurveOperation2::Evaluation;
+        let family = crate::CurveFamily2::AnalyticParallel;
+        let invalid = |cause| crate::ExactCurveError::invalid(operation, family, cause);
+        if let Some(weight) = self.source_power_basis().map_err(invalid)?.weight {
+            let sign = crate::ExactCurveError::decided(
+                operation,
+                parameter.polynomial_sign(weight, policy).map_err(invalid)?,
+            )?;
+            if sign == RealSign::Zero {
+                return Err(invalid(CurveError::InvalidCurveParameter));
+            }
+        }
+        if self.distance().zero_status() != ZeroKnowledge::Zero
+            && !crate::ExactCurveError::decided(
+                operation,
+                self.source_tangent_nonzero_at(parameter, policy)
+                    .map_err(invalid)?,
+            )?
+        {
+            return Err(invalid(CurveError::InvalidCurveParameter));
+        }
+        BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+            self.clone(),
+            parameter,
+            Real::zero(),
+            policy,
+        )
+        .map(CurvePoint2::from)
+        .ok_or_else(|| {
+            crate::ExactCurveError::blocked(operation, family, UncertaintyReason::Unsupported)
+        })
+    }
+
     /// Constructs an exact analytic parallel from its structural source and
     /// signed left-normal distance.
     ///
@@ -1462,6 +1500,7 @@ impl BezierParallel2 {
         };
         let CurvePoint2(CurvePointData2::Algebraic(point)) = point else {
             return match point {
+                CurvePoint2(CurvePointData2::Polynomial(_)) => retained(point, visitor),
                 CurvePoint2(CurvePointData2::Endpoint(endpoint)) => {
                     match endpoint.resolve(policy)? {
                         Classification::Decided(Some(point)) => self

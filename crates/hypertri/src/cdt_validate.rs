@@ -664,7 +664,8 @@ mod tests {
     fn strict_triangle_validation_propagates_an_undecided_orientation() {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
-        let opaque_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let opaque_zero =
+            crate::test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
         let points = [p(0, 0), p(1, 0), ExactPoint::new(Real::zero(), opaque_zero)];
         let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
         assert!(matches!(

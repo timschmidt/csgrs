@@ -65,7 +65,8 @@ fn failed_source_cannot_classify_point() {
 fn unresolved_circle_construction_does_not_unwind() {
     let sine = Scalar::e().sin();
     let cosine = Scalar::e().cos();
-    let radius = &sine * &sine + &cosine * &cosine - Scalar::one();
+    let radius =
+        crate::test_support::terminal_zero(&sine * &sine + &cosine * &cosine - Scalar::one());
     let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         crate::geometry::circle_region(&[Scalar::zero(), Scalar::zero()], &(radius))
     }));
@@ -204,7 +205,8 @@ fn enclosing_preview_cannot_resolve_unknown_classification_or_offset() {
     let region = square();
     let sine = Scalar::e().sin();
     let cosine = Scalar::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Scalar::one();
+    let zero =
+        crate::test_support::terminal_zero(&sine * &sine + &cosine * &cosine - Scalar::one());
     let check = || {
         assert!(
             region

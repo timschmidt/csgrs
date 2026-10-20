@@ -1809,7 +1809,14 @@ mod tests {
     fn terminal_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
-        &sine * &sine + &cosine * &cosine - Real::one()
+        let original = &sine * &sine + &cosine * &cosine - Real::one();
+        // Preserve the original identity as a newly certified proof case.
+        assert_eq!(
+            original.exact_rational_normal_form(),
+            Some(hyperreal::Rational::zero())
+        );
+        // A separate angle-addition identity retains the terminal-policy control.
+        crate::test_support::terminally_unresolved_zero()
     }
 
     fn x_slab(min: Real, max: Real) -> SupportSlab3 {

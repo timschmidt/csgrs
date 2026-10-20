@@ -40,10 +40,14 @@ mod classify;
 mod contour;
 mod curve;
 mod curve_intersection;
+mod curve_native_image;
+mod curve_native_segment;
+mod curve_parallel;
 mod curve_path_intersection;
 mod curve_point;
 mod curve_region_boolean;
 mod curve_region_trim;
+mod curve_scalar_chart;
 mod curve_string;
 mod curve_support;
 mod direction;
@@ -70,10 +74,13 @@ mod offset;
 mod parallel_kernel_tests;
 mod point;
 mod policy;
+mod polynomial_point;
 mod polynomial_spline;
 mod prepared;
 mod rational_bezier;
 mod rational_bezier_general;
+mod rational_map;
+pub use rational_map::RationalMap2;
 #[cfg(test)]
 mod rational_bezier_tests;
 mod reconstruct;
@@ -170,8 +177,9 @@ pub use classify::{Classification, LineSide, UncertaintyReason};
 pub use contour::{Contour2, ContourPointLocation, FillRule};
 pub use curve::{
     Curve2, CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, CurveDerivative2,
-    CurveFamily2, CurveFillet2, CurveFilletContact2, CurveGeometry2, CurveParameterSide2,
-    CurvePath2, CurveSpanRange2, CurveVector2, NativeBezierFragment2,
+    CurveFamily2, CurveFillet2, CurveFilletContact2, CurveGeometry2, CurveLoopOrientation2,
+    CurveParameterSide2, CurvePath2, CurveSpanRange2, CurveVector2, NativeBezierFragment2,
+    PolynomialCurveBranch2, PolynomialCurveSet2,
 };
 pub(crate) use curve_intersection::CurveIntersectionCandidates2;
 pub use curve_intersection::{
@@ -180,13 +188,18 @@ pub use curve_intersection::{
     CurveIntersectionResult2, CurveIntersectionTopology2, CurveLocation2, CurveOverlapOrientation2,
     CurveParameterSet2, CurvePointLocations2,
 };
+pub use curve_native_image::CurveNativeImage2;
+pub use curve_native_segment::CurveNativeSegment2;
+pub use curve_parallel::CurveAnalyticParallel2;
 pub use curve_path_intersection::{
     CurvePathIntersectionBlocker2, CurvePathIntersectionContact2, CurvePathIntersectionOverlap2,
     CurvePathIntersectionParameterComponent2, CurvePathIntersectionResult2,
     CurvePathIntersectionTopology2, CurvePathSplit2,
 };
-pub use curve_point::CurvePoint2;
 pub(crate) use curve_point::CurvePointData2;
+pub use curve_point::{
+    CurvePoint2, CurvePointAffineForm2, CurvePointDefinition2, CurvePointRationalForm2,
+};
 pub use curve_region_boolean::{
     CurveRegionBooleanOperand2, CurveRegionBooleanResults2, CurveRegionCarrier2,
     CurveRegionIntersectionBlocker2, CurveRegionIntersectionContact2,
@@ -196,6 +209,7 @@ pub use curve_region_trim::{
     CurvePathRegionTrim2, CurvePathRegionTrimFragment2, CurveRegionBoundaryContact2,
     CurveRegionBoundaryKind2, CurveRegionTrimFragment2,
 };
+pub use curve_scalar_chart::CurveScalarChart2;
 pub use curve_string::{
     CurveString2, CurveStringEndpoint2, CurveStringIntersection, CurveStringLinkKind2,
     CurveStringTrimPoint2,

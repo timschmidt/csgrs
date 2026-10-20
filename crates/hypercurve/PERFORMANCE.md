@@ -53,6 +53,73 @@ checks do not establish a whole-application speedup. The exact-track importer
 remains separately unadmitted: its combination with the unhinted proposal
 failed the original timing gates; an inline/importer combination was not run.
 
+## Native full-circle contour composition — 2026-10-15
+
+`CurveString2` now restricts its zero-chord guard to lines. Equal endpoints of a
+`CircularArc2` denote a full circle; arc validity and exact-query certification
+remain owned by the existing carrier. The
+[closed-edge evidence](../hyperbrep/docs/evidence/2026-10-15-closed-edges/README.md)
+retains the original runtime failure and unchanged zero-line rejection, and
+checks full-circle winding, area, first moment, Booleans, annular difference
+and offset reversal through `CurveRegion2`.
+
+Three alternating CPU-0 process pairs against `d60bd1cf4` preserve all 12
+default arc benchmark rows, original iterations and result tails. The four
+large-input cases retain 256 arcs and ten iterations. The median of case
+median timing ratios is **1.003615**, with range **0.910870–1.118080**.
+The largest is structural-fact replay, 6.462 to 7.225 ns; cached top-level
+evaluation changes from 232.643 to 243.940 ns (1.048560). These unfavorable
+observations remain in the record. The 11.81% row exceeds a 10% cohort budget;
+no universal budget pass or speedup is claimed. The completeness extension is
+retained as a new feature baseline, with the predecessor and unresolved
+controlled-host timing qualification preserved.
+
+The unchanged arc harness has eleven result tails and one timing-only row;
+its receipt equality is not an independent geometry oracle. The executable
+shrinks 128 bytes to 16,714,312. Process peak RSS is 29,652–30,080 KiB before
+and 29,692–30,020 after. No significant size/memory benefit is inferred.
+Five absolute BREP composition/allocation cases are reported in
+[BREP performance](../hyperbrep/PERFORMANCE.md); they do not isolate this method
+or establish general operation work/memory bounds. The original full corpus
+and superseded-candidate samples remain in the evidence bundle.
+
+## Complete-image injectivity for connected native spans
+
+`Curve2::has_certified_injective_image` reuses prepared rational evaluators and
+existing strict axis-monotonicity proofs. Multi-span success also requires
+exact joins and one common direction. It never caches a negative result or
+uses provisional near-equality. `false` means no certificate, not a proven
+self-intersection. The implementation adds no solver or global cache.
+
+The [qualification](../hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md)
+records positive/reversed/restricted weighted NURBS cases, backtracking and
+disconnected-span rejection, strict behavior in a provisional scope, and three
+rejected injectivity faults. A fourth fault tests BREP spline-image agreement.
+Eight focused Hypercurve regressions pass; this is not a full Hypercurve suite.
+
+A prepared two-span query takes a median 72 ns across three short 100-iteration
+process samples in `hyperbrep`'s `spline_replay_cost` harness. Preparation is
+outside timing. The 66 existing BREP receipts match, with a median case timing
+ratio 0.989699 and largest 1.073174 against `7091576d8`. Whole executable size
+increases 10,704 bytes; median process peak RSS changes from 21,764 to 21,712
+KiB. These are descriptive cross-crate costs, not an isolated method size,
+allocation count, statistically established speedup or complete growth bound.
+
+## Rejected strict-scope entry fast path
+
+The [scope-entry experiment](../hyperbrep/docs/evidence/2026-10-14-strict-scope-fast-path/manifest.json)
+skipped frame save/restore when the ambient state was already strict and had
+no preview context. The candidate passed the focused policy and budget tests
+and all 238 HyperBRep tests. Three alternating, CPU-0-pinned trials preserved
+all 66 benchmark rows, iteration counts, units and checksums.
+
+The median of per-case median timing ratios was 0.98947, but rational bilinear
+tensor containment rose from 897 ns to 977 ns, and the benchmark executable
+grew by 22,984 bytes. The candidate was rejected; the patch, all raw trials
+and per-case comparisons remain available. These samples do not establish
+statistical significance or a full-suite regression ceiling. Strict scope
+isolation remains in force without this optimization.
+
 ## Native segment metrics
 
 `Segment2::distance_squared` and `point_distance_squared` measure exact native
@@ -9889,3 +9956,23 @@ No endpoint patch is applied to main, and sampling for these binaries is closed.
 The original native gate and the wider property plan remain open. The next
 separate audit returns to the recorded alternate/scientific scalar-formatting
 stall, retaining its original unresolved-hypot input and precision contract.
+
+
+## Exact retained Bezier images for BRep (2026-10-18)
+
+The [admission record](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/README.md) extends exact completion through native subcurve images and supported product-solid continuation. This is a capability extension, not an optimization.
+
+Three alternating pairs preserve all 22 existing consumer groups in 18 processes, with original assertions, iterations and outcomes. Time ratios range 0.981471–1.224120; 1 exceed the 10% review marker and 3 increase allocation calls or requested bytes. Eleven new complete groups have absolute costs from three processes. All adverse observations remain. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or internal resource bound. The unequal_holes expected-rejection group rises from 2.696819 to 3.301229 ms (1.224120 ratio), with allocation calls 9123 to 11483; this adverse cost remains an explicit open obligation, not a speedup claim.
+
+The [adverse review](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/adverse-review.md) explains the retained rejection cost and the separate proof-search experiment required before any optimization.
+
+[Every cost row](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/costs.md) and the [resource review](../hyperbrep/docs/evidence/2026-10-18-selected-profile-extrusion/resource-review.json) retain slower observations, allocation requests, process RSS, executable sizes and forty exact archive states. New completed workflows have absolute costs only. Prior rejected ideas and adverse cost obligations remain attached to their original revisions. Allocation requests, archive nesting and process RSS do not bound retained heap, coefficient growth, total work or cancellation. All distribution and broader work-package gates remain open.
+
+
+## Procedural parallel definitions for BRep replay (2026-10-18)
+
+The [admission record](../hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/README.md) adds exact native persistence of analytic parallels and supported planar continuation. This is a capability extension; it introduces no new geometry solver or optimization.
+
+Three alternating pairs preserve all 33 preceding consumer groups in 24 processes, with original assertions, iterations and outcomes. Time ratios range 0.979430–1.065905; 0 exceed the 10% review marker and 5 increase allocation calls or requested bytes. Seven new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
+
+[All cost rows](../hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/costs.md) and the [resource review](../hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/resource-review.json) retain timing, allocation, RSS, executable size and 25 exact archive observations. The previous selected-profile unequal-hole rejection cost and all earlier adverse obligations remain open. These finite samples do not bound arbitrary composition, retained heap, coefficient growth, total work or cancellation. Spatial parallel-cap extrusion and broader release gates remain open.

@@ -168,6 +168,15 @@ substitute a primitive-float result.
 an opaque denominator that bounded refinement cannot separate from zero
 returns `Problem::UnknownZero`.
 
+Recognized `atan(x) + k*pi/2` forms retain exact sine, cosine and cotangent
+identities for integer `k`, including signed rational and pure-quadratic `x`.
+The shared recognizer also handles reconstructed periodic interpolation when
+the existing bounded Laurent reducer proves the same linear form. For example,
+`sin(atan(4/3) + pi/2)` is exactly `3/5`; no approximate angle or quadrant test
+is needed. Unrecognized expressions retain the ordinary computable path. See
+the [quarter-turn admission evidence](../hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
+for replay, negative controls, resource limits and measured downstream costs.
+
 ### Probability and special functions
 
 | Family | Methods |

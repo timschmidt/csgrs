@@ -1,5 +1,8 @@
 #![cfg(feature = "curve")]
 
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{GeometryCertainty, GeometryContext, Real, curve, errors::ValidationErrorKind};
 use hypercurve::{
     BooleanOp, CurvePath2, CurvePathRegionTrim2, CurveRegion2, CurveRegionBoundaryKind2,
@@ -286,7 +289,7 @@ fn empty_results_invalid_parameters_and_subsequent_recovery_are_distinct() {
 fn unresolved_padding_keeps_its_policy_and_certainty_even_on_empty_regions() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - r(1);
+    let zero = uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - r(1));
     let empty = curve::empty();
     for _ in 0..2 {
         assert_eq!(

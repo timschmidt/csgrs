@@ -1,5 +1,8 @@
 #![cfg(feature = "metaballs")]
 //! Invalid metaballs and failed samples must not publish successful geometry.
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     Real, TriangleMesh,
     errors::{ValidationError, ValidationErrorKind},
@@ -43,7 +46,7 @@ fn ball(radius: Real) -> MetaBall {
 fn unknown_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 #[test]

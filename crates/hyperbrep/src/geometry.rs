@@ -4,13 +4,58 @@ use std::cmp::Ordering;
 use std::sync::{Arc, OnceLock};
 
 use hypercurve::{
-    CircularArc2, Classification, Contour2, Curve2, CurveFamily2, CurveGeometry2,
-    CurvePointLocations2, CurveRegion2, LineSeg2, Point2 as CurvePoint2, RationalBezier2, Segment2,
+    CircularArc2, Classification, Contour2, Curve2, CurveFamily2, CurveGeometry2, CurveRegion2,
+    LineSeg2, Point2 as CurvePoint2, RationalBezier2, Segment2,
 };
 use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
 use crate::error::{GeometryError, GeometryResult};
+use crate::{Parameter, ParameterRange};
+
+mod affine_image;
+mod analytic;
+mod axial_lines;
+mod conical_revolution;
+mod curve_plane;
+mod location;
+mod pcurve;
+mod periodic_charts;
+mod planar_image;
+mod plane_tensor;
+mod planes;
+mod point;
+mod rotation;
+#[cfg(test)]
+mod selected_pcurves;
+mod spline;
+mod surface_point;
+mod transform;
+mod translation;
+mod vector;
+pub(crate) use affine_image::AffineCurve3;
+pub use affine_image::AffineCurveGeometry;
+pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
+pub use conical_revolution::{ConeBranch, ConicalRevolution, ConicalRevolutionChart};
+use curve_plane::{
+    intersect_nurbs_plane, intersect_planar_image_plane, intersect_rational_bezier_plane,
+};
+use location::{
+    locate_ellipse_arc_parameters, locate_line_parameter, locate_nurbs_parameters,
+    locate_rational_bezier_parameters,
+};
+pub use planar_image::PlanarCurveGeometry;
+pub(crate) use planar_image::{PlanarCurve3, represented_curve_point};
+use planes::intersect_planes;
+pub use point::{Axis, GeometricPoint3};
+pub(crate) use rotation::RotationCurve3;
+pub use rotation::RotationCurveGeometry;
+use rotation::rotation_transform;
+pub use spline::{NurbsCurveGeometry, RationalBezierCurveGeometry};
+pub(crate) use transform::TransformMetric;
+pub(crate) use translation::TranslationCurve3;
+pub use translation::TranslationCurveGeometry;
+pub use vector::GeometricVector3;
 
 pub(crate) fn resolve_planar_classification<T>(
     classification: Classification<T>,
@@ -33,16 +78,18 @@ pub struct ParameterDomain {
 impl ParameterDomain {
     /// Constructs a nonempty increasing closed parameter interval.
     pub fn new(start: Real, end: Real) -> GeometryResult<Self> {
-        match compare_reals(&start, &end, crate::STRICT_PREDICATES) {
-            PredicateOutcome::Decided {
-                value: Ordering::Less,
-                ..
-            } => Ok(Self { start, end }),
-            PredicateOutcome::Decided { .. } => Err(GeometryError::InvalidParameterDomain),
-            PredicateOutcome::Unknown { needed, stage } => {
-                Err(GeometryError::PredicateUnresolved { needed, stage })
-            }
-        }
+        crate::context::strict(
+            || match compare_reals(&start, &end, crate::STRICT_PREDICATES) {
+                PredicateOutcome::Decided {
+                    value: Ordering::Less,
+                    ..
+                } => Ok(Self { start, end }),
+                PredicateOutcome::Decided { .. } => Err(GeometryError::InvalidParameterDomain),
+                PredicateOutcome::Unknown { needed, stage } => {
+                    Err(GeometryError::PredicateUnresolved { needed, stage })
+                }
+            },
+        )
     }
 
     /// Returns the conventional unit interval.
@@ -65,27 +112,37 @@ impl ParameterDomain {
 
     /// Certifies whether `parameter` belongs to this interval.
     pub fn contains(&self, parameter: &Real) -> GeometryResult<bool> {
-        if parameter == &self.start || parameter == &self.end {
-            return Ok(true);
-        }
-        let after_start = decided_order(compare_reals(
-            parameter,
-            &self.start,
-            crate::STRICT_PREDICATES,
-        ))?;
-        let before_end = decided_order(compare_reals(
-            parameter,
-            &self.end,
-            crate::STRICT_PREDICATES,
-        ))?;
-        Ok(matches!(after_start, Ordering::Equal | Ordering::Greater)
-            && matches!(before_end, Ordering::Equal | Ordering::Less))
+        crate::context::strict(|| {
+            if parameter == &self.start || parameter == &self.end {
+                return Ok(true);
+            }
+            let after_start = decided_order(compare_reals(
+                parameter,
+                &self.start,
+                crate::STRICT_PREDICATES,
+            ))?;
+            let before_end = decided_order(compare_reals(
+                parameter,
+                &self.end,
+                crate::STRICT_PREDICATES,
+            ))?;
+            Ok(matches!(after_start, Ordering::Equal | Ordering::Greater)
+                && matches!(before_end, Ordering::Equal | Ordering::Less))
+        })
     }
 }
 
 /// Supported exact spatial curve family.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Curve3Kind {
+    /// Invertible affine image of a retained spatial curve.
+    AffineImage,
+    /// Circular orbit of a retained point around an authored unit axis.
+    Rotation,
+    /// Straight sweep of a retained point through an authored displacement.
+    Translation,
+    /// Exact affine lift of a retained planar curve.
+    PlanarImage,
     /// Finite line segment.
     Line,
     /// Arbitrary-degree rational Bézier curve.
@@ -98,28 +155,38 @@ pub enum Curve3Kind {
     EllipseArc,
 }
 
-/// Exact first derivative of a spatial curve.
-#[derive(Clone, Debug)]
-pub struct CurveDerivative3 {
-    vector: Vector3,
-}
-
-/// Complete represented parameter-location result for one spatial curve.
+/// Complete exact parameter-location result for one spatial curve.
 #[derive(Clone, Debug)]
 pub enum CurveParameterLocation {
     /// The point is not on the finite curve.
     None,
-    /// All represented exact parameters whose images equal the point.
-    Parameters(Vec<Real>),
+    /// All certified exact parameters whose images equal the point.
+    /// Selected algebraic roots need not have a stored `Real` view.
+    Parameters(Vec<Parameter>),
     /// Every parameter in the curve domain maps to the point.
     EntireDomain,
 }
 
-impl CurveDerivative3 {
-    /// Returns the exact derivative vector.
-    pub const fn vector(&self) -> &Vector3 {
-        &self.vector
-    }
+pub(crate) fn native_span_parameter_range(
+    curve: &Curve2,
+    index: usize,
+    range: &hypercurve::CurveParameterRange2,
+) -> Result<hypercurve::ParamRange, GeometryError> {
+    let spans = curve.native_bezier_fragments()?;
+    let (start, end) = spans
+        .get(index)
+        .ok_or(GeometryError::UnsupportedIntersection)?
+        .parameter_range();
+    let lift = |parameter: &hypercurve::CurveParameter2| -> Result<Real, GeometryError> {
+        let parameter = parameter
+            .scalar()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        Ok(start + (end - start) * parameter)
+    };
+    Ok(hypercurve::ParamRange::new(
+        lift(range.start())?,
+        lift(range.end())?,
+    ))
 }
 
 /// Immutable exact face-local parameter-space curve.
@@ -147,48 +214,65 @@ impl Pcurve {
         self.curve.family()
     }
 
-    /// Returns the inclusive exact parameter-domain start.
-    pub fn domain_start(&self) -> GeometryResult<&Real> {
-        self.curve
-            .parameter_domain()
-            .start()
-            .scalar()
-            .ok_or(GeometryError::UnsupportedPcurveContour)
+    /// Returns the first parameter in this pcurve's directed retained chart.
+    pub fn domain_start(&self) -> GeometryResult<Parameter> {
+        Parameter::from_curve(self.curve.parameter_endpoints().0)
     }
 
-    /// Returns the inclusive exact parameter-domain end.
-    pub fn domain_end(&self) -> GeometryResult<&Real> {
-        self.curve
-            .parameter_domain()
-            .end()
-            .scalar()
-            .ok_or(GeometryError::UnsupportedPcurveContour)
+    /// Returns the last parameter in this pcurve's directed retained chart.
+    pub fn domain_end(&self) -> GeometryResult<Parameter> {
+        Parameter::from_curve(self.curve.parameter_endpoints().1)
     }
 
-    /// Evaluates an exact point in surface parameter space.
-    pub fn point_at(&self, parameter: &Real) -> GeometryResult<Point2> {
-        let point = self.curve.point_at(&parameter.clone().into())?;
-        let point = point
-            .coordinates()
-            .ok_or(GeometryError::UnsupportedPcurveContour)?;
-        Ok(Point2::new(point.x().clone(), point.y().clone()))
+    pub(crate) fn represented_start(&self) -> GeometryResult<&Real> {
+        crate::context::strict(|| {
+            self.curve
+                .parameter_endpoints()
+                .0
+                .scalar()
+                .ok_or(GeometryError::UnsupportedPcurveContour)
+        })
+    }
+
+    pub(crate) fn represented_end(&self) -> GeometryResult<&Real> {
+        crate::context::strict(|| {
+            self.curve
+                .parameter_endpoints()
+                .1
+                .scalar()
+                .ok_or(GeometryError::UnsupportedPcurveContour)
+        })
+    }
+
+    /// Evaluates a face-local point without discarding selected image evidence.
+    pub fn point_at(&self, parameter: &Parameter) -> GeometryResult<hypercurve::CurvePoint2> {
+        crate::context::strict(|| Ok(self.curve.point_at(&parameter.curve_parameter())?))
+    }
+
+    pub(crate) fn evaluate_real(&self, parameter: &Real) -> GeometryResult<Point2> {
+        crate::context::strict(|| {
+            let point = represented_curve_point(&self.curve, parameter)?;
+            Ok(Point2::new(point.x().clone(), point.y().clone()))
+        })
     }
 
     /// Splits this pcurve exactly at a strict interior public parameter.
-    pub fn split_at(&self, parameter: &Real) -> GeometryResult<(Self, Self)> {
-        let (first, second) = self.curve.split_at(parameter.clone().into())?;
-        Ok((Self::new(first), Self::new(second)))
+    pub fn split_at(&self, parameter: &Parameter) -> GeometryResult<(Self, Self)> {
+        crate::context::strict(|| {
+            let (first, second) = self.curve.split_at(parameter.curve_parameter())?;
+            Ok((Self::new(first), Self::new(second)))
+        })
     }
 
     /// Returns the same exact parameter-space image with reversed traversal.
     pub fn reversed(&self) -> GeometryResult<Self> {
-        Ok(Self::new(self.curve.reversed()?))
+        crate::context::strict(|| Ok(Self::new(self.curve.reversed()?)))
     }
 
     pub(crate) fn endpoints(&self) -> GeometryResult<(Point2, Point2)> {
         Ok((
-            self.point_at(self.domain_start()?)?,
-            self.point_at(self.domain_end()?)?,
+            self.evaluate_real(self.represented_start()?)?,
+            self.evaluate_real(self.represented_end()?)?,
         ))
     }
 
@@ -214,27 +298,35 @@ impl Pcurve {
         }
     }
 
-    /// Recovers the public parameter of an exact point on a native pcurve.
-    pub(crate) fn parameter_at_point(&self, point: &Point2) -> GeometryResult<Real> {
-        let point = CurvePoint2::new(point.x.clone(), point.y.clone());
-        match self.curve.geometry() {
-            Some(CurveGeometry2::Line(line)) => {
-                let dx = line.end().x() - line.start().x();
-                let dy = line.end().y() - line.start().y();
-                let numerator =
-                    (point.x() - line.start().x()) * &dx + (point.y() - line.start().y()) * &dy;
-                (numerator / (&dx * &dx + &dy * &dy)).map_err(|_| GeometryError::ProjectiveDivision)
-            }
-            Some(CurveGeometry2::CircularArc(arc)) => {
-                match crate::error::classified(arc.sweep_fraction(&point))? {
-                    Classification::Decided(parameter) => Ok(parameter),
-                    Classification::Uncertain(reason) => {
-                        Err(GeometryError::PlanarClassificationUnresolved(reason))
+    /// Recovers every incident public parameter without replacing the native
+    /// chart or discarding selected-root authority.
+    pub(crate) fn parameters_at_point(&self, point: &Point2) -> GeometryResult<Vec<Parameter>> {
+        crate::context::strict(|| {
+            let point = CurvePoint2::new(point.x.clone(), point.y.clone());
+            if let Some(line) = self.line_segment() {
+                // A native strict side proof can exclude unrelated source
+                // uses before constructing their rational incidence equations.
+                // On-line and blocked classifications still use the complete
+                // native inverse, including finite domains and root identity.
+                match line.classify_point(&point) {
+                    Ok(hypercurve::LineSide::Left | hypercurve::LineSide::Right) => {
+                        return Ok(Vec::new());
                     }
+                    Ok(hypercurve::LineSide::On) | Err(hypercurve::ExactCurveError::Blocked(_)) => {
+                    }
+                    Err(error) => return Err(error.into()),
                 }
             }
-            _ => Err(GeometryError::UnsupportedPcurveContour),
-        }
+            match self.curve.point_locations(&point.into())? {
+                hypercurve::CurvePointLocations2::Locations(locations) => locations
+                    .iter()
+                    .map(|location| Parameter::from_curve(&location.parameter()?))
+                    .collect(),
+                hypercurve::CurvePointLocations2::EntireCurve => {
+                    Err(GeometryError::UnsupportedPcurveContour)
+                }
+            }
+        })
     }
 
     pub(crate) fn reflected_and_reversed_x(&self, reflection_sum: Real) -> GeometryResult<Self> {
@@ -253,7 +345,19 @@ impl Pcurve {
                     arc.is_clockwise(),
                 )?,
             ))),
-            _ => Err(GeometryError::UnsupportedTransform),
+            _ => {
+                let reflection = hypercurve::Similarity2::try_from_real_affine(
+                    -Real::one(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                    reflection_sum,
+                    Real::zero(),
+                )?;
+                Ok(Self::new(
+                    self.curve.transform_similarity(&reflection)?.reversed()?,
+                ))
+            }
         }
     }
 }
@@ -268,12 +372,17 @@ pub struct Curve3 {
 #[derive(Debug)]
 struct Curve3Data {
     geometry: CurveGeometry3,
-    domain: ParameterDomain,
-    bounds: OnceLock<Result<Aabb, GeometryError>>,
+    domain: ParameterRange,
+    bounds: OnceLock<Aabb>,
+    projections: OnceLock<Box<point::CurveProjections3>>,
 }
 
 #[derive(Debug)]
 enum CurveGeometry3 {
+    AffineImage(Box<AffineCurve3>),
+    Rotation(Box<RotationCurve3>),
+    Translation(Box<TranslationCurve3>),
+    PlanarImage(Box<PlanarCurve3>),
     Line(Line3),
     RationalBezier(RationalBezier3),
     Nurbs(NurbsCurve3),
@@ -283,6 +392,10 @@ enum CurveGeometry3 {
 
 #[derive(Clone, Debug)]
 pub(crate) enum Curve3ExactData {
+    AffineImage(Box<AffineCurve3>),
+    Rotation(Box<RotationCurve3>),
+    Translation(Box<TranslationCurve3>),
+    PlanarImage(Box<PlanarCurve3>),
     Line(Box<Line3ExactData>),
     RationalBezier {
         control_points: Vec<Point3>,
@@ -372,21 +485,39 @@ impl Curve3 {
         Arc::ptr_eq(&self.data, &other.data)
     }
 
+    pub(crate) fn identity_address(&self) -> usize {
+        Arc::as_ptr(&self.data) as usize
+    }
+
     /// Constructs a finite exact line segment.
     pub fn line(start: Point3, end: Point3) -> GeometryResult<Self> {
-        match point3_equal(&start, &end, crate::STRICT_PREDICATES) {
-            PredicateOutcome::Decided { value: true, .. } => {
-                return Err(GeometryError::DegenerateLine);
+        crate::context::strict(|| {
+            // Line restrictions repeatedly consume these exact coordinates.
+            // Compact derived algebraic endpoints before another affine image
+            // expands them, without changing their values or parameterization.
+            let compact = |point: Point3| {
+                Point3::new(
+                    point.x.compact_pi_laurent().unwrap_or(point.x),
+                    point.y.compact_pi_laurent().unwrap_or(point.y),
+                    point.z.compact_pi_laurent().unwrap_or(point.z),
+                )
+            };
+            let start = compact(start);
+            let end = compact(end);
+            match point3_equal(&start, &end, crate::STRICT_PREDICATES) {
+                PredicateOutcome::Decided { value: true, .. } => {
+                    return Err(GeometryError::DegenerateLine);
+                }
+                PredicateOutcome::Decided { value: false, .. } => {}
+                PredicateOutcome::Unknown { needed, stage } => {
+                    return Err(GeometryError::PredicateUnresolved { needed, stage });
+                }
             }
-            PredicateOutcome::Decided { value: false, .. } => {}
-            PredicateOutcome::Unknown { needed, stage } => {
-                return Err(GeometryError::PredicateUnresolved { needed, stage });
-            }
-        }
-        Ok(Self::from_parts(
-            CurveGeometry3::Line(Line3 { start, end }),
-            ParameterDomain::unit(),
-        ))
+            Ok(Self::from_parts(
+                CurveGeometry3::Line(Line3 { start, end }),
+                ParameterDomain::unit(),
+            ))
+        })
     }
 
     /// Constructs an exact circular arc parameterized directly by angle.
@@ -398,21 +529,23 @@ impl Curve3 {
         start_angle: Real,
         end_angle: Real,
     ) -> GeometryResult<Self> {
-        require_positive(&radius, GeometryError::InvalidRadius)?;
-        validate_arc_axes(&x, &y)?;
-        let domain = validate_arc_domain(start_angle, end_angle)?;
-        Ok(Self::from_parts(
-            CurveGeometry3::CircleArc(EllipseArc3 {
-                center,
-                x,
-                y,
-                x_radius: radius.clone(),
-                y_radius: radius,
-                angle_at_start: domain.start().clone(),
-                direction: 1,
-            }),
-            domain,
-        ))
+        crate::context::strict(|| {
+            require_positive(&radius, GeometryError::InvalidRadius)?;
+            validate_arc_axes(&x, &y)?;
+            let domain = validate_arc_domain(start_angle, end_angle)?;
+            Ok(Self::from_parts(
+                CurveGeometry3::CircleArc(EllipseArc3 {
+                    center,
+                    x,
+                    y,
+                    x_radius: radius.clone(),
+                    y_radius: radius,
+                    angle_at_start: domain.start().clone(),
+                    direction: 1,
+                }),
+                domain,
+            ))
+        })
     }
 
     /// Constructs an exact elliptic arc parameterized directly by angle.
@@ -425,22 +558,24 @@ impl Curve3 {
         start_angle: Real,
         end_angle: Real,
     ) -> GeometryResult<Self> {
-        require_positive(&x_radius, GeometryError::InvalidEllipseRadii)?;
-        require_positive(&y_radius, GeometryError::InvalidEllipseRadii)?;
-        validate_arc_axes(&x, &y)?;
-        let domain = validate_arc_domain(start_angle, end_angle)?;
-        Ok(Self::from_parts(
-            CurveGeometry3::EllipseArc(EllipseArc3 {
-                center,
-                x,
-                y,
-                x_radius,
-                y_radius,
-                angle_at_start: domain.start().clone(),
-                direction: 1,
-            }),
-            domain,
-        ))
+        crate::context::strict(|| {
+            require_positive(&x_radius, GeometryError::InvalidEllipseRadii)?;
+            require_positive(&y_radius, GeometryError::InvalidEllipseRadii)?;
+            validate_arc_axes(&x, &y)?;
+            let domain = validate_arc_domain(start_angle, end_angle)?;
+            Ok(Self::from_parts(
+                CurveGeometry3::EllipseArc(EllipseArc3 {
+                    center,
+                    x,
+                    y,
+                    x_radius,
+                    y_radius,
+                    angle_at_start: domain.start().clone(),
+                    direction: 1,
+                }),
+                domain,
+            ))
+        })
     }
 
     /// Constructs an arbitrary-degree rational Bézier curve over `[0, 1]`.
@@ -448,18 +583,20 @@ impl Curve3 {
         control_points: Vec<Point3>,
         weights: Vec<Real>,
     ) -> GeometryResult<Self> {
-        validate_control_net(&control_points, &weights)?;
-        validate_positive_weights(&weights)?;
-        let constant_coordinates = certified_constant_coordinates(&control_points);
-        Ok(Self::from_parts(
-            CurveGeometry3::RationalBezier(RationalBezier3 {
-                control_points,
-                weights,
-                constant_coordinates,
-                homogeneous_controls: OnceLock::new(),
-            }),
-            ParameterDomain::unit(),
-        ))
+        crate::context::strict(|| {
+            validate_control_net(&control_points, &weights)?;
+            validate_positive_weights(&weights)?;
+            let constant_coordinates = certified_constant_coordinates(&control_points);
+            Ok(Self::from_parts(
+                CurveGeometry3::RationalBezier(RationalBezier3 {
+                    control_points,
+                    weights,
+                    constant_coordinates,
+                    homogeneous_controls: OnceLock::new(),
+                }),
+                ParameterDomain::unit(),
+            ))
+        })
     }
 
     /// Constructs a finite, non-periodic exact NURBS curve.
@@ -469,47 +606,50 @@ impl Curve3 {
         weights: Vec<Real>,
         knots: Vec<Real>,
     ) -> GeometryResult<Self> {
-        validate_control_net(&control_points, &weights)?;
-        validate_positive_weights(&weights)?;
-        if degree == 0 || degree >= control_points.len() {
-            return Err(GeometryError::InvalidDegree);
-        }
-        if knots.len() != control_points.len() + degree + 1 {
-            return Err(GeometryError::InvalidKnotCount);
-        }
-        for adjacent in knots.windows(2) {
-            if !matches!(
-                decided_order(compare_reals(
-                    &adjacent[0],
-                    &adjacent[1],
-                    crate::STRICT_PREDICATES
-                ))?,
-                Ordering::Less | Ordering::Equal
-            ) {
-                return Err(GeometryError::InvalidKnotOrder);
+        crate::context::strict(|| {
+            validate_control_net(&control_points, &weights)?;
+            validate_positive_weights(&weights)?;
+            if degree == 0 || degree >= control_points.len() {
+                return Err(GeometryError::InvalidDegree);
             }
-        }
-        validate_clamped_knot_multiplicities(degree, &knots)?;
-        let domain =
-            ParameterDomain::new(knots[degree].clone(), knots[control_points.len()].clone())?;
-        Ok(Self::from_parts(
-            CurveGeometry3::Nurbs(NurbsCurve3 {
-                degree,
-                control_points,
-                weights,
-                knots,
-                homogeneous_controls: OnceLock::new(),
-            }),
-            domain,
-        ))
+            if knots.len() != control_points.len() + degree + 1 {
+                return Err(GeometryError::InvalidKnotCount);
+            }
+            for adjacent in knots.windows(2) {
+                if !matches!(
+                    decided_order(compare_reals(
+                        &adjacent[0],
+                        &adjacent[1],
+                        crate::STRICT_PREDICATES
+                    ))?,
+                    Ordering::Less | Ordering::Equal
+                ) {
+                    return Err(GeometryError::InvalidKnotOrder);
+                }
+            }
+            validate_clamped_knot_multiplicities(degree, &knots)?;
+            let domain =
+                ParameterDomain::new(knots[degree].clone(), knots[control_points.len()].clone())?;
+            Ok(Self::from_parts(
+                CurveGeometry3::Nurbs(NurbsCurve3 {
+                    degree,
+                    control_points,
+                    weights,
+                    knots,
+                    homogeneous_controls: OnceLock::new(),
+                }),
+                domain,
+            ))
+        })
     }
 
-    fn from_parts(geometry: CurveGeometry3, domain: ParameterDomain) -> Self {
+    fn from_parts(geometry: CurveGeometry3, domain: impl Into<ParameterRange>) -> Self {
         Self {
             data: Arc::new(Curve3Data {
                 geometry,
-                domain,
+                domain: domain.into(),
                 bounds: OnceLock::new(),
+                projections: OnceLock::new(),
             }),
             parameterization_identity: Arc::new(()),
         }
@@ -561,14 +701,24 @@ impl Curve3 {
             return false;
         }
         let direction = Real::from(first.direction);
-        let first_offset = &first.angle_at_start - &(direction.clone() * self.domain().start());
-        let second_offset = &second.angle_at_start - &(direction * other.domain().start());
+        let (Some(first_start), Some(second_start)) = (
+            self.domain().start().try_real(),
+            other.domain().start().try_real(),
+        ) else {
+            return false;
+        };
+        let first_offset = &first.angle_at_start - &(direction.clone() * first_start);
+        let second_offset = &second.angle_at_start - &(direction * second_start);
         equal(&first_offset, &second_offset)
     }
 
     /// Returns the curve family.
     pub fn kind(&self) -> Curve3Kind {
         match &self.data.geometry {
+            CurveGeometry3::AffineImage(_) => Curve3Kind::AffineImage,
+            CurveGeometry3::Rotation(_) => Curve3Kind::Rotation,
+            CurveGeometry3::Translation(_) => Curve3Kind::Translation,
+            CurveGeometry3::PlanarImage(_) => Curve3Kind::PlanarImage,
             CurveGeometry3::Line(_) => Curve3Kind::Line,
             CurveGeometry3::RationalBezier(_) => Curve3Kind::RationalBezier,
             CurveGeometry3::Nurbs(_) => Curve3Kind::Nurbs,
@@ -608,7 +758,7 @@ impl Curve3 {
                 }
                 for (index, point) in curve.control_points.iter().enumerate() {
                     let parameter = (Real::from(index as u64) / Real::from(degree as u64))
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
                     if !points_equal(point, &start.lerp(end, &parameter))? {
                         return Ok(None);
                     }
@@ -637,41 +787,56 @@ impl Curve3 {
                     .control_points
                     .last()
                     .expect("validated NURBS has controls");
-                let domain_start = self.domain().start();
-                let domain_span = self.domain().end() - domain_start;
+                let domain_start = self.domain().represented_start()?;
+                let domain_span = self.domain().represented_end()? - domain_start;
                 for (index, point) in curve.control_points.iter().enumerate() {
                     let greville = curve.knots[(index + 1)..=(index + curve.degree)]
                         .iter()
                         .cloned()
                         .fold(Real::zero(), |sum, knot| sum + knot);
                     let greville = (greville / Real::from(curve.degree as u64))
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
                     let parameter = ((greville - domain_start) / &domain_span)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
                     if !points_equal(point, &start.lerp(end, &parameter))? {
                         return Ok(None);
                     }
                 }
                 Ok(Some(Self::line(start.clone(), end.clone())?))
             }
-            CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => Ok(None),
+            CurveGeometry3::CircleArc(_)
+            | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::AffineImage(_)
+            | CurveGeometry3::Rotation(_)
+            | CurveGeometry3::Translation(_)
+            | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
     }
 
     /// Returns the exact public parameter domain.
-    pub fn domain(&self) -> &ParameterDomain {
+    pub fn domain(&self) -> &ParameterRange {
         &self.data.domain
+    }
+
+    pub(crate) fn reversal_pivot(&self) -> Real {
+        self.domain()
+            .try_real_endpoints()
+            .map_or_else(Real::zero, |(start, end)| start + end)
     }
 
     /// Returns conservative exact model-space bounds.
     ///
     /// Positive-weight rational Bézier and NURBS curves lie in the convex hull
     /// of their affine control points, so this bound never samples or converts
-    /// to floating point.
+    /// to floating point. Only successful bounds are cached; unresolved
+    /// comparisons can be retried after scalar evidence strengthens.
     pub fn bounds(&self) -> GeometryResult<Aabb> {
-        self.data
-            .bounds
-            .get_or_init(|| match &self.data.geometry {
+        crate::context::strict(|| {
+            crate::cache::get_or_try_init(&self.data.bounds, || match &self.data.geometry {
+                CurveGeometry3::AffineImage(image) => image.bounds(),
+                CurveGeometry3::Rotation(rotation) => rotation.bounds(),
+                CurveGeometry3::Translation(line) => line.bounds(),
+                CurveGeometry3::PlanarImage(image) => image.bounds(),
                 CurveGeometry3::Line(line) => {
                     exact_point_bounds(&[line.start.clone(), line.end.clone()])
                 }
@@ -681,16 +846,34 @@ impl Curve3 {
                     ellipse_arc_conservative_bounds(arc)
                 }
             })
-            .clone()
+            .cloned()
+        })
     }
 
     fn is_strictly_off_axis(&self, axis_origin: &Point3, axis: &Vector3) -> GeometryResult<bool> {
+        if self.domain().try_real_endpoints().is_none() {
+            // An authored plane through the axis avoids materializing either
+            // selected endpoint. Complete contacts, not endpoint samples,
+            // establish clearance over the entire retained interval.
+            for basis in [Vector3::x(), Vector3::y(), Vector3::z()] {
+                let witness = axis.cross(&basis);
+                if decided_order(compare_reals(
+                    &witness.norm_squared(),
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Greater
+                {
+                    return self.axis_clearance_from_witness(axis_origin, axis, &witness);
+                }
+            }
+            return Err(GeometryError::InvalidRevolutionAxis);
+        }
         let radial = |point: &Point3| {
             let relative = point - axis_origin;
             let axial = axis.clone() * axis.dot(&relative);
             relative - axial
         };
-        let start_radial = radial(&self.point_at(self.domain().start())?);
+        let start_radial = radial(&self.evaluate_real(self.domain().represented_start()?)?);
         if decided_order(compare_reals(
             &start_radial.norm_squared(),
             &Real::zero(),
@@ -699,7 +882,7 @@ impl Curve3 {
         {
             return Ok(false);
         }
-        let end_radial = radial(&self.point_at(self.domain().end())?);
+        let end_radial = radial(&self.evaluate_real(self.domain().represented_end()?)?);
         if decided_order(compare_reals(
             &end_radial.norm_squared(),
             &Real::zero(),
@@ -711,9 +894,8 @@ impl Curve3 {
         let witness_length = start_radial
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        let witness =
-            (start_radial / witness_length).map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
+        let witness = (start_radial / witness_length).map_err(GeometryError::Numeric)?;
 
         // Positive-weight rational bases stay in their affine control hull.
         // A strict axis-containing separating plane is therefore a complete,
@@ -724,7 +906,12 @@ impl Curve3 {
                 Some(curve.control_points.iter().collect::<Vec<_>>())
             }
             CurveGeometry3::Nurbs(curve) => Some(curve.control_points.iter().collect::<Vec<_>>()),
-            CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => None,
+            CurveGeometry3::CircleArc(_)
+            | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::AffineImage(_)
+            | CurveGeometry3::Rotation(_)
+            | CurveGeometry3::Translation(_)
+            | CurveGeometry3::PlanarImage(_) => None,
         };
         if let Some(controls) = controls {
             let mut separated = true;
@@ -745,18 +932,27 @@ impl Curve3 {
             }
         }
 
+        self.axis_clearance_from_witness(axis_origin, axis, &witness)
+    }
+
+    fn axis_clearance_from_witness(
+        &self,
+        axis_origin: &Point3,
+        axis: &Vector3,
+        witness: &Vector3,
+    ) -> GeometryResult<bool> {
         // When the convex-hull certificate is inconclusive, reduce exact axis
         // contact to membership in two orthogonal planes through the axis.
         // Supported curve/plane intersections enumerate the complete finite
-        // parameter interval; unsupported polynomial degrees remain explicit.
-        let transverse = axis.cross(&witness);
+        // parameter interval, retaining selected points when no scalar view exists.
+        let transverse = axis.cross(witness);
+        let second_normal = axis.cross(&transverse);
         let first_plane = Surface::plane(axis_origin.clone(), axis.clone(), witness.clone())?;
-        let point_is_on_axis = |point: &Point3| -> GeometryResult<bool> {
-            Ok(decided_order(compare_reals(
-                &radial(point).norm_squared(),
-                &Real::zero(),
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Equal)
+        let point_is_on_axis = |point: &GeometricPoint3| -> GeometryResult<bool> {
+            Ok(point.compare_linear_form(
+                &second_normal,
+                &second_normal.dot(&Vector3::from(axis_origin.clone())),
+            )? == Ordering::Equal)
         };
         match first_plane.intersect_curve(self)? {
             CurveSurfaceIntersection::None => Ok(true),
@@ -769,127 +965,230 @@ impl Curve3 {
                 Ok(true)
             }
             CurveSurfaceIntersection::Contained => {
-                let second_plane = Surface::plane(axis_origin.clone(), axis.clone(), transverse)?;
+                let second_plane =
+                    Surface::plane(axis_origin.clone(), axis.clone(), transverse.clone())?;
                 match second_plane.intersect_curve(self)? {
                     CurveSurfaceIntersection::None => Ok(true),
                     CurveSurfaceIntersection::Points(_) => Ok(false),
-                    CurveSurfaceIntersection::Overlap(_) | CurveSurfaceIntersection::Contained => {
-                        Ok(false)
+                    CurveSurfaceIntersection::Overlap(_)
+                    | CurveSurfaceIntersection::Components(_)
+                    | CurveSurfaceIntersection::Contained => Ok(false),
+                }
+            }
+            CurveSurfaceIntersection::Overlap(_) | CurveSurfaceIntersection::Components(_) => {
+                Err(GeometryError::UnsupportedIntersection)
+            }
+        }
+    }
+
+    /// Native represented-parameter evaluator used by coefficient algorithms.
+    pub(crate) fn evaluate_real(&self, parameter: &Real) -> GeometryResult<Point3> {
+        crate::context::strict(|| {
+            if !self.domain().contains_real(parameter)? {
+                return Err(GeometryError::ParameterOutsideDomain);
+            }
+            match &self.data.geometry {
+                CurveGeometry3::AffineImage(image) => image
+                    .point_at(&Parameter::from_real(parameter.clone()))?
+                    .try_coordinates()
+                    .cloned()
+                    .ok_or(GeometryError::UnrepresentablePoint),
+                CurveGeometry3::Rotation(rotation) => rotation
+                    .point_at(parameter)?
+                    .try_coordinates()
+                    .cloned()
+                    .ok_or(GeometryError::UnrepresentablePoint),
+                CurveGeometry3::Translation(line) => line
+                    .point_at(parameter)?
+                    .try_coordinates()
+                    .cloned()
+                    .ok_or(GeometryError::UnrepresentablePoint),
+                CurveGeometry3::PlanarImage(image) => image.point_at(parameter),
+                CurveGeometry3::Line(line) => {
+                    if parameter == self.domain().represented_start()? {
+                        return Ok(line.start.clone());
                     }
+                    if parameter == self.domain().represented_end()? {
+                        return Ok(line.end.clone());
+                    }
+                    Ok(line.start.lerp(&line.end, parameter))
                 }
+                CurveGeometry3::RationalBezier(curve) => {
+                    if parameter == self.domain().represented_start()? {
+                        return Ok(curve.control_points[0].clone());
+                    }
+                    if parameter == self.domain().represented_end()? {
+                        return Ok(curve
+                            .control_points
+                            .last()
+                            .expect("validated rational Bezier has controls")
+                            .clone());
+                    }
+                    let mut point =
+                        evaluate_homogeneous_bezier(curve.homogeneous_controls(), parameter)?;
+                    restore_constant_coordinates(&mut point, &curve.constant_coordinates);
+                    Ok(point)
+                }
+                CurveGeometry3::Nurbs(curve) => {
+                    let span = find_span(
+                        parameter,
+                        &self.domain().represented_domain()?,
+                        curve.degree,
+                        curve.control_points.len(),
+                        &curve.knots,
+                    )?;
+                    evaluate_homogeneous_de_boor(
+                        curve.homogeneous_controls(),
+                        &curve.knots,
+                        curve.degree,
+                        span,
+                        parameter,
+                    )
+                }
+                CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => Ok(
+                    evaluate_ellipse_arc(arc, &self.domain().represented_domain()?, parameter),
+                ),
             }
-            CurveSurfaceIntersection::Overlap(_) => Err(GeometryError::UnsupportedIntersection),
-        }
+        })
     }
 
-    /// Evaluates an exact model-space point.
-    pub fn point_at(&self, parameter: &Real) -> GeometryResult<Point3> {
-        if !self.domain().contains(parameter)? {
-            return Err(GeometryError::ParameterOutsideDomain);
-        }
-        match &self.data.geometry {
-            CurveGeometry3::Line(line) => {
-                if parameter == self.domain().start() {
-                    return Ok(line.start.clone());
-                }
-                if parameter == self.domain().end() {
-                    return Ok(line.end.clone());
-                }
-                Ok(line.start.lerp(&line.end, parameter))
-            }
-            CurveGeometry3::RationalBezier(curve) => {
-                if parameter == self.domain().start() {
-                    return Ok(curve.control_points[0].clone());
-                }
-                if parameter == self.domain().end() {
-                    return Ok(curve
-                        .control_points
-                        .last()
-                        .expect("validated rational Bezier has controls")
-                        .clone());
-                }
-                let mut point =
-                    evaluate_homogeneous_bezier(curve.homogeneous_controls(), parameter)?;
-                restore_constant_coordinates(&mut point, &curve.constant_coordinates);
-                Ok(point)
-            }
-            CurveGeometry3::Nurbs(curve) => {
-                let span = find_span(
-                    parameter,
-                    self.domain(),
-                    curve.degree,
-                    curve.control_points.len(),
-                    &curve.knots,
-                )?;
-                evaluate_homogeneous_de_boor(
-                    curve.homogeneous_controls(),
-                    &curve.knots,
-                    curve.degree,
-                    span,
-                    parameter,
-                )
-            }
-            CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
-                Ok(evaluate_ellipse_arc(arc, self.domain(), parameter))
-            }
-        }
-    }
-
-    /// Evaluates one positive-order exact derivative.
+    /// Evaluates one positive-order derivative in the original parameter chart.
+    ///
+    /// Retained parameters and implicit section images preserve their joint
+    /// source. The optional represented-vector view never rounds coordinates.
+    /// Regular implicit graphs support arbitrary finite orders; singular-chart
+    /// limits and general selected angular evaluations remain typed blockers.
+    /// Native spline address-space overflow is `Numeric(OutOfRange)` and a
+    /// refused jet allocation is `Numeric(Exhausted)`. Owner controls for
+    /// retained jets remain distinct from total work or coefficient-size bounds.
     pub fn derivative_at(
         &self,
-        parameter: &Real,
+        parameter: &Parameter,
         order: usize,
-    ) -> GeometryResult<CurveDerivative3> {
-        if order == 0 {
-            return Err(GeometryError::InvalidDerivativeOrder);
-        }
-        if !self.domain().contains(parameter)? {
-            return Err(GeometryError::ParameterOutsideDomain);
-        }
-        let vector = match &self.data.geometry {
-            CurveGeometry3::Line(line) => {
-                if order == 1 {
-                    &line.end - &line.start
-                } else {
-                    Vector3::zero()
+    ) -> GeometryResult<GeometricVector3> {
+        crate::context::strict(|| {
+            if order == 0 {
+                return Err(GeometryError::InvalidDerivativeOrder);
+            }
+            if !self.domain().contains(parameter)? {
+                return Err(GeometryError::ParameterOutsideDomain);
+            }
+            match &self.data.geometry {
+                CurveGeometry3::AffineImage(image) => {
+                    return image
+                        .source
+                        .derivative_at(parameter, order)?
+                        .affine_image(&image.transform);
                 }
+                CurveGeometry3::PlanarImage(image) => return image.derivative_at(parameter, order),
+                CurveGeometry3::Translation(line) => {
+                    return Ok(GeometricVector3::from_coordinates(if order == 1 {
+                        line.displacement.clone()
+                    } else {
+                        Vector3::zeros()
+                    }));
+                }
+                CurveGeometry3::Line(line) => {
+                    return Ok(GeometricVector3::from_coordinates(if order == 1 {
+                        &line.end - &line.start
+                    } else {
+                        Vector3::zeros()
+                    }));
+                }
+                _ => {}
             }
-            CurveGeometry3::RationalBezier(curve) => {
-                evaluate_rational_bezier_derivative(curve, parameter, order)?
+            let Some(parameter_value) = parameter.try_real() else {
+                return match &self.data.geometry {
+                    CurveGeometry3::RationalBezier(_) | CurveGeometry3::Nurbs(_) => {
+                        GeometricVector3::native_derivative(self, parameter, order)
+                    }
+                    _ => Err(GeometryError::UnsupportedSelectedEvaluation),
+                };
+            };
+            let vector = match &self.data.geometry {
+                CurveGeometry3::Rotation(rotation) => {
+                    rotation.derivative_at(parameter_value, order)?
+                }
+                CurveGeometry3::RationalBezier(curve) => {
+                    evaluate_rational_bezier_derivative(curve, parameter_value, order)?
+                }
+                CurveGeometry3::Nurbs(curve) => {
+                    let span = find_span(
+                        parameter_value,
+                        &self.domain().represented_domain()?,
+                        curve.degree,
+                        curve.control_points.len(),
+                        &curve.knots,
+                    )?;
+                    evaluate_homogeneous_de_boor_derivative(
+                        curve.homogeneous_controls(),
+                        &curve.knots,
+                        curve.degree,
+                        span,
+                        parameter_value,
+                        order,
+                    )?
+                }
+                CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
+                    evaluate_ellipse_arc_derivative(
+                        arc,
+                        &self.domain().represented_domain()?,
+                        parameter_value,
+                        order,
+                    )
+                }
+                _ => unreachable!("affine, planar and constant derivatives dispatched above"),
+            };
+            Ok(GeometricVector3::from_coordinates(vector))
+        })
+    }
+
+    /// A nonzero tangent direction oriented toward increasing public parameter.
+    ///
+    /// Smooth implicit vertical endpoints use their incident branch's exact
+    /// one-sided direction. Spatial reversal reflects the public parameter
+    /// chart; its negative scale reverses the direction by the chain rule.
+    /// No unit length or derivative magnitude is promised.
+    /// Gradient-zero events, stationary image limits and unsupported selected
+    /// families return a typed blocker; a zero derivative is never a tangent.
+    pub fn tangent_direction_at(&self, parameter: &Parameter) -> GeometryResult<GeometricVector3> {
+        crate::context::strict(|| {
+            if !self.domain().contains(parameter)? {
+                return Err(GeometryError::ParameterOutsideDomain);
             }
-            CurveGeometry3::Nurbs(curve) => {
-                let span = find_span(
-                    parameter,
-                    self.domain(),
-                    curve.degree,
-                    curve.control_points.len(),
-                    &curve.knots,
-                )?;
-                evaluate_homogeneous_de_boor_derivative(
-                    curve.homogeneous_controls(),
-                    &curve.knots,
-                    curve.degree,
-                    span,
-                    parameter,
-                    order,
-                )?
+            if let CurveGeometry3::AffineImage(image) = &self.data.geometry {
+                return image
+                    .source
+                    .tangent_direction_at(parameter)?
+                    .affine_image(&image.transform);
             }
-            CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
-                evaluate_ellipse_arc_derivative(arc, self.domain(), parameter, order)
+            let result = if let CurveGeometry3::PlanarImage(image) = &self.data.geometry
+                && let Some(branch) = image.source.polynomial_branch()
+            {
+                let mapped = parameter.affine_image(&image.source_scale, &image.source_offset)?;
+                GeometricVector3::from_planar(
+                    branch.tangent_direction_at(&mapped.curve_parameter())?,
+                    image.u.clone() * &image.source_scale,
+                    image.v.clone() * &image.source_scale,
+                )
+            } else {
+                self.derivative_at(parameter, 1)?
+            };
+            if result.is_zero()? {
+                return Err(GeometryError::UnsupportedSelectedEvaluation);
             }
-        };
-        Ok(CurveDerivative3 { vector })
+            Ok(result)
+        })
     }
 
     /// Evaluates the curve at its exact domain start.
     pub fn start(&self) -> GeometryResult<Point3> {
-        self.point_at(self.domain().start())
+        crate::context::strict(|| self.evaluate_real(self.domain().represented_start()?))
     }
 
     /// Evaluates the curve at its exact domain end.
     pub fn end(&self) -> GeometryResult<Point3> {
-        self.point_at(self.domain().end())
+        crate::context::strict(|| self.evaluate_real(self.domain().represented_end()?))
     }
 
     pub(crate) fn line_endpoints(&self) -> Option<(&Point3, &Point3)> {
@@ -898,12 +1197,63 @@ impl Curve3 {
             CurveGeometry3::RationalBezier(_)
             | CurveGeometry3::Nurbs(_)
             | CurveGeometry3::CircleArc(_)
-            | CurveGeometry3::EllipseArc(_) => None,
+            | CurveGeometry3::EllipseArc(_)
+            | CurveGeometry3::AffineImage(_)
+            | CurveGeometry3::Rotation(_)
+            | CurveGeometry3::Translation(_)
+            | CurveGeometry3::PlanarImage(_) => None,
+        }
+    }
+
+    /// A native center suitable as the common origin of a closed area integral.
+    pub(crate) fn analytic_area_origin(&self) -> Option<&Point3> {
+        match &self.data.geometry {
+            CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => Some(&arc.center),
+            _ => None,
+        }
+    }
+
+    /// Integrates `(position - origin) × d(position)` over a native analytic
+    /// span. Half its component along a plane's unit normal is the signed area
+    /// contribution. Keeping the spatial angular interval avoids reconstructing
+    /// inverse trigonometric expressions from a projected or split pcurve.
+    pub(crate) fn analytic_area_vector(
+        &self,
+        start: &Real,
+        end: &Real,
+        origin: &Point3,
+    ) -> GeometryResult<Option<Vector3>> {
+        match &self.data.geometry {
+            CurveGeometry3::Line(_) => {
+                let start = self.evaluate_real(start)? - origin;
+                let end = self.evaluate_real(end)? - origin;
+                Ok(Some(start.cross(&end)))
+            }
+            CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
+                let displacement = self.evaluate_real(end)? - self.evaluate_real(start)?;
+                let angle = Real::from(arc.direction) * (end - start);
+                // For r = c + a cos(t) + b sin(t), integration gives
+                // (c - origin) × (r(end) - r(start)) + (a × b) Δt.
+                Ok(Some(
+                    (&arc.center - origin).cross(&displacement)
+                        + arc.x.cross(&arc.y) * (&arc.x_radius * &arc.y_radius * angle),
+                ))
+            }
+            CurveGeometry3::RationalBezier(_)
+            | CurveGeometry3::Nurbs(_)
+            | CurveGeometry3::AffineImage(_)
+            | CurveGeometry3::Rotation(_)
+            | CurveGeometry3::Translation(_)
+            | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
     }
 
     pub(crate) fn exact_data(&self) -> Curve3ExactData {
         match &self.data.geometry {
+            CurveGeometry3::AffineImage(image) => Curve3ExactData::AffineImage(image.clone()),
+            CurveGeometry3::Rotation(rotation) => Curve3ExactData::Rotation(rotation.clone()),
+            CurveGeometry3::Translation(line) => Curve3ExactData::Translation(line.clone()),
+            CurveGeometry3::PlanarImage(image) => Curve3ExactData::PlanarImage(image.clone()),
             CurveGeometry3::Line(line) => Curve3ExactData::Line(Box::new(Line3ExactData {
                 start: line.start.clone(),
                 end: line.end.clone(),
@@ -926,8 +1276,18 @@ impl Curve3 {
                     y: arc.y.clone(),
                     x_radius: arc.x_radius.clone(),
                     y_radius: arc.y_radius.clone(),
-                    domain_start: self.domain().start().clone(),
-                    domain_end: self.domain().end().clone(),
+                    domain_start: self
+                        .domain()
+                        .start()
+                        .try_real()
+                        .expect("authored conic domain")
+                        .clone(),
+                    domain_end: self
+                        .domain()
+                        .end()
+                        .try_real()
+                        .expect("authored conic domain")
+                        .clone(),
                     angle_at_start: arc.angle_at_start.clone(),
                     direction: arc.direction,
                 }))
@@ -937,6 +1297,12 @@ impl Curve3 {
 
     pub(crate) fn from_exact_data(data: Curve3ExactData) -> GeometryResult<Self> {
         match data {
+            Curve3ExactData::AffineImage(image) => {
+                Self::affine_image(image.source, image.transform)
+            }
+            Curve3ExactData::Rotation(rotation) => Self::from_rotation(*rotation),
+            Curve3ExactData::Translation(line) => Self::translation(line.origin, line.displacement),
+            Curve3ExactData::PlanarImage(image) => Self::from_planar_image(*image),
             Curve3ExactData::Line(data) => Self::line(data.start, data.end),
             Curve3ExactData::RationalBezier {
                 control_points,
@@ -1000,7 +1366,19 @@ impl Curve3 {
 
     /// Returns the same geometric image with reversed parameter direction.
     pub fn reversed(&self) -> GeometryResult<Self> {
-        match &self.data.geometry {
+        crate::context::strict(|| match &self.data.geometry {
+            CurveGeometry3::AffineImage(image) => {
+                Self::affine_image(image.source.reversed()?, image.transform.clone())
+            }
+            CurveGeometry3::Rotation(rotation) => rotation.reversed(),
+            CurveGeometry3::Translation(line) => {
+                Self::translation(line.point_at(&Real::one())?, -line.displacement.clone())
+            }
+            CurveGeometry3::PlanarImage(image) => Self::from_planar_image(PlanarCurve3 {
+                source_scale: -&image.source_scale,
+                source_offset: &image.source_offset + &image.source_scale * self.reversal_pivot(),
+                ..(**image).clone()
+            }),
             CurveGeometry3::Line(line) => Self::line(line.end.clone(), line.start.clone()),
             CurveGeometry3::RationalBezier(curve) => {
                 let mut points = curve.control_points.clone();
@@ -1014,7 +1392,8 @@ impl Curve3 {
                 let mut weights = curve.weights.clone();
                 points.reverse();
                 weights.reverse();
-                let domain_sum = self.domain().start() + self.domain().end();
+                let domain_sum =
+                    self.domain().represented_start()? + self.domain().represented_end()?;
                 let knots = curve
                     .knots
                     .iter()
@@ -1024,14 +1403,20 @@ impl Curve3 {
                 Self::nurbs(curve.degree, points, weights, knots)
             }
             CurveGeometry3::CircleArc(arc) => Ok(Self::from_parts(
-                CurveGeometry3::CircleArc(reversed_ellipse_arc(arc, self.domain())),
+                CurveGeometry3::CircleArc(reversed_ellipse_arc(
+                    arc,
+                    &self.domain().represented_domain()?,
+                )),
                 self.domain().clone(),
             )),
             CurveGeometry3::EllipseArc(arc) => Ok(Self::from_parts(
-                CurveGeometry3::EllipseArc(reversed_ellipse_arc(arc, self.domain())),
+                CurveGeometry3::EllipseArc(reversed_ellipse_arc(
+                    arc,
+                    &self.domain().represented_domain()?,
+                )),
                 self.domain().clone(),
             )),
-        }
+        })
     }
 
     /// Splits any supported finite curve at a certified interior parameter.
@@ -1039,145 +1424,236 @@ impl Curve3 {
     /// Line and rational-Bézier halves use their conventional local unit
     /// interval; NURBS and conic halves retain their native source intervals.
     pub fn split_at(&self, parameter: &Real) -> GeometryResult<(Self, Self)> {
-        require_interior_parameter(self.domain(), parameter)?;
-        match &self.data.geometry {
-            CurveGeometry3::Line(line) => {
-                let split = line.start.lerp(&line.end, parameter);
-                Ok((
-                    Self::line(line.start.clone(), split.clone())?,
-                    Self::line(split, line.end.clone())?,
-                ))
+        crate::context::strict(|| {
+            if let CurveGeometry3::AffineImage(image) = &self.data.geometry {
+                let (left, right) = image.source.split_at(parameter)?;
+                let wrap = |source: Self| -> GeometryResult<Self> {
+                    let same = source.has_certified_same_parameterization(&image.source);
+                    let curve = Self::affine_image(source, image.transform.clone())?;
+                    Ok(if same {
+                        curve.retaining_parameterization_of(self)
+                    } else {
+                        curve
+                    })
+                };
+                return Ok((wrap(left)?, wrap(right)?));
             }
-            CurveGeometry3::RationalBezier(curve) => {
-                let (left, right) =
-                    split_homogeneous_bezier(curve.homogeneous_controls(), parameter);
-                Ok((
-                    rational_bezier_from_homogeneous(left, Some(&curve.constant_coordinates))?,
-                    rational_bezier_from_homogeneous(right, Some(&curve.constant_coordinates))?,
-                ))
+            if self.domain().try_real_endpoints().is_none()
+                && let CurveGeometry3::PlanarImage(image) = &self.data.geometry
+            {
+                let parameter = Parameter::from_real(parameter.clone());
+                if !self.domain().contains(&parameter)? {
+                    return Err(GeometryError::ParameterOutsideDomain);
+                }
+                if parameter.compare(self.domain().start())? == Ordering::Equal
+                    || parameter.compare(self.domain().end())? == Ordering::Equal
+                {
+                    return Err(GeometryError::SplitAtBoundary);
+                }
+                let left = ParameterRange::new(self.domain().start().clone(), parameter.clone())?;
+                let right = ParameterRange::new(parameter, self.domain().end().clone())?;
+                return Ok((
+                    Self::from_planar_image(image.restricted_to(&left)?)?
+                        .retaining_parameterization_of(self),
+                    Self::from_planar_image(image.restricted_to(&right)?)?
+                        .retaining_parameterization_of(self),
+                ));
             }
-            CurveGeometry3::Nurbs(curve) => {
-                let (left, right) = split_nurbs_curve(curve, parameter)?;
-                Ok((
-                    left.retaining_parameterization_of(self),
-                    right.retaining_parameterization_of(self),
-                ))
+            require_interior_parameter(&self.domain().represented_domain()?, parameter)?;
+            match &self.data.geometry {
+                CurveGeometry3::AffineImage(_) => unreachable!("affine split delegates above"),
+                CurveGeometry3::Rotation(rotation) => Ok((
+                    rotation
+                        .restricted(rotation.domain.start(), parameter)?
+                        .retaining_parameterization_of(self),
+                    rotation
+                        .restricted(parameter, rotation.domain.end())?
+                        .retaining_parameterization_of(self),
+                )),
+                CurveGeometry3::Translation(line) => Ok((
+                    line.restricted(&Real::zero(), parameter)?,
+                    line.restricted(parameter, &Real::one())?,
+                )),
+                CurveGeometry3::PlanarImage(image) => Ok((
+                    image.restricted(self.domain().represented_start()?, parameter)?,
+                    image.restricted(parameter, self.domain().represented_end()?)?,
+                )),
+                CurveGeometry3::Line(line) => {
+                    let split = line.start.lerp(&line.end, parameter);
+                    Ok((
+                        Self::line(line.start.clone(), split.clone())?,
+                        Self::line(split, line.end.clone())?,
+                    ))
+                }
+                CurveGeometry3::RationalBezier(curve) => {
+                    let (left, right) =
+                        split_homogeneous_bezier(curve.homogeneous_controls(), parameter);
+                    Ok((
+                        rational_bezier_from_homogeneous(left, Some(&curve.constant_coordinates))?,
+                        rational_bezier_from_homogeneous(right, Some(&curve.constant_coordinates))?,
+                    ))
+                }
+                CurveGeometry3::Nurbs(curve) => {
+                    let (left, right) = split_nurbs_curve(curve, parameter)?;
+                    Ok((
+                        left.retaining_parameterization_of(self),
+                        right.retaining_parameterization_of(self),
+                    ))
+                }
+                CurveGeometry3::CircleArc(arc) => {
+                    let (left, right) = split_ellipse_arc(
+                        arc,
+                        &self.domain().represented_domain()?,
+                        parameter,
+                        Curve3Kind::CircleArc,
+                    )?;
+                    Ok((
+                        left.retaining_parameterization_of(self),
+                        right.retaining_parameterization_of(self),
+                    ))
+                }
+                CurveGeometry3::EllipseArc(arc) => {
+                    let (left, right) = split_ellipse_arc(
+                        arc,
+                        &self.domain().represented_domain()?,
+                        parameter,
+                        Curve3Kind::EllipseArc,
+                    )?;
+                    Ok((
+                        left.retaining_parameterization_of(self),
+                        right.retaining_parameterization_of(self),
+                    ))
+                }
             }
-            CurveGeometry3::CircleArc(arc) => {
-                let (left, right) =
-                    split_ellipse_arc(arc, self.domain(), parameter, Curve3Kind::CircleArc)?;
-                Ok((
-                    left.retaining_parameterization_of(self),
-                    right.retaining_parameterization_of(self),
-                ))
-            }
-            CurveGeometry3::EllipseArc(arc) => {
-                let (left, right) =
-                    split_ellipse_arc(arc, self.domain(), parameter, Curve3Kind::EllipseArc)?;
-                Ok((
-                    left.retaining_parameterization_of(self),
-                    right.retaining_parameterization_of(self),
-                ))
-            }
-        }
+        })
     }
 
     /// Returns the exact image over a strictly ordered source-parameter range.
     ///
-    /// Line and rational-Bézier results use their conventional local unit
+    /// Line, rational-Bézier and planar-image results use their local unit
     /// domain. NURBS and named conic results retain the selected source
     /// interval because their native knot or angle parameterization is
     /// authoritative.
     pub fn subcurve(&self, start: &Real, end: &Real) -> GeometryResult<Self> {
-        if decided_order(compare_reals(start, end, crate::STRICT_PREDICATES))? != Ordering::Less
-            || decided_order(compare_reals(
-                start,
-                self.domain().start(),
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Less
-            || decided_order(compare_reals(
-                end,
-                self.domain().end(),
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Greater
-        {
-            return Err(GeometryError::InvalidParameterDomain);
-        }
-        if decided_order(compare_reals(
-            start,
-            self.domain().start(),
-            crate::STRICT_PREDICATES,
-        ))? == Ordering::Equal
-            && decided_order(compare_reals(
-                end,
-                self.domain().end(),
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Equal
-        {
-            return Ok(self.clone());
-        }
-        match &self.data.geometry {
-            CurveGeometry3::Line(_) => Self::line(self.point_at(start)?, self.point_at(end)?),
-            CurveGeometry3::RationalBezier(curve) => {
-                let controls = if decided_order(compare_reals(
+        crate::context::strict(|| {
+            if decided_order(compare_reals(start, end, crate::STRICT_PREDICATES))? != Ordering::Less
+                || decided_order(compare_reals(
                     start,
-                    &Real::zero(),
-                    crate::STRICT_PREDICATES,
-                ))? == Ordering::Equal
-                {
-                    split_homogeneous_bezier(curve.homogeneous_controls(), end).0
-                } else {
-                    let (_, right) = split_homogeneous_bezier(curve.homogeneous_controls(), start);
-                    let relative_end = ((end - start) / (Real::one() - start))
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
-                    split_homogeneous_bezier(&right, &relative_end).0
-                };
-                rational_bezier_from_homogeneous(controls, Some(&curve.constant_coordinates))
-            }
-            CurveGeometry3::Nurbs(_) => {
-                let mut selected = self.clone();
-                if decided_order(compare_reals(
-                    end,
-                    selected.domain().end(),
+                    self.domain().represented_start()?,
                     crate::STRICT_PREDICATES,
                 ))? == Ordering::Less
-                {
-                    selected = selected.split_at(end)?.0;
-                }
-                if decided_order(compare_reals(
-                    start,
-                    selected.domain().start(),
+                || decided_order(compare_reals(
+                    end,
+                    self.domain().represented_end()?,
                     crate::STRICT_PREDICATES,
                 ))? == Ordering::Greater
-                {
-                    selected = selected.split_at(start)?.1;
-                }
-                Ok(selected)
+            {
+                return Err(GeometryError::InvalidParameterDomain);
             }
-            CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
-                let geometry = EllipseArc3 {
-                    angle_at_start: ellipse_arc_angle(arc, self.domain(), start),
-                    ..arc.clone()
-                };
-                Ok(Self::from_parts(
-                    if matches!(self.data.geometry, CurveGeometry3::CircleArc(_)) {
-                        CurveGeometry3::CircleArc(geometry)
+            if decided_order(compare_reals(
+                start,
+                self.domain().represented_start()?,
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal
+                && decided_order(compare_reals(
+                    end,
+                    self.domain().represented_end()?,
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Equal
+            {
+                return Ok(self.clone());
+            }
+            match &self.data.geometry {
+                CurveGeometry3::AffineImage(image) => {
+                    let source = image.source.subcurve(start, end)?;
+                    let same = source.has_certified_same_parameterization(&image.source);
+                    let curve = Self::affine_image(source, image.transform.clone())?;
+                    Ok(if same {
+                        curve.retaining_parameterization_of(self)
                     } else {
-                        CurveGeometry3::EllipseArc(geometry)
-                    },
-                    ParameterDomain::new(start.clone(), end.clone())?,
-                )
-                .retaining_parameterization_of(self))
+                        curve
+                    })
+                }
+                CurveGeometry3::Rotation(rotation) => rotation.restricted(start, end),
+                CurveGeometry3::Translation(line) => line.restricted(start, end),
+                CurveGeometry3::PlanarImage(image) => image.restricted(start, end),
+                CurveGeometry3::Line(_) => {
+                    Self::line(self.evaluate_real(start)?, self.evaluate_real(end)?)
+                }
+                CurveGeometry3::RationalBezier(curve) => {
+                    let controls = if decided_order(compare_reals(
+                        start,
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Equal
+                    {
+                        split_homogeneous_bezier(curve.homogeneous_controls(), end).0
+                    } else {
+                        let (_, right) =
+                            split_homogeneous_bezier(curve.homogeneous_controls(), start);
+                        let relative_end = ((end - start) / (Real::one() - start))
+                            .map_err(GeometryError::Numeric)?;
+                        split_homogeneous_bezier(&right, &relative_end).0
+                    };
+                    rational_bezier_from_homogeneous(controls, Some(&curve.constant_coordinates))
+                }
+                CurveGeometry3::Nurbs(_) => {
+                    let mut selected = self.clone();
+                    if decided_order(compare_reals(
+                        end,
+                        selected.domain().represented_end()?,
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Less
+                    {
+                        selected = selected.split_at(end)?.0;
+                    }
+                    if decided_order(compare_reals(
+                        start,
+                        selected.domain().represented_start()?,
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Greater
+                    {
+                        selected = selected.split_at(start)?.1;
+                    }
+                    Ok(selected)
+                }
+                CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
+                    let geometry = EllipseArc3 {
+                        angle_at_start: ellipse_arc_angle(
+                            arc,
+                            &self.domain().represented_domain()?,
+                            start,
+                        ),
+                        ..arc.clone()
+                    };
+                    Ok(Self::from_parts(
+                        if matches!(self.data.geometry, CurveGeometry3::CircleArc(_)) {
+                            CurveGeometry3::CircleArc(geometry)
+                        } else {
+                            CurveGeometry3::EllipseArc(geometry)
+                        },
+                        ParameterDomain::new(start.clone(), end.clone())?,
+                    )
+                    .retaining_parameterization_of(self))
+                }
             }
-        }
+        })
     }
 
-    /// Locates every represented exact parameter whose image is `point`.
+    /// Locates every certified exact parameter whose image is `point`.
     ///
-    /// Algebraic roots not representable by `Real` are an explicit error;
-    /// self-intersections may return more than one parameter.
+    /// Rational Bézier and NURBS queries retain selected algebraic roots even
+    /// without a stored `Real` view. All three coordinates must be certified;
+    /// a planar projection alone is not spatial incidence. Self-intersections
+    /// may return more than one parameter. Partly constant NURBS preimages
+    /// remain an explicit unsupported result, never an incomplete finite set.
     pub fn parameters_of(&self, point: &Point3) -> GeometryResult<CurveParameterLocation> {
-        match &self.data.geometry {
+        crate::context::strict(|| match &self.data.geometry {
+            CurveGeometry3::AffineImage(image) => image.parameters_of(point),
+            CurveGeometry3::Rotation(_) | CurveGeometry3::Translation(_) => {
+                Err(GeometryError::UnsupportedParameterLocation)
+            }
+            CurveGeometry3::PlanarImage(image) => image.parameters_of(point),
             CurveGeometry3::Line(line) => locate_line_parameter(self, line, point),
             CurveGeometry3::RationalBezier(curve) => {
                 locate_rational_bezier_parameters(self, curve, point)
@@ -1186,11 +1662,31 @@ impl Curve3 {
                 locate_ellipse_arc_parameters(self, arc, point)
             }
             CurveGeometry3::Nurbs(curve) => locate_nurbs_parameters(curve, point),
-        }
+        })
     }
 
     pub(crate) fn transformed(&self, transform: &Matrix4) -> GeometryResult<Self> {
+        self.transformed_with_metric(&TransformMetric::new(transform))
+    }
+
+    pub(crate) fn transformed_with_metric(
+        &self,
+        metric: &TransformMetric<'_>,
+    ) -> GeometryResult<Self> {
+        let transform = metric.matrix();
         match &self.data.geometry {
+            CurveGeometry3::AffineImage(_) => Self::affine_image(self.clone(), transform.clone()),
+            CurveGeometry3::Rotation(rotation) => match rotation.transformed(metric) {
+                Err(GeometryError::UnsupportedTransform) => {
+                    Self::affine_image(self.clone(), transform.clone())
+                }
+                result => result,
+            },
+            CurveGeometry3::Translation(line) => Self::translation(
+                line.origin.transformed(transform)?,
+                transform.transform_direction3(&line.displacement),
+            ),
+            CurveGeometry3::PlanarImage(image) => image.transformed(transform),
             CurveGeometry3::Line(line) => Self::line(
                 transform_point(transform, &line.start)?,
                 transform_point(transform, &line.end)?,
@@ -1206,15 +1702,16 @@ impl Curve3 {
                 curve.knots.clone(),
             ),
             CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
+                let (x, y, scale) = metric.arc_frame(&arc.x, &arc.y)?;
                 let transformed = EllipseArcExactData {
                     circle: matches!(self.data.geometry, CurveGeometry3::CircleArc(_)),
                     center: transform_point(transform, &arc.center)?,
-                    x: transform.transform_direction3(&arc.x),
-                    y: transform.transform_direction3(&arc.y),
-                    x_radius: arc.x_radius.clone(),
-                    y_radius: arc.y_radius.clone(),
-                    domain_start: self.domain().start().clone(),
-                    domain_end: self.domain().end().clone(),
+                    x,
+                    y,
+                    x_radius: &arc.x_radius * &scale,
+                    y_radius: &arc.y_radius * &scale,
+                    domain_start: self.domain().represented_start()?.clone(),
+                    domain_end: self.domain().represented_end()?.clone(),
                     angle_at_start: arc.angle_at_start.clone(),
                     direction: arc.direction,
                 };
@@ -1284,9 +1781,9 @@ impl HomogeneousPoint3 {
 
     fn project(&self) -> GeometryResult<Point3> {
         Ok(Point3::new(
-            (&self.x / &self.w).map_err(|_| GeometryError::ProjectiveDivision)?,
-            (&self.y / &self.w).map_err(|_| GeometryError::ProjectiveDivision)?,
-            (&self.z / &self.w).map_err(|_| GeometryError::ProjectiveDivision)?,
+            (&self.x / &self.w).map_err(GeometryError::Numeric)?,
+            (&self.y / &self.w).map_err(GeometryError::Numeric)?,
+            (&self.z / &self.w).map_err(GeometryError::Numeric)?,
         ))
     }
 }
@@ -1397,7 +1894,7 @@ pub enum SurfaceParameterDomain {
     /// Every real parameter is accepted.
     Unbounded,
     /// A finite closed exact interval.
-    Closed(ParameterDomain),
+    Closed(ParameterRange),
     /// A periodic parameter with canonical start and positive period.
     Periodic {
         /// Canonical period start.
@@ -1434,8 +1931,8 @@ impl SurfaceDomain {
 /// First partial derivatives of a parametric surface.
 #[derive(Clone, Debug)]
 pub struct SurfacePartials {
-    u: Vector3,
-    v: Vector3,
+    u: GeometricVector3,
+    v: GeometricVector3,
 }
 
 /// Exact intersection between a finite spatial curve and a surface.
@@ -1446,7 +1943,10 @@ pub enum CurveSurfaceIntersection {
     /// The finite curve meets the surface at isolated exact points.
     Points(Vec<CurveSurfacePoint>),
     /// A finite exact subinterval of the curve belongs to the surface.
-    Overlap(ParameterDomain),
+    Overlap(crate::ParameterRange),
+    /// Multiple coincident ranges, or isolated points together with ranges.
+    /// Points contained in an overlap closure are omitted from the point list.
+    Components(CurveSurfaceComponents),
     /// The entire finite curve belongs to the surface.
     Contained,
 }
@@ -1455,20 +1955,48 @@ pub enum CurveSurfaceIntersection {
 #[derive(Clone, Debug)]
 pub struct CurveSurfacePoint {
     /// Parameter on the spatial curve.
-    pub parameter: Real,
-    /// Exact model-space intersection point.
-    pub point: Point3,
-    /// Certified local intersection multiplicity.
-    pub multiplicity: IntersectionMultiplicity,
+    pub parameter: Parameter,
+    /// Exact model-space point, retaining selected source evidence when needed.
+    pub point: GeometricPoint3,
+    /// Certified first-order root or finite-boundary classification.
+    pub kind: CurveSurfaceContactKind,
 }
 
-/// Certified local multiplicity of an isolated intersection.
+/// Complete isolated and coincident components in the spatial curve's chart.
+#[derive(Clone, Debug)]
+pub struct CurveSurfaceComponents {
+    points: Vec<CurveSurfacePoint>,
+    overlaps: Vec<crate::ParameterRange>,
+}
+
+impl CurveSurfaceComponents {
+    /// Borrows isolated contacts outside every coincident range.
+    pub fn points(&self) -> &[CurveSurfacePoint] {
+        &self.points
+    }
+
+    /// Borrows the disjoint maximal closed coincident ranges.
+    pub fn overlaps(&self) -> &[crate::ParameterRange] {
+        &self.overlaps
+    }
+}
+
+/// Certified first-order classification of an isolated intersection.
+///
+/// For isolated equation roots this distinguishes a simple zero from a repeated
+/// zero of the supporting equation; it does not report an exact integer
+/// multiplicity. At a spline joint, `Simple` requires simple zeros on every incident span, while `Repeated`
+/// records a repeated zero on at least one incident span. Neither establishes
+/// smoothness or the global crossing direction at a nonsmooth joint.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum IntersectionMultiplicity {
-    /// The curve crosses the surface.
+pub enum CurveSurfaceContactKind {
+    /// Each incident span has a nonzero first derivative of its contact equation.
     Simple,
-    /// The curve is tangent to the surface.
-    Tangent,
+    /// At least one incident span has zero first derivative of its contact equation.
+    Repeated,
+    /// A coincident support meets the finite surface only at a clipping boundary.
+    /// This does not claim a simple or repeated root of the supporting equation.
+    Boundary,
 }
 
 /// Exact retained intersection between two supported parameterized surfaces.
@@ -1482,9 +2010,9 @@ pub enum SurfaceSurfaceIntersection {
     /// exactly contained in the other surface's carrier.
     ContainedSurface(SurfaceIntersectionOperand),
     /// The surfaces touch at one exact point.
-    Point(Box<Point3>),
+    Point(Box<GeometricPoint3>),
     /// The surfaces meet at multiple isolated exact points.
-    Points(Vec<Point3>),
+    Points(Vec<GeometricPoint3>),
     /// Two planes meet in an unbounded exact line.
     Line(Box<SurfaceIntersectionLine>),
     /// The surfaces meet in multiple unbounded exact lines.
@@ -1502,8 +2030,8 @@ pub enum SurfaceSurfaceIntersection {
     /// Two finite carriers meet in one exact curve with retained parameter
     /// images on both surfaces.
     Curve(Box<SurfaceIntersectionCurve>),
-    /// Two finite carriers meet in multiple disjoint exact curves with
-    /// retained parameter images on both surfaces.
+    /// Two finite carriers meet in exact branches with retained parameter
+    /// images on both surfaces. Branches may share singular or event endpoints.
     Curves(Vec<SurfaceIntersectionCurve>),
     /// The surfaces meet in exact components of more than one dimension.
     Components(Box<SurfaceIntersectionComponents>),
@@ -1517,14 +2045,14 @@ pub enum SurfaceSurfaceIntersection {
 /// relations produced by [`Surface::intersect_surface`].
 #[derive(Clone, Debug)]
 pub struct SurfaceIntersectionComponents {
-    points: Vec<Point3>,
+    points: Vec<GeometricPoint3>,
     curves: Vec<Curve3>,
     surface_curves: Vec<SurfaceIntersectionCurve>,
 }
 
 impl SurfaceIntersectionComponents {
     pub(crate) fn new(
-        points: Vec<Point3>,
+        points: Vec<GeometricPoint3>,
         curves: Vec<Curve3>,
         surface_curves: Vec<SurfaceIntersectionCurve>,
     ) -> Self {
@@ -1542,7 +2070,7 @@ impl SurfaceIntersectionComponents {
     }
 
     /// Returns the isolated exact point components.
-    pub fn points(&self) -> &[Point3] {
+    pub fn points(&self) -> &[GeometricPoint3] {
         &self.points
     }
 
@@ -1586,6 +2114,7 @@ pub struct SurfaceIntersectionCurve {
 pub(crate) struct SurfaceIntersectionBoundaryContact {
     curve: Curve3,
     parameter: Real,
+    affine_parameter: Option<Real>,
     pcurve_point: CurvePoint2,
     spatial_point: Point3,
 }
@@ -1594,12 +2123,14 @@ impl SurfaceIntersectionBoundaryContact {
     pub(crate) fn new(
         curve: Curve3,
         parameter: Real,
+        affine_parameter: Option<Real>,
         pcurve_point: CurvePoint2,
         spatial_point: Point3,
     ) -> Self {
         Self {
             curve,
             parameter,
+            affine_parameter,
             pcurve_point,
             spatial_point,
         }
@@ -1611,6 +2142,13 @@ impl SurfaceIntersectionBoundaryContact {
 
     pub(crate) const fn parameter(&self) -> &Real {
         &self.parameter
+    }
+
+    /// The same spatial preimage before canonicalization, retained from a
+    /// certified affine pcurve contact. All incident affine uses can consume
+    /// this representative without reconstructing the contact's coordinates.
+    pub(crate) const fn affine_parameter(&self) -> Option<&Real> {
+        self.affine_parameter.as_ref()
     }
 
     pub(crate) const fn pcurve_point(&self) -> &CurvePoint2 {
@@ -1649,7 +2187,7 @@ impl SurfaceIntersectionOperand {
 /// Exact surface-parameter image of a retained intersection curve.
 #[derive(Clone, Debug)]
 pub struct SurfaceIntersectionPcurve {
-    domain: ParameterDomain,
+    domain: ParameterRange,
     source_scale: Real,
     source_offset: Real,
     mapping: SurfaceIntersectionPcurveMapping,
@@ -1729,14 +2267,34 @@ enum TensorAxis {
     V,
 }
 
-#[derive(Clone, Debug)]
-pub(crate) struct SurfacePcurveClipCarrier {
-    pub(crate) curve: Curve2,
-    pub(crate) spatial_scale: Real,
-    pub(crate) spatial_offset: Real,
-}
-
 impl SurfaceIntersectionCurve {
+    /// Moves one iso pcurve into an equivalent periodic surface chart. The
+    /// caller proves that each nonzero displacement is a whole surface period.
+    pub(crate) fn translated_iso_pcurve(
+        &self,
+        operand: SurfaceIntersectionOperand,
+        u: &Real,
+        v: &Real,
+    ) -> GeometryResult<Self> {
+        let mut result = self.clone();
+        let pcurve = match operand {
+            SurfaceIntersectionOperand::First => &mut result.first_pcurve,
+            SurfaceIntersectionOperand::Second => &mut result.second_pcurve,
+        };
+        match &mut pcurve.mapping {
+            SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
+                *constant += u;
+                pcurve.source_offset += v;
+            }
+            SurfaceIntersectionPcurveMapping::TensorIsoV { constant } => {
+                *constant += v;
+                pcurve.source_offset += u;
+            }
+            _ => return Err(GeometryError::UnsupportedIntersection),
+        }
+        Ok(result)
+    }
+
     pub(crate) fn new(
         curve: Curve3,
         first_pcurve: SurfaceIntersectionPcurve,
@@ -1753,13 +2311,25 @@ impl SurfaceIntersectionCurve {
     }
 
     pub(crate) fn on_plane(curve: Curve3, surface: &Surface) -> GeometryResult<Self> {
-        let SurfaceGeometry::Plane(plane) = &surface.data.geometry else {
+        Self::on_coincident_planes(curve, surface, surface)
+    }
+
+    /// Retains both charts after the caller proves coincident planes and that
+    /// the curve lies on their common support.
+    pub(crate) fn on_coincident_planes(
+        curve: Curve3,
+        first: &Surface,
+        second: &Surface,
+    ) -> GeometryResult<Self> {
+        let (SurfaceGeometry::Plane(first), SurfaceGeometry::Plane(second)) =
+            (&first.data.geometry, &second.data.geometry)
+        else {
             return Err(GeometryError::UnsupportedIntersection);
         };
         Ok(Self::new(
             curve.clone(),
-            SurfaceIntersectionPcurve::plane_projection(curve.clone(), plane),
-            SurfaceIntersectionPcurve::plane_projection(curve, plane),
+            SurfaceIntersectionPcurve::plane_projection(curve.clone(), first),
+            SurfaceIntersectionPcurve::plane_projection(curve, second),
         ))
     }
 
@@ -1822,6 +2392,53 @@ impl SurfaceIntersectionCurve {
             SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), first_constant),
             SurfaceIntersectionPcurve::tensor_iso_v(domain, second_constant),
         )
+    }
+
+    /// Retains a validated edge's affine iso-parameter pcurve on two surfaces
+    /// already proved to have the same complete parameterization.
+    pub(crate) fn from_certified_iso_boundary(
+        curve: Curve3,
+        pcurve: &Pcurve,
+        edge_scale: &Real,
+        edge_offset: &Real,
+    ) -> GeometryResult<Option<Self>> {
+        let Some(line) = pcurve.line_segment() else {
+            return Ok(None);
+        };
+        let dx = line.end().x() - line.start().x();
+        let dy = line.end().y() - line.start().y();
+        let (constant, axis, delta, start) =
+            if decided_order(compare_reals(&dx, &Real::zero(), crate::STRICT_PREDICATES))?
+                == Ordering::Equal
+            {
+                (
+                    line.start().x().clone(),
+                    TensorAxis::U,
+                    dy,
+                    line.start().y(),
+                )
+            } else if decided_order(compare_reals(&dy, &Real::zero(), crate::STRICT_PREDICATES))?
+                == Ordering::Equal
+            {
+                (
+                    line.start().y().clone(),
+                    TensorAxis::V,
+                    dx,
+                    line.start().x(),
+                )
+            } else {
+                return Ok(None);
+            };
+        let scale = (delta / edge_scale).map_err(GeometryError::Numeric)?;
+        let offset = start - &scale * edge_offset;
+        let pcurve = SurfaceIntersectionPcurve::tensor_iso(
+            curve.domain().clone(),
+            constant,
+            axis,
+            scale,
+            offset,
+        );
+        Ok(Some(Self::new(curve, pcurve.clone(), pcurve)))
     }
 
     fn swapped(mut self) -> Self {
@@ -1899,614 +2516,149 @@ impl SurfaceIntersectionCurve {
         }
     }
 
+    /// Restricts a retained planar section in its original common parameter
+    /// chart, including selected endpoints. No coordinate reconstruction or
+    /// unit-interval rebasing occurs. Other spatial families remain typed.
+    pub fn restrict_source(&self, range: ParameterRange) -> GeometryResult<Self> {
+        crate::context::strict(|| {
+            let curve = self.curve.restrict_source(range.clone())?;
+            let start = range.start().compare(self.curve.domain().start())? == Ordering::Equal;
+            let end = range.end().compare(self.curve.domain().end())? == Ordering::Equal;
+            let contacts = |source: &SurfaceIntersectionBoundaryContacts| {
+                SurfaceIntersectionBoundaryContacts {
+                    start: if start {
+                        source.start.clone()
+                    } else {
+                        Vec::new()
+                    },
+                    end: if end { source.end.clone() } else { Vec::new() },
+                }
+            };
+            Ok(Self {
+                curve,
+                first_pcurve: self.first_pcurve.subcurve(range.start(), range.end())?,
+                second_pcurve: self.second_pcurve.subcurve(range.start(), range.end())?,
+                image_certificates: self.image_certificates,
+                first_boundary_contacts: contacts(&self.first_boundary_contacts),
+                second_boundary_contacts: contacts(&self.second_boundary_contacts),
+            })
+        })
+    }
+
     /// Restricts the spatial curve and both exact pcurve mappings to one
     /// increasing represented parameter interval.
     pub fn subcurve(&self, start: &Real, end: &Real) -> GeometryResult<Self> {
-        let curve = self.curve.subcurve(start, end)?;
-        let first_pcurve =
-            self.first_pcurve
-                .reparameterized_subcurve(start, end, curve.domain())?;
-        let second_pcurve =
-            self.second_pcurve
-                .reparameterized_subcurve(start, end, curve.domain())?;
-        let retain_start = decided_order(compare_reals(
-            start,
-            self.curve.domain().start(),
-            crate::STRICT_PREDICATES,
-        ))? == Ordering::Equal;
-        let retain_end = decided_order(compare_reals(
-            end,
-            self.curve.domain().end(),
-            crate::STRICT_PREDICATES,
-        ))? == Ordering::Equal;
-        Ok(Self {
-            curve,
-            first_pcurve,
-            second_pcurve,
-            image_certificates: self.image_certificates,
-            first_boundary_contacts: SurfaceIntersectionBoundaryContacts {
-                start: if retain_start {
-                    self.first_boundary_contacts.start.clone()
-                } else {
-                    Vec::new()
+        crate::context::strict(|| {
+            let curve = self.curve.subcurve(start, end)?;
+            let first_pcurve = self.first_pcurve.reparameterized_subcurve(
+                start,
+                end,
+                &curve.domain().represented_domain()?,
+            )?;
+            let second_pcurve = self.second_pcurve.reparameterized_subcurve(
+                start,
+                end,
+                &curve.domain().represented_domain()?,
+            )?;
+            let retain_start = decided_order(compare_reals(
+                start,
+                self.curve.domain().represented_start()?,
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal;
+            let retain_end = decided_order(compare_reals(
+                end,
+                self.curve.domain().represented_end()?,
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal;
+            Ok(Self {
+                curve,
+                first_pcurve,
+                second_pcurve,
+                image_certificates: self.image_certificates,
+                first_boundary_contacts: SurfaceIntersectionBoundaryContacts {
+                    start: if retain_start {
+                        self.first_boundary_contacts.start.clone()
+                    } else {
+                        Vec::new()
+                    },
+                    end: if retain_end {
+                        self.first_boundary_contacts.end.clone()
+                    } else {
+                        Vec::new()
+                    },
                 },
-                end: if retain_end {
-                    self.first_boundary_contacts.end.clone()
-                } else {
-                    Vec::new()
+                second_boundary_contacts: SurfaceIntersectionBoundaryContacts {
+                    start: if retain_start {
+                        self.second_boundary_contacts.start.clone()
+                    } else {
+                        Vec::new()
+                    },
+                    end: if retain_end {
+                        self.second_boundary_contacts.end.clone()
+                    } else {
+                        Vec::new()
+                    },
                 },
-            },
-            second_boundary_contacts: SurfaceIntersectionBoundaryContacts {
-                start: if retain_start {
-                    self.second_boundary_contacts.start.clone()
-                } else {
-                    Vec::new()
-                },
-                end: if retain_end {
-                    self.second_boundary_contacts.end.clone()
-                } else {
-                    Vec::new()
-                },
-            },
+            })
         })
     }
 
     /// Returns the same exact spatial and two-operand parameter-space images
     /// with one common reversed traversal.
     pub fn reversed(&self) -> GeometryResult<Self> {
-        Ok(Self {
-            curve: self.curve.reversed()?,
-            first_pcurve: self.first_pcurve.reversed()?,
-            second_pcurve: self.second_pcurve.reversed()?,
-            image_certificates: self.image_certificates,
-            first_boundary_contacts: SurfaceIntersectionBoundaryContacts {
-                start: self.first_boundary_contacts.end.clone(),
-                end: self.first_boundary_contacts.start.clone(),
-            },
-            second_boundary_contacts: SurfaceIntersectionBoundaryContacts {
-                start: self.second_boundary_contacts.end.clone(),
-                end: self.second_boundary_contacts.start.clone(),
-            },
+        crate::context::strict(|| {
+            Ok(Self {
+                curve: self.curve.reversed()?,
+                first_pcurve: self.first_pcurve.reversed()?,
+                second_pcurve: self.second_pcurve.reversed()?,
+                image_certificates: self.image_certificates,
+                first_boundary_contacts: SurfaceIntersectionBoundaryContacts {
+                    start: self.first_boundary_contacts.end.clone(),
+                    end: self.first_boundary_contacts.start.clone(),
+                },
+                second_boundary_contacts: SurfaceIntersectionBoundaryContacts {
+                    start: self.second_boundary_contacts.end.clone(),
+                    end: self.second_boundary_contacts.start.clone(),
+                },
+            })
         })
     }
 }
 
-impl SurfaceIntersectionPcurve {
-    fn unsupported(domain: ParameterDomain) -> Self {
-        Self {
-            domain,
-            source_scale: Real::one(),
-            source_offset: Real::zero(),
-            mapping: SurfaceIntersectionPcurveMapping::Unsupported,
+fn orient_affine_surface_pcurve(
+    mut curve: Curve2,
+    mut scale: Real,
+    mut offset: Real,
+    target: &ParameterRange,
+) -> GeometryResult<MaterializedSurfacePcurve> {
+    let (first, last) = curve.parameter_endpoints();
+    let mapped_first = Parameter::from_curve(first)?.affine_image(&scale, &offset)?;
+    let mapped_last = Parameter::from_curve(last)?.affine_image(&scale, &offset)?;
+    if mapped_first.compare(target.end())? == Ordering::Equal
+        && mapped_last.compare(target.start())? == Ordering::Equal
+    {
+        // Authored reversal changes coefficients in a reflected chart;
+        // generated and source-restricted curves keep their existing chart.
+        if curve.geometry().is_some() {
+            let pivot = first
+                .scalar()
+                .ok_or(GeometryError::UnrepresentableParameter)?
+                + last
+                    .scalar()
+                    .ok_or(GeometryError::UnrepresentableParameter)?;
+            offset += &scale * pivot;
+            scale = -scale;
         }
+        curve = curve.reversed()?;
+    } else if mapped_first.compare(target.start())? != Ordering::Equal
+        || mapped_last.compare(target.end())? != Ordering::Equal
+    {
+        return Err(GeometryError::InvalidParameterDomain);
     }
-
-    fn retained_curve(curve: Curve2) -> GeometryResult<Self> {
-        let curve_domain = curve.parameter_domain();
-        let (curve_domain_start, curve_domain_end) = curve_domain
-            .scalar_endpoints()
-            .ok_or(GeometryError::UnsupportedPcurveContour)?;
-        Ok(Self {
-            domain: ParameterDomain::new(curve_domain_start.clone(), curve_domain_end.clone())?,
-            source_scale: Real::one(),
-            source_offset: Real::zero(),
-            mapping: SurfaceIntersectionPcurveMapping::RetainedCurve { curve },
-        })
-    }
-
-    fn plane_projection(curve: Curve3, plane: &PlaneSurface) -> Self {
-        Self {
-            domain: curve.domain().clone(),
-            source_scale: Real::one(),
-            source_offset: Real::zero(),
-            mapping: SurfaceIntersectionPcurveMapping::PlaneProjection {
-                spatial: curve,
-                origin: plane.origin.clone(),
-                u: plane.u.clone(),
-                v: plane.v.clone(),
-            },
-        }
-    }
-
-    fn linear_plane_section(
-        profile: Curve3,
-        plane: &PlaneSurface,
-        denominator: Real,
-        profile_axis: TensorAxis,
-        coefficient_scale: Real,
-        coefficient_offset: Real,
-    ) -> Self {
-        Self {
-            domain: profile.domain().clone(),
-            source_scale: Real::one(),
-            source_offset: Real::zero(),
-            mapping: SurfaceIntersectionPcurveMapping::LinearPlaneSection {
-                profile,
-                plane_origin: plane.origin.clone(),
-                plane_normal: plane.u.cross(&plane.v),
-                denominator,
-                profile_axis,
-                coefficient_scale,
-                coefficient_offset,
-            },
-        }
-    }
-
-    fn tensor_iso_v(domain: ParameterDomain, constant: Real) -> Self {
-        Self {
-            domain,
-            source_scale: Real::one(),
-            source_offset: Real::zero(),
-            mapping: SurfaceIntersectionPcurveMapping::TensorIsoV { constant },
-        }
-    }
-
-    fn tensor_iso(
-        domain: ParameterDomain,
-        constant: Real,
-        profile_axis: TensorAxis,
-        coefficient_scale: Real,
-        coefficient_offset: Real,
-    ) -> Self {
-        Self {
-            domain,
-            source_scale: coefficient_scale,
-            source_offset: coefficient_offset,
-            mapping: match profile_axis {
-                TensorAxis::U => SurfaceIntersectionPcurveMapping::TensorIsoU { constant },
-                TensorAxis::V => SurfaceIntersectionPcurveMapping::TensorIsoV { constant },
-            },
-        }
-    }
-
-    /// Returns the pcurve's parameter domain, shared exactly with the spatial
-    /// intersection curve.
-    pub const fn domain(&self) -> &ParameterDomain {
-        &self.domain
-    }
-
-    pub(crate) fn is_available(&self) -> bool {
-        !matches!(self.mapping, SurfaceIntersectionPcurveMapping::Unsupported)
-    }
-
-    /// Evaluates the exact surface parameter corresponding to `parameter` on
-    /// the retained spatial curve.
-    pub fn point_at(&self, parameter: &Real) -> GeometryResult<Point2> {
-        if !self.domain.contains(parameter)? {
-            return Err(GeometryError::ParameterOutsideDomain);
-        }
-        let source_parameter = &self.source_scale * parameter + &self.source_offset;
-        match &self.mapping {
-            SurfaceIntersectionPcurveMapping::Unsupported => {
-                Err(GeometryError::UnsupportedIntersection)
-            }
-            SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
-                let point = curve.point_at(&source_parameter.clone().into())?;
-                let point = point
-                    .coordinates()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
-                Ok(Point2::new(point.x().clone(), point.y().clone()))
-            }
-            SurfaceIntersectionPcurveMapping::PlaneProjection {
-                spatial,
-                origin,
-                u,
-                v,
-            } => project_point_to_plane_frame(origin, u, v, &spatial.point_at(&source_parameter)?),
-            SurfaceIntersectionPcurveMapping::LinearPlaneSection {
-                profile,
-                plane_origin,
-                plane_normal,
-                denominator,
-                profile_axis,
-                coefficient_scale,
-                coefficient_offset,
-                ..
-            } => {
-                let profile_point = profile.point_at(&source_parameter)?;
-                let normalized_coefficient = (plane_normal.dot(&(plane_origin - &profile_point))
-                    / denominator)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
-                let coefficient = coefficient_offset + coefficient_scale * normalized_coefficient;
-                Ok(match profile_axis {
-                    TensorAxis::U => Point2::new(source_parameter, coefficient),
-                    TensorAxis::V => Point2::new(coefficient, source_parameter),
-                })
-            }
-            SurfaceIntersectionPcurveMapping::TensorIsoV { constant } => {
-                Ok(Point2::new(source_parameter, constant.clone()))
-            }
-            SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
-                Ok(Point2::new(constant.clone(), source_parameter))
-            }
-        }
-    }
-
-    /// Restricts this exact surface-parameter mapping without changing its
-    /// authoritative spatial-curve parameterization.
-    pub fn subcurve(&self, start: &Real, end: &Real) -> GeometryResult<Self> {
-        if !self.domain.contains(start)? || !self.domain.contains(end)? {
-            return Err(GeometryError::ParameterOutsideDomain);
-        }
-        Ok(Self {
-            domain: ParameterDomain::new(start.clone(), end.clone())?,
-            source_scale: self.source_scale.clone(),
-            source_offset: self.source_offset.clone(),
-            mapping: self.mapping.clone(),
-        })
-    }
-
-    /// Returns the same exact parameter-space image with reversed traversal.
-    pub fn reversed(&self) -> GeometryResult<Self> {
-        let domain_sum = self.domain.start() + self.domain.end();
-        Ok(Self {
-            domain: self.domain.clone(),
-            source_scale: -self.source_scale.clone(),
-            source_offset: &self.source_scale * domain_sum + &self.source_offset,
-            mapping: self.mapping.clone(),
-        })
-    }
-
-    /// Materializes this retained mapping as one exact Hypercurve carrier.
-    ///
-    /// The returned affine coefficients map
-    /// `spatial_parameter = scale * pcurve_parameter + offset`. A mapping
-    /// that requires more than one Hypercurve carrier remains explicitly
-    /// unsupported.
-    pub fn materialize(&self) -> GeometryResult<MaterializedSurfacePcurve> {
-        let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
-        let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
-        let source_order = decided_order(compare_reals(
-            &source_start,
-            &source_end,
-            crate::STRICT_PREDICATES,
-        ))?;
-        if source_order == Ordering::Equal {
-            return Err(GeometryError::InvalidParameterDomain);
-        }
-        let descending = source_order == Ordering::Greater;
-        let (ordered_source_start, ordered_source_end) = if descending {
-            (&source_end, &source_start)
-        } else {
-            (&source_start, &source_end)
-        };
-        let orient_curve = |curve: Curve2| -> GeometryResult<Curve2> {
-            if descending {
-                curve.reversed().map_err(GeometryError::from)
-            } else {
-                Ok(curve)
-            }
-        };
-        match &self.mapping {
-            SurfaceIntersectionPcurveMapping::Unsupported => {
-                Err(GeometryError::UnsupportedIntersection)
-            }
-            SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
-                let domain = curve.parameter_domain();
-                let restricted = if decided_order(compare_reals(
-                    ordered_source_start,
-                    (domain.start())
-                        .scalar()
-                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                    crate::STRICT_PREDICATES,
-                ))? == Ordering::Equal
-                    && decided_order(compare_reals(
-                        ordered_source_end,
-                        (domain.end())
-                            .scalar()
-                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                        crate::STRICT_PREDICATES,
-                    ))? == Ordering::Equal
-                {
-                    curve.clone()
-                } else {
-                    curve.subcurve(
-                        ordered_source_start.clone().into(),
-                        ordered_source_end.clone().into(),
-                    )?
-                };
-                materialized_surface_pcurve_from_matching_domains(
-                    orient_curve(restricted)?,
-                    &self.domain,
-                )
-            }
-            SurfaceIntersectionPcurveMapping::PlaneProjection {
-                spatial,
-                origin,
-                u,
-                v,
-            } => {
-                let source_curve = spatial.subcurve(ordered_source_start, ordered_source_end)?;
-                let curve = orient_curve(
-                    project_curve_to_plane_frame(&source_curve, origin, u, v)?
-                        .ok_or(GeometryError::UnsupportedIntersection)?,
-                )?;
-                if curve.family() == CurveFamily2::CircularArc {
-                    Ok(MaterializedSurfacePcurve {
-                        curve,
-                        correspondence: SurfacePcurveCorrespondence::AngularSweep {
-                            spatial_start: self.domain.start().clone(),
-                            spatial_end: self.domain.end().clone(),
-                        },
-                    })
-                } else {
-                    materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
-                }
-            }
-            SurfaceIntersectionPcurveMapping::LinearPlaneSection {
-                profile,
-                plane_origin,
-                plane_normal,
-                denominator,
-                profile_axis,
-                coefficient_scale,
-                coefficient_offset,
-            } => {
-                let carriers = linear_section_pcurve_carriers(
-                    profile,
-                    plane_origin,
-                    plane_normal,
-                    denominator,
-                    *profile_axis,
-                    coefficient_scale,
-                    coefficient_offset,
-                )?
-                .ok_or(GeometryError::UnsupportedIntersection)?;
-                let mut curves = Vec::new();
-                let mut boundaries = Vec::new();
-                for carrier in carriers {
-                    let carrier_start = carrier.spatial_offset.clone();
-                    let carrier_end = &carrier.spatial_offset + &carrier.spatial_scale;
-                    let overlap_start = if decided_order(compare_reals(
-                        ordered_source_start,
-                        &carrier_start,
-                        crate::STRICT_PREDICATES,
-                    ))? == Ordering::Greater
-                    {
-                        ordered_source_start.clone()
-                    } else {
-                        carrier_start
-                    };
-                    let overlap_end = if decided_order(compare_reals(
-                        ordered_source_end,
-                        &carrier_end,
-                        crate::STRICT_PREDICATES,
-                    ))? == Ordering::Less
-                    {
-                        ordered_source_end.clone()
-                    } else {
-                        carrier_end
-                    };
-                    if decided_order(compare_reals(
-                        &overlap_start,
-                        &overlap_end,
-                        crate::STRICT_PREDICATES,
-                    ))? != Ordering::Less
-                    {
-                        continue;
-                    }
-                    let start = ((&overlap_start - &carrier.spatial_offset)
-                        / &carrier.spatial_scale)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
-                    let end = ((&overlap_end - &carrier.spatial_offset) / &carrier.spatial_scale)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
-                    let domain = carrier.curve.parameter_domain();
-                    let curve = if decided_order(compare_reals(
-                        &start,
-                        (domain.start())
-                            .scalar()
-                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                        crate::STRICT_PREDICATES,
-                    ))? == Ordering::Equal
-                        && decided_order(compare_reals(
-                            &end,
-                            (domain.end())
-                                .scalar()
-                                .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Equal
-                    {
-                        carrier.curve
-                    } else {
-                        carrier.curve.subcurve(start.into(), end.into())?
-                    };
-                    if boundaries.is_empty() {
-                        boundaries.push(overlap_start);
-                    }
-                    boundaries.push(overlap_end);
-                    curves.push(curve);
-                }
-                match curves.as_slice() {
-                    [] => Err(GeometryError::UnsupportedIntersection),
-                    [curve] => materialized_surface_pcurve_from_matching_domains(
-                        orient_curve(curve.clone())?,
-                        &self.domain,
-                    ),
-                    _ => materialized_surface_pcurve_from_matching_domains(
-                        orient_curve(concatenate_rational_bezier_spans_as_nurbs(
-                            &curves,
-                            &boundaries,
-                        )?)?,
-                        &self.domain,
-                    ),
-                }
-            }
-            SurfaceIntersectionPcurveMapping::TensorIsoV { constant } => {
-                let curve = orient_curve(Curve2::from(LineSeg2::try_new(
-                    CurvePoint2::new(ordered_source_start.clone(), constant.clone()),
-                    CurvePoint2::new(ordered_source_end.clone(), constant.clone()),
-                )?))?;
-                materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
-            }
-            SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
-                let curve = orient_curve(Curve2::from(LineSeg2::try_new(
-                    CurvePoint2::new(constant.clone(), ordered_source_start.clone()),
-                    CurvePoint2::new(constant.clone(), ordered_source_end.clone()),
-                )?))?;
-                materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
-            }
-        }
-    }
-
-    fn reparameterized_subcurve(
-        &self,
-        start: &Real,
-        end: &Real,
-        target_domain: &ParameterDomain,
-    ) -> GeometryResult<Self> {
-        if !self.domain.contains(start)? || !self.domain.contains(end)? {
-            return Err(GeometryError::ParameterOutsideDomain);
-        }
-        let source_start = &self.source_scale * start + &self.source_offset;
-        let source_end = &self.source_scale * end + &self.source_offset;
-        let target_span = target_domain.end() - target_domain.start();
-        let source_scale = ((&source_end - &source_start) / target_span)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
-        let source_offset = source_start - &source_scale * target_domain.start();
-        Ok(Self {
-            domain: target_domain.clone(),
-            source_scale,
-            source_offset,
-            mapping: self.mapping.clone(),
-        })
-    }
-
-    pub(crate) fn clipping_carriers(
-        &self,
-    ) -> GeometryResult<Option<Vec<SurfacePcurveClipCarrier>>> {
-        let identity = |curve| SurfacePcurveClipCarrier {
-            curve,
-            spatial_scale: Real::one(),
-            spatial_offset: Real::zero(),
-        };
-        match &self.mapping {
-            SurfaceIntersectionPcurveMapping::Unsupported => Ok(None),
-            SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
-                Ok(Some(vec![identity(curve.clone())]))
-            }
-            SurfaceIntersectionPcurveMapping::PlaneProjection {
-                spatial,
-                origin,
-                u,
-                v,
-            } => {
-                let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
-                let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
-                let descending = decided_order(compare_reals(
-                    &source_start,
-                    &source_end,
-                    crate::STRICT_PREDICATES,
-                ))? == Ordering::Greater;
-                let source_curve = if descending {
-                    spatial.subcurve(&source_end, &source_start)?
-                } else {
-                    spatial.subcurve(&source_start, &source_end)?
-                };
-                let Some(mut curve) = project_curve_to_plane_frame(&source_curve, origin, u, v)?
-                else {
-                    return Ok(None);
-                };
-                if descending {
-                    curve = curve.reversed()?;
-                }
-                let curve_domain = curve.parameter_domain();
-                let (curve_domain_start, curve_domain_end) = curve_domain
-                    .scalar_endpoints()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
-                let curve_span = curve_domain_end - curve_domain_start;
-                let spatial_span = self.domain.end() - self.domain.start();
-                let spatial_scale =
-                    (&spatial_span / &curve_span).map_err(|_| GeometryError::ProjectiveDivision)?;
-                let spatial_offset = self.domain.start() - &spatial_scale * curve_domain_start;
-                Ok(Some(vec![SurfacePcurveClipCarrier {
-                    curve,
-                    spatial_scale,
-                    spatial_offset,
-                }]))
-            }
-            SurfaceIntersectionPcurveMapping::LinearPlaneSection {
-                profile,
-                plane_origin,
-                plane_normal,
-                denominator,
-                profile_axis,
-                coefficient_scale,
-                coefficient_offset,
-            } => linear_section_pcurve_carriers(
-                profile,
-                plane_origin,
-                plane_normal,
-                denominator,
-                *profile_axis,
-                coefficient_scale,
-                coefficient_offset,
-            ),
-            SurfaceIntersectionPcurveMapping::TensorIsoV { constant } => {
-                let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
-                let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
-                let span = self.domain.end() - self.domain.start();
-                Ok(Some(vec![SurfacePcurveClipCarrier {
-                    curve: Curve2::from(LineSeg2::try_new(
-                        CurvePoint2::new(source_start, constant.clone()),
-                        CurvePoint2::new(source_end, constant.clone()),
-                    )?),
-                    spatial_scale: span,
-                    spatial_offset: self.domain.start().clone(),
-                }]))
-            }
-            SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
-                let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
-                let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
-                let span = self.domain.end() - self.domain.start();
-                Ok(Some(vec![SurfacePcurveClipCarrier {
-                    curve: Curve2::from(LineSeg2::try_new(
-                        CurvePoint2::new(constant.clone(), source_start),
-                        CurvePoint2::new(constant.clone(), source_end),
-                    )?),
-                    spatial_scale: span,
-                    spatial_offset: self.domain.start().clone(),
-                }]))
-            }
-        }
-    }
-}
-
-impl MaterializedSurfacePcurve {
-    /// Returns the exact Hypercurve carrier.
-    pub const fn curve(&self) -> &Curve2 {
-        &self.curve
-    }
-
-    /// Returns the exact pcurve-to-spatial parameter correspondence.
-    pub const fn correspondence(&self) -> &SurfacePcurveCorrespondence {
-        &self.correspondence
-    }
-
-    /// Maps one pcurve parameter to the authoritative spatial-curve parameter.
-    pub fn spatial_parameter_at(&self, parameter: &Real) -> GeometryResult<Real> {
-        match &self.correspondence {
-            SurfacePcurveCorrespondence::Affine { scale, offset } => Ok(scale * parameter + offset),
-            SurfacePcurveCorrespondence::AngularSweep {
-                spatial_start,
-                spatial_end,
-            } => {
-                let Some(CurveGeometry2::CircularArc(arc)) = self.curve.geometry() else {
-                    return Err(GeometryError::UnsupportedPcurveContour);
-                };
-                let point = self.curve.point_at(&parameter.clone().into())?;
-                let point = point
-                    .coordinates()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
-                let fraction = match crate::error::classified(arc.sweep_fraction(point))? {
-                    Classification::Decided(fraction) => fraction,
-                    Classification::Uncertain(reason) => {
-                        return Err(GeometryError::PlanarClassificationUnresolved(reason));
-                    }
-                };
-                Ok(spatial_start + (spatial_end - spatial_start) * fraction)
-            }
-        }
-    }
+    Ok(MaterializedSurfacePcurve {
+        curve,
+        correspondence: SurfacePcurveCorrespondence::Affine { scale, offset },
+    })
 }
 
 fn materialized_surface_pcurve_from_matching_domains(
@@ -2520,8 +2672,7 @@ fn materialized_surface_pcurve_from_matching_domains(
     let curve_start = curve_domain_start.clone();
     let curve_span = curve_domain_end - &curve_start;
     let target_span = target_domain.end() - target_domain.start();
-    let spatial_scale =
-        (target_span / curve_span).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let spatial_scale = (target_span / curve_span).map_err(GeometryError::Numeric)?;
     let spatial_offset = target_domain.start() - &spatial_scale * curve_start;
     Ok(MaterializedSurfacePcurve {
         curve,
@@ -2618,13 +2769,45 @@ impl SurfaceIntersectionParameterRay {
 
 impl SurfacePartials {
     /// Returns the partial derivative in the surface `u` direction.
-    pub const fn u(&self) -> &Vector3 {
+    pub const fn u(&self) -> &GeometricVector3 {
         &self.u
     }
 
     /// Returns the partial derivative in the surface `v` direction.
-    pub const fn v(&self) -> &Vector3 {
+    pub const fn v(&self) -> &GeometricVector3 {
         &self.v
+    }
+
+    fn from_coordinates(u: Vector3, v: Vector3) -> Self {
+        Self {
+            u: GeometricVector3::from_coordinates(u),
+            v: GeometricVector3::from_coordinates(v),
+        }
+    }
+
+    /// Applies the Jacobian to an exact velocity in this surface's UV chart.
+    /// Shared source fields remain correlated; unavailable field joins or
+    /// radical derivative magnitudes return a typed blocker.
+    pub fn apply_direction(
+        &self,
+        direction: &hypercurve::CurveVector2,
+    ) -> GeometryResult<GeometricVector3> {
+        crate::context::strict(|| GeometricVector3::chain_rule(&self.u, &self.v, direction))
+    }
+
+    /// The unit normal induced by the authored u/v order. Positive speed
+    /// factors may cancel during normalization, but orientation never does.
+    pub fn normal(&self) -> GeometryResult<GeometricVector3> {
+        crate::context::strict(|| {
+            let normal = self
+                .u
+                .normal_direction()?
+                .cross(&self.v.normal_direction()?)?;
+            if normal.is_zero()? {
+                return Err(GeometryError::SingularSurfaceParameter);
+            }
+            normal.normalized()
+        })
     }
 }
 
@@ -2638,7 +2821,7 @@ pub struct Surface {
 struct SurfaceData {
     geometry: SurfaceGeometry,
     domain: SurfaceDomain,
-    bounds: OnceLock<Result<SurfaceBounds, GeometryError>>,
+    bounds: OnceLock<SurfaceBounds>,
 }
 
 #[derive(Debug)]
@@ -2731,23 +2914,25 @@ struct NurbsSurface {
 impl Surface {
     /// Constructs an unbounded exact plane with an authored parameter frame.
     pub fn plane(origin: Point3, u: Vector3, v: Vector3) -> GeometryResult<Self> {
-        let normal_norm = u.cross(&v).norm_squared();
-        match compare_reals(&normal_norm, &Real::zero(), crate::STRICT_PREDICATES) {
-            PredicateOutcome::Decided {
-                value: Ordering::Greater,
-                ..
-            } => Ok(Self::from_parts(
-                SurfaceGeometry::Plane(PlaneSurface { origin, u, v }),
-                SurfaceDomain {
-                    u: SurfaceParameterDomain::Unbounded,
-                    v: SurfaceParameterDomain::Unbounded,
-                },
-            )),
-            PredicateOutcome::Decided { .. } => Err(GeometryError::DegeneratePlaneBasis),
-            PredicateOutcome::Unknown { needed, stage } => {
-                Err(GeometryError::PredicateUnresolved { needed, stage })
+        crate::context::strict(|| {
+            let normal_norm = u.cross(&v).norm_squared();
+            match compare_reals(&normal_norm, &Real::zero(), crate::STRICT_PREDICATES) {
+                PredicateOutcome::Decided {
+                    value: Ordering::Greater,
+                    ..
+                } => Ok(Self::from_parts(
+                    SurfaceGeometry::Plane(PlaneSurface { origin, u, v }),
+                    SurfaceDomain {
+                        u: SurfaceParameterDomain::Unbounded,
+                        v: SurfaceParameterDomain::Unbounded,
+                    },
+                )),
+                PredicateOutcome::Decided { .. } => Err(GeometryError::DegeneratePlaneBasis),
+                PredicateOutcome::Unknown { needed, stage } => {
+                    Err(GeometryError::PredicateUnresolved { needed, stage })
+                }
             }
-        }
+        })
     }
 
     /// Constructs a circular cylinder with periodic angle `u` and axial `v`.
@@ -2758,16 +2943,18 @@ impl Surface {
         axis: Vector3,
         radius: Real,
     ) -> GeometryResult<Self> {
-        let frame = validate_orthonormal_frame(x, y, axis)?;
-        require_positive(&radius, GeometryError::InvalidRadius)?;
-        Ok(Self::from_parts(
-            SurfaceGeometry::Cylinder(CylinderSurface {
-                origin,
-                frame,
-                radius,
-            }),
-            angle_unbounded_domain(),
-        ))
+        crate::context::strict(|| {
+            let frame = validate_orthonormal_frame(x, y, axis)?;
+            require_positive(&radius, GeometryError::InvalidRadius)?;
+            Ok(Self::from_parts(
+                SurfaceGeometry::Cylinder(CylinderSurface {
+                    origin,
+                    frame,
+                    radius,
+                }),
+                angle_unbounded_domain(),
+            ))
+        })
     }
 
     /// Constructs a sphere with longitude `u` and latitude `v`.
@@ -2778,24 +2965,31 @@ impl Surface {
         axis: Vector3,
         radius: Real,
     ) -> GeometryResult<Self> {
-        let frame = validate_orthonormal_frame(x, y, axis)?;
-        require_positive(&radius, GeometryError::InvalidRadius)?;
-        let half_pi =
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
-        Ok(Self::from_parts(
-            SurfaceGeometry::Sphere(SphereSurface {
-                center,
-                frame,
-                radius,
-            }),
-            SurfaceDomain {
-                u: angle_domain(),
-                v: SurfaceParameterDomain::Closed(ParameterDomain::new(-half_pi.clone(), half_pi)?),
-            },
-        ))
+        crate::context::strict(|| {
+            let frame = validate_orthonormal_frame(x, y, axis)?;
+            require_positive(&radius, GeometryError::InvalidRadius)?;
+            let half_pi = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
+            Ok(Self::from_parts(
+                SurfaceGeometry::Sphere(SphereSurface {
+                    center,
+                    frame,
+                    radius,
+                }),
+                SurfaceDomain {
+                    u: angle_domain(),
+                    v: SurfaceParameterDomain::Closed(
+                        ParameterDomain::new(-half_pi.clone(), half_pi)?.into(),
+                    ),
+                },
+            ))
+        })
     }
 
-    /// Constructs a right circular cone with nonnegative radial-height `v`.
+    /// Constructs a right circular cone with nonnegative slant distance `v`.
+    ///
+    /// The exact parameterization is
+    /// `apex + v*(sin(semi_angle)*(x*cos(u) + y*sin(u)) + cos(semi_angle)*axis)`.
+    /// The apex at `v=0` is a parameter singularity.
     pub fn cone(
         apex: Point3,
         x: Vector3,
@@ -2803,35 +2997,36 @@ impl Surface {
         axis: Vector3,
         semi_angle: Real,
     ) -> GeometryResult<Self> {
-        let frame = validate_orthonormal_frame(x, y, axis)?;
-        let half_pi =
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
-        if decided_order(compare_reals(
-            &semi_angle,
-            &Real::zero(),
-            crate::STRICT_PREDICATES,
-        ))? != Ordering::Greater
-            || decided_order(compare_reals(
+        crate::context::strict(|| {
+            let frame = validate_orthonormal_frame(x, y, axis)?;
+            let half_pi = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
+            if decided_order(compare_reals(
                 &semi_angle,
-                &half_pi,
+                &Real::zero(),
                 crate::STRICT_PREDICATES,
-            ))? != Ordering::Less
-        {
-            return Err(GeometryError::InvalidConeAngle);
-        }
-        Ok(Self::from_parts(
-            SurfaceGeometry::Cone(ConeSurface {
-                apex,
-                frame,
-                semi_angle,
-            }),
-            SurfaceDomain {
-                u: angle_domain(),
-                v: SurfaceParameterDomain::LowerBounded {
-                    start: Real::zero(),
+            ))? != Ordering::Greater
+                || decided_order(compare_reals(
+                    &semi_angle,
+                    &half_pi,
+                    crate::STRICT_PREDICATES,
+                ))? != Ordering::Less
+            {
+                return Err(GeometryError::InvalidConeAngle);
+            }
+            Ok(Self::from_parts(
+                SurfaceGeometry::Cone(ConeSurface {
+                    apex,
+                    frame,
+                    semi_angle,
+                }),
+                SurfaceDomain {
+                    u: angle_domain(),
+                    v: SurfaceParameterDomain::LowerBounded {
+                        start: Real::zero(),
+                    },
                 },
-            },
-        ))
+            ))
+        })
     }
 
     /// Constructs a non-self-intersecting ring torus.
@@ -2843,28 +3038,30 @@ impl Surface {
         major_radius: Real,
         minor_radius: Real,
     ) -> GeometryResult<Self> {
-        let frame = validate_orthonormal_frame(x, y, axis)?;
-        require_positive(&minor_radius, GeometryError::InvalidTorusRadii)?;
-        if decided_order(compare_reals(
-            &major_radius,
-            &minor_radius,
-            crate::STRICT_PREDICATES,
-        ))? != Ordering::Greater
-        {
-            return Err(GeometryError::InvalidTorusRadii);
-        }
-        Ok(Self::from_parts(
-            SurfaceGeometry::Torus(TorusSurface {
-                center,
-                frame,
-                major_radius,
-                minor_radius,
-            }),
-            SurfaceDomain {
-                u: angle_domain(),
-                v: angle_domain(),
-            },
-        ))
+        crate::context::strict(|| {
+            let frame = validate_orthonormal_frame(x, y, axis)?;
+            require_positive(&minor_radius, GeometryError::InvalidTorusRadii)?;
+            if decided_order(compare_reals(
+                &major_radius,
+                &minor_radius,
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Greater
+            {
+                return Err(GeometryError::InvalidTorusRadii);
+            }
+            Ok(Self::from_parts(
+                SurfaceGeometry::Torus(TorusSurface {
+                    center,
+                    frame,
+                    major_radius,
+                    minor_radius,
+                }),
+                SurfaceDomain {
+                    u: angle_domain(),
+                    v: angle_domain(),
+                },
+            ))
+        })
     }
 
     /// Constructs the unbounded linear extrusion of a finite profile curve.
@@ -2872,22 +3069,24 @@ impl Surface {
     /// `u` is the profile parameter and `v` is the signed coefficient of the
     /// authored direction: `S(u, v) = profile(u) + v * direction`.
     pub fn extrusion(profile: Curve3, direction: Vector3) -> GeometryResult<Self> {
-        if decided_order(compare_reals(
-            &direction.norm_squared(),
-            &Real::zero(),
-            crate::STRICT_PREDICATES,
-        ))? != Ordering::Greater
-        {
-            return Err(GeometryError::DegenerateExtrusionDirection);
-        }
-        let u_domain = profile.domain().clone();
-        Ok(Self::from_parts(
-            SurfaceGeometry::Extrusion(ExtrusionSurface { profile, direction }),
-            SurfaceDomain {
-                u: SurfaceParameterDomain::Closed(u_domain),
-                v: SurfaceParameterDomain::Unbounded,
-            },
-        ))
+        crate::context::strict(|| {
+            if decided_order(compare_reals(
+                &direction.norm_squared(),
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Greater
+            {
+                return Err(GeometryError::DegenerateExtrusionDirection);
+            }
+            let u_domain = profile.domain().clone();
+            Ok(Self::from_parts(
+                SurfaceGeometry::Extrusion(ExtrusionSurface { profile, direction }),
+                SurfaceDomain {
+                    u: SurfaceParameterDomain::Closed(u_domain),
+                    v: SurfaceParameterDomain::Unbounded,
+                },
+            ))
+        })
     }
 
     /// Constructs the full revolution of a finite profile around a unit axis.
@@ -2895,26 +3094,28 @@ impl Surface {
     /// `u` is the periodic revolution angle and `v` is the profile parameter.
     /// Profile points on the axis remain explicit parameter singularities.
     pub fn revolution(profile: Curve3, axis_origin: Point3, axis: Vector3) -> GeometryResult<Self> {
-        if decided_order(compare_reals(
-            &axis.norm_squared(),
-            &Real::one(),
-            crate::STRICT_PREDICATES,
-        ))? != Ordering::Equal
-        {
-            return Err(GeometryError::InvalidRevolutionAxis);
-        }
-        let v_domain = profile.domain().clone();
-        Ok(Self::from_parts(
-            SurfaceGeometry::Revolution(RevolutionSurface {
-                profile,
-                axis_origin,
-                axis,
-            }),
-            SurfaceDomain {
-                u: angle_domain(),
-                v: SurfaceParameterDomain::Closed(v_domain),
-            },
-        ))
+        crate::context::strict(|| {
+            if decided_order(compare_reals(
+                &axis.norm_squared(),
+                &Real::one(),
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Equal
+            {
+                return Err(GeometryError::InvalidRevolutionAxis);
+            }
+            let v_domain = profile.domain().clone();
+            Ok(Self::from_parts(
+                SurfaceGeometry::Revolution(RevolutionSurface {
+                    profile,
+                    axis_origin,
+                    axis,
+                }),
+                SurfaceDomain {
+                    u: angle_domain(),
+                    v: SurfaceParameterDomain::Closed(v_domain),
+                },
+            ))
+        })
     }
 
     /// Constructs a tensor-product rational Bézier surface over `[0, 1]²`.
@@ -2925,20 +3126,22 @@ impl Surface {
         control_points: Vec<Vec<Point3>>,
         weights: Vec<Vec<Real>>,
     ) -> GeometryResult<Self> {
-        let (u_count, _) = validate_surface_control_net(&control_points, &weights)?;
-        validate_positive_surface_weights(&weights)?;
-        debug_assert!(u_count >= 2);
-        Ok(Self::from_parts(
-            SurfaceGeometry::RationalBezier(RationalBezierSurface {
-                control_points,
-                weights,
-                homogeneous_controls: OnceLock::new(),
-            }),
-            SurfaceDomain {
-                u: SurfaceParameterDomain::Closed(ParameterDomain::unit()),
-                v: SurfaceParameterDomain::Closed(ParameterDomain::unit()),
-            },
-        ))
+        crate::context::strict(|| {
+            let (u_count, _) = validate_surface_control_net(&control_points, &weights)?;
+            validate_positive_surface_weights(&weights)?;
+            debug_assert!(u_count >= 2);
+            Ok(Self::from_parts(
+                SurfaceGeometry::RationalBezier(RationalBezierSurface {
+                    control_points,
+                    weights,
+                    homogeneous_controls: OnceLock::new(),
+                }),
+                SurfaceDomain {
+                    u: SurfaceParameterDomain::Closed(ParameterRange::unit()),
+                    v: SurfaceParameterDomain::Closed(ParameterRange::unit()),
+                },
+            ))
+        })
     }
 
     /// Constructs a finite non-periodic tensor-product NURBS surface.
@@ -2953,27 +3156,31 @@ impl Surface {
         u_knots: Vec<Real>,
         v_knots: Vec<Real>,
     ) -> GeometryResult<Self> {
-        let (u_count, v_count) = validate_surface_control_net(&control_points, &weights)?;
-        validate_positive_surface_weights(&weights)?;
-        validate_nurbs_axis(u_degree, u_count, &u_knots)?;
-        validate_nurbs_axis(v_degree, v_count, &v_knots)?;
-        let u_domain = ParameterDomain::new(u_knots[u_degree].clone(), u_knots[u_count].clone())?;
-        let v_domain = ParameterDomain::new(v_knots[v_degree].clone(), v_knots[v_count].clone())?;
-        Ok(Self::from_parts(
-            SurfaceGeometry::Nurbs(NurbsSurface {
-                u_degree,
-                v_degree,
-                control_points,
-                weights,
-                u_knots,
-                v_knots,
-                homogeneous_controls: OnceLock::new(),
-            }),
-            SurfaceDomain {
-                u: SurfaceParameterDomain::Closed(u_domain),
-                v: SurfaceParameterDomain::Closed(v_domain),
-            },
-        ))
+        crate::context::strict(|| {
+            let (u_count, v_count) = validate_surface_control_net(&control_points, &weights)?;
+            validate_positive_surface_weights(&weights)?;
+            validate_nurbs_axis(u_degree, u_count, &u_knots)?;
+            validate_nurbs_axis(v_degree, v_count, &v_knots)?;
+            let u_domain =
+                ParameterDomain::new(u_knots[u_degree].clone(), u_knots[u_count].clone())?;
+            let v_domain =
+                ParameterDomain::new(v_knots[v_degree].clone(), v_knots[v_count].clone())?;
+            Ok(Self::from_parts(
+                SurfaceGeometry::Nurbs(NurbsSurface {
+                    u_degree,
+                    v_degree,
+                    control_points,
+                    weights,
+                    u_knots,
+                    v_knots,
+                    homogeneous_controls: OnceLock::new(),
+                }),
+                SurfaceDomain {
+                    u: SurfaceParameterDomain::Closed(u_domain.into()),
+                    v: SurfaceParameterDomain::Closed(v_domain.into()),
+                },
+            ))
+        })
     }
 
     fn from_parts(geometry: SurfaceGeometry, domain: SurfaceDomain) -> Self {
@@ -2998,6 +3205,66 @@ impl Surface {
             SurfaceGeometry::Revolution(_) => SurfaceKind::Revolution,
             SurfaceGeometry::RationalBezier(_) => SurfaceKind::RationalBezier,
             SurfaceGeometry::Nurbs(_) => SurfaceKind::Nurbs,
+        }
+    }
+
+    /// Proves equality of authored periodic analytic parameterizations, including
+    /// frame orientation. Coincidence of their unparameterized images alone
+    /// is insufficient for reusing face-local boundary curves.
+    pub(crate) fn same_periodic_analytic_parameterization(
+        &self,
+        other: &Self,
+    ) -> GeometryResult<bool> {
+        let (first_origin, first_frame, second_origin, second_frame, equal_parameters) =
+            match (&self.data.geometry, &other.data.geometry) {
+                (SurfaceGeometry::Cylinder(first), SurfaceGeometry::Cylinder(second)) => (
+                    &first.origin,
+                    &first.frame,
+                    &second.origin,
+                    &second.frame,
+                    decided_order(compare_reals(
+                        &first.radius,
+                        &second.radius,
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Equal,
+                ),
+                (SurfaceGeometry::Cone(first), SurfaceGeometry::Cone(second)) => (
+                    &first.apex,
+                    &first.frame,
+                    &second.apex,
+                    &second.frame,
+                    decided_order(compare_reals(
+                        &first.semi_angle,
+                        &second.semi_angle,
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Equal,
+                ),
+                (SurfaceGeometry::Torus(first), SurfaceGeometry::Torus(second)) => (
+                    &first.center,
+                    &first.frame,
+                    &second.center,
+                    &second.frame,
+                    decided_order(compare_reals(
+                        &first.major_radius,
+                        &second.major_radius,
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Equal
+                        && decided_order(compare_reals(
+                            &first.minor_radius,
+                            &second.minor_radius,
+                            crate::STRICT_PREDICATES,
+                        ))? == Ordering::Equal,
+                ),
+                _ => return Ok(false),
+            };
+        if !equal_parameters || !orthonormal_frames_equal(first_frame, second_frame)? {
+            return Ok(false);
+        }
+        match point3_equal(first_origin, second_origin, crate::STRICT_PREDICATES) {
+            PredicateOutcome::Decided { value, .. } => Ok(value),
+            PredicateOutcome::Unknown { needed, stage } => {
+                Err(GeometryError::PredicateUnresolved { needed, stage })
+            }
         }
     }
 
@@ -3099,7 +3366,7 @@ impl Surface {
                             (Real::from(
                                 u128::try_from(index).expect("usize is representable as u128"),
                             ) / denominator)
-                                .map_err(|_| GeometryError::ProjectiveDivision)
+                                .map_err(GeometryError::Numeric)
                         })
                         .collect()
                 };
@@ -3363,8 +3630,8 @@ impl Surface {
             .zip(&common_weights)
             .map(|((u, v), weight)| {
                 Ok(CurvePoint2::new(
-                    (u / weight).map_err(|_| GeometryError::ProjectiveDivision)?,
-                    (v / weight).map_err(|_| GeometryError::ProjectiveDivision)?,
+                    (u / weight).map_err(GeometryError::Numeric)?,
+                    (v / weight).map_err(GeometryError::Numeric)?,
                 ))
             })
             .collect::<GeometryResult<Vec<_>>>()?;
@@ -3380,113 +3647,127 @@ impl Surface {
     /// direction with de Casteljau. NURBS surfaces use homogeneous de Boor and
     /// retain the varying direction's authored degree and knot vector.
     pub fn iso_curve(&self, axis: SurfaceIsoAxis, constant: &Real) -> GeometryResult<Curve3> {
-        let homogeneous_to_curve_data = |controls: Vec<HomogeneousPoint3>| {
-            let mut points = Vec::with_capacity(controls.len());
-            let mut weights = Vec::with_capacity(controls.len());
-            for control in controls {
-                weights.push(control.w.clone());
-                points.push(control.project()?);
-            }
-            Ok::<_, GeometryError>((points, weights))
-        };
-        match &self.data.geometry {
-            SurfaceGeometry::RationalBezier(surface) => {
-                if !ParameterDomain::unit().contains(constant)? {
-                    return Err(GeometryError::ParameterOutsideDomain);
+        crate::context::strict(|| {
+            let homogeneous_to_curve_data = |controls: Vec<HomogeneousPoint3>| {
+                let mut points = Vec::with_capacity(controls.len());
+                let mut weights = Vec::with_capacity(controls.len());
+                for control in controls {
+                    weights.push(control.w.clone());
+                    points.push(control.project()?);
                 }
-                let controls = surface.homogeneous_controls();
-                let iso_controls = match axis {
-                    SurfaceIsoAxis::U => (0..controls[0].len())
-                        .map(|column| {
-                            evaluate_homogeneous_bezier_value(
-                                &controls
-                                    .iter()
-                                    .map(|row| row[column].clone())
-                                    .collect::<Vec<_>>(),
-                                constant,
-                            )
-                            .ok_or(GeometryError::InvalidControlNetShape)
-                        })
-                        .collect::<GeometryResult<Vec<_>>>()?,
-                    SurfaceIsoAxis::V => controls
-                        .iter()
-                        .map(|row| {
-                            evaluate_homogeneous_bezier_value(row, constant)
+                Ok::<_, GeometryError>((points, weights))
+            };
+            match &self.data.geometry {
+                SurfaceGeometry::RationalBezier(surface) => {
+                    if !ParameterDomain::unit().contains(constant)? {
+                        return Err(GeometryError::ParameterOutsideDomain);
+                    }
+                    let controls = surface.homogeneous_controls();
+                    let iso_controls = match axis {
+                        SurfaceIsoAxis::U => (0..controls[0].len())
+                            .map(|column| {
+                                evaluate_homogeneous_bezier_value(
+                                    &controls
+                                        .iter()
+                                        .map(|row| row[column].clone())
+                                        .collect::<Vec<_>>(),
+                                    constant,
+                                )
                                 .ok_or(GeometryError::InvalidControlNetShape)
-                        })
-                        .collect::<GeometryResult<Vec<_>>>()?,
-                };
-                let (points, weights) = homogeneous_to_curve_data(iso_controls)?;
-                Curve3::rational_bezier(points, weights)
-            }
-            SurfaceGeometry::Nurbs(surface) => {
-                let (domain, degree, knots, control_count) = match axis {
-                    SurfaceIsoAxis::U => (
-                        match &self.data.domain.v {
-                            SurfaceParameterDomain::Closed(domain) => domain,
-                            _ => return Err(GeometryError::InvalidParameterDomain),
-                        },
-                        surface.v_degree,
-                        &surface.v_knots,
-                        surface.control_points.len(),
-                    ),
-                    SurfaceIsoAxis::V => (
-                        match &self.data.domain.u {
-                            SurfaceParameterDomain::Closed(domain) => domain,
-                            _ => return Err(GeometryError::InvalidParameterDomain),
-                        },
-                        surface.u_degree,
-                        &surface.u_knots,
-                        surface.control_points[0].len(),
-                    ),
-                };
-                if !domain.contains(constant)? {
-                    return Err(GeometryError::ParameterOutsideDomain);
+                            })
+                            .collect::<GeometryResult<Vec<_>>>()?,
+                        SurfaceIsoAxis::V => controls
+                            .iter()
+                            .map(|row| {
+                                evaluate_homogeneous_bezier_value(row, constant)
+                                    .ok_or(GeometryError::InvalidControlNetShape)
+                            })
+                            .collect::<GeometryResult<Vec<_>>>()?,
+                    };
+                    let (points, weights) = homogeneous_to_curve_data(iso_controls)?;
+                    Curve3::rational_bezier(points, weights)
                 }
-                let span = find_span(constant, domain, degree, control_count, knots)?;
-                let controls = surface.homogeneous_controls();
-                let iso_controls = match axis {
-                    SurfaceIsoAxis::U => (0..controls[0].len())
-                        .map(|column| {
-                            evaluate_homogeneous_de_boor_jet(
-                                &controls
-                                    .iter()
-                                    .map(|row| row[column].clone())
-                                    .collect::<Vec<_>>(),
-                                &surface.v_knots,
-                                surface.v_degree,
-                                span,
-                                constant,
-                            )
-                            .map(|(value, _)| value)
-                        })
-                        .collect::<GeometryResult<Vec<_>>>()?,
-                    SurfaceIsoAxis::V => controls
-                        .iter()
-                        .map(|row| {
-                            evaluate_homogeneous_de_boor_jet(
-                                row,
-                                &surface.u_knots,
-                                surface.u_degree,
-                                span,
-                                constant,
-                            )
-                            .map(|(value, _)| value)
-                        })
-                        .collect::<GeometryResult<Vec<_>>>()?,
-                };
-                let (points, weights) = homogeneous_to_curve_data(iso_controls)?;
-                match axis {
-                    SurfaceIsoAxis::U => {
-                        Curve3::nurbs(surface.u_degree, points, weights, surface.u_knots.clone())
+                SurfaceGeometry::Nurbs(surface) => {
+                    let (domain, degree, knots, control_count) = match axis {
+                        SurfaceIsoAxis::U => (
+                            match &self.data.domain.v {
+                                SurfaceParameterDomain::Closed(domain) => domain,
+                                _ => return Err(GeometryError::InvalidParameterDomain),
+                            },
+                            surface.v_degree,
+                            &surface.v_knots,
+                            surface.control_points.len(),
+                        ),
+                        SurfaceIsoAxis::V => (
+                            match &self.data.domain.u {
+                                SurfaceParameterDomain::Closed(domain) => domain,
+                                _ => return Err(GeometryError::InvalidParameterDomain),
+                            },
+                            surface.u_degree,
+                            &surface.u_knots,
+                            surface.control_points[0].len(),
+                        ),
+                    };
+                    if !domain.contains_real(constant)? {
+                        return Err(GeometryError::ParameterOutsideDomain);
                     }
-                    SurfaceIsoAxis::V => {
-                        Curve3::nurbs(surface.v_degree, points, weights, surface.v_knots.clone())
+                    let span = find_span(
+                        constant,
+                        &domain.represented_domain()?,
+                        degree,
+                        control_count,
+                        knots,
+                    )?;
+                    let controls = surface.homogeneous_controls();
+                    let iso_controls = match axis {
+                        SurfaceIsoAxis::U => (0..controls[0].len())
+                            .map(|column| {
+                                evaluate_homogeneous_de_boor_jet(
+                                    &controls
+                                        .iter()
+                                        .map(|row| row[column].clone())
+                                        .collect::<Vec<_>>(),
+                                    &surface.v_knots,
+                                    surface.v_degree,
+                                    span,
+                                    constant,
+                                )
+                                .map(|(value, _)| value)
+                            })
+                            .collect::<GeometryResult<Vec<_>>>()?,
+                        SurfaceIsoAxis::V => controls
+                            .iter()
+                            .map(|row| {
+                                evaluate_homogeneous_de_boor_jet(
+                                    row,
+                                    &surface.u_knots,
+                                    surface.u_degree,
+                                    span,
+                                    constant,
+                                )
+                                .map(|(value, _)| value)
+                            })
+                            .collect::<GeometryResult<Vec<_>>>()?,
+                    };
+                    let (points, weights) = homogeneous_to_curve_data(iso_controls)?;
+                    match axis {
+                        SurfaceIsoAxis::U => Curve3::nurbs(
+                            surface.u_degree,
+                            points,
+                            weights,
+                            surface.u_knots.clone(),
+                        ),
+                        SurfaceIsoAxis::V => Curve3::nurbs(
+                            surface.v_degree,
+                            points,
+                            weights,
+                            surface.v_knots.clone(),
+                        ),
                     }
                 }
+                _ => Err(GeometryError::UnsupportedSubdivision),
             }
-            _ => Err(GeometryError::UnsupportedSubdivision),
-        }
+        })
     }
 
     /// Returns the canonical exact parameter domain.
@@ -3498,11 +3779,11 @@ impl Surface {
     ///
     /// Positive-weight tensor-product spline surfaces lie in the convex hull
     /// of their affine control net. Infinite analytic families are reported as
-    /// unbounded; bounded analytic families use an exact enclosing cube.
+    /// unbounded; bounded analytic families use an exact enclosing cube. Only
+    /// successful bounds are cached; unresolved comparisons remain retryable.
     pub fn bounds(&self) -> GeometryResult<SurfaceBounds> {
-        self.data
-            .bounds
-            .get_or_init(|| match &self.data.geometry {
+        crate::context::strict(|| {
+            crate::cache::get_or_try_init(&self.data.bounds, || match &self.data.geometry {
                 SurfaceGeometry::Plane(_)
                 | SurfaceGeometry::Cylinder(_)
                 | SurfaceGeometry::Cone(_)
@@ -3526,196 +3807,203 @@ impl Surface {
                     exact_surface_control_bounds(&surface.control_points)?,
                 ))),
             })
-            .clone()
+            .cloned()
+        })
     }
 
-    /// Evaluates an exact model-space point.
-    pub fn point_at(&self, parameter: &Point2) -> GeometryResult<Point3> {
-        validate_surface_parameter(&self.data.domain, parameter)?;
-        match &self.data.geometry {
-            SurfaceGeometry::Plane(plane) => {
-                let displacement = plane.u.clone() * &parameter.x + plane.v.clone() * &parameter.y;
-                Ok(plane.origin.clone() + displacement)
+    /// Evaluates represented coefficients for internal surface algorithms.
+    pub(crate) fn evaluate_real(&self, parameter: &Point2) -> GeometryResult<Point3> {
+        crate::context::strict(|| {
+            validate_surface_parameter(&self.data.domain, parameter)?;
+            match &self.data.geometry {
+                SurfaceGeometry::Plane(plane) => {
+                    let displacement =
+                        plane.u.clone() * &parameter.x + plane.v.clone() * &parameter.y;
+                    Ok(plane.origin.clone() + displacement)
+                }
+                SurfaceGeometry::Cylinder(surface) => {
+                    let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
+                    Ok(surface.origin.clone()
+                        + surface.frame.x.clone() * (&surface.radius * cos_u)
+                        + surface.frame.y.clone() * (&surface.radius * sin_u)
+                        + surface.frame.z.clone() * &parameter.y)
+                }
+                SurfaceGeometry::Sphere(surface) => {
+                    let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
+                    let (sin_v, cos_v) = (parameter.y.clone().sin(), parameter.y.clone().cos());
+                    Ok(surface.center.clone()
+                        + surface.frame.x.clone() * (&surface.radius * &cos_v * cos_u)
+                        + surface.frame.y.clone() * (&surface.radius * cos_v * sin_u)
+                        + surface.frame.z.clone() * (&surface.radius * sin_v))
+                }
+                SurfaceGeometry::Cone(surface) => {
+                    let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
+                    let sin_angle = surface.semi_angle.clone().sin();
+                    let cos_angle = surface.semi_angle.clone().cos();
+                    Ok(surface.apex.clone()
+                        + surface.frame.z.clone() * (&parameter.y * cos_angle)
+                        + surface.frame.x.clone() * (&parameter.y * &sin_angle * cos_u)
+                        + surface.frame.y.clone() * (&parameter.y * sin_angle * sin_u))
+                }
+                SurfaceGeometry::Torus(surface) => {
+                    let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
+                    let (sin_v, cos_v) = (parameter.y.clone().sin(), parameter.y.clone().cos());
+                    let radial_distance = &surface.major_radius + &surface.minor_radius * &cos_v;
+                    Ok(surface.center.clone()
+                        + surface.frame.x.clone() * (&radial_distance * cos_u)
+                        + surface.frame.y.clone() * (&radial_distance * sin_u)
+                        + surface.frame.z.clone() * (&surface.minor_radius * sin_v))
+                }
+                SurfaceGeometry::Extrusion(surface) => {
+                    Ok(surface.profile.evaluate_real(&parameter.x)?
+                        + surface.direction.clone() * &parameter.y)
+                }
+                SurfaceGeometry::Revolution(surface) => {
+                    let profile_point = surface.profile.evaluate_real(&parameter.y)?;
+                    Ok(rotate_point_about_axis(
+                        &profile_point,
+                        &surface.axis_origin,
+                        &surface.axis,
+                        &parameter.x,
+                    ))
+                }
+                SurfaceGeometry::RationalBezier(surface) => {
+                    evaluate_tensor_bezier(surface.homogeneous_controls(), parameter)
+                }
+                SurfaceGeometry::Nurbs(surface) => {
+                    evaluate_tensor_nurbs(surface, &self.data.domain, parameter)
+                }
             }
-            SurfaceGeometry::Cylinder(surface) => {
-                let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
-                Ok(surface.origin.clone()
-                    + surface.frame.x.clone() * (&surface.radius * cos_u)
-                    + surface.frame.y.clone() * (&surface.radius * sin_u)
-                    + surface.frame.z.clone() * &parameter.y)
-            }
-            SurfaceGeometry::Sphere(surface) => {
-                let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
-                let (sin_v, cos_v) = (parameter.y.clone().sin(), parameter.y.clone().cos());
-                Ok(surface.center.clone()
-                    + surface.frame.x.clone() * (&surface.radius * &cos_v * cos_u)
-                    + surface.frame.y.clone() * (&surface.radius * cos_v * sin_u)
-                    + surface.frame.z.clone() * (&surface.radius * sin_v))
-            }
-            SurfaceGeometry::Cone(surface) => {
-                let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
-                let sin_angle = surface.semi_angle.clone().sin();
-                let cos_angle = surface.semi_angle.clone().cos();
-                Ok(surface.apex.clone()
-                    + surface.frame.z.clone() * (&parameter.y * cos_angle)
-                    + surface.frame.x.clone() * (&parameter.y * &sin_angle * cos_u)
-                    + surface.frame.y.clone() * (&parameter.y * sin_angle * sin_u))
-            }
-            SurfaceGeometry::Torus(surface) => {
-                let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
-                let (sin_v, cos_v) = (parameter.y.clone().sin(), parameter.y.clone().cos());
-                let radial_distance = &surface.major_radius + &surface.minor_radius * &cos_v;
-                Ok(surface.center.clone()
-                    + surface.frame.x.clone() * (&radial_distance * cos_u)
-                    + surface.frame.y.clone() * (&radial_distance * sin_u)
-                    + surface.frame.z.clone() * (&surface.minor_radius * sin_v))
-            }
-            SurfaceGeometry::Extrusion(surface) => {
-                Ok(surface.profile.point_at(&parameter.x)?
-                    + surface.direction.clone() * &parameter.y)
-            }
-            SurfaceGeometry::Revolution(surface) => {
-                let profile_point = surface.profile.point_at(&parameter.y)?;
-                Ok(rotate_point_about_axis(
-                    &profile_point,
-                    &surface.axis_origin,
-                    &surface.axis,
-                    &parameter.x,
-                ))
-            }
-            SurfaceGeometry::RationalBezier(surface) => {
-                evaluate_tensor_bezier(surface.homogeneous_controls(), parameter)
-            }
-            SurfaceGeometry::Nurbs(surface) => {
-                evaluate_tensor_nurbs(surface, &self.data.domain, parameter)
-            }
-        }
+        })
     }
 
-    /// Returns exact first partial derivatives.
-    pub fn partials_at(&self, parameter: &Point2) -> GeometryResult<SurfacePartials> {
-        validate_surface_parameter(&self.data.domain, parameter)?;
-        match &self.data.geometry {
-            SurfaceGeometry::Plane(plane) => Ok(SurfacePartials {
-                u: plane.u.clone(),
-                v: plane.v.clone(),
-            }),
-            SurfaceGeometry::Cylinder(surface) => {
-                let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
-                Ok(SurfacePartials {
-                    u: surface.frame.x.clone() * (-&surface.radius * sin_u)
-                        + surface.frame.y.clone() * (&surface.radius * cos_u),
-                    v: surface.frame.z.clone(),
-                })
+    fn represented_partials(&self, parameter: &Point2) -> GeometryResult<SurfacePartials> {
+        crate::context::strict(|| {
+            validate_surface_parameter(&self.data.domain, parameter)?;
+            match &self.data.geometry {
+                SurfaceGeometry::Plane(plane) => Ok(SurfacePartials::from_coordinates(
+                    plane.u.clone(),
+                    plane.v.clone(),
+                )),
+                SurfaceGeometry::Cylinder(surface) => {
+                    let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
+                    Ok(SurfacePartials::from_coordinates(
+                        surface.frame.x.clone() * (-&surface.radius * sin_u)
+                            + surface.frame.y.clone() * (&surface.radius * cos_u),
+                        surface.frame.z.clone(),
+                    ))
+                }
+                SurfaceGeometry::Sphere(surface) => {
+                    let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
+                    let (sin_v, cos_v) = (parameter.y.clone().sin(), parameter.y.clone().cos());
+                    Ok(SurfacePartials::from_coordinates(
+                        surface.frame.x.clone() * (-&surface.radius * &cos_v * &sin_u)
+                            + surface.frame.y.clone() * (&surface.radius * &cos_v * &cos_u),
+                        surface.frame.x.clone() * (-&surface.radius * &sin_v * &cos_u)
+                            + surface.frame.y.clone() * (-&surface.radius * &sin_v * &sin_u)
+                            + surface.frame.z.clone() * (&surface.radius * cos_v),
+                    ))
+                }
+                SurfaceGeometry::Cone(surface) => {
+                    let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
+                    let sin_angle = surface.semi_angle.clone().sin();
+                    let cos_angle = surface.semi_angle.clone().cos();
+                    Ok(SurfacePartials::from_coordinates(
+                        surface.frame.x.clone() * (-&parameter.y * &sin_angle * &sin_u)
+                            + surface.frame.y.clone() * (&parameter.y * &sin_angle * &cos_u),
+                        surface.frame.x.clone() * (&sin_angle * cos_u)
+                            + surface.frame.y.clone() * (&sin_angle * sin_u)
+                            + surface.frame.z.clone() * cos_angle,
+                    ))
+                }
+                SurfaceGeometry::Torus(surface) => {
+                    let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
+                    let (sin_v, cos_v) = (parameter.y.clone().sin(), parameter.y.clone().cos());
+                    let radial_distance = &surface.major_radius + &surface.minor_radius * &cos_v;
+                    Ok(SurfacePartials::from_coordinates(
+                        surface.frame.x.clone() * (-&radial_distance * &sin_u)
+                            + surface.frame.y.clone() * (&radial_distance * &cos_u),
+                        surface.frame.x.clone() * (-&surface.minor_radius * &sin_v * &cos_u)
+                            + surface.frame.y.clone() * (-&surface.minor_radius * &sin_v * &sin_u)
+                            + surface.frame.z.clone() * (&surface.minor_radius * cos_v),
+                    ))
+                }
+                SurfaceGeometry::Extrusion(surface) => Ok(SurfacePartials {
+                    u: surface
+                        .profile
+                        .derivative_at(&parameter.x.clone().into(), 1)?,
+                    v: GeometricVector3::from_coordinates(surface.direction.clone()),
+                }),
+                SurfaceGeometry::Revolution(surface) => {
+                    let profile_point = surface.profile.evaluate_real(&parameter.y)?;
+                    let profile_derivative = surface
+                        .profile
+                        .derivative_at(&parameter.y.clone().into(), 1)?
+                        .require_coordinates()?
+                        .clone();
+                    let relative = &profile_point - &surface.axis_origin;
+                    let axial = surface.axis.clone() * surface.axis.dot(&relative);
+                    let radial = relative - axial;
+                    let sin = parameter.x.clone().sin();
+                    let cos = parameter.x.clone().cos();
+                    let u = radial.clone() * -sin + surface.axis.cross(&radial) * cos;
+                    let v =
+                        rotate_vector_about_axis(&profile_derivative, &surface.axis, &parameter.x);
+                    Ok(SurfacePartials::from_coordinates(u, v))
+                }
+                SurfaceGeometry::RationalBezier(surface) => {
+                    evaluate_tensor_bezier_partials(surface.homogeneous_controls(), parameter)
+                }
+                SurfaceGeometry::Nurbs(surface) => {
+                    evaluate_tensor_nurbs_partials(surface, &self.data.domain, parameter)
+                }
             }
-            SurfaceGeometry::Sphere(surface) => {
-                let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
-                let (sin_v, cos_v) = (parameter.y.clone().sin(), parameter.y.clone().cos());
-                Ok(SurfacePartials {
-                    u: surface.frame.x.clone() * (-&surface.radius * &cos_v * &sin_u)
-                        + surface.frame.y.clone() * (&surface.radius * &cos_v * &cos_u),
-                    v: surface.frame.x.clone() * (-&surface.radius * &sin_v * &cos_u)
-                        + surface.frame.y.clone() * (-&surface.radius * &sin_v * &sin_u)
-                        + surface.frame.z.clone() * (&surface.radius * cos_v),
-                })
-            }
-            SurfaceGeometry::Cone(surface) => {
-                let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
-                let sin_angle = surface.semi_angle.clone().sin();
-                let cos_angle = surface.semi_angle.clone().cos();
-                Ok(SurfacePartials {
-                    u: surface.frame.x.clone() * (-&parameter.y * &sin_angle * &sin_u)
-                        + surface.frame.y.clone() * (&parameter.y * &sin_angle * &cos_u),
-                    v: surface.frame.x.clone() * (&sin_angle * cos_u)
-                        + surface.frame.y.clone() * (&sin_angle * sin_u)
-                        + surface.frame.z.clone() * cos_angle,
-                })
-            }
-            SurfaceGeometry::Torus(surface) => {
-                let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
-                let (sin_v, cos_v) = (parameter.y.clone().sin(), parameter.y.clone().cos());
-                let radial_distance = &surface.major_radius + &surface.minor_radius * &cos_v;
-                Ok(SurfacePartials {
-                    u: surface.frame.x.clone() * (-&radial_distance * &sin_u)
-                        + surface.frame.y.clone() * (&radial_distance * &cos_u),
-                    v: surface.frame.x.clone() * (-&surface.minor_radius * &sin_v * &cos_u)
-                        + surface.frame.y.clone() * (-&surface.minor_radius * &sin_v * &sin_u)
-                        + surface.frame.z.clone() * (&surface.minor_radius * cos_v),
-                })
-            }
-            SurfaceGeometry::Extrusion(surface) => Ok(SurfacePartials {
-                u: surface.profile.derivative_at(&parameter.x, 1)?.vector,
-                v: surface.direction.clone(),
-            }),
-            SurfaceGeometry::Revolution(surface) => {
-                let profile_point = surface.profile.point_at(&parameter.y)?;
-                let profile_derivative = surface.profile.derivative_at(&parameter.y, 1)?.vector;
-                let relative = &profile_point - &surface.axis_origin;
-                let axial = surface.axis.clone() * surface.axis.dot(&relative);
-                let radial = relative - axial;
-                let sin = parameter.x.clone().sin();
-                let cos = parameter.x.clone().cos();
-                let u = radial.clone() * -sin + surface.axis.cross(&radial) * cos;
-                let v = rotate_vector_about_axis(&profile_derivative, &surface.axis, &parameter.x);
-                Ok(SurfacePartials { u, v })
-            }
-            SurfaceGeometry::RationalBezier(surface) => {
-                evaluate_tensor_bezier_partials(surface.homogeneous_controls(), parameter)
-            }
-            SurfaceGeometry::Nurbs(surface) => {
-                evaluate_tensor_nurbs_partials(surface, &self.data.domain, parameter)
-            }
-        }
+        })
     }
 
     /// Returns the exact unit normal induced by the authored parameter order.
     ///
     /// Poles, cone apices, revolution-axis contacts, and other rank-deficient
     /// parameters return [`GeometryError::SingularSurfaceParameter`].
-    pub fn normal_at(&self, parameter: &Point2) -> GeometryResult<Vector3> {
-        let partials = self.partials_at(parameter)?;
-        let normal = partials.u.cross(&partials.v);
-        if decided_order(compare_reals(
-            &normal.norm_squared(),
-            &Real::zero(),
-            crate::STRICT_PREDICATES,
-        ))? == Ordering::Equal
-        {
-            return Err(GeometryError::SingularSurfaceParameter);
-        }
-        normal
-            .normalize()
-            .map_err(|_| GeometryError::ElementaryFunction)
+    pub fn normal_at(
+        &self,
+        parameter: &hypercurve::CurvePoint2,
+    ) -> GeometryResult<GeometricVector3> {
+        crate::context::strict(|| self.partials_at(parameter)?.normal())
     }
 
     /// Splits a supported finite tensor-product surface along interior `u`.
     pub fn split_u_at(&self, parameter: &Real) -> GeometryResult<(Self, Self)> {
-        let SurfaceParameterDomain::Closed(domain) = self.domain().u() else {
-            return Err(GeometryError::UnsupportedSubdivision);
-        };
-        require_interior_parameter(domain, parameter)?;
-        match &self.data.geometry {
-            SurfaceGeometry::RationalBezier(surface) => {
-                split_rational_bezier_surface_u(surface, parameter)
+        crate::context::strict(|| {
+            let SurfaceParameterDomain::Closed(domain) = self.domain().u() else {
+                return Err(GeometryError::UnsupportedSubdivision);
+            };
+            require_interior_parameter(&domain.represented_domain()?, parameter)?;
+            match &self.data.geometry {
+                SurfaceGeometry::RationalBezier(surface) => {
+                    split_rational_bezier_surface_u(surface, parameter)
+                }
+                SurfaceGeometry::Nurbs(surface) => split_nurbs_surface_u(surface, parameter),
+                _ => Err(GeometryError::UnsupportedSubdivision),
             }
-            SurfaceGeometry::Nurbs(surface) => split_nurbs_surface_u(surface, parameter),
-            _ => Err(GeometryError::UnsupportedSubdivision),
-        }
+        })
     }
 
     /// Splits a supported finite tensor-product surface along interior `v`.
     pub fn split_v_at(&self, parameter: &Real) -> GeometryResult<(Self, Self)> {
-        let SurfaceParameterDomain::Closed(domain) = self.domain().v() else {
-            return Err(GeometryError::UnsupportedSubdivision);
-        };
-        require_interior_parameter(domain, parameter)?;
-        match &self.data.geometry {
-            SurfaceGeometry::RationalBezier(surface) => {
-                split_rational_bezier_surface_v(surface, parameter)
+        crate::context::strict(|| {
+            let SurfaceParameterDomain::Closed(domain) = self.domain().v() else {
+                return Err(GeometryError::UnsupportedSubdivision);
+            };
+            require_interior_parameter(&domain.represented_domain()?, parameter)?;
+            match &self.data.geometry {
+                SurfaceGeometry::RationalBezier(surface) => {
+                    split_rational_bezier_surface_v(surface, parameter)
+                }
+                SurfaceGeometry::Nurbs(surface) => split_nurbs_surface_v(surface, parameter),
+                _ => Err(GeometryError::UnsupportedSubdivision),
             }
-            SurfaceGeometry::Nurbs(surface) => split_nurbs_surface_v(surface, parameter),
-            _ => Err(GeometryError::UnsupportedSubdivision),
-        }
+        })
     }
 
     /// Returns the authored plane origin when this is a plane.
@@ -3808,7 +4096,12 @@ impl Surface {
         }
     }
 
-    pub(crate) fn extrusion_profile_and_direction(&self) -> Option<(&Curve3, &Vector3)> {
+    /// Borrows a native extrusion's exact profile and authored direction.
+    ///
+    /// Its chart is `S(u, v) = profile(u) + v * direction`; the direction need
+    /// not have unit length. Other surface families return `None`. This does
+    /// not fit or recognize another carrier as an extrusion.
+    pub fn extrusion_profile_and_direction(&self) -> Option<(&Curve3, &Vector3)> {
         match &self.data.geometry {
             SurfaceGeometry::Extrusion(surface) => Some((&surface.profile, &surface.direction)),
             _ => None,
@@ -3825,6 +4118,19 @@ impl Surface {
         let rotate_vector =
             |vector: &Vector3| rotate_vector_about_axis(vector, &surface.axis, angle);
         match surface.profile.exact_data() {
+            Curve3ExactData::AffineImage(_)
+            | Curve3ExactData::Rotation(_)
+            | Curve3ExactData::Translation(_) => surface.profile.transformed(&rotation_transform(
+                &surface.axis_origin,
+                &surface.axis,
+                angle,
+            )),
+            Curve3ExactData::PlanarImage(mut image) => {
+                image.origin = rotate_point(&image.origin);
+                image.u = rotate_vector(&image.u);
+                image.v = rotate_vector(&image.v);
+                Curve3::from_planar_image(*image)
+            }
             Curve3ExactData::Line(line) => {
                 Curve3::line(rotate_point(&line.start), rotate_point(&line.end))
             }
@@ -3872,6 +4178,26 @@ impl Surface {
             .is_strictly_off_axis(&surface.axis_origin, &surface.axis)
     }
 
+    pub(crate) fn revolution_rotation_curve(
+        &self,
+        profile_parameter: &Parameter,
+        domain: ParameterDomain,
+        angle_direction: i8,
+        angle_offset: Real,
+    ) -> GeometryResult<Curve3> {
+        let SurfaceGeometry::Revolution(surface) = &self.data.geometry else {
+            return Err(GeometryError::UnsupportedSubdivision);
+        };
+        Curve3::from_rotation(RotationCurve3 {
+            origin: surface.profile.point_at(profile_parameter)?,
+            axis_origin: surface.axis_origin.clone(),
+            axis: surface.axis.clone(),
+            domain,
+            angle_direction,
+            angle_offset,
+        })
+    }
+
     pub(crate) fn revolution_latitude_curve(
         &self,
         profile_parameter: &Real,
@@ -3881,7 +4207,7 @@ impl Surface {
         let SurfaceGeometry::Revolution(surface) = &self.data.geometry else {
             return Err(GeometryError::UnsupportedSubdivision);
         };
-        let profile_point = surface.profile.point_at(profile_parameter)?;
+        let profile_point = surface.profile.evaluate_real(profile_parameter)?;
         let relative = &profile_point - &surface.axis_origin;
         let axial = surface.axis.clone() * surface.axis.dot(&relative);
         let radial = relative - &axial;
@@ -3896,8 +4222,8 @@ impl Surface {
         let radius = radial
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        let x = (radial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
+        let x = (radial / &radius).map_err(GeometryError::Numeric)?;
         let y = surface.axis.cross(&x);
         Curve3::circle_arc(
             surface.axis_origin.clone() + axial,
@@ -3973,109 +4299,126 @@ impl Surface {
 
     /// Intersects this surface with a finite spatial curve.
     pub fn intersect_curve(&self, curve: &Curve3) -> GeometryResult<CurveSurfaceIntersection> {
-        if let (
-            SurfaceGeometry::Plane(plane),
-            CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc),
-        ) = (&self.data.geometry, &curve.data.geometry)
-        {
-            return intersect_ellipse_arc_plane(curve, arc, plane);
-        }
-        if let (SurfaceGeometry::Plane(plane), CurveGeometry3::RationalBezier(bezier)) =
-            (&self.data.geometry, &curve.data.geometry)
-        {
-            return intersect_rational_bezier_plane(curve, bezier, plane);
-        }
-        if let (SurfaceGeometry::Plane(plane), CurveGeometry3::Nurbs(nurbs)) =
-            (&self.data.geometry, &curve.data.geometry)
-        {
-            return intersect_nurbs_plane(nurbs, plane);
-        }
-        if let (SurfaceGeometry::Sphere(sphere), CurveGeometry3::CircleArc(arc)) =
-            (&self.data.geometry, &curve.data.geometry)
-        {
-            return intersect_circle_arc_sphere(curve, arc, sphere);
-        }
-        if let (SurfaceGeometry::Cylinder(cylinder), CurveGeometry3::CircleArc(arc)) =
-            (&self.data.geometry, &curve.data.geometry)
-        {
-            return intersect_transverse_circle_arc_cylinder(curve, arc, cylinder);
-        }
-        if let (SurfaceGeometry::Cone(cone), CurveGeometry3::CircleArc(arc)) =
-            (&self.data.geometry, &curve.data.geometry)
-        {
-            return intersect_transverse_circle_arc_cone(curve, arc, cone);
-        }
-        if let (SurfaceGeometry::Torus(torus), CurveGeometry3::CircleArc(arc)) =
-            (&self.data.geometry, &curve.data.geometry)
-        {
-            return intersect_transverse_circle_arc_torus(curve, arc, torus);
-        }
-        let Some((start, end)) = curve.line_endpoints() else {
-            return Err(GeometryError::UnsupportedIntersection);
-        };
-        match &self.data.geometry {
-            SurfaceGeometry::Plane(plane) => {
-                let normal = plane.u.cross(&plane.v);
-                let direction = end - start;
-                let denominator = normal.dot(&direction);
-                let start_value = normal.dot(&(start - &plane.origin));
-                match decided_order(compare_reals(
-                    &denominator,
-                    &Real::zero(),
-                    crate::STRICT_PREDICATES,
-                ))? {
-                    Ordering::Equal => {
-                        if decided_order(compare_reals(
-                            &start_value,
-                            &Real::zero(),
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Equal
-                        {
-                            Ok(CurveSurfaceIntersection::Contained)
-                        } else {
-                            Ok(CurveSurfaceIntersection::None)
+        crate::context::strict(|| {
+            if let (
+                SurfaceGeometry::Plane(plane),
+                CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc),
+            ) = (&self.data.geometry, &curve.data.geometry)
+            {
+                return intersect_ellipse_arc_plane(curve, arc, plane);
+            }
+            if let (SurfaceGeometry::Plane(plane), CurveGeometry3::RationalBezier(bezier)) =
+                (&self.data.geometry, &curve.data.geometry)
+            {
+                return intersect_rational_bezier_plane(curve, bezier, plane);
+            }
+            if let (SurfaceGeometry::Plane(plane), CurveGeometry3::Nurbs(nurbs)) =
+                (&self.data.geometry, &curve.data.geometry)
+            {
+                return intersect_nurbs_plane(curve, nurbs, plane);
+            }
+            if let (SurfaceGeometry::Plane(plane), CurveGeometry3::PlanarImage(image)) =
+                (&self.data.geometry, &curve.data.geometry)
+            {
+                return intersect_planar_image_plane(curve, image, plane);
+            }
+            if let (SurfaceGeometry::Sphere(sphere), CurveGeometry3::CircleArc(arc)) =
+                (&self.data.geometry, &curve.data.geometry)
+            {
+                return intersect_circle_arc_sphere(curve, arc, sphere);
+            }
+            if let (SurfaceGeometry::Cylinder(cylinder), CurveGeometry3::CircleArc(arc)) =
+                (&self.data.geometry, &curve.data.geometry)
+            {
+                return intersect_transverse_circle_arc_cylinder(curve, arc, cylinder);
+            }
+            if let (SurfaceGeometry::Cone(cone), CurveGeometry3::CircleArc(arc)) =
+                (&self.data.geometry, &curve.data.geometry)
+            {
+                return intersect_transverse_circle_arc_cone(curve, arc, cone);
+            }
+            if let (SurfaceGeometry::Torus(torus), CurveGeometry3::CircleArc(arc)) =
+                (&self.data.geometry, &curve.data.geometry)
+            {
+                return intersect_transverse_circle_arc_torus(curve, arc, torus);
+            }
+            let Some((start, end)) = curve.line_endpoints() else {
+                return Err(GeometryError::UnsupportedIntersection);
+            };
+            match &self.data.geometry {
+                SurfaceGeometry::Plane(plane) => {
+                    let normal = plane.u.cross(&plane.v);
+                    let direction = end - start;
+                    let denominator = normal.dot(&direction);
+                    let start_value = normal.dot(&(start - &plane.origin));
+                    match decided_order(compare_reals(
+                        &denominator,
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    ))? {
+                        Ordering::Equal => {
+                            if decided_order(compare_reals(
+                                &start_value,
+                                &Real::zero(),
+                                crate::STRICT_PREDICATES,
+                            ))? == Ordering::Equal
+                            {
+                                Ok(CurveSurfaceIntersection::Contained)
+                            } else {
+                                Ok(CurveSurfaceIntersection::None)
+                            }
+                        }
+                        Ordering::Less | Ordering::Greater => {
+                            let parameter =
+                                ((-start_value) / denominator).map_err(GeometryError::Numeric)?;
+                            isolated_line_parameters(
+                                curve,
+                                [(parameter, CurveSurfaceContactKind::Simple)],
+                            )
                         }
                     }
-                    Ordering::Less | Ordering::Greater => {
-                        let parameter = ((-start_value) / denominator)
-                            .map_err(|_| GeometryError::ProjectiveDivision)?;
-                        isolated_line_parameters(
-                            curve,
-                            [(parameter, IntersectionMultiplicity::Simple)],
-                        )
-                    }
                 }
+                SurfaceGeometry::Sphere(surface) => {
+                    let offset = start - &surface.center;
+                    quadratic_line_intersection(curve, &offset, &(end - start), &surface.radius)
+                }
+                SurfaceGeometry::Cylinder(surface) => {
+                    let offset = start - &surface.origin;
+                    let direction = end - start;
+                    let radial_offset =
+                        &offset - &(surface.frame.z.clone() * offset.dot(&surface.frame.z));
+                    let radial_direction =
+                        &direction - &(surface.frame.z.clone() * direction.dot(&surface.frame.z));
+                    quadratic_line_intersection(
+                        curve,
+                        &radial_offset,
+                        &radial_direction,
+                        &surface.radius,
+                    )
+                }
+                SurfaceGeometry::Cone(surface) => intersect_line_cone(curve, start, end, surface),
+                SurfaceGeometry::Torus(_)
+                | SurfaceGeometry::Extrusion(_)
+                | SurfaceGeometry::Revolution(_)
+                | SurfaceGeometry::RationalBezier(_)
+                | SurfaceGeometry::Nurbs(_) => Err(GeometryError::UnsupportedIntersection),
             }
-            SurfaceGeometry::Sphere(surface) => {
-                let offset = start - &surface.center;
-                quadratic_line_intersection(curve, &offset, &(end - start), &surface.radius)
-            }
-            SurfaceGeometry::Cylinder(surface) => {
-                let offset = start - &surface.origin;
-                let direction = end - start;
-                let radial_offset =
-                    &offset - &(surface.frame.z.clone() * offset.dot(&surface.frame.z));
-                let radial_direction =
-                    &direction - &(surface.frame.z.clone() * direction.dot(&surface.frame.z));
-                quadratic_line_intersection(
-                    curve,
-                    &radial_offset,
-                    &radial_direction,
-                    &surface.radius,
-                )
-            }
-            SurfaceGeometry::Cone(surface) => intersect_line_cone(curve, start, end, surface),
-            SurfaceGeometry::Torus(_)
-            | SurfaceGeometry::Extrusion(_)
-            | SurfaceGeometry::Revolution(_)
-            | SurfaceGeometry::RationalBezier(_)
-            | SurfaceGeometry::Nurbs(_) => Err(GeometryError::UnsupportedIntersection),
-        }
+        })
     }
 
     /// Intersects this surface with another supported surface.
+    ///
+    /// Rational Bézier/plane sections include complete interior loops,
+    /// isolated points and singular branches when the homogeneous pullback is
+    /// admitted by Hypersolve's default finite-fiber topology controls and a
+    /// whole-rectangle injectivity proof certifies its planar spatial image.
+    /// Both pcurves keep the original source parameters. Folded images and
+    /// unsupported vertical, repeated or boundary components fail typed;
+    /// no incomplete trace is returned as a complete section. The configured
+    /// solver work context participates where instrumented, but these limits
+    /// do not bound all coefficient growth, heap use, elapsed time or cancellation.
     pub fn intersect_surface(&self, other: &Self) -> GeometryResult<SurfaceSurfaceIntersection> {
-        match (&self.data.geometry, &other.data.geometry) {
+        crate::context::strict(|| match (&self.data.geometry, &other.data.geometry) {
             (SurfaceGeometry::Plane(first), SurfaceGeometry::Plane(second)) => {
                 intersect_planes(first, second)
             }
@@ -4180,14 +4523,15 @@ impl Surface {
                 intersect_spheres(first, second)
             }
             _ => Err(GeometryError::UnsupportedIntersection),
-        }
+        })
     }
 
     pub(crate) fn transformed(
         &self,
-        transform: &Matrix4,
+        metric: &TransformMetric<'_>,
         reflect_parameters: bool,
     ) -> GeometryResult<Self> {
+        let transform = metric.matrix();
         match &self.data.geometry {
             SurfaceGeometry::Plane(plane) => {
                 let mut u = transform.transform_direction3(&plane.u);
@@ -4201,8 +4545,8 @@ impl Surface {
                 )
             }
             SurfaceGeometry::Cylinder(surface) => {
-                let x = transform.transform_direction3(&surface.frame.x);
-                let mut y = transform.transform_direction3(&surface.frame.y);
+                let x = metric.unit_direction(&surface.frame.x)?;
+                let mut y = metric.unit_direction(&surface.frame.y)?;
                 if reflect_parameters {
                     y = -y;
                 }
@@ -4210,13 +4554,13 @@ impl Surface {
                     transform_point(transform, &surface.origin)?,
                     x,
                     y,
-                    transform.transform_direction3(&surface.frame.z),
-                    surface.radius.clone(),
+                    metric.unit_direction(&surface.frame.z)?,
+                    metric.length(&surface.radius)?,
                 )
             }
             SurfaceGeometry::Torus(surface) => {
-                let x = transform.transform_direction3(&surface.frame.x);
-                let mut y = transform.transform_direction3(&surface.frame.y);
+                let x = metric.unit_direction(&surface.frame.x)?;
+                let mut y = metric.unit_direction(&surface.frame.y)?;
                 if reflect_parameters {
                     y = -y;
                 }
@@ -4224,14 +4568,14 @@ impl Surface {
                     transform_point(transform, &surface.center)?,
                     x,
                     y,
-                    transform.transform_direction3(&surface.frame.z),
-                    surface.major_radius.clone(),
-                    surface.minor_radius.clone(),
+                    metric.unit_direction(&surface.frame.z)?,
+                    metric.length(&surface.major_radius)?,
+                    metric.length(&surface.minor_radius)?,
                 )
             }
             SurfaceGeometry::Cone(surface) => {
-                let x = transform.transform_direction3(&surface.frame.x);
-                let mut y = transform.transform_direction3(&surface.frame.y);
+                let x = metric.unit_direction(&surface.frame.x)?;
+                let mut y = metric.unit_direction(&surface.frame.y)?;
                 if reflect_parameters {
                     y = -y;
                 }
@@ -4239,13 +4583,13 @@ impl Surface {
                     transform_point(transform, &surface.apex)?,
                     x,
                     y,
-                    transform.transform_direction3(&surface.frame.z),
+                    metric.unit_direction(&surface.frame.z)?,
                     surface.semi_angle.clone(),
                 )
             }
             SurfaceGeometry::Sphere(surface) => {
-                let x = transform.transform_direction3(&surface.frame.x);
-                let mut y = transform.transform_direction3(&surface.frame.y);
+                let x = metric.unit_direction(&surface.frame.x)?;
+                let mut y = metric.unit_direction(&surface.frame.y)?;
                 if reflect_parameters {
                     y = -y;
                 }
@@ -4253,21 +4597,26 @@ impl Surface {
                     transform_point(transform, &surface.center)?,
                     x,
                     y,
-                    transform.transform_direction3(&surface.frame.z),
-                    surface.radius.clone(),
+                    metric.unit_direction(&surface.frame.z)?,
+                    metric.length(&surface.radius)?,
                 )
             }
             SurfaceGeometry::Revolution(surface) => Self::revolution(
-                surface.profile.transformed(transform)?,
+                surface.profile.transformed_with_metric(metric)?,
                 transform_point(transform, &surface.axis_origin)?,
-                transform.transform_direction3(&surface.axis),
+                metric.unit_direction(&surface.axis)?,
             ),
             SurfaceGeometry::Extrusion(surface) => {
-                let mut direction = transform.transform_direction3(&surface.direction);
-                if reflect_parameters {
-                    direction = -direction;
-                }
-                Self::extrusion(surface.profile.transformed(transform)?, direction)
+                let profile = surface.profile.transformed_with_metric(metric)?;
+                // Topology reflects u and reverses wire orientation. Here u is
+                // the profile parameter, so reverse its exact parameterization;
+                // v remains the coefficient of the transformed direction.
+                let profile = if reflect_parameters {
+                    profile.reversed()?
+                } else {
+                    profile
+                };
+                Self::extrusion(profile, transform.transform_direction3(&surface.direction))
             }
             SurfaceGeometry::RationalBezier(surface) => {
                 let mut control_points =
@@ -4395,12 +4744,7 @@ fn intersect_transverse_circle_arc_cone(
     {
         return Ok(CurveSurfaceIntersection::None);
     }
-    let cone_radius = height
-        * cone
-            .semi_angle
-            .clone()
-            .tan()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+    let (_, cone_radius) = cone_section_parameters(cone, &height)?;
     intersect_transverse_circle_arc_radius(curve, arc, &cone.apex, &cone.frame.z, &cone_radius)
 }
 
@@ -4432,7 +4776,7 @@ fn intersect_transverse_circle_arc_torus(
     }
     let radial_delta = (minor_squared - height_squared)
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let mut radii = vec![&torus.major_radius + &radial_delta];
     if decided_order(compare_reals(
         &radial_delta,
@@ -4456,12 +4800,7 @@ fn intersect_transverse_circle_arc_torus(
                 for point in points {
                     let mut duplicate = false;
                     for existing in &combined {
-                        if decided_order(compare_reals(
-                            &existing.parameter,
-                            &point.parameter,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Equal
-                        {
+                        if existing.parameter.compare(&point.parameter)? == Ordering::Equal {
                             duplicate = true;
                             break;
                         }
@@ -4474,7 +4813,7 @@ fn intersect_transverse_circle_arc_torus(
             CurveSurfaceIntersection::Contained => {
                 return Ok(CurveSurfaceIntersection::Contained);
             }
-            CurveSurfaceIntersection::Overlap(_) => {
+            CurveSurfaceIntersection::Overlap(_) | CurveSurfaceIntersection::Components(_) => {
                 unreachable!("exact circle relation has no proper overlap")
             }
         }
@@ -4482,11 +4821,10 @@ fn intersect_transverse_circle_arc_torus(
     for index in 1..combined.len() {
         let mut position = index;
         while position > 0
-            && decided_order(compare_reals(
-                &combined[position].parameter,
-                &combined[position - 1].parameter,
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Less
+            && combined[position]
+                .parameter
+                .compare(&combined[position - 1].parameter)?
+                == Ordering::Less
         {
             combined.swap(position, position - 1);
             position -= 1;
@@ -4543,9 +4881,7 @@ fn intersect_axial_circle_arc_torus(
             torus.center.clone() - radial,
         )
     } else {
-        let radial = radial
-            .normalize()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let radial = radial.normalize().map_err(GeometryError::Numeric)?;
         (
             torus.center.clone() + radial.clone() * &torus.major_radius,
             torus.center.clone() - radial * &torus.major_radius,
@@ -4559,12 +4895,7 @@ fn intersect_axial_circle_arc_torus(
                 for point in points {
                     let mut duplicate = false;
                     for existing in &combined {
-                        if decided_order(compare_reals(
-                            &existing.parameter,
-                            &point.parameter,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Equal
-                        {
+                        if existing.parameter.compare(&point.parameter)? == Ordering::Equal {
                             duplicate = true;
                             break;
                         }
@@ -4577,7 +4908,7 @@ fn intersect_axial_circle_arc_torus(
             CurveSurfaceIntersection::Contained => {
                 return Ok(CurveSurfaceIntersection::Contained);
             }
-            CurveSurfaceIntersection::Overlap(_) => {
+            CurveSurfaceIntersection::Overlap(_) | CurveSurfaceIntersection::Components(_) => {
                 unreachable!("exact circle relation has no proper overlap")
             }
         }
@@ -4585,11 +4916,10 @@ fn intersect_axial_circle_arc_torus(
     for index in 1..combined.len() {
         let mut position = index;
         while position > 0
-            && decided_order(compare_reals(
-                &combined[position].parameter,
-                &combined[position - 1].parameter,
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Less
+            && combined[position]
+                .parameter
+                .compare(&combined[position - 1].parameter)?
+                == Ordering::Less
         {
             combined.swap(position, position - 1);
             position -= 1;
@@ -4660,23 +4990,19 @@ fn intersect_ellipse_arc_scalar_equation(
     if relation == Ordering::Greater {
         return Ok(CurveSurfaceIntersection::None);
     }
-    let amplitude = amplitude_squared
-        .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let amplitude = amplitude_squared.sqrt().map_err(GeometryError::Numeric)?;
     let phase = certified_atan2(sine_coefficient, cosine_coefficient)?;
-    let ratio = ((-center_value) / amplitude).map_err(|_| GeometryError::ProjectiveDivision)?;
-    let offset = ratio
-        .acos()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let ratio = ((-center_value) / amplitude).map_err(GeometryError::Numeric)?;
+    let offset = ratio.acos().map_err(GeometryError::Numeric)?;
     let angles = if relation == Ordering::Equal {
         vec![phase + offset]
     } else {
         vec![&phase + &offset, phase - offset]
     };
-    let multiplicity = if relation == Ordering::Equal {
-        IntersectionMultiplicity::Tangent
+    let kind = if relation == Ordering::Equal {
+        CurveSurfaceContactKind::Repeated
     } else {
-        IntersectionMultiplicity::Simple
+        CurveSurfaceContactKind::Simple
     };
     let mut points = Vec::<CurveSurfacePoint>::new();
     for angle in angles {
@@ -4690,12 +5016,7 @@ fn intersect_ellipse_arc_scalar_equation(
         for parameter in parameters {
             let mut duplicate = false;
             for existing in &points {
-                if decided_order(compare_reals(
-                    &existing.parameter,
-                    &parameter,
-                    crate::STRICT_PREDICATES,
-                ))? == Ordering::Equal
-                {
+                if existing.parameter.compare(&parameter.clone().into())? == Ordering::Equal {
                     duplicate = true;
                     break;
                 }
@@ -4704,20 +5025,19 @@ fn intersect_ellipse_arc_scalar_equation(
                 continue;
             }
             points.push(CurveSurfacePoint {
-                parameter,
-                point: point.clone(),
-                multiplicity,
+                parameter: parameter.into(),
+                point: point.clone().into(),
+                kind,
             });
         }
     }
     for index in 1..points.len() {
         let mut position = index;
         while position > 0
-            && decided_order(compare_reals(
-                &points[position].parameter,
-                &points[position - 1].parameter,
-                crate::STRICT_PREDICATES,
-            ))? == Ordering::Less
+            && points[position]
+                .parameter
+                .compare(&points[position - 1].parameter)?
+                == Ordering::Less
         {
             points.swap(position, position - 1);
             position -= 1;
@@ -4735,42 +5055,107 @@ fn ellipse_arc_parameters_at_angle(
     arc: &EllipseArc3,
     angle: Real,
 ) -> GeometryResult<Vec<Real>> {
-    let mut delta = if arc.direction < 0 {
-        &arc.angle_at_start - angle
+    let delta = if arc.direction < 0 {
+        &arc.angle_at_start - &angle
     } else {
-        angle - &arc.angle_at_start
+        &angle - &arc.angle_at_start
     };
-    if decided_order(compare_reals(
-        &delta,
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Less
-    {
-        delta += Real::tau();
+    let result = angular_parameter_lifts(
+        &(curve.domain().represented_start()? + delta),
+        &curve.domain().represented_domain()?,
+    );
+    if !matches!(
+        result,
+        Err(GeometryError::PredicateUnresolved { .. }
+            | GeometryError::Numeric(hyperreal::Problem::Exhausted))
+    ) {
+        return result;
     }
-    let sweep = curve.domain().end() - curve.domain().start();
-    if decided_order(compare_reals(
-        &delta,
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Equal
+    // A scalar equation can produce an acos phase for a contact already at an
+    // atan-authored endpoint. Equality of both unit-circle coordinates proves
+    // congruence modulo tau without an unproved inverse-trig identity. In an
+    // at-most-one-turn chart this retains precisely the endpoint lift(s).
+    // Only a positive exact certificate replaces the original typed failure.
+    let sine = angle.clone().sin();
+    let cosine = angle.cos();
+    for endpoint in [
+        curve.domain().represented_start()?,
+        curve.domain().represented_end()?,
+    ] {
+        let offset = endpoint - curve.domain().represented_start()?;
+        let phase = if arc.direction < 0 {
+            &arc.angle_at_start - offset
+        } else {
+            &arc.angle_at_start + offset
+        };
+        if compare_reals(&sine, &phase.clone().sin(), crate::STRICT_PREDICATES).value()
+            == Some(Ordering::Equal)
+            && compare_reals(&cosine, &phase.cos(), crate::STRICT_PREDICATES).value()
+                == Some(Ordering::Equal)
+        {
+            return angular_parameter_lifts(endpoint, &curve.domain().represented_domain()?);
+        }
+    }
+    result
+}
+
+/// All equivalent unit-speed conic parameters in a validated at-most-one-turn
+/// domain. The integer quotient selects the first possible lift directly, so
+/// enumeration does not grow with the chart's turn number. Scalar quotient and
+/// coefficient costs retain their existing resource contract.
+/// The two ends of a complete period retain distinct parameter identities.
+pub(crate) fn angular_parameter_lifts(
+    parameter: &Real,
+    domain: &ParameterDomain,
+) -> GeometryResult<Vec<Real>> {
+    let tau = Real::tau();
+    // Reuse these certified orders for both membership and endpoint identity.
+    let endpoint_orderings = |value: &Real| {
+        crate::context::strict(|| {
+            let from_start = decided_order(compare_reals(
+                value,
+                domain.start(),
+                crate::STRICT_PREDICATES,
+            ))?;
+            let to_end =
+                decided_order(compare_reals(value, domain.end(), crate::STRICT_PREDICATES))?;
+            Ok::<_, GeometryError>((from_start, to_end))
+        })
+    };
+    let (from_start, to_end) = endpoint_orderings(parameter)?;
+    let (first, from_start, to_end) = if from_start != Ordering::Less && to_end != Ordering::Greater
     {
-        let mut parameters = vec![curve.domain().start().clone()];
-        if decided_order(compare_reals(
-            &sweep,
-            &Real::tau(),
+        (parameter.clone(), from_start, to_end)
+    } else {
+        let turns = ((domain.start() - parameter) / &tau)
+            .map_err(GeometryError::Numeric)?
+            .ceil_certified()
+            .map_err(GeometryError::Numeric)?;
+        let first = parameter + Real::new(hyperreal::Rational::from_bigint(turns)) * &tau;
+        let (from_start, to_end) = endpoint_orderings(&first)?;
+        (first, from_start, to_end)
+    };
+    if from_start == Ordering::Less || to_end == Ordering::Greater {
+        return Ok(Vec::new());
+    }
+    let at_start = from_start == Ordering::Equal;
+    let at_end = to_end == Ordering::Equal;
+    if (at_start || at_end)
+        && decided_order(compare_reals(
+            &(domain.end() - domain.start()),
+            &tau,
             crate::STRICT_PREDICATES,
         ))? == Ordering::Equal
-        {
-            parameters.push(curve.domain().end().clone());
-        }
-        return Ok(parameters);
+    {
+        return Ok(vec![domain.start().clone(), domain.end().clone()]);
     }
-    match decided_order(compare_reals(&delta, &sweep, crate::STRICT_PREDICATES))? {
-        Ordering::Less => Ok(vec![curve.domain().start() + delta]),
-        Ordering::Equal => Ok(vec![curve.domain().end().clone()]),
-        Ordering::Greater => Ok(Vec::new()),
-    }
+    Ok(vec![if at_start {
+        domain.start().clone()
+    } else if at_end {
+        domain.end().clone()
+    } else {
+        first
+    }])
 }
 
 fn angle_domain() -> SurfaceParameterDomain {
@@ -4803,7 +5188,7 @@ fn surface_axis_contains(
 ) -> GeometryResult<bool> {
     match domain {
         SurfaceParameterDomain::Unbounded | SurfaceParameterDomain::Periodic { .. } => Ok(true),
-        SurfaceParameterDomain::Closed(domain) => domain.contains(parameter),
+        SurfaceParameterDomain::Closed(domain) => domain.contains_real(parameter),
         SurfaceParameterDomain::LowerBounded { start } => Ok(matches!(
             decided_order(compare_reals(parameter, start, crate::STRICT_PREDICATES))?,
             Ordering::Equal | Ordering::Greater
@@ -4884,13 +5269,13 @@ pub(crate) fn affine_transform_orientation(transform: &Matrix4) -> GeometryResul
 fn transform_point(transform: &Matrix4, point: &Point3) -> GeometryResult<Point3> {
     transform
         .transform_point3(point)
-        .map_err(|_| GeometryError::TransformFailure)
+        .map_err(GeometryError::Numeric)
 }
 
 fn transform_points(transform: &Matrix4, points: &[Point3]) -> GeometryResult<Vec<Point3>> {
     transform
         .transform_point3_batch(points)
-        .map_err(|_| GeometryError::TransformFailure)
+        .map_err(GeometryError::Numeric)
 }
 
 fn transform_surface_control_points(
@@ -4948,7 +5333,7 @@ fn swapped_curve_intersection(
     }
 }
 
-fn project_point_to_plane_frame(
+pub(crate) fn project_point_to_plane_frame(
     origin: &Point3,
     u: &Vector3,
     v: &Vector3,
@@ -4961,9 +5346,14 @@ fn project_point_to_plane_frame(
     let du = displacement.dot(u);
     let dv = displacement.dot(v);
     let determinant = &uu * &vv - &uv * &uv;
+    let x = ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?;
+    let y = ((&dv * &uu - &du * &uv) / determinant).map_err(GeometryError::Numeric)?;
+    // Replayed endpoints feed native circle-radius and area proofs. Keep each
+    // coordinate compact before those consumers multiply repeated projection
+    // expressions, using only the scalar-owned bounded exact normal form.
     Ok(Point2::new(
-        ((&du * &vv - &dv * &uv) / &determinant).map_err(|_| GeometryError::ProjectiveDivision)?,
-        ((&dv * &uu - &du * &uv) / determinant).map_err(|_| GeometryError::ProjectiveDivision)?,
+        x.compact_pi_laurent().unwrap_or(x),
+        y.compact_pi_laurent().unwrap_or(y),
     ))
 }
 
@@ -5029,8 +5419,10 @@ pub(crate) fn project_curve_to_plane_frame(
             }
             let start = project(&curve.start()?)?;
             let end = project(&curve.end()?)?;
-            let tangent_point =
-                data.center.clone() + curve.derivative_at(curve.domain().start(), 1)?.vector();
+            let tangent_point = data.center.clone()
+                + curve
+                    .derivative_at(&curve.domain().represented_start()?.clone().into(), 1)?
+                    .require_coordinates()?;
             let projected_tangent_point = project(&tangent_point)?;
             let projected_tangent = (
                 projected_tangent_point.x() - center.x(),
@@ -5047,7 +5439,11 @@ pub(crate) fn project_curve_to_plane_frame(
                 start, end, center, clockwise,
             )?)))
         }
-        Curve3ExactData::EllipseArc(_) => Ok(None),
+        Curve3ExactData::AffineImage(_)
+        | Curve3ExactData::Rotation(_)
+        | Curve3ExactData::Translation(_)
+        | Curve3ExactData::EllipseArc(_)
+        | Curve3ExactData::PlanarImage(_) => Ok(None),
     }
 }
 
@@ -5134,6 +5530,18 @@ pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
                 weights,
             )?))
         }
+        Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
+            let mut controls = curve.control_points();
+            let mut weights = curve.weights().map(Clone::clone);
+            if reversed {
+                controls.reverse();
+                weights.reverse();
+            }
+            Ok(Some(Curve3::rational_bezier(
+                controls.into_iter().map(lift).collect(),
+                weights.to_vec(),
+            )?))
+        }
         Some(CurveGeometry2::Nurbs(curve)) => {
             let mut control_points = curve
                 .affine_control_points()
@@ -5159,7 +5567,6 @@ pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
         Some(CurveGeometry2::CircularArc(_))
         | Some(CurveGeometry2::QuadraticBezier(_))
         | Some(CurveGeometry2::CubicBezier(_))
-        | Some(CurveGeometry2::RationalQuadraticBezier(_))
         | Some(CurveGeometry2::PolynomialBSpline(_)) => Ok(None),
     }
 }
@@ -5172,33 +5579,35 @@ fn linear_section_pcurve_carriers(
     profile_axis: TensorAxis,
     coefficient_scale: &Real,
     coefficient_offset: &Real,
-) -> GeometryResult<Option<Vec<SurfacePcurveClipCarrier>>> {
+) -> GeometryResult<Option<Vec<MaterializedSurfacePcurve>>> {
     let coefficient = |point: &Point3| {
         let normalized = (plane_normal.dot(&(plane_origin - point)) / denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         Ok(coefficient_offset + coefficient_scale * normalized)
     };
-    let span = profile.domain().end() - profile.domain().start();
+    let span = profile.domain().represented_end()? - profile.domain().represented_start()?;
     match &profile.data.geometry {
-        CurveGeometry3::Line(line) => Ok(Some(vec![SurfacePcurveClipCarrier {
+        CurveGeometry3::Line(line) => Ok(Some(vec![MaterializedSurfacePcurve {
             curve: Curve2::from(LineSeg2::try_new(
                 section_parameter_point(
-                    profile.domain().start().clone(),
+                    profile.domain().represented_start()?.clone(),
                     coefficient(&line.start)?,
                     profile_axis,
                 ),
                 section_parameter_point(
-                    profile.domain().end().clone(),
+                    profile.domain().represented_end()?.clone(),
                     coefficient(&line.end)?,
                     profile_axis,
                 ),
             )?),
-            spatial_scale: span,
-            spatial_offset: profile.domain().start().clone(),
+            correspondence: SurfacePcurveCorrespondence::Affine {
+                scale: span,
+                offset: profile.domain().represented_start()?.clone(),
+            },
         }])),
         CurveGeometry3::RationalBezier(curve) => Ok(Some(vec![rational_linear_section_carrier(
             curve,
-            profile.domain().start(),
+            profile.domain().represented_start()?,
             &span,
             &coefficient,
             profile_axis,
@@ -5219,7 +5628,12 @@ fn linear_section_pcurve_carriers(
             }
             Ok(Some(carriers))
         }
-        CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => Ok(None),
+        CurveGeometry3::CircleArc(_)
+        | CurveGeometry3::EllipseArc(_)
+        | CurveGeometry3::AffineImage(_)
+        | CurveGeometry3::Rotation(_)
+        | CurveGeometry3::Translation(_)
+        | CurveGeometry3::PlanarImage(_) => Ok(None),
     }
 }
 
@@ -5271,7 +5685,7 @@ pub(crate) fn concatenate_rational_bezier_spans_as_nurbs(
             .expect("first rational span has weights")
             .clone()
             / &curve.weights()[0])
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         control_points.extend(
             curve
                 .affine_control_points()
@@ -5364,7 +5778,7 @@ fn rational_linear_section_carrier(
     parameter_span: &Real,
     coefficient: &impl Fn(&Point3) -> GeometryResult<Real>,
     profile_axis: TensorAxis,
-) -> GeometryResult<SurfacePcurveClipCarrier> {
+) -> GeometryResult<MaterializedSurfacePcurve> {
     let degree_plus_one = curve.weights.len();
     let denominator_degree =
         Real::from(i64::try_from(degree_plus_one).map_err(|_| GeometryError::InvalidDegree)?);
@@ -5379,7 +5793,7 @@ fn rational_linear_section_carrier(
     for index in 0..=degree_plus_one {
         let alpha = (Real::from(i64::try_from(index).map_err(|_| GeometryError::InvalidDegree)?)
             / &denominator_degree)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let one_minus_alpha = Real::one() - &alpha;
         let previous_weight = (index > 0).then(|| curve.weights[index - 1].clone());
         let next_weight = (index < degree_plus_one).then(|| curve.weights[index].clone());
@@ -5406,62 +5820,19 @@ fn rational_linear_section_carrier(
         };
         let y_homogeneous = previous_y + next_y;
         elevated_points.push(section_parameter_point(
-            (x_homogeneous / &elevated_weight).map_err(|_| GeometryError::ProjectiveDivision)?,
-            (y_homogeneous / &elevated_weight).map_err(|_| GeometryError::ProjectiveDivision)?,
+            (x_homogeneous / &elevated_weight).map_err(GeometryError::Numeric)?,
+            (y_homogeneous / &elevated_weight).map_err(GeometryError::Numeric)?,
             profile_axis,
         ));
         elevated_weights.push(elevated_weight);
     }
-    Ok(SurfacePcurveClipCarrier {
+    Ok(MaterializedSurfacePcurve {
         curve: Curve2::from(RationalBezier2::try_new(elevated_points, elevated_weights)?),
-        spatial_scale: parameter_span.clone(),
-        spatial_offset: parameter_start.clone(),
+        correspondence: SurfacePcurveCorrespondence::Affine {
+            scale: parameter_span.clone(),
+            offset: parameter_start.clone(),
+        },
     })
-}
-
-fn intersect_planes(
-    first: &PlaneSurface,
-    second: &PlaneSurface,
-) -> GeometryResult<SurfaceSurfaceIntersection> {
-    let first_normal = first.u.cross(&first.v);
-    let second_normal = second.u.cross(&second.v);
-    let direction = first_normal.cross(&second_normal);
-    let direction_squared = direction.norm_squared();
-    if decided_order(compare_reals(
-        &direction_squared,
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Equal
-    {
-        let separation = first_normal.dot(&(&second.origin - &first.origin));
-        return if decided_order(compare_reals(
-            &separation,
-            &Real::zero(),
-            crate::STRICT_PREDICATES,
-        ))? == Ordering::Equal
-        {
-            Ok(SurfaceSurfaceIntersection::Coincident)
-        } else {
-            Ok(SurfaceSurfaceIntersection::None)
-        };
-    }
-
-    let first_constant = first_normal.dot(&Vector3::from(first.origin.clone()));
-    let second_constant = second_normal.dot(&Vector3::from(second.origin.clone()));
-    let numerator = (second_normal.clone() * first_constant
-        - first_normal.clone() * second_constant)
-        .cross(&direction);
-    let point = Point3::from(Vector3::from_xyz(
-        (numerator.0[0].clone() / &direction_squared)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
-        (numerator.0[1].clone() / &direction_squared)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
-        (numerator.0[2].clone() / direction_squared)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
-    ));
-    Ok(SurfaceSurfaceIntersection::Line(Box::new(
-        SurfaceIntersectionLine { point, direction },
-    )))
 }
 
 fn intersect_plane_rational_bezier_surface(
@@ -5512,7 +5883,10 @@ fn intersect_plane_rational_bezier_surface(
             Err(error) => return Err(error),
         }
     }
-    intersect_plane_rational_bilinear(plane, surface)
+    match intersect_plane_rational_bilinear(plane, surface) {
+        Err(GeometryError::UnsupportedIntersection) => plane_tensor::intersect(plane, surface),
+        result => result,
+    }
 }
 
 fn intersect_plane_rational_bilinear(
@@ -5609,7 +5983,7 @@ fn sign_definite_bilinear_boundary_intersection(
                 .position(|zero| *zero)
                 .expect("one sign-definite bilinear zero");
             Ok(Some(SurfaceSurfaceIntersection::Point(Box::new(
-                bilinear_corner(surface, index),
+                (bilinear_corner(surface, index)).into(),
             ))))
         }
         2 if zeros[0] && zeros[1] => Ok(Some(SurfaceSurfaceIntersection::Curve(Box::new(
@@ -5629,7 +6003,7 @@ fn sign_definite_bilinear_boundary_intersection(
                 .iter()
                 .enumerate()
                 .filter(|(_, zero)| **zero)
-                .map(|(index, _)| bilinear_corner(surface, index))
+                .map(|(index, _)| bilinear_corner(surface, index).into())
                 .collect(),
         ))),
         3 => {
@@ -5795,19 +6169,17 @@ fn bilinear_parameter_graph_from_endpoints(
         _ => return Ok(None),
     };
     let denominator_sum = &first_denominator + &second_denominator;
-    let middle_denominator =
-        (&denominator_sum / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let middle_denominator = (&denominator_sum / Real::from(2)).map_err(GeometryError::Numeric)?;
     let numerators = [-first_offset, -second_offset];
     let solved_controls = [
-        (&numerators[0] / &first_denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
-        ((&numerators[0] + &numerators[1]) / &denominator_sum)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
-        (&numerators[1] / &second_denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
+        (&numerators[0] / &first_denominator).map_err(GeometryError::Numeric)?,
+        ((&numerators[0] + &numerators[1]) / &denominator_sum).map_err(GeometryError::Numeric)?,
+        (&numerators[1] / &second_denominator).map_err(GeometryError::Numeric)?,
     ];
     let middle_parameter = ((first_parameter * &second_denominator
         + second_parameter * &first_denominator)
         / &denominator_sum)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
     let controls = match parameter_axis {
         TensorAxis::V => vec![
             CurvePoint2::new(solved_controls[0].clone(), first_parameter.clone()),
@@ -5893,8 +6265,7 @@ fn intersect_plane_bilinear_pole_branches(
             {
                 continue;
             }
-            let midpoint =
-                ((start + end) / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+            let midpoint = ((start + end) / Real::from(2)).map_err(GeometryError::Numeric)?;
             let midpoint_denominator =
                 linear_value(first_denominator, second_denominator, &midpoint);
             if decided_order(compare_reals(
@@ -5907,7 +6278,7 @@ fn intersect_plane_bilinear_pole_branches(
             }
             let midpoint_solved = (-linear_value(first_offset, second_offset, &midpoint)
                 / midpoint_denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
             if decided_order(compare_reals(
                 &midpoint_solved,
                 &Real::zero(),
@@ -5991,7 +6362,7 @@ fn factorized_bilinear_sections(
             &coefficients.second_offset,
             &sample,
         ) / sample_denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         if decided_order(compare_reals(
             &solved,
             &Real::zero(),
@@ -6059,7 +6430,7 @@ fn linear_root_in_unit_interval(first: &Real, second: &Real) -> GeometryResult<O
     {
         return Ok(None);
     }
-    let root = (-first / delta).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let root = (-first / delta).map_err(GeometryError::Numeric)?;
     if decided_order(compare_reals(
         &root,
         &Real::zero(),
@@ -6182,12 +6553,9 @@ pub(crate) fn rational_bilinear_parameter_curve(
             },
         );
         controls.push(Point3::new(
-            (&numerator.0[0] / &curve_weights[index])
-                .map_err(|_| GeometryError::ProjectiveDivision)?,
-            (&numerator.0[1] / &curve_weights[index])
-                .map_err(|_| GeometryError::ProjectiveDivision)?,
-            (&numerator.0[2] / &curve_weights[index])
-                .map_err(|_| GeometryError::ProjectiveDivision)?,
+            (&numerator.0[0] / &curve_weights[index]).map_err(GeometryError::Numeric)?,
+            (&numerator.0[1] / &curve_weights[index]).map_err(GeometryError::Numeric)?,
+            (&numerator.0[2] / &curve_weights[index]).map_err(GeometryError::Numeric)?,
         ));
     }
     Ok(Some(Curve3::rational_bezier(
@@ -6200,14 +6568,14 @@ fn quadratic_bernstein_product(first: &[Real; 3], second: &[Real; 3]) -> Geometr
     Ok([
         &first[0] * &second[0],
         ((&first[0] * &second[1] + &first[1] * &second[0]) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
         ((&first[0] * &second[2]
             + Real::from(4) * &first[1] * &second[1]
             + &first[2] * &second[0])
             / Real::from(6))
-        .map_err(|_| GeometryError::ProjectiveDivision)?,
+        .map_err(GeometryError::Numeric)?,
         ((&first[1] * &second[2] + &first[2] * &second[1]) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
         &first[2] * &second[2],
     ])
 }
@@ -6235,7 +6603,7 @@ fn bernstein_product(first: &[Real], second: &[Real]) -> GeometryResult<Vec<Real
             let numerator = binomial_real(first_degree, first_index)?
                 * binomial_real(second_degree, second_index)?;
             coefficient += (numerator * first_value * &second[second_index] / &denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
         }
         product.push(coefficient);
     }
@@ -6257,17 +6625,25 @@ fn intersect_plane_extrusion(
         let plane_surface = Surface::plane(plane.origin.clone(), plane.u.clone(), plane.v.clone())?;
         return match plane_surface.intersect_curve(&surface.profile)? {
             CurveSurfaceIntersection::None => Ok(SurfaceSurfaceIntersection::None),
-            CurveSurfaceIntersection::Contained | CurveSurfaceIntersection::Overlap(_) => {
+            CurveSurfaceIntersection::Contained
+            | CurveSurfaceIntersection::Overlap(_)
+            | CurveSurfaceIntersection::Components(_) => {
                 Err(GeometryError::UnsupportedIntersection)
             }
             CurveSurfaceIntersection::Points(points) => {
                 let mut lines = points
                     .into_iter()
-                    .map(|point| SurfaceIntersectionLine {
-                        point: point.point,
-                        direction: surface.direction.clone(),
+                    .map(|point| {
+                        Ok(SurfaceIntersectionLine {
+                            point: point
+                                .point
+                                .try_coordinates()
+                                .cloned()
+                                .ok_or(GeometryError::UnrepresentablePoint)?,
+                            direction: surface.direction.clone(),
+                        })
                     })
-                    .collect::<Vec<_>>();
+                    .collect::<GeometryResult<Vec<_>>>()?;
                 if lines.len() == 1 {
                     Ok(SurfaceSurfaceIntersection::Line(Box::new(
                         lines.pop().expect("one retained extrusion line"),
@@ -6322,7 +6698,9 @@ fn intersect_plane_revolution(
     let plane_surface = Surface::plane(plane.origin.clone(), plane.u.clone(), plane.v.clone())?;
     let points = match plane_surface.intersect_curve(&surface.profile)? {
         CurveSurfaceIntersection::None => return Ok(SurfaceSurfaceIntersection::None),
-        CurveSurfaceIntersection::Contained | CurveSurfaceIntersection::Overlap(_) => {
+        CurveSurfaceIntersection::Contained
+        | CurveSurfaceIntersection::Overlap(_)
+        | CurveSurfaceIntersection::Components(_) => {
             return Err(GeometryError::UnsupportedIntersection);
         }
         CurveSurfaceIntersection::Points(points) => points,
@@ -6331,7 +6709,11 @@ fn intersect_plane_revolution(
     let mut singular = None;
     let mut radii = Vec::<Real>::with_capacity(points.len());
     for point in points {
-        let relative = &point.point - &surface.axis_origin;
+        let relative = point
+            .point
+            .try_coordinates()
+            .ok_or(GeometryError::UnrepresentablePoint)?
+            - &surface.axis_origin;
         let axial_parameter = relative.dot(&surface.axis);
         let center = surface.axis_origin.clone() + surface.axis.clone() * axial_parameter.clone();
         let radial = relative - surface.axis.clone() * axial_parameter;
@@ -6347,9 +6729,7 @@ fn intersect_plane_revolution(
             }
             continue;
         }
-        let radius = radius_squared
-            .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let radius = radius_squared.sqrt().map_err(GeometryError::Numeric)?;
         for existing in &radii {
             if decided_order(compare_reals(existing, &radius, crate::STRICT_PREDICATES))?
                 == Ordering::Equal
@@ -6358,7 +6738,7 @@ fn intersect_plane_revolution(
             }
         }
         radii.push(radius.clone());
-        let radial_direction = (radial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let radial_direction = (radial / &radius).map_err(GeometryError::Numeric)?;
         let curve = Curve3::circle_arc(
             center,
             radial_direction.clone(),
@@ -6371,12 +6751,19 @@ fn intersect_plane_revolution(
         sections.push(SurfaceIntersectionCurve::new(
             curve.clone(),
             SurfaceIntersectionPcurve::plane_projection(curve, plane),
-            SurfaceIntersectionPcurve::tensor_iso_v(domain, point.parameter),
+            SurfaceIntersectionPcurve::tensor_iso_v(
+                domain,
+                point
+                    .parameter
+                    .try_real()
+                    .cloned()
+                    .ok_or(GeometryError::UnrepresentableParameter)?,
+            ),
         ));
     }
     if let Some(point) = singular {
         if sections.is_empty() {
-            return Ok(SurfaceSurfaceIntersection::Point(Box::new(point)));
+            return Ok(SurfaceSurfaceIntersection::Point(Box::new((point).into())));
         }
         return Err(GeometryError::UnsupportedIntersection);
     }
@@ -6403,7 +6790,11 @@ fn project_revolution_meridian(
         Curve3ExactData::Line(line) => vec![line.start, line.end],
         Curve3ExactData::RationalBezier { control_points, .. }
         | Curve3ExactData::Nurbs { control_points, .. } => control_points,
-        Curve3ExactData::EllipseArc(_) => {
+        Curve3ExactData::AffineImage(_)
+        | Curve3ExactData::Rotation(_)
+        | Curve3ExactData::Translation(_)
+        | Curve3ExactData::EllipseArc(_)
+        | Curve3ExactData::PlanarImage(_) => {
             return Err(GeometryError::UnsupportedIntersection);
         }
     };
@@ -6430,9 +6821,8 @@ fn project_revolution_meridian(
     let radial_length = radial
         .norm_squared()
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
-    let radial_direction =
-        (radial.clone() / &radial_length).map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
+    let radial_direction = (radial.clone() / &radial_length).map_err(GeometryError::Numeric)?;
     for radial in &radials {
         if decided_order(compare_reals(
             &radial.cross(&radial_direction).norm_squared(),
@@ -6883,21 +7273,33 @@ fn intersect_plane_linear_tensor_graph(
         let plane_surface = Surface::plane(plane.origin.clone(), plane.u.clone(), plane.v.clone())?;
         return match plane_surface.intersect_curve(&profile)? {
             CurveSurfaceIntersection::None => Ok(SurfaceSurfaceIntersection::None),
-            CurveSurfaceIntersection::Contained | CurveSurfaceIntersection::Overlap(_) => {
+            CurveSurfaceIntersection::Contained
+            | CurveSurfaceIntersection::Overlap(_)
+            | CurveSurfaceIntersection::Components(_) => {
                 Err(GeometryError::UnsupportedIntersection)
             }
             CurveSurfaceIntersection::Points(points) => {
                 let mut curves = points
                     .into_iter()
                     .map(|point| {
-                        let curve =
-                            Curve3::line(point.point.clone(), point.point + direction.clone())?;
+                        let coordinates = point
+                            .point
+                            .try_coordinates()
+                            .ok_or(GeometryError::UnrepresentablePoint)?;
+                        let curve = Curve3::line(
+                            coordinates.clone(),
+                            coordinates.clone() + direction.clone(),
+                        )?;
                         Ok(SurfaceIntersectionCurve::new(
                             curve.clone(),
                             SurfaceIntersectionPcurve::plane_projection(curve.clone(), plane),
                             SurfaceIntersectionPcurve::tensor_iso(
                                 curve.domain().clone(),
-                                point.parameter,
+                                point
+                                    .parameter
+                                    .try_real()
+                                    .cloned()
+                                    .ok_or(GeometryError::UnrepresentableParameter)?,
                                 profile_axis,
                                 coefficient_scale.clone(),
                                 coefficient_offset.clone(),
@@ -6915,7 +7317,7 @@ fn intersect_plane_linear_tensor_graph(
 
     let coefficients = values
         .into_iter()
-        .map(|value| ((-value) / &denominator).map_err(|_| GeometryError::ProjectiveDivision))
+        .map(|value| ((-value) / &denominator).map_err(GeometryError::Numeric))
         .collect::<GeometryResult<Vec<_>>>()?;
     let coefficient_orders = coefficients
         .iter()
@@ -7017,7 +7419,12 @@ fn curve_is_strictly_on_one_plane_side(
             }
             Ok(true)
         }
-        CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => Ok(false),
+        CurveGeometry3::CircleArc(_)
+        | CurveGeometry3::EllipseArc(_)
+        | CurveGeometry3::AffineImage(_)
+        | CurveGeometry3::Rotation(_)
+        | CurveGeometry3::Translation(_)
+        | CurveGeometry3::PlanarImage(_) => Ok(false),
     }
 }
 
@@ -7027,8 +7434,8 @@ fn clip_linear_tensor_section(
     coefficient_start: &Real,
     coefficient_end: &Real,
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
-    let profile_start = section.curve.domain().start();
-    let profile_end = section.curve.domain().end();
+    let profile_start = section.curve.domain().represented_start()?;
+    let profile_end = section.curve.domain().represented_end()?;
     let region = tensor_parameter_region(
         profile_axis,
         profile_start,
@@ -7045,8 +7452,16 @@ fn clip_linear_tensor_section(
         let Some((pcurve_start, pcurve_end)) = fragment.represented_parameter_range() else {
             return Err(GeometryError::UnrepresentableParameter);
         };
-        let spatial_start = materialized.spatial_parameter_at(&pcurve_start)?;
-        let spatial_end = materialized.spatial_parameter_at(&pcurve_end)?;
+        let spatial_start = materialized
+            .spatial_parameter_at(&pcurve_start.into())?
+            .try_real()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        let spatial_end = materialized
+            .spatial_parameter_at(&pcurve_end.into())?
+            .try_real()
+            .cloned()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
         if let Some((_, previous_end)) = intervals.last_mut()
             && decided_order(compare_reals(
                 previous_end,
@@ -7118,12 +7533,10 @@ fn project_curve_onto_plane_along_direction(
     let normal = plane.u.cross(&plane.v);
     let constant = normal.dot(&Vector3::from(plane.origin.clone()));
     let ratio = |row: usize, column: usize| {
-        ((&direction.0[row] * &normal.0[column]) / denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)
+        ((&direction.0[row] * &normal.0[column]) / denominator).map_err(GeometryError::Numeric)
     };
     let translation = |row: usize| {
-        ((&direction.0[row] * &constant) / denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)
+        ((&direction.0[row] * &constant) / denominator).map_err(GeometryError::Numeric)
     };
     let projection = Matrix4::from_row_major([
         Real::one() - ratio(0, 0)?,
@@ -7193,8 +7606,7 @@ fn intersect_plane_v_linear_tensor_iso(
             Ok(SurfaceSurfaceIntersection::None)
         };
     }
-    let normalized_fraction =
-        ((-offset) / denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let normalized_fraction = ((-offset) / denominator).map_err(GeometryError::Numeric)?;
     if decided_order(compare_reals(
         &normalized_fraction,
         &Real::zero(),
@@ -7235,8 +7647,8 @@ fn intersect_plane_sphere(
         crate::STRICT_PREDICATES,
     ))? == Ordering::Equal;
     let separation = normal.dot(&(&sphere.center - &plane.origin));
-    let distance_squared = ((&separation * &separation) / &normal_squared)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let distance_squared =
+        ((&separation * &separation) / &normal_squared).map_err(GeometryError::Numeric)?;
     let radius_squared = &sphere.radius * &sphere.radius;
     match decided_order(compare_reals(
         &distance_squared,
@@ -7246,7 +7658,7 @@ fn intersect_plane_sphere(
         Ordering::Greater => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal | Ordering::Less => {
             let projection_scale =
-                (&separation / &normal_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
+                (&separation / &normal_squared).map_err(GeometryError::Numeric)?;
             let center = sphere.center.clone() - normal.clone() * projection_scale;
             if decided_order(compare_reals(
                 &distance_squared,
@@ -7254,14 +7666,14 @@ fn intersect_plane_sphere(
                 crate::STRICT_PREDICATES,
             ))? == Ordering::Equal
             {
-                return Ok(SurfaceSurfaceIntersection::Point(Box::new(center)));
+                return Ok(SurfaceSurfaceIntersection::Point(Box::new((center).into())));
             }
             let radius = (radius_squared - distance_squared)
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             if axial {
                 let height = ((-&separation) / normal.dot(&sphere.frame.z))
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    .map_err(GeometryError::Numeric)?;
                 let center = sphere.center.clone() + sphere.frame.z.clone() * &height;
                 let curve = Curve3::circle_arc(
                     center,
@@ -7272,9 +7684,9 @@ fn intersect_plane_sphere(
                     Real::tau(),
                 )?;
                 let latitude = (height / &sphere.radius)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?
+                    .map_err(GeometryError::Numeric)?
                     .asin()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                    .map_err(GeometryError::Numeric)?;
                 let domain = curve.domain().clone();
                 return Ok(SurfaceSurfaceIntersection::Curve(Box::new(
                     SurfaceIntersectionCurve::new(
@@ -7284,13 +7696,8 @@ fn intersect_plane_sphere(
                     ),
                 )));
             }
-            let unit_normal = normal
-                .normalize()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
-            let x = plane
-                .u
-                .normalize()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let unit_normal = normal.normalize().map_err(GeometryError::Numeric)?;
+            let x = plane.u.normalize().map_err(GeometryError::Numeric)?;
             let y = unit_normal.cross(&x);
             Ok(SurfaceSurfaceIntersection::Circle(Curve3::circle_arc(
                 center,
@@ -7319,8 +7726,7 @@ fn intersect_plane_cylinder(
     {
         let denominator = normal.dot(&cylinder.frame.z);
         let numerator = normal.dot(&(&plane.origin - &cylinder.origin));
-        let axial_parameter =
-            (numerator / denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let axial_parameter = (numerator / denominator).map_err(GeometryError::Numeric)?;
         let center = cylinder.origin.clone() + cylinder.frame.z.clone() * axial_parameter.clone();
         let curve = Curve3::circle_arc(
             center,
@@ -7348,26 +7754,23 @@ fn intersect_plane_cylinder(
     ))? != Ordering::Equal
     {
         let separation = normal.dot(&(&plane.origin - &cylinder.origin));
-        let axial_center =
-            (separation / &axis_dot_normal).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let axial_center = (separation / &axis_dot_normal).map_err(GeometryError::Numeric)?;
         let center = cylinder.origin.clone() + cylinder.frame.z.clone() * axial_center;
         let radial_normal = normal.clone() - cylinder.frame.z.clone() * axis_dot_normal.clone();
         let radial_normal_length = radial_normal
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        let radial_parallel = (radial_normal / &radial_normal_length)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
+        let radial_parallel =
+            (radial_normal / &radial_normal_length).map_err(GeometryError::Numeric)?;
         let radial_perpendicular = cylinder.frame.z.cross(&radial_parallel);
-        let slope = (&radial_normal_length / &axis_dot_normal)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let slope = (&radial_normal_length / &axis_dot_normal).map_err(GeometryError::Numeric)?;
         let sloped_axis = radial_parallel - cylinder.frame.z.clone() * slope;
         let sloped_length = sloped_axis
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        let sloped_direction =
-            (sloped_axis / &sloped_length).map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
+        let sloped_direction = (sloped_axis / &sloped_length).map_err(GeometryError::Numeric)?;
         return Ok(SurfaceSurfaceIntersection::Ellipse(Curve3::ellipse_arc(
             center,
             radial_perpendicular,
@@ -7379,8 +7782,8 @@ fn intersect_plane_cylinder(
         )?));
     }
     let separation = normal.dot(&(&plane.origin - &cylinder.origin));
-    let distance_squared = ((&separation * &separation) / &normal_squared)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let distance_squared =
+        ((&separation * &separation) / &normal_squared).map_err(GeometryError::Numeric)?;
     let radius_squared = &cylinder.radius * &cylinder.radius;
     match decided_order(compare_reals(
         &distance_squared,
@@ -7390,7 +7793,7 @@ fn intersect_plane_cylinder(
         Ordering::Greater => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal | Ordering::Less => {
             let projection_scale =
-                (separation / &normal_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
+                (separation / &normal_squared).map_err(GeometryError::Numeric)?;
             let radial_projection = normal.clone() * projection_scale;
             let line_offset_squared = &radius_squared - &distance_squared;
             let tangent = cylinder
@@ -7398,7 +7801,7 @@ fn intersect_plane_cylinder(
                 .z
                 .cross(&normal)
                 .normalize()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             if decided_order(compare_reals(
                 &line_offset_squared,
                 &Real::zero(),
@@ -7412,9 +7815,7 @@ fn intersect_plane_cylinder(
                     },
                 )));
             }
-            let line_offset = line_offset_squared
-                .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let line_offset = line_offset_squared.sqrt().map_err(GeometryError::Numeric)?;
             Ok(SurfaceSurfaceIntersection::Lines(vec![
                 SurfaceIntersectionLine {
                     point: cylinder.origin.clone()
@@ -7460,7 +7861,7 @@ fn intersect_plane_cone(
         let radial = normal
             .cross(&cone.frame.z)
             .normalize()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
         let sine = cone.semi_angle.clone().sin();
         let cosine = cone.semi_angle.clone().cos();
         let ray = |radial: Vector3| -> GeometryResult<SurfaceIntersectionRay> {
@@ -7499,7 +7900,7 @@ fn intersect_plane_cone(
         ]));
     }
     let axial_height = (normal.dot(&(&plane.origin - &cone.apex)) / normal.dot(&cone.frame.z))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
     match decided_order(compare_reals(
         &axial_height,
         &Real::zero(),
@@ -7507,15 +7908,10 @@ fn intersect_plane_cone(
     ))? {
         Ordering::Less => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => Ok(SurfaceSurfaceIntersection::Point(Box::new(
-            cone.apex.clone(),
+            (cone.apex.clone()).into(),
         ))),
         Ordering::Greater => {
-            let radius = axial_height.clone()
-                * cone
-                    .semi_angle
-                    .clone()
-                    .tan()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
+            let (v, radius) = cone_section_parameters(cone, &axial_height)?;
             let center = cone.apex.clone() + cone.frame.z.clone() * axial_height.clone();
             let curve = Curve3::circle_arc(
                 center,
@@ -7525,8 +7921,6 @@ fn intersect_plane_cone(
                 Real::zero(),
                 Real::from(2) * Real::pi(),
             )?;
-            let v = (axial_height / cone.semi_angle.clone().cos())
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
             let domain = curve.domain().clone();
             Ok(SurfaceSurfaceIntersection::Curve(Box::new(
                 SurfaceIntersectionCurve::new(
@@ -7537,6 +7931,19 @@ fn intersect_plane_cone(
             )))
         }
     }
+}
+
+/// A transverse section uses the cone's own meridian parameter and radial
+/// image. Share this representation between curve and surface intersections,
+/// so their witnesses compose with the authored cone pcurves.
+fn cone_section_parameters(
+    cone: &ConeSurface,
+    axial_height: &Real,
+) -> GeometryResult<(Real, Real)> {
+    let parameter =
+        (axial_height / cone.semi_angle.clone().cos()).map_err(GeometryError::Numeric)?;
+    let radius = &parameter * cone.semi_angle.clone().sin();
+    Ok((parameter, radius))
 }
 
 fn intersect_plane_torus(
@@ -7568,7 +7975,7 @@ fn intersect_plane_torus(
         {
             let distance_squared = ((&center_separation * &center_separation)
                 / normal.norm_squared())
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
             let outer_radius = &torus.major_radius + &torus.minor_radius;
             match decided_order(compare_reals(
                 &distance_squared,
@@ -7578,9 +7985,9 @@ fn intersect_plane_torus(
                 Ordering::Greater => return Ok(SurfaceSurfaceIntersection::None),
                 Ordering::Equal => {
                     let projection_scale = (center_separation / normal.norm_squared())
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
                     return Ok(SurfaceSurfaceIntersection::Point(Box::new(
-                        torus.center.clone() - normal.clone() * projection_scale,
+                        (torus.center.clone() - normal.clone() * projection_scale).into(),
                     )));
                 }
                 Ordering::Less => {}
@@ -7591,7 +7998,7 @@ fn intersect_plane_torus(
         let radial = normal
             .cross(&torus.frame.z)
             .normalize()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
         let normalize_angle = |angle: Real| -> GeometryResult<Real> {
             Ok(
                 if decided_order(compare_reals(
@@ -7638,7 +8045,7 @@ fn intersect_plane_torus(
         ]));
     }
     let axial_height = (normal.dot(&(&plane.origin - &torus.center)) / normal.dot(&torus.frame.z))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
     let axial_squared = &axial_height * &axial_height;
     let minor_squared = &torus.minor_radius * &torus.minor_radius;
     match decided_order(compare_reals(
@@ -7650,7 +8057,7 @@ fn intersect_plane_torus(
         Ordering::Equal | Ordering::Less => {
             let radial_offset = (minor_squared - axial_squared)
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             let center = torus.center.clone() + torus.frame.z.clone() * axial_height.clone();
             let normalize_angle = |angle: Real| -> GeometryResult<Real> {
                 Ok(
@@ -7743,7 +8150,7 @@ fn intersect_parallel_cylinders(
     let distance = distance_squared
         .clone()
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let radius_sum = &first.radius + &second.radius;
     let radius_difference = match decided_order(compare_reals(
         &first.radius,
@@ -7769,9 +8176,8 @@ fn intersect_parallel_cylinders(
     let along = ((&first.radius * &first.radius - &second.radius * &second.radius
         + &distance_squared)
         / (Real::from(2) * &distance))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let unit_displacement =
-        (radial_displacement / &distance).map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
+    let unit_displacement = (radial_displacement / &distance).map_err(GeometryError::Numeric)?;
     let base = first.origin.clone() + unit_displacement.clone() * &along;
     let height_squared = &first.radius * &first.radius - &along * &along;
     if decided_order(compare_reals(
@@ -7787,9 +8193,7 @@ fn intersect_parallel_cylinders(
             },
         )));
     }
-    let height = height_squared
-        .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let height = height_squared.sqrt().map_err(GeometryError::Numeric)?;
     let transverse = first.frame.z.cross(&unit_displacement);
     Ok(SurfaceSurfaceIntersection::Lines(vec![
         SurfaceIntersectionLine {
@@ -7835,9 +8239,9 @@ fn intersect_coaxial_sphere_cylinder(
         )?;
         let sphere_height = (&center - &sphere.center).dot(&sphere.frame.z);
         let latitude = (sphere_height / &sphere.radius)
-            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .map_err(GeometryError::Numeric)?
             .asin()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
         let cylinder_height = &axial_offset + height;
         let domain = curve.domain().clone();
         Ok(SurfaceIntersectionCurve::new(
@@ -7871,7 +8275,7 @@ fn intersect_coaxial_sphere_cylinder(
         Ordering::Greater => {
             let axial_distance = (sphere_radius_squared - cylinder_radius_squared)
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             if retain_pcurves {
                 return Ok(SurfaceSurfaceIntersection::Curves(vec![
                     retained_circle(axial_distance.clone())?,
@@ -7932,9 +8336,7 @@ fn intersect_coaxial_sphere_cone(
     let root_parameters = if discriminant_order == Ordering::Equal {
         vec![root_center]
     } else {
-        let root_offset = discriminant
-            .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let root_offset = discriminant.sqrt().map_err(GeometryError::Numeric)?;
         vec![&root_center - &root_offset, root_center + root_offset]
     };
     let mut has_apex = false;
@@ -7954,7 +8356,7 @@ fn intersect_coaxial_sphere_cone(
     }
     if has_apex && slant_parameters.is_empty() {
         return Ok(SurfaceSurfaceIntersection::Point(Box::new(
-            cone.apex.clone(),
+            (cone.apex.clone()).into(),
         )));
     }
     if slant_parameters.is_empty() {
@@ -7981,9 +8383,9 @@ fn intersect_coaxial_sphere_cone(
         if retain_pcurves {
             let sphere_height = (&center - &sphere.center).dot(&sphere.frame.z);
             let latitude = (sphere_height / &sphere.radius)
-                .map_err(|_| GeometryError::ProjectiveDivision)?
+                .map_err(GeometryError::Numeric)?
                 .asin()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             let domain = curve.domain().clone();
             retained.push(SurfaceIntersectionCurve::new(
                 curve,
@@ -7996,7 +8398,7 @@ fn intersect_coaxial_sphere_cone(
     }
     if has_apex {
         return Ok(SurfaceSurfaceIntersection::Components(Box::new(
-            SurfaceIntersectionComponents::new(vec![cone.apex.clone()], circles, retained),
+            SurfaceIntersectionComponents::new(vec![cone.apex.clone().into()], circles, retained),
         )));
     }
     if retain_pcurves {
@@ -8039,8 +8441,7 @@ fn intersect_coaxial_cylinder_cone(
 
     let sine = cone.semi_angle.clone().sin();
     let cosine = cone.semi_angle.clone().cos();
-    let slant_parameter =
-        (&cylinder.radius / &sine).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let slant_parameter = (&cylinder.radius / &sine).map_err(GeometryError::Numeric)?;
     let axial_height = &slant_parameter * cosine;
     let center = cone.apex.clone() + cone.frame.z.clone() * axial_height;
     let curve = Curve3::circle_arc(
@@ -8123,10 +8524,10 @@ fn intersect_coaxial_cones(
     let second_sine = second.semi_angle.clone().sin();
     let second_cosine = second.semi_angle.clone().cos();
     let determinant = &first_cosine * &second_sine - &first_sine * &second_cosine;
-    let first_slant = (&axial_offset * &second_sine / &determinant)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let second_slant = (&axial_offset * &first_sine / determinant)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let first_slant =
+        (&axial_offset * &second_sine / &determinant).map_err(GeometryError::Numeric)?;
+    let second_slant =
+        (&axial_offset * &first_sine / determinant).map_err(GeometryError::Numeric)?;
     let first_order = decided_order(compare_reals(
         &first_slant,
         &Real::zero(),
@@ -8142,7 +8543,7 @@ fn intersect_coaxial_cones(
     }
     if first_order == Ordering::Equal || second_order == Ordering::Equal {
         return Ok(SurfaceSurfaceIntersection::Point(Box::new(
-            first.apex.clone(),
+            (first.apex.clone()).into(),
         )));
     }
 
@@ -8185,7 +8586,7 @@ fn intersect_counteroriented_coaxial_cones(
     }
     if axial_order == Ordering::Equal {
         return Ok(SurfaceSurfaceIntersection::Point(Box::new(
-            first.apex.clone(),
+            (first.apex.clone()).into(),
         )));
     }
 
@@ -8194,10 +8595,10 @@ fn intersect_counteroriented_coaxial_cones(
     let second_sine = second.semi_angle.clone().sin();
     let second_cosine = second.semi_angle.clone().cos();
     let denominator = &first_cosine * &second_sine + &first_sine * &second_cosine;
-    let first_slant = (&axial_offset * &second_sine / &denominator)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let second_slant = (&axial_offset * &first_sine / denominator)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let first_slant =
+        (&axial_offset * &second_sine / &denominator).map_err(GeometryError::Numeric)?;
+    let second_slant =
+        (&axial_offset * &first_sine / denominator).map_err(GeometryError::Numeric)?;
     let axial_height = &first_slant * &first_cosine;
     let radius = &first_slant * &first_sine;
     let center = first.apex.clone() + first.frame.z.clone() * axial_height;
@@ -8246,7 +8647,7 @@ fn orthonormal_frames_equal(
 }
 
 fn angular_iso_v_pcurve(
-    domain: ParameterDomain,
+    domain: ParameterRange,
     constant: Real,
     reversed: bool,
 ) -> SurfaceIntersectionPcurve {
@@ -8320,7 +8721,7 @@ fn intersect_meridian_circles(
     let distance = distance_squared
         .clone()
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let radius_sum = first_radius + second_radius;
     let radius_difference = match decided_order(compare_reals(
         first_radius,
@@ -8346,9 +8747,8 @@ fn intersect_meridian_circles(
 
     let along = ((first_radius * first_radius - second_radius * second_radius + &distance_squared)
         / (Real::from(2) * &distance))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let inverse_distance =
-        (Real::one() / distance).map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
+    let inverse_distance = (Real::one() / distance).map_err(GeometryError::Numeric)?;
     let unit_x = displacement_x * &inverse_distance;
     let unit_y = displacement_y * inverse_distance;
     let base_x = first_center_x + &unit_x * &along;
@@ -8362,9 +8762,7 @@ fn intersect_meridian_circles(
         Ordering::Less => Vec::new(),
         Ordering::Equal => vec![(base_x, base_y)],
         Ordering::Greater => {
-            let transverse = transverse_squared
-                .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let transverse = transverse_squared.sqrt().map_err(GeometryError::Numeric)?;
             vec![
                 (
                     &base_x + &unit_y * &transverse,
@@ -8512,9 +8910,7 @@ fn intersect_coaxial_cylinder_torus(
         Ordering::Less => return Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => vec![torus_height],
         Ordering::Greater => {
-            let height_offset = height_squared
-                .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let height_offset = height_squared.sqrt().map_err(GeometryError::Numeric)?;
             vec![&torus_height - &height_offset, torus_height + height_offset]
         }
     };
@@ -8619,9 +9015,7 @@ fn intersect_coaxial_cone_torus(
         Ordering::Less => return Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => vec![projected_center],
         Ordering::Greater => {
-            let offset = discriminant
-                .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let offset = discriminant.sqrt().map_err(GeometryError::Numeric)?;
             vec![&projected_center - &offset, projected_center + offset]
         }
     };
@@ -8837,7 +9231,7 @@ fn intersect_spheres(
     let distance = distance_squared
         .clone()
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let radius_sum = &first.radius + &second.radius;
     let radius_difference = match decided_order(compare_reals(
         &first.radius,
@@ -8865,9 +9259,8 @@ fn intersect_spheres(
     let center_distance = ((&first.radius * &first.radius - &second.radius * &second.radius
         + &distance_squared)
         / denominator)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let inverse_distance =
-        (Real::one() / distance).map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
+    let inverse_distance = (Real::one() / distance).map_err(GeometryError::Numeric)?;
     let normal = displacement * inverse_distance;
     let center = first.center.clone() + normal.clone() * &center_distance;
     let circle_radius_squared = &first.radius * &first.radius - &center_distance * &center_distance;
@@ -8877,11 +9270,11 @@ fn intersect_spheres(
         crate::STRICT_PREDICATES,
     ))? {
         Ordering::Less => Ok(SurfaceSurfaceIntersection::None),
-        Ordering::Equal => Ok(SurfaceSurfaceIntersection::Point(Box::new(center))),
+        Ordering::Equal => Ok(SurfaceSurfaceIntersection::Point(Box::new((center).into()))),
         Ordering::Greater => {
             let radius = circle_radius_squared
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             let first_axial = decided_order(compare_reals(
                 &normal.cross(&first.frame.z).norm_squared(),
                 &Real::zero(),
@@ -8907,13 +9300,13 @@ fn intersect_spheres(
                     let first_height = (&center - &first.center).dot(&first.frame.z);
                     let second_height = (&center - &second.center).dot(&second.frame.z);
                     let first_latitude = (first_height / &first.radius)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?
+                        .map_err(GeometryError::Numeric)?
                         .asin()
-                        .map_err(|_| GeometryError::ElementaryFunction)?;
+                        .map_err(GeometryError::Numeric)?;
                     let second_latitude = (second_height / &second.radius)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?
+                        .map_err(GeometryError::Numeric)?
                         .asin()
-                        .map_err(|_| GeometryError::ElementaryFunction)?;
+                        .map_err(GeometryError::Numeric)?;
                     let domain = curve.domain().clone();
                     let second_pcurve = if frames_equal {
                         SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), second_latitude)
@@ -8938,7 +9331,7 @@ fn intersect_spheres(
             }
             let (x, y) = normal
                 .orthonormal_basis_checked()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             Ok(SurfaceSurfaceIntersection::Circle(Curve3::circle_arc(
                 center,
                 x,
@@ -8954,7 +9347,7 @@ fn intersect_spheres(
 enum QuadraticRoots {
     None,
     All,
-    Isolated(Vec<(Real, IntersectionMultiplicity)>),
+    Isolated(Vec<(Real, CurveSurfaceContactKind)>),
 }
 
 fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> {
@@ -8971,10 +9364,10 @@ fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> 
                 Ok(QuadraticRoots::None)
             };
         }
-        let parameter = ((-c) / b).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let parameter = ((-c) / b).map_err(GeometryError::Numeric)?;
         return Ok(QuadraticRoots::Isolated(vec![(
             parameter,
-            IntersectionMultiplicity::Simple,
+            CurveSurfaceContactKind::Simple,
         )]));
     }
     let discriminant = &b * &b - Real::from(4) * &a * &c;
@@ -8985,117 +9378,22 @@ fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> 
     ))? {
         Ordering::Less => Ok(QuadraticRoots::None),
         Ordering::Equal => {
-            let parameter =
-                ((-b) / (Real::from(2) * a)).map_err(|_| GeometryError::ProjectiveDivision)?;
+            let parameter = ((-b) / (Real::from(2) * a)).map_err(GeometryError::Numeric)?;
             Ok(QuadraticRoots::Isolated(vec![(
                 parameter,
-                IntersectionMultiplicity::Tangent,
+                CurveSurfaceContactKind::Repeated,
             )]))
         }
         Ordering::Greater => {
-            let root = discriminant
-                .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let root = discriminant.sqrt().map_err(GeometryError::Numeric)?;
             let denominator = Real::from(2) * a;
-            let first =
-                ((-&b - &root) / &denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
-            let second =
-                ((-&b + root) / denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
+            let first = ((-&b - &root) / &denominator).map_err(GeometryError::Numeric)?;
+            let second = ((-&b + root) / denominator).map_err(GeometryError::Numeric)?;
             Ok(QuadraticRoots::Isolated(vec![
-                (first, IntersectionMultiplicity::Simple),
-                (second, IntersectionMultiplicity::Simple),
+                (first, CurveSurfaceContactKind::Simple),
+                (second, CurveSurfaceContactKind::Simple),
             ]))
         }
-    }
-}
-
-fn intersect_rational_bezier_plane(
-    curve: &Curve3,
-    bezier: &RationalBezier3,
-    plane: &PlaneSurface,
-) -> GeometryResult<CurveSurfaceIntersection> {
-    let normal = plane.u.cross(&plane.v);
-    let coefficients = bezier
-        .control_points
-        .iter()
-        .zip(&bezier.weights)
-        .map(|(point, weight)| weight * normal.dot(&(point - &plane.origin)))
-        .collect::<Vec<_>>();
-    let roots = match coefficients.as_slice() {
-        [start, end] => quadratic_roots(Real::zero(), end - start, start.clone())?,
-        [start, middle, end] => quadratic_roots(
-            start - Real::from(2) * middle + end,
-            Real::from(2) * (middle - start),
-            start.clone(),
-        )?,
-        _ => return Err(GeometryError::UnsupportedIntersection),
-    };
-    match roots {
-        QuadraticRoots::None => Ok(CurveSurfaceIntersection::None),
-        QuadraticRoots::All => Ok(CurveSurfaceIntersection::Contained),
-        QuadraticRoots::Isolated(roots) => isolated_line_parameters(curve, roots),
-    }
-}
-
-fn intersect_nurbs_plane(
-    nurbs: &NurbsCurve3,
-    plane: &PlaneSurface,
-) -> GeometryResult<CurveSurfaceIntersection> {
-    let segments = decompose_nurbs_into_bezier_segments(nurbs)?;
-    let segment_count = segments.len();
-    let mut points: Vec<CurveSurfacePoint> = Vec::new();
-    let mut contained_count = 0_usize;
-    for (segment, domain) in segments {
-        let CurveGeometry3::RationalBezier(bezier) = &segment.data.geometry else {
-            unreachable!("NURBS decomposition produces rational Bézier segments");
-        };
-        match intersect_rational_bezier_plane(&segment, bezier, plane)? {
-            CurveSurfaceIntersection::None => {}
-            CurveSurfaceIntersection::Points(local_points) => {
-                let span = domain.end() - domain.start();
-                for local in local_points {
-                    let parameter = domain.start() + &span * &local.parameter;
-                    let mut duplicate = None;
-                    for (index, existing) in points.iter().enumerate() {
-                        if decided_order(compare_reals(
-                            &existing.parameter,
-                            &parameter,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Equal
-                        {
-                            duplicate = Some(index);
-                            break;
-                        }
-                    }
-                    if let Some(index) = duplicate {
-                        if local.multiplicity == IntersectionMultiplicity::Tangent {
-                            points[index].multiplicity = IntersectionMultiplicity::Tangent;
-                        }
-                    } else {
-                        points.push(CurveSurfacePoint {
-                            parameter,
-                            point: local.point,
-                            multiplicity: local.multiplicity,
-                        });
-                    }
-                }
-            }
-            CurveSurfaceIntersection::Contained => contained_count += 1,
-            CurveSurfaceIntersection::Overlap(_) => {
-                unreachable!("rational Bézier/plane dispatch returns contained spans")
-            }
-        }
-    }
-    if contained_count == segment_count {
-        return Ok(CurveSurfaceIntersection::Contained);
-    }
-    if contained_count != 0 {
-        return Err(GeometryError::UnsupportedIntersection);
-    }
-    if points.is_empty() {
-        Ok(CurveSurfaceIntersection::None)
-    } else {
-        Ok(CurveSurfaceIntersection::Points(points))
     }
 }
 
@@ -9126,7 +9424,7 @@ fn intersect_line_cone(
         QuadraticRoots::None => Ok(CurveSurfaceIntersection::None),
         QuadraticRoots::Isolated(roots) => {
             let mut upper_roots = Vec::new();
-            for (parameter, multiplicity) in roots {
+            for (parameter, kind) in roots {
                 let axial = &axial_offset + &parameter * &axial_direction;
                 if decided_order(compare_reals(
                     &axial,
@@ -9134,7 +9432,7 @@ fn intersect_line_cone(
                     crate::STRICT_PREDICATES,
                 ))? != Ordering::Less
                 {
-                    upper_roots.push((parameter, multiplicity));
+                    upper_roots.push((parameter, kind));
                 }
             }
             isolated_line_parameters(curve, upper_roots)
@@ -9158,20 +9456,19 @@ fn intersect_line_cone(
             if start_order == Ordering::Less && end_order == Ordering::Less {
                 return Ok(CurveSurfaceIntersection::None);
             }
-            let boundary = ((-&axial_start) / &axial_direction)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let boundary = ((-&axial_start) / &axial_direction).map_err(GeometryError::Numeric)?;
             if start_order == Ordering::Equal || end_order == Ordering::Equal {
                 return isolated_line_parameters(
                     curve,
-                    [(boundary, IntersectionMultiplicity::Simple)],
+                    [(boundary, CurveSurfaceContactKind::Boundary)],
                 );
             }
             let domain = if start_order == Ordering::Greater {
-                ParameterDomain::new(curve.domain().start().clone(), boundary)?
+                ParameterDomain::new(curve.domain().represented_start()?.clone(), boundary)?
             } else {
-                ParameterDomain::new(boundary, curve.domain().end().clone())?
+                ParameterDomain::new(boundary, curve.domain().represented_end()?.clone())?
             };
-            Ok(CurveSurfaceIntersection::Overlap(domain))
+            Ok(CurveSurfaceIntersection::Overlap(domain.into()))
         }
     }
 }
@@ -9194,15 +9491,15 @@ fn quadratic_line_intersection(
 
 fn isolated_line_parameters(
     curve: &Curve3,
-    parameters: impl IntoIterator<Item = (Real, IntersectionMultiplicity)>,
+    parameters: impl IntoIterator<Item = (Real, CurveSurfaceContactKind)>,
 ) -> GeometryResult<CurveSurfaceIntersection> {
     let mut points = Vec::new();
-    for (parameter, multiplicity) in parameters {
-        if curve.domain().contains(&parameter)? {
+    for (parameter, kind) in parameters {
+        if curve.domain().contains_real(&parameter)? {
             points.push(CurveSurfacePoint {
-                point: curve.point_at(&parameter)?,
-                parameter,
-                multiplicity,
+                point: curve.evaluate_real(&parameter)?.into(),
+                parameter: parameter.into(),
+                kind,
             });
         }
     }
@@ -9221,166 +9518,6 @@ fn validate_control_net(control_points: &[Point3], weights: &[Real]) -> Geometry
         return Err(GeometryError::WeightCountMismatch);
     }
     Ok(())
-}
-
-fn locate_line_parameter(
-    curve: &Curve3,
-    line: &Line3,
-    point: &Point3,
-) -> GeometryResult<CurveParameterLocation> {
-    let direction = &line.end - &line.start;
-    let offset = point - &line.start;
-    let mut parameter = None;
-    let mut parameter_axis = None;
-    for axis in 0..3 {
-        match decided_order(compare_reals(
-            &direction.0[axis],
-            &Real::zero(),
-            crate::STRICT_PREDICATES,
-        ))? {
-            Ordering::Equal => {}
-            Ordering::Less | Ordering::Greater => {
-                parameter = Some(
-                    (&offset.0[axis] / &direction.0[axis])
-                        .map_err(|_| GeometryError::ProjectiveDivision)?,
-                );
-                parameter_axis = Some(axis);
-                break;
-            }
-        }
-    }
-    let parameter = parameter.ok_or(GeometryError::DegenerateLine)?;
-    if !curve.domain().contains(&parameter)? {
-        return Ok(CurveParameterLocation::None);
-    }
-    let parameter_axis = parameter_axis.expect("a line parameter has a source axis");
-    for axis in 0..3 {
-        if axis == parameter_axis {
-            continue;
-        }
-        let left = &offset.0[axis] * &direction.0[parameter_axis];
-        let right = &offset.0[parameter_axis] * &direction.0[axis];
-        if decided_order(compare_reals(&left, &right, crate::STRICT_PREDICATES))? != Ordering::Equal
-        {
-            return Ok(CurveParameterLocation::None);
-        }
-    }
-    Ok(CurveParameterLocation::Parameters(vec![parameter]))
-}
-
-fn locate_rational_bezier_parameters(
-    curve: &Curve3,
-    rational: &RationalBezier3,
-    point: &Point3,
-) -> GeometryResult<CurveParameterLocation> {
-    let mut projection = None;
-    for axes in [(0, 1), (0, 2), (1, 2)] {
-        if surface_projection_varies(&rational.control_points, axes)? {
-            projection = Some(axes);
-            break;
-        }
-    }
-    let Some((first_axis, second_axis)) = projection else {
-        return if points_equal(&rational.control_points[0], point)? {
-            Ok(CurveParameterLocation::EntireDomain)
-        } else {
-            Ok(CurveParameterLocation::None)
-        };
-    };
-    let controls = rational
-        .control_points
-        .iter()
-        .map(|control| {
-            CurvePoint2::new(
-                control_coordinate(control, first_axis).clone(),
-                control_coordinate(control, second_axis).clone(),
-            )
-        })
-        .collect();
-    let projected = Curve2::from(RationalBezier2::try_new(
-        controls,
-        rational.weights.clone(),
-    )?);
-    let query = CurvePoint2::new(
-        control_coordinate(point, first_axis).clone(),
-        control_coordinate(point, second_axis).clone(),
-    );
-    match projected.point_locations(&query.into())? {
-        CurvePointLocations2::EntireCurve => Err(GeometryError::UnsupportedParameterLocation),
-        CurvePointLocations2::Locations(locations) => {
-            let mut represented = Vec::new();
-            for location in locations {
-                // One unit-chart span: local and authored parameters agree.
-                let Some(parameter) = location.local_parameter().scalar().cloned() else {
-                    return Err(GeometryError::UnrepresentableParameter);
-                };
-                if points_equal(&curve.point_at(&parameter)?, point)? {
-                    represented.push(parameter);
-                }
-            }
-            if represented.is_empty() {
-                Ok(CurveParameterLocation::None)
-            } else {
-                Ok(CurveParameterLocation::Parameters(represented))
-            }
-        }
-    }
-}
-
-fn locate_nurbs_parameters(
-    nurbs: &NurbsCurve3,
-    point: &Point3,
-) -> GeometryResult<CurveParameterLocation> {
-    let mut all_controls_equal = true;
-    for control in &nurbs.control_points[1..] {
-        if !points_equal(control, &nurbs.control_points[0])? {
-            all_controls_equal = false;
-            break;
-        }
-    }
-    if all_controls_equal {
-        return if points_equal(&nurbs.control_points[0], point)? {
-            Ok(CurveParameterLocation::EntireDomain)
-        } else {
-            Ok(CurveParameterLocation::None)
-        };
-    }
-    let segments = decompose_nurbs_into_bezier_segments(nurbs)?;
-    let mut parameters = Vec::new();
-    for (segment, domain) in segments {
-        match segment.parameters_of(point)? {
-            CurveParameterLocation::None => {}
-            CurveParameterLocation::Parameters(local_parameters) => {
-                let span = domain.end() - domain.start();
-                for local in local_parameters {
-                    let global = domain.start() + &span * local;
-                    let mut duplicate = false;
-                    for existing in &parameters {
-                        if decided_order(compare_reals(
-                            existing,
-                            &global,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Equal
-                        {
-                            duplicate = true;
-                            break;
-                        }
-                    }
-                    if !duplicate {
-                        parameters.push(global);
-                    }
-                }
-            }
-            CurveParameterLocation::EntireDomain => {
-                return Err(GeometryError::UnsupportedParameterLocation);
-            }
-        }
-    }
-    if parameters.is_empty() {
-        Ok(CurveParameterLocation::None)
-    } else {
-        Ok(CurveParameterLocation::Parameters(parameters))
-    }
 }
 
 fn decompose_nurbs_into_bezier_segments(
@@ -9494,145 +9631,6 @@ fn restore_constant_coordinates(point: &mut Point3, coordinates: &[Option<Real>;
     }
 }
 
-fn locate_ellipse_arc_parameters(
-    curve: &Curve3,
-    arc: &EllipseArc3,
-    point: &Point3,
-) -> GeometryResult<CurveParameterLocation> {
-    let mut endpoints = Vec::new();
-    if point3_equal(&curve.start()?, point, crate::STRICT_PREDICATES).value() == Some(true) {
-        endpoints.push(curve.domain().start().clone());
-    }
-    if point3_equal(&curve.end()?, point, crate::STRICT_PREDICATES).value() == Some(true)
-        && (endpoints.is_empty()
-            || decided_order(compare_reals(
-                &endpoints[0],
-                curve.domain().end(),
-                crate::STRICT_PREDICATES,
-            ))? != Ordering::Equal)
-    {
-        endpoints.push(curve.domain().end().clone());
-    }
-    if !endpoints.is_empty() {
-        return Ok(CurveParameterLocation::Parameters(endpoints));
-    }
-
-    let relative = point - &arc.center;
-    let x_coordinate = arc.x.dot(&relative);
-    let y_coordinate = arc.y.dot(&relative);
-    let represented = arc.x.clone() * &x_coordinate + arc.y.clone() * &y_coordinate;
-    match compare_reals(
-        &(&relative - &represented).norm_squared(),
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ) {
-        PredicateOutcome::Decided {
-            value: Ordering::Equal,
-            ..
-        } => {}
-        PredicateOutcome::Decided { .. } => return Ok(CurveParameterLocation::None),
-        PredicateOutcome::Unknown { needed, stage } => {
-            return Err(GeometryError::PredicateUnresolved { needed, stage });
-        }
-    }
-    let normalized_x =
-        (x_coordinate / &arc.x_radius).map_err(|_| GeometryError::ProjectiveDivision)?;
-    let normalized_y =
-        (y_coordinate / &arc.y_radius).map_err(|_| GeometryError::ProjectiveDivision)?;
-    let normalized_radius_squared = &normalized_x * &normalized_x + &normalized_y * &normalized_y;
-    match compare_reals(
-        &normalized_radius_squared,
-        &Real::one(),
-        crate::STRICT_PREDICATES,
-    ) {
-        PredicateOutcome::Decided {
-            value: Ordering::Equal,
-            ..
-        } => {}
-        PredicateOutcome::Decided { .. } => return Ok(CurveParameterLocation::None),
-        PredicateOutcome::Unknown { needed, stage } => {
-            return Err(GeometryError::PredicateUnresolved { needed, stage });
-        }
-    }
-    let angle = match certified_atan2(normalized_y.clone(), normalized_x.clone()) {
-        Ok(angle) => angle,
-        Err(GeometryError::PredicateUnresolved { .. }) => {
-            atan2_replay_candidate(&normalized_y, &normalized_x)?
-        }
-        Err(error) => return Err(error),
-    };
-    let mut delta = if arc.direction < 0 {
-        &arc.angle_at_start - angle
-    } else {
-        angle - &arc.angle_at_start
-    };
-    if decided_order(compare_reals(
-        &delta,
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Less
-    {
-        delta += Real::from(2) * Real::pi();
-    }
-    let parameter = curve.domain().start() + delta;
-    if !curve.domain().contains(&parameter)? {
-        return Ok(CurveParameterLocation::None);
-    }
-    let mut parameters = vec![parameter];
-    if decided_order(compare_reals(
-        &parameters[0],
-        curve.domain().start(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Equal
-        && decided_order(compare_reals(
-            &(curve.domain().end() - curve.domain().start()),
-            &Real::tau(),
-            crate::STRICT_PREDICATES,
-        ))? == Ordering::Equal
-    {
-        parameters.push(curve.domain().end().clone());
-    }
-    Ok(CurveParameterLocation::Parameters(parameters))
-}
-
-fn atan2_replay_candidate(y: &Real, x: &Real) -> GeometryResult<Real> {
-    let (Some(y_approx), Some(x_approx)) = (y.to_f64_lossy(), x.to_f64_lossy()) else {
-        return Err(GeometryError::PredicateUnresolved {
-            needed: hyperlimit::RefinementNeed::RealRefinement,
-            stage: hyperlimit::Escalation::Undecided,
-        });
-    };
-    if !y_approx.is_finite() || !x_approx.is_finite() {
-        return Err(GeometryError::PredicateUnresolved {
-            needed: hyperlimit::RefinementNeed::RealRefinement,
-            stage: hyperlimit::Escalation::Undecided,
-        });
-    }
-    if x_approx == 0.0 {
-        return if y_approx > 0.0 {
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
-        } else if y_approx < 0.0 {
-            (-Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
-        } else {
-            Err(GeometryError::PredicateUnresolved {
-                needed: hyperlimit::RefinementNeed::RealRefinement,
-                stage: hyperlimit::Escalation::Undecided,
-            })
-        };
-    }
-    let principal = (y / x)
-        .map_err(|_| GeometryError::ProjectiveDivision)?
-        .atan()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
-    Ok(if x_approx > 0.0 {
-        principal
-    } else if y_approx >= 0.0 {
-        principal + Real::pi()
-    } else {
-        principal - Real::pi()
-    })
-}
-
 fn points_equal(left: &Point3, right: &Point3) -> GeometryResult<bool> {
     match point3_equal(left, right, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value, .. } => Ok(value),
@@ -9724,6 +9722,20 @@ fn validate_clamped_knot_multiplicities(degree: usize, knots: &[Real]) -> Geomet
             return Err(GeometryError::UnclampedNurbs);
         }
     }
+    // An endpoint run must stop after degree + 1 entries. Checking only the
+    // interior runs misses extra knots attached to either clamped endpoint.
+    if endpoint_count < knots.len() - endpoint_count {
+        for (interior, endpoint) in [
+            (&knots[endpoint_count], &knots[0]),
+            (&knots[last - endpoint_count], &knots[last]),
+        ] {
+            if decided_order(compare_reals(interior, endpoint, crate::STRICT_PREDICATES))?
+                == Ordering::Equal
+            {
+                return Err(GeometryError::InvalidKnotMultiplicity);
+            }
+        }
+    }
     let mut run = 1_usize;
     for index in endpoint_count..(knots.len() - endpoint_count) {
         if decided_order(compare_reals(
@@ -9759,24 +9771,24 @@ pub(crate) fn certified_atan2(y: Real, x: Real) -> GeometryResult<Real> {
         (Ordering::Equal, Ordering::Equal | Ordering::Greater) => Ok(Real::zero()),
         (Ordering::Equal, Ordering::Less) => Ok(Real::pi()),
         (Ordering::Greater, Ordering::Equal) => {
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
+            (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)
         }
         (Ordering::Less, Ordering::Equal) => {
-            (-Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
+            (-Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)
         }
         (_, Ordering::Greater) => (y / x)
-            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .map_err(GeometryError::Numeric)?
             .atan()
-            .map_err(|_| GeometryError::ElementaryFunction),
+            .map_err(GeometryError::Numeric),
         (Ordering::Greater, Ordering::Less) => Ok((y / x)
-            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .map_err(GeometryError::Numeric)?
             .atan()
-            .map_err(|_| GeometryError::ElementaryFunction)?
+            .map_err(GeometryError::Numeric)?
             + Real::pi()),
         (Ordering::Less, Ordering::Less) => Ok((y / x)
-            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .map_err(GeometryError::Numeric)?
             .atan()
-            .map_err(|_| GeometryError::ElementaryFunction)?
+            .map_err(GeometryError::Numeric)?
             - Real::pi()),
     }
 }
@@ -9881,7 +9893,13 @@ fn split_ellipse_arc(
     let wrap = |geometry| match kind {
         Curve3Kind::CircleArc => CurveGeometry3::CircleArc(geometry),
         Curve3Kind::EllipseArc => CurveGeometry3::EllipseArc(geometry),
-        Curve3Kind::Line | Curve3Kind::RationalBezier | Curve3Kind::Nurbs => {
+        Curve3Kind::Line
+        | Curve3Kind::RationalBezier
+        | Curve3Kind::Nurbs
+        | Curve3Kind::AffineImage
+        | Curve3Kind::Rotation
+        | Curve3Kind::Translation
+        | Curve3Kind::PlanarImage => {
             unreachable!("ellipse split kind")
         }
     };
@@ -9924,39 +9942,41 @@ fn centered_cube_bounds(center: &Point3, radius: &Real) -> Aabb {
 }
 
 fn revolution_bounds(surface: &RevolutionSurface) -> GeometryResult<Aabb> {
-    let bounds = surface.profile.bounds()?;
+    rotation_bounds(
+        &surface.profile.bounds()?,
+        &surface.axis_origin,
+        &surface.axis,
+    )
+}
+
+fn rotation_bounds(bounds: &Aabb, axis_origin: &Point3, axis: &Vector3) -> GeometryResult<Aabb> {
     let xs = [&bounds.mins.x, &bounds.maxs.x];
     let ys = [&bounds.mins.y, &bounds.maxs.y];
     let zs = [&bounds.mins.z, &bounds.maxs.z];
     let first_offset = Vector3::from_xyz(
-        xs[0] - &surface.axis_origin.x,
-        ys[0] - &surface.axis_origin.y,
-        zs[0] - &surface.axis_origin.z,
+        xs[0] - &axis_origin.x,
+        ys[0] - &axis_origin.y,
+        zs[0] - &axis_origin.z,
     );
-    let first_axial = surface.axis.dot(&first_offset);
-    let first_radial = first_offset - surface.axis.clone() * first_axial.clone();
+    let first_axial = axis.dot(&first_offset);
+    let first_radial = first_offset - axis.clone() * first_axial.clone();
     let mut axial_min = first_axial.clone();
     let mut axial_max = first_axial;
     let mut radius_squared = first_radial.norm_squared();
     for x in xs {
         for y in ys {
             for z in zs {
-                let offset = Vector3::from_xyz(
-                    x - &surface.axis_origin.x,
-                    y - &surface.axis_origin.y,
-                    z - &surface.axis_origin.z,
-                );
-                let axial = surface.axis.dot(&offset);
+                let offset =
+                    Vector3::from_xyz(x - &axis_origin.x, y - &axis_origin.y, z - &axis_origin.z);
+                let axial = axis.dot(&offset);
                 update_bound_min(&mut axial_min, &axial)?;
                 update_bound_max(&mut axial_max, &axial)?;
-                let radial = offset - surface.axis.clone() * axial;
+                let radial = offset - axis.clone() * axial;
                 update_bound_max(&mut radius_squared, &radial.norm_squared())?;
             }
         }
     }
-    let radius = radius_squared
-        .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let radius = radius_squared.sqrt().map_err(GeometryError::Numeric)?;
     let coordinate_bounds =
         |origin: &Real, axis_component: &Real| -> GeometryResult<(Real, Real)> {
             let first_axial = axis_component * &axial_min;
@@ -9973,16 +9993,16 @@ fn revolution_bounds(surface: &RevolutionSurface) -> GeometryResult<Aabb> {
             };
             let radial_factor = (Real::one() - axis_component * axis_component)
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             let radial_extent = &radius * radial_factor;
             Ok((
                 origin + axial_low - &radial_extent,
                 origin + axial_high + radial_extent,
             ))
         };
-    let (min_x, max_x) = coordinate_bounds(&surface.axis_origin.x, &surface.axis.0[0])?;
-    let (min_y, max_y) = coordinate_bounds(&surface.axis_origin.y, &surface.axis.0[1])?;
-    let (min_z, max_z) = coordinate_bounds(&surface.axis_origin.z, &surface.axis.0[2])?;
+    let (min_x, max_x) = coordinate_bounds(&axis_origin.x, &axis.0[0])?;
+    let (min_y, max_y) = coordinate_bounds(&axis_origin.y, &axis.0[1])?;
+    let (min_z, max_z) = coordinate_bounds(&axis_origin.z, &axis.0[2])?;
     Ok(Aabb::new(
         Point3::new(min_x, min_y, min_z),
         Point3::new(max_x, max_y, max_z),
@@ -10096,10 +10116,10 @@ fn evaluate_tensor_bezier_partials(
         .ok_or(GeometryError::InvalidControlNetShape)?;
     let v_derivative = evaluate_homogeneous_bezier_derivative_value(&u_values, &parameter.y)
         .ok_or(GeometryError::InvalidControlNetShape)?;
-    Ok(SurfacePartials {
-        u: project_homogeneous_derivative(&value, &u_derivative)?,
-        v: project_homogeneous_derivative(&value, &v_derivative)?,
-    })
+    Ok(SurfacePartials::from_coordinates(
+        project_homogeneous_derivative(&value, &u_derivative)?,
+        project_homogeneous_derivative(&value, &v_derivative)?,
+    ))
 }
 
 fn evaluate_tensor_nurbs(
@@ -10118,10 +10138,10 @@ fn evaluate_tensor_nurbs_partials(
 ) -> GeometryResult<SurfacePartials> {
     let (value, u_derivative, v_derivative) =
         evaluate_tensor_nurbs_homogeneous(surface, domain, parameter)?;
-    Ok(SurfacePartials {
-        u: project_homogeneous_derivative(&value, &u_derivative)?,
-        v: project_homogeneous_derivative(&value, &v_derivative)?,
-    })
+    Ok(SurfacePartials::from_coordinates(
+        project_homogeneous_derivative(&value, &u_derivative)?,
+        project_homogeneous_derivative(&value, &v_derivative)?,
+    ))
 }
 
 fn evaluate_tensor_nurbs_homogeneous(
@@ -10140,14 +10160,14 @@ fn evaluate_tensor_nurbs_homogeneous(
     let v_count = controls.len();
     let u_span = find_span(
         &parameter.x,
-        u_domain,
+        &u_domain.represented_domain()?,
         surface.u_degree,
         u_count,
         &surface.u_knots,
     )?;
     let v_span = find_span(
         &parameter.y,
-        v_domain,
+        &v_domain.represented_domain()?,
         surface.v_degree,
         v_count,
         &surface.v_knots,
@@ -10237,9 +10257,9 @@ fn evaluate_rational_bezier_derivative(
     parameter: &Real,
     order: usize,
 ) -> GeometryResult<Vector3> {
+    let mut jets = derivative_jet_buffer(order)?;
     let mut derivative_controls = curve.homogeneous_controls().to_vec();
     let degree = derivative_controls.len() - 1;
-    let mut jets = Vec::with_capacity(order + 1);
     jets.push(
         evaluate_homogeneous_bezier_value(&derivative_controls, parameter)
             .ok_or(GeometryError::TooFewControlPoints)?,
@@ -10343,22 +10363,22 @@ fn evaluate_homogeneous_de_boor_jets(
         .iter()
         .cloned()
         .map(|value| {
-            let mut jets = vec![zero.clone(); order + 1];
-            jets[0] = value;
-            jets
+            let mut jets = derivative_jet_buffer(order)?;
+            jets.push(value);
+            jets.extend(std::iter::repeat_n(zero.clone(), order));
+            Ok(jets)
         })
-        .collect::<Vec<_>>();
+        .collect::<GeometryResult<Vec<_>>>()?;
     for stage in 1..=degree {
         for local in (stage..=degree).rev() {
             let knot_index = span - degree + local;
             let denominator = &knots[knot_index + degree - stage + 1] - &knots[knot_index];
             let alpha = ((parameter - &knots[knot_index]) / &denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
-            let alpha_derivative =
-                (Real::one() / &denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
-            let left = level[local - 1].clone();
-            let right = level[local].clone();
-            let mut jets = Vec::with_capacity(order + 1);
+                .map_err(GeometryError::Numeric)?;
+            let alpha_derivative = (Real::one() / &denominator).map_err(GeometryError::Numeric)?;
+            let left = &level[local - 1];
+            let right = &level[local];
+            let mut jets = derivative_jet_buffer(order)?;
             jets.push(left[0].lerp(&right[0], &alpha));
             for derivative_order in 1..=order {
                 let base = left[derivative_order].lerp(&right[derivative_order], &alpha);
@@ -10375,7 +10395,23 @@ fn evaluate_homogeneous_de_boor_jets(
             level[local] = jets;
         }
     }
-    Ok(level[degree].clone())
+    Ok(level.pop().expect("a degree-d span has d+1 jet buffers"))
+}
+
+/// Reserves one complete derivative buffer before evaluating its entries.
+/// Address-space overflow and allocator refusal are distinct typed failures.
+/// This does not bound scalar allocations or total work across all buffers.
+fn derivative_jet_buffer<T>(order: usize) -> GeometryResult<Vec<T>> {
+    let count = order
+        .checked_add(1)
+        .ok_or(GeometryError::Numeric(hyperreal::Problem::OutOfRange))?;
+    std::alloc::Layout::array::<T>(count)
+        .map_err(|_| GeometryError::Numeric(hyperreal::Problem::OutOfRange))?;
+    let mut values = Vec::new();
+    values
+        .try_reserve_exact(count)
+        .map_err(|_| GeometryError::Numeric(hyperreal::Problem::Exhausted))?;
+    Ok(values)
 }
 
 fn homogeneous_zero() -> HomogeneousPoint3 {
@@ -10413,7 +10449,7 @@ fn project_homogeneous_derivative_order(
     jets: &[HomogeneousPoint3],
     order: usize,
 ) -> GeometryResult<Vector3> {
-    let mut derivatives = Vec::with_capacity(order + 1);
+    let mut derivatives = derivative_jet_buffer(order)?;
     derivatives.push(divide_vector_by_real(
         Vector3::from_xyz(jets[0].x.clone(), jets[0].y.clone(), jets[0].z.clone()),
         &jets[0].w,
@@ -10437,9 +10473,9 @@ fn project_homogeneous_derivative_order(
 
 fn divide_vector_by_real(vector: Vector3, denominator: &Real) -> GeometryResult<Vector3> {
     Ok(Vector3::from_xyz(
-        (vector.0[0].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
-        (vector.0[1].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
-        (vector.0[2].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
+        (vector.0[0].clone() / denominator).map_err(GeometryError::Numeric)?,
+        (vector.0[1].clone() / denominator).map_err(GeometryError::Numeric)?,
+        (vector.0[2].clone() / denominator).map_err(GeometryError::Numeric)?,
     ))
 }
 
@@ -10456,8 +10492,8 @@ fn normalized_greville_coordinates(
             let sum = knots[index + 1..=index + degree]
                 .iter()
                 .fold(Real::zero(), |sum, knot| sum + knot);
-            let greville = (sum / &degree_scalar).map_err(|_| GeometryError::ProjectiveDivision)?;
-            ((greville - domain_start) / domain_span).map_err(|_| GeometryError::ProjectiveDivision)
+            let greville = (sum / &degree_scalar).map_err(GeometryError::Numeric)?;
+            ((greville - domain_start) / domain_span).map_err(GeometryError::Numeric)
         })
         .collect()
 }
@@ -10467,7 +10503,7 @@ fn binomial_real(n: usize, k: usize) -> GeometryResult<Real> {
     let mut result = Real::one();
     for index in 1..=k {
         result = (result * Real::from((n + 1 - index) as u64) / Real::from(index as u64))
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
     }
     Ok(result)
 }
@@ -10479,11 +10515,11 @@ fn project_homogeneous_derivative(
     let denominator = &value.w * &value.w;
     Ok(Vector3::from_xyz(
         ((&derivative.x * &value.w - &value.x * &derivative.w) / &denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
         ((&derivative.y * &value.w - &value.y * &derivative.w) / &denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
         ((&derivative.z * &value.w - &value.z * &derivative.w) / denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
     ))
 }
 
@@ -10789,8 +10825,8 @@ fn insert_nurbs_knot_once(
             controls[index - 1].clone()
         } else {
             let denominator = &knots[index + degree] - &knots[index];
-            let alpha = ((parameter - &knots[index]) / denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let alpha =
+                ((parameter - &knots[index]) / denominator).map_err(GeometryError::Numeric)?;
             controls[index - 1].lerp(&controls[index], &alpha)
         };
         next.push(value);
@@ -10814,6 +10850,17 @@ fn nurbs_from_homogeneous(
         weights.push(control.w);
     }
     Curve3::nurbs(degree, points, weights, knots)
+}
+
+#[cfg(test)]
+#[path = "geometry/periodic_tests.rs"]
+mod periodic_tests;
+
+/// Existing coordinate fixtures must keep their represented view after migration.
+#[cfg(test)]
+pub(crate) fn represented_test_surface_parameter(point: hypercurve::CurvePoint2) -> Point2 {
+    let coordinates = point.coordinates().expect("represented pcurve fixture");
+    Point2::new(coordinates.x().clone(), coordinates.y().clone())
 }
 
 #[cfg(test)]
@@ -10842,12 +10889,576 @@ mod tests {
     }
 
     #[test]
+    fn analytic_area_vectors_preserve_native_domains_and_orientation() {
+        for (a, b) in [(r(2), r(2)), (r(2), r(3))] {
+            let curve = if a == b {
+                Curve3::circle_arc(
+                    p(7, -4, 2),
+                    Vector3::x(),
+                    Vector3::y(),
+                    a.clone(),
+                    r(0),
+                    Real::tau(),
+                )
+            } else {
+                Curve3::ellipse_arc(
+                    p(7, -4, 2),
+                    Vector3::x(),
+                    Vector3::y(),
+                    a.clone(),
+                    b.clone(),
+                    r(0),
+                    Real::tau(),
+                )
+            }
+            .unwrap();
+            for (start, end) in [
+                (r(0), Real::tau()),
+                (Real::pi() * q(1, 6), Real::pi() * q(1, 3)),
+            ] {
+                let expected = Vector3::z() * (&a * &b * (&end - &start));
+                let area = curve
+                    .analytic_area_vector(&start, &end, &p(7, -4, 2))
+                    .unwrap()
+                    .unwrap();
+                assert_eq!(
+                    point3_equal(
+                        &Point3::from(area),
+                        &Point3::from(expected.clone()),
+                        crate::STRICT_PREDICATES
+                    )
+                    .value(),
+                    Some(true)
+                );
+                let reversed = curve
+                    .analytic_area_vector(&end, &start, &p(7, -4, 2))
+                    .unwrap()
+                    .unwrap();
+                assert_eq!(
+                    point3_equal(
+                        &Point3::from(reversed),
+                        &Point3::from(-expected),
+                        crate::STRICT_PREDICATES
+                    )
+                    .value(),
+                    Some(true)
+                );
+            }
+            assert_eq!(
+                curve
+                    .analytic_area_vector(&r(-1), &r(0), &p(0, 0, 0))
+                    .unwrap_err(),
+                GeometryError::ParameterOutsideDomain
+            );
+        }
+        let line = Curve3::line(p(1, 0, 0), p(0, 2, 0)).unwrap();
+        assert_eq!(
+            point3_equal(
+                &Point3::from(
+                    line.analytic_area_vector(&q(1, 4), &q(3, 4), &p(0, 0, 0))
+                        .unwrap()
+                        .unwrap()
+                ),
+                &p(0, 0, 1),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn circular_clipping_preserves_angular_parameter_correspondence() {
+        let plane =
+            Surface::plane(p(0, -20, -20), Vector3::y() * r(40), Vector3::z() * r(40)).unwrap();
+        let spatial = Curve3::circle_arc(
+            p(0, 5, 0),
+            Vector3::y(),
+            Vector3::z(),
+            r(2),
+            Real::zero(),
+            Real::pi() * q(1, 2),
+        )
+        .unwrap();
+        let trace = SurfaceIntersectionCurve::on_plane(spatial, &plane).unwrap();
+        let uv = Point2::new((r(25) + r(3).sqrt().unwrap()) * q(1, 40), q(21, 40));
+        for (trace, expected) in [
+            (trace.clone(), Real::pi() * q(1, 6)),
+            (trace.reversed().unwrap(), Real::pi() * q(1, 3)),
+        ] {
+            let carrier = trace
+                .first_pcurve()
+                .clipping_carriers()
+                .unwrap()
+                .unwrap()
+                .pop()
+                .unwrap();
+            assert_eq!(carrier.curve.family(), CurveFamily2::CircularArc);
+            let local = Pcurve::new(carrier.curve.clone())
+                .parameters_at_point(&uv)
+                .unwrap();
+            assert_eq!(local.len(), 1);
+            let spatial_parameter = carrier
+                .spatial_parameter_at(&local[0].curve_parameter())
+                .unwrap()
+                .try_real()
+                .unwrap()
+                .clone();
+            assert_eq!(
+                hyperlimit::compare_reals(&spatial_parameter, &expected, crate::STRICT_PREDICATES)
+                    .value(),
+                Some(Ordering::Equal),
+            );
+            assert_eq!(
+                hyperlimit::point2_equal(
+                    &trace
+                        .first_pcurve()
+                        .point_at(&Real::clone(&spatial_parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                    &uv,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
+                Some(true),
+            );
+        }
+    }
+
+    #[test]
+    fn circular_clipping_preserves_distinct_periodic_endpoint_parameters() {
+        let plane = Surface::plane(p(0, 0, 0), Vector3::x(), Vector3::y()).unwrap();
+        let trace = SurfaceIntersectionCurve::on_plane(
+            Curve3::circle_arc(
+                p(0, 0, 0),
+                Vector3::x(),
+                Vector3::y(),
+                r(2),
+                Real::zero(),
+                Real::tau(),
+            )
+            .unwrap(),
+            &plane,
+        )
+        .unwrap();
+        for trace in [trace.clone(), trace.reversed().unwrap()] {
+            let carrier = trace
+                .first_pcurve()
+                .clipping_carriers()
+                .unwrap()
+                .unwrap()
+                .pop()
+                .unwrap();
+            for (local, expected) in [(Real::zero(), Real::zero()), (Real::one(), Real::tau())] {
+                assert_eq!(
+                    hyperlimit::compare_reals(
+                        &carrier
+                            .spatial_parameter_at(&local.clone().into())
+                            .unwrap()
+                            .try_real()
+                            .unwrap()
+                            .clone(),
+                        &expected,
+                        crate::STRICT_PREDICATES
+                    )
+                    .value(),
+                    Some(Ordering::Equal)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn retained_clipping_preserves_restricted_reversed_domain() {
+        let source = SurfaceIntersectionPcurve::retained_curve(Curve2::from(
+            LineSeg2::try_new(CurvePoint2::new(r(0), r(0)), CurvePoint2::new(r(4), r(0))).unwrap(),
+        ))
+        .unwrap();
+        let restricted = source
+            .subcurve(&q(1, 4).into(), &q(3, 4).into())
+            .unwrap()
+            .reversed()
+            .unwrap();
+        let carrier = restricted
+            .clipping_carriers()
+            .unwrap()
+            .unwrap()
+            .pop()
+            .unwrap();
+        for (local, expected_parameter, expected_x) in
+            [(r(0), q(1, 4), r(3)), (r(1), q(3, 4), r(1))]
+        {
+            let spatial_parameter = carrier
+                .spatial_parameter_at(&local.clone().into())
+                .unwrap()
+                .try_real()
+                .unwrap()
+                .clone();
+            assert_eq!(
+                hyperlimit::compare_reals(
+                    &spatial_parameter,
+                    &expected_parameter,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+            let point = carrier.curve.point_at(&local.into()).unwrap();
+            assert_eq!(
+                hyperlimit::compare_reals(
+                    point.coordinates().unwrap().x(),
+                    &expected_x,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+        }
+    }
+
+    #[test]
+    fn linear_section_clipping_preserves_restricted_reversed_domain() {
+        let profile = Curve3::line(p(0, 0, 0), p(4, 0, 0)).unwrap();
+        let plane = Surface::plane(p(0, 0, 1), Vector3::x(), Vector3::y()).unwrap();
+        let SurfaceGeometry::Plane(plane) = &plane.data.geometry else {
+            unreachable!()
+        };
+        let source = SurfaceIntersectionPcurve::linear_plane_section(
+            profile,
+            plane,
+            r(1),
+            TensorAxis::U,
+            r(1),
+            r(0),
+        );
+        let restricted = source
+            .subcurve(&q(1, 4).into(), &q(3, 4).into())
+            .unwrap()
+            .reversed()
+            .unwrap();
+        let carrier = restricted
+            .clipping_carriers()
+            .unwrap()
+            .unwrap()
+            .pop()
+            .unwrap();
+        for (local, expected_parameter, expected_x) in
+            [(r(0), q(1, 4), q(3, 4)), (r(1), q(3, 4), q(1, 4))]
+        {
+            let spatial_parameter = carrier
+                .spatial_parameter_at(&local.clone().into())
+                .unwrap()
+                .try_real()
+                .unwrap()
+                .clone();
+            assert_eq!(
+                hyperlimit::compare_reals(
+                    &spatial_parameter,
+                    &expected_parameter,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+            let point = carrier.curve.point_at(&local.into()).unwrap();
+            assert_eq!(
+                hyperlimit::compare_reals(
+                    point.coordinates().unwrap().x(),
+                    &expected_x,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+        }
+    }
+
+    #[test]
+    fn circular_pcurve_contact_parameter_replays_exact_point() {
+        let point = Point2::new(r(3), r(4));
+        let curve = Pcurve::new(Curve2::from(
+            CircularArc2::try_from_center(
+                CurvePoint2::new(r(5), r(0)),
+                CurvePoint2::new(r(0), r(5)),
+                CurvePoint2::new(r(0), r(0)),
+                false,
+            )
+            .unwrap(),
+        ));
+        for curve in [curve.clone(), curve.reversed().unwrap()] {
+            let parameters = curve.parameters_at_point(&point).unwrap();
+            assert_eq!(parameters.len(), 1);
+            let replay = curve
+                .evaluate_real(parameters[0].try_real().unwrap())
+                .unwrap();
+            assert_eq!(
+                hyperlimit::point2_equal(&point, &replay, crate::STRICT_PREDICATES).value(),
+                Some(true)
+            );
+            let near = Point2::new(r(3), r(4) + q(1, 1_000_000_000_000));
+            assert!(curve.parameters_at_point(&near).unwrap().is_empty());
+        }
+        let full = Pcurve::new(Curve2::from(
+            CircularArc2::try_from_center(
+                CurvePoint2::new(r(5), r(0)),
+                CurvePoint2::new(r(5), r(0)),
+                CurvePoint2::new(r(0), r(0)),
+                false,
+            )
+            .unwrap(),
+        ));
+        let parameters = full.parameters_at_point(&Point2::new(r(5), r(0))).unwrap();
+        assert_eq!(parameters.len(), 2);
+        assert_eq!(parameters[0].try_real(), Some(&Real::zero()));
+        assert_eq!(parameters[1].try_real(), Some(&Real::one()));
+    }
+
+    #[test]
+    fn line_pcurve_preimages_preserve_finite_domains_and_reversal() {
+        for (dx, dy) in [(6, 8), (0, 8), (6, 0)] {
+            let start = Point2::new(r(1), r(2));
+            let point = |t: Real| Point2::new(&start.x + r(dx) * &t, &start.y + r(dy) * t);
+            let end = point(Real::one());
+            let pcurve = Pcurve::new(Curve2::from(
+                LineSeg2::try_new(
+                    CurvePoint2::new(start.x.clone(), start.y.clone()),
+                    CurvePoint2::new(end.x, end.y),
+                )
+                .unwrap(),
+            ));
+            for (curve, reversed) in [(pcurve.clone(), false), (pcurve.reversed().unwrap(), true)] {
+                for t in [Real::zero(), q(1, 4), q(1, 2), Real::one()] {
+                    let expected = point(t.clone());
+                    let parameters = curve.parameters_at_point(&expected).unwrap();
+                    assert_eq!(parameters.len(), 1);
+                    let actual = parameters[0].try_real().unwrap();
+                    assert_eq!(
+                        compare_reals(
+                            actual,
+                            &if reversed { Real::one() - &t } else { t },
+                            crate::STRICT_PREDICATES,
+                        )
+                        .value(),
+                        Some(Ordering::Equal)
+                    );
+                    assert_eq!(
+                        hyperlimit::point2_equal(
+                            &expected,
+                            &curve.evaluate_real(actual).unwrap(),
+                            crate::STRICT_PREDICATES,
+                        )
+                        .value(),
+                        Some(true)
+                    );
+                    let tiny = q(1, 1_000_000_000_000);
+                    let near = Point2::new(expected.x - r(dy) * &tiny, expected.y + r(dx) * tiny);
+                    assert!(curve.parameters_at_point(&near).unwrap().is_empty());
+                }
+                for t in [q(-1, 2), q(3, 2)] {
+                    assert!(curve.parameters_at_point(&point(t)).unwrap().is_empty());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn circular_boundary_replays_spatial_image_despite_cached_certificate() {
+        use crate::topology::{BuildError, TopologyEditError};
+        let (model, _) = crate::construction::cylinder(r(5), r(6)).unwrap();
+        let (face, record) = model.faces().next().unwrap();
+        let original = model.to_json().unwrap();
+        let valid = SurfaceIntersectionCurve::on_plane(
+            Curve3::circle_arc(
+                p(0, 0, 0),
+                Vector3::x(),
+                Vector3::y(),
+                r(5),
+                Real::zero(),
+                Real::tau(),
+            )
+            .unwrap(),
+            model.surface(record.surface()).unwrap(),
+        )
+        .unwrap();
+        let wrong = Curve3::circle_arc(
+            p(1, 0, 0),
+            Vector3::x(),
+            Vector3::y(),
+            r(4),
+            Real::zero(),
+            Real::tau(),
+        )
+        .unwrap();
+        for (a, b) in [
+            (valid.curve().start().unwrap(), wrong.start().unwrap()),
+            (valid.curve().end().unwrap(), wrong.end().unwrap()),
+        ] {
+            assert_eq!(
+                point3_equal(&a, &b, crate::STRICT_PREDICATES).value(),
+                Some(true)
+            );
+        }
+        // The private constructor marks both images certified. The boundary
+        // no-op must still replay complete image agreement on the actual face.
+        let forged = SurfaceIntersectionCurve::new(
+            wrong,
+            valid.first_pcurve.clone(),
+            valid.second_pcurve.clone(),
+        );
+        assert!(matches!(
+            model.split_face_by_surface_curves(face, &[forged], SurfaceIntersectionOperand::First),
+            Err(TopologyEditError::Build(BuildError::EdgeUseSupportMismatch))
+        ));
+        assert_eq!(model.to_json().unwrap(), original);
+        let (unchanged, _) = model
+            .split_face_by_surface_curves(face, &[valid], SurfaceIntersectionOperand::First)
+            .unwrap();
+        assert_eq!(unchanged.to_json().unwrap(), original);
+    }
+
+    #[test]
+    fn common_analytic_chart_proof_distinguishes_image_and_parameterization() {
+        let torus = |x, y, center| Surface::torus(center, x, y, Vector3::z(), r(5), r(2)).unwrap();
+        let first = torus(Vector3::x(), Vector3::y(), p(0, 0, 0));
+        let same = torus(Vector3::x(), Vector3::y(), p(0, 0, 0));
+        assert!(
+            first
+                .same_periodic_analytic_parameterization(&same)
+                .unwrap()
+        );
+        let rotated = torus(Vector3::y(), -Vector3::x(), p(0, 0, 0));
+        assert!(matches!(
+            first.intersect_surface(&rotated).unwrap(),
+            SurfaceSurfaceIntersection::Coincident
+        ));
+        assert!(
+            !first
+                .same_periodic_analytic_parameterization(&rotated)
+                .unwrap()
+        );
+        let near = torus(
+            Vector3::x(),
+            Vector3::y(),
+            Point3::new(q(1, 1_000_000_000_000), r(0), r(0)),
+        );
+        assert!(
+            !first
+                .same_periodic_analytic_parameterization(&near)
+                .unwrap()
+        );
+        let angle = q(1, 2).atan().unwrap();
+        let cone = |x, y| Surface::cone(p(0, 0, 0), x, y, Vector3::z(), angle.clone()).unwrap();
+        let first = cone(Vector3::x(), Vector3::y());
+        assert!(
+            first
+                .same_periodic_analytic_parameterization(&cone(Vector3::x(), Vector3::y()))
+                .unwrap()
+        );
+        assert!(
+            !first
+                .same_periodic_analytic_parameterization(&cone(Vector3::y(), -Vector3::x()))
+                .unwrap()
+        );
+    }
+
+    #[test]
+    fn homogeneous_projection_retains_numeric_failure_causes() {
+        use hyperreal::Problem;
+        use std::error::Error;
+
+        // This positive difference is below the scalar zero-test budget. Its
+        // opaque exponentials prevent structural affine cancellation. It must
+        // stay distinct from a denominator proven to be exactly zero.
+        let tiny: Real = "1e-2000".parse().unwrap();
+        let first = (Real::pi() + &tiny + &tiny).exp().unwrap();
+        let second = (Real::pi() + tiny).exp().unwrap();
+        let unresolved = first - second;
+
+        for (denominator, expected) in [
+            (Real::zero(), Problem::DivideByZero),
+            (unresolved, Problem::UnknownZero),
+        ] {
+            let point = HomogeneousPoint3 {
+                x: r(1),
+                y: r(2),
+                z: r(3),
+                w: denominator.clone(),
+            };
+            let error = point.project().unwrap_err();
+            assert_eq!(error, GeometryError::Numeric(expected));
+            assert_eq!(
+                error.source().unwrap().downcast_ref::<Problem>(),
+                Some(&expected)
+            );
+            assert_eq!(
+                divide_vector_by_real(Vector3::from_xyz(r(1), r(2), r(3)), &denominator),
+                Err(GeometryError::Numeric(expected))
+            );
+        }
+    }
+
+    #[test]
+    fn pcurve_evaluation_is_strict_inside_an_approximate_scope() {
+        let curve = Pcurve::new(Curve2::from(
+            hypercurve::LineSeg2::try_new(
+                CurvePoint2::new(r(0), r(0)),
+                CurvePoint2::new(r(1), r(0)),
+            )
+            .unwrap(),
+        ));
+        let tiny: Real = "1e-2000".parse().unwrap();
+        let first = (Real::pi() + &tiny + &tiny).exp().unwrap();
+        let second = (Real::pi() + tiny).exp().unwrap();
+        // Strict comparison cannot certify this positive distance outside
+        // the endpoint. A surrounding approximation policy must not admit it.
+        let parameter = Real::one() + (first - second);
+        let strict_error = curve
+            .point_at(&crate::Parameter::from_real(parameter.clone()))
+            .unwrap_err();
+        assert!(matches!(
+            strict_error,
+            GeometryError::PlanarCurve(hypercurve::ExactCurveError::Blocked(_))
+        ));
+        let attempted = hypercurve::provisional(|| {
+            curve.point_at(&crate::Parameter::from_real(parameter.clone()))
+        });
+        assert_eq!(attempted.certainty(), hypercurve::CurveCertainty::Certified);
+        assert_eq!(attempted.into_unverified().unwrap_err(), strict_error);
+
+        // A later direct Hypercurve call still sees its caller's approximate
+        // policy. BREP must restore that scope instead of disabling it globally.
+        let restored = hypercurve::provisional(|| {
+            assert_eq!(
+                curve
+                    .point_at(&crate::Parameter::from_real(parameter.clone()))
+                    .unwrap_err(),
+                strict_error
+            );
+            curve.curve().point_at(&parameter.clone().into())
+        });
+        assert_eq!(
+            restored.certainty(),
+            hypercurve::CurveCertainty::Approximate512Consumed
+        );
+        assert!(restored.into_unverified().is_ok());
+
+        // A warmed approximate result and explicit display tolerances cannot
+        // become authority for the next BREP query either.
+        let preview = hypercurve::CurvePreviewOptions::try_approximate_512(1e-6, 0.0).unwrap();
+        let previewed = hypercurve::provisional(|| {
+            preview.evaluate(|| curve.point_at(&crate::Parameter::from_real(parameter.clone())))
+        });
+        assert_eq!(previewed.certainty(), hypercurve::CurveCertainty::Certified);
+        assert_eq!(previewed.into_unverified().unwrap_err(), strict_error);
+    }
+
+    #[test]
     fn line_uses_real_domain_and_exact_evaluation() {
         let curve = Curve3::line(p(0, 0, 0), p(2, 4, 6)).unwrap();
         assert_eq!(curve.kind(), Curve3Kind::Line);
-        assert_points_equal(&curve.point_at(&q(1, 2)).unwrap(), &p(1, 2, 3));
+        assert_points_equal(&curve.evaluate_real(&q(1, 2)).unwrap(), &p(1, 2, 3));
         assert_eq!(
-            curve.point_at(&r(2)),
+            curve.evaluate_real(&r(2)),
             Err(GeometryError::ParameterOutsideDomain)
         );
     }
@@ -10856,23 +11467,54 @@ mod tests {
     fn rational_bezier_evaluates_homogeneously() {
         let curve =
             Curve3::rational_bezier(vec![p(0, 0, 0), p(2, 4, 6)], vec![r(1), r(1)]).unwrap();
-        assert_points_equal(&curve.point_at(&q(1, 2)).unwrap(), &p(1, 2, 3));
-        let derivative = curve.derivative_at(&q(1, 3), 1).unwrap();
-        assert_eq!(derivative.vector().0, [r(2), r(4), r(6)]);
+        assert_points_equal(&curve.evaluate_real(&q(1, 2)).unwrap(), &p(1, 2, 3));
+        let derivative = curve.derivative_at(&q(1, 3).into(), 1).unwrap();
+        assert_eq!(derivative.try_coordinates().unwrap().0, [r(2), r(4), r(6)]);
         let bounds = curve.bounds().unwrap();
         assert_points_equal(&bounds.mins, &p(0, 0, 0));
         assert_points_equal(&bounds.maxs, &p(2, 4, 6));
     }
 
     #[test]
+    fn derivative_order_capacity_overflow_is_typed() {
+        let controls = vec![p(0, 0, 0), p(2, 4, 6)];
+        let weights = vec![r(1), r(2)];
+        let bezier = Curve3::rational_bezier(controls.clone(), weights.clone()).unwrap();
+        let nurbs = Curve3::nurbs(1, controls, weights, vec![r(0), r(0), r(1), r(1)]).unwrap();
+        for curve in [bezier, nurbs] {
+            for order in [usize::MAX, usize::MAX - 1] {
+                assert_eq!(
+                    curve.derivative_at(&q(1, 2).into(), order).unwrap_err(),
+                    GeometryError::Numeric(hyperreal::Problem::OutOfRange)
+                );
+            }
+        }
+        // Closed-form families need no jet buffer. A large order remains
+        // valid when its answer can be obtained directly.
+        let line = Curve3::line(p(0, 0, 0), p(2, 4, 6)).unwrap();
+        assert_eq!(
+            line.derivative_at(&q(1, 2).into(), usize::MAX)
+                .unwrap()
+                .try_coordinates()
+                .unwrap()
+                .0,
+            [r(0), r(0), r(0)]
+        );
+    }
+
+    #[test]
     fn every_curve_family_exposes_exact_positive_order_derivatives() {
         let line = Curve3::line(p(0, 0, 0), p(2, 4, 6)).unwrap();
         assert_eq!(
-            line.derivative_at(&q(1, 2), 2).unwrap().vector().0,
+            line.derivative_at(&q(1, 2).into(), 2)
+                .unwrap()
+                .try_coordinates()
+                .unwrap()
+                .0,
             Vector3::zero().0
         );
         assert_eq!(
-            line.derivative_at(&q(1, 2), 0).unwrap_err(),
+            line.derivative_at(&q(1, 2).into(), 0).unwrap_err(),
             GeometryError::InvalidDerivativeOrder
         );
 
@@ -10884,9 +11526,10 @@ mod tests {
         assert_points_equal(
             &Point3::from(
                 polynomial
-                    .derivative_at(&q(1, 2), 1)
+                    .derivative_at(&q(1, 2).into(), 1)
                     .unwrap()
-                    .vector()
+                    .try_coordinates()
+                    .unwrap()
                     .clone(),
             ),
             &p(4, 0, 0),
@@ -10894,15 +11537,21 @@ mod tests {
         assert_points_equal(
             &Point3::from(
                 polynomial
-                    .derivative_at(&q(1, 2), 2)
+                    .derivative_at(&q(1, 2).into(), 2)
                     .unwrap()
-                    .vector()
+                    .try_coordinates()
+                    .unwrap()
                     .clone(),
             ),
             &p(4, 0, 0),
         );
         assert_eq!(
-            polynomial.derivative_at(&q(1, 2), 3).unwrap().vector().0,
+            polynomial
+                .derivative_at(&q(1, 2).into(), 3)
+                .unwrap()
+                .try_coordinates()
+                .unwrap()
+                .0,
             Vector3::zero().0
         );
         let rational = Curve3::rational_bezier(
@@ -10911,7 +11560,14 @@ mod tests {
         )
         .unwrap();
         assert_points_equal(
-            &Point3::from(rational.derivative_at(&r(0), 2).unwrap().vector().clone()),
+            &Point3::from(
+                rational
+                    .derivative_at(&r(0).into(), 2)
+                    .unwrap()
+                    .try_coordinates()
+                    .unwrap()
+                    .clone(),
+            ),
             &p(-20, 0, 0),
         );
 
@@ -10923,11 +11579,23 @@ mod tests {
         )
         .unwrap();
         assert_points_equal(
-            &Point3::from(nurbs.derivative_at(&q(1, 2), 2).unwrap().vector().clone()),
+            &Point3::from(
+                nurbs
+                    .derivative_at(&q(1, 2).into(), 2)
+                    .unwrap()
+                    .try_coordinates()
+                    .unwrap()
+                    .clone(),
+            ),
             &p(4, 0, 0),
         );
         assert_eq!(
-            nurbs.derivative_at(&q(1, 2), 3).unwrap().vector().0,
+            nurbs
+                .derivative_at(&q(1, 2).into(), 3)
+                .unwrap()
+                .try_coordinates()
+                .unwrap()
+                .0,
             Vector3::zero().0
         );
 
@@ -10950,9 +11618,10 @@ mod tests {
             assert_points_equal(
                 &Point3::from(
                     circle
-                        .derivative_at(&Real::zero(), order)
+                        .derivative_at(&Real::zero().into(), order)
                         .unwrap()
-                        .vector()
+                        .try_coordinates()
+                        .unwrap()
                         .clone(),
                 ),
                 &expected,
@@ -10969,11 +11638,16 @@ mod tests {
             vec![r(0), r(0), r(1), r(2), r(2)],
         )
         .unwrap();
-        assert_eq!(curve.domain().start(), &r(0));
-        assert_eq!(curve.domain().end(), &r(2));
-        assert_points_equal(&curve.point_at(&q(3, 2)).unwrap(), &p(3, 0, 0));
+        assert_eq!(curve.domain().represented_start().unwrap(), &r(0));
+        assert_eq!(curve.domain().represented_end().unwrap(), &r(2));
+        assert_points_equal(&curve.evaluate_real(&q(3, 2)).unwrap(), &p(3, 0, 0));
         assert_eq!(
-            curve.derivative_at(&q(3, 2), 1).unwrap().vector().0,
+            curve
+                .derivative_at(&q(3, 2).into(), 1)
+                .unwrap()
+                .try_coordinates()
+                .unwrap()
+                .0,
             [r(2), r(0), r(0)]
         );
     }
@@ -10982,15 +11656,17 @@ mod tests {
     fn reversal_split_and_line_parameter_location_are_exact() {
         let line = Curve3::line(p(1, 2, 3), p(5, 10, 15)).unwrap();
         let parameter = q(1, 4);
-        let point = line.point_at(&parameter).unwrap();
+        let point = line.evaluate_real(&parameter).unwrap();
         let CurveParameterLocation::Parameters(parameters) = line.parameters_of(&point).unwrap()
         else {
             panic!("line point must have one parameter");
         };
         assert_eq!(parameters.len(), 1);
         assert_eq!(
-            compare_reals(&parameters[0], &parameter, crate::STRICT_PREDICATES).value(),
-            Some(Ordering::Equal)
+            parameters[0]
+                .compare(&Parameter::from_real(parameter.clone()))
+                .unwrap(),
+            Ordering::Equal
         );
         assert!(matches!(
             line.parameters_of(&p(2, 5, 6)).unwrap(),
@@ -10998,8 +11674,8 @@ mod tests {
         ));
         let reversed = line.reversed().unwrap();
         assert_points_equal(
-            &line.point_at(&parameter).unwrap(),
-            &reversed.point_at(&q(3, 4)).unwrap(),
+            &line.evaluate_real(&parameter).unwrap(),
+            &reversed.evaluate_real(&q(3, 4)).unwrap(),
         );
 
         let curve = Curve3::rational_bezier(
@@ -11010,19 +11686,25 @@ mod tests {
         let (left, right) = curve.split_at(&q(1, 2)).unwrap();
         assert_points_equal(&left.end().unwrap(), &right.start().unwrap());
         assert_points_equal(
-            &left.point_at(&q(1, 2)).unwrap(),
-            &curve.point_at(&q(1, 4)).unwrap(),
+            &left.evaluate_real(&q(1, 2)).unwrap(),
+            &curve.evaluate_real(&q(1, 4)).unwrap(),
         );
         assert_points_equal(
-            &right.point_at(&q(1, 2)).unwrap(),
-            &curve.point_at(&q(3, 4)).unwrap(),
+            &right.evaluate_real(&q(1, 2)).unwrap(),
+            &curve.evaluate_real(&q(3, 4)).unwrap(),
         );
         let middle = curve.subcurve(&q(1, 4), &q(3, 4)).unwrap();
-        assert_points_equal(&middle.start().unwrap(), &curve.point_at(&q(1, 4)).unwrap());
-        assert_points_equal(&middle.end().unwrap(), &curve.point_at(&q(3, 4)).unwrap());
         assert_points_equal(
-            &middle.point_at(&q(1, 2)).unwrap(),
-            &curve.point_at(&q(1, 2)).unwrap(),
+            &middle.start().unwrap(),
+            &curve.evaluate_real(&q(1, 4)).unwrap(),
+        );
+        assert_points_equal(
+            &middle.end().unwrap(),
+            &curve.evaluate_real(&q(3, 4)).unwrap(),
+        );
+        assert_points_equal(
+            &middle.evaluate_real(&q(1, 2)).unwrap(),
+            &curve.evaluate_real(&q(1, 2)).unwrap(),
         );
 
         let nurbs = Curve3::nurbs(
@@ -11037,19 +11719,19 @@ mod tests {
         assert!(right.shares_parameterization(&nurbs));
         assert_points_equal(&left.end().unwrap(), &right.start().unwrap());
         assert_points_equal(
-            &left.point_at(&q(1, 2)).unwrap(),
-            &nurbs.point_at(&q(1, 2)).unwrap(),
+            &left.evaluate_real(&q(1, 2)).unwrap(),
+            &nurbs.evaluate_real(&q(1, 2)).unwrap(),
         );
         assert_points_equal(
-            &right.point_at(&q(3, 2)).unwrap(),
-            &nurbs.point_at(&q(3, 2)).unwrap(),
+            &right.evaluate_real(&q(3, 2)).unwrap(),
+            &nurbs.evaluate_real(&q(3, 2)).unwrap(),
         );
         let middle = nurbs.subcurve(&q(1, 2), &q(3, 2)).unwrap();
-        assert_eq!(middle.domain().start(), &q(1, 2));
-        assert_eq!(middle.domain().end(), &q(3, 2));
+        assert_eq!(middle.domain().represented_start().unwrap(), &q(1, 2));
+        assert_eq!(middle.domain().represented_end().unwrap(), &q(3, 2));
         assert_points_equal(
-            &middle.point_at(&r(1)).unwrap(),
-            &nurbs.point_at(&r(1)).unwrap(),
+            &middle.evaluate_real(&r(1)).unwrap(),
+            &nurbs.evaluate_real(&r(1)).unwrap(),
         );
     }
 
@@ -11060,7 +11742,7 @@ mod tests {
             vec![r(1), r(1), r(1)],
         )
         .unwrap();
-        let query = rational.point_at(&q(1, 2)).unwrap();
+        let query = rational.evaluate_real(&q(1, 2)).unwrap();
         let CurveParameterLocation::Parameters(parameters) =
             rational.parameters_of(&query).unwrap()
         else {
@@ -11068,8 +11750,10 @@ mod tests {
         };
         assert_eq!(parameters.len(), 1);
         assert_eq!(
-            compare_reals(&parameters[0], &q(1, 2), crate::STRICT_PREDICATES).value(),
-            Some(Ordering::Equal)
+            parameters[0]
+                .compare(&Parameter::from_real(q(1, 2)))
+                .unwrap(),
+            Ordering::Equal
         );
         assert!(matches!(
             rational.parameters_of(&p(8, 8, 8)).unwrap(),
@@ -11087,11 +11771,23 @@ mod tests {
             vec![r(1), r(1), r(1)],
         )
         .unwrap();
+        let CurveParameterLocation::Parameters(parameters) = algebraic
+            .parameters_of(&Point3::new(q(1, 2), r(0), r(0)))
+            .unwrap()
+        else {
+            panic!("the selected positive square root must survive the query");
+        };
+        assert_eq!(parameters.len(), 1);
+        assert!(parameters[0].try_real().is_none());
         assert_eq!(
-            algebraic
-                .parameters_of(&Point3::new(q(1, 2), r(0), r(0)))
-                .unwrap_err(),
-            GeometryError::UnrepresentableParameter
+            parameters[0]
+                .compare(&Parameter::from_real(q(1, 2)))
+                .unwrap(),
+            Ordering::Greater
+        );
+        assert_eq!(
+            parameters[0].compare(&Parameter::from_real(r(1))).unwrap(),
+            Ordering::Less
         );
 
         let full_circle = Curve3::circle_arc(
@@ -11110,15 +11806,17 @@ mod tests {
         };
         assert_eq!(seam.len(), 2);
         let parameter = (Real::pi() / r(3)).unwrap();
-        let point = full_circle.point_at(&parameter).unwrap();
+        let point = full_circle.evaluate_real(&parameter).unwrap();
         let CurveParameterLocation::Parameters(parameters) =
             full_circle.parameters_of(&point).unwrap()
         else {
             panic!("arc point must retain its exact angular parameter");
         };
         assert_eq!(
-            compare_reals(&parameters[0], &parameter, crate::STRICT_PREDICATES).value(),
-            Some(Ordering::Equal)
+            parameters[0]
+                .compare(&Parameter::from_real(parameter.clone()))
+                .unwrap(),
+            Ordering::Equal
         );
 
         let nurbs = Curve3::nurbs(
@@ -11129,15 +11827,17 @@ mod tests {
         )
         .unwrap();
         let parameter = q(3, 2);
-        let point = nurbs.point_at(&parameter).unwrap();
+        let point = nurbs.evaluate_real(&parameter).unwrap();
         let CurveParameterLocation::Parameters(parameters) = nurbs.parameters_of(&point).unwrap()
         else {
             panic!("NURBS point must retain its global parameter");
         };
         assert_eq!(parameters.len(), 1);
         assert_eq!(
-            compare_reals(&parameters[0], &parameter, crate::STRICT_PREDICATES).value(),
-            Some(Ordering::Equal)
+            parameters[0]
+                .compare(&Parameter::from_real(parameter.clone()))
+                .unwrap(),
+            Ordering::Equal
         );
     }
 
@@ -11145,10 +11845,12 @@ mod tests {
     fn parameterized_plane_retains_authored_frame() {
         let surface = Surface::plane(p(1, 2, 3), Vector3::x(), Vector3::z()).unwrap();
         let parameter = Point2::new(r(4), r(5));
-        assert_points_equal(&surface.point_at(&parameter).unwrap(), &p(5, 2, 8));
-        let partials = surface.partials_at(&parameter).unwrap();
-        assert_eq!(partials.u().0, Vector3::x().0);
-        assert_eq!(partials.v().0, Vector3::z().0);
+        assert_points_equal(&surface.evaluate_real(&parameter).unwrap(), &p(5, 2, 8));
+        let partials = surface
+            .partials_at(&hypercurve::Point2::new(parameter.x.clone(), parameter.y.clone()).into())
+            .unwrap();
+        assert_eq!(partials.u().try_coordinates().unwrap().0, Vector3::x().0);
+        assert_eq!(partials.v().try_coordinates().unwrap().0, Vector3::z().0);
     }
 
     #[test]
@@ -11161,12 +11863,20 @@ mod tests {
         assert_eq!(surface.kind(), SurfaceKind::RationalBezier);
         let middle = Point2::new(q(1, 2), q(1, 2));
         assert_points_equal(
-            &surface.point_at(&middle).unwrap(),
+            &surface.evaluate_real(&middle).unwrap(),
             &Point3::new(r(1), r(2), q(1, 2)),
         );
-        let partials = surface.partials_at(&middle).unwrap();
-        assert_points_equal(&Point3::from(partials.u().clone()), &p(2, 0, 1));
-        assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 4, 1));
+        let partials = surface
+            .partials_at(&hypercurve::Point2::new(middle.x.clone(), middle.y.clone()).into())
+            .unwrap();
+        assert_points_equal(
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
+            &p(2, 0, 1),
+        );
+        assert_points_equal(
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
+            &p(0, 4, 1),
+        );
         let SurfaceBounds::Bounded(bounds) = surface.bounds().unwrap() else {
             panic!("finite spline surface must be bounded");
         };
@@ -11183,10 +11893,18 @@ mod tests {
         .unwrap();
         assert_eq!(extrusion.kind(), SurfaceKind::Extrusion);
         let parameter = Point2::new(q(1, 2), r(2));
-        assert_points_equal(&extrusion.point_at(&parameter).unwrap(), &p(1, 6, 0));
-        let partials = extrusion.partials_at(&parameter).unwrap();
-        assert_points_equal(&Point3::from(partials.u().clone()), &p(2, 0, 0));
-        assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 3, 0));
+        assert_points_equal(&extrusion.evaluate_real(&parameter).unwrap(), &p(1, 6, 0));
+        let partials = extrusion
+            .partials_at(&hypercurve::Point2::new(parameter.x.clone(), parameter.y.clone()).into())
+            .unwrap();
+        assert_points_equal(
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
+            &p(2, 0, 0),
+        );
+        assert_points_equal(
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
+            &p(0, 3, 0),
+        );
         assert!(matches!(
             extrusion.bounds().unwrap(),
             SurfaceBounds::Unbounded
@@ -11201,10 +11919,18 @@ mod tests {
         assert_eq!(revolution.kind(), SurfaceKind::Revolution);
         let half_pi = (Real::pi() / r(2)).unwrap();
         let parameter = Point2::new(half_pi, q(1, 2));
-        assert_points_equal(&revolution.point_at(&parameter).unwrap(), &p(0, 2, 0));
-        let partials = revolution.partials_at(&parameter).unwrap();
-        assert_points_equal(&Point3::from(partials.u().clone()), &p(-2, 0, 0));
-        assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 0, 2));
+        assert_points_equal(&revolution.evaluate_real(&parameter).unwrap(), &p(0, 2, 0));
+        let partials = revolution
+            .partials_at(&hypercurve::Point2::new(parameter.x.clone(), parameter.y.clone()).into())
+            .unwrap();
+        assert_points_equal(
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
+            &p(-2, 0, 0),
+        );
+        assert_points_equal(
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
+            &p(0, 0, 2),
+        );
         let SurfaceBounds::Bounded(bounds) = revolution.bounds().unwrap() else {
             panic!("finite revolution must have conservative bounds");
         };
@@ -11254,16 +11980,24 @@ mod tests {
             CurveFamily2::Line
         );
         for parameter in [Real::zero(), (Real::pi() / r(2)).unwrap()] {
-            let spatial = section.curve().point_at(&parameter).unwrap();
-            let plane_parameter = section.first_pcurve().point_at(&parameter).unwrap();
-            let revolution_parameter = section.second_pcurve().point_at(&parameter).unwrap();
+            let spatial = section.curve().evaluate_real(&parameter).unwrap();
+            let plane_parameter = section
+                .first_pcurve()
+                .point_at(&Real::clone(&parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap();
+            let revolution_parameter = section
+                .second_pcurve()
+                .point_at(&Real::clone(&parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap();
             assert_eq!(
                 compare_reals(&revolution_parameter.y, &q(1, 2), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
-            assert_points_equal(&plane.point_at(&plane_parameter).unwrap(), &spatial);
+            assert_points_equal(&plane.evaluate_real(&plane_parameter).unwrap(), &spatial);
             assert_points_equal(
-                &revolution.point_at(&revolution_parameter).unwrap(),
+                &revolution.evaluate_real(&revolution_parameter).unwrap(),
                 &spatial,
             );
         }
@@ -11273,16 +12007,28 @@ mod tests {
             panic!("operand reversal must retain the revolution section");
         };
         let parameter = (Real::pi() / r(2)).unwrap();
-        let spatial = swapped.curve().point_at(&parameter).unwrap();
+        let spatial = swapped.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &revolution
-                .point_at(&swapped.first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
         assert_points_equal(
             &plane
-                .point_at(&swapped.second_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped
+                        .second_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
@@ -11321,7 +12067,12 @@ mod tests {
         else {
             panic!("a transverse revolution-axis contact must retain its singular point");
         };
-        assert_points_equal(&point, &Point3::origin());
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
 
         let coincident_profile = Surface::revolution(
             Curve3::line(p(2, 0, 0), p(4, 0, 0)).unwrap(),
@@ -11362,9 +12113,17 @@ mod tests {
         };
         assert_points_equal(&section.curve().start().unwrap(), &p(3, 0, 1));
         for parameter in [Real::zero(), (Real::pi() / r(2)).unwrap()] {
-            let spatial = section.curve().point_at(&parameter).unwrap();
-            let first_parameter = section.first_pcurve().point_at(&parameter).unwrap();
-            let second_parameter = section.second_pcurve().point_at(&parameter).unwrap();
+            let spatial = section.curve().evaluate_real(&parameter).unwrap();
+            let first_parameter = section
+                .first_pcurve()
+                .point_at(&Real::clone(&parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap();
+            let second_parameter = section
+                .second_pcurve()
+                .point_at(&Real::clone(&parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap();
             assert_eq!(
                 compare_reals(&first_parameter.y, &r(1), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
@@ -11373,8 +12132,8 @@ mod tests {
                 compare_reals(&second_parameter.y, &q(1, 2), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
-            assert_points_equal(&first.point_at(&first_parameter).unwrap(), &spatial);
-            assert_points_equal(&second.point_at(&second_parameter).unwrap(), &spatial);
+            assert_points_equal(&first.evaluate_real(&first_parameter).unwrap(), &spatial);
+            assert_points_equal(&second.evaluate_real(&second_parameter).unwrap(), &spatial);
         }
 
         let SurfaceSurfaceIntersection::Curve(swapped) = second.intersect_surface(&first).unwrap()
@@ -11382,16 +12141,28 @@ mod tests {
             panic!("operand reversal must preserve the retained spline latitude");
         };
         let parameter = (Real::pi() / r(2)).unwrap();
-        let spatial = swapped.curve().point_at(&parameter).unwrap();
+        let spatial = swapped.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &second
-                .point_at(&swapped.first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
         assert_points_equal(
             &first
-                .point_at(&swapped.second_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped
+                        .second_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
@@ -11416,7 +12187,8 @@ mod tests {
         let parameter = (Real::pi() / r(2)).unwrap();
         let mirrored_parameter = mirrored_section
             .second_pcurve()
-            .point_at(&parameter)
+            .point_at(&Real::clone(&parameter).into())
+            .map(crate::geometry::represented_test_surface_parameter)
             .unwrap();
         assert_eq!(
             compare_reals(
@@ -11428,8 +12200,8 @@ mod tests {
             Some(Ordering::Equal)
         );
         assert_points_equal(
-            &mirrored.point_at(&mirrored_parameter).unwrap(),
-            &mirrored_section.curve().point_at(&parameter).unwrap(),
+            &mirrored.evaluate_real(&mirrored_parameter).unwrap(),
+            &mirrored_section.curve().evaluate_real(&parameter).unwrap(),
         );
 
         let rotated = Surface::revolution(
@@ -11545,25 +12317,37 @@ mod tests {
             panic!("NURBS v domain must be closed");
         };
         assert_eq!(
-            compare_reals(u_domain.end(), &r(2), crate::STRICT_PREDICATES).value(),
+            compare_reals(
+                u_domain.represented_end().unwrap(),
+                &r(2),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(v_domain.start(), &r(1), crate::STRICT_PREDICATES).value(),
+            compare_reals(
+                v_domain.represented_start().unwrap(),
+                &r(1),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let middle = Point2::new(r(1), r(2));
         assert_points_equal(
-            &surface.point_at(&middle).unwrap(),
+            &surface.evaluate_real(&middle).unwrap(),
             &Point3::new(r(1), r(2), q(1, 2)),
         );
-        let partials = surface.partials_at(&middle).unwrap();
+        let partials = surface
+            .partials_at(&hypercurve::Point2::new(middle.x.clone(), middle.y.clone()).into())
+            .unwrap();
         assert_points_equal(
-            &Point3::from(partials.u().clone()),
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
             &Point3::new(r(1), r(0), q(1, 2)),
         );
         assert_points_equal(
-            &Point3::from(partials.v().clone()),
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
             &Point3::new(r(0), r(2), q(1, 2)),
         );
     }
@@ -11577,31 +12361,51 @@ mod tests {
         .unwrap();
         let (u_left, u_right) = bezier.split_u_at(&q(1, 2)).unwrap();
         assert_points_equal(
-            &u_left.point_at(&Point2::new(q(1, 2), q(3, 4))).unwrap(),
-            &bezier.point_at(&Point2::new(q(1, 4), q(3, 4))).unwrap(),
+            &u_left
+                .evaluate_real(&Point2::new(q(1, 2), q(3, 4)))
+                .unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(1, 4), q(3, 4)))
+                .unwrap(),
         );
         assert_points_equal(
-            &u_right.point_at(&Point2::new(q(1, 2), q(3, 4))).unwrap(),
-            &bezier.point_at(&Point2::new(q(3, 4), q(3, 4))).unwrap(),
+            &u_right
+                .evaluate_real(&Point2::new(q(1, 2), q(3, 4)))
+                .unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(3, 4), q(3, 4)))
+                .unwrap(),
         );
         let (v_left, v_right) = bezier.split_v_at(&q(1, 2)).unwrap();
         assert_points_equal(
-            &v_left.point_at(&Point2::new(q(3, 4), q(1, 2))).unwrap(),
-            &bezier.point_at(&Point2::new(q(3, 4), q(1, 4))).unwrap(),
+            &v_left
+                .evaluate_real(&Point2::new(q(3, 4), q(1, 2)))
+                .unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(3, 4), q(1, 4)))
+                .unwrap(),
         );
         assert_points_equal(
-            &v_right.point_at(&Point2::new(q(3, 4), q(1, 2))).unwrap(),
-            &bezier.point_at(&Point2::new(q(3, 4), q(3, 4))).unwrap(),
+            &v_right
+                .evaluate_real(&Point2::new(q(3, 4), q(1, 2)))
+                .unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(3, 4), q(3, 4)))
+                .unwrap(),
         );
         let iso_u = bezier.iso_curve(SurfaceIsoAxis::U, &q(3, 4)).unwrap();
         assert_points_equal(
-            &iso_u.point_at(&q(1, 3)).unwrap(),
-            &bezier.point_at(&Point2::new(q(1, 3), q(3, 4))).unwrap(),
+            &iso_u.evaluate_real(&q(1, 3)).unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(1, 3), q(3, 4)))
+                .unwrap(),
         );
         let iso_v = bezier.iso_curve(SurfaceIsoAxis::V, &q(1, 3)).unwrap();
         assert_points_equal(
-            &iso_v.point_at(&q(3, 4)).unwrap(),
-            &bezier.point_at(&Point2::new(q(1, 3), q(3, 4))).unwrap(),
+            &iso_v.evaluate_real(&q(3, 4)).unwrap(),
+            &bezier
+                .evaluate_real(&Point2::new(q(1, 3), q(3, 4)))
+                .unwrap(),
         );
 
         let nurbs = Surface::nurbs(
@@ -11625,29 +12429,33 @@ mod tests {
         for (surface, parameter) in [(&u_left, q(1, 4)), (&u_right, q(3, 4))] {
             assert_points_equal(
                 &surface
-                    .point_at(&Point2::new(parameter.clone(), q(2, 3)))
+                    .evaluate_real(&Point2::new(parameter.clone(), q(2, 3)))
                     .unwrap(),
-                &nurbs.point_at(&Point2::new(parameter, q(2, 3))).unwrap(),
+                &nurbs
+                    .evaluate_real(&Point2::new(parameter, q(2, 3)))
+                    .unwrap(),
             );
         }
         let (v_left, v_right) = nurbs.split_v_at(&q(1, 2)).unwrap();
         for (surface, parameter) in [(&v_left, q(1, 4)), (&v_right, q(3, 4))] {
             assert_points_equal(
                 &surface
-                    .point_at(&Point2::new(q(1, 3), parameter.clone()))
+                    .evaluate_real(&Point2::new(q(1, 3), parameter.clone()))
                     .unwrap(),
-                &nurbs.point_at(&Point2::new(q(1, 3), parameter)).unwrap(),
+                &nurbs
+                    .evaluate_real(&Point2::new(q(1, 3), parameter))
+                    .unwrap(),
             );
         }
         let iso_u = nurbs.iso_curve(SurfaceIsoAxis::U, &q(2, 3)).unwrap();
         assert_points_equal(
-            &iso_u.point_at(&q(1, 3)).unwrap(),
-            &nurbs.point_at(&Point2::new(q(1, 3), q(2, 3))).unwrap(),
+            &iso_u.evaluate_real(&q(1, 3)).unwrap(),
+            &nurbs.evaluate_real(&Point2::new(q(1, 3), q(2, 3))).unwrap(),
         );
         let iso_v = nurbs.iso_curve(SurfaceIsoAxis::V, &q(1, 3)).unwrap();
         assert_points_equal(
-            &iso_v.point_at(&q(2, 3)).unwrap(),
-            &nurbs.point_at(&Point2::new(q(1, 3), q(2, 3))).unwrap(),
+            &iso_v.evaluate_real(&q(2, 3)).unwrap(),
+            &nurbs.evaluate_real(&Point2::new(q(1, 3), q(2, 3))).unwrap(),
         );
     }
 
@@ -11693,15 +12501,19 @@ mod tests {
         )
         .unwrap();
         let translated = surface
-            .transformed(&Matrix4::affine_translation([r(3), r(-2), r(5)]), false)
+            .transformed(
+                &TransformMetric::new(&Matrix4::affine_translation([r(3), r(-2), r(5)])),
+                false,
+            )
             .unwrap();
         let parameter = Point2::new(q(1, 4), q(3, 4));
-        let expected = surface.point_at(&parameter).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
-        assert_points_equal(&translated.point_at(&parameter).unwrap(), &expected);
+        let expected =
+            surface.evaluate_real(&parameter).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
+        assert_points_equal(&translated.evaluate_real(&parameter).unwrap(), &expected);
 
         let reflected = surface
             .transformed(
-                &Matrix4::from_row_major([
+                &TransformMetric::new(&Matrix4::from_row_major([
                     r(-1),
                     r(0),
                     r(0),
@@ -11718,17 +12530,19 @@ mod tests {
                     r(0),
                     r(0),
                     r(1),
-                ]),
+                ])),
                 true,
             )
             .unwrap();
-        let mirrored_original = surface.point_at(&Point2::new(q(3, 4), q(3, 4))).unwrap();
+        let mirrored_original = surface
+            .evaluate_real(&Point2::new(q(3, 4), q(3, 4)))
+            .unwrap();
         let expected = Point3::new(
             -mirrored_original.x,
             mirrored_original.y,
             mirrored_original.z,
         );
-        assert_points_equal(&reflected.point_at(&parameter).unwrap(), &expected);
+        assert_points_equal(&reflected.evaluate_real(&parameter).unwrap(), &expected);
     }
 
     #[test]
@@ -11741,8 +12555,8 @@ mod tests {
         let bezier_parameters = bezier.affine_parameter_plane().unwrap().unwrap();
         let parameter = Point2::new(q(1, 3), q(2, 5));
         assert_points_equal(
-            &bezier.point_at(&parameter).unwrap(),
-            &bezier_parameters.point_at(&parameter).unwrap(),
+            &bezier.evaluate_real(&parameter).unwrap(),
+            &bezier_parameters.evaluate_real(&parameter).unwrap(),
         );
 
         let nurbs = Surface::nurbs(
@@ -11757,8 +12571,8 @@ mod tests {
         let nurbs_parameters = nurbs.affine_parameter_plane().unwrap().unwrap();
         let native_parameter = Point2::new(r(3), r(7));
         assert_points_equal(
-            &nurbs.point_at(&native_parameter).unwrap(),
-            &nurbs_parameters.point_at(&native_parameter).unwrap(),
+            &nurbs.evaluate_real(&native_parameter).unwrap(),
+            &nurbs_parameters.evaluate_real(&native_parameter).unwrap(),
         );
 
         let projective = Surface::rational_bezier(
@@ -11802,9 +12616,9 @@ mod tests {
                 .clone();
             assert_points_equal(
                 &surface
-                    .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
+                    .evaluate_real(&Point2::new(uv.x().clone(), uv.y().clone()))
                     .unwrap(),
-                &curve.point_at(&parameter).unwrap(),
+                &curve.evaluate_real(&parameter).unwrap(),
             );
         }
 
@@ -11854,9 +12668,9 @@ mod tests {
                 .clone();
             assert_points_equal(
                 &nurbs
-                    .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
+                    .evaluate_real(&Point2::new(uv.x().clone(), uv.y().clone()))
                     .unwrap(),
-                &curve.point_at(&parameter).unwrap(),
+                &curve.evaluate_real(&parameter).unwrap(),
             );
         }
 
@@ -11891,11 +12705,17 @@ mod tests {
         };
         assert_eq!(curve.curve().kind(), Curve3Kind::RationalBezier);
         assert_points_equal(
-            &curve.curve().point_at(&q(1, 2)).unwrap(),
-            &rational.point_at(&Point2::new(q(1, 2), q(1, 2))).unwrap(),
+            &curve.curve().evaluate_real(&q(1, 2)).unwrap(),
+            &rational
+                .evaluate_real(&Point2::new(q(1, 2), q(1, 2)))
+                .unwrap(),
         );
         assert_eq!(
-            curve.second_pcurve().point_at(&q(1, 2)).unwrap(),
+            curve
+                .second_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 2), q(1, 2))
         );
         assert!(matches!(
@@ -11925,11 +12745,15 @@ mod tests {
         };
         assert_eq!(curve.curve().kind(), Curve3Kind::Nurbs);
         assert_points_equal(
-            &curve.curve().point_at(&q(1, 2)).unwrap(),
-            &nurbs.point_at(&Point2::new(q(1, 2), q(1, 3))).unwrap(),
+            &curve.curve().evaluate_real(&q(1, 2)).unwrap(),
+            &nurbs.evaluate_real(&Point2::new(q(1, 2), q(1, 3))).unwrap(),
         );
         assert_eq!(
-            curve.first_pcurve().point_at(&q(1, 2)).unwrap(),
+            curve
+                .first_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 2), q(1, 3))
         );
 
@@ -11944,7 +12768,11 @@ mod tests {
             panic!("bilinear tensor must fall through to its exact v-iso section");
         };
         assert_eq!(
-            curve.first_pcurve().point_at(&q(1, 2)).unwrap(),
+            curve
+                .first_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 2), q(1, 2))
         );
 
@@ -11955,11 +12783,19 @@ mod tests {
             panic!("a represented rational-profile plane root must lift to a tensor iso-curve");
         };
         let parameter = q(1, 2);
-        let tensor_parameter = section.first_pcurve().point_at(&parameter).unwrap();
-        let plane_parameter = section.second_pcurve().point_at(&parameter).unwrap();
-        let point = section.curve().point_at(&parameter).unwrap();
-        assert_points_equal(&point, &rational.point_at(&tensor_parameter).unwrap());
-        assert_points_equal(&point, &transverse.point_at(&plane_parameter).unwrap());
+        let tensor_parameter = section
+            .first_pcurve()
+            .point_at(&Real::clone(&parameter).into())
+            .map(crate::geometry::represented_test_surface_parameter)
+            .unwrap();
+        let plane_parameter = section
+            .second_pcurve()
+            .point_at(&Real::clone(&parameter).into())
+            .map(crate::geometry::represented_test_surface_parameter)
+            .unwrap();
+        let point = section.curve().evaluate_real(&parameter).unwrap();
+        assert_points_equal(&point, &rational.evaluate_real(&tensor_parameter).unwrap());
+        assert_points_equal(&point, &transverse.evaluate_real(&plane_parameter).unwrap());
         assert_eq!(tensor_parameter, Point2::new(q(1, 2), q(1, 2)));
     }
 
@@ -11987,12 +12823,16 @@ mod tests {
         let parameter = q(1, 2);
         let tensor_parameter = Point2::new(q(3, 8), parameter.clone());
         assert_eq!(
-            section.second_pcurve().point_at(&parameter).unwrap(),
+            section
+                .second_pcurve()
+                .point_at(&Real::clone(&parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             tensor_parameter
         );
         assert_points_equal(
-            &section.curve().point_at(&parameter).unwrap(),
-            &rational.point_at(&tensor_parameter).unwrap(),
+            &section.curve().evaluate_real(&parameter).unwrap(),
+            &rational.evaluate_real(&tensor_parameter).unwrap(),
         );
         let materialized = section.second_pcurve().materialize().unwrap();
         assert_eq!(materialized.curve().family(), CurveFamily2::RationalBezier);
@@ -12022,12 +12862,16 @@ mod tests {
         };
         assert_eq!(section.curve().kind(), Curve3Kind::Nurbs);
         assert_eq!(
-            section.first_pcurve().point_at(&parameter).unwrap(),
+            section
+                .first_pcurve()
+                .point_at(&Real::clone(&parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(3, 8), q(1, 2))
         );
         assert_points_equal(
-            &section.curve().point_at(&parameter).unwrap(),
-            &nurbs.point_at(&Point2::new(q(3, 8), q(1, 2))).unwrap(),
+            &section.curve().evaluate_real(&parameter).unwrap(),
+            &nurbs.evaluate_real(&Point2::new(q(3, 8), q(1, 2))).unwrap(),
         );
 
         let disjoint = Surface::plane(
@@ -12063,7 +12907,7 @@ mod tests {
             vec![p(0, 4, 3), p(2, 4, 3)],
         ];
         let weights = vec![vec![r(1), r(1)]; controls.len()];
-        let (patch, face) = crate::builder::nurbs_patch(
+        let (patch, face) = crate::construction::nurbs_patch(
             1,
             1,
             controls,
@@ -12087,14 +12931,18 @@ mod tests {
         assert_eq!(fragments.len(), 2);
         for fragment in &fragments {
             for parameter in [
-                fragment.curve().domain().start(),
-                fragment.curve().domain().end(),
+                fragment.curve().domain().represented_start().unwrap(),
+                fragment.curve().domain().represented_end().unwrap(),
             ] {
-                let tensor_parameter = fragment.first_pcurve().point_at(parameter).unwrap();
+                let tensor_parameter = fragment
+                    .first_pcurve()
+                    .point_at(&Real::clone(parameter).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
+                    .unwrap();
                 assert_eq!(tensor_parameter.x, r(7));
                 assert_points_equal(
-                    &fragment.curve().point_at(parameter).unwrap(),
-                    &tensor.point_at(&tensor_parameter).unwrap(),
+                    &fragment.curve().evaluate_real(parameter).unwrap(),
+                    &tensor.evaluate_real(&tensor_parameter).unwrap(),
                 );
             }
         }
@@ -12129,7 +12977,7 @@ mod tests {
         );
         let partitioned_json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&partitioned_json)
+            crate::ImportedModel::from_json(&partitioned_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12171,7 +13019,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12185,7 +13033,7 @@ mod tests {
     fn crossing_tensor_surface_curves_are_atomized_by_exact_pcurve_contacts() {
         let controls = vec![vec![p(0, 0, 0), p(2, 0, 0)], vec![p(0, 2, 0), p(2, 2, 0)]];
         let weights = vec![vec![Real::one(), Real::one()]; 2];
-        let (patch, face) = crate::builder::rational_bezier_patch(controls, weights).unwrap();
+        let (patch, face) = crate::construction::rational_bezier_patch(controls, weights).unwrap();
         let surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let x_plane = Surface::plane(p(1, 0, 0), Vector3::y(), Vector3::z()).unwrap();
         let y_plane = Surface::plane(p(0, 1, 0), Vector3::x(), Vector3::z()).unwrap();
@@ -12232,7 +13080,13 @@ mod tests {
             })
             .filter(|vertex| {
                 let point = partitioned.vertex(*vertex).unwrap().point();
-                point3_equal(point, &p(1, 1, 0), crate::STRICT_PREDICATES).value() == Some(true)
+                point3_equal(
+                    (point).try_coordinates().unwrap(),
+                    &p(1, 1, 0),
+                    crate::STRICT_PREDICATES,
+                )
+                .value()
+                    == Some(true)
             })
             .collect::<std::collections::HashSet<_>>();
         assert_eq!(shared_crossing_vertices.len(), 1);
@@ -12247,7 +13101,7 @@ mod tests {
         let json = partitioned.to_json().unwrap();
         assert_eq!(reversed.to_json().unwrap(), json);
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12259,7 +13113,7 @@ mod tests {
 
     #[test]
     fn closed_planar_surface_curve_authors_identity_shared_outer_and_inner_wires() {
-        let (model, solid) = crate::builder::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
+        let (model, solid) = crate::construction::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
         let (face, surface) = model
             .faces()
             .find_map(|(face, record)| {
@@ -12335,7 +13189,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12358,7 +13212,7 @@ mod tests {
 
     #[test]
     fn nested_closed_surface_curves_partition_descendants_independent_of_order_and_direction() {
-        let (model, solid) = crate::builder::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
+        let (model, solid) = crate::construction::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
         let (face, surface) = model
             .faces()
             .find_map(|(face, record)| {
@@ -12458,7 +13312,7 @@ mod tests {
         let json = partitioned.to_json().unwrap();
         assert_eq!(reversed.to_json().unwrap(), json);
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12470,7 +13324,7 @@ mod tests {
 
     #[test]
     fn boundary_trace_atomizes_a_closed_curve_into_unambiguous_descendant_segments() {
-        let (model, solid) = crate::builder::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
+        let (model, solid) = crate::construction::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
         let (face, surface) = model
             .faces()
             .find_map(|(face, record)| {
@@ -12563,7 +13417,7 @@ mod tests {
         let json = partitioned.to_json().unwrap();
         assert_eq!(reversed.to_json().unwrap(), json);
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12594,12 +13448,18 @@ mod tests {
         };
         assert_eq!(section.curve().kind(), Curve3Kind::RationalBezier);
         assert_eq!(
-            section.first_pcurve().point_at(&q(1, 2)).unwrap(),
+            section
+                .first_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 2), q(3, 8))
         );
         assert_points_equal(
-            &section.curve().point_at(&q(1, 2)).unwrap(),
-            &rational.point_at(&Point2::new(q(1, 2), q(3, 8))).unwrap(),
+            &section.curve().evaluate_real(&q(1, 2)).unwrap(),
+            &rational
+                .evaluate_real(&Point2::new(q(1, 2), q(3, 8)))
+                .unwrap(),
         );
 
         let nurbs = Surface::nurbs(
@@ -12615,10 +13475,14 @@ mod tests {
         else {
             panic!("v-linear NURBS tensor must retain its native graph section");
         };
-        assert_eq!(section.curve().domain().start(), &r(2));
-        assert_eq!(section.curve().domain().end(), &r(5));
+        assert_eq!(section.curve().domain().represented_start().unwrap(), &r(2));
+        assert_eq!(section.curve().domain().represented_end().unwrap(), &r(5));
         assert_eq!(
-            section.second_pcurve().point_at(&q(7, 2)).unwrap(),
+            section
+                .second_pcurve()
+                .point_at(&Real::clone(&q(7, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(7, 2), q(17, 2))
         );
         let materialized = section.second_pcurve().materialize().unwrap();
@@ -12638,7 +13502,7 @@ mod tests {
         );
 
         let (rational_patch, rational_face) =
-            crate::builder::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
+            crate::construction::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
         let rational_surface = rational_patch
             .surface(rational_patch.face(rational_face).unwrap().surface())
             .unwrap();
@@ -12657,7 +13521,7 @@ mod tests {
         assert_eq!(rational_split.counts().faces, 2);
         let rational_json = rational_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&rational_json)
+            crate::ImportedModel::from_json(&rational_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12666,7 +13530,7 @@ mod tests {
             rational_json
         );
 
-        let (nurbs_patch, nurbs_face) = crate::builder::nurbs_patch(
+        let (nurbs_patch, nurbs_face) = crate::construction::nurbs_patch(
             2,
             1,
             controls,
@@ -12693,7 +13557,7 @@ mod tests {
         assert_eq!(nurbs_split.counts().faces, 2);
         let nurbs_json = nurbs_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&nurbs_json)
+            crate::ImportedModel::from_json(&nurbs_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12711,7 +13575,7 @@ mod tests {
             vec![p(0, 2, 2), p(2, 2, 2)],
         ];
         let weights = vec![vec![r(1), r(1)], vec![r(2), r(2)], vec![r(3), r(3)]];
-        let (patch, face) = crate::builder::rational_bezier_patch(controls, weights).unwrap();
+        let (patch, face) = crate::construction::rational_bezier_patch(controls, weights).unwrap();
         let surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let plane = Surface::plane(
             p(2, 0, 0),
@@ -12751,7 +13615,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12779,11 +13643,15 @@ mod tests {
         };
         assert_eq!(section.curve().kind(), Curve3Kind::RationalBezier);
         assert_eq!(
-            section.first_pcurve().point_at(&q(1, 2)).unwrap(),
+            section
+                .first_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 3), q(1, 2))
         );
         assert_points_equal(
-            &section.curve().point_at(&q(1, 2)).unwrap(),
+            &section.curve().evaluate_real(&q(1, 2)).unwrap(),
             &Point3::new(q(2, 3), r(1), q(1, 6)),
         );
         // Both sides are rational quartics. Nine distinct exact parameters
@@ -12791,11 +13659,15 @@ mod tests {
         // independently of the construction's control-net arithmetic.
         for numerator in 0_i64..=8 {
             let parameter = q(numerator, 8);
-            let surface_parameter = section.first_pcurve().point_at(&parameter).unwrap();
+            let surface_parameter = section
+                .first_pcurve()
+                .point_at(&Real::clone(&parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap();
             assert_points_equal(
-                &section.curve().point_at(&parameter).unwrap(),
+                &section.curve().evaluate_real(&parameter).unwrap(),
                 &surface
-                    .point_at(&Point2::new(
+                    .evaluate_real(&Point2::new(
                         surface_parameter.x.clone(),
                         surface_parameter.y.clone(),
                     ))
@@ -12809,12 +13681,16 @@ mod tests {
             panic!("operand reversal must retain the same exact rational section");
         };
         assert_eq!(
-            swapped.second_pcurve().point_at(&q(1, 2)).unwrap(),
+            swapped
+                .second_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 3), q(1, 2))
         );
         assert_points_equal(
-            &swapped.curve().point_at(&q(1, 2)).unwrap(),
-            &section.curve().point_at(&q(1, 2)).unwrap(),
+            &swapped.curve().evaluate_real(&q(1, 2)).unwrap(),
+            &section.curve().evaluate_real(&q(1, 2)).unwrap(),
         );
 
         let u_graph_plane = Surface::plane(
@@ -12829,11 +13705,15 @@ mod tests {
             panic!("bilinear plane section must solve through either parameter axis");
         };
         assert_eq!(
-            u_graph_section.first_pcurve().point_at(&q(1, 2)).unwrap(),
+            u_graph_section
+                .first_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 2), q(1, 3))
         );
         assert_points_equal(
-            &u_graph_section.curve().point_at(&q(1, 2)).unwrap(),
+            &u_graph_section.curve().evaluate_real(&q(1, 2)).unwrap(),
             &Point3::new(r(1), q(2, 3), q(1, 6)),
         );
 
@@ -12848,22 +13728,30 @@ mod tests {
         else {
             panic!("rectangle clipping must retain the represented section fragment");
         };
-        assert_eq!(clipped.curve().domain().start(), &r(0));
-        assert_eq!(clipped.curve().domain().end(), &r(1));
+        assert_eq!(clipped.curve().domain().represented_start().unwrap(), &r(0));
+        assert_eq!(clipped.curve().domain().represented_end().unwrap(), &r(1));
         assert_eq!(
-            clipped.first_pcurve().point_at(&r(0)).unwrap(),
+            clipped
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(1), q(1, 2))
         );
         assert_eq!(
-            clipped.first_pcurve().point_at(&r(1)).unwrap(),
+            clipped
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(3, 4), r(1))
         );
         assert_points_equal(
-            &clipped.curve().point_at(&r(0)).unwrap(),
+            &clipped.curve().evaluate_real(&r(0)).unwrap(),
             &Point3::new(r(2), r(1), q(1, 2)),
         );
         assert_points_equal(
-            &clipped.curve().point_at(&r(1)).unwrap(),
+            &clipped.curve().evaluate_real(&r(1)).unwrap(),
             &Point3::new(q(3, 2), r(2), q(3, 4)),
         );
 
@@ -12885,19 +13773,27 @@ mod tests {
             panic!("retained polynomial bilinear pole branch must be exact");
         };
         assert_eq!(
-            pole_branch.first_pcurve().point_at(&r(0)).unwrap(),
+            pole_branch
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(1), q(1, 4))
         );
         assert_eq!(
-            pole_branch.first_pcurve().point_at(&r(1)).unwrap(),
+            pole_branch
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 4), r(1))
         );
         assert_points_equal(
-            &pole_branch.curve().point_at(&r(0)).unwrap(),
+            &pole_branch.curve().evaluate_real(&r(0)).unwrap(),
             &Point3::new(r(2), q(1, 2), q(1, 4)),
         );
         assert_points_equal(
-            &pole_branch.curve().point_at(&r(1)).unwrap(),
+            &pole_branch.curve().evaluate_real(&r(1)).unwrap(),
             &Point3::new(q(1, 2), r(2), q(1, 4)),
         );
 
@@ -12921,22 +13817,37 @@ mod tests {
             panic!("UV clipping must precede weighted spatial composition");
         };
         assert_eq!(
-            pole_clipped.first_pcurve().point_at(&r(0)).unwrap(),
+            pole_clipped
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(1), q(2, 3))
         );
         assert_eq!(
-            pole_clipped.first_pcurve().point_at(&r(1)).unwrap(),
+            pole_clipped
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 2), r(1))
         );
         assert_points_equal(
-            &pole_clipped.curve().point_at(&r(0)).unwrap(),
+            &pole_clipped.curve().evaluate_real(&r(0)).unwrap(),
             &Point3::new(r(2), q(4, 3), r(0)),
         );
-        assert_points_equal(&pole_clipped.curve().point_at(&r(1)).unwrap(), &p(1, 2, 0));
+        assert_points_equal(
+            &pole_clipped.curve().evaluate_real(&r(1)).unwrap(),
+            &p(1, 2, 0),
+        );
 
         let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
-        let translated_surface = surface.transformed(&translation, false).unwrap();
-        let translated_plane = section_plane.transformed(&translation, false).unwrap();
+        let translated_surface = surface
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
+        let translated_plane = section_plane
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
         let SurfaceSurfaceIntersection::Curve(translated) = translated_surface
             .intersect_surface(&translated_plane)
             .unwrap()
@@ -12944,11 +13855,14 @@ mod tests {
             panic!("translated bilinear section must retain its exact construction");
         };
         let expected =
-            section.curve().point_at(&q(1, 2)).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
-        assert_points_equal(&translated.curve().point_at(&q(1, 2)).unwrap(), &expected);
+            section.curve().evaluate_real(&q(1, 2)).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
+        assert_points_equal(
+            &translated.curve().evaluate_real(&q(1, 2)).unwrap(),
+            &expected,
+        );
 
         let (patch, face) =
-            crate::builder::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
+            crate::construction::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
         let patch_surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let SurfaceSurfaceIntersection::Curve(patch_section) =
             patch_surface.intersect_surface(&section_plane).unwrap()
@@ -12982,7 +13896,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13002,7 +13916,7 @@ mod tests {
         assert_eq!(partial_split.counts().faces, 2);
         let partial_json = partial_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&partial_json)
+            crate::ImportedModel::from_json(&partial_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13030,22 +13944,30 @@ mod tests {
         };
         assert_eq!(section.curve().kind(), Curve3Kind::RationalBezier);
         assert_eq!(
-            section.first_pcurve().point_at(&q(1, 2)).unwrap(),
+            section
+                .first_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(2, 9), q(1, 2))
         );
         assert_points_equal(
-            &section.curve().point_at(&q(1, 2)).unwrap(),
+            &section.curve().evaluate_real(&q(1, 2)).unwrap(),
             &Point3::new(q(3, 5), q(29, 20), q(1, 5)),
         );
         // This independently certifies the weighted rational-quartic identity
         // rather than trusting the shared homogeneous construction helper.
         for numerator in 0_i64..=8 {
             let parameter = q(numerator, 8);
-            let surface_parameter = section.first_pcurve().point_at(&parameter).unwrap();
+            let surface_parameter = section
+                .first_pcurve()
+                .point_at(&Real::clone(&parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap();
             assert_points_equal(
-                &section.curve().point_at(&parameter).unwrap(),
+                &section.curve().evaluate_real(&parameter).unwrap(),
                 &surface
-                    .point_at(&Point2::new(
+                    .evaluate_real(&Point2::new(
                         surface_parameter.x.clone(),
                         surface_parameter.y.clone(),
                     ))
@@ -13059,12 +13981,16 @@ mod tests {
             panic!("weighted bilinear section must survive operand reversal");
         };
         assert_eq!(
-            swapped.second_pcurve().point_at(&q(1, 2)).unwrap(),
+            swapped
+                .second_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(2, 9), q(1, 2))
         );
         assert_points_equal(
-            &swapped.curve().point_at(&q(1, 2)).unwrap(),
-            &section.curve().point_at(&q(1, 2)).unwrap(),
+            &swapped.curve().evaluate_real(&q(1, 2)).unwrap(),
+            &section.curve().evaluate_real(&q(1, 2)).unwrap(),
         );
 
         let nurbs = Surface::nurbs(
@@ -13082,12 +14008,16 @@ mod tests {
             panic!("single-span NURBS must retain the equivalent weighted bilinear section");
         };
         assert_eq!(
-            native_section.first_pcurve().point_at(&q(1, 2)).unwrap(),
+            native_section
+                .first_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(8, 3), r(2))
         );
         assert_points_equal(
-            &native_section.curve().point_at(&q(1, 2)).unwrap(),
-            &section.curve().point_at(&q(1, 2)).unwrap(),
+            &native_section.curve().evaluate_real(&q(1, 2)).unwrap(),
+            &section.curve().evaluate_real(&q(1, 2)).unwrap(),
         );
         let SurfaceSurfaceIntersection::Curve(native_swapped) =
             section_plane.intersect_surface(&nurbs).unwrap()
@@ -13095,16 +14025,24 @@ mod tests {
             panic!("native-domain weighted bilinear section must survive operand reversal");
         };
         assert_eq!(
-            native_swapped.second_pcurve().point_at(&q(1, 2)).unwrap(),
+            native_swapped
+                .second_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(8, 3), r(2))
         );
         for numerator in 0_i64..=8 {
             let parameter = q(numerator, 8);
-            let surface_parameter = native_section.first_pcurve().point_at(&parameter).unwrap();
+            let surface_parameter = native_section
+                .first_pcurve()
+                .point_at(&Real::clone(&parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap();
             assert_points_equal(
-                &native_section.curve().point_at(&parameter).unwrap(),
+                &native_section.curve().evaluate_real(&parameter).unwrap(),
                 &nurbs
-                    .point_at(&Point2::new(
+                    .evaluate_real(&Point2::new(
                         surface_parameter.x.clone(),
                         surface_parameter.y.clone(),
                     ))
@@ -13124,11 +14062,15 @@ mod tests {
             panic!("weighted bilinear section must solve through either parameter axis");
         };
         assert_eq!(
-            u_graph_section.first_pcurve().point_at(&q(1, 2)).unwrap(),
+            u_graph_section
+                .first_pcurve()
+                .point_at(&Real::clone(&q(1, 2)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 2), q(1, 6))
         );
         assert_points_equal(
-            &u_graph_section.curve().point_at(&q(1, 2)).unwrap(),
+            &u_graph_section.curve().evaluate_real(&q(1, 2)).unwrap(),
             &Point3::new(q(14, 11), q(7, 11), q(2, 11)),
         );
 
@@ -13143,22 +14085,30 @@ mod tests {
         else {
             panic!("weighted bilinear section must retain its represented rectangle clip");
         };
-        assert_eq!(clipped.curve().domain().start(), &r(0));
-        assert_eq!(clipped.curve().domain().end(), &r(1));
+        assert_eq!(clipped.curve().domain().represented_start().unwrap(), &r(0));
+        assert_eq!(clipped.curve().domain().represented_end().unwrap(), &r(1));
         assert_eq!(
-            clipped.first_pcurve().point_at(&r(0)).unwrap(),
+            clipped
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(1), q(1, 7))
         );
         assert_eq!(
-            clipped.first_pcurve().point_at(&r(1)).unwrap(),
+            clipped
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(5, 9), r(1))
         );
         assert_points_equal(
-            &clipped.curve().point_at(&r(0)).unwrap(),
+            &clipped.curve().evaluate_real(&r(0)).unwrap(),
             &Point3::new(r(2), q(1, 2), q(1, 4)),
         );
         assert_points_equal(
-            &clipped.curve().point_at(&r(1)).unwrap(),
+            &clipped.curve().evaluate_real(&r(1)).unwrap(),
             &Point3::new(q(5, 4), r(2), q(5, 8)),
         );
         let SurfaceSurfaceIntersection::Curve(native_clipped) =
@@ -13167,18 +14117,30 @@ mod tests {
             panic!("single-span NURBS must retain its clipped weighted section");
         };
         assert_eq!(
-            native_clipped.first_pcurve().point_at(&r(0)).unwrap(),
+            native_clipped
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(5), q(-11, 7))
         );
         assert_eq!(
-            native_clipped.first_pcurve().point_at(&r(1)).unwrap(),
+            native_clipped
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(11, 3), r(7))
         );
         for parameter in [Real::zero(), q(1, 2), Real::one()] {
-            let uv = native_clipped.first_pcurve().point_at(&parameter).unwrap();
+            let uv = native_clipped
+                .first_pcurve()
+                .point_at(&Real::clone(&parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap();
             assert_points_equal(
-                &native_clipped.curve().point_at(&parameter).unwrap(),
-                &nurbs.point_at(&Point2::new(uv.x, uv.y)).unwrap(),
+                &native_clipped.curve().evaluate_real(&parameter).unwrap(),
+                &nurbs.evaluate_real(&Point2::new(uv.x, uv.y)).unwrap(),
             );
         }
 
@@ -13189,11 +14151,19 @@ mod tests {
             panic!("single-span NURBS must retain its native-domain boundary iso-line");
         };
         assert_eq!(
-            native_boundary.first_pcurve().point_at(&r(0)).unwrap(),
+            native_boundary
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(2), r(-3))
         );
         assert_eq!(
-            native_boundary.first_pcurve().point_at(&r(1)).unwrap(),
+            native_boundary
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(2), r(7))
         );
 
@@ -13215,25 +14185,37 @@ mod tests {
             panic!("retained weighted bilinear pole branch must be exact");
         };
         assert_eq!(
-            pole_branch.first_pcurve().point_at(&r(0)).unwrap(),
+            pole_branch
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(1), q(1, 7))
         );
         assert_eq!(
-            pole_branch.first_pcurve().point_at(&r(1)).unwrap(),
+            pole_branch
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 5), r(1))
         );
         assert_points_equal(
-            &pole_branch.curve().point_at(&r(0)).unwrap(),
+            &pole_branch.curve().evaluate_real(&r(0)).unwrap(),
             &Point3::new(r(2), q(1, 2), q(1, 4)),
         );
         assert_points_equal(
-            &pole_branch.curve().point_at(&r(1)).unwrap(),
+            &pole_branch.curve().evaluate_real(&r(1)).unwrap(),
             &Point3::new(q(1, 2), r(2), q(1, 4)),
         );
 
         let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
-        let translated_surface = surface.transformed(&translation, false).unwrap();
-        let translated_plane = section_plane.transformed(&translation, false).unwrap();
+        let translated_surface = surface
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
+        let translated_plane = section_plane
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
         let SurfaceSurfaceIntersection::Curve(translated) = translated_surface
             .intersect_surface(&translated_plane)
             .unwrap()
@@ -13241,11 +14223,14 @@ mod tests {
             panic!("translated weighted bilinear section must remain exact");
         };
         let expected =
-            section.curve().point_at(&q(1, 2)).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
-        assert_points_equal(&translated.curve().point_at(&q(1, 2)).unwrap(), &expected);
+            section.curve().evaluate_real(&q(1, 2)).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
+        assert_points_equal(
+            &translated.curve().evaluate_real(&q(1, 2)).unwrap(),
+            &expected,
+        );
 
         let (patch, face) =
-            crate::builder::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
+            crate::construction::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
         let patch_surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let SurfaceSurfaceIntersection::Curve(patch_section) =
             patch_surface.intersect_surface(&section_plane).unwrap()
@@ -13279,7 +14264,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13299,7 +14284,7 @@ mod tests {
         assert_eq!(partial_split.counts().faces, 2);
         let partial_json = partial_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&partial_json)
+            crate::ImportedModel::from_json(&partial_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13308,7 +14293,7 @@ mod tests {
             partial_json
         );
 
-        let (native_patch, native_face) = crate::builder::nurbs_patch(
+        let (native_patch, native_face) = crate::construction::nurbs_patch(
             1,
             1,
             controls,
@@ -13364,7 +14349,7 @@ mod tests {
         );
         let json = native_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13412,18 +14397,36 @@ mod tests {
             ),
         ] {
             assert_eq!(
-                branch.first_pcurve().point_at(&r(0)).unwrap(),
+                branch
+                    .first_pcurve()
+                    .point_at(&Real::clone(&r(0)).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
+                    .unwrap(),
                 expected_start
             );
-            assert_eq!(branch.first_pcurve().point_at(&r(1)).unwrap(), expected_end);
-            assert_points_equal(&branch.curve().point_at(&r(0)).unwrap(), &spatial_start);
-            assert_points_equal(&branch.curve().point_at(&r(1)).unwrap(), &spatial_end);
+            assert_eq!(
+                branch
+                    .first_pcurve()
+                    .point_at(&Real::clone(&r(1)).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
+                    .unwrap(),
+                expected_end
+            );
+            assert_points_equal(
+                &branch.curve().evaluate_real(&r(0)).unwrap(),
+                &spatial_start,
+            );
+            assert_points_equal(&branch.curve().evaluate_real(&r(1)).unwrap(), &spatial_end);
             for numerator in 0_i64..=8 {
                 let parameter = q(numerator, 8);
-                let surface_parameter = branch.first_pcurve().point_at(&parameter).unwrap();
+                let surface_parameter = branch
+                    .first_pcurve()
+                    .point_at(&Real::clone(&parameter).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
+                    .unwrap();
                 assert_points_equal(
-                    &branch.curve().point_at(&parameter).unwrap(),
-                    &surface.point_at(&surface_parameter).unwrap(),
+                    &branch.curve().evaluate_real(&parameter).unwrap(),
+                    &surface.evaluate_real(&surface_parameter).unwrap(),
                 );
             }
         }
@@ -13436,15 +14439,20 @@ mod tests {
         assert_eq!(swapped.len(), 2);
         for (original, reversed_operands) in branches.iter().zip(&swapped) {
             assert_eq!(
-                original.first_pcurve().point_at(&q(1, 2)).unwrap(),
+                original
+                    .first_pcurve()
+                    .point_at(&Real::clone(&q(1, 2)).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
+                    .unwrap(),
                 reversed_operands
                     .second_pcurve()
-                    .point_at(&q(1, 2))
+                    .point_at(&Real::clone(&q(1, 2)).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
                     .unwrap()
             );
             assert_points_equal(
-                &original.curve().point_at(&q(1, 2)).unwrap(),
-                &reversed_operands.curve().point_at(&q(1, 2)).unwrap(),
+                &original.curve().evaluate_real(&q(1, 2)).unwrap(),
+                &reversed_operands.curve().evaluate_real(&q(1, 2)).unwrap(),
             );
         }
 
@@ -13459,11 +14467,19 @@ mod tests {
             panic!("a branch leaving the patch before an endpoint pole must be retained");
         };
         assert_eq!(
-            endpoint_branch.first_pcurve().point_at(&r(0)).unwrap(),
+            endpoint_branch
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 2), r(0))
         );
         assert_eq!(
-            endpoint_branch.first_pcurve().point_at(&r(1)).unwrap(),
+            endpoint_branch
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(1), q(1, 2))
         );
 
@@ -13486,23 +14502,40 @@ mod tests {
         };
         assert_eq!(factorized_lines.len(), 2);
         assert_eq!(
-            factorized_lines[0].first_pcurve().point_at(&r(0)).unwrap(),
+            factorized_lines[0]
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(0), q(1, 2))
         );
         assert_eq!(
-            factorized_lines[0].first_pcurve().point_at(&r(1)).unwrap(),
+            factorized_lines[0]
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(1), q(1, 2))
         );
         assert_eq!(
-            factorized_lines[1].first_pcurve().point_at(&r(0)).unwrap(),
+            factorized_lines[1]
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 2), r(0))
         );
         assert_eq!(
-            factorized_lines[1].first_pcurve().point_at(&r(1)).unwrap(),
+            factorized_lines[1]
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(q(1, 2), r(1))
         );
         let (factorized_patch, factorized_face) =
-            crate::builder::rational_bezier_patch(factorized_controls, weights.clone()).unwrap();
+            crate::construction::rational_bezier_patch(factorized_controls, weights.clone())
+                .unwrap();
         let (factorized_partition, factorized_record) = factorized_patch
             .split_face_by_surface_curves(
                 factorized_face,
@@ -13514,7 +14547,7 @@ mod tests {
         assert_eq!(factorized_partition.counts().faces, 4);
         let factorized_json = factorized_partition.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&factorized_json)
+            crate::ImportedModel::from_json(&factorized_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13539,7 +14572,7 @@ mod tests {
         else {
             panic!("one zero Bernstein corner must be one exact point");
         };
-        assert_eq!(*single_corner, p(0, 0, 0));
+        assert_eq!(single_corner.try_coordinates().unwrap(), &p(0, 0, 0));
 
         let opposite_corners = boundary_surface([[0, 1], [1, 0]]);
         let SurfaceSurfaceIntersection::Points(points) =
@@ -13547,13 +14580,28 @@ mod tests {
         else {
             panic!("opposite zero Bernstein corners must be two exact points");
         };
-        assert_eq!(points, vec![p(0, 0, 0), p(2, 2, 0)]);
+        assert_eq!(
+            points
+                .iter()
+                .map(|p| p.try_coordinates().unwrap())
+                .collect::<Vec<_>>(),
+            vec![&p(0, 0, 0), &p(2, 2, 0)]
+        );
         let SurfaceSurfaceIntersection::Points(swapped_points) =
             plane.intersect_surface(&opposite_corners).unwrap()
         else {
             panic!("multiple exact points must survive operand reversal");
         };
-        assert_eq!(swapped_points, points);
+        assert_eq!(
+            swapped_points
+                .iter()
+                .map(|p| p.try_coordinates().unwrap())
+                .collect::<Vec<_>>(),
+            points
+                .iter()
+                .map(|p| p.try_coordinates().unwrap())
+                .collect::<Vec<_>>()
+        );
 
         let SurfaceSurfaceIntersection::Curve(boundary_edge) = boundary_surface([[0, 0], [1, 1]])
             .intersect_surface(&plane)
@@ -13562,11 +14610,19 @@ mod tests {
             panic!("two adjacent zero Bernstein corners must retain their boundary iso-line");
         };
         assert_eq!(
-            boundary_edge.first_pcurve().point_at(&r(0)).unwrap(),
+            boundary_edge
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(0), r(0))
         );
         assert_eq!(
-            boundary_edge.first_pcurve().point_at(&r(1)).unwrap(),
+            boundary_edge
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(1), r(0))
         );
 
@@ -13578,19 +14634,35 @@ mod tests {
         };
         assert_eq!(boundary_pair.len(), 2);
         assert_eq!(
-            boundary_pair[0].first_pcurve().point_at(&r(0)).unwrap(),
+            boundary_pair[0]
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(0), r(1))
         );
         assert_eq!(
-            boundary_pair[0].first_pcurve().point_at(&r(1)).unwrap(),
+            boundary_pair[0]
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(1), r(1))
         );
         assert_eq!(
-            boundary_pair[1].first_pcurve().point_at(&r(0)).unwrap(),
+            boundary_pair[1]
+                .first_pcurve()
+                .point_at(&Real::clone(&r(0)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(1), r(0))
         );
         assert_eq!(
-            boundary_pair[1].first_pcurve().point_at(&r(1)).unwrap(),
+            boundary_pair[1]
+                .first_pcurve()
+                .point_at(&Real::clone(&r(1)).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(r(1), r(1))
         );
 
@@ -13608,14 +14680,18 @@ mod tests {
         let containment_translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
         assert!(matches!(
             plane
-                .transformed(&containment_translation, false)
+                .transformed(&TransformMetric::new(&containment_translation), false)
                 .unwrap()
-                .intersect_surface(&planar.transformed(&containment_translation, false).unwrap())
+                .intersect_surface(
+                    &planar
+                        .transformed(&TransformMetric::new(&containment_translation), false)
+                        .unwrap()
+                )
                 .unwrap(),
             SurfaceSurfaceIntersection::ContainedSurface(SurfaceIntersectionOperand::Second)
         ));
 
-        let (planar_patch, planar_face) = crate::builder::rational_bezier_patch(
+        let (planar_patch, planar_face) = crate::construction::rational_bezier_patch(
             planar_controls,
             vec![vec![r(1), r(1)], vec![r(1), r(1)]],
         )
@@ -13623,7 +14699,7 @@ mod tests {
         let patch_surface = planar_patch
             .surface(planar_patch.face(planar_face).unwrap().surface())
             .unwrap();
-        let (cube, cube_solid) = crate::builder::cuboid(p(-1, -1, 0), p(3, 3, 1)).unwrap();
+        let (cube, cube_solid) = crate::construction::cuboid(p(-1, -1, 0), p(3, 3, 1)).unwrap();
         let cube_faces = cube
             .shell(cube.solid(cube_solid).unwrap().outer())
             .unwrap()
@@ -13643,10 +14719,14 @@ mod tests {
                 )
             })
             .expect("one cuboid cap plane must contain the complete tensor carrier");
-        let face_pair =
-            crate::boolean::intersect_faces(&planar_patch, planar_face, &cube, containing_face)
-                .unwrap()
-                .expect("contained tensor/plane carriers must retain an exact face relation");
+        let face_pair = crate::boolean_kernel::intersect_faces(
+            &planar_patch,
+            planar_face,
+            &cube,
+            containing_face,
+        )
+        .unwrap()
+        .expect("contained tensor/plane carriers must retain an exact face relation");
         assert!(matches!(
             face_pair.relation(),
             crate::FacePairRelation::Exact(SurfaceSurfaceIntersection::ContainedSurface(
@@ -13667,7 +14747,7 @@ mod tests {
             crate::error::classified(region.loop_role_counts()).unwrap(),
             hypercurve::Classification::Decided((1, 0))
         ));
-        let complete_plane_traces = crate::boolean::contained_face_boundary_traces_on_plane(
+        let complete_plane_traces = crate::boolean_kernel::contained_face_boundary_traces_on_plane(
             &planar_patch,
             planar_face,
             &cube,
@@ -13702,7 +14782,7 @@ mod tests {
                 .collect(),
         )
         .unwrap();
-        let (partial_plane, partial_face) = crate::builder::planar_face(
+        let (partial_plane, partial_face) = crate::construction::planar_face(
             &partial_outline,
             &[],
             p(0, 0, 0),
@@ -13710,7 +14790,7 @@ mod tests {
             Vector3::from_xyz(r(0), r(1), r(0)),
         )
         .unwrap();
-        let partial_plane_traces = crate::boolean::contained_face_boundary_traces_on_plane(
+        let partial_plane_traces = crate::boolean_kernel::contained_face_boundary_traces_on_plane(
             &planar_patch,
             planar_face,
             &partial_plane,
@@ -13729,7 +14809,7 @@ mod tests {
         );
         for (pair, expected_parameter_operand) in [
             (
-                crate::boolean::intersect_faces(
+                crate::boolean_kernel::intersect_faces(
                     &planar_patch,
                     planar_face,
                     &partial_plane,
@@ -13740,7 +14820,7 @@ mod tests {
                 SurfaceIntersectionOperand::Second,
             ),
             (
-                crate::boolean::intersect_faces(
+                crate::boolean_kernel::intersect_faces(
                     &partial_plane,
                     partial_face,
                     &planar_patch,
@@ -13796,7 +14876,7 @@ mod tests {
         };
         let excluded_outer = rectangle_path(-2, -2, 4, 4);
         let excluded_hole = rectangle_path(-1, -1, 3, 3);
-        let (excluded_plane, excluded_face) = crate::builder::planar_face(
+        let (excluded_plane, excluded_face) = crate::construction::planar_face(
             &excluded_outer,
             &[excluded_hole],
             p(0, 0, 0),
@@ -13804,7 +14884,7 @@ mod tests {
             Vector3::from_xyz(r(0), r(1), r(0)),
         )
         .unwrap();
-        let excluded = crate::boolean::intersect_faces(
+        let excluded = crate::boolean_kernel::intersect_faces(
             &planar_patch,
             planar_face,
             &excluded_plane,
@@ -13815,8 +14895,12 @@ mod tests {
         assert!(matches!(excluded.trim(), crate::FacePairTrim::NoContact));
 
         let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
-        let translated_surface = surface.transformed(&translation, false).unwrap();
-        let translated_plane = plane.transformed(&translation, false).unwrap();
+        let translated_surface = surface
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
+        let translated_plane = plane
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
         let SurfaceSurfaceIntersection::Curves(translated) = translated_surface
             .intersect_surface(&translated_plane)
             .unwrap()
@@ -13825,12 +14909,15 @@ mod tests {
         };
         assert_eq!(translated.len(), 2);
         for (original, translated) in branches.iter().zip(&translated) {
-            let expected =
-                original.curve().point_at(&q(1, 2)).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
-            assert_points_equal(&translated.curve().point_at(&q(1, 2)).unwrap(), &expected);
+            let expected = original.curve().evaluate_real(&q(1, 2)).unwrap()
+                + Vector3::from_xyz(r(3), r(-2), r(5));
+            assert_points_equal(
+                &translated.curve().evaluate_real(&q(1, 2)).unwrap(),
+                &expected,
+            );
         }
 
-        let (patch, face) = crate::builder::rational_bezier_patch(controls, weights).unwrap();
+        let (patch, face) = crate::construction::rational_bezier_patch(controls, weights).unwrap();
         let patch_surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let SurfaceSurfaceIntersection::Curves(patch_branches) =
             patch_surface.intersect_surface(&plane).unwrap()
@@ -13854,7 +14941,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13872,7 +14959,7 @@ mod tests {
             vec![p(0, 2, 2), p(2, 2, 2)],
         ];
         let weights = vec![vec![r(1), r(1)], vec![r(2), r(2)], vec![r(3), r(3)]];
-        let (patch, face) = crate::builder::nurbs_patch(
+        let (patch, face) = crate::construction::nurbs_patch(
             1,
             2,
             controls,
@@ -13892,8 +14979,8 @@ mod tests {
         else {
             panic!("single-span NURBS tensor must retain one graph section");
         };
-        assert_eq!(section.curve().domain().start(), &r(2));
-        assert_eq!(section.curve().domain().end(), &r(5));
+        assert_eq!(section.curve().domain().represented_start().unwrap(), &r(2));
+        assert_eq!(section.curve().domain().represented_end().unwrap(), &r(5));
         let materialized = section.first_pcurve().materialize().unwrap();
         assert_eq!(
             materialized.correspondence().affine_coefficients(),
@@ -13915,7 +15002,7 @@ mod tests {
         assert_eq!(split.counts().faces, 2);
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13939,7 +15026,7 @@ mod tests {
             vec![r(3), r(3)],
             vec![r(1), r(1)],
         ];
-        let (patch, face) = crate::builder::nurbs_patch(
+        let (patch, face) = crate::construction::nurbs_patch(
             1,
             2,
             controls,
@@ -13959,8 +15046,8 @@ mod tests {
         else {
             panic!("multi-span NURBS tensor must retain one graph section");
         };
-        assert_eq!(section.curve().domain().start(), &r(2));
-        assert_eq!(section.curve().domain().end(), &r(5));
+        assert_eq!(section.curve().domain().represented_start().unwrap(), &r(2));
+        assert_eq!(section.curve().domain().represented_end().unwrap(), &r(5));
         let materialized = section.first_pcurve().materialize().unwrap();
         assert_eq!(materialized.curve().family(), CurveFamily2::Nurbs);
         assert_eq!(
@@ -13976,9 +15063,9 @@ mod tests {
                 .expect("native pcurve coordinates")
                 .clone();
             assert_points_equal(
-                &section.curve().point_at(&parameter).unwrap(),
+                &section.curve().evaluate_real(&parameter).unwrap(),
                 &surface
-                    .point_at(&Point2::new(
+                    .evaluate_real(&Point2::new(
                         surface_parameter.x().clone(),
                         surface_parameter.y().clone(),
                     ))
@@ -14018,7 +15105,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -14027,7 +15114,7 @@ mod tests {
             json
         );
 
-        let (v_patch, v_face) = crate::builder::nurbs_patch(
+        let (v_patch, v_face) = crate::construction::nurbs_patch(
             2,
             1,
             vec![
@@ -14059,7 +15146,7 @@ mod tests {
         assert_eq!(v_split.counts().faces, 2);
         let v_json = v_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&v_json)
+            crate::ImportedModel::from_json(&v_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -14090,11 +15177,18 @@ mod tests {
         };
         assert_eq!(section.curve().kind(), Curve3Kind::RationalBezier);
         let parameter = q(1, 2);
-        let profile_point = profile.point_at(&parameter).unwrap();
+        let profile_point = profile.evaluate_real(&parameter).unwrap();
         let expected = Point3::new(profile_point.x.clone(), profile_point.y, profile_point.x);
-        assert_points_equal(&section.curve().point_at(&parameter).unwrap(), &expected);
+        assert_points_equal(
+            &section.curve().evaluate_real(&parameter).unwrap(),
+            &expected,
+        );
         assert_eq!(
-            section.first_pcurve().point_at(&parameter).unwrap(),
+            section
+                .first_pcurve()
+                .point_at(&Real::clone(&parameter).into())
+                .map(crate::geometry::represented_test_surface_parameter)
+                .unwrap(),
             Point2::new(parameter.clone(), expected.z.clone())
         );
         let extrusion_clip = section
@@ -14143,7 +15237,11 @@ mod tests {
             .coordinates()
             .expect("native pcurve coordinates")
             .clone();
-        let retained_plane_parameter = section.second_pcurve().point_at(&parameter).unwrap();
+        let retained_plane_parameter = section
+            .second_pcurve()
+            .point_at(&Real::clone(&parameter).into())
+            .map(crate::geometry::represented_test_surface_parameter)
+            .unwrap();
         assert_eq!(
             compare_reals(
                 plane_parameter.x(),
@@ -14184,7 +15282,12 @@ mod tests {
         assert_eq!(carriers.len(), 2);
         for carrier in &carriers {
             for local in [Real::zero(), Real::one()] {
-                let spatial_parameter = &carrier.spatial_scale * &local + &carrier.spatial_offset;
+                let spatial_parameter = carrier
+                    .spatial_parameter_at(&local.clone().into())
+                    .unwrap()
+                    .try_real()
+                    .unwrap()
+                    .clone();
                 let materialized = carrier
                     .curve
                     .point_at(&local.clone().into())
@@ -14194,7 +15297,8 @@ mod tests {
                     .clone();
                 let retained = nurbs_section
                     .first_pcurve()
-                    .point_at(&spatial_parameter)
+                    .point_at(&Real::clone(&spatial_parameter).into())
+                    .map(crate::geometry::represented_test_surface_parameter)
                     .unwrap();
                 assert_eq!(
                     compare_reals(materialized.x(), &retained.x, crate::STRICT_PREDICATES).value(),
@@ -14238,8 +15342,18 @@ mod tests {
                     .represented_parameter_range()
                     .expect("linear region contacts have represented parameters");
                 retained_ranges.push((
-                    &carrier.spatial_scale * local_start + &carrier.spatial_offset,
-                    &carrier.spatial_scale * local_end + &carrier.spatial_offset,
+                    carrier
+                        .spatial_parameter_at(&local_start.into())
+                        .unwrap()
+                        .try_real()
+                        .unwrap()
+                        .clone(),
+                    carrier
+                        .spatial_parameter_at(&local_end.into())
+                        .unwrap()
+                        .try_real()
+                        .unwrap()
+                        .clone(),
                 ));
             }
         }
@@ -14304,12 +15418,16 @@ mod tests {
                 assert_eq!(points.len(), 1);
                 let intersection = &points[0];
                 assert_eq!(
-                    compare_reals(&intersection.parameter, &q(1, 2), crate::STRICT_PREDICATES)
-                        .value(),
+                    compare_reals(
+                        intersection.parameter.try_real().unwrap(),
+                        &q(1, 2),
+                        crate::STRICT_PREDICATES
+                    )
+                    .value(),
                     Some(Ordering::Equal)
                 );
-                assert_points_equal(&intersection.point, &p(2, 3, 0));
-                assert_eq!(intersection.multiplicity, IntersectionMultiplicity::Simple);
+                assert_points_equal(intersection.point.try_coordinates().unwrap(), &p(2, 3, 0));
+                assert_eq!(intersection.kind, CurveSurfaceContactKind::Simple);
             }
             other => panic!("expected point intersection, got {other:?}"),
         }
@@ -14347,7 +15465,7 @@ mod tests {
         assert_eq!(points.len(), 2);
         assert_eq!(
             compare_reals(
-                &points[0].parameter,
+                points[0].parameter.try_real().unwrap(),
                 &(Real::pi() / r(2)).unwrap(),
                 crate::STRICT_PREDICATES
             )
@@ -14356,7 +15474,7 @@ mod tests {
         );
         assert_eq!(
             compare_reals(
-                &points[1].parameter,
+                points[1].parameter.try_real().unwrap(),
                 &(r(3) * Real::pi() / r(2)).unwrap(),
                 crate::STRICT_PREDICATES
             )
@@ -14366,7 +15484,7 @@ mod tests {
         assert!(
             points
                 .iter()
-                .all(|point| point.multiplicity == IntersectionMultiplicity::Simple)
+                .all(|point| point.kind == CurveSurfaceContactKind::Simple)
         );
 
         let tangent = Surface::plane(p(2, 0, 0), Vector3::y(), Vector3::z()).unwrap();
@@ -14377,7 +15495,7 @@ mod tests {
         assert_eq!(points.len(), 2);
         assert_eq!(
             compare_reals(
-                &points[0].parameter,
+                points[0].parameter.try_real().unwrap(),
                 &Real::zero(),
                 crate::STRICT_PREDICATES
             )
@@ -14385,13 +15503,18 @@ mod tests {
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&points[1].parameter, &Real::tau(), crate::STRICT_PREDICATES).value(),
+            compare_reals(
+                points[1].parameter.try_real().unwrap(),
+                &Real::tau(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert!(
             points
                 .iter()
-                .all(|point| point.multiplicity == IntersectionMultiplicity::Tangent)
+                .all(|point| point.kind == CurveSurfaceContactKind::Repeated)
         );
 
         let carrier_plane = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
@@ -14423,7 +15546,7 @@ mod tests {
         assert_eq!(points.len(), 1);
         assert_eq!(
             compare_reals(
-                &points[0].parameter,
+                points[0].parameter.try_real().unwrap(),
                 &(Real::pi() / r(2)).unwrap(),
                 crate::STRICT_PREDICATES
             )
@@ -14433,7 +15556,7 @@ mod tests {
     }
 
     #[test]
-    fn circle_sphere_intersection_retains_exact_arc_parameters_and_multiplicity() {
+    fn circle_sphere_intersection_retains_exact_arc_parameters_and_contact_kind() {
         let sphere = Surface::sphere(
             Point3::origin(),
             Vector3::x(),
@@ -14456,12 +15579,12 @@ mod tests {
             panic!("offset circle must cross the sphere twice");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(3, 4, 0));
-        assert_points_equal(&points[1].point, &p(3, -4, 0));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(3, 4, 0));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(3, -4, 0));
         assert!(
             points
                 .iter()
-                .all(|point| point.multiplicity == IntersectionMultiplicity::Simple)
+                .all(|point| point.kind == CurveSurfaceContactKind::Simple)
         );
 
         let tangent = Curve3::circle_arc(
@@ -14478,8 +15601,8 @@ mod tests {
             panic!("internally tangent circle must retain one point");
         };
         assert_eq!(points.len(), 1);
-        assert_points_equal(&points[0].point, &p(5, 0, 0));
-        assert_eq!(points[0].multiplicity, IntersectionMultiplicity::Tangent);
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(5, 0, 0));
+        assert_eq!(points[0].kind, CurveSurfaceContactKind::Repeated);
 
         let contained = Curve3::circle_arc(
             Point3::origin(),
@@ -14533,8 +15656,8 @@ mod tests {
             panic!("transverse offset circle must cross the cylinder twice");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(3, 4, 2));
-        assert_points_equal(&points[1].point, &p(3, -4, 2));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(3, 4, 2));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(3, -4, 2));
 
         let tangent = Curve3::circle_arc(
             p(4, 0, -3),
@@ -14550,8 +15673,8 @@ mod tests {
             panic!("transverse tangent circle must retain one point");
         };
         assert_eq!(points.len(), 1);
-        assert_eq!(points[0].multiplicity, IntersectionMultiplicity::Tangent);
-        assert_points_equal(&points[0].point, &p(5, 0, -3));
+        assert_eq!(points[0].kind, CurveSurfaceContactKind::Repeated);
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(5, 0, -3));
 
         let contained = Curve3::circle_arc(
             p(0, 0, 7),
@@ -14606,8 +15729,8 @@ mod tests {
             panic!("upper transverse circle must meet the cone twice");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(3, 4, 5));
-        assert_points_equal(&points[1].point, &p(3, -4, 5));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(3, 4, 5));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(3, -4, 5));
 
         let contained = Curve3::circle_arc(
             p(0, 0, 5),
@@ -14663,12 +15786,12 @@ mod tests {
             panic!("center-plane circle must touch both torus radial sections");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(4, 0, 0));
-        assert_points_equal(&points[1].point, &p(2, 0, 0));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(4, 0, 0));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(2, 0, 0));
         assert!(
             points
                 .iter()
-                .all(|point| point.multiplicity == IntersectionMultiplicity::Tangent)
+                .all(|point| point.kind == CurveSurfaceContactKind::Repeated)
         );
 
         let outer = Curve3::circle_arc(
@@ -14700,7 +15823,7 @@ mod tests {
     }
 
     #[test]
-    fn line_sphere_and_cylinder_intersections_retain_multiplicity() {
+    fn line_sphere_and_cylinder_intersections_retain_contact_kind() {
         let sphere = Surface::sphere(
             Point3::origin(),
             Vector3::x(),
@@ -14715,12 +15838,12 @@ mod tests {
             panic!("expected two sphere intersections");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(-2, 0, 0));
-        assert_points_equal(&points[1].point, &p(2, 0, 0));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(-2, 0, 0));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(2, 0, 0));
         assert!(
             points
                 .iter()
-                .all(|point| point.multiplicity == IntersectionMultiplicity::Simple)
+                .all(|point| point.kind == CurveSurfaceContactKind::Simple)
         );
         let tangent = Curve3::line(p(-3, 2, 0), p(3, 2, 0)).unwrap();
         let CurveSurfaceIntersection::Points(points) = sphere.intersect_curve(&tangent).unwrap()
@@ -14728,8 +15851,8 @@ mod tests {
             panic!("expected tangent sphere intersection");
         };
         assert_eq!(points.len(), 1);
-        assert_eq!(points[0].multiplicity, IntersectionMultiplicity::Tangent);
-        assert_points_equal(&points[0].point, &p(0, 2, 0));
+        assert_eq!(points[0].kind, CurveSurfaceContactKind::Repeated);
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(0, 2, 0));
 
         let cylinder = Surface::cylinder(
             Point3::origin(),
@@ -14763,8 +15886,8 @@ mod tests {
             panic!("line through the upper cone must have two intersections");
         };
         assert_eq!(points.len(), 2);
-        assert_points_equal(&points[0].point, &p(-1, 0, 1));
-        assert_points_equal(&points[1].point, &p(1, 0, 1));
+        assert_points_equal(points[0].point.try_coordinates().unwrap(), &p(-1, 0, 1));
+        assert_points_equal(points[1].point.try_coordinates().unwrap(), &p(1, 0, 1));
 
         let lower = Curve3::line(p(-2, 0, -1), p(2, 0, -1)).unwrap();
         assert!(matches!(
@@ -14777,11 +15900,21 @@ mod tests {
             panic!("generator crossing the apex must retain its upper interval");
         };
         assert_eq!(
-            compare_reals(domain.start(), &q(1, 2), crate::STRICT_PREDICATES).value(),
+            compare_reals(
+                domain.start().try_real().unwrap(),
+                &q(1, 2),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(domain.end(), &r(1), crate::STRICT_PREDICATES).value(),
+            compare_reals(
+                domain.end().try_real().unwrap(),
+                &r(1),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let contained = Curve3::line(p(1, 0, 1), p(2, 0, 2)).unwrap();
@@ -14893,9 +16026,11 @@ mod tests {
             panic!("oblique plane must retain one exact full ellipse");
         };
         assert_eq!(ellipse.kind(), Curve3Kind::EllipseArc);
-        assert_points_equal(&ellipse.point_at(&Real::zero()).unwrap(), &p(2, 0, 0));
+        assert_points_equal(&ellipse.evaluate_real(&Real::zero()).unwrap(), &p(2, 0, 0));
         assert_points_equal(
-            &ellipse.point_at(&(Real::pi() / r(2)).unwrap()).unwrap(),
+            &ellipse
+                .evaluate_real(&(Real::pi() / r(2)).unwrap())
+                .unwrap(),
             &p(0, -2, -2),
         );
         for parameter in [
@@ -14904,7 +16039,7 @@ mod tests {
             Real::pi(),
             (r(3) * Real::pi() / r(2)).unwrap(),
         ] {
-            let point = ellipse.point_at(&parameter).unwrap();
+            let point = ellipse.evaluate_real(&parameter).unwrap();
             assert_eq!(
                 compare_reals(
                     &(&point.x * &point.x + &point.y * &point.y),
@@ -14960,7 +16095,12 @@ mod tests {
         else {
             panic!("apex plane must retain the singular point");
         };
-        assert_points_equal(&point, &Point3::origin());
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
         let below = Surface::plane(p(0, 0, -1), Vector3::x(), Vector3::y()).unwrap();
         assert!(matches!(
             cone.intersect_surface(&below).unwrap(),
@@ -15042,7 +16182,7 @@ mod tests {
                 let spatial = ray.point.clone() + ray.direction.clone() * &parameter;
                 assert_points_equal(
                     &cone
-                        .point_at(
+                        .evaluate_real(
                             &ray.pcurve(SurfaceIntersectionOperand::First)
                                 .point_at(&parameter),
                         )
@@ -15051,7 +16191,7 @@ mod tests {
                 );
                 assert_points_equal(
                     &axial_plane
-                        .point_at(
+                        .evaluate_real(
                             &ray.pcurve(SurfaceIntersectionOperand::Second)
                                 .point_at(&parameter),
                         )
@@ -15078,7 +16218,7 @@ mod tests {
             let spatial = ray.point.clone() + ray.direction.clone() * &sqrt_two;
             assert_points_equal(
                 &axial_plane
-                    .point_at(
+                    .evaluate_real(
                         &ray.pcurve(SurfaceIntersectionOperand::First)
                             .point_at(&sqrt_two),
                     )
@@ -15087,7 +16227,7 @@ mod tests {
             );
             assert_points_equal(
                 &cone
-                    .point_at(
+                    .evaluate_real(
                         &ray.pcurve(SurfaceIntersectionOperand::Second)
                             .point_at(&sqrt_two),
                     )
@@ -15182,16 +16322,28 @@ mod tests {
                 CurveFamily2::CircularArc
             );
             for parameter in [Real::zero(), (Real::pi() / r(2)).unwrap(), Real::pi()] {
-                let point = section.curve().point_at(&parameter).unwrap();
+                let point = section.curve().evaluate_real(&parameter).unwrap();
                 assert_points_equal(
                     &torus
-                        .point_at(&section.first_pcurve().point_at(&parameter).unwrap())
+                        .evaluate_real(
+                            &section
+                                .first_pcurve()
+                                .point_at(&Real::clone(&parameter).into())
+                                .map(crate::geometry::represented_test_surface_parameter)
+                                .unwrap(),
+                        )
                         .unwrap(),
                     &point,
                 );
                 assert_points_equal(
                     &plane
-                        .point_at(&section.second_pcurve().point_at(&parameter).unwrap())
+                        .evaluate_real(
+                            &section
+                                .second_pcurve()
+                                .point_at(&Real::clone(&parameter).into())
+                                .map(crate::geometry::represented_test_surface_parameter)
+                                .unwrap(),
+                        )
                         .unwrap(),
                     &point,
                 );
@@ -15237,7 +16389,12 @@ mod tests {
         else {
             panic!("an outer-radius axial plane must retain the exact tangent point");
         };
-        assert_points_equal(&point, &p(4, 0, 0));
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &p(4, 0, 0),
+        );
         let oblique = Surface::plane(
             Point3::origin(),
             Vector3::x(),
@@ -15360,12 +16517,24 @@ mod tests {
         );
         for circle in &circles {
             let parameter = Real::pi();
-            let spatial = circle.curve().point_at(&parameter).unwrap();
+            let spatial = circle.curve().evaluate_real(&parameter).unwrap();
             let sphere_point = sphere
-                .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &circle
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap();
             let cylinder_point = cylinder
-                .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &circle
+                        .second_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap();
             assert_points_equal(&sphere_point, &spatial);
             assert_points_equal(&cylinder_point, &spatial);
@@ -15380,15 +16549,27 @@ mod tests {
         let parameter = Real::pi();
         assert_points_equal(
             &cylinder
-                .point_at(&swapped[0].first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped[0]
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
-            &swapped[0].curve().point_at(&parameter).unwrap(),
+            &swapped[0].curve().evaluate_real(&parameter).unwrap(),
         );
         assert_points_equal(
             &sphere
-                .point_at(&swapped[0].second_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped[0]
+                        .second_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
-            &swapped[0].curve().point_at(&parameter).unwrap(),
+            &swapped[0].curve().evaluate_real(&parameter).unwrap(),
         );
         let rotated_parameters = Surface::sphere(
             Point3::origin(),
@@ -15420,14 +16601,15 @@ mod tests {
         for mirrored_circle in &mirrored_circles {
             let spatial = mirrored_circle
                 .curve()
-                .point_at(&mirrored_parameter)
+                .evaluate_real(&mirrored_parameter)
                 .unwrap();
             assert_points_equal(
                 &mirrored_cylinder
-                    .point_at(
+                    .evaluate_real(
                         &mirrored_circle
                             .second_pcurve()
-                            .point_at(&mirrored_parameter)
+                            .point_at(&Real::clone(&mirrored_parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
                             .unwrap(),
                     )
                     .unwrap(),
@@ -15518,16 +16700,28 @@ mod tests {
             &Point3::new(q(6, 5), Real::zero(), q(8, 5)),
         );
         for parameter in [Real::zero(), Real::pi()] {
-            let spatial = circle.curve().point_at(&parameter).unwrap();
+            let spatial = circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &centered
-                    .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .first_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
             assert_points_equal(
                 &cone
-                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .second_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
@@ -15543,16 +16737,28 @@ mod tests {
         assert_eq!(circles.len(), 2);
         let parameter = q(1, 3);
         for circle in &circles {
-            let spatial = circle.curve().point_at(&parameter).unwrap();
+            let spatial = circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &two_circle_sphere
-                    .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .first_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
             assert_points_equal(
                 &cone
-                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .second_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
@@ -15582,7 +16788,12 @@ mod tests {
         else {
             panic!("the lower coaxial sphere must retain its isolated apex contact");
         };
-        assert_points_equal(&point, &Point3::origin());
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
 
         let mixed_dimension =
             Surface::sphere(p(0, 0, 5), Vector3::x(), Vector3::y(), Vector3::z(), r(5)).unwrap();
@@ -15592,7 +16803,12 @@ mod tests {
             panic!("apex-plus-circle contact must retain both exact dimensions");
         };
         assert_eq!(components.points().len(), 1);
-        assert_points_equal(&components.points()[0], &Point3::origin());
+        assert_points_equal(
+            components.points()[0]
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
         assert!(components.curves().is_empty());
         assert_eq!(components.surface_curves().len(), 1);
         let mixed_circle = &components.surface_curves()[0];
@@ -15601,16 +16817,28 @@ mod tests {
             &Point3::new(q(24, 5), Real::zero(), q(32, 5)),
         );
         for parameter in [Real::zero(), Real::pi()] {
-            let spatial = mixed_circle.curve().point_at(&parameter).unwrap();
+            let spatial = mixed_circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &mixed_dimension
-                    .point_at(&mixed_circle.first_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &mixed_circle
+                            .first_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
             assert_points_equal(
                 &cone
-                    .point_at(&mixed_circle.second_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &mixed_circle
+                            .second_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
@@ -15625,16 +16853,28 @@ mod tests {
         assert_eq!(swapped.surface_curves().len(), 1);
         let swapped_circle = &swapped.surface_curves()[0];
         let parameter = q(1, 3);
-        let spatial = swapped_circle.curve().point_at(&parameter).unwrap();
+        let spatial = swapped_circle.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &cone
-                .point_at(&swapped_circle.first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped_circle
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
         assert_points_equal(
             &mixed_dimension
-                .point_at(&swapped_circle.second_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped_circle
+                        .second_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
@@ -15655,7 +16895,12 @@ mod tests {
         assert_eq!(rotated.points().len(), 1);
         assert_eq!(rotated.curves().len(), 1);
         assert!(rotated.surface_curves().is_empty());
-        assert_points_equal(&rotated.points()[0], &Point3::origin());
+        assert_points_equal(
+            rotated.points()[0]
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
         assert_points_equal(
             &rotated.curves()[0].start().unwrap(),
             &Point3::new(q(24, 5), Real::zero(), q(32, 5)),
@@ -15694,10 +16939,16 @@ mod tests {
             &Real::zero()
         );
         let parameter = q(2, 3);
-        let spatial = mirrored_circle.curve().point_at(&parameter).unwrap();
+        let spatial = mirrored_circle.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &mirrored_centered
-                .point_at(&mirrored_circle.first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &mirrored_circle
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
@@ -15725,16 +16976,28 @@ mod tests {
             &Point3::new(r(3), Real::zero(), r(9)),
         );
         for parameter in [Real::zero(), Real::pi()] {
-            let spatial = circle.curve().point_at(&parameter).unwrap();
+            let spatial = circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &cylinder
-                    .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .first_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
             assert_points_equal(
                 &cone
-                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .second_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
@@ -15746,9 +17009,15 @@ mod tests {
         let parameter = q(2, 3);
         assert_points_equal(
             &cone
-                .point_at(&swapped.first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
-            &swapped.curve().point_at(&parameter).unwrap(),
+            &swapped.curve().evaluate_real(&parameter).unwrap(),
         );
 
         let rotated_parameters =
@@ -15785,10 +17054,16 @@ mod tests {
             &Real::zero()
         );
         let parameter = q(1, 4);
-        let spatial = mirrored_circle.curve().point_at(&parameter).unwrap();
+        let spatial = mirrored_circle.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &mirrored_cylinder
-                .point_at(&mirrored_circle.first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &mirrored_circle
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
@@ -15835,16 +17110,28 @@ mod tests {
             &Point3::new(q(5, 2), Real::zero(), q(5, 2)),
         );
         for parameter in [Real::zero(), Real::pi()] {
-            let spatial = circle.curve().point_at(&parameter).unwrap();
+            let spatial = circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &wide
-                    .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .first_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
             assert_points_equal(
                 &narrow
-                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .second_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
@@ -15854,16 +17141,28 @@ mod tests {
             panic!("operand reversal must retain the same exact cone circle");
         };
         let parameter = q(1, 3);
-        let spatial = swapped.curve().point_at(&parameter).unwrap();
+        let spatial = swapped.curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &narrow
-                .point_at(&swapped.first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
         assert_points_equal(
             &wide
-                .point_at(&swapped.second_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped
+                        .second_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
@@ -15881,7 +17180,12 @@ mod tests {
         else {
             panic!("different coaxial angles with one apex must meet at that apex");
         };
-        assert_points_equal(&point, &Point3::origin());
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
 
         let same_geometry_rotated = Surface::cone(
             Point3::origin(),
@@ -15950,19 +17254,26 @@ mod tests {
             &Point3::new(q(5, 6), Real::zero(), q(5, 6)),
         );
         for parameter in [Real::zero(), Real::pi(), Real::tau()] {
-            let spatial = counteroriented.curve().point_at(&parameter).unwrap();
+            let spatial = counteroriented.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &wide
-                    .point_at(&counteroriented.first_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &counteroriented
+                            .first_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
             assert_points_equal(
                 &antiparallel
-                    .point_at(
+                    .evaluate_real(
                         &counteroriented
                             .second_pcurve()
-                            .point_at(&parameter)
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
                             .unwrap(),
                     )
                     .unwrap(),
@@ -16002,7 +17313,12 @@ mod tests {
         else {
             panic!("opposite cones with one apex must meet at that apex");
         };
-        assert_points_equal(&point, &Point3::origin());
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &Point3::origin(),
+        );
         let opening_away = Surface::cone(
             Point3::new(Real::zero(), Real::zero(), q(-5, 2)),
             Vector3::x(),
@@ -16053,16 +17369,28 @@ mod tests {
         );
         for circle in &circles {
             for parameter in [Real::zero(), Real::pi()] {
-                let spatial = circle.curve().point_at(&parameter).unwrap();
+                let spatial = circle.curve().evaluate_real(&parameter).unwrap();
                 assert_points_equal(
                     &first
-                        .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                        .evaluate_real(
+                            &circle
+                                .first_pcurve()
+                                .point_at(&Real::clone(&parameter).into())
+                                .map(crate::geometry::represented_test_surface_parameter)
+                                .unwrap(),
+                        )
                         .unwrap(),
                     &spatial,
                 );
                 assert_points_equal(
                     &second
-                        .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                        .evaluate_real(
+                            &circle
+                                .second_pcurve()
+                                .point_at(&Real::clone(&parameter).into())
+                                .map(crate::geometry::represented_test_surface_parameter)
+                                .unwrap(),
+                        )
                         .unwrap(),
                     &spatial,
                 );
@@ -16073,16 +17401,28 @@ mod tests {
             panic!("operand reversal must retain both torus latitude circles");
         };
         let parameter = q(1, 3);
-        let spatial = swapped[0].curve().point_at(&parameter).unwrap();
+        let spatial = swapped[0].curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &second
-                .point_at(&swapped[0].first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped[0]
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
         assert_points_equal(
             &first
-                .point_at(&swapped[0].second_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped[0]
+                        .second_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
@@ -16204,9 +17544,15 @@ mod tests {
             let parameter = q(2, 3);
             assert_points_equal(
                 &mirrored
-                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .second_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
-                &circle.curve().point_at(&parameter).unwrap(),
+                &circle.curve().evaluate_real(&parameter).unwrap(),
             );
         }
 
@@ -16273,16 +17619,28 @@ mod tests {
         );
         for circle in &circles {
             for parameter in [Real::zero(), q(2, 3), Real::pi()] {
-                let spatial = circle.curve().point_at(&parameter).unwrap();
+                let spatial = circle.curve().evaluate_real(&parameter).unwrap();
                 assert_points_equal(
                     &sphere
-                        .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                        .evaluate_real(
+                            &circle
+                                .first_pcurve()
+                                .point_at(&Real::clone(&parameter).into())
+                                .map(crate::geometry::represented_test_surface_parameter)
+                                .unwrap(),
+                        )
                         .unwrap(),
                     &spatial,
                 );
                 assert_points_equal(
                     &torus
-                        .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                        .evaluate_real(
+                            &circle
+                                .second_pcurve()
+                                .point_at(&Real::clone(&parameter).into())
+                                .map(crate::geometry::represented_test_surface_parameter)
+                                .unwrap(),
+                        )
                         .unwrap(),
                     &spatial,
                 );
@@ -16293,16 +17651,28 @@ mod tests {
             panic!("operand reversal must retain both sphere/torus latitude circles");
         };
         let parameter = q(1, 4);
-        let spatial = swapped[0].curve().point_at(&parameter).unwrap();
+        let spatial = swapped[0].curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &torus
-                .point_at(&swapped[0].first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped[0]
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
         assert_points_equal(
             &sphere
-                .point_at(&swapped[0].second_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped[0]
+                        .second_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
@@ -16373,9 +17743,15 @@ mod tests {
             let parameter = q(5, 7);
             assert_points_equal(
                 &mirrored
-                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .second_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
-                &circle.curve().point_at(&parameter).unwrap(),
+                &circle.curve().evaluate_real(&parameter).unwrap(),
             );
         }
 
@@ -16456,16 +17832,28 @@ mod tests {
         );
         for circle in &circles {
             for parameter in [Real::zero(), q(3, 5), Real::pi()] {
-                let spatial = circle.curve().point_at(&parameter).unwrap();
+                let spatial = circle.curve().evaluate_real(&parameter).unwrap();
                 assert_points_equal(
                     &cylinder
-                        .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                        .evaluate_real(
+                            &circle
+                                .first_pcurve()
+                                .point_at(&Real::clone(&parameter).into())
+                                .map(crate::geometry::represented_test_surface_parameter)
+                                .unwrap(),
+                        )
                         .unwrap(),
                     &spatial,
                 );
                 assert_points_equal(
                     &torus
-                        .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                        .evaluate_real(
+                            &circle
+                                .second_pcurve()
+                                .point_at(&Real::clone(&parameter).into())
+                                .map(crate::geometry::represented_test_surface_parameter)
+                                .unwrap(),
+                        )
                         .unwrap(),
                     &spatial,
                 );
@@ -16477,16 +17865,28 @@ mod tests {
             panic!("operand reversal must retain both cylinder/torus latitude circles");
         };
         let parameter = q(4, 7);
-        let spatial = swapped[0].curve().point_at(&parameter).unwrap();
+        let spatial = swapped[0].curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &torus
-                .point_at(&swapped[0].first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped[0]
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
         assert_points_equal(
             &cylinder
-                .point_at(&swapped[0].second_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped[0]
+                        .second_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
@@ -16557,9 +17957,15 @@ mod tests {
             let parameter = q(6, 7);
             assert_points_equal(
                 &mirrored
-                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .second_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
-                &circle.curve().point_at(&parameter).unwrap(),
+                &circle.curve().evaluate_real(&parameter).unwrap(),
             );
         }
 
@@ -16640,16 +18046,28 @@ mod tests {
         );
         for circle in &circles {
             for parameter in [Real::zero(), q(4, 5), Real::pi()] {
-                let spatial = circle.curve().point_at(&parameter).unwrap();
+                let spatial = circle.curve().evaluate_real(&parameter).unwrap();
                 assert_points_equal(
                     &cone
-                        .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                        .evaluate_real(
+                            &circle
+                                .first_pcurve()
+                                .point_at(&Real::clone(&parameter).into())
+                                .map(crate::geometry::represented_test_surface_parameter)
+                                .unwrap(),
+                        )
                         .unwrap(),
                     &spatial,
                 );
                 assert_points_equal(
                     &torus
-                        .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                        .evaluate_real(
+                            &circle
+                                .second_pcurve()
+                                .point_at(&Real::clone(&parameter).into())
+                                .map(crate::geometry::represented_test_surface_parameter)
+                                .unwrap(),
+                        )
                         .unwrap(),
                     &spatial,
                 );
@@ -16660,16 +18078,28 @@ mod tests {
             panic!("operand reversal must retain both cone/torus latitude circles");
         };
         let parameter = q(3, 7);
-        let spatial = swapped[0].curve().point_at(&parameter).unwrap();
+        let spatial = swapped[0].curve().evaluate_real(&parameter).unwrap();
         assert_points_equal(
             &torus
-                .point_at(&swapped[0].first_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped[0]
+                        .first_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
         assert_points_equal(
             &cone
-                .point_at(&swapped[0].second_pcurve().point_at(&parameter).unwrap())
+                .evaluate_real(
+                    &swapped[0]
+                        .second_pcurve()
+                        .point_at(&Real::clone(&parameter).into())
+                        .map(crate::geometry::represented_test_surface_parameter)
+                        .unwrap(),
+                )
                 .unwrap(),
             &spatial,
         );
@@ -16745,9 +18175,15 @@ mod tests {
             let parameter = q(6, 7);
             assert_points_equal(
                 &mirrored
-                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &circle
+                            .second_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
-                &circle.curve().point_at(&parameter).unwrap(),
+                &circle.curve().evaluate_real(&parameter).unwrap(),
             );
         }
 
@@ -16857,7 +18293,12 @@ mod tests {
         else {
             panic!("tangent plane must produce one point");
         };
-        assert_points_equal(&point, &p(0, 0, 2));
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &p(0, 0, 2),
+        );
         let disjoint_plane = Surface::plane(p(0, 0, 3), Vector3::x(), Vector3::y()).unwrap();
         assert!(matches!(
             sphere.intersect_surface(&disjoint_plane).unwrap(),
@@ -16898,16 +18339,28 @@ mod tests {
             &Point3::new(r(3).sqrt().unwrap(), Real::zero(), Real::one()),
         );
         for parameter in [Real::zero(), Real::pi()] {
-            let spatial = axial_circle.curve().point_at(&parameter).unwrap();
+            let spatial = axial_circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &sphere
-                    .point_at(&axial_circle.first_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &axial_circle
+                            .first_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
             assert_points_equal(
                 &axial_second
-                    .point_at(&axial_circle.second_pcurve().point_at(&parameter).unwrap())
+                    .evaluate_real(
+                        &axial_circle
+                            .second_pcurve()
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
+                            .unwrap(),
+                    )
                     .unwrap(),
                 &spatial,
             );
@@ -16940,13 +18393,14 @@ mod tests {
             &Real::zero()
         );
         for parameter in [Real::zero(), Real::pi()] {
-            let spatial = mirrored_circle.curve().point_at(&parameter).unwrap();
+            let spatial = mirrored_circle.curve().evaluate_real(&parameter).unwrap();
             assert_points_equal(
                 &mirrored_second
-                    .point_at(
+                    .evaluate_real(
                         &mirrored_circle
                             .second_pcurve()
-                            .point_at(&parameter)
+                            .point_at(&Real::clone(&parameter).into())
+                            .map(crate::geometry::represented_test_surface_parameter)
                             .unwrap(),
                     )
                     .unwrap(),
@@ -16967,7 +18421,12 @@ mod tests {
         else {
             panic!("tangent spheres must produce one point");
         };
-        assert_points_equal(&point, &p(2, 0, 0));
+        assert_points_equal(
+            point
+                .try_coordinates()
+                .expect("represented analytic contact"),
+            &p(2, 0, 0),
+        );
         assert!(matches!(
             sphere.intersect_surface(&sphere).unwrap(),
             SurfaceSurfaceIntersection::Coincident
@@ -16980,12 +18439,20 @@ mod tests {
             Surface::cylinder(p(1, 2, 3), Vector3::x(), Vector3::y(), Vector3::z(), r(2)).unwrap();
         assert_eq!(cylinder.kind(), SurfaceKind::Cylinder);
         assert_points_equal(
-            &cylinder.point_at(&Point2::new(r(0), r(5))).unwrap(),
+            &cylinder.evaluate_real(&Point2::new(r(0), r(5))).unwrap(),
             &p(3, 2, 8),
         );
-        let partials = cylinder.partials_at(&Point2::new(r(0), r(5))).unwrap();
-        assert_points_equal(&Point3::from(partials.u().clone()), &p(0, 2, 0));
-        assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 0, 1));
+        let partials = cylinder
+            .partials_at(&hypercurve::Point2::new(r(0), r(5)).into())
+            .unwrap();
+        assert_points_equal(
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
+            &p(0, 2, 0),
+        );
+        assert_points_equal(
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
+            &p(0, 0, 1),
+        );
 
         let sphere = Surface::sphere(
             Point3::origin(),
@@ -16996,24 +18463,41 @@ mod tests {
         )
         .unwrap();
         assert_points_equal(
-            &sphere.point_at(&Point2::new(r(0), r(0))).unwrap(),
+            &sphere.evaluate_real(&Point2::new(r(0), r(0))).unwrap(),
             &p(2, 0, 0),
         );
-        let partials = sphere.partials_at(&Point2::new(r(0), r(0))).unwrap();
-        assert_points_equal(&Point3::from(partials.u().clone()), &p(0, 2, 0));
-        assert_points_equal(&Point3::from(partials.v().clone()), &p(0, 0, 2));
+        let partials = sphere
+            .partials_at(&hypercurve::Point2::new(r(0), r(0)).into())
+            .unwrap();
         assert_points_equal(
-            &Point3::from(sphere.normal_at(&Point2::new(r(0), r(0))).unwrap()),
+            &Point3::from(partials.u().try_coordinates().unwrap().clone()),
+            &p(0, 2, 0),
+        );
+        assert_points_equal(
+            &Point3::from(partials.v().try_coordinates().unwrap().clone()),
+            &p(0, 0, 2),
+        );
+        assert_points_equal(
+            &Point3::from(
+                sphere
+                    .normal_at(&hypercurve::Point2::new(r(0), r(0)).into())
+                    .unwrap()
+                    .try_coordinates()
+                    .unwrap()
+                    .clone(),
+            ),
             &p(1, 0, 0),
         );
         assert_eq!(
             sphere
-                .normal_at(&Point2::new(r(0), (Real::pi() / r(2)).unwrap()))
+                .normal_at(&hypercurve::Point2::new(r(0), (Real::pi() / r(2)).unwrap()).into())
                 .unwrap_err(),
             GeometryError::SingularSurfaceParameter
         );
         assert_eq!(
-            sphere.point_at(&Point2::new(r(0), Real::pi())).unwrap_err(),
+            sphere
+                .evaluate_real(&Point2::new(r(0), Real::pi()))
+                .unwrap_err(),
             GeometryError::SurfaceParameterOutsideDomain
         );
 
@@ -17026,15 +18510,16 @@ mod tests {
         )
         .unwrap();
         assert_points_equal(
-            &cone.point_at(&Point2::new(r(7), r(0))).unwrap(),
+            &cone.evaluate_real(&Point2::new(r(7), r(0))).unwrap(),
             &p(1, 2, 3),
         );
         assert_eq!(
-            cone.normal_at(&Point2::new(r(7), r(0))).unwrap_err(),
+            cone.normal_at(&hypercurve::Point2::new(r(7), r(0)).into())
+                .unwrap_err(),
             GeometryError::SingularSurfaceParameter
         );
         assert_eq!(
-            cone.point_at(&Point2::new(r(0), r(-1))).unwrap_err(),
+            cone.evaluate_real(&Point2::new(r(0), r(-1))).unwrap_err(),
             GeometryError::SurfaceParameterOutsideDomain
         );
 
@@ -17048,7 +18533,7 @@ mod tests {
         )
         .unwrap();
         assert_points_equal(
-            &torus.point_at(&Point2::new(r(0), r(0))).unwrap(),
+            &torus.evaluate_real(&Point2::new(r(0), r(0))).unwrap(),
             &p(5, 0, 0),
         );
     }
@@ -17109,9 +18594,10 @@ mod tests {
         assert_points_equal(
             &Point3::from(
                 circle
-                    .derivative_at(&Real::zero(), 1)
+                    .derivative_at(&Real::zero().into(), 1)
                     .unwrap()
-                    .vector()
+                    .try_coordinates()
+                    .unwrap()
                     .clone(),
             ),
             &p(0, 2, 0),

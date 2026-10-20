@@ -1,4 +1,7 @@
 //! Failed construction must not enter a pipeline as successful empty geometry.
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{Real, adapter::RawTriangleMesh};
 use csgrs::{
     TriangleMesh,
@@ -10,7 +13,7 @@ use hyperlattice::{Point3, Vector3};
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    &sine * &sine + &cosine * &cosine - Real::one()
+    uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
 #[test]

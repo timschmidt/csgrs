@@ -1,5 +1,8 @@
 #![cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
 
+#[path = "../src/test_uncertainty.rs"]
+mod test_uncertainty;
+
 #[cfg(any(feature = "earcut", feature = "cdt"))]
 use hypertri::Point2;
 use hypertri::{Error, PredicatePolicy, Real, TriangulationCertainty, TriangulationContext};
@@ -11,7 +14,10 @@ fn terminal_equality() -> (Real, Real) {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     (
-        &sine * &sine + &cosine * &cosine + Real::from(2),
+        Real::from(3)
+            + test_uncertainty::terminal_zero(
+                (&sine * &sine + &cosine * &cosine + Real::from(2)) - Real::from(3),
+            ),
         Real::from(3),
     )
 }

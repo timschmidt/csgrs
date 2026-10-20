@@ -1,7 +1,87 @@
 # HyperBREP Architecture
 
+Procedural parallel pcurves borrow their source definition through Hypercurve's
+`Curve2::analytic_parallel()` view, including analytic selected-fiber restrictions.
+HyperBRep's [parallel archive records](../src/persistence/parallel.rs) own format
+mapping and pre-decode resource counts; Hypercurve rechecks regularity and
+selected ranges. No offset formula or proof flag is duplicated in BRep.
+`Curve3::planar_image` now supplies the exact spatial lift. Its immutable
+source, injective plane frame and affine parameter chart are owned by
+[`geometry/planar_image.rs`](../src/geometry/planar_image.rs). For spatial
+parameter `s` in `[0,1]`, the source parameter is `a+(b-a)*s` and the point is
+`origin + u*x(t) + v*y(t)`. Reversal and subdivision change the chart; an affine
+spatial transform changes the frame. It does not re-offset a transformed curve.
+Queries delegate planar evaluation, derivative and incidence to Hypercurve.
+The frame cross product proves injectivity, and its four lifted source-bound
+corners give a conservative spatial bound even after restriction when those
+bounds are available. Retaining an arbitrary source is not a finite-loop
+certificate: source poles and other query failures remain typed, and face
+admission still requires the complete loop proof.
+
+Whole-edge admission compares complete definitions after an exactly proved
+plane-chart similarity. It also checks the explicit source-to-edge parameter
+map. Endpoint checks supplement this proof; matching endpoints cannot replace
+it. Translated extrusion profiles reuse the same identity proof. Retained
+procedural wires use Hypercurve's complete simple-loop arrangement proof,
+including intrinsic span injectivity and directed endpoint parameters.
+Cap pairing and transverse translation then use the existing prism validator.
+No represented area or volume is required to certify that topology.
+
+The [planar lift admission](evidence/2026-10-18-planar-curve-lift/README.md)
+covers the original full nonlinear parallel cap, its quadratic closing spans,
+planar faces, path/region extrusion, holes/components, exact queries, edge
+splits, affine replay and repeated same-profile slab cuts/restoration. The
+[selected-image admission](evidence/2026-10-18-selected-planar-images/README.md)
+extends point queries and topology splits to retained selected roots. A point
+owns its original spatial source, parameter and planar point evidence. Frame
+linear forms delegate to Hypercurve's `CurvePointAffineForm2`; no independent
+coordinates or copied offset formulas are needed. Cold trim admission compares
+the complete source/frame/chart identity after exact endpoint correspondence.
+Injective adjacent source pieces may share a simpler proof image while their
+topology stays intact. Complete horizontal-prism certificates support subsequent
+slab operations without scalar vertex views. Newly authored source chart endpoints
+without scalar views, full source-history/intent receipts and general surface
+intersections remain separate work.
+
+Finite curve/plane contacts live in
+[`geometry/curve_plane.rs`](../src/geometry/curve_plane.rs). Positive-weight
+spatial Béziers reduce to the homogeneous plane numerator; Hypercurve owns
+its complete root census and derivative-sign queries. NURBS decomposition
+retains authored knot parameters and original selected spatial images.
+Planar images reduce the plane to an affine form on their actual consumed
+source interval. Hypercurve owns chart-preserving restriction, finite bounds,
+contacts and span-to-source parameter transport. A pole outside that interval
+does not invalidate the finite restriction; a pole inside it blocks a definite
+answer, including containment.
+
+`CurveSurfacePoint` carries `Parameter`, `GeometricPoint3` and
+`CurveSurfaceContactKind`. `Simple` and `Repeated` describe nonzero versus zero
+first derivative of the contact equation, including both incident spline spans;
+they do not promise global crossing behavior or an integer multiplicity.
+`Boundary` identifies a singleton clipped from coincident support.
+`CurveSurfaceIntersection::Components` retains mixed isolated points and
+maximal closed parameter ranges. Ranges own their endpoints; separate source
+visits to one spatial point retain separate parameters. Complete overlap is
+`Contained`. Hypercurve's complete overlap proof covers the interior; BRep
+also checks the transported closed endpoint images and their plane membership.
+An ambiguous full-multiplicity planar spline joint retains the owner's typed
+`Boundary` blocker. Unambiguous interior contacts and finite restrictions away
+from the jump remain consumable. Coefficient-only consumers explicitly request optional scalar
+views and preserve typed failures. A boundary mapper can reuse its supplied
+represented parameter only after exact equality proves it is the retained root.
+The [contact admission](evidence/2026-10-18-retained-plane-contacts/README.md)
+records this public API migration and the supported topology/format consumers.
+
+The shared surface-pcurve materializer also consumes a contained planar image
+when the projected source frame is an owner-certified similarity. It restricts
+the original source chart and returns an explicit signed affine correspondence
+to the spatial interval, including reversed mappings. It does not rebase the
+procedural source. General non-similarity projections remain typed owner
+construction failures; finite plane incidence alone does not prove that a
+particular planar carrier can encode the projected image.
+
 HyperBREP is an exact, immutable boundary-representation kernel.
-`hyperreal::Real` is the sole authoritative scalar. Approximate numbers may
+`hyperreal::Real` is the sole authored coefficient scalar. Approximate numbers may
 eventually propose work at explicit adapter boundaries, but they never decide
 incidence, ordering, containment, topology, or regularization.
 
@@ -30,6 +110,274 @@ certificates, persistence, and modeling operations.
 HyperTRI is an optional derived consumer behind the `tessellation` feature. It
 is not a core dependency and cannot mutate or replace a source BREP.
 
+The downstream [HyperBRep IO crate](../../hyperbrep-io/README.md) owns bounded
+Part 21 syntax, supported STEP geometry mapping and source-entity accounting.
+It consumes the native model interface and Hyperreal's exact numeric conversion;
+the core does not depend on the exchange layer.
+Parsed records confer no geometry authority. Source-scoped views and flat
+parameter storage preserve references and avoid recursive parameter-tree drop.
+
+## Retained rotation orbits
+
+`Curve3::rotation` stores an exact point, authored unit axis and finite angular
+domain of at most one turn. Its chart is `theta = s*t+b`, with `s` equal to +1 or
+-1. Authored angular evaluation applies the existing affine rotation primitives
+to the retained point. Reversal and restriction preserve the source; similarities
+transport the axis as an axial vector, including the orientation sign under
+reflection. Bounds conservatively enclose the full orbit. Positive-order vector
+derivatives require stored origin coordinates; independent selected angular
+parameters and general affine orbit transport remain typed frontiers.
+
+The [rotation implementation](../src/geometry/rotation.rs) owns these invariants.
+Selected revolution patches use it for their latitude boundaries. Ordinary
+face admission checks complete coordinate images and profile-axis clearance,
+including during cold reconstruction. Those checks do not certify general
+rank-two surface regularity, global embedding or solid interior. The
+[finite evidence](evidence/2026-10-18-selected-revolution/README.md) records composition and replay.
+
+## Closed edges and periodic seam uses
+
+`ModelBuilder::edge` may reference the same vertex twice for a circle, ellipse
+or retained rotation whose exact parameter interval spans one `tau` period.
+Positive radii and independent axes prove the native conic is regular and simple.
+A retained rotation instead certifies a unit axis, a nonzero radial component
+and a signed angular chart with derivative +1 or -1. Both endpoint images must
+still agree with the vertex. A shorter interval returns `ClosedEdgePeriodMismatch`; other closed
+curve families return `UnsupportedClosedEdge` until they have an appropriate
+regularity certificate. Equality of endpoint coordinates alone is insufficient.
+
+Vertex adjacency lists each incident edge once. Edge uses remain distinct:
+a cylinder seam can have two uses on opposite boundaries of one UV rectangle.
+A circular edge can bound an entire cap and one full-period side interval.
+The seam's spatial endpoint identity never identifies the two parameter
+endpoints. Directed angular-sweep and affine correspondences retain those
+endpoints and interior parameters through reversal, subdivision and replay.
+Existing whole-image, cap, shell-incidence and periodic-coverage checks remain
+mandatory. This admission does not add general ellipse/plane image proofs,
+closed spline certificates, general chart gluing or curved STEP mapping.
+
+Hypercurve owns the corresponding planar rule. A `CircularArc2` with equal
+endpoints denotes a full circle; the arc carrier owns radius and incidence
+checks. Its constructor rejects known zero radius or unequal endpoint radii;
+unknown structural facts still require certification by exact consumers.
+`CurveString2` rechecks zero-length chords only for lines, which can
+be constructed unchecked. Full-circle contours use the existing single
+`CurveRegion2` carrier, winding, Boolean and offset algorithms. See the
+[closed-edge qualification](evidence/2026-10-15-closed-edges/README.md).
+
+Disconnected selected solids retain these records through the shared topology
+transfer. A finite cylinder trim has a conservative face bound from its boundary
+curves: each Cartesian coordinate is affine along axial lines that reach the
+trim boundary. This supplies the existing disjoint Boolean path with a per-face
+proof, preserving selected closed edges without transferring unselected bodies.
+
+## Retained inverse parameters
+
+[`Parameter`](../src/parameter.rs) holds an authored `Real` or a certified
+selected algebraic root. `try_real` borrows an available scalar view without
+reconstruction. `compare` uses strict Hyperlimit order for two represented
+values and Hypercurve's retained comparison otherwise. It exposes no infallible
+mathematical `Eq` or `Ord`, and an unresolved comparison remains an error.
+Use `OperationContext::evaluate` to share instrumented solver work across a
+batch. The current implementation retains Hypercurve's admitted Bézier root
+authority; it adds no independent root-isolation or coefficient-field engine.
+
+[`geometry/location.rs`](../src/geometry/location.rs) owns spatial inverse
+queries. For a rational Bézier, a varying planar projection proposes certified
+parameters. Represented parameters retain the existing full-3D evaluation
+check. Selected roots use a certified constant remaining coordinate, or replay
+a second projected point at the **same** root and compare its exact image.
+Independent roots of different projections cannot establish spatial incidence.
+Positive weights are already an admission invariant. NURBS queries reuse
+Bezier-span decomposition and Hypercurve's affine root transport to retain
+authored knot parameters; exact comparison deduplicates shared seams.
+Partly constant preimages remain an explicit unsupported result.
+
+The [inverse-query qualification record](evidence/2026-10-15-retained-inverse-parameters/manifest.json)
+records that increment's covered cases and limits. The selected spatial
+evaluation added subsequently is described below.
+
+## Retained spatial points
+
+`Curve3::point_at(&Parameter)` returns `GeometricPoint3`. Authored scalar
+parameters on authored carriers store `Point3` coordinates. Retained translation
+and rotation origins can preserve a selected source even at scalar parameters.
+A selected line, rational Bézier, finite NURBS or planar image retains its
+immutable source curve and one shared parameter; `try_coordinates` returns `None`
+without attempting materialization. Conic angular parameters still require a scalar view and
+otherwise return `UnsupportedSelectedEvaluation`.
+
+[`geometry/point.rs`](../src/geometry/point.rs) owns the spatial evidence.
+`coincides_with` first checks shared point/source identity, then compares all
+three coordinates through Hypercurve's existing selected-image predicates.
+Different parameters do not prove different points. An unresolved coordinate
+does not prevent a definite separation in another coordinate from proving
+noncoincidence. Both projections use the same selector; independently chosen
+roots cannot establish a spatial point.
+
+`compare_linear_form(direction, rhs)` compares `direction · point` with `rhs`
+under strict predicates. It maps authored source controls to the scalar linear
+form and reuses the same selected parameter and rational denominator through
+Hypercurve. It certifies oblique plane membership and sides without separate
+coordinate reconstruction. This projection is local to the query; there is no
+unbounded cache keyed by arbitrary plane coefficients. Typed uncertainty can be
+retried after stronger scalar evidence.
+
+For native curve images, the XY and XZ projections and their selected points are
+prepared independently on demand. Successful projection preparation is cached, while failed work remains
+retryable. Cold readers may duplicate preparation before publishing a shared
+success. Source geometry owns no point or model reference, preventing a cycle.
+Bounds are conservative exact enclosures, with no promised width. Affine
+transforms certify invertibility, transform the source controls and reuse the
+selector; they do not add a chain of point-expression wrappers.
+
+The
+[qualification record](evidence/2026-10-15-retained-spatial-points/manifest.json)
+records that increment's covered cases and limits. The topology transfer
+implemented subsequently is described below.
+
+## Selected topology trims
+
+`ParameterDomain` describes authored carrier domains with `Real` coefficients.
+`ParameterRange` describes canonical increasing edge trims with exact
+`Parameter` endpoints. Vertex records store `GeometricPoint3`. Builder incidence
+checks compare retained images; they do not demand stored coordinates.
+Scalar coefficient algorithms explicitly request an available scalar or
+coordinate view and return a typed blocker otherwise.
+
+`EdgeRef::split(Parameter)` restricts the original spatial carrier and splits
+every incident pcurve in traversal order. An affine pcurve relation transports
+the same selector through Hypercurve. Selected restrictions preserve their
+source chart and the original relation; native reparameterized pieces get
+exact recomputed affine coefficients. Validation checks the actual map at
+both endpoints. It cannot infer agreement merely because a queried parameter
+is an endpoint.
+
+The exact subdivision inherits the source edge-image, wire simplicity,
+orientation, nesting and solid certificates: a partition of a validated
+boundary preserves its image. Publication still checks connectivity, ownership
+and parameter correspondence. Arbitrary replacements invalidate those proofs.
+No-op edits retain them. These in-memory certificates are not trusted archive
+input.
+
+Hypercurve's `Curve2::parameter_endpoints` exposes traversal order separately
+from its parameter-domain order. BREP reflection uses this distinction to
+reverse retained pcurves without reflecting their source parameter chart.
+Spatial transforms reuse the transformed arena curve for retained vertices;
+the source lookup is built only when a selected vertex needs it. Bounds union
+selected-point enclosures with the existing conservative curve bounds.
+
+The [topology qualification](evidence/2026-10-15-selected-topology/README.md)
+covers shared-edge splits, repeated edits, rational/NURBS charts, reflections
+and retained solid queries. [Archive version 12](SELECTED_ARCHIVE.md) retains
+selected roots, flattened charts, spatial curve images and authored pcurve
+restrictions. Independent replay covers the selected sheet fixtures and exact
+planar area, every cuboid edge alone or together (including shear/reflection),
+and cylinder axial subdivisions. Optional prism proofs project selected cap
+sources into the cap frame and retain their trim ranges. Generic convex planar
+proofs use retained linear-form comparisons for vertex half-spaces. When a
+wire lacks scalar vertex coordinates, the planar signed-volume proof integrates
+its checked boundary image; native scalar triangle fans remain the fast path.
+Cylinder proofs reconstruct parameter rectangles from checked boundary images.
+All topology records survive, and archives supply no trusted solid proof flags.
+See [solid replay evidence](evidence/2026-10-15-selected-solids/README.md).
+General selected solid/surface/contact graphs and Boolean transfer remain open. Native
+coefficient subdivision and angular conic evaluation retain their explicit
+scalar requirements. WP02/G1 and WP13 are not complete.
+
+Spatial curve domains now use `ParameterRange`. Retained planar lifts expose
+an authored source scale/offset rather than two scalar endpoints; selected
+source intervals keep their chart. Straight axial sweeps use `Curve3::translation`
+to preserve a selected origin. Hypercurve owns scalar-chart, affine-point and
+point-definition replay; BRep owns the spatial frame and complete extrusion
+image proof. Coordinate pcurve maps preserve selected UV corners through edge
+splits and reflection. Archive version 12 records these definitions and rejects
+versions through 11 without an adapter. General recursive selected fields remain outside
+the supported replay domain.
+
+Independent planar spline image validation compares the complete lifted pcurve
+with the spatial curve restricted to the mapped edge interval. The shared
+affine lift handles rational Bezier/quadratic controls and transforms NURBS knot
+charts, including reversed parameter direction. Selected source restrictions
+can therefore replay after prior native subdivision without requiring the
+source pcurve to span the entire spatial curve. The archive contract also
+defines Hypercurve's complete-image injectivity gate for boundary reassembly;
+connected multi-span NURBS with one common strict monotone coordinate can pass.
+See [composition evidence](evidence/2026-10-15-spline-replay/README.md).
+
+Archive decoding requires explicit `ArchiveLimits` for input bytes, JSON depth,
+tokens, records, degrees, variable geometry elements and topology references.
+A constant-storage syntax scan precedes a resource-only metadata pass. Stateful
+Serde seeds carry the shared budget through arenas and detached selected sources;
+metadata summaries contain no exact scalars or per-entry collections. Successful
+inputs read version and metadata together. The full record decoder runs only
+after admission, and model validation still rebuilds every geometry proof.
+The [archive contract](SELECTED_ARCHIVE.md#input-admission) defines exact units
+and retry behavior. Allocation/scalar-work limits and an iterative WASM-safe
+record decoder remain separate work; structural admission is not a total bound.
+
+## Source organization
+
+The private [topology module](../src/topology/mod.rs) owns arena storage and
+shared certificate records. The crate root remains the public type facade;
+there is no parallel legacy model API.
+
+| Module | Responsibility |
+| --- | --- |
+| `ownership/` | Canonical public model references, scoped construction keys, owned operation results and transactions |
+| `construction.rs`, `boolean_kernel.rs`, `meshing.rs` | Private constructor, Boolean and derived-output algorithms |
+| `boolean_kernel/sets.rs` | Regularized finite-union operands, intersection distribution, successive subtraction and connected-component normalization through the shared solid kernel |
+| `context.rs` | Explicit strict operation configuration and shared Hypersolve budgets; strict authority at fallible public operation boundaries |
+| `cache.rs` | Shared publication of successful immutable certificates; failed queries remain retryable |
+| `parameter.rs`, `geometry/location.rs`, `geometry/point.rs` | Retained parameters, spatial inverse queries and shared selected point images |
+| `topology/ids.rs`, `records.rs`, `correspondence.rs` | Typed identifiers, immutable topology records and exact parameter relations |
+| `topology/model.rs`, `builder.rs`, `error.rs` | Arena access, adjacency, staged construction/publication and typed failures |
+| `topology/transfer.rs` | Common full-model and selected-solid transfer; source-order remapping retains curve images, parameter correspondence, voids and validated solid certificates |
+| `topology/edit/` | Edge/face/surface splitting, multi-trace partitioning, endpoint attachment, transactions and edit results |
+| `topology/validation/` | Image agreement, wire/shell checks and existing analytic/prism/sweep/loft family certificates |
+| `topology/query.rs`, `measure.rs`, `transform.rs` | Classification, exact measurements and immutable transforms |
+| `topology/helpers.rs`, `tests.rs` | Shared exact support routines and topology regressions |
+
+This split preserves the existing algorithms and admitted families. Complete
+operation accounting, general curved-shell validation and retained algebraic
+parameters remain tracked in the
+[implementation ledger](IMPLEMENTATION_STATUS.json).
+
+Curve, surface and model bounds and face contours retain successful results
+only. A predicate or resource failure belongs to its query, so later requests
+can benefit from stronger scalar evidence. Concurrent cold readers may repeat
+the calculation; publication keeps one successful value, and a failed reader
+uses a success published before its final cache check. Warm reads do not
+recompute. See the [cache regression evidence](evidence/2026-10-14-retryable-caches/manifest.json).
+
+## Operation scopes
+
+`OperationContext::strict` takes the existing Hypersolve `WorkBudget`, exposed
+at the crate root alongside `BudgetOutcome`, `BudgetExceeded`, `WorkKind` and
+`WorkUsage`. `evaluate` establishes one synchronous strict scope for a closure.
+Put a sequence of modeling operations inside that closure to share a total
+budget. Each evaluation of the reusable configuration creates a fresh scope;
+nested scopes also charge every parent and cannot reset a parent's allowance.
+A child with a smaller allowance may fail while its parent can still proceed.
+Unwinding restores the prior scope without refunding its already admitted work.
+
+Resource exhaustion is the outer `BudgetOutcome::result` error; the callback's
+domain errors, unknowns and completeness reports remain in its return type.
+An exhausted scope cannot return that value even when the callback ignores a
+nested denial. The scope does not roll back arbitrary caller side effects.
+The strict policy is queryable and suspends ambient Hypercurve approximation
+and preview authority. Existing individual BREP operations continue to enforce
+strict policy even outside a bounded batch.
+
+The two counters cover existing instrumented solver refinements and
+promotions, with the same units and cache-sensitive usage as
+`hypersolve::work_budget`. Scalar precision refinement, remaining geometry and
+elimination work, degree/coefficient growth and allocations are not completely
+charged. This is not a time or memory bound. Worker allocations, async scopes,
+cancellation, detailed proof-stage receipts and remaining counters are open
+WP01 work. The plan's broader `WorkLimits` sketch remains a target; unsupported
+limit fields are not exposed as if they were enforced.
+
 ## Canonical model
 
 `Model` is an immutable `Arc`-shared snapshot over private typed arenas:
@@ -44,6 +392,15 @@ An `Edge` owns one canonical spatial curve and exact parameter domain. Every
 incident `EdgeUse` owns its direction, face-local Hypercurve pcurve, and exact
 `ParameterCorrespondence`. Adjacency and ownership indexes are built once and
 retained for O(1) lookup.
+
+The public `VertexRef`, `EdgeRef`, `FaceRef`, `SolidRef` and corresponding
+reference types borrow one immutable revision. Traversal preserves that owner;
+arena positions alone cannot resolve entities. Builder keys resolve only in
+their construction scope and its published revision. Model clones share
+identity; transforms, committed edits and decoded archives create new
+revisions. Owned operation results retain the revisions needed by their
+borrowed detail views, including intermediate multi-trace split steps. See
+[ADR 0002](architecture/0002-model-ownership-and-validity.md).
 
 `ModelBuilder` is the publication boundary. Its noun-style methods stage
 records, while `finish` proves global ownership, closure, image agreement,
@@ -66,13 +423,13 @@ trees rather than inheriting Serde JSON's generic recursion ceiling, and wraps
 deserialization in a dynamically growing stack adapter before reconstruction;
 geometry and topology validation remain the trust boundary.
 
-`Model::split_edge` is a topology-changing exact edit. It splits every
+`EdgeRef::split` is a topology-changing exact edit. It splits every
 incident pcurve, updates forward and reversed wire traversal, and republishes
 only after complete validation. Affine correspondences are rederived from the
 new domains; angular correspondences invert through Hypercurve's certified
 rational-conic parameter solver.
 
-`Model::split_face` is the planar region counterpart. Two nonadjacent
+`FaceRef::split` is the planar region counterpart. Two nonadjacent
 outer-boundary vertices define one exact line chord. The chord is authored once
 as a canonical edge with opposite face-local uses; the source face/wire IDs are
 retained for one result, holes are reassigned by certified classification, and
@@ -91,6 +448,8 @@ The world-z prism optimization is separately gated by a certified translation
 family. Two vertex-height layers and a planar cap are not sufficient evidence:
 in particular, a cone frustum must fall through to retained curved stitching
 instead of being interpreted as a constant-profile extrusion.
+Every admitted edge connecting distinct height levels must also preserve x/y;
+a skew extrusion cannot become a world-z Cartesian product from its cap alone.
 
 ## Exact image agreement
 
@@ -100,6 +459,7 @@ curve/pcurve/surface tuple has a complete-interval structural proof:
 - affine line images on planes;
 - circular pcurves on planes through directed angular sweep;
 - axial lines and constant-height circles on cylinders;
+- latitude and meridian circles on spheres;
 - generators and constant-height circles on cones;
 - both circle directions on ring tori;
 - line and circular profile images on extrusion surfaces.
@@ -119,6 +479,30 @@ curve/pcurve/surface tuple has a complete-interval structural proof:
   denominators are partitioned at exact poles and tensor-boundary contacts;
   factorized relations retain their native iso-lines.
 
+`ModelBuilder::validate_edge_image` exposes this same check for a staged edge,
+direction, pcurve, parameter correspondence and surface. It checks all three
+key owners before geometry work, runs strict predicates even in an ambient
+approximate scope, and does not stage topology or install an inherited proof
+flag. A caller can retain alternate source pcurves in the builder and check
+each before constructing face-local uses. Face construction still validates
+the selected geometry independently. `Ok(())` proves only the complete trim
+image and directed correspondence; it does not establish shell validity or
+fidelity to a different source. Unsupported, unresolved and invalid outcomes
+remain distinct typed errors.
+
+Circular iso-curves on cylinders, spheres, cones and tori share one complete
+angular comparison. After restricting the spatial circle to the edge domain,
+the validator checks centers, radii, signed angular span and both vectors of
+the radial/tangent frame at the common domain start. Reversal and phase changes
+are included in that frame. The older direct-domain cosine/sine form remains
+an alternate exact proof when the anchored comparison is unresolved. This
+preserves its certified cases while avoiding doubled inverse-angle phases for
+reversed imported circles. Matching only the center and one tangent is
+insufficient: a wrong phase or tilted circle can pass that test. Six such false proofs were
+reproduced and repaired; the
+[image validation evidence](evidence/2026-10-15-edge-image-proof/README.md)
+retains the failures, parameterization matrix and downstream qualification.
+
 `builder::tensor_patch_shell` applies the same whole-curve certificate before
 sharing topology. Matching endpoint vertices alone never sew patches: degrees,
 knots, every control point, and weights up to one nonzero projective scale must
@@ -132,8 +516,15 @@ All kernel quadrant construction uses one checked `certified_atan2` path. It
 decides both coordinate signs through the exact comparison policy, returns
 axis angles structurally, and applies the exact single-argument arctangent
 only after the quadrant is certified. Symbolic cancellation therefore becomes
-an exact axis result or a typed predicate/elementary-function error; it cannot
+an exact axis result or a typed predicate/scalar error; it cannot
 panic through `Real::atan2`'s convenience refinement floor.
+
+Fallible scalar division, elementary functions and homogeneous transforms
+retain their `hyperreal::Problem` in `GeometryError::Numeric`. Domain errors,
+unresolved zero tests and exhausted refinement remain distinguishable through
+the public error variants and standard error cause chains. The exact meaning
+of these outcomes is specified in
+[ADR 0001](architecture/0001-exact-decision-contract.md#outcomes).
 
 ## Solid certificates
 
@@ -171,6 +562,19 @@ families is recertified:
 Certificates are compact retained facts used for exact volume and point
 classification. They are rebuilt from geometry and topology after persistence.
 Supported transforms update the certificate directly and preserve its proof.
+
+Successful builder admission now retains its positive strict family proofs
+until `finish` or drop. These partial records differ from a validated transfer's
+complete available proof set: a missing admission proof still invokes the
+existing recognizer. Whole-solid sphere/cylinder facts include their supported
+voids; outer-shell facts are reusable only without voids. Finalization still
+derives the secondary prism proof and applies the prism/loft eligibility rules.
+Ownership, orientation, nesting and global orphan validation remain mandatory.
+Edits invalidate certificates before replay. The private line-pcurve rewrite
+cannot reach an admitted boundary, and later appended faces cannot change a
+shell-scoped proof. Retention is one owned record per solid, with no global key
+or eviction policy; this does not bound retained bytes, total work or cancellation.
+See the [proof-scope review and executed evidence](evidence/2026-10-16-builder-certificates/README.md).
 
 Torus certification derives longitude/latitude rectangles from the current
 trimmed topology. Longitude cells must cover one complete period. Latitude
@@ -210,8 +614,8 @@ polynomial B-splines and rational Bézier controls and weights are retained
 without flattening. A single periodic polynomial B-spline or NURBS profile is
 partitioned at its exact native knot intervals into finite clamped
 piecewise-Bézier spline carriers before topology publication. This retains the
-source parameter intervals and rational images while avoiding a degenerate
-one-vertex closed edge. Hypercurve classifies the radial/axial boundary
+source parameter intervals and rational images while avoiding an unsupported
+one-vertex closed spline edge. Hypercurve classifies the radial/axial boundary
 directly and supplies exact Green-theorem area moments for polynomial and
 polynomial-equivalent Bézier fragments. Finite rational quadratics use exact
 homogeneous Green integrals with denominator `W^4`, reduced symbolically to
@@ -308,6 +712,25 @@ families are promoted exactly. The prism certificate retains the complete
 `CurvePath2` outer-minus-hole region, so exact volume and point
 classification never reduce spline boundaries to chords.
 
+Region extrusion asks the authoritative `CurveRegion2` component for its
+certified borrowed line/arc view before converting boundaries to spatial
+curves. Available circles remain native circles; other persistent curves use
+the existing exact conversion. Failure to prove a view remains distinct from
+an unavailable view. The original region certificate remains authoritative.
+This intentionally changes some boundary tags and archive bytes from rational
+Bézier spans to native circles; it is a representation migration, not a
+performance-only optimization.
+
+Prism replay derives cap area from retained spatial conic integrals when
+available, projected into the certified cap basis. Other paths retain their
+exact path-area calculation. The area is a transient validated fact, never an
+unchecked serialized value. Signed cap area and the oriented extrusion
+determinant also establish shell orientation when a chord mesh would have zero
+volume, including an annulus bounded by two semicircles per loop. Inward shells
+remain invalid. A cylindrical lateral face requires an exact rectangular trim,
+axis parallel to the cap translation and cap normal, and matching axial bounds;
+this extends the shared prism validator used by replay and STEP import.
+
 Finite revolution patches share one native latitude extractor between
 construction and validation. Latitude edges are compared against the complete
 expected circle parameterization, including frame, domain, and directed
@@ -322,6 +745,22 @@ Regularized z-prism Booleans delegate planar arrangement and role assignment to
 Hypercurve, then reconstruct line/arc material contours and holes as newly
 validated BREP solids. Empty, incompatible, unsupported, and unresolved
 outcomes remain distinct.
+Intersection uses the overlapping axial interval; union requires equal
+intervals. Directed difference accepts a cutter interval containing the entire
+source interval, including equal endpoints. Partial coverage, an exact 1e-12
+gap, touching, and disjoint intervals do not satisfy that difference rule;
+other existing Boolean routes may still complete them. The same operation
+handles replayed right prisms in a common orthonormal chart when both certified
+axes are exactly parallel. Skew or nonparallel axes are outside this route.
+No second planar kernel, tolerance or sampled recognition is introduced.
+
+Rationally rotated split circles expose two necessary scalar identities:
+principal rational atan reciprocal normalization and half-atan sine/cosine
+reduction when the rational argument has a rational hypotenuse. These proofs
+belong to Hyperreal; BREP keeps the original strict comparisons and full-size
+rotated inputs. This is the reproduced dependency exception to the branch's
+BREP-focused ownership. Other trig branches and fields retain their existing
+representations and failure contracts.
 
 The retained intersection-graph route is the general planar BREP pipeline:
 exact transverse and coincident support arrangements partition both operands,
@@ -430,6 +869,25 @@ conventions. `SurfaceIntersectionPcurve::materialize` exposes one exact
 Hypercurve `Curve2` plus the affine map from its public parameter back to the
 spatial fragment parameter. Topology transfer therefore needs neither inverse
 fitting nor an assumed identity parameterization.
+`SurfaceIntersectionPcurve::point_at(&Parameter)` returns a retained Hypercurve
+`CurvePoint2`, with exact domain checks and no coordinate reconstruction.
+`geometry/pcurve.rs` owns evaluation and correspondence. Native rational section
+spans and plane projections preserve selected parameters; iso/retained mappings
+reuse their source authority. Planar procedural projections currently require a
+similarity of the source chart. Face classification accepts the retained UV
+point directly; coordinate algorithms explicitly request an optional view.
+Selected angular/procedural surface images and full selected section restriction remain
+open boundaries, documented in the [evaluation record](evidence/2026-10-19-pcurve-evaluation/README.md).
+`Surface::point_at(&hypercurve::CurvePoint2)` returns `GeometricPoint3`.
+`geometry/surface_point.rs` validates retained UV domains; plane evaluation stores
+the immutable surface and the joint UV point directly. Spatial affine-form
+queries share the planar owner's proofs with curve images. Point transforms map
+the source plane frame without changing the UV selector. The private represented
+surface evaluator remains the common coefficient path. Endpoint image validation
+consumes retained pcurve and surface points directly. Archive 12 persists surface
+point definitions and generic translation/rotation origins through
+`persistence/spatial_points.rs`; nested shape admission precedes scalar decoding.
+See the [surface evaluation record](evidence/2026-10-19-surface-evaluation/README.md).
 Retained pcurves may run in either source direction; materialization preserves
 that affine direction exactly for lines, rational Béziers, and NURBS curves.
 For an authored-frame-aligned coaxial sphere/cylinder pair, each intersection
@@ -578,7 +1036,7 @@ For tensor carriers, `Surface::iso_curve` derives the complete exact
 homogeneous row or column at any represented constant parameter. The topology
 validator accepts an edge only when its full carrier or represented subcurve is
 projectively identical to that derived iso-curve. This lets
-`Model::split_face_by_surface_curve` attach an intersection to opposite
+`FaceRef::split_by_surface_curve` attach an intersection to opposite
 boundary edges and publish two identity-sharing rational Bézier or NURBS faces
 without downgrading validation to endpoint sampling. Complete
 non-isoparametric rational graph sections on translation tensors linear in either axis use
@@ -600,7 +1058,7 @@ middle-control forgery. Factorized and sign-definite boundary components use
 native tensor iso-curves, so their existing complete-control proof remains the
 authoritative validator.
 
-`Model::split_face_by_surface_curves` accepts retained intersection objects
+`FaceRef::split_by_surface_curves` accepts retained intersection objects
 directly, uses an explicit operand selector for their first or second pcurve,
 canonicalizes each unordered spatial endpoint pair, and locates every
 successive fragment on exactly one current descendant. Before editing, every
@@ -675,6 +1133,289 @@ retains an exact parameter beside every exact surface evaluation and exposes
 invented Hausdorff or normal-error certificate. It owns no mutable source
 state and cannot replace the BREP.
 
+## Analytic similarity transport
+
+`Model::transformed` first certifies an invertible affine map. A per-operation
+`TransformMetric` lazily proves `AᵀA = s²I`, `s > 0`, once and shares the positive
+scale across analytic carriers and shell certificates. Unit directions become
+`A*d/s`; points follow the affine map. Radii, axial bounds and void dimensions
+scale by `s`, while angles, selected curve parameters and dimensionless profile
+parameters retain their meanings. Polynomial carriers keep general affine
+transport. Circular/elliptical curves also retain their previously supported
+plane-isometry case when the unused normal is transformed differently.
+
+Cylinder/cone charts map `(u,v)` to `(u,s*v)`. For straight source pcurves,
+Hypercurve's exact similarity restricted to that line implements this map and
+retains selected-source lineage. Nonlinear axial pcurves require future exact
+affine carriers and fail typed. A pcurve shared by distinct face chart maps is
+separated into records; the first variant keeps its original slot. Reflection
+also reverses wires, directed uses and parameter correspondences. An extrusion
+reverses its transformed profile and reflects `u` about the profile domain
+endpoint sum; its affine extrusion vector and `v` coefficient remain paired.
+This repairs the old mismatch between reflected `u` and a negated `v` vector.
+Independent replay certifies complete forward or reversed profile equality and
+the matching parameter map. Reflected subcurves may have translated parameter
+origins; only the comparison chart is shifted, with equal-span and full carrier
+proofs retained. Matching endpoints alone are insufficient. Elliptic
+revolution meridians use the same existing complete-parameterization proof.
+No metric
+proof is cached across operations or mutable inputs; transformed query caches
+start empty.
+
+All analytic shell certificates transport physical dimensions and directions,
+including sphere/cylinder voids, clipped bodies, paired spheres, tori and cones.
+Revolution certificates scale their complete 2D contour/path profiles through
+Hypercurve. Prism, loft and sweep affine bases retain their own dimensionless
+coefficients. A torus axial-band integral normalizes height by minor radius and
+uses Hyperreal's existing exact quadratic-tower reduction before `sqrt`/`asin`;
+this preserves recognizable special angles after radical similarities.
+
+Persistence projects planar pcurves and writes full-domain rational edge/profile
+endpoints from the actual emitted vertex coordinates rather than runtime vertices
+replaced by curve-derived canonical coordinates.
+This keeps radical scale/inverse replay deterministic. It does not reconstruct
+selected coordinate images or change their authority. The
+[admission evidence](evidence/2026-10-16-analytic-similarity/README.md) records
+original failures, exact expectations, composition, archive effects and cost.
+The source/work/heap/cancellation limits of the existing kernel still apply;
+this transform extension does not establish global resource admission.
+
+## Retained profile images
+
+Retained planar spline restrictions enter the existing extrusion representation
+through Hypercurve's `Curve2::native_image()`. The image borrows its proving
+source and uses exact subcurve substitution for represented selected endpoints;
+its native chart can differ from the source chart. BREP consumes the complete
+image and still validates the whole wire, cap and shell. Shared image/area
+proofs belong in Hypercurve, while spatial lifting and product-solid continuation
+belong in BREP. Empty exact planar material intersection proves product
+subtraction is unchanged; retaining two solids for union additionally requires
+two separate planar material components. This continuation follows existing
+optimized and graph paths. Native geometry replay and a complete persistent
+authoring graph remain separate contracts. The
+[selected-profile proof record](evidence/2026-10-18-selected-profile-extrusion/proofs.md)
+states the admitted domain and remaining limits.
+
+## Seam-aligned analytic cuts
+
+Closed-set curve/region clipping retains positive-length boundary overlaps as
+well as interior intervals. Hypercurve owns that incidence proof. BREP must not
+discard an overlap by subsequently classifying its midpoint as boundary. Native
+iso pcurves are lifted by whole surface periods into the actual authored trim
+chart before clipping; spatial parameters and contact records remain paired.
+Each periodic axis admits at most three intersecting copies, independent of
+how many periods separate the chart origins. Wider chart spans remain typed
+unsupported. This bounds copy enumeration, not total scalar work or memory.
+
+`topology/edit/boundary.rs` proves complete coverage of a materialized line
+pcurve by existing outer/inner boundary line uses. It checks the retained
+mapping's native representation before materializing; nonlinear families
+continue through ordinary partitioning without constructing this line-only
+probe. Exact paired overlap ranges
+must cover its entire normalized interval without gaps. It then invokes the
+native complete spatial-curve/pcurve/surface image validator on the actual face,
+without accepting the trace's inherited proof flag. Covered traces leave the
+face unchanged in a multi-trace partition; a single-face split reports
+`DegenerateFaceSplit`. Partial overlaps, endpoint agreement and uncertain
+incidence are not coverage proofs. Nonlinear boundary pcurve coverage remains
+outside this path.
+
+`FaceTracePartitionRef::boundary()` exposes `BoundarySurfaceTraceRef`, its full
+intersection, selected operand, actual `source_model()` and overlap records.
+Each `BoundaryTraceOverlapRef` borrows its source edge use and paired normalized
+trace/boundary ranges, including reversed parameter orientation. Earlier face
+partitions may have subdivided shared edges, so the proof owns that staged
+revision. Interior split records precede boundary records; every record retains
+its caller `source_index`. A covered trace has one original spatial segment and
+no splits. These records do not yet constitute complete operation provenance.
+
+Planar cap assembly coalesces duplicated seam reports only after a complete
+parameterization proof. Selected circular edges with different chart origins or
+reflected frames reuse topology's existing full center/radius, angular-span,
+start-radial-vector and signed-tangent proof. Closed edges require both traversal
+trials even when both endpoint tests match. Same endpoints or common support
+alone never certify the selected arc. Unsupported infinite carrier intersections
+can be excluded when Hyperlimit certifies strict separation between a plane and
+the other finite face's bounds; touching and Unknown remain unrejected.
+
+Native line construction and plane-point projection compact exact coordinates
+through Hyperreal's bounded `compact_pi_laurent` API before later construction
+multiplies the expressions. Persistence now shares that plane projection instead
+of maintaining a duplicate formula. Axial chart transport likewise compacts
+line-direction differences before computing its restricted similarity. Torus and
+cone area magnitudes consume strict signs before introducing an unnecessary
+square root of a squared area. Unrecognized forms retain the original exact
+values; no recognition budget, predicate policy or archive limit is increased.
+Canonical expression bytes can change under the existing archive schema.
+
+The [evidence record](evidence/2026-10-16-seam-cuts/README.md) retains the original
+full-size seam failures and the subsequent repeated-use failures, including the
+70 MB swapped-cone line archive. The repeated-composition extension below addresses those specific cap/recut/reunion
+failures. Arbitrary periodic traces, general Boolean closure, general torus/cone STEP
+encoding and project-wide resource/provenance/delivery gates remain open.
+
+## Repeated curved composition
+
+`FacePairTrim::CoincidentFaces` replaces `CoincidentPlanar`; its two trace lists
+contain retained `SurfaceIntersectionCurve` values, including both actual
+surface charts, source intervals and clipping contacts. This is an intentional
+breaking API change without an alias. Planar straight boundaries retain their
+existing support-line arrangement; native circular boundaries retain finite
+curves. Cone/torus coincidence is admitted only when origins, oriented frames
+and all carrier parameters agree exactly and their validated boundary uses have
+affine iso-parameter maps. Existing bounded whole-period lifting moves only the
+target chart. Image coincidence alone does not establish a shared parameter map.
+
+Prepared region fragment indices do not identify authored edge uses. BREP contact
+mapping queries all actual boundary uses of the appropriate contour role through
+Hypercurve's native `point_locations`, retaining every supported incident
+parameter before applying the authored edge correspondence. Unrepresented
+selected-root values remain typed blockers at the existing contact boundary. Circular evaluation parameters use native rational
+charts; angular sweep fractions are not interchangeable with those parameters.
+Missing, unsupported or unresolved preimages remain typed failures. A strict
+native line-side certificate can exclude unrelated straight boundary uses before
+constructing incidence equations. On-line and blocked classifications retain
+the complete native inverse, and invalid input errors propagate. No additional
+cache or approximate predicate is introduced.
+
+A circular boundary no-op requires complete, closed native overlap coverage and
+full spatial image validation on the actual face carrier. It handles subdivided
+boundaries, holes and reversed charts, including circular images retained as
+rational curves. `BoundaryTraceOverlapRef::native_overlap()` exposes the original
+span overlap witness; its public paired ranges use the actual pcurve charts.
+The proof retains its source model revision. Wrong spatial interiors are rejected
+even when endpoints and an internal cached image flag agree. These records do
+not yet constitute complete operation provenance.
+
+Coplanar cap traces with equal parameterizations are coalesced by exact interval
+union including angle offsets. Different frames require either an existing
+complete period on the same circle support or full closed native overlap coverage
+of a complete circle candidate. Gaps and complementary parameter ranges that
+actually map to the same semicircle never establish full coverage. The graph
+retains original face incidences. Cone transverse sections share the authored
+meridian parameter and radial image, avoiding a separately reconstructed tangent
+radius. Cone/torus shell validators accept different arena records only after
+proving the same complete parameterization; all embedding, coverage, incidence
+and orientation checks remain required.
+
+The original three full-size half-cut fixtures now support recut intersection,
+subtraction to canonical empty with recovery, and complementary reconstruction.
+Both orders are exercised where applicable, at identity and six exact
+similarities: 63 configurations and 126 continuation outputs. Independent exact
+volume/area, inside/outside/boundary and near-offset classification, opposite
+paired edge uses, deterministic untrusted replay, subdivision and reflected
+rescaling accompany every nonempty result. The
+[evidence](evidence/2026-10-16-curved-coplanar/README.md) preserves the complete
+fifteen-case diagnostic frontier, failed candidates and cost observations.
+The sector extension below continues the five quarter/band cases. Differently
+parameterized coincident surfaces, general curved shells, complete operation
+receipts and resource/release gates remain open.
+
+## Analytic sector and band continuation
+
+Native line partitions incident on an inner wire share the retained-surface
+bridge arrangement. A complete bridge cycle must pass full wire simplicity,
+orientation and nesting validation before its new wires acquire reusable
+simplicity certificates. Endpoint attachment alone cannot justify them; a bridge
+crossing a hole is rejected. The public partition retains original trace indices,
+source/output model revisions, canonical ordering and exact segments.
+
+Planar circular traces share exact connected-interval union even when other
+traces are straight. Only a proved complete period joins the first and last
+components across a seam; all other gaps remain. Full-circle tests for different
+frames remain in force. The sphere path still requires complete circular coverage.
+
+Clipping uses `MaterializedSurfacePcurve` and its actual correspondence. Native
+circular charts use their nonlinear rational-to-angular map; a fraction of the
+rational domain is not an angular fraction. Restriction and reversal transport
+both source intervals and span order. A periodic seam retains distinct start/end
+parameter identities even when coordinates agree. No additional approximate
+carrier or tolerance is introduced.
+
+Materializing an iso curve reduces scalar-proven Laurent coordinates before
+those values become line coefficients. This preserves exact angular endpoints
+through repeated interpolation and untrusted replay after irrational reflection.
+The source parameter correspondence and every unrecognized exact expression are
+retained. The failed full cone-band fixture remains in the evidence record.
+
+The cone/torus shell validators admit complete convex angular sectors and axial
+bands only on the supported native rectangular UV grids. Curved cells have
+multiplicity one. Every selected angular column has exactly the same admitted
+axial mask, lies wholly in each longitudinal halfspace, and the sum of its
+interval widths equals the independently derived halfspace-intersection angle.
+Intervals are ordered inside one period; intervals wider than pi, gaps, wrong
+sides and partial columns fail this proof. Strict endpoint and midpoint signs on
+an interval of width at most pi prove its sinusoid remains in the halfspace.
+
+There are at most two planes containing the axis and two perpendicular to it.
+Cone caps coincide with the carrier limits; torus axial caps are strictly between
+its natural extrema. Every planar face has the required support and outward
+orientation, with validated images, wires and oppositely paired shell edge uses.
+These planes have no bounded three-dimensional arrangement cell. A compact closed
+oriented boundary with the certified curved part therefore has a unique planar
+completion: the difference of two completions would be a closed planar chain
+with nonzero winding in an unbounded cell. This argument depends on the entire
+restricted arrangement and carrier coverage. It is a mathematical justification,
+not a machine-checked proof of the Rust implementation, and does not admit
+arbitrary clipping planes or general curved shells.
+
+Planar line/conic area integrates `(r-origin) cross dr` using authoritative spatial
+angular intervals. Choosing a retained conic center as the common wire origin
+preserves the closed integral while avoiding translated endpoint terms that would
+otherwise cancel after subdivision. The existing scalar Laurent reducer and
+strict sign proof retain a usable signed magnitude. Unrecognized forms retain
+the original exact absolute value. Pure polygon paths and general spline
+measurement contracts remain distinct. The ordinary wire validator handles
+multiple circle supports and exterior chords outside the one-disk specialization;
+a valid two-edge arc/chord wire may share both cyclic endpoints.
+
+One reproduced BREP blocker required a Hyperreal correction after checking
+upstream: `Computable::acos` now preserves `acos(1/2)=pi/3` and
+`acos(-1/2)=2pi/3`, including values discovered by its existing rational normal
+form. This lets a retained `pi/2-acos(1/2)` contact compare exactly with `pi/6`.
+No BREP-specific scalar identity or larger recognition budget was added.
+
+The [acceptance corpus](../tests/support/sectors.rs) keeps the original full-size
+cutters and strict policies. Five original and 30 exact similarity configurations
+exercise 175 nonempty continuation outputs and 35 canonical empty results.
+Each nonempty output has independent exact volume/area, analytic point tables
+including 1e-12 offsets, paired opposite edge uses, deterministic raw replay,
+subdivision, reflected rescaling and further replay. This finite corpus does not
+establish arbitrary-angle or general Boolean closure. That historical increment
+kept ten typed unsupported torus/cone STEP controls. Ring-torus exchange now
+admits the exactly representable torus cases; cones and nonrepresentable scalar
+encodings retain typed diagnostics and same-context supported recovery. See the
+[evidence record](evidence/2026-10-16-sector-cuts/README.md) for executed commands,
+failed candidates, costs and remaining gates.
+
+## Exact ring-torus exchange and repeated angular replay
+
+`TorusGeometry` borrows the native right-handed frame and radii; authoritative
+geometry remains in `Surface`. The STEP adapter owns `TOROIDAL_SURFACE`, its two
+angular coordinates, length units and exact finite-decimal encoding. It builds
+latitude/meridian UV candidates through native circle incidence, preserves a
+continuous loop lift and translates by an exact period into the native chart.
+Whole-image validation admits those candidates. Distinct opposite seams remain
+explicit, including the axis identity of supplied pcurves. Other trim families
+and loops requiring additional periodic subdivision fail typed.
+
+Repeated rational-band subdivision exposed lost affine contact expressions and
+an inverse-angle equality unavailable at scalar replay. Planar cuts now retain
+the validated preimage alongside the canonical edge parameter. The topology
+owner normalizes only exactly rational affine split parameters. Equal authored
+circle frames/phases give a positive whole-map certificate; endpoint sine/cosine
+congruence can recover lifts in an already validated at-most-one-turn chart.
+The existing alternate certificates remain available when these proofs fail.
+
+The shared scalar normal form recognizes rational/pure-quadratic tangents with
+an exactly rational sine, first-quadrant complementary acos arguments and
+reconstructed rational scales through its existing bounded Laurent authority.
+This necessary dependency repair replaces a rejected BREP multiplier cascade.
+It introduces no numeric carrier, tolerance, terminal or larger recognition
+budget. See the [ownership/proof review](evidence/2026-10-16-torus-exchange/review.md)
+and [executed evidence](evidence/2026-10-16-torus-exchange/README.md), including
+four split/reload cycles, wrong-quadrant controls and preserved adverse results.
+
 ## Performance contract
 
 Correctness does not vary by execution route. Retained adjacency, structural
@@ -686,3 +1427,189 @@ exactly.
 See [`../PERFORMANCE.md`](../PERFORMANCE.md) for benchmark cohorts and current
 baselines, and [`SUPPORT_MATRIX.md`](SUPPORT_MATRIX.md) for the exact operation
 matrix.
+
+## Periodic conic parameters in Boolean continuation
+
+The native conic parameter is an identity in an authored chart, not just an
+angle modulo one revolution. Inverse queries, plane contacts and Boolean edge
+atomization now share `geometry::angular_parameter_lifts`. For a validated
+unit-speed conic interval of length at most tau, a certified integer ceiling
+selects the first equivalent parameter in that interval. A full-period seam
+retains both endpoint identities; a shorter interval can return no preimage.
+Stored endpoints are reused on certified equality. Enumeration does not grow
+with the chart's turn count; scalar quotient and coefficient costs retain their
+existing resource limitations.
+
+The helper computes strict orderings against the interval start and end once
+for each candidate parameter. That same pair decides membership and endpoint
+identity. A periodic lift changes the value, so it receives a fresh pair of
+comparisons. An undecided comparison still fails explicitly; the two endpoint
+identities of a complete period remain distinct. This reuse lasts only for one
+helper call and adds no persistent cache. The ordering cascade already proves
+the structural endpoint equality previously checked by `ParameterDomain::contains`.
+The [comparison evidence](evidence/2026-10-16-conic-comparison-reuse/README.md)
+retains the complete output contracts and observed costs; no general resource
+bound follows from fewer comparisons or allocations.
+
+The periodic lift repairs a lost subdivision when a retained parameter pi/2 belongs to a
+coalesced target arc spanning [7pi/4, 11pi/4]: the target preimage is 5pi/2.
+Previously the parameter was discarded as outside the interval, leaving the
+torus band cap unpaired. Direct inverse queries also previously lost valid
+preimages in distant authored charts because normalization added only one turn.
+
+`retained_curve_face_intervals` receives the actual spatial curve and obtains
+native boundary contacts before recovering its clipped endpoints. For an
+interior angular pcurve parameter, `retained_spatial_parameter` reuses a native
+contact only after certifying equal full spatial parameterization and finding
+one lift in the target domain. The native trim contact supplies the proof that
+the point is on this fragment; matching endpoints or circle supports alone
+does not justify reuse. Original pcurve endpoints use the retained correspondence
+so the two ends of a periodic seam remain distinct. Other correspondences and
+ambiguous lifts continue through the existing exact mapping.
+
+The [acceptance corpus](../tests/support/oblique.rs) retains the original
+40-unit cutter rotated 45 degrees relative to a radius-5/minor-radius-2 torus,
+then clips the half by z >= 1. Independent volume, area and point expectations
+exercise intersection in both orders, subtraction, reconstruction in both
+orders, subdivision, exact similarities and archive replay. Chart controls use
+both conic families, reversed/restricted curves, turns through +/-10^12 and
+1e-12 seam gaps. Wrong phase and different-support contacts are negative controls.
+For minor radius 2 and major radius 5, the disk segment above z = 1 has area
+S = 4pi/3 - sqrt(3). Rotation through pi gives volume 5pi*S. The curved area is
+20pi^2/3, the axial annular cap has area 10pi*sqrt(3), and the two longitudinal
+caps contribute 2S. The complement uses the remaining disk area and adds the
+same shared axial cap. These expectations are derived independently of BREP
+measurement; the exact similarity cases apply the corresponding square/cube
+scaling laws and transformed point tables.
+The [evidence](evidence/2026-10-16-oblique-cuts/README.md) also retains all nine
+wider oblique fixtures and their failures. This extends parameter evidence
+reuse; it does not supply a general curved-shell embedding proof or general
+oblique Boolean closure.
+
+## Axial-shell certificates and native carrier transport
+
+Topology's [axial-shell admission](../src/topology/validation/axial_shell.rs)
+proves complete plane/cylinder boundary structure before publishing a partial-depth
+solid. All native lateral edge/chart images are constant through each open
+height band. Shared axial edge identities assemble simple section loops whose
+individual winding transitions prove multiplicity one; Hypercurve owns the
+resulting material regions. Exact cap differences, event contacts and connected
+vertex links establish the transitions and embedding. Separate void shells and
+general curved embedding remain outside this certificate.
+
+`CertifiedAxialShell` is private immutable model data: a frame, exact event
+heights and region/area bands. It is indexed by the owning solid, scoped to that
+model's geometry and strict proof. Builder admission and validated transfer
+retain it; edits clear it and cold archives reconstruct it. There is no public
+proof flag, separate mutable cache or global identity key. Stored regions and
+vectors have no independent retained-byte budget; this is not a heap or total-work
+bound. Native volume and point classification consume the same certificate,
+including exact event-side ownership and transformed frames.
+
+[Cylinder chart transitions](../src/geometry/periodic_charts.rs) prove complete
+angular sign/phase and axial sign/displacement maps. Boolean selection retains
+the source UV witness and checks the opposite authored trim directly. Native
+iso traces keep complete spatial/pcurve images; meridian support subdivisions
+only partition the existing face and preserve original intersection incidences.
+
+Native line/circle extrusion walls now publish planes/cylinders with explicit
+chart and orientation maps. This is a greenfield representation/API migration,
+with the measured artifact differences recorded in the [feature evidence](evidence/2026-10-17-axial-shells/README.md).
+Before a supported non-similarity transform of a certified prism, exact
+[carrier promotion](../src/topology/transform/affine_prisms.rs) restores a finite
+extrusion representation over the actual angular trims. Its equation and pcurves
+are unchanged, preserving the original axial-shear domain. Other unsupported
+analytic affine images still fail explicitly; no fitting or tolerance is used.
+
+### Retained full revolutions
+
+`construction/revolution.rs` connects retained planar meridians and exact
+rotation latitudes across four angular cells. Point-ordered source chords use
+Hypercurve's complete scalar-chart proof before becoming surface coordinates.
+`validation/retained_revolution.rs` replays the face rectangles, single-cover
+angular/profile grid, common meridian plane and exact projected profile. Curve
+simplicity and winding plus strictly positive radial bounds prove the product
+shell's embedding. Area/volume formulas are separate optional queries. Native
+primitive/path fast paths keep their existing carriers. `revolve_curve_region`
+uses the unified region's material components and hole ownership, including
+empty input. The [admission record](evidence/2026-10-18-procedural-revolution/README.md)
+limits this proof to its supported domain; general shell embedding remains open.
+
+## Rational surface points and affine curve images
+
+`Surface::point_at` admits selected joint UV points on positive-weight rational
+Bézier and finite NURBS tensor patches, and extrusions of native line/Bézier/NURBS
+profiles. The source surface and entire UV point remain replay authority.
+`geometry/surface_point/rational.rs` derives homogeneous coordinate polynomials;
+Hypercurve's `CurvePointRationalForm2` evaluates their signs, comparisons and
+bounds in the retained joint field. Original denominators are checked before
+any cancellation. Hypersolve owns Bernstein and original-knot B-spline basis
+conversion and homogeneous recursive-field evaluation. NURBS span ownership is
+right-sided at internal knots and includes the final endpoint. Basis conversion
+uses an explicit -512 precision floor and preserves undecided/invalid statuses.
+
+Derived coefficient maps are immutable and point-owned. The point retains its
+source surface, with no back reference or global cache. Transforms rebuild the
+maps from the transformed source and unchanged UV selector. Bounds are exact
+conservative enclosures, not promised-width approximations or topology proofs.
+Selected angular surfaces and general retained procedural extrusion profiles
+remain unsupported. Full section restrictions and branch/event graphs remain
+open independently of point evaluation.
+
+`Curve3::affine_image` retains any spatial source under a certified nonsingular
+affine matrix. Its `AffineImage` family has a borrowed `affine_geometry` view;
+repeated images compose matrices instead of wrapper chains. Evaluation,
+derivatives, bounds, inverse location, reversal and restriction delegate to the
+source with its typed limitations. Regular angular closed edges remain regular
+under the invertible map. General transforms of retained rotations use this
+carrier when their native metric path is unavailable. Native conic model transforms keep their existing
+metric restriction until complete face-image and replay proofs are available.
+Coefficient-only and unsupported surface-intersection algorithms remain typed
+blockers; an affine image is not mislabeled as a circle or rotation.
+
+Archive 12 stores the complete source curve and matrix and admits nested source
+metadata before decoding scalars. Rational surface maps are recomputed from
+source definitions during replay. Versions through 11 are deliberately rejected,
+without an adapter. Source-path native/WASM consumers and preserved complete
+workflows are recorded in the [admission evidence](evidence/2026-10-19-rational-surface-evaluation/README.md). Installed
+distributions, full release/push gates and complete BRep modeling remain open.
+
+
+## Joint surface differentials and unit-vector queries
+
+The public differential boundary takes `CurvePoint2` directly and returns
+`GeometricVector3` partials and normals. One private represented evaluator keeps
+the original analytic formulas. Selected rational tensors differentiate their
+original homogeneous coordinate maps in `geometry/surface_point/rational.rs`;
+profile extrusions retain the profile derivative. Native NURBS span ownership
+and original denominator checks precede publication. A unit normal is distinct
+from a merely oriented tangent direction.
+
+`geometry/vector/algebra.rs` composes coordinate forms in Hypercurve's common
+source field. That owner pulls back polynomial-fiber maps, native parameter
+images, similarities and resolved endpoints; different selected branches cannot
+be joined just because their base coordinate agrees. Binary forms retain an
+immutable pair of original operands, including their checked pole guards.
+Structural common denominators stay shared during sums. Debug output does not
+expand the operand DAG recursively. No new cache or coordinate-root authority
+is introduced.
+
+A private positive-form proof retains the squared divisor of a root-scaled
+vector. Sign and squared-polynomial identities compare its coordinates, dot
+products and length without independently constructing square-root coordinates.
+Affine transport changes the numerator vector and retains that divisor;
+renormalization proves a new positive length. A surface's normal is computed
+from its authored partial order, so a reflection carries the determinant sign.
+Hypercurve's direction image discards only positive scale and permits parallel
+unit normals and zero-dot products without claiming unavailable radical speeds.
+
+`SurfacePartials::apply_direction` evaluates the Jacobian on a retained UV
+velocity. Materialized pcurves use `Parameter::curve_parameter` and their exact
+spatial-parameter correspondence; reversing that chart can require a negative
+scale. Pointwise chain identities and cold replay are tested independently from
+archive byte identity. They do not prove whole-section differential agreement
+at singular events or complete trim topology. Vector proofs are transient;
+archive 14 stays unchanged. Original shared guards can still grow with the input
+composition: degree shortcuts and solver counters are not total-work, heap,
+stack or cancellation bounds. The [admission record](evidence/2026-10-19-surface-differentials/README.md)
+retains these limits and the full previous corpus.

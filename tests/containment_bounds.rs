@@ -1,4 +1,7 @@
 //! Certified strict containment near all supporting planes, without tolerances.
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::solid::SolidExt;
 use csgrs::{GeometryCertainty, GeometryContext, Real, TriangleMesh, solid};
 use hypermesh::{HypermeshError, MeshCertainty, Point3, Triangle};
@@ -121,7 +124,7 @@ fn approximate_boundary_equalities_keep_their_receipt() {
     let mesh = solid::cube(Real::from(2)).unwrap();
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let zero = uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     // The independent trigonometric identity places both points on a face;
     // this expression deliberately requires the policy terminal today.
     for x in [zero.clone(), Real::from(2) - zero] {

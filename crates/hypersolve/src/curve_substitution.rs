@@ -815,6 +815,9 @@ fn bspline_blossom_homogeneous_point(
     Ok(work[degree].clone())
 }
 
+mod basis;
+pub use basis::{bernstein_scalar_power_basis, bspline_span_basis_power_basis};
+
 fn bernstein_scalars_to_power_basis(values: &[Real]) -> Vec<Real> {
     let degree = values.len() - 1;
     let mut coefficients = vec![Real::zero(); degree + 1];

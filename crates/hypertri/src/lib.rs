@@ -35,6 +35,8 @@ mod predicate_evaluator;
 mod predicates;
 #[cfg(feature = "runtime-select")]
 pub mod runtime;
+#[cfg(all(test, any(feature = "earcut", feature = "cdt", feature = "nd")))]
+mod test_uncertainty;
 pub mod types;
 
 pub use context::{TriangulationCertainty, TriangulationContext, TriangulationOutcome};

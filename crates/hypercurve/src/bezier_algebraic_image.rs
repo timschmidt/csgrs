@@ -917,6 +917,30 @@ impl RationalBezierAlgebraicPointImage2 {
         }
     }
 
+    /// Recovers the shared source parameter, including the root selection
+    /// retained by independently represented coordinate images.
+    pub(crate) fn source_parameter(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParameter2>> {
+        if let Some(parameter) = self.retained_parameter() {
+            Ok(Classification::Decided(BezierParameter2::Algebraic(
+                parameter.clone(),
+            )))
+        } else {
+            BezierParameter2::from_algebraic_root_representation_unbounded(self.parameter(), policy)
+        }
+    }
+
+    pub(crate) fn native_curve_evaluation(
+        &self,
+    ) -> Option<(&RationalBezier2, &BezierAlgebraicParameter2)> {
+        match &self.data.definition {
+            RationalPointDefinition::Parametric(source) => Some((&source.curve, &source.parameter)),
+            _ => None,
+        }
+    }
+
     /// Returns the exact x numerator, y numerator, and shared denominator for
     /// this selected-parameter rational expression.
     ///
@@ -1340,17 +1364,10 @@ impl RationalBezierAlgebraicPointImage2 {
                     x.denominator_coefficients(),
                 )
             };
-        let parameter = if let Some(parameter) = image.retained_parameter() {
-            BezierParameter2::Algebraic(parameter.clone())
-        } else {
-            match BezierParameter2::from_algebraic_root_representation_unbounded(
-                image.parameter(),
-                policy,
-            )? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+        let parameter = match image.source_parameter(policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
         };
         let denominator_sign =
@@ -1373,6 +1390,46 @@ impl RationalBezierAlgebraicPointImage2 {
                 parameter: parameter.refined_isolating_interval(1, &CurveContext::STRICT),
                 denominator_sign,
             },
+        ))
+    }
+
+    pub(crate) fn rational_query_source(
+        &self,
+        numerator: &hypersolve::BivariatePolynomial,
+        denominator: &hypersolve::BivariatePolynomial,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<crate::bezier_offset::PointFormSource2>> {
+        use hypersolve::BivariatePolynomial;
+        let evaluator = match self.predicate_evaluator(policy)? {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let lift =
+            |p: &[Real]| BivariatePolynomial::new(p.iter().map(|c| vec![c.clone()]).collect());
+        let map = crate::RationalMap2::new(
+            [lift(evaluator.x_numerator), lift(evaluator.y_numerator)],
+            lift(evaluator.denominator),
+        );
+        let Some((numerator, denominator)) = map.pullback(numerator, denominator) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let source = match &evaluator.parameter {
+            BezierParameter2::Exact(value) => {
+                crate::Point2::new(value.clone(), Real::zero()).into()
+            }
+            BezierParameter2::Algebraic(parameter) => match rational_point_image_from_power_basis(
+                parameter,
+                vec![Real::zero(), Real::one()],
+                Vec::new(),
+                vec![Real::one()],
+                policy,
+            )? {
+                Classification::Decided(point) => point.into(),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            },
+        };
+        Ok(Classification::Decided(
+            crate::bezier_offset::PointFormSource2::new(source, numerator, denominator),
         ))
     }
 }
@@ -1653,6 +1710,51 @@ impl PartialEq for RationalBezierAlgebraicTangentImage2 {
 }
 
 impl RationalBezierAlgebraicTangentImage2 {
+    pub(crate) fn coordinate_image(
+        &self,
+        scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<crate::CurvePoint2>> {
+        let parameter = if let Some(parameter) = self.retained_parameter() {
+            BezierParameter2::Algebraic(parameter.clone())
+        } else {
+            match BezierParameter2::from_algebraic_root_representation_unbounded(
+                self.parameter(),
+                policy,
+            )? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        };
+        let (x, y, denominator) = self.coordinate_polynomials();
+        match parameter {
+            BezierParameter2::Algebraic(parameter) => rational_point_image_from_power_basis(
+                &parameter,
+                x.iter().map(|c| c * scale).collect(),
+                y.iter().map(|c| c * scale).collect(),
+                denominator.to_vec(),
+                policy,
+            )
+            .map(|result| result.map(crate::CurvePoint2::from)),
+            BezierParameter2::Exact(value) => {
+                let interval = hypersolve::RealInterval {
+                    lower: value.clone(),
+                    upper: value,
+                };
+                let evaluate = |p| {
+                    hypersolve::RealInterval::evaluate_power_basis(p, &interval).map(|v| v.lower)
+                };
+                let (Some(x), Some(y), Some(w)) = (evaluate(x), evaluate(y), evaluate(denominator))
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                };
+                Ok(Classification::Decided(
+                    crate::Point2::new(((x * scale) / &w)?, ((y * scale) / &w)?).into(),
+                ))
+            }
+        }
+    }
+
     fn new(parameter: AlgebraicRootRepresentation, definition: RationalTangentDefinition) -> Self {
         Self {
             data: Arc::new(RationalBezierAlgebraicTangentImageData {

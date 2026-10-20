@@ -14,6 +14,7 @@
 //! identities. Hypercurve deliberately replaces their sampling/error heuristics
 //! with exact-scalar interval certification at the acceptance boundary.
 
+mod affine_form;
 mod algebraic_chord;
 mod approximation;
 mod bivariate_replay;
@@ -30,6 +31,7 @@ mod parallel_construction;
 mod parallel_pair_sets;
 #[path = "curve_parameter_component.rs"]
 mod parameter_component;
+mod rational_form;
 mod recursive_field;
 use recursive_field::foreign_embedding_projective_point;
 #[cfg(test)]
@@ -39,6 +41,7 @@ mod represented;
 mod selected_dense;
 mod selected_fiber;
 
+pub(crate) use affine_form::*;
 pub use approximation::*;
 pub(crate) use bivariate_replay::*;
 pub(crate) use cusp_overlap::overlap_parameter_is_in_range;
@@ -53,6 +56,7 @@ use parameter_component::{
     retain_finite_parallel_components,
 };
 pub(crate) use parameter_component::{CurveParameterComponent2, CurveParameterComponentSelection2};
+pub(crate) use rational_form::*;
 pub(crate) use recursive_quadratic::*;
 use represented::*;
 use selected_dense::*;
@@ -1850,11 +1854,12 @@ struct BezierSelectedFiberRepresentations2 {
     projective: OnceLock<BezierRecursiveProjectiveParameter2>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct BezierAlgebraicSelectedFiberParameterData2 {
     authority: BezierAlgebraicSelectedFiberAuthority2,
     root: IsolatedRootInterval,
     representations: Arc<BezierSelectedFiberRepresentations2>,
+    affine_form: Option<Arc<crate::CurvePointAffineForm2>>,
 }
 
 impl PartialEq for BezierAlgebraicSelectedFiberParameterData2 {
@@ -2852,6 +2857,7 @@ pub(crate) enum BezierRecursiveChordContactLocation2 {
 
 #[derive(Clone, Debug)]
 enum BezierRecursiveProjectiveParameterIdentity2 {
+    AffineForm(crate::CurvePointAffineForm2),
     Line(BezierRecursiveLineParameterIdentity2),
     ChordRationalTangent(BezierRecursiveChordRationalTangentIdentity2),
 }
@@ -5175,7 +5181,11 @@ fn strict_common_retained_line_unit_tangent(
         | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
         | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
         | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-        | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
+        | CurvePoint2(
+            CurvePointData2::Similarity(_)
+            | CurvePointData2::Endpoint(_)
+            | CurvePointData2::Polynomial(_),
+        ) => None,
     };
     let constant_axis = match parameter_axis.axis {
         Axis2::X => Axis2::Y,
@@ -8587,6 +8597,7 @@ pub(crate) fn affine_line_parameter_at_incident_point(
     point: &CurvePoint2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurveParameter2>> {
+    let original_point = point.clone();
     let (dx, dy) = line.delta();
     let Some((axis, direction)) =
         [(Axis2::X, dx), (Axis2::Y, dy)]
@@ -8618,6 +8629,21 @@ pub(crate) fn affine_line_parameter_at_incident_point(
         return Ok(Classification::Decided(CurveParameter2::from(
             BezierParameter2::Exact(((coordinate - start) / delta)?),
         )));
+    }
+    if matches!(point.0, CurvePointData2::Algebraic(_)) {
+        // Rational coordinate images and their replayed expressions must
+        // extract the same affine parameter from their shared source root.
+        let (start, delta) = match axis {
+            Axis2::X => (line.start().x(), line.end().x() - line.start().x()),
+            Axis2::Y => (line.start().y(), line.end().y() - line.start().y()),
+        };
+        let scale = (Real::one() / delta)?;
+        let offset = -start * &scale;
+        let (a, b) = match axis {
+            Axis2::X => (scale, Real::zero()),
+            Axis2::Y => (Real::zero(), scale),
+        };
+        return point_affine_form_parameter(point, &[a, b, offset], policy);
     }
     let points = match recursive_projective_evidence_points(&[point], policy)? {
         Classification::Decided(Some(points)) => points,
@@ -8681,7 +8707,18 @@ pub(crate) fn affine_line_parameter_at_incident_point(
         },
         policy,
     )?
-    .map(CurveParameter2::from_recursive_projective))
+    .map(|parameter| {
+        let scale = (Real::one() / &delta)
+            .expect("the selected affine coordinate has certified nonzero direction");
+        let offset = -start * &scale;
+        let (a, b) = match axis {
+            Axis2::X => (scale, Real::zero()),
+            Axis2::Y => (Real::zero(), scale),
+        };
+        CurveParameter2::from_recursive_projective(
+            parameter.with_affine_form_identity(original_point.affine_form(a, b, offset)),
+        )
+    }))
 }
 
 fn algebraic_chord_parameter_axis(
@@ -8783,6 +8820,40 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
 ) -> CurveResult<Classification<std::cmp::Ordering>> {
     if first.shares_storage(second) {
         return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+    }
+    for (candidate, other, reverse) in [(first, second, false), (second, first, true)] {
+        if let CurvePointData2::Similarity(image) = &candidate.0
+            && matches!(image.data.source.0, CurvePointData2::Polynomial(_))
+            && let Some(other) = other.coordinates()
+        {
+            // Pull the coordinate through the image into the original joint
+            // field. An equal image need not have a singleton coordinate box.
+            let (a, b, value) = match axis {
+                Axis2::X => (Real::one(), Real::zero(), other.x()),
+                Axis2::Y => (Real::zero(), Real::one(), other.y()),
+            };
+            return point_affine_form_order_to_real(candidate, &a, &b, value, policy)
+                .map(|order| order.map(|order| if reverse { order.reverse() } else { order }));
+        }
+    }
+    for (candidate, other, reverse) in [(first, second, false), (second, first, true)] {
+        if let CurvePointData2::Polynomial(point) = &candidate.0 {
+            let (a, b) = match axis {
+                Axis2::X => (Real::one(), Real::zero()),
+                Axis2::Y => (Real::zero(), Real::one()),
+            };
+            let other = match point_affine_form_parameter(other, &[a, b, Real::zero()], policy)? {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let coordinate = match point.coordinate_parameter(axis, policy)? {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            return coordinate
+                .cmp_by_refinement(&other, policy)
+                .map(|order| order.map(|order| if reverse { order.reverse() } else { order }));
+        }
     }
     // A cardinal support already owns one coordinate of its intersection.
     // Reuse that endpoint for every point family before refining or promoting
@@ -9206,10 +9277,24 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         | (_, CurvePoint2(CurvePointData2::AlgebraicChordParallel(_)))
         | (CurvePoint2(CurvePointData2::AnalyticParallel(_)), _)
         | (_, CurvePoint2(CurvePointData2::AnalyticParallel(_)))
-        | (CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)), _)
-        | (_, CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_))) => Ok(
-            algebraic_chord_point_coordinate_order_fallback(first, second, axis, policy),
-        ),
+        | (
+            CurvePoint2(
+                CurvePointData2::Similarity(_)
+                | CurvePointData2::Endpoint(_)
+                | CurvePointData2::Polynomial(_),
+            ),
+            _,
+        )
+        | (
+            _,
+            CurvePoint2(
+                CurvePointData2::Similarity(_)
+                | CurvePointData2::Endpoint(_)
+                | CurvePointData2::Polynomial(_),
+            ),
+        ) => Ok(algebraic_chord_point_coordinate_order_fallback(
+            first, second, axis, policy,
+        )),
     }
 }
 
@@ -9436,7 +9521,11 @@ fn algebraic_axis_point_coordinates(
         | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
         | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
         | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-        | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+        | CurvePoint2(
+            CurvePointData2::Similarity(_)
+            | CurvePointData2::Endpoint(_)
+            | CurvePointData2::Polynomial(_),
+        ) => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
     };
@@ -9504,7 +9593,11 @@ fn algebraic_chord_point_coordinate_representation(
         | CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
         | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
         | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-        | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
+        | CurvePoint2(
+            CurvePointData2::Similarity(_)
+            | CurvePointData2::Endpoint(_)
+            | CurvePointData2::Polynomial(_),
+        ) => None,
     }
 }
 
@@ -9721,6 +9814,7 @@ fn represented_chord_direction_speed(
     chord.validate_policy(policy)?;
     #[cfg(feature = "dispatch-trace")]
     let evidence_kind = |point: &CurvePoint2| match point {
+        CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
         CurvePoint2(CurvePointData2::Exact(_)) => "exact",
         CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
         CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "chord-pair",
@@ -9949,8 +10043,8 @@ fn represented_chord_direction_tensor(
     let reduce = |polynomial| dense_reduce_selected_root_relations(polynomial, &sources);
     let Some((mut dx, mut dy)) = end_x
         .subtract(&start_x)
-        .and_then(&reduce)
-        .zip(end_y.subtract(&start_y).and_then(&reduce))
+        .and_then(reduce)
+        .zip(end_y.subtract(&start_y).and_then(reduce))
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
@@ -9958,8 +10052,8 @@ fn represented_chord_direction_tensor(
     {
         let Some((reversed_x, reversed_y)) = dx
             .scale(&Real::from(-1_i8))
-            .and_then(&reduce)
-            .zip(dy.scale(&Real::from(-1_i8)).and_then(&reduce))
+            .and_then(reduce)
+            .zip(dy.scale(&Real::from(-1_i8)).and_then(reduce))
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -10973,6 +11067,9 @@ fn algebraic_chord_endpoint_bounds_refined_impl(
     local_only: bool,
 ) -> Classification<Aabb2> {
     let composite = match endpoint {
+        CurvePoint2(CurvePointData2::Polynomial(point)) => {
+            Some(point.bounds(refinement_steps, policy))
+        }
         CurvePoint2(CurvePointData2::Endpoint(point)) => {
             Some(point.bounds(refinement_steps, policy))
         }
@@ -11195,6 +11292,9 @@ pub(crate) fn retained_point_circle_incidence_sign(
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     match point {
+        CurvePoint2(CurvePointData2::Polynomial(point)) => {
+            return point.circle_residual_sign(center, radius_squared, policy);
+        }
         CurvePoint2(CurvePointData2::Exact(point)) => {
             return Ok(
                 real_sign(&(point.distance_squared(center) - radius_squared), policy).map_or(
@@ -12253,6 +12353,15 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
     coefficient_y: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<std::cmp::Ordering>> {
+    if let CurvePoint2(CurvePointData2::Polynomial(point)) = point {
+        return point.affine_order(
+            coefficient_x,
+            coefficient_y,
+            &(coefficient_x * origin.x() + coefficient_y * origin.y()),
+            policy,
+        );
+    }
+
     if let CurvePoint2(CurvePointData2::AlgebraicCuspChord(point)) = point {
         let value = coefficient_x * origin.x() + coefficient_y * origin.y();
         return point.linear_order_to_real(coefficient_x, coefficient_y, &value, policy);
@@ -12554,7 +12663,11 @@ fn algebraic_chord_endpoint_images(
             | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
             | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_))
+            | CurvePoint2(
+                CurvePointData2::Similarity(_)
+                    | CurvePointData2::Endpoint(_)
+                    | CurvePointData2::Polynomial(_)
+            )
     ) || matches!(
         end,
         CurvePoint2(CurvePointData2::AlgebraicChordPair(_))
@@ -12562,7 +12675,11 @@ fn algebraic_chord_endpoint_images(
             | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
             | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_))
+            | CurvePoint2(
+                CurvePointData2::Similarity(_)
+                    | CurvePointData2::Endpoint(_)
+                    | CurvePointData2::Polynomial(_)
+            )
     ) {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     }
@@ -12576,7 +12693,11 @@ fn algebraic_chord_endpoint_images(
         | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
         | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
         | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-        | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+        | CurvePoint2(
+            CurvePointData2::Similarity(_)
+            | CurvePointData2::Endpoint(_)
+            | CurvePointData2::Polynomial(_),
+        ) => {
             unreachable!("correlated chord endpoints return before algebraic image normalization")
         }
     };
@@ -12932,7 +13053,11 @@ impl BezierAlgebraicChordSupportPredicate2 {
             | CurvePoint2(CurvePointData2::Algebraic(_))
             | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
+            | CurvePoint2(
+                CurvePointData2::Similarity(_)
+                | CurvePointData2::Endpoint(_)
+                | CurvePointData2::Polynomial(_),
+            ) => None,
         };
         let retained_side_was_uncertain = if let Some(side) = retained_side {
             match side? {
@@ -12993,7 +13118,11 @@ impl BezierAlgebraicChordSupportPredicate2 {
                 CurvePoint2(CurvePointData2::AnalyticParallel(_)) => {
                     return chord.oriented_side_by_refinement(point, policy);
                 }
-                CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+                CurvePoint2(
+                    CurvePointData2::Similarity(_)
+                    | CurvePointData2::Endpoint(_)
+                    | CurvePointData2::Polynomial(_),
+                ) => {
                     return chord.oriented_side_by_refinement(point, policy);
                 }
             },
@@ -13012,7 +13141,9 @@ impl BezierAlgebraicChordSupportPredicate2 {
                     CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
                         | CurvePoint2(CurvePointData2::AnalyticParallel(_))
                         | CurvePoint2(
-                            CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)
+                            CurvePointData2::Similarity(_)
+                                | CurvePointData2::Endpoint(_)
+                                | CurvePointData2::Polynomial(_)
                         )
                 ) {
                     return chord.oriented_side_by_refinement(point, policy);
@@ -13032,7 +13163,11 @@ impl BezierAlgebraicChordSupportPredicate2 {
                     | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
                     | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
                     | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-                    | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+                    | CurvePoint2(
+                        CurvePointData2::Similarity(_)
+                        | CurvePointData2::Endpoint(_)
+                        | CurvePointData2::Polynomial(_),
+                    ) => {
                         unreachable!("correlated chord points return before image normalization")
                     }
                 };
@@ -13203,6 +13338,11 @@ fn retained_bounds_axis_order_to_real(
 }
 
 impl BezierSimilarityPoint2 {
+    pub(crate) fn strict_definition(&self) -> Option<(&CurvePoint2, &Similarity2)> {
+        CurveContext::STRICT
+            .accepts_retained_policy(self.data.policy)
+            .then_some((&self.data.source, &self.data.transform))
+    }
     pub(crate) fn new(
         mut source: CurvePoint2,
         mut transform: Similarity2,
@@ -13265,6 +13405,9 @@ impl BezierSimilarityPoint2 {
             ));
         }
         let source = match &self.data.source {
+            CurvePoint2(CurvePointData2::Polynomial(_)) => {
+                return Ok(Classification::Decided(None));
+            }
             CurvePoint2(CurvePointData2::Endpoint(endpoint)) => match endpoint.resolve(policy)? {
                 Classification::Decided(Some(point)) => point,
                 Classification::Decided(None) => return Ok(Classification::Decided(None)),
@@ -13372,6 +13515,12 @@ impl BezierSimilarityPoint2 {
     ) -> Classification<bool> {
         if !policy.accepts_retained_policy(self.data.policy) {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
+        }
+        if matches!(self.data.source.0, CurvePointData2::Polynomial(_))
+            && other.coordinates().is_some()
+        {
+            return CurvePoint2::from(self.clone())
+                .same_point_by_coordinate_evidence(other, policy);
         }
         if let CurvePoint2(CurvePointData2::Similarity(other)) = other
             && policy.accepts_retained_policy(other.data.policy)

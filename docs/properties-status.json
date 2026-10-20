@@ -17904,6 +17904,39 @@
     "public_distribution_complete": false,
     "full_plan_complete": false
   },
+  "hyperbrep": {
+    "status": "in-progress",
+    "plan": "crates/hyperbrep/docs/DEVELOPMENT_PLAN.md",
+    "work_packages": "crates/hyperbrep/docs/IMPLEMENTATION_STATUS.json",
+    "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-19-surface-differentials/manifest.json",
+    "contract": "Pure Rust native/WASM exact CAD implementation; greenfield API/archive changes with direct caller updates and no compatibility shims.",
+    "qualification": "All-feature release BRep/IO suites pass 782 tests in 85 batches, with no failures or ignored tests. Focused curve joint-form arithmetic, polynomial/point/fiber/work-budget, rational-map and derivative-owner checks pass 77 tests. All-feature/all-target Clippy for Hypercurve, HyperBRep and HyperBRep-IO, warning-denied rustdoc, BRep fuzz-target compilation and formatting pass. Seven shared surface-differential workflows and one supplemental native-NURBS workflow pass natively and as eight actual zero-import Wasmtime exports. Independent exact identities cover full implicit-circle extrusion normals and both pcurve chain-rule consumers; restriction, reversal and original/materialized charts; cubic/projective sections; selected unweighted/weighted tensor partials; native Bezier/NURBS vector products; unit/nonunit knot domains and right-owned nonsmooth spans; reflection, shear and cold replay. The supplemental NURBS consumer independently checks the cross-product Z coordinate for C(t)=(t,t^2,t^3) and C(t)/(1+t), with exact native-chart derivative scaling. Unit norm, orthogonality, positive/negative comparisons and exact 1e-12 distinctions are separate assertions. Selected parallel unit normals retain orientation for both speed signs while unavailable magnitude operations remain typed. Zero vectors, singular ranks/cusps, unsupported fields/angular surfaces, original 0/0, invalid domains, policy transitions, fresh budget exhaustion and warmed-proof reuse/recovery are exercised. All 328 prior archive records are byte-identical to the baseline and previous frozen evidence, with archive 14 unchanged; 17 new records have 17 distinct payloads. Geometric identities, required model validation and deterministic bytes are checked separately. The clean baseline probe reproduces typed Unsupported partial/normal queries on the first full-circle branch; the directly migrated candidate probe successfully checks both branches. The fixture audit preserves 248 existing test files byte-for-byte, three integration fixtures and geometry unit-test bodies modulo direct joint-UV and coordinate-view API migration. No complete trimmed-face or curved-solid Boolean result is claimed.",
+    "upstream_revision": "dbe99e3cc145e8ca58a53ade6e79fd46311972fb",
+    "acceptance_protocol": "docs/admission.md",
+    "integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-upstream-integration/README.md",
+    "acceptance_order": [
+      "Empty-result composition and visible failures",
+      "Ordinary strict-mode completion",
+      "Complete user-path and release validation"
+    ],
+    "latest_integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-18-selected-procedural-profiles/contract.md",
+    "implementation_ownership": {
+      "primary": [
+        "hyperbrep",
+        "hyperbrep-io",
+        "their tests, benchmarks and documentation"
+      ],
+      "surrounding_crates": "Concurrent upstream development in another thread. Changes needed to implement BREP features or preserve their correctness, evidence, supported behavior or resources are allowed in the owning crate, with affected consumer qualification. Do not pursue unrelated breakage already owned by that thread.",
+      "updates": "Occasionally fetch and merge at coherent checkpoints; keep source fixed during checks/measurements, preserve both histories, and requalify affected BREP consumers.",
+      "parked_scalar_investigation": "96c308f87af6f3491828ada3e9b8e92cec858cf1; unfinished, not admitted, not restored over upstream corrections."
+    },
+    "latest_implementation": "surface-differentials-2026-10-19",
+    "latest_feature_evidence": "crates/hyperbrep/docs/evidence/2026-10-19-surface-differentials/manifest.json",
+    "integration_qualification": "Merged dbe99e3cc145e8ca58a53ade6e79fd46311972fb in 75b4aa7ab while preserving both histories and the pending feature diff. Upstream corrects sign publication, lazy named certificate folding/replay, checked trigonometry and known exact-rational undefined graph decoding. Normative admission files are unchanged. Full named-certificate/payload consistency and arbitrary graph-domain validation remain upstream-owned gaps. This increment qualifies the combined BRep consumer source; it does not qualify every upstream crate or close its release gates. All non-BRep ledger values match merged upstream.",
+    "latest_update_check": "crates/hyperbrep/docs/evidence/2026-10-19-section-differentials/upstream-check.json",
+    "performance_evidence": "Three alternating CPU-10 process pairs run 38 preserved complete workflows, with all assertions, materialization, validation and replay retained. The 228 paired phase rows yield 76 first/repeated-fresh-input phase medians. Median paired latency ratios range 0.554469 to 1.753088; 12 exceed the 10% review marker: plane/disconnected_sections/first_fresh_input=1.191220; plane/disconnected_sections/repeated_fresh_input=1.753088; plane/solver_frontier/first_fresh_input=1.319510; plane/solver_frontier/repeated_fresh_input=1.332542; plane/weighted_loops/first_fresh_input=1.253063; prior/pcurve_surface_images/first_fresh_input=1.269565; prior/pcurve_surface_images/repeated_fresh_input=1.142717; surface/joint_forms/first_fresh_input=1.616884; surface/joint_forms/repeated_fresh_input=1.694762; surface/native_forms/first_fresh_input=1.369248; surface/transformed_forms/first_fresh_input=1.615766; surface/transformed_forms/repeated_fresh_input=1.714950. 0 paired rows increase counted Rust allocation calls and 0 increase requested bytes. Allocation-call and requested-byte counts are identical in all 228 pairs; this does not resolve the adverse latency observations. Maximum observed process RSS is 24764 KiB. Matched executable byte changes are {'preserved': 33112, 'prior': 40112, 'surface': 41888, 'branches': 38848, 'plane': 36928, 'differentials': 265400, 'similarity': 38872}. Eight new successful workflows have no successful production baseline and retain three absolute process measurements, including the complete native-NURBS recipe. Native/WASM sizes, hashes and every adverse sample are recorded. The most expensive new first invocation is selected_tensors_normals_and_native_knot_charts: its median is 42.229692 seconds, 353494793 counted allocations and 18577402242 requested Rust bytes. This is the full construction/assertion/replay workflow, not one normal query; its high work and allocation traffic remain an explicit performance follow-up. No qualification build or separate test runs concurrently with measurement. Requested Rust allocation traffic is not live heap and excludes foreign allocator internals. The 10% marker is not a significance test; shared-host timings establish neither a universal speedup nor stable latency non-regression. The earlier surface/joint_forms/first_fresh_input ratios 1.370930, 1.119002 and 1.371168, and all earlier plane/tensor adverse observations remain open. The initial full consumer timed out after 1800 seconds; a diagnostic timed out after 600 seconds including compilation. Both are retained as prototype failures, not same-contract speedup evidence. The structural common-denominator correction and nonrecursive operand Debug prevent demonstrated avoidable growth; neither is a general resource bound. This is a certified-completion extension, not a performance-only change.",
+    "limits": "Surface::partials_at and normal_at now accept a joint CurvePoint2 directly; SurfacePartials owns GeometricVector3 values and normal_at preserves unit length. All callers migrate directly without compatibility overloads. Common-source rational arithmetic preserves original operands, denominator guards and selected identity. It does not construct arbitrary independent-field composita. Positive-root vector carriers support exact comparisons and products in admitted common fields. Selected parallel directions and normals do not imply support for their unavailable radical speed magnitudes or general radical-valued chain-rule sums. Selected angular/procedural surface queries, singular branch germs and event limits, differential whole-section proofs, general patch-pair sections, folded/vertical/repeated/boundary components and complete trim arrangements remain open. Selected partial/normal support for retained-profile extrusions does not extend general retained-profile Surface::point_at automatically; its current selected position path still requires native profile coefficients. The native-conic affine cold-replay frontier remains separate. Archive 14 is unchanged. Transient vector proof carriers are recomputed from validated geometry, not serialized as new authoritative proof claims. Precision and owner budget controls, shared denominators and bounded diagnostic expansion do not bound total work, coefficient bits, retained operand history, heap, stack or cancellation. Dangerous checks use external containment. Source-path consumers do not establish installed distributions or production bindings. Runtime fuzz/ASan/lexicase, connected formal proofs, measured coverage, MSRV, full release/workflow and push gates remain unqualified. All 28 work packages remain open/in-progress. The eaa0cae54 push exception is consumed; this increment is not pushed."
+  },
   "exact_track_after_scalar_facts": {
     "status": "reject unchanged exact-track importer on current scalar facts: focused semantics pass, both original KiCad resource gates fail",
     "parent_revision": "540074a8c05ccc676d7c70b8f0093f98804b81d9",
@@ -18885,6 +18918,41 @@
     "hypervoxel_deferred_by_user": true,
     "next": "Enforce named Class parameter and payload consistency, then remaining graph domain obligations, before reconsidering affine cancellation; continue strict workloads and distribution acceptance."
   },
+    "hyperbrep_pre_push_fixture_maintenance_2026_10_18": {
+      "base_revision": "7dec1b08caa8722691e932972a084120759ade88",
+      "upstream_revision": "dbe99e3cc145e8ca58a53ade6e79fd46311972fb",
+      "evidence": "crates/hyperbrep/docs/evidence/2026-10-18-prepush-fixtures/manifest.json",
+      "scope": "Validation fixtures and explicit certified/undecided controls only. No production algorithm, public API, policy, fixture assertion, or tolerance is weakened.",
+      "validation": {
+        "native_curve_tests": 19,
+        "root_and_native_wasm_reproductions": 59,
+        "hypertri_all_feature_library_and_integration_tests": 196,
+        "mesh_reproductions": 17,
+        "hypersdf_tests": 114,
+        "ffi_tests": 10,
+        "drc_reproductions_and_affine_control": 87,
+        "strict_clippy": "Changed library/test/benchmark configurations, DRC release library/tests, minimal Hypertri targets, and all-feature/all-target BRep/IO pass. The separate full all-target command fails on an unchanged upstream example.",
+        "wasm_consumers": "Actual JS and TS workflow scripts pass on branch and upstream before the final test-only edits; these are not claimed as a new final complete workflow run."
+      },
+      "blocking_gates": [
+        {
+          "gate": "typos .",
+          "inherited_findings": 188020,
+          "source": "Same findings reproduced on the pinned upstream snapshot. Two additional abbreviated-commit findings are corrected by retaining the full commit ID. A focused post-correction check still finds an inherited abbreviated baseline ID in the shared ledger.",
+          "action": "Preserve archived evidence and leave unrelated upstream findings to their owner."
+        },
+        {
+          "gate": "all-target Clippy -D warnings",
+          "source": "crates/hypertri/examples/allocation_profile.rs:83",
+          "finding": "AtomicUsize::fetch_update is deprecated by the installed stable compiler. The same failure occurs on unchanged upstream source.",
+          "action": "No lint suppression or unrelated API-floor change."
+        }
+      ],
+      "full_pre_push_complete": false,
+      "publication_qualified": false,
+      "runtime_algorithms_changed": false,
+      "work_packages_completed": []
+    },
   "named_certificate_audit": {
     "status": "Retain current-revision failures and reject direct structural payload comparison as an admission strategy. No runtime repair is admitted here.",
     "parent_revision": "dbe99e3cc145e8ca58a53ade6e79fd46311972fb",

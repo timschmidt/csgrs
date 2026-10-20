@@ -1,8 +1,72 @@
-//! Lossless line/arc views shared by retained integration and native promotion.
+//! Complete native curve views shared by retained integration and promotion.
 
 use super::*;
 
-pub(super) fn retained_native_fragment_segment(
+/// Exact subcurve substitution, shared by image publication and integration.
+/// The selected roots and their caches remain owned by the original fragment.
+pub(crate) fn represented_native_subcurve(
+    fragment: &BezierSplitFragment2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierSubcurve2>>> {
+    let (source, start, end, reversed) = match fragment {
+        BezierSplitFragment2::Materialized { curve, .. } => {
+            return Ok(Classification::Decided(Some(curve.clone())));
+        }
+        BezierSplitFragment2::RetainedBezier {
+            source_curve,
+            start,
+            end,
+            reversed,
+            ..
+        } => (
+            std::borrow::Cow::Borrowed(source_curve),
+            crate::CurveParameter2::from(start.clone()),
+            crate::CurveParameter2::from(end.clone()),
+            *reversed,
+        ),
+        BezierSplitFragment2::SelectedFiber(fragment) => {
+            let Some(source) = fragment.rational_curve() else {
+                return Ok(Classification::Decided(None));
+            };
+            (
+                std::borrow::Cow::Owned(BezierSubcurve2::Rational(source.clone())),
+                fragment.range().start().clone(),
+                fragment.range().end().clone(),
+                fragment.is_reversed(),
+            )
+        }
+        _ => return Ok(Classification::Decided(None)),
+    };
+    let endpoint = |parameter: &crate::CurveParameter2| {
+        if let Some(value) = parameter.scalar() {
+            return Ok(Classification::Decided(Some(value.clone())));
+        }
+        match parameter.as_bezier_parameter() {
+            Some(BezierParameter2::Algebraic(root)) => {
+                root.represented_quadratic_point_with_policy(policy)
+            }
+            _ => Ok(Classification::Decided(None)),
+        }
+    };
+    let start = match endpoint(&start)? {
+        Classification::Decided(Some(value)) => value,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end = match endpoint(&end)? {
+        Classification::Decided(Some(value)) => value,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    // The exact affine substitution preserves every interior point and traversal,
+    // including a nonmonotone polynomial. Rational sources also prove pole freedom
+    // in this chart. Endpoint agreement alone would not establish either claim.
+    Ok(source
+        .subcurve_between_affine_exact(&start, &end, policy)?
+        .map(|curve| Some(if reversed { curve.reversed() } else { curve })))
+}
+
+pub(crate) fn retained_native_fragment_segment(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Segment2>> {

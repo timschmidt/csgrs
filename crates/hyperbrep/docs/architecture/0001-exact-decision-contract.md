@@ -23,8 +23,29 @@ contract before it introduces final geometry and topology types.
 
 ### Authoritative scalar
 
-`hyperreal::Real` is the only scalar accepted or stored by core geometry.
-There is no generic scalar parameter.
+`hyperreal::Real` is the only authored coefficient scalar accepted or stored
+by core geometry. There is no generic coefficient scalar parameter.
+
+A selected solution need not have an independently stored `Real` value.
+Opaque `Parameter` retains an exact authored value or an admitted selected
+algebraic root, including its source relation and isolator. `try_real` is an
+optional view; its absence is not invalidity or approximation. Mathematical
+comparison is fallible and strictly certified. Generic polynomial arithmetic
+remains in Hypersolve; Hypercurve owns the reused root/chart evidence. HyperBREP
+composes this authority into spatial incidence without a second solver.
+
+The current retained-parameter API covers spatial inverse queries and
+comparison. `GeometricPoint3` retains selected images of lines, rational
+Béziers and finite NURBS, with exact comparison, bounds and invertible affine
+transforms. Topological vertices store these points; `ParameterRange` retains
+canonical selected edge trims separately from authored `ParameterDomain`
+coefficients. Exact edge subdivision retains every incident pcurve's source
+chart and correspondence. Full selected archive replay and arbitrary selected
+surface/contact validation remain open. Existing materialization requirements
+remain explicit typed blockers at those consumers. Selected conic angles return
+`UnsupportedSelectedEvaluation`; they are never reinterpreted as rational
+chart coordinates. See the
+[current contract](../ARCHITECTURE.md#retained-inverse-parameters).
 
 Primitive floats may be accepted only by explicitly named boundary adapters.
 An adapter classifies conversion as exact lifting, certified approximation,
@@ -35,7 +56,8 @@ or topology policy.
 
 The kernel keeps these concepts separate:
 
-1. Identity: typed IDs refer to the same model record. Use ordinary `Eq`.
+1. Identity: bound references refer to the same model revision and record.
+   Use ordinary `Eq`.
 2. Representation equality: two values have the same authored/canonical
    representation. Use a specifically named method if an operation needs it.
 3. Mathematical equality: two values or geometric images denote the same
@@ -60,6 +82,25 @@ not `assert_eq!` on carriers.
 The only allowed structural-fact use in HyperBREP is conservative scheduling:
 selecting a certified fast path, eliminating work already proved irrelevant, or
 choosing an arithmetic kernel. Missing structural facts cannot decide geometry.
+
+Fallible public BREP entry points enter the crate's strict operation scope.
+It calls `hypercurve::evaluate_under(PredicatePolicy::STRICT, ...)` so an
+enclosing Hypercurve provisional or display-preview scope cannot authorize a
+BREP decision. The caller's scope is restored on return and unwinding. Scalar
+and spatial predicates continue to receive Hyperlimit's explicit strict policy.
+New predicate-bearing entry points must establish this authority before any
+principal Hypercurve call. Reading immutable records and metadata requires no
+predicate scope.
+
+`OperationContext::strict(WorkBudget)` additionally establishes a caller-visible
+synchronous scope through `evaluate`. It shares Hypersolve's instrumented root
+refinements and algebraic promotions across nested calls, retaining the outer
+`BudgetExceeded` result and admitted `WorkUsage`. Each evaluation starts a fresh
+scope; nested scopes also charge their parents. The two counters do not bound
+all scalar or geometry work, coefficient growth, memory or time. Worker
+allocations, cancellation and full proof-stage receipts remain separate
+requirements. See the [operation-scope contract](../ARCHITECTURE.md#operation-scopes)
+and [qualification evidence](../evidence/2026-10-14-operation-context/manifest.json).
 
 ### Outcomes
 
@@ -91,6 +132,21 @@ At an operation boundary, outcomes are translated without conflation:
 Resource exhaustion is not mathematical ambiguity. Unsupported is not
 inequality. Unknown is not false.
 
+Scalar failures cross the geometry boundary as
+`GeometryError::Numeric(hyperreal::Problem)`. Keep the original `Problem`:
+`DivideByZero` proves a zero denominator; `UnknownZero` does not certify a
+nonzero denominator; `Exhausted` reports an arithmetic resource/refinement
+limit. Do not replace these with a generic projective, elementary-function,
+or transform failure, or infer a degenerate geometric result from them.
+An overflowing degree/index calculation reports `OutOfRange`.
+
+Single-cause geometry, construction, query, edit, Boolean, persistence and
+tessellation errors expose their wrapped cause through `std::error::Error`.
+Multi-cause validation reports retain their complete `errors()` collection;
+Boolean fallback failures retain both public branch errors. Consumers must
+inspect those collections rather than treating one arbitrary cause as the
+complete diagnostic.
+
 ### Resource policy
 
 Ordinary APIs have no tolerance argument. Operations that can require unbounded
@@ -100,6 +156,15 @@ geometric equality.
 
 The default policy must preserve exact semantics by returning an unresolved
 error when its resource bound is reached.
+
+Derivative jet storage checks both the entry count and its byte layout before
+allocation. An unaddressable buffer returns `Numeric(OutOfRange)`; allocator
+refusal returns `Numeric(Exhausted)`. The implementation uses Rust's
+[checked array layout](https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.array)
+and [fallible vector reservation](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.try_reserve_exact).
+This guards the requested derivative buffers, not all scalar allocations,
+total operation memory, or elapsed time. The full shared work-budget contract
+remains a separate requirement.
 
 ### Proposal and certification
 
@@ -118,10 +183,12 @@ operations such as tessellation.
 
 ## API Rules
 
-- Geometry inputs and retained values use `Real`, `Point2`, `Point3`, exact
-  vectors, and exact transforms.
-- Functions borrow `&Real` for evaluation parameters when ownership is not
-  required.
+- Authored coefficients use `Real`, `Point2`, `Point3`, exact vectors and exact
+  transforms. Selected geometric values use `Parameter`, `ParameterRange`
+  and `GeometricPoint3`; their optional stored views do not define validity.
+- Point evaluation and topological correspondence borrow `&Parameter` when
+  ownership is unnecessary. Native coefficient algorithms borrow `&Real` and
+  report an explicit blocker if the required stored view is unavailable.
 - IDs and direction/role enums implement `Eq`, `Ord`, and `Hash`.
 - Geometry records keep fields private.
 - Constructors return `Result`; geometric input never causes a public panic.

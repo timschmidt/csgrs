@@ -38,6 +38,19 @@ enum TangentVectorDefinition {
 }
 
 impl BezierAlgebraicTangentVector2 {
+    pub(crate) fn coordinate_image(
+        &self,
+        scale: &Real,
+        policy: &CurveContext,
+    ) -> crate::CurveResult<Classification<crate::CurvePoint2>> {
+        let Some(image) = self.image() else {
+            return Ok(Classification::Uncertain(
+                crate::UncertaintyReason::Unsupported,
+            ));
+        };
+        image.coordinate_image(scale, policy)
+    }
+
     /// Constructs a vector from exact represented coordinate roots.
     pub fn new(dx: AlgebraicRootRepresentation, dy: AlgebraicRootRepresentation) -> Self {
         Self {

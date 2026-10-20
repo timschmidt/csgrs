@@ -145,6 +145,18 @@ impl CurveParameter2 {
         Self::from_selected_scalar(SelectedScalar2::SelectedFiber(parameter))
     }
 
+    pub(crate) fn with_selected_fiber_affine_form(
+        self,
+        form: crate::CurvePointAffineForm2,
+    ) -> Self {
+        match self.data {
+            CurveParameterData2::Scalar(SelectedScalar2::SelectedFiber(parameter)) => {
+                Self::from_selected_fiber(parameter.with_affine_form_identity(form))
+            }
+            data => Self { data },
+        }
+    }
+
     pub(crate) fn from_recursive_projective(
         parameter: BezierRecursiveProjectiveParameter2,
     ) -> Self {
@@ -215,6 +227,20 @@ impl CurveParameter2 {
                 parameter: BezierAlgebraicCuspSemicircleParameter2::Mapped(_),
                 ..
             } => None,
+        }
+    }
+
+    /// Borrows a certified closed enclosure in this parameter's scalar chart.
+    ///
+    /// Represented values return the value at both ends. Selected scalar
+    /// authorities return their stored isolating bounds without refinement or
+    /// conversion to independent roots. The enclosure never replaces the exact
+    /// parameter and promises no particular width. `None` means a geometric
+    /// parameter has no scalar view; its owning curve must first supply a chart.
+    pub fn scalar_bounds(&self) -> Option<(&Real, &Real)> {
+        match &self.data {
+            CurveParameterData2::Scalar(scalar) => Some(scalar.isolating_bounds()),
+            _ => self.scalar().map(|value| (value, value)),
         }
     }
 
@@ -350,6 +376,23 @@ impl CurveParameter2 {
                     outcome.into_value(),
                 )
             })
+    }
+
+    /// Applies an authored affine chart while retaining the selected field.
+    ///
+    /// This does not promote a selected fiber or recursive field value into an
+    /// independent scalar root. Point-ordered geometric parameters admit the
+    /// identity map; other maps require a scalar chart from their owning curve.
+    pub fn affine_image(&self, scale: &Real, offset: &Real) -> crate::ExactCurveResult<Self> {
+        if scale == &Real::one() && offset.zero_status() == hyperreal::ZeroKnowledge::Zero {
+            return Ok(self.clone());
+        }
+        let operation = crate::CurveOperation2::Evaluation;
+        crate::policy::resolve_certified_operation(&crate::policy::principal_context(), |policy| {
+            self.affine_image_unbounded(scale, offset, policy)
+        })
+        .map_err(|cause| crate::ExactCurveError::invalid_unattributed(operation, cause))
+        .and_then(|outcome| crate::ExactCurveError::decided(operation, outcome.into_value()))
     }
 
     /// [`Self::compare`] under an explicit predicate policy.

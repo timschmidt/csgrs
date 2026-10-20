@@ -4470,7 +4470,7 @@ mod tests {
     fn terminally_unresolved_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
-        &sine * &sine + &cosine * &cosine - Real::one()
+        crate::test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
     }
 
     fn triangle(

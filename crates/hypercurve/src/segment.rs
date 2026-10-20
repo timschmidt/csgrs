@@ -1994,6 +1994,13 @@ mod policy_cache_tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        // Preserve the original identity as a newly certified proof case.
+        assert_eq!(
+            unresolved_zero.exact_rational_normal_form(),
+            Some(hyperreal::Rational::zero())
+        );
+        // A separate angle-addition identity retains the terminal-policy control.
+        let unresolved_zero = crate::test_support::terminally_unresolved_zero();
         let opposite = Point2::new(Real::from(-1), unresolved_zero.clone());
         let boundary = Point2::new(Real::one(), unresolved_zero);
         assert!(
@@ -2038,6 +2045,13 @@ mod policy_cache_tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let undecidable_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        // Preserve the original identity as a newly certified proof case.
+        assert_eq!(
+            undecidable_zero.exact_rational_normal_form(),
+            Some(hyperreal::Rational::zero())
+        );
+        // A separate angle-addition identity retains the terminal-policy control.
+        let undecidable_zero = crate::test_support::terminally_unresolved_zero();
         let center = Point2::new(Real::from(3_i8) + undecidable_zero, Real::one());
         let start = point(3, 0);
         let end = point(3, 2);

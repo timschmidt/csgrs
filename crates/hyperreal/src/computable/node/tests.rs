@@ -5,6 +5,40 @@ mod tests {
     use num::bigint::BigUint;
     use std::mem::size_of;
 
+    #[test]
+    fn acos_rational_halves_preserve_exact_pi_composition() {
+        for (numerator, third_multiple) in [(1, 1), (-1, 2)] {
+            let argument = Rational::fraction(numerator, 2).unwrap();
+            let expected = pi_times(Rational::fraction(third_multiple, 3).unwrap());
+            for warm in [false, true] {
+                let source = Computable::rational(argument.clone());
+                if warm {
+                    let _ = source.approx(-64);
+                }
+                let actual = source.acos();
+                for precision in [-16, -128, -16] {
+                    if warm {
+                        let _ = actual.approx(precision);
+                    }
+                    assert_eq!(
+                        actual.clone().add(expected.clone().negate()).exact_rational(),
+                        Some(Rational::zero()),
+                    );
+                }
+                // BREP's plane/circle contact parameter must compose with the
+                // retained angular endpoint without refinement.
+                let contact = Computable::pi().shift_right(1).add(actual.negate());
+                let endpoint = pi_times(
+                    Rational::fraction(if numerator > 0 { 1 } else { -1 }, 6).unwrap(),
+                );
+                assert_eq!(
+                    contact.add(endpoint.negate()).exact_rational(),
+                    Some(Rational::zero()),
+                );
+            }
+        }
+    }
+
     fn check_inverse_series_wide_coefficients(asin: bool, generic: bool) {
         use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -3693,18 +3727,20 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
         );
         let atan = argument.clone().atan();
         let angle = atan.negate().add(Computable::pi());
-        let (_, _, retained) = angle
-            .integer_pi_plus_or_minus_atan_argument()
+        let (swap, _, _, retained) = angle
+            .quarter_turn_plus_or_minus_atan_argument()
             .expect("pi minus atan must retain its inverse-trig argument");
+        assert!(!swap);
         assert!(Computable::internal_structural_eq(&retained, &argument));
 
         let half_pi = Computable::pi().shift_right(1);
         let reduced = angle
             .add(half_pi.clone().negate())
             .add(half_pi.negate());
-        let (_, _, retained) = reduced
-            .integer_pi_plus_or_minus_atan_argument()
+        let (swap, _, _, retained) = reduced
+            .quarter_turn_plus_or_minus_atan_argument()
             .expect("nested half-pi cancellation must retain its inverse-trig argument");
+        assert!(!swap);
         assert!(Computable::internal_structural_eq(&retained, &argument));
         assert!(Computable::internal_structural_eq(
             &reduced.clone().sin(),

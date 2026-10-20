@@ -1471,7 +1471,7 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let a = Point2::new(
-            &sine * &sine + &cosine * &cosine - Real::one(),
+            crate::test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one()),
             Real::zero(),
         );
         let b = exact_point(0, 1);

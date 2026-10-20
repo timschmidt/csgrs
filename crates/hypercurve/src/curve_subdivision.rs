@@ -152,6 +152,38 @@ fn compare(
 }
 
 impl Curve2 {
+    /// Borrows a retained authored source, ascending range and traversal flag.
+    ///
+    /// Native curves and non-authored support fragments return `None`. Repeated
+    /// source restrictions remain flat: the returned source is native, and the
+    /// range is expressed in its original chart even for reversed traversal.
+    pub fn source_restriction(&self) -> Option<(&Self, &CurveParameterRange2, bool)> {
+        self.source_range()
+            .map(|range| (&range.source, &range.range, range.reversed))
+    }
+
+    /// Restricts a curve without rebasing its parameter chart.
+    ///
+    /// Unlike scalar subdivision, scalar endpoints also retain the source
+    /// chart. The range must be ascending and lie in the current domain;
+    /// traversal follows `self`. All endpoint and containment evidence is
+    /// reconstructed under strict predicates. Authored curves retain their
+    /// source range; generated supports reuse their retained restriction authority.
+    pub fn restrict_source(&self, range: CurveParameterRange2) -> ExactCurveResult<Self> {
+        if self.retained_fragment().is_some() || self.polynomial_branch().is_some() {
+            return self.subcurve_at_parameters(
+                range.start().clone(),
+                range.end().clone(),
+                &CurveContext::STRICT,
+            );
+        }
+        self.restrict_authored_source(
+            range.start().clone(),
+            range.end().clone(),
+            &CurveContext::STRICT,
+        )
+    }
+
     /// Constructs a finite Bezier image in its original source chart.
     ///
     /// The oriented range may extend outside `[0, 1]` and may retain selected
@@ -359,6 +391,9 @@ impl Curve2 {
     }
 
     pub(crate) fn source_traversal_is_reversed(&self) -> bool {
+        if let Some(branch) = self.polynomial_branch() {
+            return branch.reversed;
+        }
         self.source_range().map_or_else(
             || {
                 self.retained_fragment()
@@ -402,6 +437,13 @@ impl Curve2 {
         end: CurveParameter2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        if let Some(branch) = self.polynomial_branch() {
+            return branch
+                .restricted(start, end, policy)
+                .map(Self::from_polynomial_branch)
+                .map_err(|error| error.with_operation(CurveOperation2::Subdivision));
+        }
+
         if self.geometry().is_some()
             && let (Some(BezierParameter2::Exact(start)), Some(BezierParameter2::Exact(end))) =
                 (start.as_bezier_parameter(), end.as_bezier_parameter())
@@ -459,7 +501,9 @@ impl Curve2 {
     pub(super) fn source_range(&self) -> Option<&CurveSourceRange2> {
         match &self.data.carrier {
             CurveCarrier2::SourceRange(range) => Some(range),
-            CurveCarrier2::Native(_) | CurveCarrier2::Restricted(_) => None,
+            CurveCarrier2::Native(_)
+            | CurveCarrier2::Restricted(_)
+            | CurveCarrier2::Polynomial(_) => None,
         }
     }
 

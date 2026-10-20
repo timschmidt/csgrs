@@ -524,6 +524,13 @@ impl Computable {
             } else {
                 rational
             };
+            if magnitude == *HALF_RATIONAL {
+                crate::trace_dispatch!("computable", "acos", "exact-rational-half-pi-third");
+                let numerator = if rational_sign == Sign::Minus { 2 } else { 1 };
+                return Self::pi().multiply_rational(
+                    Rational::fraction(numerator, 3).expect("three is nonzero"),
+                );
+            }
             if magnitude.msd_exact().is_some_and(|msd| msd <= -4) {
                 crate::trace_dispatch!("computable", "acos", "tiny-via-asin");
                 return Self::pi().shift_right(1).add(self.asin().negate());

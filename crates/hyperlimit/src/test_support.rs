@@ -18,3 +18,11 @@ pub(crate) fn exact_normal_positive() -> Real {
         + Real::one();
     contact - domain + Real::from(2).powi_i64(-3000).unwrap()
 }
+
+/// An exact angle-addition zero outside the admitted normal-form frontier.
+/// Terminal-policy tests must consume an actual unresolved decision.
+pub(crate) fn terminally_unresolved_zero() -> Real {
+    (Real::e() + Real::one()).sin()
+        - Real::e().sin() * Real::one().cos()
+        - Real::e().cos() * Real::one().sin()
+}

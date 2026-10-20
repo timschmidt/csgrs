@@ -3224,6 +3224,30 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
 }
 
 impl BezierRecursiveProjectiveParameter2 {
+    pub(crate) fn affine_form_source(&self) -> Option<&crate::CurvePointAffineForm2> {
+        match self.data.identity.as_deref() {
+            Some(BezierRecursiveProjectiveParameterIdentity2::AffineForm(form)) => Some(form),
+            _ => None,
+        }
+    }
+
+    pub(super) fn with_affine_form_identity(self, form: crate::CurvePointAffineForm2) -> Self {
+        let form = super::affine_form::canonical_affine_form_definition(form);
+        Self {
+            data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                authority: self.data.authority.clone(),
+                projection: self.data.projection.clone(),
+                lower: self.data.lower.clone(),
+                upper: self.data.upper.clone(),
+                refinement_steps: self.data.refinement_steps,
+                identity: Some(Arc::new(
+                    BezierRecursiveProjectiveParameterIdentity2::AffineForm(form),
+                )),
+                line_branch: self.data.line_branch,
+                policy: self.data.policy,
+            }),
+        }
+    }
     pub(super) fn projective_scalar(&self) -> Option<&RecursiveQuadraticProjectiveScalar> {
         match &self.data.authority {
             BezierRecursiveProjectiveParameterAuthority2::Projective(scalar) => Some(scalar),
@@ -4824,6 +4848,19 @@ impl BezierRecursiveProjectiveParameter2 {
             },
             policy,
         )
+        .map(|result| {
+            result.map(|parameter| match self.affine_form_source() {
+                Some(form) => {
+                    let [a, b, c] = form.coefficients();
+                    parameter.with_affine_form_identity(form.source().affine_form(
+                        scale * a,
+                        scale * b,
+                        scale * c + offset,
+                    ))
+                }
+                None => parameter,
+            })
+        })
     }
 
     pub(crate) fn projective_image_unbounded(

@@ -2636,6 +2636,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyperbrep-io"
+version = "0.1.0"
+dependencies = [
+ "hyperbrep",
+ "hypercurve",
+ "hyperlimit",
+ "hyperreal",
+ "num",
+ "serde_json",
+]
+
+[[package]]
 name = "hypercircuit"
 version = "0.3.0"
 dependencies = [

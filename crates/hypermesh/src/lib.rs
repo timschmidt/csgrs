@@ -34,6 +34,8 @@ mod storage_hash;
 mod surface_arrangement;
 #[cfg(test)]
 mod test_support;
+#[cfg(test)]
+mod test_uncertainty;
 
 pub mod bvh;
 pub mod clip;

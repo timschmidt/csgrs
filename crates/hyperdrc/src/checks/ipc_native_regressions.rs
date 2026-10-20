@@ -53,7 +53,7 @@ fn point(x: Scalar, net: &str, diameter: Option<Scalar>) -> Ipc356Point {
 fn unknown_zero() -> Scalar {
     let sine = Scalar::e().sin();
     let cosine = Scalar::e().cos();
-    &sine * &sine + &cosine * &cosine - Scalar::one()
+    crate::test_support::terminal_zero(&sine * &sine + &cosine * &cosine - Scalar::one())
 }
 
 fn uncertain(findings: &[Violation]) {

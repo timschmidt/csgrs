@@ -5427,6 +5427,165 @@ mod tests {
     }
 
     #[test]
+    fn pythagorean_half_atan_trig_replays_as_exact_algebraic_values() {
+        // Half-angle endpoints of rationally rotated circular BREP cuts.
+        // These independently tabulated values must remain usable after replay.
+        for (n, d, c2n, s2n, denominator) in [
+            (3, 4, 9, 1, 10),
+            (4, 3, 4, 1, 5),
+            (5, 12, 25, 1, 26),
+            (12, 5, 9, 4, 13),
+            (8, 15, 16, 1, 17),
+            (15, 8, 25, 9, 34),
+        ] {
+            for sign in [-1, 1] {
+                let angle = ((Real::from(sign * n) / Real::from(d))
+                    .unwrap()
+                    .atan()
+                    .unwrap()
+                    / Real::from(2))
+                .unwrap();
+                let c = angle.clone().cos();
+                let s = angle.sin();
+                let expected_c = (Real::from(c2n) / Real::from(denominator))
+                    .unwrap()
+                    .sqrt()
+                    .unwrap();
+                let expected_s = Real::from(sign)
+                    * (Real::from(s2n) / Real::from(denominator))
+                        .unwrap()
+                        .sqrt()
+                        .unwrap();
+                for (value, expected) in [(&c, &expected_c), (&s, &expected_s)] {
+                    assert_eq!(
+                        value.certified_cmp_until(expected, -512).ordering(),
+                        Some(Ordering::Equal),
+                        "half atan({sign} * {n}/{d})"
+                    );
+                    #[cfg(feature = "serde")]
+                    {
+                        let encoded = serde_json::to_string(value).unwrap();
+                        let replay: Real = serde_json::from_str(&encoded).unwrap();
+                        assert_eq!(
+                            replay.certified_cmp_until(expected, -512).ordering(),
+                            Some(Ordering::Equal)
+                        );
+                    }
+                }
+                assert_eq!(
+                    (&c * &c + &s * &s)
+                        .certified_cmp_until(&Real::one(), -512)
+                        .ordering(),
+                    Some(Ordering::Equal)
+                );
+                let x = Real::from(-d) * &c - Real::from(n) * &s;
+                let y = Real::from(n) * c - Real::from(d) * s;
+                assert_eq!(
+                    (&x * &x + &y * &y)
+                        .certified_cmp_until(&Real::from(n * n + d * d), -512)
+                        .ordering(),
+                    Some(Ordering::Equal)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn half_atan_keeps_other_branches_and_fields() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let atan = (Real::from(3) / Real::from(4)).unwrap().atan().unwrap();
+        let root_thirteen = Real::from(13).sqrt().unwrap();
+        let three_over_root = (Real::from(3) / root_thirteen).unwrap();
+        for (angle, expected_c2, expected_s2, cosine_sign) in [
+            (
+                ((Real::pi() / Real::from(2)).unwrap() + &atan) * &half,
+                Real::new(Rational::fraction(1, 5).unwrap()),
+                Real::new(Rational::fraction(4, 5).unwrap()),
+                Ordering::Greater,
+            ),
+            (
+                (Real::pi() + &atan) * &half,
+                Real::new(Rational::fraction(1, 10).unwrap()),
+                Real::new(Rational::fraction(9, 10).unwrap()),
+                Ordering::Less,
+            ),
+            (
+                (Real::from(2) / Real::from(3)).unwrap().atan().unwrap() * &half,
+                (Real::one() + &three_over_root) * &half,
+                (Real::one() - &three_over_root) * &half,
+                Ordering::Greater,
+            ),
+        ] {
+            let c = angle.clone().cos();
+            let s = angle.sin();
+            assert_eq!(
+                c.certified_cmp_until(&Real::zero(), -96).ordering(),
+                Some(cosine_sign)
+            );
+            assert_eq!(
+                s.certified_cmp_until(&Real::zero(), -96).ordering(),
+                Some(Ordering::Greater)
+            );
+            for difference in [&c * &c - expected_c2, &s * &s - expected_s2] {
+                let [lower, upper] = difference.certified_rational_interval(-96).unwrap();
+                assert!(lower <= Rational::zero() && upper >= Rational::zero());
+            }
+        }
+        let third = atan * Real::new(Rational::fraction(1, 3).unwrap());
+        let s = third.clone().sin();
+        let c = third.cos();
+        for difference in [
+            Real::from(3) * &s
+                - Real::from(4) * &s * &s * s
+                - Real::new(Rational::fraction(3, 5).unwrap()),
+            Real::from(4) * &c * &c * &c
+                - Real::from(3) * c
+                - Real::new(Rational::fraction(4, 5).unwrap()),
+        ] {
+            let [lower, upper] = difference.certified_rational_interval(-96).unwrap();
+            assert!(lower <= Rational::zero() && upper >= Rational::zero());
+        }
+    }
+
+    #[test]
+    fn rational_atan_reciprocals_retain_exact_half_turn_and_trig() {
+        // Circular BREP partitions can retain these angles independently.
+        // Their sum must reuse the reciprocal identity, without refinement
+        // trying to distinguish a symbolic zero from a small nonzero value.
+        for (n, d) in [(4, 3), (7, 2), (101, 100)] {
+            for sign in [-1, 1] {
+                let x = (Real::from(sign * n) / Real::from(d)).unwrap();
+                let angle = x.clone().atan().unwrap();
+                let complement = (Real::one() / &x).unwrap().atan().unwrap();
+                let expected = (Real::from(sign) * Real::pi() / Real::from(2)).unwrap();
+                assert_eq!(
+                    (&angle + complement)
+                        .certified_cmp_until(&expected, -512)
+                        .ordering(),
+                    Some(Ordering::Equal),
+                    "{sign} * {n}/{d}"
+                );
+                let length = Real::from(n * n + d * d).sqrt().unwrap();
+                assert_eq!(
+                    angle
+                        .clone()
+                        .sin()
+                        .certified_cmp_until(&(Real::from(sign * n) / &length).unwrap(), -512)
+                        .ordering(),
+                    Some(Ordering::Equal)
+                );
+                assert_eq!(
+                    angle
+                        .cos()
+                        .certified_cmp_until(&(Real::from(d) / length).unwrap(), -512)
+                        .ordering(),
+                    Some(Ordering::Equal)
+                );
+            }
+        }
+    }
+
+    #[test]
     fn trig_retains_atan_after_pi_reciprocal_cancellation() {
         let root_fifteen = Real::from(15).sqrt().unwrap();
         let angle = root_fifteen.clone().atan().unwrap();

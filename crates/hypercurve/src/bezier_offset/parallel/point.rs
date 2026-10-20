@@ -7,9 +7,7 @@ impl BezierAnalyticParallelPoint2 {
     /// The original source evaluation, without a replacement tangent frame,
     /// tangent displacement or translation. Only certified constructions can
     /// supply identities that will later be replayed under a strict policy.
-    pub(in crate::bezier_offset) fn native_parallel_evaluation(
-        &self,
-    ) -> Option<(&BezierParallel2, CurveParameter2)> {
+    pub(crate) fn native_parallel_evaluation(&self) -> Option<(&BezierParallel2, CurveParameter2)> {
         if !CurveContext::STRICT.accepts_retained_policy(self.data.policy)
             || self.data.frame_tangent.is_some()
             || self.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
@@ -3092,6 +3090,22 @@ impl BezierAnalyticParallelPoint2 {
         value: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
+        let (a, b) = match axis {
+            Axis2::X => (Real::one(), Real::zero()),
+            Axis2::Y => (Real::zero(), Real::one()),
+        };
+        self.linear_residual_sign(&a, &b, value, policy)
+    }
+
+    /// Signs a*x+b*y-value before adjoining independent Cartesian roots.
+    /// The same positive-speed and denominator proof serves axis queries.
+    pub(in crate::bezier_offset) fn linear_residual_sign(
+        &self,
+        a: &Real,
+        b: &Real,
+        value: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
         if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "analytic-parallel axis predicate crossed retained policies".into(),
@@ -3107,12 +3121,32 @@ impl BezierAnalyticParallelPoint2 {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        let axis = if a == &Real::one() && b.zero_status() == ZeroKnowledge::Zero {
+            Some(Axis2::X)
+        } else if b == &Real::one() && a.zero_status() == ZeroKnowledge::Zero {
+            Some(Axis2::Y)
+        } else {
+            None
+        };
         let (coordinate, translation) = match axis {
-            Axis2::X => (source.x_numerator, &self.data.translation_x),
-            Axis2::Y => (source.y_numerator, &self.data.translation_y),
+            Some(Axis2::X) => (
+                std::borrow::Cow::Borrowed(source.x_numerator),
+                self.data.translation_x.clone(),
+            ),
+            Some(Axis2::Y) => (
+                std::borrow::Cow::Borrowed(source.y_numerator),
+                self.data.translation_y.clone(),
+            ),
+            None => (
+                std::borrow::Cow::Owned(polynomial_add(
+                    &polynomial_scale(source.x_numerator, a),
+                    &polynomial_scale(source.y_numerator, b),
+                )),
+                Real::dot2_refs([a, b], [&self.data.translation_x, &self.data.translation_y]),
+            ),
         };
         let rational = polynomial_add(
-            coordinate,
+            &coordinate,
             &polynomial_scale(weight, &(translation - value)),
         );
         if self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
@@ -3124,13 +3158,31 @@ impl BezierAnalyticParallelPoint2 {
         }
         let (tangent_x, tangent_y) = self.frame_tangent_power_basis()?;
         let frame_coordinate = match axis {
-            Axis2::X => polynomial_subtract(
+            Some(Axis2::X) => polynomial_subtract(
                 &polynomial_scale(tangent_x, &self.data.tangent_distance),
                 &polynomial_scale(tangent_y, self.data.parallel.distance()),
             ),
-            Axis2::Y => polynomial_add(
+            Some(Axis2::Y) => polynomial_add(
                 &polynomial_scale(tangent_x, self.data.parallel.distance()),
                 &polynomial_scale(tangent_y, &self.data.tangent_distance),
+            ),
+            None => polynomial_add(
+                &polynomial_scale(
+                    tangent_x,
+                    &Real::dot2_refs(
+                        [a, b],
+                        [&self.data.tangent_distance, self.data.parallel.distance()],
+                    ),
+                ),
+                &polynomial_scale(
+                    tangent_y,
+                    &Real::diff_of_products(
+                        b,
+                        &self.data.tangent_distance,
+                        a,
+                        self.data.parallel.distance(),
+                    ),
+                ),
             ),
         };
         let speed_squared = polynomial_add(

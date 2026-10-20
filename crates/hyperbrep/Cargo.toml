@@ -7,6 +7,8 @@ authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/timschmidt/hyperbrep"
 readme = "README.md"
+# Historical acceptance records remain available in the source repository.
+exclude = ["/docs/evidence"]
 keywords = ["brep", "cad", "geometry", "exact", "topology"]
 categories = ["mathematics", "graphics", "data-structures"]
 
@@ -30,4 +32,72 @@ proptest = "1.7.0"
 
 [[bench]]
 name = "kernel"
+harness = false
+
+[[bench]]
+name = "work_budget"
+harness = false
+
+[[bench]]
+name = "retained_parameters"
+harness = false
+
+[[bench]]
+name = "retained_points"
+harness = false
+
+[[bench]]
+name = "selected_topology"
+harness = false
+
+[[bench]]
+name = "selected_archive"
+harness = false
+
+[[bench]]
+name = "selected_solids"
+harness = false
+
+[[bench]]
+name = "spline_replay_cost"
+harness = false
+
+[[bench]]
+name = "archive_limits"
+harness = false
+
+[[bench]]
+name = "periodic_cylinder"
+harness = false
+
+[[bench]]
+name = "closed_edges"
+harness = false
+
+[[bench]]
+name = "edge_images"
+harness = false
+
+[[bench]]
+name = "analytic_similarity"
+harness = false
+
+[[bench]]
+name = "seam_cuts"
+harness = false
+
+[[bench]]
+name = "coplanar"
+harness = false
+
+[[bench]]
+name = "sectors"
+harness = false
+
+[[bench]]
+name = "oblique"
+harness = false
+
+[[bench]]
+name = "prisms"
 harness = false

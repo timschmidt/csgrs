@@ -1,9 +1,24 @@
 # HyperBREP
 
+Partial-depth plane/cylinder Booleans now admit piecewise prismatic shells from
+complete native boundaries. The supported axial-shell domain includes thin
+remaining layers, internal notches, holes, cold archive replay, exact similarities,
+periodic seams and subsequent cuts/reconstruction/empty recovery. Shared topology,
+oriented section winding and cap transitions are certified before publication;
+unsupported surface arrangements remain typed failures. See the
+[axial-shell admission record](docs/evidence/2026-10-17-axial-shells/README.md).
+
+Native line/circle extrusion walls use plane/cylinder carriers. This intentionally
+changes native archive and STEP output bytes. Certified prism images under a
+supported axial shear retain exact extrusion carriers; no fitting or tolerance
+is introduced. Numerical certainty, manifold validity and format fidelity remain
+separate claims. General affine images of partial-depth analytic shells and full
+work/heap/cancellation bounds remain open.
+
 Hyper-native exact boundary representation for CAD.
 
 HyperBREP uses `hyperreal::Real` as its only authoritative scalar and familiar
-CAD vocabulary: `Vertex`, `Edge`, `EdgeUse`, `Wire`, `Face`, `Shell`, `Solid`,
+CAD vocabulary: vertices, edges, edge uses, wires, faces, shells, solids,
 `Curve3`, `Pcurve`, `Surface`, and `Model`.
 
 The source model is an immutable typed arena. Geometry and topology are staged
@@ -11,9 +26,127 @@ through `ModelBuilder`; invalid references, disconnected wires, mismatched edge
 endpoints, and unsupported edge/pcurve/surface agreement cannot be published as
 a `Model`.
 
+Public topology is borrowed through `VertexRef`, `EdgeRef`, `FaceRef`,
+`SolidRef` and corresponding references for the other entity families.
+References retain their model revision through traversal. Cloned models share
+one revision; transforms, committed edits and decoded models publish new
+revisions. Builders issue scoped keys and reject foreign keys before mutation.
+Constructors and Booleans return owned `BodySet` or `SheetSet` selections.
+Typed arena positions in errors are diagnostic labels and cannot resolve a
+record through the public API.
+
+`ModelBuilder::validate_edge_image` checks a staged edge, candidate pcurve,
+explicit correspondence and surface without adding an edge use. It invokes
+the same strict whole-curve proof as face construction. This lets exchange
+code check alternate source representations before assigning face-local
+geometry; success certifies image agreement, not a complete model or source
+fidelity. See [exact image agreement](docs/ARCHITECTURE.md#exact-image-agreement).
+
+`boolean::{union, intersection, difference, symmetric_difference}` consume
+`&BodySet` and return `BodySet`, so empty and multi-body outputs feed directly
+into further operations. `BodySet::empty()` starts an accumulation;
+`BodySet::from_solid(solid)` selects an already validated solid while sharing
+its model. A selection denotes the regularized union of its bodies, even when
+they overlap. Its `len()` counts selected bodies; summing individual volumes
+does not measure an overlapping union. Nontrivial Booleans normalize their
+results through the same strict native solid kernels. See the
+[composition contract and evidence](docs/evidence/2026-10-15-body-set/admission.md).
+General surface arrangements, full resource bounds and durable operation
+receipts remain open under the [development plan](docs/DEVELOPMENT_PLAN.md).
+
+Selected Bézier profile restrictions with proved exact native images can feed
+the planar-face and extrusion builders. Quadratic selected endpoints now permit
+the original parabola difference/XOR profiles, including reversed authoring,
+affine maps, holes, native replay and repeated supported slab cuts/restoration.
+Hypercurve owns the root, complete subcurve and area proofs; BREP retains
+whole-boundary validation. Different prism profiles require exact material
+intersection and component proofs before an interval continuation can retain
+their original solids. Irrational STEP Cartesian vertices remain explicit
+encoding errors. Native geometry replay preserves the represented set; complete
+authoring-history persistence and general retained spatial carriers remain open.
+
+`OperationContext::strict(WorkBudget { refinements, promotions })` runs a
+synchronous batch through `context.evaluate(|| ...)`. Nested BREP, Hypercurve
+and Hypersolve calls share the admitted solver work. The returned
+`BudgetOutcome` separates resource exhaustion from the callback's domain
+result and reports actual usage. These counters cover instrumented root
+refinements and algebraic promotions; they do not bound all geometry work,
+scalar precision, time or memory. Scopes do not propagate to worker threads
+or futures. See [operation scopes](docs/ARCHITECTURE.md#operation-scopes).
+
+Archive input uses `RawModel::from_json(json, &ArchiveLimits::default())` or
+caller-selected byte, nesting, token, record, degree, geometry-element and
+topology-reference limits. Exceeding a limit returns a typed resource error
+before exact-scalar deserialization. `RawModel::validate` then
+reconstructs geometry proofs. Input limits do not bound scalar reconstruction
+or geometric validation; see the [archive contract](docs/SELECTED_ARCHIVE.md).
+
+Native archives also retain procedural analytic-parallel pcurves: polynomial
+or homogeneous rational sources, signed distance, selected ranges and traversal.
+Replay rechecks source regularity and preserves subsequent planar subdivision
+and region queries. `Curve3::planar_image` retains a planar source in an injective
+affine plane frame. Represented source intervals use a unit spatial chart;
+selected intervals keep their source chart and root identity. Nonlinear parallel caps now feed planar faces, region/path extrusion,
+native replay, edge splits, affine transforms and supported slab Booleans.
+Whole source/frame/map proofs validate edge images. Scalar queries reuse the
+planar evaluator. Selected spatial points retain their planar source and root;
+frame comparisons, bounds, transforms and native replay consume that evidence
+without independent coordinates. Selected edge splits preserve cold replay and
+supported slab Booleans. Selected procedural profile domains now construct
+through retained vertices, straight axial translations and coordinate pcurve
+maps, with complete image proofs on cold replay. General surface intersections,
+metrics and STEP encodings retain typed frontiers. See the
+[planar lift admission](docs/evidence/2026-10-18-planar-curve-lift/README.md).
+
+Finite curve/plane queries retain `Parameter` and `GeometricPoint3` in
+`CurveSurfacePoint`. Native rational Bézier and NURBS queries reuse the planar
+owner's complete root authority for higher-degree equations; planar images
+reduce the target plane through their exact frame. `CurveSurfaceContactKind`
+distinguishes simple roots, repeated roots and finite boundary contacts without
+claiming an integer multiplicity or a global crossing direction at spline joints.
+`CurveSurfaceIntersection::Components` retains mixed isolated contacts and
+maximal closed `ParameterRange` overlaps, including collapsed spans. Closed
+overlaps require usable endpoint images; ambiguous spline joints remain typed
+failures. The original source parameters feed edge splitting, selected-point
+predicates and native replay. Planar subcurve queries and bounds inspect the
+consumed source interval; a pole outside it does not invalidate the finite subcurve. Coefficient-only
+surface consumers and STEP still report typed representation limits. This is a
+direct API migration with no compatibility adapter; see the
+[finite contact admission](docs/evidence/2026-10-18-retained-plane-contacts/README.md).
+Contained planar images also materialize exact pcurves when the projected frame
+is a certified Hypercurve similarity. Their original source chart and signed map
+to spatial parameters remain explicit; general non-similarity projections remain typed.
+
 ## Exactness contract
 
-- Coordinates, parameters, domains, weights, knots, and transforms use `Real`.
+- Authored coordinates, coefficients, weights, knots, and transforms use
+  `Real`. `Curve3::domain`, closed surface domains and contact pcurve domains
+  use `ParameterRange`; `represented_domain`, `represented_start` and
+  `represented_end` are explicit fallible scalar views. `PlanarCurveGeometry`
+  exposes `source_scale` and `source_offset`. This is a direct API migration,
+  with no compatibility adapter. Inverse curve queries return `Parameter` values that can
+  retain selected algebraic roots without a stored `Real` view.
+- `Curve3::point_at(&Parameter)` returns `GeometricPoint3`. Lines and rational
+  curves and retained planar lifts retain selected images for exact comparison,
+  conservative bounds and
+  invertible affine transforms. `try_coordinates` borrows stored coordinates;
+  an unavailable view does not make the point approximate. Vertices store these
+  points, and `ParameterRange` retains selected edge trims. `EdgeRef::split`
+  partitions all incident uses while retaining their parameter correspondence.
+  Archive replay covers selected sheet fixtures, subdivided cuboids and cylinder
+  axial edges. General selected surface/contact images remain open; see the
+  [archive contract](docs/SELECTED_ARCHIVE.md) for the tested boundary.
+- Native cylinder validation admits rectangular side partitions covering exactly
+  one angular period, including a single side face with a shared seam, unequal
+  widths and axial T-junctions. An indexed sweep checks multiplicity one without
+  allocating the angular–axial grid. Caps, orientation, incidence and complete
+  edge images still require independent exact checks. See the
+  [periodic-cylinder evidence](docs/evidence/2026-10-15-periodic-cylinder/README.md).
+- Full-period circular and elliptic edges may share one endpoint vertex.
+  Circular caps can use one edge, with distinct cap/side uses and seam parameter
+  endpoints retained through subdivision and archive replay. Other closed
+  families require additional regularity proofs. See the
+  [closed-edge contract](docs/ARCHITECTURE.md#closed-edges-and-periodic-seam-uses).
 - Geometric equality and ordering use Hyperlimit predicates, not structural
   `PartialEq` or an epsilon.
 - An unresolved predicate is a typed error, never `false`.
@@ -34,9 +167,11 @@ The clean-break implementation currently provides:
 
 - exact line, circular/elliptic arc, rational Bézier, and finite non-periodic
   NURBS `Curve3` carriers;
-- arbitrary positive-order exact derivatives, certified represented parameter
+- arbitrary positive-order exact derivatives, certified retained parameter
   location, NURBS knot-insertion subdivision, supported reversal, and
   conservative exact curve bounds;
+- retained spatial curve images with strict coordinate order/coincidence,
+  shared source evidence and explicit unsupported selected angular evaluation;
 - parameterized planes plus sphere, cylinder, cone, and torus carriers with
   exact domains, evaluation, and partial derivatives;
 - exact extrusion, revolution, tensor-product rational Bézier, and
@@ -84,6 +219,14 @@ The clean-break implementation currently provides:
   shared knot seams;
 - exact `builder::revolve_region` cavities as inward periodic shells with
   first-moment subtraction and radial/profile material classification;
+- exact `builder::revolve_curve_region` construction from the unified filled
+  region, including holes, disconnected components and empty results. Supported
+  procedural paths and selected endpoints also flow through `revolve_path` and
+  `revolve_path_region`, retaining meridians and rotation latitudes. Ordinary
+  solid admission checks a complete single-turn face cover and the simple
+  positive-radius profile. Similarities, reflection, shared-edge splitting and
+  cold native replay consume the result; unavailable measurements remain typed.
+  [Scope and evidence](docs/evidence/2026-10-18-procedural-revolution/README.md).
 - exact `builder::sphere_with_voids` construction with inward complete-sphere
   cavities, strict nesting, exact volume, and material classification;
 - validated open-shell `builder::{rational_bezier_patch, nurbs_patch}`
@@ -91,14 +234,22 @@ The clean-break implementation currently provides:
 - validated open-shell `builder::planar_face` construction from exact
   `CurvePath2` outer and hole loops in any nondegenerate authored plane frame,
   with Hypercurve-owned simplicity/nesting proof and exact persistent
-  promotion of conic and polynomial spline boundaries;
+  promotion of conic and polynomial spline boundaries; procedural parallels
+  and source restrictions also retain selected endpoints, support holes and
+  edge subdivision, and survive affine transforms and exact native replay;
 - validated open-shell `builder::extrusion_patch` construction for any exact
   profile family, retaining the profile's native `u` domain and strictly
-  ordered finite sweep-coefficient bounds without direct arena manipulation;
+  ordered finite sweep-coefficient bounds, including selected profile domains
+  with retained connector origins and complete coordinate image proofs; see the
+  [selected-patch evidence](docs/evidence/2026-10-18-selected-surface-patches/README.md);
 - validated open-shell `builder::revolution_patch` construction with native
   meridian domains, exact latitude circles, complete profile/axis-clearance
   certification, and an explicit sub-period angular contract so complete
-  revolutions use periodic subdivision;
+  revolutions use periodic subdivision. Selected meridian endpoints retain
+  latitude origins through `Curve3::rotation`; exact angular charts, similarity
+  and reflection, edge subdivision and cold replay consume the result. Complete
+  boundary images and axis clearance do not establish global embedding; see the
+  [selected-revolution evidence](docs/evidence/2026-10-18-selected-revolution/README.md);
 - exact face area for affine-image rational Bézier and NURBS tensor patches,
   certified from the complete Bernstein/Greville control lattice without
   tessellation; constant weights support arbitrary validated trims, while a
@@ -133,8 +284,21 @@ The clean-break implementation currently provides:
   holes and disconnected solids;
 - exact `builder::{extrude_path, extrude_path_region, extrude_path_regions}`
   construction from native `CurvePath2` line, circle, rational Bézier, and
-  NURBS boundaries, including spline-bounded through-holes, exact volume, and
-  material classification;
+  NURBS boundaries, including spline-bounded through-holes and exact material
+  classification. A represented integral supplies exact volume; its absence
+  returns `UnsupportedMeasurement` from the query without preventing admission
+  of a prism whose topology and orientation are independently certified;
+- `builder::extrude_curve_region` consumes a regularized `CurveRegion2`
+  directly, retaining its component proof and certified native line/arc view.
+  Round stroke profiles keep native circular sides through exact area queries,
+  STEP exchange and subsequent modeling. Material components, holes, islands
+  and canonical empty geometry use the same native construction authority;
+  height ordering is checked even for empty input. Native positive rational
+  profiles with no represented area integral retain classification, affine
+  transforms, cold replay and supported same-profile slab cuts. See the
+  [measurement admission evidence](docs/evidence/2026-10-18-measurement-admission/README.md).
+  Errors while attempting an available integral still propagate; general
+  integration and non-native selected spatial boundaries remain open;
 - exact affine `builder::{sweep, sweep_region}` for polygonal linear-path
   sweeps in an explicit model-space profile frame, including through-holes
   and shear without a hidden moving-frame policy;
@@ -178,9 +342,10 @@ The clean-break implementation currently provides:
   with retained two-surface pcurves when their authored frames align or mirror,
   with retained multiplicity, overlaps, coincidence, tangent points, lines,
   circles, exact ellipse curves, and typed mixed-dimensional component sets;
-- topology-safe exact family-preserving transforms, including rigid
-  cylindrical/conical/toroidal/revolution translations and reflections,
-  arbitrary affine line prisms, and rigidly reoriented curved prisms;
+- topology-safe exact family-preserving transforms, including certified
+  analytic similarities and reflections with scaled lengths, axial charts,
+  selected parameters and solid certificates; arbitrary affine line prisms
+  retain their existing domain;
 - copy-on-write stable-ID geometry/topology replacement transactions with
   complete validation on commit;
 - exact canonical edge splitting with incident pcurve subdivision, native
@@ -236,9 +401,12 @@ The clean-break implementation currently provides:
   Standard intersection and torus-minus-cutter difference publish the two
   complementary half-tori through one closed longitude-region certificate,
   with exact area, volume, classification, transforms, and persistence;
-- exact coaxial polygonal-revolution Booleans through Hypercurve radial/axial
-  regions, including reversed axes, disconnected outputs, and retained
-  toroidal-profile cavities;
+- exact coaxial full-turn revolution Booleans through Hypercurve radial/axial
+  regions, including native arcs/NURBS, retained analytic parallels and
+  Boolean-selected profiles. Common-axis proofs account for reversed axes,
+  shifted axial origins and common similarities/reflections; reconstruction
+  admits disconnected outputs, cavities and empty results. Profiles must stay
+  strictly off the axis, and every curve operation must certify its domain;
 - strict certified-AABB disjoint Booleans across every current single-solid
   analytic family, with exact full-arena remapping for multi-solid unions;
 - equal, strictly contained, and strictly partially overlapping sphere
@@ -388,7 +556,7 @@ The clean-break implementation currently provides:
   support traces for plane-face partitioning, while partial tensor-side
   partition remains explicit until inverse pcurves are representable;
 - exact `Surface::iso_curve` extraction in either tensor direction and
-  `Model::split_face_by_surface_curve` transfer for one retained rational
+  `FaceRef::split_by_surface_curve` transfer for one retained rational
   Bézier/NURBS iso-curve or complete rational-Bézier or NURBS
   translation-tensor graph sections in either axis, plus complete or clipped
   weighted bilinear rational-Bézier graph sections, including bounded
@@ -398,7 +566,7 @@ The clean-break implementation currently provides:
   curved-loop simplicity, same-boundary two-edge pockets, and orientation are
   recertified, interior endpoints split canonical boundary edges, the new curve
   is identity-shared by both descendants, and the complete open shell is
-  revalidated before publication; `Model::split_face_by_surface_curves`
+  revalidated before publication; `FaceRef::split_by_surface_curves`
   applies every retained fragment with an explicit first/second operand
   selector, exact endpoint ordering, deterministic descendant selection, and
   caller-order-independent topology; represented transverse pcurve contacts
@@ -427,10 +595,87 @@ The clean-break implementation currently provides:
 - immutable `Arc`-shared `Model` values.
 
 The implementation intentionally rejects combinations whose proof path has not
-landed yet. The workspace-root
-[`HYPERBREP_REBUILD_PLAN.md`](../HYPERBREP_REBUILD_PLAN.md) is the execution
-plan for analytic surfaces, intersections, editing, Booleans, spline surfaces,
-tessellation, and adapters.
+landed yet. The [development plan](docs/DEVELOPMENT_PLAN.md) specifies the
+remaining kernel, modeling, STEP, persistence, and downstream integration work.
+The accompanying [repository audit](docs/REPOSITORY_AUDIT.md) records the
+implementation baseline and external reference findings.
+The [algorithm research](docs/ALGORITHM_RESEARCH.md) documents feasibility,
+source assumptions, prototype gates and performance experiments for that plan.
+The [implementation ledger](docs/IMPLEMENTATION_STATUS.json) tracks work
+packages, landed increments, verification and the remaining capability gaps.
+
+The downstream [HyperBRep IO crate](../hyperbrep-io/README.md) provides bounded
+Part 21 syntax, strict unit-aware faceted/selected analytic import, and exact
+faceted or analytic geometry export. Planar/cylindrical/ring-torus faces with line/circle
+boundaries retain explicit topology and source parameter maps; native borrowed
+circle/cylinder/torus views supply exact carrier data to the writer. Holes, repeated
+body occurrences, edits and reflected models remain explicit.
+[Its mapping contract](../hyperbrep-io/docs/STEP_MAPPING.md) records the admitted
+domain, output representability and loss model. Other analytic/spline families,
+voids and whole-document/assembly mapping remain open. Native analytic
+similarities now support exact physical scaling before export, including
+millimetre/inch workflows; output unit selection remains a separate operation.
+See the [similarity contract](docs/ARCHITECTURE.md#analytic-similarity-transport)
+for chart restrictions and [evidence](docs/evidence/2026-10-16-analytic-similarity/README.md).
+Geometry exchange does not replace native archival replay.
+
+Seam-aligned axial and longitudinal torus halves and longitudinal cone-frustum
+halves now complete through strict Booleans, exact similarities, edge splitting,
+and untrusted archive replay. Existing boundary traces retain complete overlap
+and source-revision evidence through `FaceTracePartitionRef::boundary()`.
+The [seam-cut contract](docs/ARCHITECTURE.md#seam-aligned-analytic-cuts) and
+[evidence](docs/evidence/2026-10-16-seam-cuts/README.md) delimit this domain.
+The same halves also support recut intersection in both orders, subtraction to
+canonical empty followed by recovery, and union of complementary halves in both
+orders. Nine original configurations and 54 exact similarity configurations
+check 126 continuation outputs, including independent exact measures,
+classification and split/transform/archive reuse. Public
+`FacePairTrim::CoincidentFaces` retains both surface charts; circular boundary
+no-ops expose native overlap evidence through
+`BoundaryTraceOverlapRef::native_overlap()`. See the
+[repeated-composition contract](docs/ARCHITECTURE.md#repeated-curved-composition)
+and [evidence](docs/evidence/2026-10-16-curved-coplanar/README.md).
+Quarter and band continuations now have a focused acceptance corpus: torus
+axial/longitudinal quarters, cone-frustum longitudinal quarters, and axial bands
+of longitudinal torus/cone halves. Five original and 30 exact similarity
+configurations check intersection in both orders, subtraction, complementary
+reconstruction, canonical empty results, independent measures and classification,
+subdivision and untrusted replay. Public annular face partitions retain the
+source trace indices and model revisions. The
+[sector contract](docs/ARCHITECTURE.md#analytic-sector-and-band-continuation)
+and [evidence](docs/evidence/2026-10-16-sector-cuts/README.md) state the coverage.
+Ring-torus STEP exchange now covers exact latitude/meridian boundaries in the
+named whole/half/quarter and rational-band corpus. Both angular coordinates,
+periodic lifts, source maps and strict failures remain explicit;
+general Boolean closure remains open. See the
+[torus exchange admission record](docs/evidence/2026-10-16-torus-exchange/README.md).
+Rationally rotated complementary torus cuts also reconstruct in both operand
+orders. The full-size acceptance workflows continue through two edge-split,
+archive-reload, recut and empty-recovery cycles, checking exact measures,
+paired incidence and near-boundary points. Shared scalar rounding and
+function-congruence proofs preserve the cold replay contract; see the
+[continuation record](docs/evidence/2026-10-17-curved-continuation/README.md).
+Rationally rotated cone-frustum cuts also complete the axial-band workflow
+and complementary reconstruction in both operand orders. Each runs two further
+split/reload/recut/reunion/empty-recovery cycles with independent exact measures,
+paired incidence and near-boundary classification. Hyperreal supplies the shared
+root and trigonometric proofs; Hypercurve retains the circular chart and paired
+overlap endpoint evidence. The [cone continuation record](docs/evidence/2026-10-17-cone-continuation/README.md)
+states this finite domain, explicit uncertainty-fixture migration and remaining
+exchange/resource limits.
+
+`ConicalRevolution::from_line` recognizes an exact line revolved around a unit
+axis. It retains the original line and axis, proves their intersection, and
+constructs either `ConeBranch` relative to the apex parameter. The owned chart
+maps source angle/line parameters to native angle/slant distance and supplies
+a certified point inverse away from the apex. Skew, parallel, perpendicular,
+off-carrier and unresolved inputs have typed outcomes. `Surface::conical_geometry`
+borrows a native cone's exact frame and semi-angle for consumers.
+Cone shell validation also admits a single periodic side face and independently
+lifted rectangular partitions after exact period reduction; whole edge images,
+orientation and complete nonoverlapping coverage remain required. This supports
+native continuation after exact conical LINE-revolution STEP exchange in
+HyperBRep IO. See the [cone exchange record](docs/evidence/2026-10-17-cone-exchange/README.md).
 
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.
@@ -454,11 +699,11 @@ The essential construction flow is:
 ```rust
 use hyperbrep::{Point3, Real, builder};
 
-let (model, solid) = builder::cuboid(
+let bodies = builder::cuboid(
     Point3::origin(),
     Point3::new(Real::from(2), Real::from(3), Real::from(5)),
 )?;
-let exact_volume = model.solid_volume(solid)?;
+let exact_volume = bodies.bodies().next().expect("one cuboid").volume()?;
 # let _ = exact_volume;
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
@@ -485,3 +730,117 @@ through explicitly derived adapters.
 Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
 It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
+
+Selected geometry archive coverage and remaining replay limits are documented
+in [Archive version 14](docs/SELECTED_ARCHIVE.md).
+
+Conic inverse and curve/surface contact queries preserve distant authored
+angular charts and distinct full-period seam parameters. Retained Boolean
+contacts reuse proven native preimages across periodic charts. Oblique torus
+band workflows exercise subdivision, reflection, exact rescaling, replay and
+complementary reconstruction; broader arbitrary-angle completion remains open.
+
+Selected joint UV evaluation supports planes, positive-weight Bézier/NURBS
+tensor patches and extrusions of native line/Bézier/NURBS profiles. Returned
+`GeometricPoint3` values retain their source and selectors for exact comparisons,
+conservative bounds, affine transforms, sweep origins and checked replay.
+`Curve3::affine_image` preserves an original spatial curve under an invertible
+affine matrix, including sheared retained rotation curves.
+Selected angular/general procedural evaluation and general surface-section
+arrangements remain open. See the [capability and evidence record](docs/evidence/2026-10-19-rational-surface-evaluation/README.md).
+
+Archive 14 retains whole native polynomial branches, selected restrictions,
+reversal, similarities and spatial planar lifts. Shared exact equations,
+rectangles and construction/evaluation controls reconstruct the complete source
+graph before branch selection; serialized connectivity is never trusted.
+Previous formats are rejected without compatibility adapters.
+`ArchiveLimits::solver_steps` admits each declared refinement/depth control
+before decoding scalars; it is not a total-work or heap bound. This persistence
+extension does not complete general surface sections or trim arrangements.
+See the [branch replay record](docs/evidence/2026-10-19-polynomial-branch-replay/README.md).
+
+Plane/rational-Bézier sections now use a complete polynomial decomposition of
+the whole UV rectangle. Interior loops, isolated contacts, cusps, crossings and
+disconnected branches retain their selected source charts, spatial curves and
+both pcurves. A strict control-net test resolves one-sided empty sections and
+coplanar containment. Nonempty polynomial sections require a certified injective
+projection into the plane; a normalized Jacobian interval proof admits nonlinear
+weighted images. Folded images, general NURBS sections and the solver's vertical,
+repeated or boundary-component cases remain explicit frontiers.
+
+`SurfaceSurfaceIntersection::Point`, `Points` and mixed-component points carry
+`GeometricPoint3`; use its exact queries or `try_coordinates()` for the narrower
+represented-coordinate view. `SurfaceIntersectionCurve::restrict_source` keeps
+selected trim endpoints and the original shared parameterization. Whole-image
+model validation checks the defining polynomial identity, including after
+affine transport and cold replay. Hypercurve proves equivalent rational images
+by exact divisibility of their coordinate residuals by the retained equation.
+Archive 14 replays ordered rational images with their original pole guards. These sections do not
+yet complete general surface intersections, derivatives at singular events,
+trim arrangements or solid Booleans on those arrangements. Solver degree and
+refinement controls are distinct from total work, memory and cancellation limits.
+
+The [plane/tensor section evidence](docs/evidence/2026-10-19-plane-tensor-sections/README.md)
+records the admitted domain, preserved corpus, independent checks and costs.
+
+
+`Curve3::derivative_at(&Parameter, order)` returns `GeometricVector3`.
+Represented coordinates are available through `try_coordinates()`; retained
+vectors support exact coordinate signs, linear-form comparisons, zero tests and
+invertible affine transport. Native rational Bézier/NURBS derivatives preserve
+selected parameters, including non-unit knot charts. Planar implicit-section
+jets retain their original joint polynomial/fiber source through rational maps,
+restrictions, spatial reversal and cold curve replay. `Parameter::affine_image`
+transports selected values between those charts without scalar reconstruction.
+This replaces `CurveDerivative3::vector()` directly, with no compatibility alias.
+
+`Curve3::tangent_direction_at` also handles smooth vertical events of retained
+polynomial sections. Its direction follows increasing spatial parameter and is
+not normalized. Hypercurve branch reversal keeps the source chart; BRep reversal
+reflects its public chart, so derivatives and directions use the explicit chart
+scale. Gradient-zero nodes/cusps, singular image limits, general selected angular
+families, and unavailable joins of independent selected vector fields remain open. Selected analytic parallels
+admit direction/zero tests, while comparisons against a nonzero scalar still
+need their radical speed magnitude. No successful zero vector substitutes for
+an unresolved tangent. The [section differential record](docs/evidence/2026-10-19-section-differentials/README.md)
+separates the admitted domain from these limits and the remaining trim-arrangement
+work. The native archive stays at version 14; vector queries do not change model
+records or add a compatibility decoder.
+
+
+`Surface::partials_at(&CurvePoint2)` now returns `SurfacePartials` whose `u()`
+and `v()` are `GeometricVector3` values. `normal_at` returns a unit
+`GeometricVector3` in authored UV order. Represented analytic families keep their
+coordinate view. Selected planes, positive-weight Bézier/NURBS tensors and
+admitted profile extrusions keep the entire correlated source. NURBS partials
+use the right-owned internal knot span and the final span at the closed upper
+endpoint; this does not assert two-sided smoothness at a nonsmooth knot.
+
+Vectors expose `cross`, `normalized`, `equals`, `compare_dot` and
+`compare_squared_length` without requiring separate coordinate roots. A selected
+unit vector retains its positive squared-length divisor. An affine image of a
+unit vector need not stay unit; normalize the transported vector when required.
+A surface normal instead follows the cross product of its authored partials,
+including orientation reversal under reflection. Zero-vector normalization
+returns `DegenerateVector`; rank-deficient surface normals return
+`SingularSurfaceParameter`.
+
+`SurfacePartials::apply_direction` consumes a Hypercurve UV velocity in the
+same retained field. `Parameter::curve_parameter()` exposes the retained owner
+value for materialized pcurves. Apply the pcurve's explicit parameter scale in
+chain-rule comparisons, including negative scales after reversal. The full
+circle and projective section fixtures exercise both surface consumers,
+selected parameters, restrictions, reversals and cold geometry replay.
+
+Hypercurve rational-form arithmetic keeps original operands and pole guards,
+pulls image queries into a proved common source and retains one structurally
+shared denominator in finite sums. Debug output describes the current query
+without recursively expanding its operand DAG. Selected parallels provide a
+positively proportional direction image; this admits unit normals and zero-dot
+comparisons while their radical speed magnitudes remain unavailable. Selected
+angular fields, singular branch limits, general independent-field joins and
+complete trim arrangements remain open. Internal controls do not bound total
+work, retained heap, stack or cancellation. See the
+[surface differential record](docs/evidence/2026-10-19-surface-differentials/README.md)
+for the admitted domain, corrections, qualification and remaining work. Archive
+14 is unchanged; transient vector queries add no saved-model carrier or shim.

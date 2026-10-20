@@ -1204,6 +1204,13 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let undecidable_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        // Preserve the original identity as a newly certified proof case.
+        assert_eq!(
+            undecidable_zero.exact_rational_normal_form(),
+            Some(hyperreal::Rational::zero())
+        );
+        // A separate angle-addition identity retains the terminal-policy control.
+        let undecidable_zero = crate::test_support::terminally_unresolved_zero();
         let outcome = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |operation| {
             calls.set(calls.get() + 1);
             assert_eq!(

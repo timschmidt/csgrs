@@ -1,0 +1,443 @@
+use super::*;
+
+fn p(x: i32, y: i32, z: i32) -> Point3 {
+    Point3::new(x.into(), y.into(), z.into())
+}
+fn path(points: &[(i32, i32)]) -> CurvePath2 {
+    CurvePath2::try_new(
+        (0..points.len())
+            .map(|i| {
+                let a = points[i];
+                let b = points[(i + 1) % points.len()];
+                Curve2::from(
+                    LineSeg2::try_new(
+                        CurvePoint2::new(a.0.into(), a.1.into()),
+                        CurvePoint2::new(b.0.into(), b.1.into()),
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+fn fixture() -> (ArenaModel, FaceId) {
+    crate::construction::planar_face(
+        &path(&[(0, 0), (8, 0), (8, 8), (0, 8)]),
+        &[path(&[(2, 2), (2, 4), (4, 4), (4, 2)])],
+        p(0, 0, 0),
+        Vector3::x(),
+        Vector3::y(),
+    )
+    .unwrap()
+}
+fn trace(model: &ArenaModel, face: FaceId, start: Point3, end: Point3) -> SurfaceIntersectionCurve {
+    SurfaceIntersectionCurve::on_plane(
+        Curve3::line(start, end).unwrap(),
+        model.surface(model.face(face).unwrap().surface()).unwrap(),
+    )
+    .unwrap()
+}
+
+fn circle_path(radius: i32, clockwise: bool) -> CurvePath2 {
+    let mut points = [(radius, 0), (0, radius), (-radius, 0), (0, -radius)];
+    if clockwise {
+        points.reverse();
+    }
+    CurvePath2::try_new(
+        (0..4)
+            .map(|index| {
+                let (x, y) = points[index];
+                let (nx, ny) = points[(index + 1) % 4];
+                Curve2::from(
+                    CircularArc2::try_from_center(
+                        CurvePoint2::new(x.into(), y.into()),
+                        CurvePoint2::new(nx.into(), ny.into()),
+                        CurvePoint2::new(0.into(), 0.into()),
+                        clockwise,
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+
+#[test]
+fn bridge_partition_rejects_traces_crossing_a_hole() {
+    let (model, face) = fixture();
+    let original = model.to_json().unwrap();
+    // Both traces attach to the outer wire and the hole. The upper trace
+    // reaches the far side of the hole by passing through its interior.
+    let curves = vec![
+        Curve3::line(p(8, 3, 0), p(2, 3, 0)).unwrap(),
+        Curve3::line(p(0, 2, 0), p(2, 2, 0)).unwrap(),
+    ];
+    for curves in [
+        curves.clone(),
+        curves.iter().rev().map(|c| c.reversed().unwrap()).collect(),
+    ] {
+        let result = model.split_face_by_curves(face, &curves);
+        assert!(
+            matches!(&result, Err(TopologyEditError::Validation(report))
+            if report.errors().iter().any(|error| matches!(error, BuildError::SelfIntersectingWire(_)))),
+            "crossing a source hole must fail with a topology diagnostic: {result:?}"
+        );
+        let retained = curves
+            .iter()
+            .map(|curve| {
+                SurfaceIntersectionCurve::on_plane(
+                    curve.clone(),
+                    model.surface(model.face(face).unwrap().surface()).unwrap(),
+                )
+                .unwrap()
+            })
+            .collect::<Vec<_>>();
+        let result =
+            model.split_face_by_surface_curves(face, &retained, SurfaceIntersectionOperand::First);
+        assert!(
+            matches!(&result, Err(TopologyEditError::Validation(report))
+            if report.errors().iter().any(|error| matches!(error, BuildError::SelfIntersectingWire(_)))),
+            "retained trace entry point must enforce the same contract: {result:?}"
+        );
+    }
+    assert_eq!(model.to_json().unwrap(), original);
+}
+
+#[test]
+fn planar_line_partition_consumes_complete_annular_bridge_cycles() {
+    let (model, face) = crate::construction::planar_face(
+        &circle_path(5, false),
+        &[circle_path(2, true)],
+        p(0, 0, 0),
+        Vector3::x(),
+        Vector3::y(),
+    )
+    .unwrap();
+    let original = model.to_json().unwrap();
+    let curves = vec![
+        Curve3::line(p(-5, 0, 0), p(-2, 0, 0)).unwrap(),
+        Curve3::line(p(2, 0, 0), p(5, 0, 0)).unwrap(),
+    ];
+    for curves in [
+        curves.clone(),
+        curves.iter().rev().map(|c| c.reversed().unwrap()).collect(),
+    ] {
+        let (partitioned, partition) = model.split_face_by_curves(face, &curves).unwrap();
+        assert_eq!(partition.faces.len(), 2);
+        for &face in &partition.faces {
+            assert_eq!(
+                compare_reals(
+                    &partitioned.face_area(face).unwrap(),
+                    &((Real::from(21) * Real::pi()) / Real::from(2)).unwrap(),
+                    crate::STRICT_PREDICATES,
+                )
+                .value(),
+                Some(std::cmp::Ordering::Equal)
+            );
+        }
+        assert_eq!(partition.traces.len(), 2);
+        assert!(
+            partition
+                .traces
+                .iter()
+                .all(|trace| !trace.splits.is_empty())
+        );
+        let encoded = partitioned.to_json().unwrap();
+        assert_eq!(
+            crate::persistence::ImportedModel::from_json(
+                &encoded,
+                &crate::ArchiveLimits::default()
+            )
+            .unwrap()
+            .validate()
+            .unwrap()
+            .to_json()
+            .unwrap(),
+            encoded
+        );
+    }
+    assert_eq!(model.to_json().unwrap(), original);
+}
+
+#[test]
+fn complete_circular_boundary_coverage_replays_native_charts_and_holes() {
+    let (source, face) = crate::construction::planar_face(
+        &circle_path(5, false),
+        &[circle_path(2, true)],
+        p(0, 0, 0),
+        Vector3::x(),
+        Vector3::y(),
+    )
+    .unwrap();
+    let edge = source
+        .edge_use(
+            source
+                .wire(source.face(face).unwrap().outer().unwrap())
+                .unwrap()
+                .edge_uses()[0],
+        )
+        .unwrap()
+        .edge();
+    let domain = source.edge(edge).unwrap().domain();
+    let midpoint = ((domain.start().try_real().unwrap() + domain.end().try_real().unwrap())
+        / Real::from(2))
+    .unwrap();
+    let (model, _) = source.split_edge(edge, midpoint.into()).unwrap();
+    let original = model.to_json().unwrap();
+    for radius in [5, 2] {
+        let trace = SurfaceIntersectionCurve::on_plane(
+            Curve3::circle_arc(
+                p(0, 0, 0),
+                Vector3::x(),
+                Vector3::y(),
+                radius.into(),
+                Real::zero(),
+                Real::tau(),
+            )
+            .unwrap(),
+            model.surface(model.face(face).unwrap().surface()).unwrap(),
+        )
+        .unwrap();
+        for trace in [trace.clone(), trace.reversed().unwrap()] {
+            let (unchanged, partition) = model
+                .split_face_by_surface_curves(
+                    face,
+                    std::slice::from_ref(&trace),
+                    SurfaceIntersectionOperand::First,
+                )
+                .unwrap();
+            assert_eq!(unchanged.to_json().unwrap(), original);
+            assert_eq!(partition.faces, vec![face]);
+            let proof = partition.traces[0].boundary.as_ref().unwrap();
+            assert!(!proof.overlaps.is_empty());
+            let materialized = trace.first_pcurve().materialize().unwrap();
+            for overlap in &proof.overlaps {
+                assert!(overlap.native_overlap.is_some());
+                let boundary = model
+                    .pcurve(model.edge_use(overlap.edge_use).unwrap().pcurve())
+                    .unwrap();
+                for (a, b) in [
+                    (overlap.trace_range.start(), overlap.boundary_range.start()),
+                    (overlap.trace_range.end(), overlap.boundary_range.end()),
+                ] {
+                    let actual = materialized.curve().point_at(&a.clone().into()).unwrap();
+                    let expected = boundary.curve().point_at(&b.clone().into()).unwrap();
+                    let actual = actual.coordinates().unwrap();
+                    let expected = expected.coordinates().unwrap();
+                    assert_eq!(
+                        hyperlimit::point2_equal(
+                            &Point2::new(actual.x().clone(), actual.y().clone()),
+                            &Point2::new(expected.x().clone(), expected.y().clone()),
+                            crate::STRICT_PREDICATES,
+                        )
+                        .value(),
+                        Some(true)
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn partial_circles_and_near_circles_do_not_become_boundary_proofs() {
+    let (model, face) = crate::construction::planar_face(
+        &circle_path(5, false),
+        &[],
+        p(0, 0, 0),
+        Vector3::x(),
+        Vector3::y(),
+    )
+    .unwrap();
+    let surface = model.surface(model.face(face).unwrap().surface()).unwrap();
+    let tiny = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+    for radius in [Real::from(2), Real::from(5) + tiny] {
+        let trace = SurfaceIntersectionCurve::on_plane(
+            Curve3::circle_arc(
+                p(0, 0, 0),
+                Vector3::x(),
+                Vector3::y(),
+                radius,
+                Real::zero(),
+                Real::tau(),
+            )
+            .unwrap(),
+            surface,
+        )
+        .unwrap();
+        assert!(
+            model
+                .retained_surface_trace_on_boundary(face, &trace, SurfaceIntersectionOperand::First)
+                .unwrap()
+                .is_none()
+        );
+    }
+    let semi = CurvePath2::try_new(vec![
+        Curve2::from(
+            CircularArc2::try_from_center(
+                CurvePoint2::new(5.into(), 0.into()),
+                CurvePoint2::new((-5).into(), 0.into()),
+                CurvePoint2::new(0.into(), 0.into()),
+                false,
+            )
+            .unwrap(),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(
+                CurvePoint2::new((-5).into(), 0.into()),
+                CurvePoint2::new(5.into(), 0.into()),
+            )
+            .unwrap(),
+        ),
+    ])
+    .unwrap();
+    let (model, face) =
+        crate::construction::planar_face(&semi, &[], p(0, 0, 0), Vector3::x(), Vector3::y())
+            .unwrap();
+    let trace = SurfaceIntersectionCurve::on_plane(
+        Curve3::circle_arc(
+            p(0, 0, 0),
+            Vector3::x(),
+            Vector3::y(),
+            5.into(),
+            Real::zero(),
+            Real::tau(),
+        )
+        .unwrap(),
+        model.surface(model.face(face).unwrap().surface()).unwrap(),
+    )
+    .unwrap();
+    assert!(
+        model
+            .retained_surface_trace_on_boundary(face, &trace, SurfaceIntersectionOperand::First)
+            .unwrap()
+            .is_none()
+    );
+}
+
+#[test]
+fn complete_boundary_coverage_retains_subdivision_direction_and_holes() {
+    let (source, face) = fixture();
+    let edge = source
+        .edge_use(
+            source
+                .wire(source.face(face).unwrap().outer().unwrap())
+                .unwrap()
+                .edge_uses()[0],
+        )
+        .unwrap()
+        .edge();
+    let (model, _) = source
+        .split_edge(edge, ((Real::one() / Real::from(2)).unwrap()).into())
+        .unwrap();
+    let original = model.to_json().unwrap();
+    for (start, end, count) in [
+        (p(0, 0, 0), p(8, 0, 0), 2),
+        (p(8, 0, 0), p(0, 0, 0), 2),
+        (p(1, 0, 0), p(3, 0, 0), 1),
+        (p(2, 2, 0), p(2, 4, 0), 1),
+    ] {
+        let trace = trace(&model, face, start, end);
+        let (unchanged, partition) = model
+            .split_face_by_surface_curves(
+                face,
+                std::slice::from_ref(&trace),
+                SurfaceIntersectionOperand::First,
+            )
+            .unwrap();
+        assert_eq!(partition.faces, vec![face]);
+        assert_eq!(unchanged.to_json().unwrap(), original);
+        let record = &partition.traces[0];
+        assert!(record.splits.is_empty());
+        assert_eq!(record.segments.len(), 1);
+        let boundary = record.boundary.as_ref().unwrap();
+        assert_eq!(boundary.source.to_json().unwrap(), original);
+        assert_eq!(boundary.overlaps.len(), count);
+        assert_eq!(
+            boundary.overlaps.first().unwrap().trace_range.start(),
+            &Real::zero()
+        );
+        assert_eq!(
+            boundary.overlaps.last().unwrap().trace_range.end(),
+            &Real::one()
+        );
+        for overlap in &boundary.overlaps {
+            let use_ = boundary.source.edge_use(overlap.edge_use).unwrap();
+            let edge_curve = boundary.source.pcurve(use_.pcurve()).unwrap();
+            let materialized = boundary.intersection.first_pcurve().materialize().unwrap();
+            for (a, b) in [
+                (overlap.trace_range.start(), overlap.boundary_range.start()),
+                (overlap.trace_range.end(), overlap.boundary_range.end()),
+            ] {
+                let actual = materialized.curve().point_at(&a.clone().into()).unwrap();
+                let expected = edge_curve.curve().point_at(&b.clone().into()).unwrap();
+                assert_eq!(actual, expected);
+            }
+        }
+        assert!(matches!(
+            model.split_face_by_surface_curve(face, &trace, SurfaceIntersectionOperand::First),
+            Err(TopologyEditError::DegenerateFaceSplit)
+        ));
+    }
+}
+
+#[test]
+fn partial_coverage_and_near_offsets_do_not_become_boundary_proofs() {
+    let (model, face) = fixture();
+    let tiny = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+    for (a, b) in [
+        (p(-1, 0, 0), p(9, 0, 0)),
+        (p(0, 2, 0), p(8, 2, 0)),
+        (
+            Point3::new(0.into(), tiny.clone(), 0.into()),
+            Point3::new(8.into(), tiny, 0.into()),
+        ),
+    ] {
+        let trace = trace(&model, face, a, b);
+        assert!(
+            model
+                .retained_surface_trace_on_boundary(face, &trace, SurfaceIntersectionOperand::First)
+                .unwrap()
+                .is_none()
+        );
+    }
+    assert_eq!(model.face_area(face).unwrap(), Real::from(60));
+}
+
+#[test]
+fn boundary_endpoint_agreement_does_not_certify_a_forged_spatial_image() {
+    let (model, face) = fixture();
+    let original = model.to_json().unwrap();
+    let pcurve = Curve2::from(
+        LineSeg2::try_new(
+            CurvePoint2::new(0.into(), 0.into()),
+            CurvePoint2::new(8.into(), 0.into()),
+        )
+        .unwrap(),
+    );
+    let forged = SurfaceIntersectionCurve::from_exact_pcurves(
+        Curve3::rational_bezier(
+            vec![p(0, 0, 0), p(4, 0, 1), p(8, 0, 0)],
+            vec![Real::one(); 3],
+        )
+        .unwrap(),
+        pcurve.clone(),
+        pcurve,
+    )
+    .unwrap();
+    assert!(matches!(
+        model.split_face_by_surface_curves(face, &[forged], SurfaceIntersectionOperand::First),
+        Err(TopologyEditError::Build(
+            BuildError::UnsupportedEdgeUseAgreement { .. }
+        ))
+    ));
+    assert_eq!(model.to_json().unwrap(), original);
+    let valid = trace(&model, face, p(0, 0, 0), p(8, 0, 0));
+    assert!(
+        model
+            .split_face_by_surface_curves(face, &[valid], SurfaceIntersectionOperand::First)
+            .is_ok()
+    );
+}

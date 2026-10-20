@@ -1,0 +1,129 @@
+{
+  "rational": {
+    "sign": 1,
+    "numerator": [
+      1
+    ],
+    "denominator": [
+      1
+    ]
+  },
+  "class": "Irrational",
+  "computable": {
+    "internal": {
+      "Add": [
+        {
+          "internal": {
+            "Multiply": [
+              {
+                "internal": {
+                  "Ratio": {
+                    "sign": 1,
+                    "numerator": [
+                      1
+                    ],
+                    "denominator": [
+                      5
+                    ]
+                  }
+                }
+              },
+              {
+                "internal": {
+                  "Multiply": [
+                    {
+                      "internal": {
+                        "Constant": "Pi"
+                      }
+                    },
+                    {
+                      "internal": {
+                        "Multiply": [
+                          {
+                            "internal": {
+                              "Multiply": [
+                                {
+                                  "internal": {
+                                    "AtanRational": {
+                                      "sign": 1,
+                                      "numerator": [
+                                        3
+                                      ],
+                                      "denominator": [
+                                        4
+                                      ]
+                                    }
+                                  }
+                                },
+                                {
+                                  "internal": {
+                                    "Sqrt": {
+                                      "internal": {
+                                        "Int": [
+                                          1,
+                                          [
+                                            5
+                                          ]
+                                        ]
+                                      }
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "internal": {
+                              "Multiply": [
+                                {
+                                  "internal": {
+                                    "Constant": "InvPi"
+                                  }
+                                },
+                                {
+                                  "internal": {
+                                    "Sqrt": {
+                                      "internal": {
+                                        "Int": [
+                                          1,
+                                          [
+                                            5
+                                          ]
+                                        ]
+                                      }
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "internal": {
+            "Negate": {
+              "internal": {
+                "AtanRational": {
+                  "sign": 1,
+                  "numerator": [
+                    3
+                  ],
+                  "denominator": [
+                    4
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

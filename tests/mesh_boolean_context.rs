@@ -1,3 +1,6 @@
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
 use csgrs::{
     GeometryCertainty, GeometryContext, GeometryOutcome, Real, TriangleMesh,
     solid::{self, SolidExt},
@@ -83,7 +86,8 @@ fn every_boolean_reports_approximation_without_affecting_later_strict_calls() {
     // needs the terminal policy to decide equality.
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
-    let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let unresolved_zero =
+        uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     let left = solid::cube(Real::one())
         .expect("valid primitive fixture")
         .translated(&sine - &Real::one(), Real::zero(), Real::zero())

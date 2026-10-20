@@ -58,10 +58,30 @@ fn independently_rebuilt_atoms_obey_distributivity() {
 }
 
 #[test]
-fn an_unproved_trigonometric_relation_is_not_a_ring_proof() {
-    let sine = Real::e().sin();
-    let cosine = Real::e().cos();
-    let value = &sine * &sine + &cosine * &cosine - Real::one();
+fn unit_circle_proofs_preserve_offsets_and_unproved_angle_addition() {
+    // Preserve the original e-angle fixture, now with its additional exact
+    // unit-circle proof; signed offsets rule out treating near-zero as zero.
+    for numerator in [-1, 0, 1] {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let original = &sine * &sine + &cosine * &cosine - Real::one();
+        let offset = Rational::fraction(numerator, 1_000_000_000_000_u64).unwrap();
+        let value = original + Real::from(offset.clone());
+        assert_eq!(value.exact_rational_normal_form(), Some(offset));
+        assert_eq!(
+            value.certified_sign_until(-512).sign(),
+            Some(match numerator {
+                -1 => RealSign::Negative,
+                0 => RealSign::Zero,
+                _ => RealSign::Positive,
+            })
+        );
+    }
+    // This separate exact identity still requires an unavailable angle-
+    // addition proof. Failure to recognize it cannot certify a zero.
+    let value = (Real::e() + Real::one()).sin()
+        - Real::e().sin() * Real::one().cos()
+        - Real::e().cos() * Real::one().sin();
     assert_eq!(value.exact_rational_normal_form(), None);
     assert_eq!(value.certified_sign_until(-512).sign(), None);
 }

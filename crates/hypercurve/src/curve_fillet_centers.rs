@@ -1173,9 +1173,11 @@ impl FilletOffsetCarrier2<'_, '_> {
                     | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
                     | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
                     | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-                    | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
-                        None
-                    }
+                    | CurvePoint2(
+                        CurvePointData2::Similarity(_)
+                        | CurvePointData2::Endpoint(_)
+                        | CurvePointData2::Polynomial(_),
+                    ) => None,
                 };
                 let selected_center_parameter = anchor_parameter
                     .and_then(CurveParameter2::as_algebraic_cusp)

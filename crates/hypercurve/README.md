@@ -23,10 +23,16 @@ This README describes crate version `0.3.1`.
 | --- | --- |
 | `Point2`, `Aabb2`, `Similarity2` | Exact planar coordinates, bounds, and similarity transforms |
 | `CurvePoint2` | Exact curve point retaining coordinates or selected geometric evidence |
+| `CurvePointDefinition2` | Replayable point sources and shared selected roots, with strict validation on reconstruction |
+| `CurvePointAffineForm2` | Source-bound query of `a*x + b*y + c`, preserving selected coordinate correlation |
 | `LineSeg2`, `CircularArc2`, `Segment2` | Native line/arc primitives and their common enum |
 | `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, `RationalBezier2` | Polynomial and rational Bézier carriers |
 | `PolynomialSplineCurve2`, `NurbsCurve2` | Validated B-spline and NURBS curves |
+| `PolynomialCurveSet2`, `PolynomialCurveBranch2` | Complete solver-certified polynomial zero sets as native graph branches and isolated points |
 | `Curve2` | Shared exact curve carrier with borrowed operations |
+| `CurveNativeSegment2` | Proof of a complete oriented line/arc image, borrowing the original curve |
+| `CurveNativeImage2` | Complete native curve image, retaining its source and selected-root authority |
+| `CurveAnalyticParallel2` | Borrowed procedural parallel definition, including selected range and traversal |
 | `CurveString2`, `CurvePath2`, `Contour2` | Connected open strings, general paths, and closed line/arc contours |
 | `CurveRegion2` | Native mixed-family filled planar region |
 | `provisional`, `evaluate_under`, `Provisional<T>`, `CurvePreviewOptions`, `Classification<T>` | Explicitly qualified approximate evaluation, its certainty-carrying result, lossy preview adapter, and decided/uncertain result |
@@ -35,6 +41,55 @@ This README describes crate version `0.3.1`.
 
 `CurveRegion2` is the sole public filled-region carrier. Native line/arc
 specializations remain private fast paths inside the unified kernel.
+
+`PolynomialCurveSet2::from_topology()` consumes a complete
+`hypersolve::bivariate_topology::BivariateCurveTopology`. Its `Curve2` branches
+retain the equation, projection slab, ordered fiber root and selected event
+endpoints. Evaluation, subdivision, reversal, conservative bounds and similarity
+transforms keep the original first-coordinate parameter chart and shared source.
+`CurvePointDefinition2::PolynomialFiber` replays the selected base and fiber
+together; untrusted singleton claims are checked. Isolated points remain separate
+from branches. This collection does not establish winding or a filled region.
+General derivatives, rational Bézier promotion, filled arrangements, and branch
+archive replay remain unsupported. Mixed affine forms can be signed in the local
+fiber; constructing their scalar parameter is restricted when both coefficients
+are nonzero and the base parameter is algebraic. Fiber subdivision/refinement
+limits and instrumented work budgets are not total-work or heap-byte bounds.
+
+`CurvePoint2::definition()` retains supported rational/parallel source images,
+correlated coordinate expressions, similarities and intersections of exact
+supporting lines. `SupportingLineIntersection` stores two endpoint pairs;
+`into_point()` rechecks their strict definitions, nondegeneracy and unique
+intersection. The intersection may lie outside either finite witness chord.
+Parallel or coincident supports return `CurveError::ParallelLineSupports`;
+degenerate supports and unresolved proofs keep their own typed outcomes.
+NURBS coordinate images reuse their original selected root for replay and affine
+queries. Independent coordinate roots and stored certainty flags are not used
+to replace that identity. This source view is not complete authoring history.
+
+`Curve2::native_segment()` proves eligible complete line/arc images under a
+strict policy, including represented retained chords and supported single-span
+restrictions. The returned view retains the source curve; its native segment
+may have a different parameter chart. A support fit alone does not prove a
+trim's traversal. Missing range, injectivity or representation proofs return
+typed blockers. This query neither samples geometry nor certifies an earlier
+approximate construction's fidelity.
+
+`Curve2::native_image()` also admits single retained Bézier spans whose endpoints
+have exact scalar views. Selected quadratic roots replay their defining
+polynomial and isolator without changing their original field or caches. Exact
+subcurve substitution preserves the complete nonlinear or nonmonotone curve;
+the returned geometry uses its own native chart. The same shared proof enables
+retained boundary measurements when the native area integral is available. General selected
+fields, multiple retained spans and nonlinear parallels can still return typed
+blockers. Simplicity, filled material and source qualification remain separate
+claims.
+
+`Curve2::analytic_parallel()` borrows the procedural source and distance,
+ascending parameter range, traversal and original curve. The view also covers
+analytic selected-fiber subdivisions. It preserves the current definition
+without fitting or rebuilding selected coordinates; it is not a certificate
+to trust on untrusted replay or a complete authoring-history receipt.
 
 Region and closed-path point queries accept `CurvePoint2`, preserving selected
 roots and generated contact evidence. Convert authored coordinates with
@@ -124,6 +179,12 @@ Point2
 
 A `Contour2` is a closed, connected line/arc boundary with a fill rule.
 `CurvePath2` generalizes connected paths to every supported curve family.
+`CurvePath2::simple_loop_orientation` proves clockwise/counterclockwise traversal
+from complete arrangement topology and winding without requiring an area
+integral. Its domain is one unpinched closed chain of certified injective spans,
+with no overlaps or internal splits. Open paths are invalid; an unavailable
+simplicity or winding proof is a typed blocker. A single periodic carrier may
+need subdivision. Endpoint chords never supply this proof.
 `CurveRegion2` stores filled topology as oriented exact boundary curves and
 is the main input to mixed-family region operations. Curve operations emit
 boundary provenance for inspection; authored input supplies geometry and fill
@@ -145,6 +206,10 @@ exact signatures.
   optional view of stored `Real` coordinates; selected points retain their
   exact meaning and support geometric queries without that view. Undecided
   predicates are reported as blockers.
+- `CurvePoint2::affine_form(a, b, c)` retains an exact affine query of the point.
+  `compare_to_real`, `compare`, and `bounds` reuse its roots and normal-sheet
+  evidence; they do not reconstruct independent scalar coordinates. Bounds are
+  conservative intervals, and unavailable proofs remain typed blockers.
 - `LineSeg2::{try_new, point_at, reversed, classify_point, contains_point,
   structural_facts}` covers checked segments and point predicates.
 - `CircularArc2::{try_from_center, from_bulge, contains_point,
@@ -181,6 +246,11 @@ exact signatures.
   including exterior charts and finite restrictions excluding source poles.
 - `BezierParameter2`, `BezierParameterRange2`, and
   `BezierRootIsolationResult2` retain exact algebraic parameter information.
+- `Curve2::has_certified_injective_image` supplies a strict sufficient proof
+  for complete images, including connected native spans with one common
+  monotone coordinate. A missing certificate does not imply self-intersection.
+  [Qualification](../hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md)
+  covers its use in independent BREP replay and its explicit limits.
 - Bézier analysis includes cusp and inflection classification, monotone spans,
   line/curve contacts, curve/curve intersection, length bounds, exact
   polynomial and rational area moments for conics, exact homogeneous degree
@@ -275,6 +345,10 @@ exact signatures.
   overlap ranges. A location retains its support parameter and span chart;
   `location.parameter()` maps it into the authored curve domain on
   demand, preserving selected roots for evaluation and subdivision.
+  `curve.parameter_from_span(index, local)` transports overlap and collapsed
+  component parameters through the same authored chart; it does not itself
+  certify incidence or membership. `restrict_source` preserves that chart for
+  authored curves and generated retained supports, including reversed traversal.
   `CurveParameter2::compare` compares parameters in a shared support chart
   without requiring scalar payloads and reports predicate certainty.
   Curve and open-path intersections consume retained rational-source cuts

@@ -1,0 +1,73 @@
+[package]
+name = "hyperbrep-io"
+version = "0.1.0"
+edition = "2024"
+description = "Exact, bounded CAD exchange for the Hyper geometry stack"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/timschmidt/hyperbrep"
+readme = "README.md"
+keywords = ["step", "cad", "geometry", "exact"]
+categories = ["parser-implementations", "graphics"]
+
+[dependencies]
+hyperbrep = { version = "0.2.0", path = "../hyperbrep", default-features = false }
+hypercurve = { version = "0.3.1", path = "../hypercurve", default-features = false }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
+hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
+num = { version = "0.4.3", features = ["num-bigint"] }
+
+[dev-dependencies]
+serde_json = "1.0.149"
+
+[[bench]]
+name = "part21"
+harness = false
+
+[[bench]]
+name = "faceted"
+harness = false
+
+[[bench]]
+name = "export"
+harness = false
+
+[[bench]]
+name = "advanced"
+harness = false
+
+[[bench]]
+name = "circles"
+harness = false
+
+[[bench]]
+name = "pcurves"
+harness = false
+
+[[bench]]
+name = "analytic_export"
+harness = false
+
+[[bench]]
+name = "prism_exchange"
+harness = false
+
+[[bench]]
+name = "torus_exchange"
+harness = false
+
+[[bench]]
+name = "cone_exchange"
+harness = false
+
+[[bench]]
+name = "region_exchange"
+harness = false
+
+[[bench]]
+name = "axial_exchange"
+harness = false
+
+[[bench]]
+name = "axial_shell_exchange"
+harness = false

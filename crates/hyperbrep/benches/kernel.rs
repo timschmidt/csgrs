@@ -14,31 +14,48 @@ fn point(x: i32, y: i32, z: i32) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), Real::from(z))
 }
 
-fn directed_start(model: &Model, edge_use: hyperbrep::EdgeUseId) -> hyperbrep::VertexId {
-    let edge_use = model.edge_use(edge_use).expect("validated edge use");
-    let edge = model.edge(edge_use.edge()).expect("validated edge");
+fn directed_start(edge_use: hyperbrep::EdgeUseRef<'_>) -> hyperbrep::VertexRef<'_> {
+    let edge = edge_use.edge();
     match edge_use.direction() {
         Direction::Forward => edge.start(),
         Direction::Reversed => edge.end(),
     }
 }
 
+fn only_solid(model: &Model) -> hyperbrep::SolidRef<'_> {
+    assert_eq!(model.counts().solids, 1, "fixture requires one solid");
+    model.solids().next().expect("one fixture solid")
+}
+
 fn main() {
+    println!(
+        "ownership_layout_bytes: Model={} VertexRef={} SolidRef={} VertexKey={} BodySet={}",
+        std::mem::size_of::<Model>(),
+        std::mem::size_of::<hyperbrep::VertexRef<'_>>(),
+        std::mem::size_of::<hyperbrep::SolidRef<'_>>(),
+        std::mem::size_of::<hyperbrep::VertexKey>(),
+        std::mem::size_of::<hyperbrep::BodySet>(),
+    );
     const ITERATIONS: usize = 1_000;
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..ITERATIONS {
-        let (model, solid) =
+        let model_selection =
             builder::cuboid(black_box(point(-2, -3, -5)), black_box(point(7, 11, 13)))
                 .expect("benchmark cuboid");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(&volume, &Real::from(2_268), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(solid, &point(0, 0, 0))
+            solid
+                .classify_point(&point(0, 0, 0))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -53,16 +70,21 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..ITERATIONS {
-        let (model, solid) = builder::cylinder(black_box(Real::from(2)), black_box(Real::from(3)))
+        let model_selection = builder::cylinder(black_box(Real::from(2)), black_box(Real::from(3)))
             .expect("benchmark cylinder");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(&volume, &(Real::from(12) * Real::pi()), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(solid, &point(0, 0, 1))
+            solid
+                .classify_point(&point(0, 0, 1))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -77,15 +99,20 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..ITERATIONS {
-        let (model, solid) = builder::sphere(black_box(Real::from(3))).expect("benchmark sphere");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model_selection = builder::sphere(black_box(Real::from(3))).expect("benchmark sphere");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(&volume, &(Real::from(36) * Real::pi()), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(solid, &point(0, 0, 0))
+            solid
+                .classify_point(&point(0, 0, 0))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -101,20 +128,25 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..FRUSTUM_ITERATIONS {
-        let (model, solid) = builder::cone_frustum(
+        let model_selection = builder::cone_frustum(
             black_box(Real::from(2)),
             black_box(Real::one()),
             black_box(Real::from(3)),
         )
         .expect("benchmark cone frustum");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(&volume, &(Real::from(7) * Real::pi()), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(solid, &point(0, 0, 1))
+            solid
+                .classify_point(&point(0, 0, 1))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -130,9 +162,14 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TORUS_ITERATIONS {
-        let (model, solid) = builder::torus(black_box(Real::from(3)), black_box(Real::one()))
+        let model_selection = builder::torus(black_box(Real::from(3)), black_box(Real::one()))
             .expect("benchmark torus");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(
                 &volume,
@@ -143,8 +180,8 @@ fn main() {
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(solid, &point(3, 0, 0))
+            solid
+                .classify_point(&point(3, 0, 0))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -166,15 +203,20 @@ fn main() {
             hyperbrep::Point2::new(Real::from(3), Real::from(2)),
             hyperbrep::Point2::new(Real::one(), Real::from(2)),
         ];
-        let (model, solid) = builder::revolve(black_box(&profile)).expect("benchmark revolution");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model_selection = builder::revolve(black_box(&profile)).expect("benchmark revolution");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(&volume, &(Real::from(16) * Real::pi()), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(solid, &point(2, 0, 1))
+            solid
+                .classify_point(&point(2, 0, 1))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -212,9 +254,14 @@ fn main() {
             ),
         ])
         .expect("benchmark profile contour");
-        let (model, solid) =
+        let model_selection =
             builder::revolve_contour(black_box(&profile)).expect("benchmark curved revolution");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(
                 &volume,
@@ -225,8 +272,8 @@ fn main() {
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(solid, &point(3, 0, 0))
+            solid
+                .classify_point(&point(3, 0, 0))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -248,7 +295,7 @@ fn main() {
             hyperbrep::Point2::new(Real::from(2), Real::from(3)),
             hyperbrep::Point2::new(Real::zero(), Real::from(3)),
         ];
-        let (model, solid) = builder::sweep(
+        let model_selection = builder::sweep(
             black_box(&profile),
             Point3::origin(),
             hyperbrep::Vector3::from_xyz(Real::from(2), Real::zero(), Real::zero()),
@@ -256,21 +303,23 @@ fn main() {
             hyperbrep::Vector3::from_xyz(Real::one(), Real::zero(), Real::from(4)),
         )
         .expect("benchmark linear sweep");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(&volume, &Real::from(144), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(
-                    solid,
-                    &Point3::new(
-                        (Real::from(5) / Real::from(2)).unwrap(),
-                        Real::from(3),
-                        Real::from(2),
-                    ),
-                )
+            solid
+                .classify_point(&Point3::new(
+                    (Real::from(5) / Real::from(2)).unwrap(),
+                    Real::from(3),
+                    Real::from(2),
+                ))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -297,28 +346,30 @@ fn main() {
             vec![Real::one(), Real::from(2), Real::from(3)],
         )
         .expect("benchmark curved sweep path");
-        let (model, solid) = builder::sweep_curve(
+        let model_selection = builder::sweep_curve(
             black_box(&profile),
             Vector3::x(),
             Vector3::y(),
             black_box(path),
         )
         .expect("benchmark curved sweep");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(&volume, &Real::from(16), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(
-                    solid,
-                    &Point3::new(
-                        (Real::from(3) / Real::from(2)).unwrap(),
-                        Real::one(),
-                        Real::from(2),
-                    ),
-                )
+            solid
+                .classify_point(&Point3::new(
+                    (Real::from(3) / Real::from(2)).unwrap(),
+                    Real::one(),
+                    Real::from(2),
+                ))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -352,23 +403,25 @@ fn main() {
             vec![Real::one(), Real::one()],
         )
         .expect("benchmark moving sweep frame");
-        let (model, solid) = builder::sweep_moving_frame(black_box(&profile), black_box(frame))
+        let model_selection = builder::sweep_moving_frame(black_box(&profile), black_box(frame))
             .expect("benchmark moving-frame sweep");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(&volume, &Real::from(28), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(
-                    solid,
-                    &Point3::new(
-                        (Real::from(3) / Real::from(2)).unwrap(),
-                        (Real::from(3) / Real::from(2)).unwrap(),
-                        (Real::from(3) / Real::from(2)).unwrap(),
-                    ),
-                )
+            solid
+                .classify_point(&Point3::new(
+                    (Real::from(3) / Real::from(2)).unwrap(),
+                    (Real::from(3) / Real::from(2)).unwrap(),
+                    (Real::from(3) / Real::from(2)).unwrap(),
+                ))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -404,15 +457,20 @@ fn main() {
                 z: Real::from(3),
             },
         ];
-        let (model, solid) = builder::loft(black_box(&sections)).expect("benchmark loft");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model_selection = builder::loft(black_box(&sections)).expect("benchmark loft");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(&volume, &Real::from(28), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(solid, &point(2, 2, 1))
+            solid
+                .classify_point(&point(2, 2, 1))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -447,9 +505,14 @@ fn main() {
                 z: Real::from(3),
             },
         ];
-        let (model, solid) =
+        let model_selection =
             builder::loft(black_box(&sections)).expect("benchmark convex corresponding loft");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(
                 &volume,
@@ -460,15 +523,12 @@ fn main() {
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(
-                    solid,
-                    &Point3::new(
-                        Real::one(),
-                        Real::one(),
-                        (Real::from(3) / Real::from(2)).unwrap(),
-                    ),
-                )
+            solid
+                .classify_point(&Point3::new(
+                    Real::one(),
+                    Real::one(),
+                    (Real::from(3) / Real::from(2)).unwrap(),
+                ))
                 .expect("benchmark classification")
                 == SolidPointLocation::Inside,
         );
@@ -513,9 +573,14 @@ fn main() {
                 z: Real::from(5),
             },
         ];
-        let (model, solid) =
+        let model_selection =
             builder::loft(black_box(&sections)).expect("benchmark multi-section loft");
-        let volume = model.solid_volume(solid).expect("benchmark volume");
+        let model = model_selection.model();
+        let solid = model_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let volume = only_solid(model).volume().expect("benchmark volume");
         assert_eq!(
             compare_reals(
                 &volume,
@@ -526,8 +591,8 @@ fn main() {
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
-            model
-                .classify_point(solid, &point(2, 2, 2))
+            solid
+                .classify_point(&point(2, 2, 2))
                 .expect("benchmark seam classification")
                 == SolidPointLocation::Inside,
         );
@@ -540,21 +605,24 @@ fn main() {
     );
 
     const EDIT_ITERATIONS: usize = 250;
-    let (edit_source, solid) =
+    let edit_source_selection =
         builder::cuboid(point(0, 0, 0), point(2, 2, 2)).expect("benchmark edit source");
-    let (edge, edge_record) = edit_source.edges().next().expect("cuboid has edges");
-    let edge_midpoint = ((edge_record.domain().start() + edge_record.domain().end())
+    let edit_source = edit_source_selection.model();
+    let edge = edit_source.edges().next().expect("cuboid has edges");
+    let edge_midpoint = ((edge.domain().start().try_real().expect("native trim")
+        + edge.domain().end().try_real().expect("native trim"))
         / Real::from(2))
     .expect("two is nonzero");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..EDIT_ITERATIONS {
-        let (edited, _) = edit_source
-            .split_edge(edge, black_box(edge_midpoint.clone()))
+        let edited_change = edge
+            .split(black_box(edge_midpoint.clone().into()))
             .expect("benchmark edge split");
+        let edited = edited_change.model();
         checksum += usize::from(
             compare_reals(
-                &edited.solid_volume(solid).expect("edited volume"),
+                &only_solid(edited).volume().expect("edited volume"),
                 &Real::from(8),
                 STRICT_PREDICATES,
             )
@@ -569,23 +637,21 @@ fn main() {
         elapsed / EDIT_ITERATIONS as u32,
     );
 
-    let (face, face_record) = edit_source.faces().nth(1).expect("cuboid has top cap");
-    let outer = face_record.outer().expect("top cap is trimmed");
-    let uses = edit_source
-        .wire(outer)
-        .expect("validated cap wire")
-        .edge_uses();
-    let start = directed_start(&edit_source, uses[0]);
-    let end = directed_start(&edit_source, uses[2]);
+    let face = edit_source.faces().nth(1).expect("cuboid has top cap");
+    let outer = face.outer().expect("top cap is trimmed");
+    let uses = outer.edge_uses().collect::<Vec<_>>();
+    let start = directed_start(uses[0]);
+    let end = directed_start(uses[2]);
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..EDIT_ITERATIONS {
-        let (edited, _) = edit_source
-            .split_face(face, black_box(start), black_box(end))
+        let edited_change = face
+            .split(black_box(start), black_box(end))
             .expect("benchmark face split");
+        let edited = edited_change.model();
         checksum += usize::from(
             compare_reals(
-                &edited.solid_volume(solid).expect("edited volume"),
+                &only_solid(edited).volume().expect("edited volume"),
                 &Real::from(8),
                 STRICT_PREDICATES,
             )
@@ -600,34 +666,31 @@ fn main() {
         elapsed / EDIT_ITERATIONS as u32,
     );
 
-    let edge_midpoint = |use_id| {
-        let edge = edit_source
-            .edge(
-                edit_source
-                    .edge_use(use_id)
-                    .expect("validated cap use")
-                    .edge(),
-            )
-            .expect("validated cap edge");
-        let parameter = ((edge.domain().start() + edge.domain().end()) / Real::from(2))
-            .expect("two is nonzero");
-        edit_source
-            .curve(edge.curve())
-            .expect("validated cap curve")
-            .point_at(&parameter)
+    let edge_midpoint = |use_id: hyperbrep::EdgeUseRef<'_>| {
+        let edge = use_id.edge();
+        let parameter = ((edge.domain().start().try_real().expect("native trim")
+            + edge.domain().end().try_real().expect("native trim"))
+            / Real::from(2))
+        .expect("two is nonzero");
+        edge.curve()
+            .point_at(&parameter.into())
             .expect("edge midpoint evaluates")
+            .try_coordinates()
+            .expect("authored midpoint has coordinates")
+            .clone()
     };
     let trace =
         Curve3::line(edge_midpoint(uses[0]), edge_midpoint(uses[2])).expect("planar split trace");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..EDIT_ITERATIONS {
-        let (edited, _) = edit_source
-            .split_face_by_curve(face, black_box(&trace))
+        let edited_change = face
+            .split_by_curve(black_box(&trace))
             .expect("benchmark curve-driven face split");
+        let edited = edited_change.model();
         checksum += usize::from(
             compare_reals(
-                &edited.solid_volume(solid).expect("edited volume"),
+                &only_solid(edited).volume().expect("edited volume"),
                 &Real::from(8),
                 STRICT_PREDICATES,
             )
@@ -642,26 +705,24 @@ fn main() {
         elapsed / EDIT_ITERATIONS as u32,
     );
 
-    let directed_point = |use_id, numerator: i32| {
-        let edge_use = edit_source
-            .edge_use(use_id)
-            .expect("validated cap edge use");
-        let edge = edit_source
-            .edge(edge_use.edge())
-            .expect("validated cap edge");
+    let directed_point = |use_id: hyperbrep::EdgeUseRef<'_>, numerator: i32| {
+        let edge_use = use_id;
+        let edge = edge_use.edge();
         let fraction =
             (Real::from(numerator) / Real::from(3)).expect("three is a nonzero denominator");
-        let span = edge.domain().end() - edge.domain().start();
+        let span = edge.domain().end().try_real().expect("native trim")
+            - edge.domain().start().try_real().expect("native trim");
         let offset = span * fraction;
         let parameter = match edge_use.direction() {
-            Direction::Forward => edge.domain().start() + offset,
-            Direction::Reversed => edge.domain().end() - offset,
+            Direction::Forward => edge.domain().start().try_real().expect("native trim") + offset,
+            Direction::Reversed => edge.domain().end().try_real().expect("native trim") - offset,
         };
-        edit_source
-            .curve(edge.curve())
-            .expect("validated cap curve")
-            .point_at(&parameter)
+        edge.curve()
+            .point_at(&parameter.into())
             .expect("directed edge fraction evaluates")
+            .try_coordinates()
+            .expect("authored edge fraction has coordinates")
+            .clone()
     };
     let trace_at = |numerator: i32| {
         Curve3::line(
@@ -674,13 +735,15 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..EDIT_ITERATIONS {
-        let (edited, partition) = edit_source
-            .split_face_by_curves(face, black_box(&traces))
+        let edited_change = face
+            .split_by_curves(black_box(&traces))
             .expect("benchmark deterministic multi-trace face partition");
-        checksum += partition.faces.len();
+        let edited = edited_change.model();
+        let partition = edited_change.details();
+        checksum += partition.faces().len();
         assert_eq!(
             compare_reals(
-                &edited.solid_volume(solid).expect("partitioned volume"),
+                &only_solid(edited).volume().expect("partitioned volume"),
                 &Real::from(8),
                 STRICT_PREDICATES
             )
@@ -696,10 +759,10 @@ fn main() {
     );
 
     let vertex_point = |use_id| {
-        edit_source
-            .vertex(directed_start(&edit_source, use_id))
-            .expect("validated cap vertex")
+        directed_start(use_id)
             .point()
+            .try_coordinates()
+            .expect("authored vertex")
             .clone()
     };
     let crossing_traces = [
@@ -709,13 +772,15 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..EDIT_ITERATIONS {
-        let (edited, partition) = edit_source
-            .split_face_by_curves(face, black_box(&crossing_traces))
+        let edited_change = face
+            .split_by_curves(black_box(&crossing_traces))
             .expect("benchmark exact crossing-trace arrangement");
-        checksum += partition.faces.len();
+        let edited = edited_change.model();
+        let partition = edited_change.details();
+        checksum += partition.faces().len();
         assert_eq!(
             compare_reals(
-                &edited.solid_volume(solid).expect("arranged volume"),
+                &only_solid(edited).volume().expect("arranged volume"),
                 &Real::from(8),
                 STRICT_PREDICATES
             )
@@ -730,16 +795,24 @@ fn main() {
         elapsed / EDIT_ITERATIONS as u32,
     );
 
-    let (tensor_cap_source, tensor_cap_solid) =
+    let tensor_cap_source_selection =
         builder::cuboid(point(0, 0, 0), point(1, 1, 1)).expect("tensor-cap benchmark source");
+    let tensor_cap_source = tensor_cap_source_selection.model();
     let tensor_cap_surface = tensor_cap_source
         .faces()
-        .find_map(|(_, face)| {
-            let surface = tensor_cap_source
-                .surface(face.surface())
-                .expect("validated benchmark surface");
+        .find_map(|face| {
+            let surface = face.surface();
             let origin = surface
-                .point_at(&hyperbrep::Point2::new(Real::zero(), Real::zero()))
+                .point_at(&{
+                    let uv = &hyperbrep::Point2::new(Real::zero(), Real::zero());
+                    hypercurve::Point2::new(uv.x.clone(), uv.y.clone()).into()
+                })
+                .map(|point| {
+                    point
+                        .try_coordinates()
+                        .expect("represented surface fixture")
+                        .clone()
+                })
                 .ok()?;
             (surface.kind() == hyperbrep::SurfaceKind::Plane
                 && compare_reals(&origin.z, &Real::one(), STRICT_PREDICATES).value()
@@ -764,9 +837,7 @@ fn main() {
         let edited = edit.commit().expect("benchmark tensor-cap certificate");
         checksum += usize::from(
             compare_reals(
-                &edited
-                    .solid_volume(tensor_cap_solid)
-                    .expect("tensor-cap volume"),
+                &only_solid(&edited).volume().expect("tensor-cap volume"),
                 &Real::one(),
                 STRICT_PREDICATES,
             )
@@ -795,9 +866,10 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
-        let (model, _) =
+        let model =
             builder::rational_bezier_patch(black_box(controls.clone()), black_box(weights.clone()))
-                .expect("benchmark rational Bézier patch");
+                .expect("benchmark rational Bézier patch")
+                .into_model();
         checksum += model.counts().faces;
         black_box(model);
     }
@@ -818,7 +890,7 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
-        let (model, _) = builder::nurbs_patch(
+        let model = builder::nurbs_patch(
             2,
             2,
             black_box(controls.clone()),
@@ -826,7 +898,8 @@ fn main() {
             black_box(knots.clone()),
             black_box(knots.clone()),
         )
-        .expect("benchmark NURBS patch");
+        .expect("benchmark NURBS patch")
+        .into_model();
         checksum += model.counts().faces;
         black_box(model);
     }
@@ -873,7 +946,7 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
-        let (model, face) = builder::planar_face(
+        let model_selection = builder::planar_face(
             black_box(&planar_outer),
             black_box(std::slice::from_ref(&planar_hole)),
             black_box(point(5, -2, 7)),
@@ -881,8 +954,10 @@ fn main() {
             black_box(Vector3::from_xyz(Real::one(), Real::from(3), Real::zero())),
         )
         .expect("benchmark exact planar face");
-        let area = model
-            .face_area(face)
+        let model = model_selection.model();
+        let face = model_selection.faces().next().expect("one selected entity");
+        let area = face
+            .area()
             .expect("benchmark exact planar spline region area");
         checksum += usize::from(
             compare_reals(&area, &Real::from(90), STRICT_PREDICATES).value()
@@ -899,15 +974,16 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
-        let (model, solid) = builder::extrude_path_region(
+        let model_selection = builder::extrude_path_region(
             black_box(&planar_outer),
             black_box(std::slice::from_ref(&planar_hole)),
             black_box(-Real::one()),
             black_box(Real::from(2)),
         )
         .expect("benchmark exact path extrusion");
-        let volume = model
-            .solid_volume(solid)
+        let model = model_selection.model();
+        let volume = only_solid(model)
+            .volume()
             .expect("benchmark exact path extrusion volume");
         checksum += usize::from(
             compare_reals(&volume, &Real::from(45), STRICT_PREDICATES).value()
@@ -938,15 +1014,17 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
-        let (model, face) = builder::extrusion_patch(
+        let model_selection = builder::extrusion_patch(
             black_box(extrusion_profile.clone()),
             black_box(Vector3::x()),
             black_box(-Real::one()),
             black_box(Real::from(2)),
         )
         .expect("benchmark exact extrusion patch");
-        let area = model
-            .face_area(face)
+        let model = model_selection.model();
+        let face = model_selection.faces().next().expect("one selected entity");
+        let area = face
+            .area()
             .expect("benchmark exact planar spline extrusion area");
         checksum += usize::from(
             compare_reals(&area, &Real::from(6), STRICT_PREDICATES).value()
@@ -983,7 +1061,7 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
-        let (model, face) = builder::revolution_patch(
+        let model_selection = builder::revolution_patch(
             black_box(revolution_profile.clone()),
             black_box(Point3::origin()),
             black_box(Vector3::z()),
@@ -991,8 +1069,10 @@ fn main() {
             black_box(quarter.clone()),
         )
         .expect("benchmark exact revolution patch");
-        let area = model
-            .face_area(face)
+        let model = model_selection.model();
+        let face = model_selection.faces().next().expect("one selected entity");
+        let area = face
+            .area()
             .expect("benchmark exact rational line-image revolution area");
         checksum += usize::from(
             compare_reals(&area, &expected_revolution_area, STRICT_PREDICATES).value()
@@ -1017,9 +1097,13 @@ fn main() {
         vec![Real::from(5), Real::from(10), Real::from(15)],
         vec![Real::from(7), Real::from(14), Real::from(21)],
     ];
-    let (affine_bezier, affine_bezier_face) =
+    let affine_bezier_selection =
         builder::rational_bezier_patch(affine_controls.clone(), separable_weights.clone())
             .expect("benchmark separably parameterized Bézier patch");
+    let affine_bezier_face = affine_bezier_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
     let native_knots = vec![
         Real::from(2),
         Real::from(2),
@@ -1028,7 +1112,7 @@ fn main() {
         Real::from(5),
         Real::from(5),
     ];
-    let (affine_nurbs, affine_nurbs_face) = builder::nurbs_patch(
+    let affine_nurbs_selection = builder::nurbs_patch(
         2,
         2,
         affine_controls,
@@ -1037,16 +1121,15 @@ fn main() {
         native_knots,
     )
     .expect("benchmark separably parameterized NURBS patch");
+    let affine_nurbs_face = affine_nurbs_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_AREA_ITERATIONS {
-        for (model, face) in [
-            (&affine_bezier, affine_bezier_face),
-            (&affine_nurbs, affine_nurbs_face),
-        ] {
-            let area = black_box(model)
-                .face_area(face)
-                .expect("benchmark exact tensor area");
+        for face in [affine_bezier_face, affine_nurbs_face] {
+            let area = black_box(face).area().expect("benchmark exact tensor area");
             checksum += usize::from(
                 compare_reals(&area, &Real::from(24), STRICT_PREDICATES).value()
                     == Some(std::cmp::Ordering::Equal),
@@ -1085,8 +1168,10 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
-        let (model, faces) = builder::tensor_patch_shell(black_box(stitched_specs.clone()))
+        let model_selection = builder::tensor_patch_shell(black_box(stitched_specs.clone()))
             .expect("benchmark stitched tensor shell");
+        let model = model_selection.model();
+        let faces = model_selection.faces();
         checksum += faces.len();
         black_box(model);
     }
@@ -1099,8 +1184,9 @@ fn main() {
     #[cfg(feature = "tessellation")]
     {
         const CHORDAL_ITERATIONS: usize = 100;
-        let (model, faces) = builder::tensor_patch_shell(stitched_specs.clone())
+        let model_selection = builder::tensor_patch_shell(stitched_specs.clone())
             .expect("benchmark chordal source shell");
+        let faces = model_selection.faces().collect::<Vec<_>>();
         let policy = hyperbrep::tessellation::ChordalApproximationPolicy::uniform(
             std::num::NonZeroUsize::new(4).expect("nonzero boundary subdivision"),
             3,
@@ -1109,8 +1195,7 @@ fn main() {
         let mut checksum = 0_usize;
         for _ in 0..CHORDAL_ITERATIONS {
             let artifact = hyperbrep::tessellation::approximate_face_chordally(
-                black_box(&model),
-                faces[0],
+                black_box(faces[0]),
                 black_box(policy),
             )
             .expect("benchmark explicit chordal face output");
@@ -1127,19 +1212,22 @@ fn main() {
             elapsed / CHORDAL_ITERATIONS as u32,
         );
 
-        let (analytic, analytic_solid) =
+        let analytic_selection =
             builder::cylinder(Real::from(2), Real::from(3)).expect("benchmark analytic source");
-        let face = *analytic
-            .solid(analytic_solid)
-            .and_then(|solid| analytic.shell(solid.outer()))
-            .and_then(|shell| shell.faces().first())
+        let analytic_solid = analytic_selection
+            .bodies()
+            .next()
+            .expect("one selected entity");
+        let face = analytic_solid
+            .outer()
+            .faces()
+            .next()
             .expect("benchmark analytic face");
         let started = Instant::now();
         let mut checksum = 0_usize;
         for _ in 0..CHORDAL_ITERATIONS {
             let artifact = hyperbrep::tessellation::approximate_face_chordally(
-                black_box(&analytic),
-                face,
+                black_box(face),
                 black_box(policy),
             )
             .expect("benchmark curved-trim analytic chordal output");
@@ -1204,6 +1292,7 @@ fn main() {
     )
     .expect("benchmark oblique plane");
     let midpoint = (Real::one() / Real::from(2)).expect("exact benchmark midpoint");
+    let midpoint_parameter = hyperbrep::Parameter::from_real(midpoint.clone());
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
@@ -1217,7 +1306,7 @@ fn main() {
             .second_pcurve()
             .materialize()
             .expect("benchmark exact rational graph pcurve");
-        black_box(curve.curve().point_at(black_box(&midpoint)))
+        black_box(curve.curve().point_at(black_box(&midpoint_parameter)))
             .expect("benchmark exact section evaluation");
         checksum += 1;
         black_box(pcurve);
@@ -1254,10 +1343,14 @@ fn main() {
         else {
             panic!("weighted bilinear tensor must retain one exact section");
         };
-        black_box(curve.curve().point_at(black_box(&midpoint)))
+        black_box(curve.curve().point_at(black_box(&midpoint_parameter)))
             .expect("benchmark exact rational-quartic section evaluation");
-        black_box(curve.first_pcurve().point_at(black_box(&midpoint)))
-            .expect("benchmark exact rational-quadratic graph evaluation");
+        black_box(
+            curve
+                .first_pcurve()
+                .point_at(black_box(&midpoint_parameter)),
+        )
+        .expect("benchmark exact rational-quadratic graph evaluation");
         checksum += 1;
         black_box(curve);
     }
@@ -1291,10 +1384,14 @@ fn main() {
         else {
             panic!("weighted NURBS bilinear tensor must retain one exact section");
         };
-        black_box(curve.curve().point_at(black_box(&midpoint)))
+        black_box(curve.curve().point_at(black_box(&midpoint_parameter)))
             .expect("benchmark exact native rational-quartic section evaluation");
-        black_box(curve.first_pcurve().point_at(black_box(&midpoint)))
-            .expect("benchmark exact native rational-quadratic graph evaluation");
+        black_box(
+            curve
+                .first_pcurve()
+                .point_at(black_box(&midpoint_parameter)),
+        )
+        .expect("benchmark exact native rational-quadratic graph evaluation");
         checksum += 1;
         black_box(curve);
     }
@@ -1337,10 +1434,14 @@ fn main() {
         };
         assert_eq!(branches.len(), 2);
         for branch in &branches {
-            black_box(branch.curve().point_at(black_box(&midpoint)))
+            black_box(branch.curve().point_at(black_box(&midpoint_parameter)))
                 .expect("benchmark bounded rational-quartic branch evaluation");
-            black_box(branch.first_pcurve().point_at(black_box(&midpoint)))
-                .expect("benchmark bounded rational-quadratic branch evaluation");
+            black_box(
+                branch
+                    .first_pcurve()
+                    .point_at(black_box(&midpoint_parameter)),
+            )
+            .expect("benchmark bounded rational-quadratic branch evaluation");
             checksum += 1;
         }
         black_box(branches);
@@ -1380,7 +1481,7 @@ fn main() {
         elapsed / SPLINE_ITERATIONS as u32,
     );
 
-    let (contained_patch, contained_face) = builder::rational_bezier_patch(
+    let contained_patch_selection = builder::rational_bezier_patch(
         vec![
             vec![point(0, 0, 0), point(2, 0, 0)],
             vec![point(0, 2, 0), point(2, 2, 0)],
@@ -1391,6 +1492,10 @@ fn main() {
         ],
     )
     .expect("benchmark contained tensor face");
+    let contained_face = contained_patch_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
     let partial_outline = CurvePath2::try_new(vec![
         Curve2::from(
             LineSeg2::try_new(
@@ -1422,7 +1527,7 @@ fn main() {
         ),
     ])
     .expect("benchmark partial plane outline");
-    let (partial_plane, partial_face) = builder::planar_face(
+    let partial_plane_selection = builder::planar_face(
         &partial_outline,
         &[],
         point(0, 0, 0),
@@ -1430,18 +1535,17 @@ fn main() {
         Vector3::from_xyz(Real::zero(), Real::one(), Real::zero()),
     )
     .expect("benchmark partial plane face");
+    let partial_face = partial_plane_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
-        let pair = boolean::intersect_faces(
-            black_box(&contained_patch),
-            contained_face,
-            black_box(&partial_plane),
-            partial_face,
-        )
-        .expect("benchmark exact contained-face trim")
-        .expect("benchmark overlapping contained faces");
-        let boolean::FacePairTrim::SurfaceRegion { region, .. } = pair.trim() else {
+        let pair = boolean::intersect_faces(black_box(contained_face), black_box(partial_face))
+            .expect("benchmark exact contained-face trim")
+            .expect("benchmark overlapping contained faces");
+        let boolean::FacePairTrim::SurfaceRegion { region, .. } = pair.details().trim() else {
             panic!("partial tensor/plane faces must retain an exact surface region");
         };
         checksum += usize::from(!region.is_empty());
@@ -1454,7 +1558,7 @@ fn main() {
     );
 
     const TENSOR_GRAPH_SPLIT_ITERATIONS: usize = 100;
-    let (graph_patch, graph_face) = builder::rational_bezier_patch(
+    let graph_patch_selection = builder::rational_bezier_patch(
         vec![
             vec![point(0, 0, 0), point(2, 0, 0)],
             vec![point(0, 2, 1), point(2, 2, 1)],
@@ -1467,14 +1571,11 @@ fn main() {
         ],
     )
     .expect("benchmark graph tensor patch");
-    let graph_surface = graph_patch
-        .surface(
-            graph_patch
-                .face(graph_face)
-                .expect("benchmark graph face")
-                .surface(),
-        )
-        .expect("benchmark graph surface");
+    let graph_face = graph_patch_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
+    let graph_surface = graph_face.surface();
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_GRAPH_SPLIT_ITERATIONS {
@@ -1484,9 +1585,10 @@ fn main() {
         else {
             panic!("graph tensor must retain one exact section");
         };
-        let (split, _) = graph_patch
-            .split_face_by_surface_curve(graph_face, &curve, SurfaceIntersectionOperand::First)
+        let split_change = graph_face
+            .split_by_surface_curve(&curve, SurfaceIntersectionOperand::First)
             .expect("benchmark non-isoparametric tensor face split");
+        let split = split_change.model();
         checksum += split.counts().faces;
         black_box(split);
     }
@@ -1496,7 +1598,7 @@ fn main() {
         elapsed / TENSOR_GRAPH_SPLIT_ITERATIONS as u32,
     );
 
-    let (nurbs_graph_patch, nurbs_graph_face) = builder::nurbs_patch(
+    let nurbs_graph_patch_selection = builder::nurbs_patch(
         1,
         2,
         vec![
@@ -1520,14 +1622,11 @@ fn main() {
         ],
     )
     .expect("benchmark NURBS graph tensor patch");
-    let nurbs_graph_surface = nurbs_graph_patch
-        .surface(
-            nurbs_graph_patch
-                .face(nurbs_graph_face)
-                .expect("benchmark NURBS graph face")
-                .surface(),
-        )
-        .expect("benchmark NURBS graph surface");
+    let nurbs_graph_face = nurbs_graph_patch_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
+    let nurbs_graph_surface = nurbs_graph_face.surface();
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_GRAPH_SPLIT_ITERATIONS {
@@ -1537,13 +1636,10 @@ fn main() {
         else {
             panic!("NURBS graph tensor must retain one exact section");
         };
-        let (split, _) = nurbs_graph_patch
-            .split_face_by_surface_curve(
-                nurbs_graph_face,
-                &curve,
-                SurfaceIntersectionOperand::First,
-            )
+        let split_change = nurbs_graph_face
+            .split_by_surface_curve(&curve, SurfaceIntersectionOperand::First)
             .expect("benchmark non-isoparametric NURBS tensor face split");
+        let split = split_change.model();
         checksum += split.counts().faces;
         black_box(split);
     }
@@ -1553,7 +1649,7 @@ fn main() {
         elapsed / TENSOR_GRAPH_SPLIT_ITERATIONS as u32,
     );
 
-    let (v_nurbs_graph_patch, v_nurbs_graph_face) = builder::nurbs_patch(
+    let v_nurbs_graph_patch_selection = builder::nurbs_patch(
         2,
         1,
         vec![
@@ -1575,14 +1671,11 @@ fn main() {
         vec![Real::from(7), Real::from(7), Real::from(11), Real::from(11)],
     )
     .expect("benchmark v-linear NURBS graph tensor patch");
-    let v_nurbs_graph_surface = v_nurbs_graph_patch
-        .surface(
-            v_nurbs_graph_patch
-                .face(v_nurbs_graph_face)
-                .expect("benchmark v-linear NURBS graph face")
-                .surface(),
-        )
-        .expect("benchmark v-linear NURBS graph surface");
+    let v_nurbs_graph_face = v_nurbs_graph_patch_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
+    let v_nurbs_graph_surface = v_nurbs_graph_face.surface();
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_GRAPH_SPLIT_ITERATIONS {
@@ -1592,13 +1685,10 @@ fn main() {
         else {
             panic!("v-linear NURBS graph tensor must retain one exact section");
         };
-        let (split, _) = v_nurbs_graph_patch
-            .split_face_by_surface_curve(
-                v_nurbs_graph_face,
-                &curve,
-                SurfaceIntersectionOperand::First,
-            )
+        let split_change = v_nurbs_graph_face
+            .split_by_surface_curve(&curve, SurfaceIntersectionOperand::First)
             .expect("benchmark non-isoparametric v-linear NURBS tensor face split");
+        let split = split_change.model();
         checksum += split.counts().faces;
         black_box(split);
     }
@@ -1608,7 +1698,7 @@ fn main() {
         elapsed / TENSOR_GRAPH_SPLIT_ITERATIONS as u32,
     );
 
-    let (multi_span_graph_patch, multi_span_graph_face) = builder::nurbs_patch(
+    let multi_span_graph_patch_selection = builder::nurbs_patch(
         1,
         2,
         vec![
@@ -1635,14 +1725,11 @@ fn main() {
         ],
     )
     .expect("benchmark multi-span NURBS graph tensor patch");
-    let multi_span_graph_surface = multi_span_graph_patch
-        .surface(
-            multi_span_graph_patch
-                .face(multi_span_graph_face)
-                .expect("benchmark multi-span NURBS graph face")
-                .surface(),
-        )
-        .expect("benchmark multi-span NURBS graph surface");
+    let multi_span_graph_face = multi_span_graph_patch_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
+    let multi_span_graph_surface = multi_span_graph_face.surface();
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_GRAPH_SPLIT_ITERATIONS {
@@ -1652,13 +1739,10 @@ fn main() {
         else {
             panic!("multi-span NURBS graph tensor must retain one exact section");
         };
-        let (split, _) = multi_span_graph_patch
-            .split_face_by_surface_curve(
-                multi_span_graph_face,
-                &curve,
-                SurfaceIntersectionOperand::First,
-            )
+        let split_change = multi_span_graph_face
+            .split_by_surface_curve(&curve, SurfaceIntersectionOperand::First)
             .expect("benchmark non-isoparametric multi-span NURBS tensor face split");
+        let split = split_change.model();
         checksum += split.counts().faces;
         black_box(split);
     }
@@ -1668,7 +1752,7 @@ fn main() {
         elapsed / TENSOR_GRAPH_SPLIT_ITERATIONS as u32,
     );
 
-    let (partial_graph_patch, partial_graph_face) = builder::nurbs_patch(
+    let partial_graph_patch_selection = builder::nurbs_patch(
         1,
         1,
         vec![
@@ -1691,14 +1775,11 @@ fn main() {
         ],
     )
     .expect("benchmark partially bounded NURBS graph tensor patch");
-    let partial_graph_surface = partial_graph_patch
-        .surface(
-            partial_graph_patch
-                .face(partial_graph_face)
-                .expect("benchmark partial NURBS graph face")
-                .surface(),
-        )
-        .expect("benchmark partial NURBS graph surface");
+    let partial_graph_face = partial_graph_patch_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
+    let partial_graph_surface = partial_graph_face.surface();
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_GRAPH_SPLIT_ITERATIONS {
@@ -1708,14 +1789,12 @@ fn main() {
         else {
             panic!("partial NURBS graph tensor must retain disjoint exact sections");
         };
-        let (partitioned, partition) = partial_graph_patch
-            .split_face_by_surface_curves(
-                partial_graph_face,
-                &curves,
-                SurfaceIntersectionOperand::First,
-            )
+        let partitioned_change = partial_graph_face
+            .split_by_surface_curves(&curves, SurfaceIntersectionOperand::First)
             .expect("benchmark partially bounded NURBS tensor face partition");
-        assert_eq!(partition.faces.len(), curves.len() + 1);
+        let partitioned = partitioned_change.model();
+        let partition = partitioned_change.details();
+        assert_eq!(partition.faces().len(), curves.len() + 1);
         checksum += curves.len() + partitioned.counts().faces;
         black_box(partitioned);
     }
@@ -1725,7 +1804,7 @@ fn main() {
         elapsed / TENSOR_GRAPH_SPLIT_ITERATIONS as u32,
     );
 
-    let (crossing_patch, crossing_face) = builder::rational_bezier_patch(
+    let crossing_patch_selection = builder::rational_bezier_patch(
         vec![
             vec![point(0, 0, 0), point(2, 0, 0)],
             vec![point(0, 2, 0), point(2, 2, 0)],
@@ -1733,14 +1812,11 @@ fn main() {
         vec![vec![Real::one(), Real::one()]; 2],
     )
     .expect("benchmark crossing tensor patch");
-    let crossing_surface = crossing_patch
-        .surface(
-            crossing_patch
-                .face(crossing_face)
-                .expect("benchmark crossing tensor face")
-                .surface(),
-        )
-        .expect("benchmark crossing tensor surface");
+    let crossing_face = crossing_patch_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
+    let crossing_surface = crossing_face.surface();
     let x_plane = Surface::plane(point(1, 0, 0), Vector3::y(), Vector3::z())
         .expect("benchmark x selection plane");
     let y_plane = Surface::plane(point(0, 1, 0), Vector3::x(), Vector3::z())
@@ -1761,14 +1837,15 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_GRAPH_SPLIT_ITERATIONS {
-        let (partitioned, partition) = crossing_patch
-            .split_face_by_surface_curves(
-                crossing_face,
+        let partitioned_change = crossing_face
+            .split_by_surface_curves(
                 black_box(&crossing_traces),
                 SurfaceIntersectionOperand::First,
             )
             .expect("benchmark exact crossing tensor partition");
-        assert_eq!(partition.faces.len(), 4);
+        let partitioned = partitioned_change.model();
+        let partition = partitioned_change.details();
+        assert_eq!(partition.faces().len(), 4);
         checksum += partitioned.counts().faces;
         black_box(partitioned);
     }
@@ -1779,7 +1856,7 @@ fn main() {
     );
 
     const TENSOR_SPLIT_ITERATIONS: usize = 100;
-    let (tensor_patch, tensor_face) = builder::rational_bezier_patch(
+    let tensor_patch_selection = builder::rational_bezier_patch(
         vec![
             vec![point(0, 0, 0), point(1, 2, 0), point(2, 0, 0)],
             vec![point(0, 0, 2), point(1, 2, 2), point(2, 0, 2)],
@@ -1790,40 +1867,34 @@ fn main() {
         ],
     )
     .expect("benchmark tensor patch");
-    let (tensor_cutter, tensor_cutter_solid) =
-        builder::cuboid(point(-1, -1, 1), point(3, 3, 2)).expect("benchmark tensor cutter");
-    let tensor_plane_face = *tensor_cutter
-        .shell(
-            tensor_cutter
-                .solid(tensor_cutter_solid)
-                .expect("benchmark cutter solid")
-                .outer(),
-        )
-        .expect("benchmark cutter shell")
+    let tensor_face = tensor_patch_selection
         .faces()
-        .first()
+        .next()
+        .expect("one selected entity");
+    let tensor_cutter_selection =
+        builder::cuboid(point(-1, -1, 1), point(3, 3, 2)).expect("benchmark tensor cutter");
+    let tensor_cutter_solid = tensor_cutter_selection
+        .bodies()
+        .next()
+        .expect("one selected entity");
+    let tensor_plane_face = tensor_cutter_solid
+        .outer()
+        .faces()
+        .next()
         .expect("benchmark cutter face");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_SPLIT_ITERATIONS {
-        let pair = boolean::intersect_faces(
-            black_box(&tensor_patch),
-            tensor_face,
-            black_box(&tensor_cutter),
-            tensor_plane_face,
-        )
-        .expect("benchmark tensor face intersection")
-        .expect("benchmark tensor faces meet");
-        let boolean::FacePairTrim::SurfaceCurveFragments(fragments) = pair.trim() else {
+        let pair = boolean::intersect_faces(black_box(tensor_face), black_box(tensor_plane_face))
+            .expect("benchmark tensor face intersection")
+            .expect("benchmark tensor faces meet");
+        let boolean::FacePairTrim::SurfaceCurveFragments(fragments) = pair.details().trim() else {
             panic!("benchmark tensor face trim must retain one native fragment");
         };
-        let (split, _) = tensor_patch
-            .split_face_by_surface_curve(
-                tensor_face,
-                &fragments[0],
-                SurfaceIntersectionOperand::First,
-            )
+        let split_change = tensor_face
+            .split_by_surface_curve(&fragments[0], SurfaceIntersectionOperand::First)
             .expect("benchmark tensor face transfer");
+        let split = split_change.model();
         checksum += split.counts().faces;
         black_box(split);
     }
@@ -1833,7 +1904,7 @@ fn main() {
         elapsed / TENSOR_SPLIT_ITERATIONS as u32,
     );
 
-    let (affine_tensor, affine_tensor_face) = builder::rational_bezier_patch(
+    let affine_tensor_selection = builder::rational_bezier_patch(
         vec![
             vec![point(0, 0, 1), point(1, 0, 1)],
             vec![point(0, 1, 1), point(1, 1, 1)],
@@ -1841,14 +1912,11 @@ fn main() {
         vec![vec![Real::one(), Real::one()]; 2],
     )
     .expect("benchmark affine tensor patch");
-    let affine_tensor_surface = affine_tensor
-        .surface(
-            affine_tensor
-                .face(affine_tensor_face)
-                .expect("benchmark affine tensor face")
-                .surface(),
-        )
-        .expect("benchmark affine tensor surface");
+    let affine_tensor_face = affine_tensor_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
+    let affine_tensor_surface = affine_tensor_face.surface();
     let half = (Real::one() / Real::from(2)).expect("two is nonzero");
     let boundary_support = Surface::plane(
         Point3::new(half.clone(), Real::zero(), Real::one()),
@@ -1866,14 +1934,15 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_SPLIT_ITERATIONS {
-        let (partitioned, partition) = affine_tensor
-            .split_face_by_surface_curves(
-                affine_tensor_face,
+        let partitioned_change = affine_tensor_face
+            .split_by_surface_curves(
                 black_box(&boundary_trace),
                 SurfaceIntersectionOperand::First,
             )
             .expect("benchmark affine tensor boundary partition");
-        assert_eq!(partition.faces.len(), 2);
+        let partitioned = partitioned_change.model();
+        let partition = partitioned_change.details();
+        assert_eq!(partition.faces().len(), 2);
         checksum += partitioned.counts().faces;
         black_box(partitioned);
     }
@@ -1910,7 +1979,7 @@ fn main() {
         ),
     ])
     .expect("benchmark curved region");
-    let (curved_plane, curved_plane_face) = builder::planar_face(
+    let curved_plane_selection = builder::planar_face(
         &curved_region,
         &[],
         point(0, 0, 1),
@@ -1918,18 +1987,22 @@ fn main() {
         Vector3::y(),
     )
     .expect("benchmark curved plane region");
+    let curved_plane_face = curved_plane_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_SPLIT_ITERATIONS {
-        let (partitioned, partition) = boolean::partition_contained_face_by_plane_region(
-            black_box(&affine_tensor),
-            affine_tensor_face,
-            black_box(&curved_plane),
-            curved_plane_face,
+        let partitioned_change = boolean::partition_contained_face_by_plane_region(
+            black_box(affine_tensor_face),
+            black_box(curved_plane_face),
         )
         .expect("benchmark exact curved contained-region partition")
         .expect("benchmark curved boundary is represented");
-        assert_eq!(partition.faces.len(), 2);
+        let partitioned = partitioned_change.model();
+        let partition = partitioned_change.details();
+        assert_eq!(partition.faces().len(), 2);
         checksum += partitioned.counts().faces;
         black_box(partitioned);
     }
@@ -1939,7 +2012,7 @@ fn main() {
         elapsed / TENSOR_SPLIT_ITERATIONS as u32,
     );
 
-    let (projective_tensor, projective_tensor_face) = builder::rational_bezier_patch(
+    let projective_tensor_selection = builder::rational_bezier_patch(
         vec![
             vec![point(0, 0, 1), point(1, 0, 1)],
             vec![point(0, 1, 1), point(1, 1, 1)],
@@ -1950,18 +2023,22 @@ fn main() {
         ],
     )
     .expect("benchmark projectively reparameterized affine tensor");
+    let projective_tensor_face = projective_tensor_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_SPLIT_ITERATIONS {
-        let (partitioned, partition) = boolean::partition_contained_face_by_plane_region(
-            black_box(&projective_tensor),
-            projective_tensor_face,
-            black_box(&curved_plane),
-            curved_plane_face,
+        let partitioned_change = boolean::partition_contained_face_by_plane_region(
+            black_box(projective_tensor_face),
+            black_box(curved_plane_face),
         )
         .expect("benchmark exact Möbius contained-region partition")
         .expect("benchmark Möbius inverse boundary is represented");
-        assert_eq!(partition.faces.len(), 2);
+        let partitioned = partitioned_change.model();
+        let partition = partitioned_change.details();
+        assert_eq!(partition.faces().len(), 2);
         checksum += partitioned.counts().faces;
         black_box(partitioned);
     }
@@ -1971,7 +2048,7 @@ fn main() {
         elapsed / TENSOR_SPLIT_ITERATIONS as u32,
     );
 
-    let (native_projective_tensor, native_projective_tensor_face) = builder::nurbs_patch(
+    let native_projective_tensor_selection = builder::nurbs_patch(
         1,
         1,
         vec![
@@ -1986,18 +2063,22 @@ fn main() {
         vec![Real::from(-3), Real::from(-3), Real::from(7), Real::from(7)],
     )
     .expect("benchmark native-domain projective NURBS tensor");
+    let native_projective_tensor_face = native_projective_tensor_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_SPLIT_ITERATIONS {
-        let (partitioned, partition) = boolean::partition_contained_face_by_plane_region(
-            black_box(&native_projective_tensor),
-            native_projective_tensor_face,
-            black_box(&curved_plane),
-            curved_plane_face,
+        let partitioned_change = boolean::partition_contained_face_by_plane_region(
+            black_box(native_projective_tensor_face),
+            black_box(curved_plane_face),
         )
         .expect("benchmark exact native-domain Möbius contained-region partition")
         .expect("benchmark native-domain Möbius inverse boundary is represented");
-        assert_eq!(partition.faces.len(), 2);
+        let partitioned = partitioned_change.model();
+        let partition = partitioned_change.details();
+        assert_eq!(partition.faces().len(), 2);
         checksum += partitioned.counts().faces;
         black_box(partitioned);
     }
@@ -2026,7 +2107,7 @@ fn main() {
         ),
     ])
     .expect("benchmark circular region");
-    let (circular_plane, circular_plane_face) = builder::planar_face(
+    let circular_plane_selection = builder::planar_face(
         &circular_region,
         &[],
         point(0, 0, 1),
@@ -2034,18 +2115,22 @@ fn main() {
         Vector3::y(),
     )
     .expect("benchmark circular plane region");
+    let circular_plane_face = circular_plane_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_SPLIT_ITERATIONS {
-        let (partitioned, partition) = boolean::partition_contained_face_by_plane_region(
-            black_box(&affine_tensor),
-            affine_tensor_face,
-            black_box(&circular_plane),
-            circular_plane_face,
+        let partitioned_change = boolean::partition_contained_face_by_plane_region(
+            black_box(affine_tensor_face),
+            black_box(circular_plane_face),
         )
         .expect("benchmark exact circular contained-region partition")
         .expect("benchmark circular boundary is represented");
-        assert_eq!(partition.faces.len(), 2);
+        let partitioned = partitioned_change.model();
+        let partition = partitioned_change.details();
+        assert_eq!(partition.faces().len(), 2);
         checksum += partitioned.counts().faces;
         black_box(partitioned);
     }
@@ -2092,7 +2177,7 @@ fn main() {
         .expect("benchmark exact NURBS half-loop"),
     ])
     .expect("benchmark mixed spline region");
-    let (mixed_plane, mixed_plane_face) = builder::planar_face(
+    let mixed_plane_selection = builder::planar_face(
         &mixed_region,
         &[],
         point(0, 0, 1),
@@ -2100,18 +2185,22 @@ fn main() {
         Vector3::y(),
     )
     .expect("benchmark mixed spline plane region");
+    let mixed_plane_face = mixed_plane_selection
+        .faces()
+        .next()
+        .expect("one selected entity");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_SPLIT_ITERATIONS {
-        let (partitioned, partition) = boolean::partition_contained_face_by_plane_region(
-            black_box(&affine_tensor),
-            affine_tensor_face,
-            black_box(&mixed_plane),
-            mixed_plane_face,
+        let partitioned_change = boolean::partition_contained_face_by_plane_region(
+            black_box(affine_tensor_face),
+            black_box(mixed_plane_face),
         )
         .expect("benchmark exact mixed spline contained-region partition")
         .expect("benchmark mixed spline boundary is represented");
-        assert_eq!(partition.faces.len(), 2);
+        let partitioned = partitioned_change.model();
+        let partition = partitioned_change.details();
+        assert_eq!(partition.faces().len(), 2);
         checksum += partitioned.counts().faces;
         black_box(partitioned);
     }
@@ -2133,22 +2222,20 @@ fn main() {
         hyperbrep::Point2::new(three_quarters.clone(), three_quarters.clone()),
         hyperbrep::Point2::new(quarter.clone(), three_quarters.clone()),
     ];
-    let (holed_source, holed_solid) =
+    let holed_source_selection =
         builder::extrude_region(&outer, &[hole], Real::zero(), Real::one())
             .expect("benchmark holed extrusion");
-    let holed_face = holed_source
-        .shell(
-            holed_source
-                .solid(holed_solid)
-                .expect("benchmark holed solid")
-                .outer(),
-        )
-        .expect("benchmark holed shell")
-        .faces()[1];
-    let holed_surface_id = holed_source
-        .face(holed_face)
-        .expect("benchmark holed cap")
-        .surface();
+    let holed_source = holed_source_selection.model();
+    let holed_solid = holed_source_selection
+        .bodies()
+        .next()
+        .expect("one selected entity");
+    let holed_face = holed_solid
+        .outer()
+        .faces()
+        .nth(1)
+        .expect("fixture face exists");
+    let holed_surface_id = holed_face.surface();
     let holed_tensor_surface = Surface::rational_bezier(
         vec![
             vec![point(0, 0, 1), point(1, 0, 1)],
@@ -2161,6 +2248,15 @@ fn main() {
     edit.replace_surface(holed_surface_id, holed_tensor_surface.clone())
         .expect("benchmark holed tensor replacement");
     let holed_tensor = edit.commit().expect("benchmark certified holed tensor");
+    let holed_face = only_solid(&holed_tensor)
+        .outer()
+        .faces()
+        .nth(1)
+        .expect("edited tensor cap");
+    assert_eq!(
+        holed_face.surface().kind(),
+        hyperbrep::SurfaceKind::RationalBezier
+    );
     let SurfaceSurfaceIntersection::Curve(holed_trace) = holed_tensor_surface
         .intersect_surface(&boundary_support)
         .expect("benchmark holed inverse tensor pcurve")
@@ -2178,18 +2274,16 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_SPLIT_ITERATIONS {
-        let (partitioned, partition) = holed_tensor
-            .split_face_by_surface_curves(
-                holed_face,
-                black_box(&holed_traces),
-                SurfaceIntersectionOperand::First,
-            )
+        let partitioned_change = holed_face
+            .split_by_surface_curves(black_box(&holed_traces), SurfaceIntersectionOperand::First)
             .expect("benchmark paired tensor bridges");
-        assert_eq!(partition.faces.len(), 2);
+        let partitioned = partitioned_change.model();
+        let partition = partitioned_change.details();
+        assert_eq!(partition.faces().len(), 2);
         assert_eq!(
             compare_reals(
-                &partitioned
-                    .solid_volume(holed_solid)
+                &only_solid(partitioned)
+                    .volume()
                     .expect("benchmark holed tensor volume"),
                 &(Real::from(3) / Real::from(4)).expect("four is nonzero"),
                 hyperbrep::STRICT_PREDICATES,
@@ -2224,22 +2318,20 @@ fn main() {
             hyperbrep::Point2::new(quarter.clone(), seven_eighths.clone()),
         ],
     ];
-    let (threaded_source, threaded_solid) =
+    let threaded_source_selection =
         builder::extrude_region(&outer, &threaded_holes, Real::zero(), Real::one())
             .expect("benchmark two-hole extrusion");
-    let threaded_face = threaded_source
-        .shell(
-            threaded_source
-                .solid(threaded_solid)
-                .expect("benchmark two-hole solid")
-                .outer(),
-        )
-        .expect("benchmark two-hole shell")
-        .faces()[1];
-    let threaded_surface_id = threaded_source
-        .face(threaded_face)
-        .expect("benchmark two-hole cap")
-        .surface();
+    let threaded_source = threaded_source_selection.model();
+    let threaded_solid = threaded_source_selection
+        .bodies()
+        .next()
+        .expect("one selected entity");
+    let threaded_face = threaded_solid
+        .outer()
+        .faces()
+        .nth(1)
+        .expect("fixture face exists");
+    let threaded_surface_id = threaded_face.surface();
     let threaded_tensor_surface = Surface::rational_bezier(
         vec![
             vec![point(0, 0, 1), point(1, 0, 1)],
@@ -2252,6 +2344,15 @@ fn main() {
     edit.replace_surface(threaded_surface_id, threaded_tensor_surface.clone())
         .expect("benchmark two-hole tensor replacement");
     let threaded_tensor = edit.commit().expect("benchmark certified two-hole tensor");
+    let threaded_face = only_solid(&threaded_tensor)
+        .outer()
+        .faces()
+        .nth(1)
+        .expect("edited tensor cap");
+    assert_eq!(
+        threaded_face.surface().kind(),
+        hyperbrep::SurfaceKind::RationalBezier
+    );
     let SurfaceSurfaceIntersection::Curve(threaded_trace) = threaded_tensor_surface
         .intersect_surface(&boundary_support)
         .expect("benchmark threaded inverse tensor pcurve")
@@ -2273,19 +2374,20 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..TENSOR_SPLIT_ITERATIONS {
-        let (partitioned, partition) = threaded_tensor
-            .split_face_by_surface_curves(
-                threaded_face,
+        let partitioned_change = threaded_face
+            .split_by_surface_curves(
                 black_box(&threaded_traces),
                 SurfaceIntersectionOperand::First,
             )
             .expect("benchmark multi-hole bridge cycle");
-        assert_eq!(partition.faces.len(), 2);
+        let partitioned = partitioned_change.model();
+        let partition = partitioned_change.details();
+        assert_eq!(partition.faces().len(), 2);
         assert_eq!(partitioned.counts().wires + 1, threaded_source_wires);
         assert_eq!(
             compare_reals(
-                &partitioned
-                    .solid_volume(threaded_solid)
+                &only_solid(partitioned)
+                    .volume()
                     .expect("benchmark threaded tensor volume"),
                 &(Real::from(3) / Real::from(4)).expect("four is nonzero"),
                 STRICT_PREDICATES,
@@ -2303,16 +2405,17 @@ fn main() {
     );
 
     const BOOLEAN_ITERATIONS: usize = 250;
-    let (first_box, first_box_solid) =
+    let first_box_selection =
         builder::cuboid(point(0, 0, 0), point(2, 2, 2)).expect("first graph cuboid");
-    let (second_box, second_box_solid) =
+    let first_box = first_box_selection.model();
+    let second_box_selection =
         builder::cuboid(point(3, 0, 0), point(4, 1, 1)).expect("second graph cuboid");
+    let second_box = second_box_selection.model();
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..BOOLEAN_ITERATIONS {
-        let graph =
-            boolean::intersection_graph(&first_box, first_box_solid, &second_box, second_box_solid)
-                .expect("benchmark disjoint intersection graph");
+        let graph = boolean::intersection_graph(only_solid(first_box), only_solid(second_box))
+            .expect("benchmark disjoint intersection graph");
         assert_eq!(graph.candidate_pairs(), 36);
         assert_eq!(graph.broad_phase_rejections(), 36);
         checksum += graph.broad_phase_rejections();
@@ -2324,21 +2427,16 @@ fn main() {
         elapsed / BOOLEAN_ITERATIONS as u32,
     );
 
-    let (overlapping_box, overlapping_box_solid) =
+    let overlapping_box_selection =
         builder::cuboid(point(1, 1, 0), point(3, 3, 2)).expect("overlapping graph cuboid");
+    let overlapping_box = overlapping_box_selection.model();
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..BOOLEAN_ITERATIONS {
-        let graph = boolean::intersection_graph(
-            &first_box,
-            first_box_solid,
-            &overlapping_box,
-            overlapping_box_solid,
-        )
-        .expect("benchmark intersecting planar graph");
+        let graph = boolean::intersection_graph(only_solid(first_box), only_solid(overlapping_box))
+            .expect("benchmark intersecting planar graph");
         checksum += graph
             .intersections()
-            .iter()
             .filter_map(|pair| match pair.trim() {
                 boolean::FacePairTrim::CurveFragments(fragments) => Some(fragments.len()),
                 boolean::FacePairTrim::SurfaceCurveFragments(fragments) => Some(fragments.len()),
@@ -2348,7 +2446,7 @@ fn main() {
                 } => Some(surface_curve_fragments.len()),
                 boolean::FacePairTrim::NotAvailable
                 | boolean::FacePairTrim::CompleteCarrier
-                | boolean::FacePairTrim::CoincidentPlanar { .. }
+                | boolean::FacePairTrim::CoincidentFaces { .. }
                 | boolean::FacePairTrim::SurfaceRegion { .. }
                 | boolean::FacePairTrim::PointContact(_)
                 | boolean::FacePairTrim::NoContact
@@ -2364,27 +2462,23 @@ fn main() {
         elapsed / BOOLEAN_ITERATIONS as u32,
     );
 
-    let graph = boolean::intersection_graph(
-        &first_box,
-        first_box_solid,
-        &overlapping_box,
-        overlapping_box_solid,
-    )
-    .expect("benchmark retained intersecting planar graph");
+    let graph = boolean::intersection_graph(only_solid(first_box), only_solid(overlapping_box))
+        .expect("benchmark retained intersecting planar graph");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..BOOLEAN_ITERATIONS {
-        let (partitioned, partitions) = black_box(&graph)
+        let result = black_box(&graph)
             .partition_first_planar_faces()
             .expect("benchmark retained-graph planar partitions");
-        checksum += partitions
-            .iter()
-            .map(|partition| partition.faces.len())
+        let partitioned = result.model();
+        checksum += result
+            .partitions()
+            .map(|partition| partition.faces().len())
             .sum::<usize>();
         assert_eq!(
             compare_reals(
-                &partitioned
-                    .solid_volume(first_box_solid)
+                &only_solid(partitioned)
+                    .volume()
                     .expect("partitioned graph volume"),
                 &Real::from(8),
                 STRICT_PREDICATES
@@ -2407,16 +2501,14 @@ fn main() {
             .select_first_faces(boolean::BooleanOperation::Intersection)
             .expect("benchmark exact planar fragment selection");
         checksum += selected
-            .faces
-            .iter()
-            .filter(|face| face.action == boolean::FaceSelectionAction::Keep)
+            .faces()
+            .filter(|face| face.action() == boolean::FaceSelectionAction::Keep)
             .count();
-        assert_eq!(selected.partitions.len(), 4);
+        assert_eq!(selected.partitioned().partitions().len(), 4);
         assert_eq!(
             compare_reals(
-                &selected
-                    .model
-                    .solid_volume(first_box_solid)
+                &only_solid(selected.partitioned().model())
+                    .volume()
                     .expect("selected model volume"),
                 &Real::from(8),
                 STRICT_PREDICATES
@@ -2436,14 +2528,16 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..PLANAR_STITCH_ITERATIONS {
-        let boolean::BooleanResult::Solid { model, solid } = black_box(&graph)
+        let result_bodies = black_box(&graph)
             .stitch_selected_faces(boolean::BooleanOperation::Union)
-            .expect("benchmark exact planar selected-face stitching")
-        else {
-            panic!("overlapping cuboid union must stitch one solid");
-        };
+            .expect("benchmark exact planar selected-face stitching");
+        assert!(
+            result_bodies.len() == 1,
+            "overlapping cuboid union must stitch one solid"
+        );
+        let model = result_bodies.model();
         checksum += model.counts().faces;
-        black_box(model.solid_volume(solid).expect("stitched planar volume"));
+        black_box(only_solid(model).volume().expect("stitched planar volume"));
         black_box(model);
     }
     let elapsed = started.elapsed();
@@ -2468,14 +2562,18 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SKEW_PLANAR_ITERATIONS {
-        let boolean::BooleanResult::Solid { model, solid } =
-            boolean::intersection(&first_box, first_box_solid, &skew_box, first_box_solid)
-                .expect("benchmark skew convex planar intersection")
-        else {
-            panic!("skew cuboid intersection must be one solid");
-        };
+        let result_bodies = boolean::intersection(
+            &hyperbrep::BodySet::from_solid(only_solid(first_box)),
+            &hyperbrep::BodySet::from_solid(only_solid(&skew_box)),
+        )
+        .expect("benchmark skew convex planar intersection");
+        assert!(
+            result_bodies.len() == 1,
+            "skew cuboid intersection must be one solid"
+        );
+        let model = result_bodies.model();
         checksum += model.counts().faces;
-        black_box(model.solid_volume(solid).expect("skew convex volume"));
+        black_box(only_solid(model).volume().expect("skew convex volume"));
         black_box(model);
     }
     let elapsed = started.elapsed();
@@ -2488,14 +2586,18 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SKEW_GENERAL_ITERATIONS {
-        let boolean::BooleanResult::Solid { model, solid } =
-            boolean::difference(&first_box, first_box_solid, &skew_box, first_box_solid)
-                .expect("benchmark skew general planar difference")
-        else {
-            panic!("generic skew cuboid difference must be one solid");
-        };
+        let result_bodies = boolean::difference(
+            &hyperbrep::BodySet::from_solid(only_solid(first_box)),
+            &hyperbrep::BodySet::from_solid(only_solid(&skew_box)),
+        )
+        .expect("benchmark skew general planar difference");
+        assert!(
+            result_bodies.len() == 1,
+            "generic skew cuboid difference must be one solid"
+        );
+        let model = result_bodies.model();
         checksum += model.counts().faces;
-        black_box(model.solid_volume(solid).expect("skew difference volume"));
+        black_box(only_solid(model).volume().expect("skew difference volume"));
         black_box(model);
     }
     let elapsed = started.elapsed();
@@ -2505,8 +2607,9 @@ fn main() {
     );
 
     const SKEW_VOID_ITERATIONS: usize = 10;
-    let (void_inner, void_inner_solid) =
+    let void_inner_selection =
         builder::cuboid(point(0, 0, 0), point(1, 1, 1)).expect("benchmark void cuboid");
+    let void_inner = void_inner_selection.model();
     let fraction = |numerator: i32| {
         (Real::from(numerator) / Real::from(25)).expect("nonzero benchmark denominator")
     };
@@ -2524,14 +2627,18 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SKEW_VOID_ITERATIONS {
-        let boolean::BooleanResult::Solid { model, solid } =
-            boolean::difference(&first_box, first_box_solid, &void_inner, void_inner_solid)
-                .expect("benchmark contained skew planar void difference")
-        else {
-            panic!("contained skew cuboid must produce one void solid");
-        };
+        let result_bodies = boolean::difference(
+            &hyperbrep::BodySet::from_solid(only_solid(first_box)),
+            &hyperbrep::BodySet::from_solid(only_solid(&void_inner)),
+        )
+        .expect("benchmark contained skew planar void difference");
+        assert!(
+            result_bodies.len() == 1,
+            "contained skew cuboid must produce one void solid"
+        );
+        let model = result_bodies.model();
         checksum += model.counts().faces;
-        black_box(model.solid_volume(solid).expect("skew void volume"));
+        black_box(only_solid(model).volume().expect("skew void volume"));
         black_box(model);
     }
     let elapsed = started.elapsed();
@@ -2540,19 +2647,16 @@ fn main() {
         elapsed / SKEW_VOID_ITERATIONS as u32,
     );
 
-    let (graph_sphere, graph_sphere_solid) = builder::sphere(Real::from(2)).expect("graph sphere");
-    let (conic_box, conic_box_solid) =
+    let graph_sphere_selection = builder::sphere(Real::from(2)).expect("graph sphere");
+    let graph_sphere = graph_sphere_selection.model();
+    let conic_box_selection =
         builder::cuboid(point(1, 1, -3), point(3, 3, 3)).expect("conic trim box");
+    let conic_box = conic_box_selection.model();
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..BOOLEAN_ITERATIONS {
-        let graph = boolean::intersection_graph(
-            &graph_sphere,
-            graph_sphere_solid,
-            &conic_box,
-            conic_box_solid,
-        )
-        .expect("benchmark planar conic trim graph");
+        let graph = boolean::intersection_graph(only_solid(graph_sphere), only_solid(conic_box))
+            .expect("benchmark planar conic trim graph");
         checksum += graph.trimmed_curve_fragments();
         black_box(graph);
     }
@@ -2562,8 +2666,10 @@ fn main() {
         elapsed / BOOLEAN_ITERATIONS as u32,
     );
 
-    let (first, first_solid) = builder::sphere(Real::one()).expect("first Boolean sphere");
-    let (second, second_solid) = builder::sphere(Real::one()).expect("second Boolean sphere");
+    let first_selection = builder::sphere(Real::one()).expect("first Boolean sphere");
+    let first = first_selection.model();
+    let second_selection = builder::sphere(Real::one()).expect("second Boolean sphere");
+    let second = second_selection.model();
     let second = second
         .transformed(&hyperbrep::Matrix4::affine_translation([
             Real::from(5),
@@ -2574,12 +2680,17 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..BOOLEAN_ITERATIONS {
-        let boolean::BooleanResult::Solids { model, solids } =
-            boolean::union(&first, first_solid, &second, second_solid)
-                .expect("benchmark disjoint Boolean")
-        else {
-            panic!("disjoint sphere union must retain two solids");
-        };
+        let result_bodies = boolean::union(
+            &hyperbrep::BodySet::from_solid(only_solid(first)),
+            &hyperbrep::BodySet::from_solid(only_solid(&second)),
+        )
+        .expect("benchmark disjoint Boolean");
+        assert!(
+            result_bodies.len() > 1,
+            "disjoint sphere union must retain two solids"
+        );
+        let model = result_bodies.model();
+        let solids = result_bodies.bodies();
         checksum += solids.len();
         black_box(model);
     }
@@ -2600,14 +2711,18 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPHERE_PAIR_ITERATIONS {
-        let boolean::BooleanResult::Solid { model, solid } =
-            boolean::intersection(&first, first_solid, &overlapping, first_solid)
-                .expect("benchmark partial sphere intersection")
-        else {
-            panic!("partial sphere intersection must retain one solid");
-        };
+        let result_bodies = boolean::intersection(
+            &hyperbrep::BodySet::from_solid(only_solid(first)),
+            &hyperbrep::BodySet::from_solid(only_solid(&overlapping)),
+        )
+        .expect("benchmark partial sphere intersection");
+        assert!(
+            result_bodies.len() == 1,
+            "partial sphere intersection must retain one solid"
+        );
+        let model = result_bodies.model();
         checksum += model.counts().faces;
-        black_box(model.solid_volume(solid).expect("sphere lens volume"));
+        black_box(only_solid(model).volume().expect("sphere lens volume"));
         black_box(model);
     }
     let elapsed = started.elapsed();
@@ -2627,30 +2742,36 @@ fn main() {
             [Real::from(offset), Real::zero(), Real::zero()],
         )
     };
-    let (interval, interval_solid) =
+    let interval_selection =
         builder::cylinder(Real::from(2), Real::from(4)).expect("interval cylinder");
+    let interval = interval_selection.model();
     let interval = interval
         .transformed(&orient(10))
         .expect("orient interval cylinder");
-    let (cut, cut_solid) =
+    let cut_selection =
         builder::cylinder(Real::from(2), Real::one()).expect("interval cut cylinder");
+    let cut = cut_selection.model();
     let cut = cut
         .transformed(&orient(11))
         .expect("orient interval cut cylinder");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..CYLINDER_INTERVAL_ITERATIONS {
-        let boolean::BooleanResult::Solids { model, solids } =
-            boolean::difference(&interval, interval_solid, &cut, cut_solid)
-                .expect("benchmark oriented cylinder interval difference")
-        else {
-            panic!("interior cylinder interval cut must return two solids");
-        };
+        let result_bodies = boolean::difference(
+            &hyperbrep::BodySet::from_solid(only_solid(&interval)),
+            &hyperbrep::BodySet::from_solid(only_solid(&cut)),
+        )
+        .expect("benchmark oriented cylinder interval difference");
+        assert!(
+            result_bodies.len() > 1,
+            "interior cylinder interval cut must return two solids"
+        );
+        let model = result_bodies.model();
+        let solids = result_bodies.bodies();
         checksum += solids.len();
         black_box(
             solids
-                .iter()
-                .map(|solid| model.solid_volume(*solid).expect("interval volume"))
+                .map(|solid| solid.volume().expect("interval volume"))
                 .fold(Real::zero(), |sum, volume| sum + volume),
         );
         black_box(model);
@@ -2662,11 +2783,12 @@ fn main() {
     );
 
     const FRUSTUM_INTERVAL_ITERATIONS: usize = 25;
-    let (frustum, frustum_solid) =
+    let frustum_selection =
         builder::cone_frustum(Real::from(4), Real::one(), Real::from(3)).expect("interval frustum");
-    let (frustum_cut, frustum_cut_solid) =
-        builder::cone_frustum(Real::from(3), Real::from(2), Real::one())
-            .expect("interval frustum cut");
+    let frustum = frustum_selection.model();
+    let frustum_cut_selection = builder::cone_frustum(Real::from(3), Real::from(2), Real::one())
+        .expect("interval frustum cut");
+    let frustum_cut = frustum_cut_selection.model();
     let frustum_cut = frustum_cut
         .transformed(&hyperbrep::Matrix4::affine_translation([
             Real::zero(),
@@ -2677,17 +2799,21 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..FRUSTUM_INTERVAL_ITERATIONS {
-        let boolean::BooleanResult::Solids { model, solids } =
-            boolean::difference(&frustum, frustum_solid, &frustum_cut, frustum_cut_solid)
-                .expect("benchmark cone-frustum interval difference")
-        else {
-            panic!("interior frustum interval cut must return two solids");
-        };
+        let result_bodies = boolean::difference(
+            &hyperbrep::BodySet::from_solid(only_solid(frustum)),
+            &hyperbrep::BodySet::from_solid(only_solid(&frustum_cut)),
+        )
+        .expect("benchmark cone-frustum interval difference");
+        assert!(
+            result_bodies.len() > 1,
+            "interior frustum interval cut must return two solids"
+        );
+        let model = result_bodies.model();
+        let solids = result_bodies.bodies();
         checksum += solids.len();
         black_box(
             solids
-                .iter()
-                .map(|solid| model.solid_volume(*solid).expect("frustum interval volume"))
+                .map(|solid| solid.volume().expect("frustum interval volume"))
                 .fold(Real::zero(), |sum, volume| sum + volume),
         );
         black_box(model);
@@ -2712,25 +2838,27 @@ fn main() {
     let axial_frustum = frustum
         .transformed(&axial_frame)
         .expect("rotate frustum parameter frame");
-    let (axial_cutter, axial_cutter_solid) =
+    let axial_cutter_selection =
         builder::cuboid(point(0, -5, -1), point(5, 5, 4)).expect("axial frustum cutter");
+    let axial_cutter = axial_cutter_selection.model();
     let expected_axial_volume =
         (Real::from(21) * Real::pi() / Real::from(2)).expect("half-frustum volume");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..AXIAL_FRUSTUM_ITERATIONS {
-        let boolean::BooleanResult::Solid { model, solid } = boolean::intersection(
-            black_box(&axial_frustum),
-            frustum_solid,
-            black_box(&axial_cutter),
-            axial_cutter_solid,
+        let result_bodies = boolean::intersection(
+            &hyperbrep::BodySet::from_solid(only_solid(black_box(&axial_frustum))),
+            &hyperbrep::BodySet::from_solid(only_solid(black_box(axial_cutter))),
         )
-        .expect("benchmark axial half-frustum intersection") else {
-            panic!("axial frustum cut must retain one solid");
-        };
+        .expect("benchmark axial half-frustum intersection");
+        assert!(
+            result_bodies.len() == 1,
+            "axial frustum cut must retain one solid"
+        );
+        let model = result_bodies.model();
         assert_eq!(
             compare_reals(
-                &model.solid_volume(solid).expect("half-frustum volume"),
+                &only_solid(model).volume().expect("half-frustum volume"),
                 &expected_axial_volume,
                 STRICT_PREDICATES
             )
@@ -2742,7 +2870,7 @@ fn main() {
             json.len() < 100_000,
             "mixed-shell planar pcurves must remain canonical"
         );
-        let decoded = RawModel::from_json(&json)
+        let decoded = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
             .expect("parse half-frustum JSON")
             .validate()
             .expect("revalidate half-frustum JSON");
@@ -2768,26 +2896,27 @@ fn main() {
         hyperbrep::Point2::new(Real::from(3), Real::from(2)),
         hyperbrep::Point2::new(Real::from(2), Real::from(2)),
     ];
-    let (first, first_solid) =
-        builder::revolve(&first_profile).expect("benchmark revolution outer");
-    let (second, second_solid) =
-        builder::revolve(&second_profile).expect("benchmark revolution cavity");
+    let first_selection = builder::revolve(&first_profile).expect("benchmark revolution outer");
+    let first = first_selection.model();
+    let second_selection = builder::revolve(&second_profile).expect("benchmark revolution cavity");
+    let second = second_selection.model();
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..REVOLUTION_BOOLEAN_ITERATIONS {
         let result = boolean::difference(
-            black_box(&first),
-            first_solid,
-            black_box(&second),
-            second_solid,
+            &hyperbrep::BodySet::from_solid(only_solid(black_box(first))),
+            &hyperbrep::BodySet::from_solid(only_solid(black_box(second))),
         )
         .expect("benchmark coaxial revolution difference");
-        let boolean::BooleanResult::Solid { model, solid } = result else {
-            panic!("contained revolution cut is connected");
-        };
+        let result_bodies = result;
+        assert!(
+            result_bodies.len() == 1,
+            "contained revolution cut is connected"
+        );
+        let model = result_bodies.model();
         checksum += usize::from(
             compare_reals(
-                &model.solid_volume(solid).expect("revolution cut volume"),
+                &only_solid(model).volume().expect("revolution cut volume"),
                 &(Real::from(91) * Real::pi()),
                 STRICT_PREDICATES,
             )

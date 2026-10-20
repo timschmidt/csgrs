@@ -2321,12 +2321,12 @@ impl Real {
         })
     }
 
-    fn retained_integer_pi_plus_or_minus_atan_argument(
+    fn retained_quarter_turn_plus_or_minus_atan_argument(
         &self,
-    ) -> Option<(Sign, Sign, Real)> {
-        let (sine_sign, cosine_sign, argument) = self
+    ) -> Option<(bool, Sign, Sign, Real)> {
+        let (swap, sine_sign, cosine_sign, argument) = self
             .fold_ref()
-            .integer_pi_plus_or_minus_atan_argument()?;
+            .quarter_turn_plus_or_minus_atan_argument()?;
         let argument = if let Some(rational) = argument.exact_rational() {
             Self::new(rational)
         } else if let Some((scale, radicand)) = argument.exact_pure_quadratic_surd() {
@@ -2337,7 +2337,7 @@ impl Real {
         } else {
             Self::irrational_from_computable(argument)
         };
-        Some((sine_sign, cosine_sign, argument))
+        Some((swap, sine_sign, cosine_sign, argument))
     }
 
     fn retained_signed_half_pi_minus_atan_argument(&self) -> Option<(Sign, Real)> {
@@ -2351,6 +2351,55 @@ impl Real {
             return Some((orientation, radical.scaled_by_rational(&scale)));
         }
         Some((orientation, Self::irrational_from_computable(argument)))
+    }
+
+    /// Recognizes half a principal atan whose sine/cosine are rational.
+    /// The principal branch puts the half angle in (-pi/4, pi/4), so its
+    /// cosine is the positive square root. Keep the result in a quadratic
+    /// field; other arguments retain the existing computable representation.
+    fn retained_half_atan_cos_and_double_sin(&self) -> Option<(Real, Real)> {
+        if !matches!(&self.class, Irrational)
+            || self.rational.compare_magnitude(&rationals::HALF) != std::cmp::Ordering::Equal
+        {
+            return None;
+        }
+        let double = self * Self::from(2);
+        let (orientation, argument) = if let Some(argument) = double.retained_atan_argument() {
+            (None, argument)
+        } else if let Some((sign, argument)) =
+            double.retained_signed_half_pi_minus_atan_argument()
+        {
+            (Some(sign), argument)
+        } else {
+            // A negative reciprocal atan may retain +atan(positive) - pi/2.
+            // Recognize its negation with the same principal-branch proof.
+            let (sign, argument) = (-double).retained_signed_half_pi_minus_atan_argument()?;
+            let sign = match sign {
+                Sign::Plus => Sign::Minus,
+                Sign::Minus => Sign::Plus,
+                Sign::NoSign => return None,
+            };
+            (Some(sign), -argument)
+        };
+        if argument.class != One {
+            return None;
+        }
+        let norm_squared = Self::one() + &argument * &argument;
+        if !norm_squared.rational.extract_square_will_succeed() {
+            return None;
+        }
+        // Eligibility needs an exact square test, not prime factorization.
+        // Keep the existing scalar square-extraction size domain.
+        let norm = Self::new(norm_squared.rational.perfect_nth_root(2)?);
+        let inverse_norm = (Self::one() / norm).ok()?;
+        let (sine, cosine) = match orientation {
+            None => (&argument * &inverse_norm, inverse_norm),
+            Some(Sign::Plus) => (inverse_norm.clone(), argument * inverse_norm),
+            Some(Sign::Minus) => (-&inverse_norm, -argument * inverse_norm),
+            Some(Sign::NoSign) => return None,
+        };
+        let half_cosine = ((Self::one() + cosine) * constants::half()).sqrt().ok()?;
+        Some((half_cosine, sine))
     }
 
     fn retained_acos_minus_half_pi_argument(&self) -> Option<(Sign, Real)> {
@@ -2388,14 +2437,22 @@ impl Real {
             return (&argument / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
         }
-        if let Some((sine_sign, _, argument)) =
-            self.retained_integer_pi_plus_or_minus_atan_argument()
+        if let Some((cosine, double_sine)) = self.retained_half_atan_cos_and_double_sin() {
+            crate::trace_dispatch!("real", "sin", "pythagorean-half-atan-rewrite");
+            // sin(theta/2) = sin(theta)/(2*cos(theta/2)); the denominator
+            // is positive on this branch, avoiding a subtractive radicand.
+            return (double_sine / (Self::from(2) * cosine))
+                .expect("a principal atan half angle has positive cosine");
+        }
+        if let Some((swap, sine_sign, _, argument)) =
+            self.retained_quarter_turn_plus_or_minus_atan_argument()
         {
-            crate::trace_dispatch!("real", "sin", "integer-pi-atan-rewrite");
+            crate::trace_dispatch!("real", "sin", "quarter-turn-atan-rewrite");
             let denominator = (Self::one() + &argument * &argument)
                 .sqrt()
                 .expect("one plus an exact atan argument square is positive");
-            let value = (&argument / denominator)
+            let numerator = if swap { Self::one() } else { argument };
+            let value = (numerator / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
             return if sine_sign == Sign::Minus {
                 -value
@@ -2486,14 +2543,19 @@ impl Real {
             return (Self::one() / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
         }
-        if let Some((_, cosine_sign, argument)) =
-            self.retained_integer_pi_plus_or_minus_atan_argument()
+        if let Some((cosine, _)) = self.retained_half_atan_cos_and_double_sin() {
+            crate::trace_dispatch!("real", "cos", "pythagorean-half-atan-rewrite");
+            return cosine;
+        }
+        if let Some((swap, _, cosine_sign, argument)) =
+            self.retained_quarter_turn_plus_or_minus_atan_argument()
         {
-            crate::trace_dispatch!("real", "cos", "integer-pi-atan-rewrite");
+            crate::trace_dispatch!("real", "cos", "quarter-turn-atan-rewrite");
             let denominator = (Self::one() + &argument * &argument)
                 .sqrt()
                 .expect("one plus an exact atan argument square is positive");
-            let value = (Self::one() / denominator)
+            let numerator = if swap { argument } else { Self::one() };
+            let value = (numerator / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
             return if cosine_sign == Sign::Minus {
                 -value
@@ -2736,11 +2798,11 @@ impl Real {
             crate::trace_dispatch!("real", "cot", "half-pi-minus-atan-rewrite");
             return Ok(argument);
         }
-        if let Some((sine_sign, cosine_sign, argument)) =
-            self.retained_integer_pi_plus_or_minus_atan_argument()
+        if let Some((swap, sine_sign, cosine_sign, argument)) =
+            self.retained_quarter_turn_plus_or_minus_atan_argument()
         {
-            crate::trace_dispatch!("real", "cot", "integer-pi-atan-rewrite");
-            let inverse = argument.inverse()?;
+            crate::trace_dispatch!("real", "cot", "quarter-turn-atan-rewrite");
+            let inverse = if swap { argument } else { argument.inverse()? };
             return Ok(if sine_sign == cosine_sign {
                 inverse
             } else {
@@ -3154,30 +3216,39 @@ impl Real {
     }
 
     /// The inverse tangent of this Real.
+    /// Exact rational and pure quadratic-surd arguments with magnitude greater
+    /// than one retain `sign(x)*pi/2 - atan(1/x)`, so complementary angles can
+    /// cancel symbolically in subsequent exact compositions.
     pub fn atan(self) -> Result<Real, Problem> {
         if let Some(exact) = self.atan_exact() {
             crate::trace_dispatch!("real", "atan", "exact-special-form");
             return Ok(exact);
         }
-        if let Sqrt(radicand) = &self.class
-            && self
-                .rational
-                .compare_magnitude_squared_times(radicand, &rationals::ONE)
-                == std::cmp::Ordering::Greater
-        {
-            // Give large quadratic surds one canonical inverse-tangent form.
-            // The reciprocal stays in the same exact quadratic field, and the
+        let reciprocal_form = match &self.class {
+            One => self.rational.abs_cmp_one_structural() == std::cmp::Ordering::Greater,
+            Sqrt(radicand) => {
+                self.rational
+                    .compare_magnitude_squared_times(radicand, &rationals::ONE)
+                    == std::cmp::Ordering::Greater
+            }
+            _ => false,
+        };
+        if reciprocal_form {
+            // Give these exact arguments one canonical inverse-tangent form.
+            // The reciprocal stays in the same rational/quadratic field, and the
             // reduced argument also matches the convergent kernel's preferred
             // representation. This keeps independently constructed angles
             // identical rather than asking predicates to rediscover
             // atan(x) = sign(x)*pi/2 - atan(1/x).
             let sign = self.rational.sign();
+            let rational = self.class == One;
             let reciprocal = (Self::one() / self)?.atan()?;
-            let half_pi = Self::pi_fraction(
-                if sign == Sign::Minus { -1 } else { 1 },
-                2,
-            );
-            crate::trace_dispatch!("real", "atan", "quadratic-surd-reciprocal-form");
+            let half_pi = Self::pi_fraction(if sign == Sign::Minus { -1 } else { 1 }, 2);
+            if rational {
+                crate::trace_dispatch!("real", "atan", "rational-reciprocal-form");
+            } else {
+                crate::trace_dispatch!("real", "atan", "quadratic-surd-reciprocal-form");
+            }
             return Ok(half_pi - reciprocal);
         }
 

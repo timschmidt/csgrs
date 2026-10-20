@@ -1,10 +1,18 @@
 //! Top-level exact curve carriers.
 
-#[path = "curve_evaluation.rs"]
-mod curve_evaluation;
+#[path = "polynomial_curve.rs"]
+mod polynomial_curve;
+pub use polynomial_curve::{PolynomialCurveBranch2, PolynomialCurveSet2};
 
+#[path = "curve_evaluation.rs"]
+pub(crate) mod curve_evaluation;
+
+#[path = "curve_injectivity.rs"]
+mod curve_injectivity;
 #[path = "curve_subdivision.rs"]
 mod curve_subdivision;
+#[path = "curve_vector.rs"]
+mod curve_vector;
 use crate::bezier_split::{CurveParameterDomain2, CurveParameterRange2};
 use curve_subdivision::CurveSourceRange2;
 pub(crate) use curve_subdivision::CurveSourceSpan2;
@@ -71,6 +79,8 @@ pub enum CurveFamily2 {
     Nurbs,
     /// Exact analytic parallel of a supported source curve.
     AnalyticParallel,
+    /// Selected branch of an implicit bivariate polynomial.
+    ImplicitPolynomial,
 }
 
 /// Exact derivative vector of a planar curve with respect to its public parameter.
@@ -84,7 +94,7 @@ pub struct CurveDerivative2 {
 /// Exact derivative vector of a curve at a general public parameter.
 ///
 /// Coordinates are either represented reals or selected algebraic values kept
-/// in the field of the parameter that produced them. Selected coordinates are
+/// in the joint parameter/fiber source that produced them. Selected coordinates are
 /// never rounded; [`Self::represented_coordinates`] is the narrower query for
 /// callers that need two represented reals.
 #[derive(Clone, Debug, PartialEq)]
@@ -95,6 +105,8 @@ pub struct CurveVector2 {
 #[derive(Clone, Debug, PartialEq)]
 enum CurveVectorData2 {
     Represented(CurveDerivative2),
+    /// Both coordinates are rational images of one joint selected source.
+    Joint(Box<CurvePoint2>),
     /// A selected-field vector times an exact positive chart factor.
     Selected {
         vector: crate::BezierAlgebraicTangentVector2,
@@ -119,6 +131,7 @@ impl CurveVector2 {
     pub fn represented_coordinates(&self) -> Option<(&Real, &Real)> {
         match &self.data {
             CurveVectorData2::Represented(derivative) => Some((derivative.dx(), derivative.dy())),
+            CurveVectorData2::Joint(point) => point.coordinates().map(|p| (p.x(), p.y())),
             CurveVectorData2::Selected { .. } | CurveVectorData2::SelectedParallel(_) => None,
         }
     }
@@ -139,6 +152,19 @@ impl CurveVector2 {
     ) -> ExactCurveResult<Classification<RealSign>> {
         let use_x = axis == crate::Axis2::X;
         match &self.data {
+            CurveVectorData2::Joint(point) => {
+                crate::bezier_offset::point_affine_form_order_to_real(
+                    point,
+                    &Real::from(i32::from(use_x)),
+                    &Real::from(i32::from(!use_x)),
+                    &Real::zero(),
+                    policy,
+                )
+                .map(|order| order.map(curve_vector::order_sign))
+                .map_err(|cause| {
+                    ExactCurveError::invalid_unattributed(CurveOperation2::Classification, cause)
+                })
+            }
             CurveVectorData2::Represented(derivative) => {
                 let value = if use_x {
                     derivative.dx()
@@ -380,6 +406,7 @@ enum CurveCarrier2 {
     Native(CurveGeometry2),
     Restricted(Box<CurveRestrictedCarrier2>),
     SourceRange(Box<CurveSourceRange2>),
+    Polynomial(Box<PolynomialCurveBranch2>),
 }
 
 #[derive(Debug)]
@@ -457,6 +484,15 @@ pub struct Curve2 {
 #[derive(Clone, Debug)]
 pub struct CurvePath2 {
     data: Arc<CurvePathData2>,
+}
+
+/// Orientation of a certified simple closed planar path.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveLoopOrientation2 {
+    /// The bounded interior lies on the traversal's left.
+    Counterclockwise,
+    /// The bounded interior lies on the traversal's right.
+    Clockwise,
 }
 
 #[derive(Debug)]
@@ -748,12 +784,17 @@ impl Curve2 {
     pub fn geometry(&self) -> Option<&CurveGeometry2> {
         match &self.data.carrier {
             CurveCarrier2::Native(geometry) => Some(geometry),
-            CurveCarrier2::Restricted(_) | CurveCarrier2::SourceRange(_) => None,
+            CurveCarrier2::Restricted(_)
+            | CurveCarrier2::SourceRange(_)
+            | CurveCarrier2::Polynomial(_) => None,
         }
     }
 
     /// Returns the curve family, including generated analytic parallels.
     pub fn family(&self) -> CurveFamily2 {
+        if self.polynomial_branch().is_some() {
+            return CurveFamily2::ImplicitPolynomial;
+        }
         if let Some(range) = self.source_range() {
             return range.source.family();
         }
@@ -795,6 +836,9 @@ impl Curve2 {
     }
 
     fn endpoint(&self, start: bool) -> CurvePoint2 {
+        if let Some(branch) = self.polynomial_branch() {
+            return branch.endpoint(start);
+        }
         if let Some(range) = self.source_range() {
             return range.endpoints[usize::from(start == range.reversed)].clone();
         }
@@ -833,7 +877,9 @@ impl Curve2 {
 
     pub(crate) fn retained_fragment(&self) -> Option<&crate::BezierSplitFragment2> {
         match &self.data.carrier {
-            CurveCarrier2::Native(_) | CurveCarrier2::SourceRange(_) => None,
+            CurveCarrier2::Native(_)
+            | CurveCarrier2::SourceRange(_)
+            | CurveCarrier2::Polynomial(_) => None,
             CurveCarrier2::Restricted(carrier) => Some(&carrier.fragment),
         }
     }
@@ -886,6 +932,9 @@ impl Curve2 {
 
     /// Returns the shared exact domain in the retained carrier's parameter chart.
     pub fn parameter_domain(&self) -> &crate::CurveParameterRange2 {
+        if let Some(branch) = self.polynomial_branch() {
+            return &branch.range;
+        }
         if let Some(range) = self.source_range() {
             return &range.range;
         }
@@ -899,6 +948,21 @@ impl Curve2 {
                 CurveParameter2::from(range.end().clone()),
             )
         })
+    }
+
+    /// Borrows the parameters of [`Self::start`] and [`Self::end`], in traversal order.
+    ///
+    /// A retained source restriction can traverse its increasing parameter
+    /// domain backwards. Reversing an authored native curve instead reflects
+    /// its parameterization, so its directed endpoints remain increasing.
+    /// This view preserves selected parameters and does not evaluate points.
+    pub fn parameter_endpoints(&self) -> (&CurveParameter2, &CurveParameter2) {
+        let domain = self.parameter_domain();
+        if self.source_traversal_is_reversed() {
+            (domain.end(), domain.start())
+        } else {
+            (domain.start(), domain.end())
+        }
     }
 
     pub(crate) fn native_parameter_domain(&self) -> ExactCurveResult<ParamRange> {
@@ -946,6 +1010,9 @@ impl Curve2 {
     }
 
     pub(crate) fn reversed_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
+        if let Some(branch) = self.polynomial_branch() {
+            return Ok(Self::from_polynomial_branch(branch.reversed()));
+        }
         if self.source_range().is_some() {
             return self
                 .reverse_source_range(policy)
@@ -1046,6 +1113,12 @@ impl Curve2 {
         transform: &Similarity2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        if let Some(branch) = self.polynomial_branch() {
+            return Ok(Self::from_polynomial_branch(
+                branch.transformed(transform, policy),
+            ));
+        }
+
         if self.source_range().is_some() {
             return self
                 .transform_source_range(transform, policy)
@@ -1736,7 +1809,10 @@ impl Curve2 {
     /// Evaluates exact derivatives through `max_order` in the public parameter.
     ///
     /// The returned vector stores orders `1..=max_order`. Native curves use
-    /// `[0, 1]`; spline curves use their authored knot domain.
+    /// `[0, 1]`; spline curves use their authored knot domain. Implicit graph
+    /// branches use their original first coordinate, including after traversal
+    /// reversal. A regular graph point requires nonzero `Fy`; singular-chart
+    /// limits remain typed blockers.
     pub fn derivatives_at(
         &self,
         parameter: &CurveParameter2,
@@ -1799,6 +1875,9 @@ impl Curve2 {
         side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveVector2>> {
+        if let Some(branch) = self.polynomial_branch() {
+            return branch.derivatives_at(parameter, max_order, policy);
+        }
         if self.source_range().is_some() {
             return self.source_range_derivatives_at(parameter, max_order, side, policy);
         }
@@ -2209,6 +2288,22 @@ impl PartialEq for Curve2 {
 }
 
 impl CurvePath2 {
+    /// Proves the orientation of a simple closed path without requiring an area integral.
+    ///
+    /// Complete carrier-pair replay must establish one unpinched closed chain
+    /// of injective spans without overlaps or internal splits. The existing
+    /// arrangement winding predicates then determine its bounded interior.
+    /// An open path is invalid; an unavailable simplicity or winding proof is
+    /// a typed blocker, never an orientation inferred from endpoint chords.
+    /// In particular, a single periodic carrier may require subdivision before
+    /// its individual spans have the required injectivity certificate.
+    pub fn simple_loop_orientation(&self) -> crate::ExactCurveResult<CurveLoopOrientation2> {
+        resolve_certified_operation(&crate::policy::principal_context(), |attempt| {
+            crate::curve_region_boolean::simple_loop_orientation(self, attempt)
+        })
+        .map(CurveOutcome::into_value)
+    }
+
     fn from_connected_curves(
         curves: Vec<Curve2>,
         connectivity_policy: Option<CurveContext>,
@@ -3358,6 +3453,9 @@ impl NativeBezierFragment2 {
 }
 
 fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
+    if let Some(branch) = curve.polynomial_branch() {
+        return branch.bounds();
+    }
     let policy = crate::CurveContext::STRICT;
     if let Some(spans) = curve.restricted_source_spans(&policy, CurveOperation2::NativeTopology)? {
         let mut bounds = decided_bounds(
@@ -7421,6 +7519,13 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        // Preserve the original identity as a newly certified proof case.
+        assert_eq!(
+            unresolved_zero.exact_rational_normal_form(),
+            Some(hyperreal::Rational::zero())
+        );
+        // A separate angle-addition identity retains the terminal-policy control.
+        let unresolved_zero = crate::test_support::terminally_unresolved_zero();
         let left_x = Real::from(4_i8);
         let right_x = left_x.clone() + unresolved_zero;
         let lower_left = Point2::new(Real::zero(), Real::zero());

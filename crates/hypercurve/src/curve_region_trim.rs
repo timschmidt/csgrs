@@ -500,10 +500,39 @@ impl<'a> PreparedTrimSource<'a> {
                 start: ordered_start,
                 end: ordered_end,
             });
-            for (source_parameter, boundary_parameter) in [
-                (&source_start, overlap.overlap().second_range().start()),
-                (&source_end, overlap.overlap().second_range().end()),
+            for (source_parameter, boundary_parameter, included) in [
+                (
+                    &source_start,
+                    overlap.overlap().second_range().start(),
+                    overlap.overlap().includes_start(),
+                ),
+                (
+                    &source_end,
+                    overlap.overlap().second_range().end(),
+                    overlap.overlap().includes_end(),
+                ),
             ] {
+                let boundary_curve = overlap.second().curve();
+                let is_endpoint = |curve: &Curve2, parameter: &CurveParameter2| {
+                    let (start, end) = curve.parameter_endpoints();
+                    parameter == start || parameter == end
+                };
+                // Paired overlap ranges already certify the same point on
+                // both carriers. Keep an owned endpoint image when available;
+                // re-evaluating an interior rational parameter can discard it
+                // and expand coordinates that later queries cannot recognize.
+                // Preserve source endpoint priority and excluded-end behavior.
+                let (point_curve, point_parameter) = if included
+                    && !is_endpoint(&source_curve, source_parameter)
+                    && is_endpoint(boundary_curve, boundary_parameter)
+                {
+                    (boundary_curve, boundary_parameter)
+                } else {
+                    (&source_curve, source_parameter)
+                };
+                let point = point_curve
+                    .point_at_with_policy(point_parameter, policy)?
+                    .into_value();
                 split_parameters.push((span_index, source_parameter.clone()));
                 boundary_contacts.push(PendingBoundaryContact {
                     span_index,
@@ -513,11 +542,7 @@ impl<'a> PreparedTrimSource<'a> {
                         contour_index,
                         carrier: overlap.second().clone(),
                         boundary_parameter: boundary_parameter.clone(),
-                        point: Some(
-                            source_curve
-                                .point_at_with_policy(source_parameter, policy)?
-                                .into_value(),
-                        ),
+                        point: Some(point),
                     },
                 });
             }

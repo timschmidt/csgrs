@@ -22,8 +22,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         line(4, 3, 0, 3)?,
         line(0, 3, 0, 0)?,
     ])?;
-    let (model, solid) = builder::extrude_path(&boundary, Real::zero(), Real::from(2))?;
-    let volume = model.solid_volume(solid)?;
+    let bodies = builder::extrude_path(&boundary, Real::zero(), Real::from(2))?;
+    let model = bodies.model();
+    let volume = bodies.bodies().next().expect("one extrusion").volume()?;
     println!("faces: {}, exact volume: {volume}", model.counts().faces);
     assert_eq!(volume, Real::from(24));
     Ok(())
