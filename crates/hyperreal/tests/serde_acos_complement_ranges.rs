@@ -54,15 +54,35 @@ fn acos_complement_preserves_adjacent_pi_cache_enclosures() {
             serde_json::from_value(collection.clone()).unwrap();
         let mut cbor_collection: Vec<Computable> =
             ciborium::de::from_reader(bytes(&collection).as_slice()).unwrap();
+        // Direct construction recognizes acos(-1/2) as exactly 2*pi/3; the
+        // wire's deferred complement node still deserializes as itself. Both
+        // must keep the same enclosures.
+        let direct = if magnitude == Rational::fraction(1, 2).unwrap() {
+            node(
+                "Multiply",
+                json!([
+                    node("Ratio", json!(Rational::fraction(2, 3).unwrap())),
+                    node("Constant", json!("Pi")),
+                ]),
+            )
+        } else {
+            graph.clone()
+        };
         let values = [
-            Computable::rational(-magnitude.clone()).acos(),
-            serde_json::from_value::<Computable>(graph.clone()).unwrap(),
-            ciborium::de::from_reader(bytes(&graph).as_slice()).unwrap(),
-            json_collection.pop().unwrap(),
-            cbor_collection.pop().unwrap(),
+            (Computable::rational(-magnitude.clone()).acos(), &direct),
+            (
+                serde_json::from_value::<Computable>(graph.clone()).unwrap(),
+                &graph,
+            ),
+            (
+                ciborium::de::from_reader(bytes(&graph).as_slice()).unwrap(),
+                &graph,
+            ),
+            (json_collection.pop().unwrap(), &graph),
+            (cbor_collection.pop().unwrap(), &graph),
         ];
-        for value in values {
-            assert_eq!(serde_json::to_value(&value).unwrap(), graph);
+        for (value, expected) in values {
+            assert_eq!(&serde_json::to_value(&value).unwrap(), expected);
             for p in [-1, -64, -1] {
                 let unit: Rational = if p == -1 {
                     Rational::fraction(1, 2).unwrap()
@@ -76,7 +96,7 @@ fn acos_complement_preserves_adjacent_pi_cache_enclosures() {
                     assert!(&center - &unit > lower && &center + &unit < upper);
                 }
             }
-            assert_eq!(serde_json::to_value(value).unwrap(), graph);
+            assert_eq!(&serde_json::to_value(value).unwrap(), expected);
         }
         for scale in [0, 1, -3] {
             let wire =
