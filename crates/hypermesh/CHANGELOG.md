@@ -50,6 +50,9 @@ grammar belong to adapters such as csgrs.
 - `f32` and `f64` GPU buffers are explicit approximate export boundaries.
   Exact render-row export reports degenerate triangles and undecided normals
   as distinct `GpuMeshError` variants and publishes no partial buffer.
+- Strict convex hulls and Booleans of sampled spheres complete: their
+  coplanar quads, collinear plane crossings and coincidental coplanarities are
+  exact zeros that hyperreal's cyclotomic zero proof decides.
 - There are no default features; `dispatch-trace` enables correlated
   Hyperreal, Hyperlattice, and Hyperlimit dispatch tracing.
 - Requires Rust 1.95.0 or later.

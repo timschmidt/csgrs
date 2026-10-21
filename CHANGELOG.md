@@ -134,6 +134,12 @@ migrations, including changed serialized output, are listed in
   a `GeometryError` with a `code`, as `extrude` does, instead of a bare
   message string.
 
+- Strict Booleans and convex hulls of sampled spheres complete. The
+  `boolean_operations` and `convex_hull` examples stopped under `STRICT` on
+  exact zeros of the 32 x 16 sphere's trigonometric coordinates; hyperreal now
+  proves them. Odd sample counts such as 17 x 9 and further operations on the
+  results also decide.
+
 ### Removed
 
 - Rapier and Parry integration: `Mesh::to_rapier_shape`, `to_trimesh` and

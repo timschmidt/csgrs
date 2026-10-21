@@ -160,29 +160,28 @@ An external review of the merged stack added these targets. Each was
 reproduced on the merge revision. They sit inside the order above: the first
 is ordinary strict-mode completion, the second milestone.
 
-15. **Strict completion of the shipped examples** - Strict mode refuses the
-    repository's own examples. `boolean_operations` and `convex_hull` stop on
-    the 32×16 sampled sphere, whose trigonometric coordinates make coplanar
-    quads unprovable zeros. `extrude` stopped because `try_sweep` reported
-    an undecided frame-transport rotation as `InvalidArguments`, which also
-    violated P6. The rotation was valid: its axis only lacked a structural
-    nonzero certificate. `Matrix4::rotation_between_unit_vectors` now builds
-    that minimal rotation algebraically, without normalizing the axis. The
-    sweep decides path reversal and the initial axis alignment under the
-    policy. It reports `PredicateUndecided` naming the sweep step, or the
-    scalar cause, instead of `InvalidArguments`. `extrude` completes under
-    `STRICT`, and a sweep with rational frames composes with a strict
-    Boolean ([`tests/sweep_frames.rs`](tests/sweep_frames.rs)). A one-off
-    comparison found identical exact rows and certainty for nine previously
-    supported fixture paths. Still open: the exact frames of a general
-    sampled path lie in a tower of nested square roots. A strict Boolean on
-    such a tube meets an exact zero it cannot prove; for the example's helix
-    it ends `PredicateUndecided` after 37 to 48 s in release builds. CI runs
-    every example through `scripts/run-examples.sh`; `boolean_operations`
-    and `convex_hull` remain tracked known failures. The generator-side coplanarity
-    certificate in [`crates/hypermesh/FUTURE_WORK.md`](crates/hypermesh/FUTURE_WORK.md#convex-hulls-of-sampled-spheres)
-    is the highest-value fix in the stack. Acceptance: the known-failure list
-    is empty, and the sweep returns its true typed outcome.
+15. **Strict completion of the shipped examples** - Strict mode refused the
+    repository's own examples; all of them now complete under `STRICT`, and
+    `scripts/run-examples.sh` has no known failures. `boolean_operations` and
+    `convex_hull` stopped on exact zeros of the 32×16 sampled sphere:
+    collinear plane crossings of one quad, and four coplanar vertices that are
+    not a quad (`cot(pi/16) = tan(7 pi/16)`). `hyperreal`'s cyclotomic zero
+    proof now decides them;
+    [`crates/hypermesh/FUTURE_WORK.md`](crates/hypermesh/FUTURE_WORK.md#convex-hulls-of-sampled-spheres)
+    records the causes, the remaining cost and the hull row instability.
+    `extrude` stopped because `try_sweep` reported an undecided frame-transport
+    rotation as `InvalidArguments`, which also violated P6. The rotation was
+    valid: its axis only lacked a structural nonzero certificate.
+    `Matrix4::rotation_between_unit_vectors` now builds that minimal rotation
+    algebraically, without normalizing the axis. The sweep decides path
+    reversal and the initial axis alignment under the policy. It reports
+    `PredicateUndecided` naming the sweep step, or the scalar cause, instead
+    of `InvalidArguments`. A sweep with rational frames composes with a strict
+    Boolean ([`tests/sweep_frames.rs`](tests/sweep_frames.rs)). Still open:
+    the exact frames of a general sampled path lie in a tower of nested square
+    roots. A strict Boolean on such a tube meets an exact zero it cannot prove;
+    for the example's helix it ends `PredicateUndecided` after 37 to 48 s in
+    release builds.
 16. **Evidence retention** - Resolved in tree. Generated evidence (14 GB in
     552,370 files) moved to the evidence repository with per-record digests
     ([`docs/evidence-archive.md`](docs/evidence-archive.md)) and was removed
