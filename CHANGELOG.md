@@ -122,6 +122,17 @@ migrations, including changed serialized output, are listed in
 - Planar transforms by a `Matrix4` no longer silently drop the out-of-plane
   and homogeneous components. The homogeneous weight is divided out, and
   perspective or out-of-plane images return `UnsupportedTransform`.
+- `curve::try_sweep` completes under `STRICT` along non-planar sampled paths,
+  such as the helix of the `extrude` example, which formerly failed with
+  `InvalidArguments`. A sweep reports its true outcome: an undecided
+  predicate returns `ValidationError::PredicateUndecided` naming the sweep
+  step, another scalar failure returns `ValidationError::Scalar`, and only an
+  invalid path returns `InvalidArguments`. Paths that already succeeded keep
+  their exact output. Coordinates along a general path are nested square
+  roots, so later strict operations on them can be undecidable.
+- In WebAssembly, `CurveRegionJs.sweep`, `revolve` and `extrudeTwisted` throw
+  a `GeometryError` with a `code`, as `extrude` does, instead of a bare
+  message string.
 
 ### Removed
 

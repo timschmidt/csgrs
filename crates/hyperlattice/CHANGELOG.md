@@ -64,6 +64,10 @@
   `Matrix4::transform_point3_batch` and `Matrix4::transform_direction3_batch`.
 - A `serde` feature that derives `Serialize` and `Deserialize` for `Point2`
   and enables `hyperreal/serde`.
+- `Matrix4::rotation_between_unit_vectors` builds the minimal rotation
+  between caller-certified unit vectors. Antipodal inputs return
+  `Problem::DivideByZero`; a divisor that cannot be certified nonzero
+  returns `Problem::UnknownZero`.
 
 ### Changed
 
@@ -79,5 +83,12 @@
 - Development moved to the
   [csgrs repository](https://github.com/timschmidt/csgrs), which the
   `repository` field now names.
+
+### Fixed
+
+- `Matrix4::rotation_between_vectors` no longer returns `Problem::UnknownZero`
+  for non-parallel vectors whose cross product has no structural nonzero
+  certificate. It builds the same rotation as `c I + [k]x + k kᵀ / (1 + c)`
+  instead. Inputs that already succeeded return the same matrix.
 
 For 0.6.0 and earlier, see [crates.io](https://crates.io/crates/hyperlattice/versions).

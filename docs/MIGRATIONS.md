@@ -52,9 +52,11 @@ remain an open migration target.
   reports `PredicateUndecided` with the sweep step as `predicate`, for
   example `"sweep path reversal"` or `"sweep frame transport"`. Other scalar
   failures report `ValidationError::Scalar` with their cause. Invalid paths
-  still report `InvalidArguments`. Paths whose transport axis lacked a
-  structural nonzero certificate, such as non-planar sampled paths, now
-  succeed. Previously supported paths keep their exact rows.
+  still report `InvalidArguments`. Code that treated `InvalidArguments` as
+  every sweep failure should match `ValidationError::kind()` instead. Paths
+  whose transport axis lacked a structural nonzero certificate, such as
+  non-planar sampled paths, now succeed. Previously supported paths keep
+  their exact rows.
 - **WASM curve meshes.** `CurveRegionJs.sweep`, `revolve` and
   `extrudeTwisted` throw a `GeometryError` with a `code`, as `extrude`
   does, instead of a bare message string for native failures.
