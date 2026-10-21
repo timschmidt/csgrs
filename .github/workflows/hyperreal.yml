@@ -80,8 +80,16 @@ jobs:
       - name: Run tests
         run: cargo test --locked --all-targets
 
+      # serde, simple, dispatch-trace and the cached approximations have
+      # their own tests.
+      - name: Run tests with all features
+        run: cargo test --locked --all-targets --all-features
+
       - name: Run Clippy
         run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: Run Clippy with all features
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings
 
       - name: Check fuzz targets
         run: cargo check --locked --manifest-path fuzz/Cargo.toml --bins
