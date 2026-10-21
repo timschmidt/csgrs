@@ -3,9 +3,11 @@
 //! Every chain runs under `GeometryContext::STRICT` through the public API.
 //! Each step must reach its stated P39 outcome. Box chains are compared with
 //! an independent exact volume oracle, and every completed step is checked
-//! for certified closed-manifold topology. Exact triangle rows and sizes pin
-//! the measured representation growth, including the gaps documented in
-//! `docs/successive-operations.md`; a fix that removes a gap updates them.
+//! for certified closed-manifold topology. Where the represented set fixes
+//! the fewest vertices and triangles a triangulation needs, the chains assert
+//! exactly that size; elsewhere exact triangle rows and sizes pin the
+//! measured representation growth documented in
+//! `docs/successive-operations.md`.
 //! Long chains are ignored by default and run with
 //! `cargo test --release --test successive_operations -- --ignored`.
 #![cfg(all(feature = "curve", feature = "stl-io", feature = "obj-io"))]
@@ -60,27 +62,40 @@ fn increments(values: &[usize]) -> Vec<usize> {
     values.windows(2).map(|pair| pair[1] - pair[0]).collect()
 }
 
-#[test]
-fn square_drills_stay_exact_with_bounded_denominators() {
-    let (chain, oracle) = chains::square_drills(16);
-    let records = certified_chain(&chain, Some(&oracle));
-    assert!(records.iter().all(|record| record.size.symbolic == 0));
-    // Steiner points where each new hole crosses earlier fan edges lift the
-    // reduced denominators from 6 to 12 bits; the minimal output keeps 3.
-    assert_eq!(
-        column(&records, |record| record.size.max_denominator_bits),
-        [6, 8, 10, 10, 10, 10, 10, 10, 10, 12, 12, 12, 12, 12, 12, 12]
-    );
-    assert_eq!(
-        column(&records, |record| record.triangles),
-        [
-            48, 96, 156, 216, 276, 336, 396, 460, 512, 564, 616, 668, 720, 756, 792, 828
-        ]
-    );
+/// The fewest triangles and vertices of a block with `k` through-holes of
+/// `sides` sides: the top and bottom are one polygon with `k` holes, each
+/// wall is a quadrilateral, and only block and hole corners are vertices.
+fn drilled_block_size(sides: usize, k: usize) -> (usize, usize) {
+    // Any triangulation of a polygon with n vertices and h holes, using no
+    // other vertex, has n + 2h - 2 triangles.
+    let top = 4 + k * sides + 2 * k - 2;
+    // Top and bottom, four block sides and k * sides wall quadrilaterals.
+    (2 * top + 2 * 4 + 2 * k * sides, 8 + 2 * k * sides)
 }
 
 #[test]
-fn rational_polygon_drills_grow_beyond_their_output_complexity() {
+fn square_drills_stay_minimal_with_constant_denominators() {
+    let (chain, oracle) = chains::square_drills(16);
+    let records = certified_chain(&chain, Some(&oracle));
+    assert!(records.iter().all(|record| record.size.symbolic == 0));
+    // Only hole and block corners remain, so the inputs' 3-bit denominators
+    // (thirds and sevenths) are the only ones.
+    assert!(
+        records
+            .iter()
+            .all(|record| record.size.max_denominator_bits == 3)
+    );
+    assert_eq!(
+        column(&records, |record| (record.triangles, record.vertices)),
+        (1..=16)
+            .map(|k| drilled_block_size(4, k))
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(drilled_block_size(4, 16), (12 + 20 * 16, 136));
+}
+
+#[test]
+fn rational_polygon_drills_keep_their_minimal_size() {
     let chain = chains::polygon_drills(4, 16);
     let records = chains::run(&chain, |step, mesh| {
         // Each inscribed square of radius 1 removes 2 * 4 from the block.
@@ -94,50 +109,48 @@ fn rational_polygon_drills_grow_beyond_their_output_complexity() {
             .all(|record| (&record.outcome, record.closed_manifold)
                 == (&Outcome::Certified, Some(true)))
     );
-    let triangles = column(&records, |record| record.triangles);
+    // Before outputs dropped the corefinement vertices their sets do not
+    // need, sixteen holes left 1,600 triangles; they need 12 + 20k = 332.
     assert_eq!(
-        triangles,
-        [
-            48, 112, 204, 324, 468, 616, 780, 928, 1060, 1180, 1272, 1360, 1444, 1512, 1564,
-            1600
-        ]
+        column(&records, |record| (record.triangles, record.vertices)),
+        (1..=16)
+            .map(|k| drilled_block_size(4, k))
+            .collect::<Vec<_>>()
     );
-    // Known gap: k holes need 12 + 20k triangles; the corefined output keeps
-    // every earlier fan crossing, so the k = 16 result is 4.8 times larger.
-    assert_eq!(12 + 20 * 16, 332);
     assert!(
-        increments(&triangles)[..5]
-            .windows(2)
-            .all(|pair| pair[0] < pair[1])
+        records
+            .iter()
+            .all(|record| record.size.max_denominator_bits == 1)
     );
-    assert_eq!(records[15].size.max_denominator_bits, 10);
 }
 
 #[test]
-fn crossing_bars_reproduce_steiner_points_in_coincident_faces() {
+fn crossing_bars_leave_no_steiner_points_in_coincident_faces() {
     let cube = solid::cube(r(12)).unwrap();
     let first = cube.try_difference(&chains::bar_extrusion(4, 4)).unwrap();
     let second = first
         .try_difference(&chains::rotated_bar(4, 4).unwrap())
         .unwrap();
-    assert_eq!(second.positions.len(), 86);
-    // The exact output needs only integer vertices; these lie inside the
-    // coincident faces at y = 4.
+    // The exact output needs only integer vertices: 8 cube corners, 8 at
+    // each pair of tunnel mouths and 8 reentrant corners where the tunnels
+    // cross. Corefinement used to leave 54 more, such as these Steiner
+    // points inside the coincident faces at y = 4.
+    assert_eq!(second.positions.len(), 32);
     for [x, y, z] in [
         [q(23, 3), r(4), r(8)],
         [q(15, 2), r(4), r(12)],
         [q(47, 6), r(4), r(4)],
     ] {
         assert!(
-            second
+            !second
                 .positions
                 .iter()
                 .any(|point| point.x == x && point.y == y && point.z == z),
-            "missing Steiner point ({x:?}, {y:?}, {z:?})"
+            "Steiner point ({x:?}, {y:?}, {z:?}) remains"
         );
     }
     let size = chains::coordinate_size(&second);
-    assert_eq!((size.non_integer, size.max_denominator_bits), (56, 7));
+    assert_eq!((size.non_integer, size.max_denominator_bits), (0, 1));
 
     // Subtracting either bar again leaves the set unchanged and is a fixed
     // point of the representation: the same vertices and triangles, up to
@@ -180,42 +193,42 @@ fn triangle_rows(mesh: &csgrs::TriangleMesh) -> std::collections::BTreeSet<[[Str
 }
 
 #[test]
-fn crossing_bars_fed_forward_accumulate_bounded_denominators() {
+fn crossing_bars_fed_forward_keep_only_integer_corners() {
     let (chain, oracle) = chains::cross_bars(10);
     let records = certified_chain(&chain, Some(&oracle));
     assert!(records.iter().all(|record| record.size.symbolic == 0));
+    // A z bar adds its eight mouth corners; the y bar that crosses it adds
+    // eight mouth and eight reentrant corners. No other vertex is needed,
+    // and all are integers.
     assert_eq!(
         column(&records, |record| (
             record.vertices,
             record.size.non_integer,
             record.size.max_denominator_bits
         )),
-        [
-            (24, 8, 2),
-            (86, 56, 7),
-            (110, 72, 7),
-            (204, 160, 12),
-            (234, 182, 12),
-            (351, 298, 12),
-            (391, 328, 12),
-            (548, 489, 12),
-            (594, 525, 12),
-            (775, 717, 12),
-        ]
+        (1..=10)
+            .map(|step| (8 + 8 * step + 8 * (step / 2), 0, 1))
+            .collect::<Vec<_>>()
     );
 }
 
 #[test]
-fn sqrt3_drills_certify_with_growing_expression_depth() {
+fn sqrt3_drills_certify_with_constant_expression_size() {
     let chain = chains::polygon_drills(6, 3);
     let records = certified_chain(&chain, None);
+    // Only hole corners remain, each a sampled hexagon vertex on a block
+    // face, so no coordinate is derived from an earlier derived vertex.
+    // Before outputs dropped unneeded vertices the graphs reached 70 nodes
+    // and depth 24 here, and 152 and 58 after eight drills.
     assert_eq!(
         column(&records, |record| (
-            record.triangles,
+            (record.triangles, record.vertices),
             record.size.max_nodes,
             record.size.max_depth
         )),
-        [(64, 8, 5), (140, 35, 13), (260, 70, 24)]
+        (1..=3)
+            .map(|k| (drilled_block_size(6, k), 5, 4))
+            .collect::<Vec<_>>()
     );
     // Independent enclosure of the drilled volume, as in the single-drill gate.
     let mut body = solid::cuboid(r(68), r(8), r(4)).unwrap();
@@ -249,19 +262,27 @@ fn sqrt3_drills_certify_with_growing_expression_depth() {
 }
 
 #[test]
-fn rational_rotation_cuts_keep_bounded_coefficients_but_grow_quadratically() {
+fn rational_rotation_cuts_grow_linearly_with_bounded_coefficients() {
     let chain = chains::rational_rotation_cuts(8);
     let records = certified_chain(&chain, None);
     assert!(records.iter().all(|record| record.size.symbolic == 0));
+    // The numerators grow with the cut position along the block; the
+    // denominators stay those of the 3-4-5 rotation.
     assert_eq!(
         column(&records, |record| record.size.max_rational_bits),
-        [16, 35, 36, 36, 36, 36, 36, 36]
+        [13, 13, 14, 14, 15, 15, 15, 15]
+    );
+    assert!(
+        records
+            .iter()
+            .all(|record| record.size.max_denominator_bits == 5)
     );
     let triangles = column(&records, |record| record.triangles);
-    assert_eq!(triangles, [34, 64, 114, 184, 274, 384, 514, 664]);
-    // Known gap: every cut needs the same few triangles, but each one crosses
-    // all earlier fan edges of the block faces, so increments grow linearly.
-    assert_eq!(increments(&triangles), [30, 50, 70, 90, 110, 130, 150]);
+    assert_eq!(triangles, [24, 36, 48, 60, 72, 84, 96, 108]);
+    // Every cut adds the same triangles. Before outputs dropped unneeded
+    // vertices each cut crossed every earlier fan edge of the block faces,
+    // and the increments grew by 20 per cut.
+    assert_eq!(increments(&triangles), [12; 7]);
 }
 
 #[test]
@@ -269,7 +290,7 @@ fn sqrt3_rotation_cuts_certify() {
     let records = certified_chain(&chains::degree_rotation_cuts(30, 3), None);
     assert_eq!(
         column(&records, |record| (record.triangles, record.size.max_depth)),
-        [(44, 16), (66, 26), (126, 38)]
+        [(28, 15), (32, 25), (44, 29)]
     );
 }
 
@@ -289,7 +310,7 @@ fn cube_unions_match_the_box_oracle() {
             .iter()
             .all(|record| record.size.max_denominator_bits <= 8)
     );
-    assert_eq!(records[15].triangles, 660);
+    assert_eq!(records[15].triangles, 316);
 }
 
 #[test]
@@ -303,7 +324,7 @@ fn polyhedron_unions_stay_linear() {
     let records = certified_chain(&chains::polyhedron_unions(true, 2), None);
     assert_eq!(
         column(&records, |record| (record.triangles, record.size.max_nodes)),
-        [(52, 88), (84, 93)]
+        [(44, 88), (68, 93)]
     );
 }
 
@@ -313,7 +334,7 @@ fn boolean_results_fed_back_match_the_box_oracle() {
     let records = certified_chain(&chain, Some(&oracle));
     assert_eq!(
         column(&records, |record| record.size.max_denominator_bits),
-        [7, 12, 12, 12, 12, 12]
+        [5; 6]
     );
 }
 
@@ -353,7 +374,7 @@ fn interchange_round_trips_between_steps_stay_certified() {
 fn extruded_profile_cuts_match_the_box_oracle() {
     let (chain, oracle) = chains::extruded_profile_cuts(6);
     let records = certified_chain(&chain, Some(&oracle));
-    assert_eq!(records[5].size.max_denominator_bits, 10);
+    assert_eq!(records[5].size.max_denominator_bits, 3);
 }
 
 #[test]
@@ -364,7 +385,7 @@ fn revolved_ring_accepts_a_cut_in_the_previous_cut_plane() {
     let records = certified_chain(&chains::revolved_ring_cuts(2), None);
     assert_eq!(
         column(&records, |record| (record.triangles, record.size.symbolic)),
-        [(156, 110), (142, 101)]
+        [(124, 92), (108, 80)]
     );
 }
 
