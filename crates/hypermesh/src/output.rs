@@ -48,6 +48,10 @@ pub struct BooleanMeshBatch {
     source_vertices: Weak<[Point3]>,
     source_results: Weak<[BooleanMeshResult]>,
     construction: ConstructionEvidence,
+    // Set only for surface-arrangement output and honored only while both
+    // buffers are unchanged: each result's distinct triangles then meet only
+    // in shared vertex indices or a shared edge.
+    embedded_complex: bool,
 }
 
 impl Default for BooleanMeshBatch {
@@ -74,6 +78,26 @@ impl BooleanMeshBatch {
         results: Vec<BooleanMeshResult>,
         construction: ConstructionEvidence,
     ) -> Self {
+        Self::from_parts(vertices, results, construction, false)
+    }
+
+    /// Output of one exact surface arrangement. Its facets meet only in
+    /// shared arrangement vertices or edges, and every result selects a
+    /// subset of those facets over one deduplicated vertex arena.
+    pub(crate) fn from_arrangement(
+        vertices: Vec<Point3>,
+        results: Vec<BooleanMeshResult>,
+        construction: ConstructionEvidence,
+    ) -> Self {
+        Self::from_parts(vertices, results, construction, true)
+    }
+
+    fn from_parts(
+        vertices: Vec<Point3>,
+        results: Vec<BooleanMeshResult>,
+        construction: ConstructionEvidence,
+        embedded_complex: bool,
+    ) -> Self {
         let vertices: Arc<[Point3]> = vertices.into();
         let results: Arc<[BooleanMeshResult]> = results.into();
         Self {
@@ -82,14 +106,18 @@ impl BooleanMeshBatch {
             vertices,
             results,
             construction,
+            embedded_complex,
         }
+    }
+
+    fn buffers_unchanged(&self) -> bool {
+        std::ptr::eq(self.source_vertices.as_ptr(), Arc::as_ptr(&self.vertices))
+            && std::ptr::eq(self.source_results.as_ptr(), Arc::as_ptr(&self.results))
     }
 
     /// Retained qualifications, with missing history exposed after buffer edits.
     pub fn construction_evidence(&self) -> ConstructionEvidence {
-        if std::ptr::eq(self.source_vertices.as_ptr(), Arc::as_ptr(&self.vertices))
-            && std::ptr::eq(self.source_results.as_ptr(), Arc::as_ptr(&self.results))
-        {
+        if self.buffers_unchanged() {
             self.construction
         } else {
             self.construction.after_buffer_mutation()
@@ -143,6 +171,7 @@ impl BooleanMeshBatch {
         }
 
         let evidence = self.construction_evidence();
+        let embedded_complex = self.embedded_complex && self.buffers_unchanged();
         let positions = self.vertices;
         let mut meshes = Vec::new();
         meshes.try_reserve_exact(self.results.len()).map_err(|_| {
@@ -171,11 +200,12 @@ impl BooleanMeshBatch {
                     .iter()
                     .map(|&[a, b, c]| Triangle::new(a as usize, b as usize, c as usize)),
             );
-            meshes.push(TriangleMesh::from_shared_construction(
-                Arc::clone(&positions),
-                triangles,
-                evidence,
-            ));
+            let positions = Arc::clone(&positions);
+            meshes.push(if embedded_complex {
+                TriangleMesh::from_shared_embedded_complex(positions, triangles, evidence)
+            } else {
+                TriangleMesh::from_shared_construction(positions, triangles, evidence)
+            });
         }
         Ok(meshes)
     }
@@ -305,6 +335,73 @@ mod tests {
         assert!(Arc::ptr_eq(&meshes[0].positions, &meshes[1].positions));
         assert_eq!(meshes[0].triangles[0], Triangle::new(0, 1, 2));
         assert_eq!(meshes[1].triangles[0], Triangle::new(0, 3, 1));
+    }
+
+    fn unit_box(offset: i64) -> TriangleMesh {
+        let corner = |x: i64, y: i64, z: i64| point(x + offset, y, z);
+        TriangleMesh::new(
+            vec![
+                corner(0, 0, 0),
+                corner(1, 0, 0),
+                corner(1, 1, 0),
+                corner(0, 1, 0),
+                corner(0, 0, 1),
+                corner(1, 0, 1),
+                corner(1, 1, 1),
+                corner(0, 1, 1),
+            ],
+            [
+                [4, 5, 6],
+                [4, 6, 7],
+                [0, 3, 2],
+                [0, 2, 1],
+                [1, 2, 6],
+                [1, 6, 5],
+                [0, 4, 7],
+                [0, 7, 3],
+                [3, 7, 6],
+                [3, 6, 2],
+                [0, 1, 5],
+                [0, 5, 4],
+            ]
+            .into_iter()
+            .map(|[a, b, c]| Triangle::new(a, b, c))
+            .collect(),
+        )
+    }
+
+    fn arrangement_union() -> BooleanMeshBatch {
+        let context = crate::MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        crate::boolean(
+            &context,
+            &[unit_box(0).as_ref(), unit_box(1).as_ref()],
+            crate::BooleanProgram::Operation(crate::BooleanOp::Union),
+        )
+        .unwrap()
+        .into_value()
+    }
+
+    #[test]
+    fn only_unedited_arrangement_output_retains_the_embedded_complex_fact() {
+        let meshes = arrangement_union().into_triangle_meshes().unwrap();
+        assert!(meshes[0].is_certified_embedded_complex());
+        // Clones share the bound fact; transforms and edits build new buffers.
+        assert!(meshes[0].clone().is_certified_embedded_complex());
+        let mut edited = meshes[0].clone();
+        Arc::make_mut(&mut edited.triangles).swap(0, 1);
+        assert!(!edited.is_certified_embedded_complex());
+
+        // Caller-assembled carriers make no structural claim, even when they
+        // contain exactly the arrangement's rows.
+        let batch = arrangement_union();
+        let rebuilt = BooleanMeshBatch::new(batch.vertices.to_vec(), batch.results.to_vec());
+        assert!(!rebuilt.into_triangle_meshes().unwrap()[0].is_certified_embedded_complex());
+        let mut edited_batch = arrangement_union();
+        Arc::make_mut(&mut edited_batch.results)[0]
+            .triangles
+            .swap(0, 1);
+        assert!(!edited_batch.into_triangle_meshes().unwrap()[0].is_certified_embedded_complex());
+        assert!(!unit_box(0).is_certified_embedded_complex());
     }
 
     #[test]

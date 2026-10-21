@@ -4023,13 +4023,14 @@ pub(crate) struct ExactSurfaceArrangement {
 pub(crate) fn build_surface_arrangement(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
+    certified_embedded_inputs: &[bool],
     source_vertex_count: usize,
 ) -> HypermeshResult<ExactSurfaceArrangement> {
     let source_bvh = ExactBvh::build_for_query_hierarchy_decision(decisions, polygons)?;
     let graph = crate::intersection::pairwise_intersections_by_polygon_from_bvh(
         decisions,
         polygons,
-        &[],
+        certified_embedded_inputs,
         &source_bvh,
     )?;
     let source_bvh = source_bvh.into_query_hierarchy(polygons)?;
@@ -4325,7 +4326,7 @@ fn materialize_surface_outputs(
             });
         }
     }
-    Ok(BooleanMeshBatch::from_construction(
+    Ok(BooleanMeshBatch::from_arrangement(
         vertices,
         outputs,
         crate::ConstructionEvidence::DECLARED_COORDINATES
@@ -4505,7 +4506,7 @@ mod tests {
         decisions: &DecisionContext,
         polygons: &[ConvexPolygon],
     ) -> HypermeshResult<ExactSurfaceArrangement> {
-        build_surface_arrangement(decisions, polygons, source_vertex_count(polygons))
+        build_surface_arrangement(decisions, polygons, &[], source_vertex_count(polygons))
     }
 
     fn corefine_test_surface(

@@ -1632,17 +1632,27 @@ fn append_pairwise_intersection<'point>(
     global_j: usize,
 ) -> HypermeshResult<()> {
     crate::trace_dispatch!("pairwise-intersection", "bvh-candidate");
-    if polygons[global_i].mesh_index == polygons[global_j].mesh_index
+    let same_mesh = polygons[global_i].mesh_index == polygons[global_j].mesh_index;
+    if same_mesh
         && usize::try_from(polygons[global_i].mesh_index)
             .ok()
             .and_then(|mesh_index| certified_embedded_inputs.get(mesh_index))
             .copied()
             .unwrap_or(false)
     {
+        // Distinct triangles of a retained arrangement output meet only in a
+        // shared vertex or edge. Two that traverse a shared edge in opposite
+        // directions therefore lie on opposite sides of it, which is the
+        // radial separation the full test below would prove numerically; any
+        // other pair would be discarded as a shared feature or as disjoint.
+        // Taking these facts from the retained structure also avoids exact
+        // zero tests between coplanar pieces of one face.
         crate::trace_dispatch!("pairwise-intersection", "certified-embedded-input");
+        if shared_reversed_triangle_edge(&polygons[global_i], &polygons[global_j])?.is_some() {
+            graph.append_radially_separated_face_pair(global_i, global_j)?;
+        }
         return Ok(());
     }
-    let same_mesh = polygons[global_i].mesh_index == polygons[global_j].mesh_index;
     let left_vertices = vertices.row(global_i)?;
     let right_vertices = vertices.row(global_j)?;
     let shares_manifold_edge = if same_mesh {
@@ -2023,14 +2033,67 @@ fn polygon_cycles_share_reversed_manifold_triangle_edge(
     if left.len() != 3 || right.len() != 3 {
         return Ok(false);
     }
+    let Some((left_index, right_index)) =
+        shared_reversed_triangle_edge(left_polygon, right_polygon)?
+    else {
+        return Ok(false);
+    };
+    let left_opposite = (left_index + 2) % 3;
+    let right_opposite = (right_index + 2) % 3;
+    if classify_polygon_vertex_decision(
+        decisions,
+        right_polygon,
+        right,
+        right_opposite,
+        left_polygon.support_plane(),
+    )? != Classification::On
+        || classify_polygon_vertex_decision(
+            decisions,
+            left_polygon,
+            left,
+            left_opposite,
+            right_polygon.support_plane(),
+        )? != Classification::On
+    {
+        return Ok(true);
+    }
+    // Coplanar PWN neighbors meet only at their authored edge when
+    // each opposite vertex lies strictly outside the other's edge
+    // half-space. Same-side or collinear folds still reach the full
+    // coplanar-overlap path.
+    Ok(classify_polygon_vertex_decision(
+        decisions,
+        right_polygon,
+        right,
+        right_opposite,
+        &left_polygon.edge_planes()[left_index],
+    )? == Classification::Positive
+        && classify_polygon_vertex_decision(
+            decisions,
+            left_polygon,
+            left,
+            left_opposite,
+            &right_polygon.edge_planes()[right_index],
+        )? == Classification::Positive)
+}
+
+/// Edge indices `(left, right)` of the source-triangle edge that the two
+/// triangles traverse in opposite directions, by retained source identity.
+fn shared_reversed_triangle_edge(
+    left_polygon: &ConvexPolygon,
+    right_polygon: &ConvexPolygon,
+) -> HypermeshResult<Option<(usize, usize)>> {
     let (Some(left_vertices), Some(left_edges), Some(right_vertices), Some(right_edges)) = (
         left_polygon.known_vertex_identities(),
         left_polygon.known_edge_identities(),
         right_polygon.known_vertex_identities(),
         right_polygon.known_edge_identities(),
     ) else {
-        return Ok(false);
+        return Ok(None);
     };
+    if left_vertices.len() != 3 || right_vertices.len() != 3 {
+        return Ok(None);
+    }
     for left_index in 0..3 {
         let Some(left_edge) = left_edges.get(left_index) else {
             return Err(HypermeshError::UnknownClassification);
@@ -2057,46 +2120,10 @@ fn polygon_cycles_share_reversed_manifold_triangle_edge(
             if left_start != right_end || left_end != right_start {
                 continue;
             }
-            let left_opposite = (left_index + 2) % 3;
-            let right_opposite = (right_index + 2) % 3;
-            if classify_polygon_vertex_decision(
-                decisions,
-                right_polygon,
-                right,
-                right_opposite,
-                left_polygon.support_plane(),
-            )? != Classification::On
-                || classify_polygon_vertex_decision(
-                    decisions,
-                    left_polygon,
-                    left,
-                    left_opposite,
-                    right_polygon.support_plane(),
-                )? != Classification::On
-            {
-                return Ok(true);
-            }
-            // Coplanar PWN neighbors meet only at their authored edge when
-            // each opposite vertex lies strictly outside the other's edge
-            // half-space. Same-side or collinear folds still reach the full
-            // coplanar-overlap path.
-            return Ok(classify_polygon_vertex_decision(
-                decisions,
-                right_polygon,
-                right,
-                right_opposite,
-                &left_polygon.edge_planes()[left_index],
-            )? == Classification::Positive
-                && classify_polygon_vertex_decision(
-                    decisions,
-                    left_polygon,
-                    left,
-                    left_opposite,
-                    &right_polygon.edge_planes()[right_index],
-                )? == Classification::Positive);
+            return Ok(Some((left_index, right_index)));
         }
     }
-    Ok(false)
+    Ok(None)
 }
 
 fn intersect_coplanar_constructed<'point>(

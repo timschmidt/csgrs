@@ -61,10 +61,13 @@ pub(crate) struct TriangleMeshFacts {
     axis_aligned_box: OnceLock<Option<Arc<ExactAabb>>>,
     source_polygon_planes: OnceLock<Arc<CompactSourcePolygons>>,
     wide_dyadic_plane_schedule: AtomicU8,
+    // Distinct triangles meet only in shared vertex indices or a shared edge,
+    // as in every surface-arrangement output. Bound to the buffers above.
+    embedded_complex: bool,
 }
 
 impl TriangleMeshFacts {
-    fn new(positions: &Arc<[Point3]>, triangles: &Arc<[Triangle]>) -> Self {
+    fn new(positions: &Arc<[Point3]>, triangles: &Arc<[Triangle]>, embedded_complex: bool) -> Self {
         Self {
             source_positions: Arc::downgrade(positions),
             source_triangles: Arc::downgrade(triangles),
@@ -73,6 +76,7 @@ impl TriangleMeshFacts {
             axis_aligned_box: OnceLock::new(),
             source_polygon_planes: OnceLock::new(),
             wide_dyadic_plane_schedule: AtomicU8::new(0),
+            embedded_complex,
         }
     }
 
@@ -159,14 +163,48 @@ impl TriangleMesh {
         triangles: Vec<Triangle>,
         construction: ConstructionEvidence,
     ) -> Self {
+        Self::from_shared_parts(positions, triangles, construction, false)
+    }
+
+    /// Mesh whose distinct triangles meet only in shared vertex indices or a
+    /// shared edge. Only exact surface-arrangement output has this structure
+    /// by construction; it lets later arrangements skip testing the mesh
+    /// against itself.
+    pub(crate) fn from_shared_embedded_complex(
+        positions: Arc<[Point3]>,
+        triangles: Vec<Triangle>,
+        construction: ConstructionEvidence,
+    ) -> Self {
+        Self::from_shared_parts(positions, triangles, construction, true)
+    }
+
+    fn from_shared_parts(
+        positions: Arc<[Point3]>,
+        triangles: Vec<Triangle>,
+        construction: ConstructionEvidence,
+        embedded_complex: bool,
+    ) -> Self {
         let triangles = Arc::<[Triangle]>::from(triangles);
-        let facts = Arc::new(TriangleMeshFacts::new(&positions, &triangles));
+        let facts = Arc::new(TriangleMeshFacts::new(
+            &positions,
+            &triangles,
+            embedded_complex,
+        ));
         Self {
             positions,
             triangles,
             facts,
             construction,
         }
+    }
+
+    /// Whether the current buffers are a retained surface-arrangement output,
+    /// whose distinct triangles meet only in shared vertices or edges.
+    /// Editing or replacing either buffer drops this fact.
+    #[cfg(test)]
+    pub(crate) fn is_certified_embedded_complex(&self) -> bool {
+        self.geometry_facts()
+            .is_some_and(|facts| facts.embedded_complex)
     }
 
     /// Construction qualifications bound to the current geometry buffers.
@@ -1355,6 +1393,10 @@ pub struct PolygonSoup {
     pub num_meshes: usize,
     /// Exact number of source vertex identities referenced by the soup.
     pub(crate) source_vertex_count: usize,
+    /// Per input mesh: retained proof that its distinct triangles meet only
+    /// in shared vertices or edges, so no arrangement needs to test the mesh
+    /// against itself.
+    pub(crate) certified_embedded_inputs: Vec<bool>,
 }
 
 impl PolygonSoup {
@@ -1444,6 +1486,12 @@ pub(crate) fn build_polygon_soup_internal(
         .ok_or(HypermeshError::UnknownClassification)?;
     let mut polygons: Vec<ConvexPolygon> = Vec::with_capacity(polygon_capacity);
     let mut source_vertex_count = 0_usize;
+    let mut certified_embedded_inputs = Vec::new();
+    certified_embedded_inputs
+        .try_reserve_exact(meshes.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "source embedded-complex facts",
+        })?;
     for (mesh_index, mesh) in meshes.iter().enumerate() {
         let signed_mesh_index =
             isize::try_from(mesh_index).map_err(|_| HypermeshError::CapacityOverflow {
@@ -1451,6 +1499,7 @@ pub(crate) fn build_polygon_soup_internal(
             })?;
         let position_owner = mesh.position_owner();
         let geometry_facts = mesh.geometry_facts();
+        certified_embedded_inputs.push(geometry_facts.is_some_and(|facts| facts.embedded_complex));
         let normalize_wide_dyadic = position_owner
             .and_then(TriangleMesh::position_facts)
             .map_or_else(
@@ -1520,6 +1569,7 @@ pub(crate) fn build_polygon_soup_internal(
         bounds,
         num_meshes: meshes.len(),
         source_vertex_count,
+        certified_embedded_inputs,
     })
 }
 

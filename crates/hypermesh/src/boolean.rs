@@ -32,8 +32,12 @@ pub fn boolean(
     crate::trace_dispatch!("boolean", "start");
     let soup = build_polygon_soup_internal(&decisions, meshes)?;
     crate::trace_dispatch!("boolean", "input-certified");
-    let arrangement =
-        build_surface_arrangement(&decisions, &soup.polygons, soup.source_vertex_count)?;
+    let arrangement = build_surface_arrangement(
+        &decisions,
+        &soup.polygons,
+        &soup.certified_embedded_inputs,
+        soup.source_vertex_count,
+    )?;
     crate::trace_dispatch!("boolean", "surface-arranged");
     let evidence = meshes.iter().fold(
         crate::ConstructionEvidence::DECLARED_COORDINATES,
