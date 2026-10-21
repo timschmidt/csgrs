@@ -87,9 +87,7 @@ fn square_drills_stay_minimal_with_constant_denominators() {
     );
     assert_eq!(
         column(&records, |record| (record.triangles, record.vertices)),
-        (1..=16)
-            .map(|k| drilled_block_size(4, k))
-            .collect::<Vec<_>>()
+        (1..=16).map(|k| drilled_block_size(4, k)).collect::<Vec<_>>()
     );
     assert_eq!(drilled_block_size(4, 16), (12 + 20 * 16, 136));
 }
@@ -113,9 +111,7 @@ fn rational_polygon_drills_keep_their_minimal_size() {
     // need, sixteen holes left 1,600 triangles; they need 12 + 20k = 332.
     assert_eq!(
         column(&records, |record| (record.triangles, record.vertices)),
-        (1..=16)
-            .map(|k| drilled_block_size(4, k))
-            .collect::<Vec<_>>()
+        (1..=16).map(|k| drilled_block_size(4, k)).collect::<Vec<_>>()
     );
     assert!(
         records

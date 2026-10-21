@@ -691,7 +691,7 @@ fn triangulate_boundary(
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "planar reduction triangles",
         })?;
-    for triangle in indices.chunks_exact(3) {
+    for triangle in indices.as_chunks::<3>().0 {
         let vertex = |index: usize| {
             boundary
                 .get(index)
@@ -748,9 +748,16 @@ fn apply_removal(
                 reason: "output facet references an absent source face",
             },
         )?;
-        // Triangulate the polygon in its source face's winding from its least
-        // vertex, so a boundary and its complement, which traverses every
-        // polygon backwards, receive the same triangles.
+        // Triangulate the polygon in its source face's winding, ending at its
+        // least vertex, so a boundary and its complement, which traverses
+        // every polygon backwards, receive the same triangles. Hypertri clips
+        // ears from the start of the ring, which fans them around the last
+        // vertex. The least arena index is the earliest-constructed vertex:
+        // source vertices precede arrangement vertices and earlier operands
+        // precede later ones, so long fan edges gather at older geometry and
+        // the newest geometry keeps short edges. On the successive-operation
+        // corpus this allocated 6% less in total than starting at the least
+        // vertex, and 22% less on coplanar icosahedron unions.
         let reverse = template.source.orientation < 0;
         let mut canonical = boundary.clone();
         if reverse {
@@ -759,7 +766,8 @@ fn apply_removal(
         let least = (0..canonical.len())
             .min_by_key(|&index| canonical[index])
             .unwrap_or(0);
-        canonical.rotate_left(least);
+        let start = (least + 1) % canonical.len();
+        canonical.rotate_left(start);
         let mut triangles = triangulate_boundary(decisions, points, polygon, &canonical)?;
         if reverse {
             for triangle in &mut triangles {

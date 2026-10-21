@@ -34,6 +34,21 @@ grammar belong to adapters such as csgrs.
   with the full self test. Crossings on an axis-aligned plane with rational
   coefficients store that coordinate exactly, so a later cut in the same plane
   decides even when the crossed edges have symbolic coordinates.
+- Boolean results keep only the vertices their represented set needs.
+  Coplanar pieces of each result are grouped into plane classes from
+  coplanarity the arrangement already decided or that an earlier result
+  retained, without new plane tests. A vertex inside one class, or on a
+  straight crease between two classes, is removed and the space around it is
+  retriangulated by Hypertri under the operation's policy; corners, crease
+  ends and non-manifold contacts stay. Represented sets, closure, orientation,
+  the embedded-complex fact and certainty are unchanged, and no vertex is
+  added. Sixteen square holes through a block give 332 triangles instead of
+  1,600, and later cuts no longer interpolate new vertices from earlier
+  crossings, so sampled-trigonometric drill chains keep constant coordinate
+  size. A result triangle covering several coplanar input triangles names the
+  least of them in `TriangleSource`. Certified results retain their plane
+  classes for the next Boolean. This changes published rows; see the csgrs
+  migration notes.
 - `minkowski_sum` computes the regularized Minkowski sum of bounded
   closed-PWN solids; `minkowski_sum_with_options` adds count limits and
   cooperative cancellation, which do not bound total work or memory.

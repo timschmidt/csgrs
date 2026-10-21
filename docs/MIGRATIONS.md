@@ -94,6 +94,20 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   to that name.
 - **Boolean batches.** Conversion from a shared Hypermesh Boolean batch gives
   empty rows zero positions as well as zero triangles.
+- **Boolean output rows.** A Hypermesh Boolean result, and therefore every
+  csgrs solid Boolean (`try_union`, `try_difference`, `try_intersection`,
+  `try_xor` and the operations built on them), no longer keeps corefinement
+  vertices that its represented set does not need. Coplanar pieces of each
+  result are merged; a vertex inside one plane, or on a straight crease
+  between two planes, is removed and the space around it is retriangulated
+  with Hypertri. Represented sets, closure, orientation, the certainty
+  receipt and the exact coordinates of the remaining vertices are unchanged,
+  and no vertex is added. Vertex and triangle rows, their counts and order,
+  and file lengths and checksums of exported results change, mostly to much
+  smaller outputs: sixteen square holes in a block give 332 triangles instead
+  of 1,600. A result triangle that covers several coplanar input triangles
+  reports the least of them as its `hypermesh::TriangleSource`. Regenerate
+  pinned Boolean rows, counts and checksums.
 
 ## Cargo features
 

@@ -103,6 +103,14 @@ migrations, including changed serialized output, are listed in
   `(iso - I) / (iso + I)` of the exact inverse-square influence `I = r² / d²`,
   without the former distance cutoff or epsilon-smoothed denominator, and
   `MetaBall::influence` returns an error at a ball's center.
+- Solid Booleans return only the vertices their result needs. Hypermesh
+  merges coplanar pieces of each result and removes vertices inside one plane
+  or on a straight crease between two, so results of successive Booleans stay
+  proportional to the represented set: sixteen square holes through a block
+  give 332 triangles instead of 1,600, and drill chains through sampled
+  polygons keep constant coordinate size. Represented sets and certainty are
+  unchanged; triangle rows, counts and exported checksums change (see
+  "Boolean output rows" in [docs/MIGRATIONS.md](docs/MIGRATIONS.md)).
 - `bevymesh` targets Bevy 0.18 (was 0.16) through `solid::to_bevy_mesh`.
 - Raises the minimum supported Rust version (MSRV) from 1.85.1 to 1.95.0.
 
