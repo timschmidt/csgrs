@@ -186,6 +186,37 @@ try {
   assert.equal(arrays.certainty, Certainty.Certified);
   assert.equal(arrays.indices.length, 6);
 
+  // Revolution, sweep and twisted extrusion keep the native outcome category.
+  // Sweep consumes its path points, so they are not registered in `owned`.
+  const sweepPath = (points) => points.map((xyz) => new Point3Js(...xyz));
+  const ring = keep(CurveRegionJs.circle(0.08, 12));
+  for (const approximate of [false, true]) {
+    for (const [operation, code] of [
+      [() => square.revolve(360, 1, approximate), "invalid_input"],
+      [() => square.extrudeTwisted(0, 45, 1, 1, 4, approximate), "invalid_input"],
+      [() => square.sweep(sweepPath([[0, 0, 0]]), approximate), "invalid_input"],
+      // A chord that exactly reverses its predecessor has no slice normal.
+      [() => square.sweep(sweepPath([[0, 0, 0], [0, 0, 1], [0, 0, -1]]), approximate),
+        "invalid_input"],
+    ]) {
+      assert.throws(operation, (error) => error instanceof Error
+        && error.name === "GeometryError" && error.code === code && error.message.length > 0);
+    }
+    // A non-planar sampled helix: its frame transport axes have no structural
+    // nonzero certificate, and the strict sweep still completes.
+    const helix = [];
+    for (let index = 0; index < 8; index++) {
+      const t = index * 0.15;
+      helix.push([Math.cos(t) * 0.6, Math.sin(t) * 0.6, index * 0.04]);
+    }
+    const swept = keep(ring.sweep(sweepPath(helix), approximate));
+    assert.equal(swept.certainty, Certainty.Certified);
+    owned.pop();
+    const tube = keep(swept.intoMesh());
+    assert.equal(tube.vertexCount(), 8 * 12);
+    assert.equal(tube.triangleCount(), 2 * 12 * 7 + 2 * 10);
+  }
+
   // Derived native coordinates retain the unit width beyond binary64 spacing.
   // Display projection is separate; translate the solid back before inspecting it.
   const distantSquare = keep(square.translate(2 ** 53, 0, 0));

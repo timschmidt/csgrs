@@ -198,7 +198,7 @@ Both matrix types provide `new`, `zero`, `identity`, `transpose`, `determinant`,
 | --- | --- |
 | Construct `Matrix3` structure | `diagonal`, `uniform_scale` |
 | Construct `Matrix4` transforms | `from_row_major`, `from_row_slice`, `affine_translation`, `affine_nonuniform_scale`, `uniform_scale` |
-| Construct rotations | `rotation_x`, `rotation_y`, `rotation_z`, `rotation_axis_angle`, `rotation_between_vectors`, `affine_orthonormal` |
+| Construct rotations | `rotation_x`, `rotation_y`, `rotation_z`, `rotation_axis_angle`, `rotation_between_vectors`, `rotation_between_unit_vectors`, `affine_orthonormal` |
 | Construct signed permutations | `signed_permutation` |
 | Use specialized inverses | `diagonal_inverse`, triangular inverse methods, `affine_translation_inverse`, `affine_orthonormal_inverse`, `signed_permutation_inverse`, `uniform_scale_inverse` |
 | Transform values | `transform_vec3`, `transform_vec4`, `transform_point3`, `transform_direction3` and corresponding batch methods |

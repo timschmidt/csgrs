@@ -8,9 +8,8 @@ root=$(git rev-parse --show-toplevel)
 cd "${root}"
 
 # Strict 32x16 sphere coplanarity is undecidable (boolean_operations,
-# convex_hull); sweep frame transport flattens an undecided rotation into
-# InvalidArguments (extrude).
-known_failures=(boolean_operations convex_hull extrude)
+# convex_hull).
+known_failures=(boolean_operations convex_hull)
 
 # Build every example: an example whose required features are not enabled is
 # silently skipped by `cargo build --examples`, leaving no fresh binary.

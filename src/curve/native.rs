@@ -2724,7 +2724,125 @@ pub fn revolve(
     Ok(decisions.finish_mesh(mesh))
 }
 
+/// Names the sweep construction step whose scalar arithmetic failed.
+///
+/// A scalar that could not be proved nonzero is an undecided predicate, not
+/// invalid input; exhaustion and other scalar problems keep their own cause.
+const fn sweep_scalar_error(
+    problem: hyperreal::Problem,
+    predicate: &'static str,
+    decisions: &GeometryDecisions,
+) -> ValidationError {
+    match problem {
+        hyperreal::Problem::UnknownZero | hyperreal::Problem::UnknownCertificate => {
+            ValidationError::PredicateUndecided {
+                predicate,
+                policy: decisions.predicate_policy(),
+            }
+        },
+        problem => ValidationError::Scalar(problem),
+    }
+}
+
+/// Normalizes a sweep direction already proved nonzero by policy decisions.
+///
+/// The structural normalization is tried first, retaining its representation.
+/// Missing structural evidence is not a zero: the value is then normalized
+/// with the scalar layer's certified magnitude.
+fn sweep_unit_direction(
+    direction: &Vector3,
+    predicate: &'static str,
+    decisions: &GeometryDecisions,
+) -> Result<Vector3, ValidationError> {
+    match direction.normalize_checked() {
+        Ok(unit) => Ok(unit),
+        Err(hyperreal::Problem::UnknownZero) => direction.normalize(),
+        Err(problem) => Err(problem),
+    }
+    .map_err(|problem| sweep_scalar_error(problem, predicate, decisions))
+}
+
+/// Decides whether two path chords point in exactly opposite directions,
+/// where the bisector tangent of a sweep vertex is undefined.
+fn sweep_chords_reverse(
+    incoming: &Vector3,
+    outgoing: &Vector3,
+    decisions: &GeometryDecisions,
+) -> Result<bool, ValidationError> {
+    // One certified nonzero cross-product component proves the chords are
+    // not parallel, even when another component is undecided.
+    let mut undecided = None;
+    for component in &incoming.cross(outgoing).0 {
+        match decisions.sign(component, "sweep path reversal") {
+            Ok(hyperreal::RealSign::Zero) => {},
+            Ok(_) => return Ok(false),
+            Err(error) => undecided = Some(error),
+        }
+    }
+    if let Some(error) = undecided {
+        return Err(error);
+    }
+    Ok(
+        decisions.sign(&incoming.dot(outgoing), "sweep path reversal")?
+            == hyperreal::RealSign::Negative,
+    )
+}
+
+/// Orients the first sweep slice from `+z` to its unit normal `tangent`,
+/// whose unnormalized direction is `direction`.
+///
+/// Normals along the `z` axis are decided under the policy and receive the
+/// identity or the half turn about `y`; all others receive the minimal
+/// rotation.
+fn sweep_initial_frame(
+    direction: &Vector3,
+    tangent: &Vector3,
+    decisions: &GeometryDecisions,
+) -> Result<Matrix4, ValidationError> {
+    let mut undecided = None;
+    for component in &direction.0[..2] {
+        match decisions.sign(component, "sweep initial tangent orientation") {
+            Ok(hyperreal::RealSign::Zero) => {},
+            Ok(_) => {
+                return Matrix4::rotation_between_unit_vectors(&Vector3::z(), tangent)
+                    .map_err(|problem| {
+                        sweep_scalar_error(problem, "sweep frame transport", decisions)
+                    });
+            },
+            Err(error) => undecided = Some(error),
+        }
+    }
+    if let Some(error) = undecided {
+        return Err(error);
+    }
+    Ok(
+        match decisions.sign(&direction.0[2], "sweep initial tangent orientation")? {
+            hyperreal::RealSign::Negative => Matrix4::rotation_y(Real::pi()),
+            _ => Matrix4::identity(),
+        },
+    )
+}
+
 /// Sweeps a native filled region along a 3D point path.
+///
+/// Consecutive points proved equal are coalesced, and a path whose last point
+/// equals its first is closed. Each remaining point carries one copy of the
+/// finite projected profile, placed rigidly in the plane through that point
+/// whose normal is the unit chord at an open endpoint, or otherwise the
+/// normalized bisector of the two adjacent unit chords. The first slice is
+/// rotated minimally from `+z` (a half turn about `y` for `-z`), and every
+/// later frame is transported by the exact minimal rotation between
+/// consecutive normals. Slice coordinates are exact. They are rational when
+/// every unit chord and bisector is rational; for a general path they are
+/// nested square roots, and later strict predicates on them can be
+/// undecidable.
+///
+/// Fewer than two distinct points, a closed path with fewer than three, a
+/// revisited point, or a chord that exactly reverses its predecessor returns
+/// [`ValidationError::InvalidArguments`]. A predicate the selected policy
+/// cannot decide returns [`ValidationError::PredicateUndecided`] naming the
+/// sweep step, and other scalar failures keep their
+/// [`hyperreal::Problem`] cause.
 pub fn try_sweep(
     region: &CurveRegion2,
     path: &[Point3],
@@ -2770,55 +2888,60 @@ pub fn try_sweep(
         }
     }
     let segment_count = if closed { slice_count } else { slice_count - 1 };
-    let Some(segment_directions) = (0..segment_count)
-        .map(|index| {
-            (&path[(index + 1) % slice_count] - &path[index])
-                .normalize_checked()
-                .ok()
-        })
-        .collect::<Option<Vec<_>>>()
-    else {
-        return Err(ValidationError::InvalidArguments);
-    };
-    let Some(tangents) = (0..slice_count)
-        .map(|index| {
-            if !closed && index == 0 {
-                Some(segment_directions[0].clone())
-            } else if !closed && index + 1 == slice_count {
-                Some(segment_directions[segment_count - 1].clone())
-            } else {
-                let incoming =
-                    &segment_directions[(index + segment_count - 1) % segment_count];
-                let outgoing = &segment_directions[index % segment_count];
-                (incoming + outgoing).normalize_checked().ok()
-            }
-        })
-        .collect::<Option<Vec<_>>>()
-    else {
-        return Err(ValidationError::InvalidArguments);
-    };
-    let Ok(mut orientation) = Matrix4::rotation_between_vectors(&Vector3::z(), &tangents[0])
-    else {
-        return Err(ValidationError::InvalidArguments);
-    };
+    // Each chord joins two points proved distinct above, so it is nonzero.
+    let chords = (0..segment_count)
+        .map(|index| &path[(index + 1) % slice_count] - &path[index])
+        .collect::<Vec<_>>();
+    let segment_directions = chords
+        .iter()
+        .map(|chord| sweep_unit_direction(chord, "sweep segment direction", &decisions))
+        .collect::<Result<Vec<_>, _>>()?;
+    // Slice normals: the unit chord at an open endpoint, otherwise the
+    // normalized bisector of the adjacent unit chords. The bisector vanishes
+    // exactly when the path reverses, which is decided on the chords.
+    let mut tangents = Vec::with_capacity(slice_count);
+    for index in 0..slice_count {
+        if !closed && (index == 0 || index + 1 == slice_count) {
+            let segment = if index == 0 { 0 } else { segment_count - 1 };
+            tangents.push((chords[segment].clone(), segment_directions[segment].clone()));
+            continue;
+        }
+        let incoming = (index + segment_count - 1) % segment_count;
+        let outgoing = index % segment_count;
+        if sweep_chords_reverse(&chords[incoming], &chords[outgoing], &decisions)? {
+            return Err(ValidationError::InvalidArguments);
+        }
+        let bisector = &segment_directions[incoming] + &segment_directions[outgoing];
+        let tangent = sweep_unit_direction(&bisector, "sweep tangent", &decisions)?;
+        tangents.push((bisector, tangent));
+    }
+    let mut orientation = sweep_initial_frame(&tangents[0].0, &tangents[0].1, &decisions)?;
     let mut frames = Vec::with_capacity(slice_count);
     frames.push((orientation.clone(), path[0].clone()));
     for index in 1..slice_count {
-        let Ok(transport) =
-            Matrix4::rotation_between_vectors(&tangents[index - 1], &tangents[index])
-        else {
-            return Err(ValidationError::InvalidArguments);
-        };
+        // Both tangents have a positive component along their shared chord,
+        // so they are never antipodal and the minimal rotation exists.
+        let transport =
+            Matrix4::rotation_between_unit_vectors(&tangents[index - 1].1, &tangents[index].1)
+                .map_err(|problem| {
+                    sweep_scalar_error(problem, "sweep frame transport", &decisions)
+                })?;
         orientation = transport * orientation;
         frames.push((orientation.clone(), path[index].clone()));
     }
-    let map = |point: [f64; 2], frame: &(Matrix4, Point3)| -> Option<Point3> {
-        let local = finite_point(point, Real::zero())?;
+    let map = |point: [f64; 2],
+               frame: &(Matrix4, Point3)|
+     -> Result<Option<Point3>, ValidationError> {
+        let Some(local) = finite_point(point, Real::zero()) else {
+            return Ok(None);
+        };
         frame
             .0
             .transform_point3(&local)
-            .ok()
-            .map(|point| point + frame.1.to_vector())
+            .map(|point| Some(point + frame.1.to_vector()))
+            .map_err(|problem| {
+                sweep_scalar_error(problem, "sweep slice placement", &decisions)
+            })
     };
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
@@ -2829,10 +2952,10 @@ pub fn try_sweep(
                 for slice in 0..segment_count {
                     let next = (slice + 1) % slice_count;
                     let [Some(a), Some(b), Some(c), Some(d)] = [
-                        map(edge[0], &frames[slice]),
-                        map(edge[1], &frames[slice]),
-                        map(edge[1], &frames[next]),
-                        map(edge[0], &frames[next]),
+                        map(edge[0], &frames[slice])?,
+                        map(edge[1], &frames[slice])?,
+                        map(edge[1], &frames[next])?,
+                        map(edge[0], &frames[next])?,
                     ] else {
                         return Err(ValidationError::InvalidArguments);
                     };
@@ -2861,7 +2984,9 @@ pub fn try_sweep(
                     (&frames[0], true),
                     (frames.last().expect("frames are nonempty"), false),
                 ] {
-                    let [Some(a), Some(b), Some(c)] = face.map(|point| map(point, frame))
+                    let [a, b, c] = face;
+                    let [Some(a), Some(b), Some(c)] =
+                        [map(a, frame)?, map(b, frame)?, map(c, frame)?]
                     else {
                         return Err(ValidationError::InvalidArguments);
                     };
@@ -3726,6 +3851,48 @@ mod tests {
             crate::GeometryCertainty::Approximate512Consumed
         );
         assert!(outcome.value.is_closed_manifold());
+    }
+
+    #[test]
+    fn sweep_scalar_failures_keep_their_outcome_category() {
+        for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
+            let decisions = GeometryDecisions::new(&context);
+            for problem in [
+                hyperreal::Problem::UnknownZero,
+                hyperreal::Problem::UnknownCertificate,
+            ] {
+                let error = sweep_scalar_error(problem, "sweep frame transport", &decisions);
+                assert_eq!(
+                    error,
+                    ValidationError::PredicateUndecided {
+                        predicate: "sweep frame transport",
+                        policy: context.predicate_policy(),
+                    }
+                );
+                assert_eq!(error.kind(), crate::errors::ValidationErrorKind::Undecided);
+            }
+            let exhausted =
+                sweep_scalar_error(hyperreal::Problem::Exhausted, "sweep tangent", &decisions);
+            assert_eq!(
+                exhausted,
+                ValidationError::Scalar(hyperreal::Problem::Exhausted)
+            );
+            assert_eq!(
+                exhausted.kind(),
+                crate::errors::ValidationErrorKind::ResourceExhausted
+            );
+            // A definite zero after the policy proved the value nonzero is a
+            // scalar-layer contradiction, not caller input.
+            assert_eq!(
+                sweep_scalar_error(
+                    hyperreal::Problem::DivideByZero,
+                    "sweep tangent",
+                    &decisions
+                )
+                .kind(),
+                crate::errors::ValidationErrorKind::Geometry
+            );
+        }
     }
 
     #[test]

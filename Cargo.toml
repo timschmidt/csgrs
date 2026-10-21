@@ -372,6 +372,11 @@ path = "tests/adversarial_stress.rs"
 required-features = ["curve"]
 
 [[test]]
+name = "sweep_frames"
+path = "tests/sweep_frames.rs"
+required-features = ["curve"]
+
+[[test]]
 name = "competitive"
 path = "tests/competitive.rs"
 required-features = ["obj-io"]

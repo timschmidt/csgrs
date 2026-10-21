@@ -10781,6 +10781,12 @@ impl Matrix4 {
     }
 
     /// Constructs an affine rotation matrix that maps `from` onto `to`.
+    ///
+    /// Both inputs are normalized with structural zero checks. A pair whose
+    /// antipodal relation bounded refinement proves receives a half turn
+    /// about a fixed seed axis; every other pair receives the minimal
+    /// rotation of [`Self::rotation_between_unit_vectors`], including its
+    /// typed failure when `1 + from·to` cannot be certified nonzero.
     pub fn rotation_between_vectors(from: &Vector3, to: &Vector3) -> CheckedBlasResult<Self> {
         let from = from.normalize_checked()?;
         let to = to.normalize_checked()?;
@@ -10790,23 +10796,96 @@ impl Matrix4 {
             return Ok(Self::identity());
         }
 
-        let (axis, angle) = match (dot + Real::one()).refine_sign_until(128) {
-            Some(RealSign::Zero) => {
-                let threshold = (Real::from(9_u8) / Real::from(10_u8))?;
-                let seed = if matches!(
-                    (from.0[0].clone().abs() - threshold).refine_sign_until(128),
-                    Some(RealSign::Negative)
-                ) {
-                    Vector3::x()
-                } else {
-                    Vector3::y()
-                };
-                (from.unit_cross_checked(&seed)?, Real::pi())
-            }
-            _ => (from.unit_cross_checked(&to)?, from.angle_to(&to)?),
-        };
+        if let Some(RealSign::Zero) = (dot.clone() + Real::one()).refine_sign_until(128) {
+            let threshold = (Real::from(9_u8) / Real::from(10_u8))?;
+            let seed = if matches!(
+                (from.0[0].clone().abs() - threshold).refine_sign_until(128),
+                Some(RealSign::Negative)
+            ) {
+                Vector3::x()
+            } else {
+                Vector3::y()
+            };
+            return Self::rotation_axis_angle(&from.unit_cross_checked(&seed)?, Real::pi());
+        }
 
-        Self::rotation_axis_angle(&axis, angle)
+        Self::minimal_rotation_between_unit_vectors(&from, &to, dot)
+    }
+
+    /// Constructs the minimal rotation that maps caller-certified unit vector
+    /// `from` onto unit vector `to`.
+    ///
+    /// The inputs are not normalized or validated as unit vectors. When the
+    /// cross product has a structural nonzero certificate, the axis-angle
+    /// construction keeps its sparse-axis and shared sine/cosine structure.
+    /// Otherwise the same rotation is built algebraically as
+    /// `c I + [k]x + k kᵀ / (1 + c)`, with `c = from·to` and
+    /// `k = from × to`. That form needs no axis normalization, inverse cosine
+    /// or trigonometric evaluation; its only divisor is `1 + c`, which is
+    /// nonzero exactly when the vectors are not antipodal.
+    ///
+    /// Antipodal inputs have no minimal rotation and return
+    /// [`Problem::DivideByZero`]. A divisor whose nonzero sign cannot be
+    /// certified returns the scalar layer's typed problem, such as
+    /// [`Problem::UnknownZero`]; it is never treated as nonzero.
+    pub fn rotation_between_unit_vectors(from: &Vector3, to: &Vector3) -> CheckedBlasResult<Self> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "constructor",
+            "rotation-between-unit-vectors"
+        );
+        let dot = from.dot(to);
+        if let Some(RealSign::Zero) = (dot.clone() - Real::one()).refine_sign_until(128) {
+            return Ok(Self::identity());
+        }
+        Self::minimal_rotation_between_unit_vectors(from, to, dot)
+    }
+
+    /// Shared tail of the vector-alignment constructors after the identity
+    /// shortcut; `dot` is `from·to`.
+    fn minimal_rotation_between_unit_vectors(
+        from: &Vector3,
+        to: &Vector3,
+        dot: Real,
+    ) -> CheckedBlasResult<Self> {
+        let cross = from.cross(to);
+        match cross
+            .normalize_checked()
+            .and_then(|axis| Ok((axis, from.angle_to(to)?)))
+        {
+            Ok((axis, angle)) => return Self::rotation_axis_angle(&axis, angle),
+            // Missing structural evidence for the axis, or a structurally
+            // parallel pair, is decided by the algebraic form below.
+            Err(Problem::UnknownZero | Problem::DivideByZero) => {}
+            Err(problem) => return Err(problem),
+        }
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "rotation-between-unit-vectors",
+            "algebraic-rodrigues"
+        );
+        let scale = (Real::one() + dot.clone()).inverse()?;
+        let [x, y, z] = cross.0;
+        let scaled = |left: &Real, right: &Real| left * right * &scale;
+        let zero = Real::zero();
+        Ok(Self::from_row_major([
+            dot.clone() + scaled(&x, &x),
+            scaled(&x, &y) - z.clone(),
+            scaled(&x, &z) + y.clone(),
+            zero.clone(),
+            scaled(&y, &x) + z.clone(),
+            dot.clone() + scaled(&y, &y),
+            scaled(&y, &z) - x.clone(),
+            zero.clone(),
+            scaled(&z, &x) - y.clone(),
+            scaled(&z, &y) + x.clone(),
+            dot + scaled(&z, &z),
+            zero.clone(),
+            zero.clone(),
+            zero.clone(),
+            zero,
+            Real::one(),
+        ]))
     }
 
     /// Constructs the inverse of a caller-certified affine translation.

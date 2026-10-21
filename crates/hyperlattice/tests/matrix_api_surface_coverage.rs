@@ -751,6 +751,11 @@ fn affine_rotation_signed_permutation_and_transform_apis_cover_object_routes() {
     let _ = Matrix4::rotation_between_vectors(&Vector3::x(), &-Vector3::x()).unwrap();
     let _ = Matrix4::rotation_between_vectors(&Vector3::y(), &-Vector3::y()).unwrap();
     let _ = Matrix4::rotation_between_vectors(&Vector3::x(), &Vector3::y()).unwrap();
+    let _ = Matrix4::rotation_between_unit_vectors(&Vector3::x(), &Vector3::y()).unwrap();
+    assert_eq!(
+        Matrix4::rotation_between_unit_vectors(&Vector3::x(), &-Vector3::x()),
+        Err(Problem::DivideByZero)
+    );
 
     let values: Vec<_> = (1..=16).map(r).collect();
     assert!(Matrix4::from_row_slice(&values[..15]).is_none());

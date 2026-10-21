@@ -41,6 +41,96 @@ fn axis_angle_coordinate_axes_retain_named_rotation_structure() {
     );
 }
 
+fn dyadic(value: f64) -> Real {
+    Real::try_from(value).unwrap()
+}
+
+/// Unit chord and normalized chord bisector at the start of the sampled helix
+/// swept by csgrs's `extrude` example. Both are certified unit vectors, but
+/// their cross product has no structural nonzero certificate.
+fn sampled_helix_tangents() -> (Vector3, Vector3) {
+    let point = |index: u32| {
+        let t = f64::from(index) * 0.15;
+        Vector3::new([
+            dyadic(t.cos() * 0.6),
+            dyadic(t.sin() * 0.6),
+            dyadic(f64::from(index) * 0.04),
+        ])
+    };
+    let incoming = (point(1) - point(0)).normalize_checked().unwrap();
+    let outgoing = (point(2) - point(1)).normalize_checked().unwrap();
+    let bisector = (incoming.clone() + outgoing).normalize_checked().unwrap();
+    (incoming, bisector)
+}
+
+fn assert_numerically_maps(rotation: &Matrix4, from: &Vector3, to: &Vector3) {
+    // Independent binary64 oracle: the exact rotation maps `from` onto `to`
+    // and keeps an orthonormal linear block.
+    let mapped = rotation.transform_direction3(from);
+    for axis in 0..3 {
+        let error =
+            (mapped.0[axis].to_f64_lossy().unwrap() - to.0[axis].to_f64_lossy().unwrap()).abs();
+        assert!(error < 1.0e-12, "axis {axis} error {error}");
+    }
+    for row in 0..3 {
+        for column in 0..3 {
+            let dot = (0..3)
+                .map(|k| {
+                    rotation[k][row].to_f64_lossy().unwrap()
+                        * rotation[k][column].to_f64_lossy().unwrap()
+                })
+                .sum::<f64>();
+            let expected = if row == column { 1.0 } else { 0.0 };
+            assert!((dot - expected).abs() < 1.0e-12);
+        }
+    }
+}
+
+#[test]
+fn rotation_between_vectors_does_not_require_a_structural_axis_certificate() {
+    let (from, to) = sampled_helix_tangents();
+    // The structural axis normalization alone cannot certify this nonzero
+    // cross product; it is not evidence that the vectors are parallel.
+    assert_eq!(from.unit_cross_checked(&to), Err(Problem::UnknownZero));
+
+    let rotation = Matrix4::rotation_between_vectors(&from, &to).unwrap();
+    assert_numerically_maps(&rotation, &from, &to);
+    let unit = Matrix4::rotation_between_unit_vectors(&from, &to).unwrap();
+    assert_numerically_maps(&unit, &from, &to);
+    let back = Matrix4::rotation_between_unit_vectors(&to, &from).unwrap();
+    assert_numerically_maps(&back, &to, &from);
+}
+
+#[test]
+fn rotation_between_unit_vectors_keeps_structural_forms_and_typed_antipodes() {
+    let pythagorean = Vector3::new([frac(3, 5), r(0), frac(4, 5)]);
+    for (from, to) in [
+        (Vector3::x(), Vector3::y()),
+        (Vector3::z(), pythagorean.clone()),
+        (pythagorean.clone(), Vector3::x()),
+    ] {
+        let unit = Matrix4::rotation_between_unit_vectors(&from, &to).unwrap();
+        // Already-unit inputs reach the same retained representation.
+        assert_eq!(unit, Matrix4::rotation_between_vectors(&from, &to).unwrap());
+        assert_eq!(unit.transform_direction3(&from), to);
+        assert!(unit.exact_facts().is_nonempty_exact_rational());
+    }
+    assert_eq!(
+        Matrix4::rotation_between_unit_vectors(&Vector3::y(), &Vector3::y()).unwrap(),
+        Matrix4::identity()
+    );
+    // The unit form has no implicit half-turn axis policy: an antipodal pair
+    // is a typed failure, never an arbitrary rotation.
+    assert_eq!(
+        Matrix4::rotation_between_unit_vectors(&Vector3::z(), &-Vector3::z()),
+        Err(Problem::DivideByZero)
+    );
+    assert_eq!(
+        Matrix4::rotation_between_unit_vectors(&pythagorean, &-pythagorean.clone()),
+        Err(Problem::DivideByZero)
+    );
+}
+
 #[test]
 fn matrix_exact_facts_expose_dyadic_and_shared_denominator_schedules() {
     let thirds = Matrix3::new([

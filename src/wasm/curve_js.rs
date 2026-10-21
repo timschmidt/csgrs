@@ -517,7 +517,7 @@ impl CurveRegionJs {
             &geometry_context(approximate_512),
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn sweep(
@@ -528,7 +528,7 @@ impl CurveRegionJs {
         let path = path.into_iter().map(|point| point.inner).collect::<Vec<_>>();
         curve::try_sweep(&self.inner, &path, &geometry_context(approximate_512))
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     #[wasm_bindgen(js_name = extrudeTwisted)]
@@ -553,7 +553,7 @@ impl CurveRegionJs {
             &geometry_context(approximate_512),
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn rectangle(width: f64, height: f64) -> Result<Self, JsValue> {

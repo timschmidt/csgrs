@@ -163,10 +163,23 @@ is ordinary strict-mode completion, the second milestone.
 15. **Strict completion of the shipped examples** - Strict mode refuses the
     repository's own examples. `boolean_operations` and `convex_hull` stop on
     the 32×16 sampled sphere, whose trigonometric coordinates make coplanar
-    quads unprovable zeros. `extrude` stops because `try_sweep` reports an
-    undecided frame-transport rotation as `InvalidArguments`, which also
-    violates P6. CI now runs every example through `scripts/run-examples.sh`,
-    with these three as tracked known failures. The generator-side coplanarity
+    quads unprovable zeros. `extrude` stopped because `try_sweep` reported
+    an undecided frame-transport rotation as `InvalidArguments`, which also
+    violated P6. The rotation was valid: its axis only lacked a structural
+    nonzero certificate. `Matrix4::rotation_between_unit_vectors` now builds
+    that minimal rotation algebraically, without normalizing the axis. The
+    sweep decides path reversal and the initial axis alignment under the
+    policy. It reports `PredicateUndecided` naming the sweep step, or the
+    scalar cause, instead of `InvalidArguments`. `extrude` completes under
+    `STRICT`, and a sweep with rational frames composes with a strict
+    Boolean ([`tests/sweep_frames.rs`](tests/sweep_frames.rs)). A one-off
+    comparison found identical exact rows and certainty for nine previously
+    supported fixture paths. Still open: the exact frames of a general
+    sampled path lie in a tower of nested square roots. A strict Boolean on
+    such a tube meets an exact zero it cannot prove; for the example's helix
+    it ends `PredicateUndecided` after 37 to 48 s in release builds. CI runs
+    every example through `scripts/run-examples.sh`; `boolean_operations`
+    and `convex_hull` remain tracked known failures. The generator-side coplanarity
     certificate in [`crates/hypermesh/FUTURE_WORK.md`](crates/hypermesh/FUTURE_WORK.md#convex-hulls-of-sampled-spheres)
     is the highest-value fix in the stack. Acceptance: the known-failure list
     is empty, and the sweep returns its true typed outcome.
