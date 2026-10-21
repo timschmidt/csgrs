@@ -86,11 +86,11 @@ fn measured(chain: Chain, allocations: Rc<RefCell<Vec<StepAllocation>>>) -> Chai
     }
 }
 
-/// The sampled 32 x 16 sphere, a known strict gap tracked by
-/// `crates/hypermesh/FUTURE_WORK.md`, drilled by a box.
+/// The sampled 32 x 16 sphere drilled by a box. It decides under `STRICT`
+/// through hyperreal's cyclotomic zero proof.
 fn sampled_sphere_cut() -> Chain {
     Chain {
-        name: "sampled 32x16 sphere cut (known gap)",
+        name: "sampled 32x16 sphere cut",
         steps: 1,
         initial: Box::new(|| solid::sphere(chains::r(10), 32, 16).unwrap()),
         step: Box::new(|_, body| {

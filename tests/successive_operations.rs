@@ -16,7 +16,7 @@
 mod chains;
 
 use chains::{BoxSet, Chain, Outcome, StepRecord, q, r};
-use csgrs::{GeometryCertainty, Real, errors::ValidationErrorKind, solid, solid::SolidExt};
+use csgrs::{GeometryCertainty, Real, solid, solid::SolidExt};
 use hyperreal::{CertifiedRealSign, Rational, RealSign};
 
 fn report(name: &str, records: &[StepRecord]) {
@@ -48,32 +48,6 @@ fn certified_chain(chain: &Chain, oracle: Option<&[BoxSet]>) -> Vec<StepRecord> 
             chain.name,
             record.step,
         );
-    }
-    records
-}
-
-/// Certified, manifold steps up to `step`, then a typed undecided predicate.
-fn undecided_at(chain: &Chain, step: usize, predicate: &str) -> Vec<StepRecord> {
-    let records = chains::run(chain, |_, _| {});
-    report(chain.name, &records);
-    assert_eq!(records.len(), step, "{}", chain.name);
-    for record in &records[..step - 1] {
-        assert_eq!(
-            (&record.outcome, record.closed_manifold),
-            (&Outcome::Certified, Some(true)),
-            "{} step {}",
-            chain.name,
-            record.step,
-        );
-    }
-    match &records[step - 1].outcome {
-        Outcome::Failed(ValidationErrorKind::Undecided, detail) => {
-            assert!(detail.contains(predicate), "{}: {detail}", chain.name)
-        },
-        other => panic!(
-            "{} step {step}: expected undecided {predicate}, got {other:?}",
-            chain.name
-        ),
     }
     records
 }
@@ -300,14 +274,10 @@ fn sqrt3_rotation_cuts_certify() {
 }
 
 #[test]
-fn ten_degree_rotation_cuts_are_undecided_at_the_second_cut() {
-    // Known gap: sin(pi/18) is cubic, so exact zeros among the second cut's
-    // derived coordinates have no structural proof under STRICT.
-    undecided_at(
-        &chains::degree_rotation_cuts(10, 3),
-        2,
-        "segment_intersection",
-    );
+fn ten_degree_rotation_cuts_stay_certified() {
+    // sin(pi/18) is cubic, so no radical tower decides the exact zeros among
+    // later cuts' derived coordinates; the cyclotomic zero proof does.
+    certified_chain(&chains::degree_rotation_cuts(10, 3), None);
 }
 
 #[test]
@@ -430,10 +400,10 @@ fn planar_region_operations_then_extrusion_and_cut() {
 fn long_symbolic_drills() {
     certified_chain(&chains::polygon_drills(6, 8), None);
     certified_chain(&chains::polygon_drills(8, 6), None);
-    // Known gaps: collinear-by-construction points on a drill wall need an
-    // exact zero proof that exceeds the strict normal-form budgets.
-    undecided_at(&chains::polygon_drills(16, 4), 4, "point on segment");
-    undecided_at(&chains::polygon_drills(32, 2), 2, "point on segment");
+    // Collinear-by-construction points on a drill wall are exact zeros that
+    // the cyclotomic zero proof decides.
+    certified_chain(&chains::polygon_drills(16, 4), None);
+    certified_chain(&chains::polygon_drills(32, 2), None);
 }
 
 #[test]

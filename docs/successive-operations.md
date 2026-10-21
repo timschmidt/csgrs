@@ -37,6 +37,14 @@ a temporary switch, since removed. Both runs publish identical rows except
 where noted. Raw output: SHA-256 `379d507f…0ca9` (with) and `323bc4c3…d5d`
 (without), not archived.
 
+**Update after `hyperreal`'s cyclotomic zero proof (2026-10-21).** The table
+below was measured before that proof. With it, the rows marked undecided now
+complete certified. The 16-gon (four drills), 32-gon (two drills), 10-degree
+(three cuts) chains and the sampled sphere's cuts are asserted as certified
+by `tests/successive_operations.rs` and `tests/sampled_sphere_strict.rs`. Their
+size and cost columns were not re-measured; the 10-degree-tilted 32-gon drill
+chain took 5.0, 14.8, 66.4 and 158.7 s for cuts 1 to 4 in one release run.
+
 | Chain | Steps | Last outcome | Triangles, first → last | Max denominator bits | Max graph depth | Last step ms | Last step MB allocated | Total MB allocated | Total MB without fixes |
 | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | square drills | 32 | certified | 48 → 2204 | 14 | 0 | 21 | 10.1 | 172 | 1,148 |
@@ -82,16 +90,20 @@ where noted. Raw output: SHA-256 `379d507f…0ca9` (with) and `323bc4c3…d5d`
   triangles to 9.8 GB and 8.9 s for 1,212. Most of that time goes to
   structural sign expansion
   ([hyperreal future work](../crates/hyperreal/FUTURE_WORK.md)). Exact zeros
-  among the deep values become undecided: 16-gon drills at drill 4, 32-gon
-  drills at drill 2, and 10-degree rotated cuts at the second cut.
+  among the deep values became undecided: 16-gon drills at drill 4, 32-gon
+  drills at drill 2, and 10-degree rotated cuts at the second cut. The
+  cyclotomic zero proof now decides them, but their cost still rises steeply
+  with each step.
 - **Interchange stays certified but drops retained facts.** STL and OBJ
   round trips between steps stay certified. Reimport marks missing source
   history, and STL also marks binary32 projection. The reimported mesh
   carries none of the arrangement's retained facts, so these chains allocate
   the same with and without the fixes below.
-- **Known gaps tracked elsewhere.** The sampled 32 x 16 sphere is undecided
-  on its first cut ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#convex-hulls-of-sampled-spheres)).
-  `try_sweep` is not exercised.
+- **Tracked elsewhere.** The sampled 32 x 16 sphere was undecided on its
+  first cut; it now completes
+  ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#convex-hulls-of-sampled-spheres)).
+  `try_sweep` is not exercised here; `tests/sweep_frames.rs` composes rational
+  sweeps with strict Booleans.
 
 ## Changes made for this record
 
