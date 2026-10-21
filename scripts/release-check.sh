@@ -47,6 +47,19 @@ trap 'rm -rf "${work}"' EXIT
 mkdir -p "${work}/packages"
 rm -rf "${target}/package"
 
+# Cargo treats a registry package version, and an unpacked .crate with its
+# fixed timestamps, as unchanged. Remove every earlier build of the released
+# crates so a cached build (or a restored CI cache) cannot stand in for the
+# current sources.
+for build in "${target}" "${target}/consumer" "${target}/ffi"; do
+  for profile in debug release; do
+    for crate in "${crates[@]}"; do
+      rm -rf "${build}/${profile}/.fingerprint/${crate}-"* "${build}/${profile}/build/${crate}-"* \
+        "${build}/${profile}/deps/lib${crate//-/_}-"* "${build}/${profile}/deps/${crate//-/_}-"*
+    done
+  done
+done
+
 package_args=()
 for crate in "${crates[@]}"; do package_args+=(-p "${crate}"); done
 # hypersdf's optional hypervoxel adapter needs hypervoxel to resolve while
