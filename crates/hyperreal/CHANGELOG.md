@@ -77,6 +77,11 @@
   `near_integer`, `try_atan2_until` and `try_compare_to_until`.
 - The `simple` expression language and `hyperreal` calculator binary accept
   the new elementary, probability and special functions.
+- `Real::representation_size` reports the stored size of a value as a
+  `RepresentationSize`: distinct expression-graph nodes, the longest path and
+  the largest stored rational in bits, visiting at most a caller limit of
+  nodes. It reads stored fields only and is meant for observing growth across
+  repeated operations, not as a cost bound.
 
 ### Changed
 
@@ -100,6 +105,11 @@
 
 ### Fixed
 
+- Parsing a decimal with more digits than fit a machine word left its
+  fraction unreduced without recording that, although stored parts are read
+  as reduced. Equal values then hashed differently and kept dyadic facts
+  hidden; the exact binary64 spelling of 10/3 stored a 170-bit denominator
+  instead of 52 bits. Such decimals now parse to reduced rationals.
 - `Real::to_f64_lossy` and `Real::to_f32_lossy` round exact rationals to the
   nearest value, ties to even, whatever their representation. A rational with
   operands wider than 53 bits, such as a long decimal parsed over a power of

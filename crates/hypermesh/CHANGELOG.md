@@ -28,6 +28,12 @@ grammar belong to adapters such as csgrs.
 - `BooleanMeshBatch::into_triangle_meshes` returns `UnboundedBooleanOutput`
   for results that contain the exterior (for example, from negation) instead
   of presenting them as finite solids.
+- Boolean results can be fed into further Booleans. An unedited result
+  retains that its triangles meet only in shared vertices or edges, so a later
+  Boolean does not test it against itself; the published rows are the same as
+  with the full self test. Crossings on an axis-aligned plane with rational
+  coefficients store that coordinate exactly, so a later cut in the same plane
+  decides even when the crossed edges have symbolic coordinates.
 - `minkowski_sum` computes the regularized Minkowski sum of bounded
   closed-PWN solids; `minkowski_sum_with_options` adds count limits and
   cooperative cancellation, which do not bound total work or memory.
