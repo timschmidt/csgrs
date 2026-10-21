@@ -106,8 +106,11 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   and file lengths and checksums of exported results change, mostly to much
   smaller outputs: sixteen square holes in a block give 332 triangles instead
   of 1,600. A result triangle that covers several coplanar input triangles
-  reports the least of them as its `hypermesh::TriangleSource`. Regenerate
-  pinned Boolean rows, counts and checksums.
+  reports the least of them as its `hypermesh::TriangleSource`. Points that
+  a later Boolean builds on such a result use the source face planes that the
+  result retains, so symbolic coordinates keep their values but can be stored
+  as smaller expressions. Regenerate pinned Boolean rows, counts and
+  checksums.
 
 ## Cargo features
 

@@ -435,7 +435,9 @@ try {
     // intoMesh consumes its result wrapper, so release that wrapper from owned.
     owned.pop();
     const mesh = keep(difference.intoMesh());
-    assert.equal(mesh.triangleCount(), 144);
+    // Block and hole corners only: two 20-vertex faces with one hole, four
+    // sides and sixteen walls.
+    assert.equal(mesh.triangleCount(), 80);
     for (const [x, y, z, expected] of [
       [1, 1, 2, true], [6, 6, 2, false], [-1, 6, 2, false],
     ]) {

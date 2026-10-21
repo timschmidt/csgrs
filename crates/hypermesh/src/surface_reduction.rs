@@ -36,8 +36,8 @@
 //!   whose boundary, the link of `v`, is a simple polygon star-shaped from
 //!   `v`; or
 //! - its facets have exactly two keys `P` and `Q` that change at exactly two
-//!   edges `v a` and `v b`, and the two edges are collinear by a retained
-//!   fact. The `P` facets then sweep exactly a half-turn from `a` to `b` in
+//!   edges `v a` and `v b`, and the two edges are collinear by a decided or
+//!   retained fact. The `P` facets then sweep exactly a half-turn from `a` to `b` in
 //!   their plane: a full turn would overlap the edges, which the embedded
 //!   complex excludes. So `v` lies strictly between `a` and `b`, and each side
 //!   is a simple polygon closed by the straight edge `a b`.
@@ -61,10 +61,12 @@
 //!    their shared edges and diagonals needed.
 //!
 //! Removability depends only on the cyclic order of keys around a vertex,
-//! which earlier removals preserve, so one pass of each kind is complete. A
-//! result reduced this way keeps only vertices where three plane classes
-//! meet, crease ends, contacts and non-manifold points, and its regions use
-//! the fewest triangles any triangulation of them with those vertices has.
+//! which earlier removals preserve, so one pass of each kind is complete. When
+//! the plane facts are available, a result reduced this way keeps only
+//! vertices where three plane classes meet, crease ends, contacts and
+//! non-manifold points, and its regions use the fewest triangles any
+//! triangulation of them with those vertices has. A missing fact only keeps a
+//! vertex.
 //!
 //! # Retained facts
 //!

@@ -47,8 +47,11 @@ grammar belong to adapters such as csgrs.
   crossings, so sampled-trigonometric drill chains keep constant coordinate
   size. A result triangle covering several coplanar input triangles names the
   least of them in `TriangleSource`. Certified results retain their plane
-  classes for the next Boolean. This changes published rows; see the csgrs
-  migration notes.
+  classes and each triangle's source support plane for the next Boolean, so
+  later points are built on the original face planes rather than on planes
+  through earlier derived vertices; a 10-degree-tilted 32-gon drill chain
+  keeps constant coordinate size and completes cuts that were undecided
+  without them. This changes published rows; see the csgrs migration notes.
 - `minkowski_sum` computes the regularized Minkowski sum of bounded
   closed-PWN solids; `minkowski_sum_with_options` adds count limits and
   cooperative cancellation, which do not bound total work or memory.
