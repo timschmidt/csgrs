@@ -3515,6 +3515,42 @@ mod tests {
     }
 
     #[test]
+    fn long_decimals_parse_to_reduced_rationals() {
+        // The exact decimal spelling of binary64 10/3 has 51 fractional digits,
+        // beyond the word-sized path. Its value is m / 2^51.
+        let spelling = "3.333333333333333481363069950020872056484222412109375";
+        let expected = Rational::from_bigint_fraction(
+            BigInt::from(7_505_999_378_950_827_u64),
+            BigUint::one() << 51_u32,
+        )
+        .unwrap();
+        let hash = |value: &Rational| {
+            use std::hash::{Hash, Hasher};
+            let mut state = std::collections::hash_map::DefaultHasher::new();
+            value.hash(&mut state);
+            state.finish()
+        };
+        for (text, value) in [
+            (spelling.to_owned(), expected.clone()),
+            (format!("-{spelling}"), -expected.clone()),
+            (format!("{spelling}000"), expected.clone()),
+            (format!("{spelling}e0"), expected.clone()),
+            (format!("0.{}e1", spelling.replace('.', "")), expected.clone()),
+        ] {
+            let parsed: Rational = text.parse().unwrap();
+            assert_eq!(parsed, value, "{text}");
+            // Stored parts are reduced, so equal values hash equally and
+            // retain their dyadic structure.
+            assert_eq!(parsed.denominator(), value.denominator(), "{text}");
+            assert_eq!(parsed.numerator(), value.numerator(), "{text}");
+            assert_eq!(hash(&parsed), hash(&value), "{text}");
+            assert!(parsed.is_dyadic(), "{text}");
+        }
+        let long_fraction: Rational = "0.125000000000000000000000000000000000000000".parse().unwrap();
+        assert_eq!(long_fraction.denominator(), &BigUint::from(8_u8));
+    }
+
+    #[test]
     fn scientific_notation_parses_as_an_exact_rational() {
         let cases = [
             ("1e3", "1000"),

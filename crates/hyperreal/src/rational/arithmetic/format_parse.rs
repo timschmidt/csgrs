@@ -439,7 +439,9 @@ impl std::str::FromStr for Rational {
             }
             let exponent = u32::try_from(d.len()).map_err(|_| Problem::Exhausted)?;
             let denominator = TEN.pow(exponent);
-            let fraction = Self::from_parts_raw(sign, numerator, denominator);
+            // Digits and 10^k may share factors. Stored parts must be reduced:
+            // equality fast paths, hashing and dyadic facts read them directly.
+            let fraction = Self::from_fraction_parts(sign, numerator, denominator).reduce();
             Ok(whole + fraction)
         } else {
             crate::trace_dispatch!("rational", "parse", "integer");
