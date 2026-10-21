@@ -93,6 +93,12 @@ name = "adapter_graphics_export"
 path = "benchmarks/rust/adapter_graphics_export.rs"
 harness = false
 
+[[bench]]
+name = "successive_operations"
+path = "benchmarks/rust/successive_operations.rs"
+harness = false
+required-features = ["curve", "stl-io", "obj-io"]
+
 [workspace]
 resolver = "3"
 members = ["crates/*"]
