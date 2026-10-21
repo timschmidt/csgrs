@@ -3370,20 +3370,26 @@ mod tests {
 
     #[test]
     fn unreduced_decimals_convert_by_value() {
-        // OBJ export writes 47/6's binary64 value as this exact decimal;
-        // parsing keeps it over 10^50, unreduced. Converting it back must
-        // give the same binary64 value, not its neighbour.
-        let decimal: Rational = "7.83333333333333303727386009995825588703155517578125"
-            .parse()
-            .unwrap();
+        // OBJ export writes 47/6's binary64 value as this exact decimal.
+        // Parsing reduces it; the same value stored over 10^50 must convert
+        // back to the same binary64 value too, not to its neighbour.
+        let digits = "7.83333333333333303727386009995825588703155517578125";
+        let parsed: Rational = digits.parse().unwrap();
+        let unreduced = Rational::from_parts_raw(
+            Plus,
+            digits.replace('.', "").parse().unwrap(),
+            BigUint::from(10_u8).pow(50),
+        );
         let expected = 47.0_f64 / 6.0;
         assert_eq!(expected.to_bits(), 0x401f_5555_5555_5555);
-        assert_eq!(decimal, Rational::try_from(expected).unwrap());
-        assert_eq!(decimal.to_f64_lossy().map(f64::to_bits), Some(expected.to_bits()));
-        assert_eq!(
-            crate::Real::new(decimal).to_f64_lossy().map(f64::to_bits),
-            Some(expected.to_bits())
-        );
+        for value in [parsed, unreduced] {
+            assert_eq!(value, Rational::try_from(expected).unwrap());
+            assert_eq!(value.to_f64_lossy().map(f64::to_bits), Some(expected.to_bits()));
+            assert_eq!(
+                crate::Real::new(value).to_f64_lossy().map(f64::to_bits),
+                Some(expected.to_bits())
+            );
+        }
     }
 
     #[test]
