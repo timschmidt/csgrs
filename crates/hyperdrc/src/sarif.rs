@@ -23,7 +23,7 @@ pub fn report_to_sarif(report: &Report) -> Value {
             "tool": {
                 "driver": {
                     "name": "hyperdrc",
-                    "informationUri": "https://github.com/timschmidt/hyperdrc",
+                    "informationUri": "https://github.com/timschmidt/csgrs/tree/main/crates/hyperdrc",
                     "rules": rules(report),
                 }
             },

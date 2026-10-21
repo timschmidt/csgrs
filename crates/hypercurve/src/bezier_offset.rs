@@ -7944,7 +7944,7 @@ impl BezierAlgebraicChordParameter2 {
             BezierAlgebraicChordParameterStorage2::Endpoint {
                 chord: parameter_chord,
                 at_end,
-            } if Arc::ptr_eq(&parameter_chord.data, &chord.data) && *at_end == !at_start
+            } if Arc::ptr_eq(&parameter_chord.data, &chord.data) && *at_end != at_start
         )
     }
 

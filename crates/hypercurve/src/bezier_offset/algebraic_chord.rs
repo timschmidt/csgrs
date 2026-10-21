@@ -1863,11 +1863,11 @@ impl BezierAlgebraicChord2 {
     /// Approximate equality is never allowed to create an axis certificate.
     pub(crate) fn certified_axis_direction(&self) -> Option<BezierAlgebraicChordAxisDirection2> {
         if !self.data.certified_axis_aligned
-            && !self
+            && self
                 .data
                 .source
                 .as_ref()
-                .is_some_and(|source| source.certified_axis_direction().is_some())
+                .is_none_or(|source| source.certified_axis_direction().is_none())
         {
             return None;
         }
