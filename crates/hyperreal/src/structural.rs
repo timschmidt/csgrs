@@ -235,6 +235,27 @@ impl CertifiedRealEquality {
     }
 }
 
+/// Size of the exact representation a value currently stores.
+///
+/// This measures growth across repeated constructions. It is not a canonical
+/// form or a cost bound: equal values can have different representations.
+/// Shared expression nodes count once. Reported by
+/// [`Real::representation_size`](crate::Real::representation_size).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RepresentationSize {
+    /// Distinct expression nodes. An exact rational has none; a recognized
+    /// closed form such as `sqrt(2)` or `sin(pi/16)` is one node.
+    pub nodes: usize,
+    /// Nodes on the longest path from the value to a leaf.
+    pub depth: usize,
+    /// Largest stored rational, as numerator plus denominator bit length.
+    /// Integer leaves count their magnitude bits.
+    pub max_rational_bits: u64,
+    /// False when the node limit stopped the traversal. The other fields are
+    /// then lower bounds.
+    pub complete: bool,
+}
+
 /// A known most-significant binary digit for a nonzero value.
 ///
 /// `exact_msd` is true when `msd` is known exactly. When it is false, `msd`

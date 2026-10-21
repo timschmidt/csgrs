@@ -7,7 +7,9 @@
 use crate::computable::approximation::{
     Approximation, LinearCombination3, NormalQuantileData, SharedConstant,
 };
-use crate::{MagnitudeBits, Rational, RealSign, RealStructuralFacts, ZeroKnowledge};
+use crate::{
+    MagnitudeBits, Rational, RealSign, RealStructuralFacts, RepresentationSize, ZeroKnowledge,
+};
 use core::cmp::Ordering;
 use num::Signed;
 use num::{BigInt, BigUint, bigint::Sign};
@@ -24,6 +26,7 @@ include!("node/bounds.rs");
 include!("node/representation.rs");
 include!("node/primitive_constructors.rs");
 include!("node/structural_analysis.rs");
+include!("node/representation_size.rs");
 include!("node/exp_relation.rs");
 include!("node/exp_relation_reuse.rs");
 include!("node/atan_pi_anchors.rs");

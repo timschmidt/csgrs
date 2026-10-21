@@ -100,6 +100,8 @@ const NO_GMP_ANALOG: &[&str] = &[
     "numerator_magnitude_gcd",
     "primitive_bigint_ratio",
     "primitive_integer_ratio",
+    // Stored expression-graph and rational size; a growth diagnostic.
+    "representation_size",
     "shared_denominator_kind",
     "sign_pattern",
     "signed_product_sum2_ordering_slice",

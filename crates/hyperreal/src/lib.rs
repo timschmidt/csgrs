@@ -24,8 +24,8 @@ pub use crate::structural::{
     ExpressionDegree, IdentityFacts, MagnitudeBits, OrderingFacts, PrimitiveFacts,
     PrimitiveFloatStatus, RationalFacts, RationalStorageClass, RealDetailedFacts,
     RealEqualityCertificate, RealOrderingCertificate, RealSign, RealSignCertificate,
-    RealStructuralFacts, StructuralComparison, StructuralKind, SymbolicDependencyMask,
-    SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
+    RealStructuralFacts, RepresentationSize, StructuralComparison, StructuralKind,
+    SymbolicDependencyMask, SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
 };
 
 mod trace;

@@ -4,8 +4,9 @@ use crate::{
     DomainStatus, ExpressionDegree, IdentityFacts, MagnitudeBits, OrderingFacts, PrimitiveFacts,
     PrimitiveFloatStatus, Problem, Rational, RationalFacts, RationalStorageClass,
     RealDetailedFacts, RealEqualityCertificate, RealOrderingCertificate, RealSign,
-    RealSignCertificate, RealStructuralFacts, StructuralComparison, StructuralKind,
-    SymbolicDependencyMask, SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
+    RealSignCertificate, RealStructuralFacts, RepresentationSize, StructuralComparison,
+    StructuralKind, SymbolicDependencyMask, SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus,
+    ZeroOneStatus,
 };
 use core::cmp::Ordering;
 use num::ToPrimitive;
@@ -21,6 +22,7 @@ include!("arithmetic/classification.rs");
 include!("arithmetic/canonical_constants.rs");
 include!("arithmetic/representation.rs");
 include!("arithmetic/facts.rs");
+include!("arithmetic/representation_size.rs");
 include!("arithmetic/pi_laurent_compaction.rs");
 include!("arithmetic/quadratic_tower_sign.rs");
 include!("arithmetic/linear_algebra.rs");

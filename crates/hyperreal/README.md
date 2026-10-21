@@ -54,6 +54,7 @@ or topology.
 | `Real` | Public exact-aware scalar combining a rational scale with symbolic or computable structure. |
 | `Computable` | Lazy expression graph evaluated to a requested binary precision. |
 | `RealStructuralFacts`, `RealDetailedFacts` | Conservative facts about sign, zero, magnitude, representation, and domain. |
+| `RepresentationSize` | Stored expression nodes, depth and rational bit length, for observing growth across repeated operations. |
 | `CertifiedRealSign`, `CertifiedRealOrdering`, `CertifiedRealEquality` | Results whose certainty and unresolved cases remain explicit. |
 | `RealExactSetFacts` | Set-level summaries used to select dyadic, integer-grid, signed-unit, or shared-denominator schedules. |
 | `Simple` | Optional small expression language and calculator surface. |
@@ -206,6 +207,7 @@ as a general-purpose special-function library.
 | --- | --- |
 | Cheap object-independent facts | `definitely_zero`, `definitely_one`, `zero_or_one`, `zero_one_or_minus_one`, `immediate_equality`, `immediate_sign`, `structural_facts`, `detailed_facts` |
 | Recover exact content | `exact_rational`, `exact_rational_ref`, `is_exact_dyadic_rational`, `exact_set_facts` |
+| Measure stored representation growth | `representation_size` |
 | Check an opposite structural scale | `is_structural_negation_of` |
 | Check a function domain | `domain_facts`, `reciprocal_domain`, `sqrt_domain`, `log_domain`, `asin_acos_domain`, `acosh_domain`, `atanh_domain` |
 | Refine a sign | `zero_status`, `refine_sign_until`, `certified_sign_until` |
