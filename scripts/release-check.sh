@@ -153,8 +153,11 @@ echo "== building the consumer against packaged sources"
 python3 - "${consumer}" "${root}" "${crates[@]}" <<'EOF'
 import json, os, subprocess, sys
 consumer, root, crates = sys.argv[1], os.path.realpath(sys.argv[2]), set(sys.argv[3:])
+# The lock file the build just wrote fixes the resolution. Metadata reads
+# every locked package's manifest, including packages for other platforms
+# that the build never downloaded, so it may fetch them.
 meta = json.loads(subprocess.check_output(
-    ["cargo", "metadata", "--format-version", "1", "--offline"], cwd=consumer))
+    ["cargo", "metadata", "--format-version", "1", "--locked"], cwd=consumer))
 packages = os.path.realpath(os.path.join(consumer, "..", "packages"))
 for package in meta["packages"]:
     path = os.path.realpath(package["manifest_path"])
