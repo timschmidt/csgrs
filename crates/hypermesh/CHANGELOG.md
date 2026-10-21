@@ -39,8 +39,9 @@ grammar belong to adapters such as csgrs.
   coplanarity the arrangement already decided or that an earlier result
   retained, without new plane tests. A vertex inside one class, or on a
   straight crease between two classes, is removed and the space around it is
-  retriangulated by Hypertri under the operation's policy; corners, crease
-  ends and non-manifold contacts stay. Represented sets, closure, orientation,
+  retriangulated by Hypertri under strict policy, whatever the operation's
+  policy; a vertex whose polygon strict policy cannot triangulate stays, as
+  do corners, crease ends and non-manifold contacts. Represented sets, closure, orientation,
   the embedded-complex fact and certainty are unchanged, and no vertex is
   added. Sixteen square holes through a block give 332 triangles instead of
   1,600, and later cuts no longer interpolate new vertices from earlier

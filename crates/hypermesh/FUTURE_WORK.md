@@ -42,7 +42,9 @@ added. A vertex whose facets form one manifold fan is removed when they all
 lie in one class, or when they lie in two classes that change at exactly two
 edges known to be collinear. The embedded-complex fact then forces each side
 to sweep a half-turn, so the vertex lies strictly between its two crease
-neighbours. Hypertri retriangulates each side under the operation policy. A
+neighbours. Hypertri retriangulates each side under strict policy, whatever
+the operation policy, and a vertex whose polygon strict policy cannot
+triangulate stays. A
 first pass keys on source faces and restores every source triangle the
 result keeps whole, so a cut that leaves the set unchanged reproduces its
 input rows; a second pass keys on plane classes. The module documentation

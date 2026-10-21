@@ -120,7 +120,9 @@ reduction itself.
   join plane classes from coplanarity the arrangement already decided or that
   an earlier result retained; vertices inside one class, or on a straight
   crease between two distinct planes, are removed and the space around them
-  is retriangulated by Hypertri under the operation policy. The argument and
+  is retriangulated by Hypertri under strict policy; a vertex whose polygon
+  strict policy cannot triangulate stays, so reduction never changes a
+  result's certainty or success. The argument and
   the two removal passes are documented in `surface_reduction.rs`. This is a
   P27 migration of published rows; see "Boolean output rows" in
   [`MIGRATIONS.md`](MIGRATIONS.md).
