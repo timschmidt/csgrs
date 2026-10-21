@@ -10,9 +10,13 @@ authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hyperlimit"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["exact", "geometric", "predicates", "boundary", "orientation"]
 categories = ["mathematics", "games", "simulation"]
+
+[package.metadata.docs.rs]
+# Document every feature-gated API.
+all-features = true
 
 [dependencies]
 hyperreal = { version = "0.14.0", path = "../hyperreal" }

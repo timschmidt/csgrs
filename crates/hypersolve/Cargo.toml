@@ -9,9 +9,13 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hypersolve"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["solver", "constraints", "hyperreal", "numerics", "cad"]
 categories = ["mathematics", "science", "algorithms"]
+
+[package.metadata.docs.rs]
+# Document every feature-gated API.
+all-features = true
 
 [dependencies]
 # Cargo uses these paths in the workspace and retains the version requirements

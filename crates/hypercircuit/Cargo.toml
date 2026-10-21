@@ -6,11 +6,15 @@ rust-version = "1.95.0"
 description = "Exact-aware circuit MNA carriers and adapter reports for the Hyper ecosystem"
 license = "Apache-2.0"
 readme = "README.md"
-include = ["/src/**", "/schemas/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/schemas/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hypercircuit"
 keywords = ["circuits", "mna", "simulation", "hyperreal", "electronics"]
 categories = ["science", "simulation", "mathematics"]
+
+[package.metadata.docs.rs]
+# Document every feature-gated API.
+all-features = true
 
 [features]
 default = []

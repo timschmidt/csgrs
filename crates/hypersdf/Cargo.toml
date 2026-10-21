@@ -9,9 +9,13 @@ license = "Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hypersdf"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["sdf", "implicit", "geometry", "exact", "voxel"]
 categories = ["mathematics", "graphics", "algorithms"]
+
+[package.metadata.docs.rs]
+# Document every feature-gated API.
+all-features = true
 
 [dependencies]
 fast-surface-nets = "0.2.1"

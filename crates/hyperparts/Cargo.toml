@@ -6,11 +6,15 @@ rust-version = "1.95.0"
 description = "Source-attributed part knowledge graph carriers for the Hyper ecosystem"
 license = "Apache-2.0"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hyperparts"
 keywords = ["parts", "bom", "knowledge-graph", "hyperreal", "cad"]
 categories = ["data-structures", "science", "development-tools"]
+
+[package.metadata.docs.rs]
+# Document every feature-gated API.
+all-features = true
 
 [features]
 default = []

@@ -9,9 +9,13 @@ license = "MIT"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hypermesh"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["mesh", "boolean", "geometry", "exact", "csg"]
 categories = ["mathematics", "graphics", "algorithms"]
+
+[package.metadata.docs.rs]
+# Document every feature-gated API.
+all-features = true
 
 [dependencies]
 hyperlattice = { version = "0.7.0", path = "../hyperlattice" }

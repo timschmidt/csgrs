@@ -9,9 +9,13 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hypertri"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["triangulation", "geometry", "hyperreal", "predicates"]
 categories = ["mathematics", "graphics", "algorithms"]
+
+[package.metadata.docs.rs]
+# Document every feature-gated API.
+all-features = true
 
 [features]
 default = []

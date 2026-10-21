@@ -8,9 +8,13 @@ version = "0.14.0"
 edition = "2024"
 rust-version = "1.95.0"
 readme = "README.md"
-include = ["/src/**", "/tests/support/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/tests/support/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["real", "rational", "arithmetic", "exact", "math"]
 categories = ["mathematics", "science", "data-structures"]
+
+[package.metadata.docs.rs]
+# Document every feature-gated API.
+all-features = true
 
 [features]
 default = []

@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hypercurve"
 readme = "README.md"
-include = ["/src/**", "/tests/support/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/tests/support/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["cad", "curves", "geometry", "hyperreal", "topology"]
 categories = ["mathematics", "graphics", "algorithms"]
 

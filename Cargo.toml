@@ -11,7 +11,7 @@ license = "MIT"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/csgrs"
 readme = "readme.md"
-include = ["/src/**", "/readme.md", "/LICENSE"]
+include = ["/src/**", "/readme.md", "/CHANGELOG.md", "/LICENSE"]
 
 keywords = ["geometry", "physics", "csg", "slicing", "offsetting"]
 categories = ["game-development", "graphics", "mathematics", "simulation", "wasm"]

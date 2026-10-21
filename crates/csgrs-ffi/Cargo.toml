@@ -9,7 +9,7 @@ license = "MIT"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/csgrs-ffi"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/include/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 
 [lib]
 crate-type = ["cdylib", "staticlib", "rlib"]

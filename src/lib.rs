@@ -14,9 +14,12 @@
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Example CSG output", "docs/csg.png"))]
 //! # Features
 //! #### Default
+//! - **curve**: native curve grammar and curve-to-solid operations
 //! - [**stl-io**](https://en.wikipedia.org/wiki/STL_(file_format)): `.stl` import/export
 //! - [**dxf-io**](https://en.wikipedia.org/wiki/AutoCAD_DXF): `.dxf` import/export
 //! - **obj-io**: Wavefront `.obj` mesh import/export
+//! - **ply-io**: PLY mesh export
+//! - **amf-io**: AMF mesh export
 //! - **gltf-io**: self-contained glTF/GLB triangle-scene import and glTF export
 //! - **vrml-io**: VRML 2.0 `.wrl` indexed-face scene import
 //! - **gerber-io**: Gerber/RS-274X import/export for native filled and open curves
@@ -34,6 +37,9 @@
 //!   feature-gated
 //! - **svg-io**: native curve import/export for SVG
 //! - **bevymesh**: conversion from native triangle geometry to Bevy
+//! - **attributed**: aligned face-metadata and authored-normal sidecar
+//! - **wasm**: WebAssembly/browser wrappers
+//! - **dispatch-trace**: computation-path evidence for tests and benchmarks
 
 #![forbid(unsafe_code)]
 #![deny(unused)]

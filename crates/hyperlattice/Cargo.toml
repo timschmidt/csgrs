@@ -9,9 +9,13 @@ license = "MIT"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hyperlattice"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["math", "blas", "matrices", "vectors", "linear-algebra"]
 categories = ["mathematics"]
+
+[package.metadata.docs.rs]
+# Document every feature-gated API.
+all-features = true
 
 [dependencies]
 hyperreal = { version = "0.14.0", path = "../hyperreal" }

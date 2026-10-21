@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hypergraphics"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/LICENSE*"]
+include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["graphics", "renderer", "hyperreal", "geometry", "opengl"]
 categories = ["graphics", "rendering", "mathematics"]
 
