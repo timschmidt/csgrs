@@ -22,7 +22,7 @@ must update them.
 
 ```sh
 cargo test --test successive_operations              # default chains, 13 s in debug
-cargo test --release --test successive_operations -- --ignored   # long chains, about 2 min
+cargo test --release --test successive_operations -- --ignored   # long chains, about 75 s
 cargo bench --bench successive_operations            # table below, with allocation
 ```
 
