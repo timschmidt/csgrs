@@ -424,6 +424,64 @@ fn symbolic_reduction_is_independent_of_cached_approximations() {
     assert_eq!((first.triangles.len(), first.positions.len()), (40, 20));
 }
 
+fn max_coordinate_depth(mesh: &TriangleMesh) -> usize {
+    mesh.positions
+        .iter()
+        .flat_map(|point| [&point.x, &point.y, &point.z])
+        .map(|value| {
+            let size = value.representation_size(1 << 16);
+            assert!(size.complete);
+            size.depth
+        })
+        .max()
+        .unwrap_or(0)
+}
+
+#[test]
+fn tilted_symbolic_drills_keep_constant_coordinate_size() {
+    // Hexagonal drills tilted about x by the rotation with cosine 12/13:
+    // every hole corner is a drill edge crossing a block face plane, and
+    // every coordinate mixes sqrt(3). The merged faces keep the block's own
+    // planes, so a later corner is not built on a plane through earlier
+    // corners.
+    let tilted = |cx: i64| {
+        let drill = hexagonal_drill(0, 0);
+        let [c, s] = [q(12, 13), q(5, 13)];
+        let positions = drill
+            .positions
+            .iter()
+            .map(|point| {
+                let z = &point.z + &r(1);
+                Point3::new(
+                    &point.x + &r(cx),
+                    &(&c * &point.y - &s * &z) + &r(4),
+                    &(&s * &point.y + &c * &z) - &r(1),
+                )
+            })
+            .collect::<Vec<_>>();
+        TriangleMesh::new(positions, drill.triangles.to_vec())
+    };
+    // No drill corner lies on the block's diagonals, where the arrangement
+    // would build it from the crossed edge instead.
+    let mut body = integer_box([0, 0, 0], [20, 9, 4]);
+    let mut depths = Vec::new();
+    for k in 0..4 {
+        body = operation(&body, &tilted(3 + 4 * k), BooleanOp::Difference);
+        depths.push(max_coordinate_depth(&body));
+        let evidence = boolean_mesh_closure_evidence(&as_result(&body));
+        assert!(evidence.is_closed(), "{evidence:?}");
+        let k = k as usize + 1;
+        assert_eq!(
+            (body.triangles.len(), body.positions.len()),
+            (12 + 28 * k, 8 + 12 * k)
+        );
+    }
+    assert!(
+        depths.windows(2).all(|pair| pair[0] == pair[1]),
+        "{depths:?}"
+    );
+}
+
 #[test]
 fn reduced_outputs_record_plane_provenance() {
     // Every output triangle names a source triangle in its own plane. The
