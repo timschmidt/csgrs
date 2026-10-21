@@ -23,56 +23,91 @@ Strict hulls and Booleans of csgrs `solid::sphere` meshes used to stop on exact 
 Found by `tests/successive_operations.rs` (repository root); measurements in
 [`docs/successive-operations.md`](../../docs/successive-operations.md).
 
-### Corefinement vertices accumulate
+### Kept: results keep only the vertices their set needs
 
-Each Boolean triangulates every source triangle separately and keeps every
-arrangement vertex. A later cutter crosses the long fan edges left on earlier
-coplanar faces, so the vertices where it meets them stay in the output. They
-are not intersections of three source planes and the exact set does not need
-them. Output size then grows faster than the set's complexity:
+Each Boolean used to triangulate every source triangle separately and keep
+every arrangement vertex, so a later cutter crossed the fan edges left on
+earlier coplanar faces and those crossings stayed. Sixteen square drills left
+1,600 triangles where 12 + 20k = 332 suffice, 3-4-5 rotated cuts grew
+quadratically, and two crossing bars on integer inputs left 54 Steiner
+vertices such as (23/3, 4, 8).
 
-- 16 square (4-gon) drills: 1,600 triangles, against 12 + 20k = 332 needed.
-- 3-4-5 rotated cube cuts: per-step increments 30, 50, 70, …, 150, so the
-  triangle count grows quadratically.
-- Two crossing bars with integer inputs give 86 vertices, 52 of them Steiner
-  points such as (23/3, 4, 8) in the coincident faces at y = 4.
+Since 2026-10-21 `surface_reduction` reduces every certified selection after
+output certification. Facets join plane classes only through facts the
+arrangement already holds: the source face itself, pairwise classifications
+that found two faces coplanar, and plane classes retained on an unedited
+earlier result. Pairwise classifications with non-parallel supports, or
+retained facts, mark two classes as distinct planes. No plane predicate is
+added. A vertex whose facets form one manifold fan is removed when they all
+lie in one class, or when they lie in two classes that change at exactly two
+edges known to be collinear. The embedded-complex fact then forces each side
+to sweep a half-turn, so the vertex lies strictly between its two crease
+neighbours. Hypertri retriangulates each side under the operation policy. A
+first pass keys on source faces and restores every source triangle the
+result keeps whole, so a cut that leaves the set unchanged reproduces its
+input rows; a second pass keys on plane classes. The module documentation
+gives the argument in full.
 
-Repeating a cut that leaves the set unchanged is a fixed point, so the growth
-comes from new cuts crossing old fan edges. **Options:** corefine coplanar
-regions of one input plane as polygons, not per triangle; or, after the
-Boolean, merge facets that share a source plane and remove vertices whose
-incident facets lie in one plane, or in two planes along their crease, which
-needs no arithmetic. Either changes output rows, so it is a serialization
-migration under P27.
+Certified results also retain each triangle's plane class, the distinct-plane
+facts between classes, and the exact support plane of the source face it was
+cut from. A reduced triangle spans earlier derived vertices, so the plane
+through its own vertices, rebuilt by the next Boolean, deepened with every
+generation: a 10-degree-tilted 32-gon drill chain became undecided at its
+fourth cut. With the retained plane, every hole corner is built on the block's
+own face plane and that chain keeps coordinate depth 15.
 
-### Derived coordinates deepen with each generation
+The represented set, closure, orientation, certainty and embedded-complex
+fact are unchanged, and the remaining vertices keep their exact values.
+Square and 4-gon drill chains now have exactly 12 + 20k triangles, crossing
+bars keep only integer corners, rotated cuts add 12 triangles per cut, and
+sampled-polygon drill chains keep coordinate depth 4 or 5 instead of reaching
+58. Over the twenty harness chains measured before and after, allocation fell
+from 113.8 GB to 33.7 GB. Changed rows are a P27 migration, recorded in
+[`docs/MIGRATIONS.md`](../../docs/MIGRATIONS.md).
 
-The extra vertices above are interpolated from earlier derived vertices.
-For symbolic inputs their expression graphs deepen at every step. For 16-gon
-drills the maximum depth goes 9, 19, 30; for 6-gon drills it reaches 58
-after eight. Exact zeros among such values exceeded the strict normal-form
-budgets: 16-gon drills were undecided at drill 4 and 32-gon drills at drill 2
-(`surface arrangement point on segment`), and cubes rotated by 10 degrees at
-the second cut (`segment_intersection`; `sin(pi/18)` is cubic, so no radical
-tower decides it). `hyperreal`'s cyclotomic zero proof now decides all of
-them; the straight and 10-degree-tilted 16- and 32-gon chains complete four
-cuts certified. The cost still rises steeply: the tilted 32-gon chain takes
-5.0, 14.8, 66.4 and 158.7 s for cuts 1 to 4 in a release build. Points
-constructed on one drill-wall plane and the face plane are collinear by
-construction, but `corefine_face` and `hypertri`'s constraint validation
-still prove it numerically.
+### Coplanar unions along a long crease concentrate fans
 
-Without the growth above, most of these points would not exist. Two further
-fixes would apply anyway. Incidence can be certified from construction
-identity before numeric tests run. A point can be represented by its defining
-planes, so that its coordinates do not depend on previous outputs.
+The fewest triangles for a long planar strip whose one side is a single
+straight edge include a fan from that edge's endpoints: every triangle near
+an end shares the end vertex. Unions of translated icosahedra build four such
+strips, because four face planes contain the translation direction. Each new
+icosahedron's coplanar face then overlaps every fan triangle at the growing
+end, and its corefinement handles constraints from all of them. This chain
+allocated 7.9 GB over six unions against 6.5 GB before reduction, although its
+output is 164 triangles instead of 276, and its per-step cost still grows with
+the number of unions. It is the only corpus chain whose cost grew beyond the
+reduction's own bookkeeping.
+
+Reduction fans each polygon around its earliest-constructed vertex, which puts
+the fans at the old end of these strips. Against starting the ring at that
+vertex, which fans around its predecessor, this cut the chain's allocation by
+22% and the corpus total by 6% without changing any chain's output size
+(measured before support planes were retained). It does not remove the cost.
+**Options:** overlay a new coplanar face against the retained plane-class
+region as one polygon instead of each of its triangles, which is the
+arrangement-side alternative to output reduction; or keep a bounded number of
+collinear vertices on long creases where the set does not need them, which
+gives up minimal size.
+
+### Derived coordinates still deepen where cuts overlap
+
+Cube cuts rotated by 30, 45 and 10 degrees overlap the previous cut, so their
+new corners are true intersections with earlier walls, and the crossed wall
+edges run between earlier derived corners. Their depth still grows (to 29, 31
+and 38), although less than before (53, 41 and 39), and their allocation fell
+3.6 to 17 times. Points constructed on one drill-wall plane and the face plane
+are collinear by construction, but `corefine_face` and Hypertri's constraint
+validation still prove it numerically. **Options:** certify incidence from
+construction identity before numeric tests run; represent a point by its
+defining planes, so that its coordinates do not depend on previous outputs.
 
 ### Kept: embedded-complex evidence and exact axis-plane coordinates
 
-Boolean outputs now retain that their triangles meet only in shared vertices
+Boolean outputs retain that their triangles meet only in shared vertices
 or edges. A later arrangement then records radial separation for shared
 reversed edges from identity and skips the remaining self tests on that
 operand. On ten corpus chains this published identical rows to the full self
-test. Crossings on an axis-aligned rational plane now take the plane's exact
-coordinate instead of an interpolated expression. Before that, a revolved ring
-cut twice in the same plane was undecided at the second cut.
+test; with output reduction a hypermesh test still pins the two paths to
+identical rows. Crossings on an axis-aligned rational plane take the plane's
+exact coordinate instead of an interpolated expression. Before that, a
+revolved ring cut twice in the same plane was undecided at the second cut.

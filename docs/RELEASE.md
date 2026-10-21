@@ -54,16 +54,16 @@ Every repository example completes under `STRICT`, and every result in the
 certified and closed. These limits remain, each tracked where it will be
 fixed:
 
-- **Output growth.** Each Boolean keeps every corefinement vertex, so
-  repeated cuts leave Steiner vertices on coplanar faces and output grows
-  faster than the represented set; 16 square drills give 1,600 triangles
-  where 332 suffice ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#corefinement-vertices-accumulate)).
-- **Cost of symbolic chains.** On sampled-trigonometric geometry, derived
-  coordinates deepen each step and per-step cost rises far faster than
-  output. Eight hexagonal drills reach 9.8 GB allocated in the last step, and
-  a 10-degree-tilted 32-gon drill chain takes 159 s for its fourth cut in a
-  release build ([hypermesh](../crates/hypermesh/FUTURE_WORK.md#derived-coordinates-deepen-with-each-generation),
-  [hyperreal](../crates/hyperreal/FUTURE_WORK.md)).
+- **Cost of overlapping and coplanar chains.** Boolean results keep only the
+  vertices their set needs, so drill chains stay at their minimal size and,
+  on sampled-trigonometric geometry, at constant coordinate size. Cuts that
+  overlap earlier symbolic cuts still build corners from earlier derived
+  vertices, so their coordinates deepen more slowly but still grow. Unions of
+  translated icosahedra merge coplanar strips whose minimal triangulation fans
+  out at the growing end; that chain allocates 7.9 GB over six unions, more
+  than the 6.5 GB it allocated before outputs were reduced
+  ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#successive-operations),
+  [measurements](successive-operations.md)).
 - **Decidable domain.** `STRICT` decides exact zeros over rationals,
   `sin`/`cos` of rational multiples of pi, and sqrt(2), sqrt(3), sqrt(6),
   within the cyclotomic proof's budgets. Other transcendental or radical

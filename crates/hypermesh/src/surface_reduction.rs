@@ -780,7 +780,8 @@ fn apply_removal(
         // precede later ones, so long fan edges gather at older geometry and
         // the newest geometry keeps short edges. On the successive-operation
         // corpus this allocated 6% less in total than starting at the least
-        // vertex, and 22% less on coplanar icosahedron unions.
+        // vertex, and 22% less on coplanar icosahedron unions, before support
+        // planes were retained.
         let reverse = template.source.orientation < 0;
         let mut canonical = boundary.clone();
         if reverse {

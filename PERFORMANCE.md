@@ -3,6 +3,10 @@
 These measurements retain only changes that preserve exact rows, output size,
 and benchmark checksums. They were collected on 15, 17, 18, 20, and 28 July 2026 with
 the release benchmark profile. Times are medians after two warmup batches.
+The Boolean output reduction of 21 October 2026 is a recorded migration, not a
+performance change, and changes Boolean output rows, sizes and checksums; the
+Boolean rows below describe the revisions they were measured on. Its
+measurements are in [docs/successive-operations.md](docs/successive-operations.md).
 
 | Workload | Before | After | Change | Preserved evidence |
 |---|---:|---:|---:|---|
