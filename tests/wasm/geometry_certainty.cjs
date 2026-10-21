@@ -156,12 +156,19 @@ try {
       assert.equal(result.reason, undefined);
     }
   }
-  // A nonzero-coordinate boundary still needs an unproved unit-norm relation.
-  // Its approximate terminal must not satisfy a subsequent strict request.
-  assert.throws(() => restoredSquare.containsXY(1, 0.5), (error) =>
+  // The exact cyclotomic zero proof certifies the nonzero-coordinate boundary
+  // of a whole-degree rotation and its inverse.
+  const exactBoundary = keep(restoredSquare.containsXYWithContext(1, 0.5, false));
+  assert.equal(exactBoundary.status, Status.Boundary);
+  assert.equal(exactBoundary.certainty, Certainty.Certified);
+  // A 13.1-degree angle is a binary64 value whose cyclotomic field is far
+  // beyond the proof's budget, so its unit-norm relation stays unproved. The
+  // approximate terminal must not satisfy a subsequent strict request.
+  const opaqueSquare = keep(keep(square.rotate(13.1)).rotate(-13.1));
+  assert.throws(() => opaqueSquare.containsXY(1, 0.5), (error) =>
     error instanceof Error && error.name === "GeometryError" && error.code === "undecided");
   for (const approximate of [false, true, false]) {
-    const result = keep(restoredSquare.containsXYWithContext(1, 0.5, approximate));
+    const result = keep(opaqueSquare.containsXYWithContext(1, 0.5, approximate));
     assert.equal(result.value, undefined);
     assert.equal(result.status, approximate ? Status.Boundary : Status.Uncertain);
     assert.equal(result.certainty, approximate ? Certainty.Approximate512Consumed : undefined);
@@ -396,11 +403,18 @@ try {
     assert.equal(result.certainty, Certainty.Certified);
     assert.equal(result.reason, undefined);
   }
-  // Its upper coordinate still requires the unresolved trigonometric identity.
-  // Keep strict uncertainty and qualified approximate evidence observable.
+  // Its upper coordinate needs the rotation's trigonometric identity, which the
+  // cyclotomic zero proof certifies for whole degrees.
   const unresolvedSurfacePoint = keep(new Point3Js(1, 0.5, 0.5));
+  const exactSurface = keep(restoredCube.containsPointWithContext(unresolvedSurfacePoint, false));
+  assert.equal(exactSurface.status, Status.Decided);
+  assert.equal(exactSurface.value, false);
+  assert.equal(exactSurface.certainty, Certainty.Certified);
+  // Beyond the proof's budget (a 13.1-degree binary64 angle), keep strict
+  // uncertainty and qualified approximate evidence observable.
+  const opaqueCube = keep(keep(cube.rotate(0, 0, 13.1)).rotate(0, 0, -13.1));
   for (const approximate of [false, true, false]) {
-    const result = keep(restoredCube.containsPointWithContext(unresolvedSurfacePoint, approximate));
+    const result = keep(opaqueCube.containsPointWithContext(unresolvedSurfacePoint, approximate));
     assert.equal(result.status, approximate ? Status.Decided : Status.Unknown);
     assert.equal(result.value, approximate ? false : undefined);
     assert.equal(result.certainty, approximate ? Certainty.Approximate512Consumed : undefined);

@@ -12,12 +12,15 @@ func TestBooleanFailureCategoryAndRecovery(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer cube.Free()
-	rotated, err := cube.RotateF64(0, 0, 13)
+	// 13.1 degrees as binary64 lies in a cyclotomic field far beyond the exact
+	// zero proof's budget, so the restored cube's coincident faces stay
+	// undecided under STRICT. Whole degrees are decided.
+	rotated, err := cube.RotateF64(0, 0, 13.1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer rotated.Free()
-	restored, err := rotated.RotateF64(0, 0, -13)
+	restored, err := rotated.RotateF64(0, 0, -13.1)
 	if err != nil {
 		t.Fatal(err)
 	}
