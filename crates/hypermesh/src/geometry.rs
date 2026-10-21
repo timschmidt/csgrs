@@ -72,6 +72,22 @@ impl Plane {
         Self::new(normal, -value)
     }
 
+    /// Axis whose coordinate this plane fixes exactly: the other two normal
+    /// components are exact zeros and the remaining one and the offset are
+    /// exact rationals. Other planes return `None`.
+    fn exact_axis(&self) -> Option<usize> {
+        let normal = [&self.normal.x, &self.normal.y, &self.normal.z]
+            .map(|component| component.exact_rational_ref());
+        let is_zero = |component: Option<&Rational>| component.is_some_and(Rational::is_zero);
+        let axis = match normal.map(is_zero) {
+            [false, true, true] => 0,
+            [true, false, true] => 1,
+            [true, true, false] => 2,
+            _ => return None,
+        };
+        (normal[axis].is_some() && self.offset.exact_rational_ref().is_some()).then_some(axis)
+    }
+
     /// Constructs the oriented plane with `normal` through `point`.
     ///
     /// Wide exact-dyadic normals are projective coordinates: one positive
@@ -533,6 +549,26 @@ pub(crate) fn axis_mut(point: &mut Point3, axis: usize) -> &mut Real {
         1 => &mut point.y,
         2 => &mut point.z,
         _ => panic!("axis must be 0, 1, or 2"),
+    }
+}
+
+/// Replace a derived coordinate of a point constructed on `plane` with the
+/// exact value that an axis-aligned rational plane fixes.
+///
+/// The caller must have constructed `point` on `plane`; the replacement is
+/// then the same value. A derived expression would carry its operands into
+/// every later predicate, and an exact zero such as its difference from the
+/// plane constant may have no proof. Coordinates that are already exact
+/// rationals are kept.
+pub(crate) fn retain_exact_axis_plane_coordinate(point: &mut Point3, plane: &Plane) {
+    let Some(axis) = plane.exact_axis() else {
+        return;
+    };
+    let derived = axis_mut(point, axis);
+    if derived.exact_rational_ref().is_none()
+        && let Ok(coordinate) = -&plane.offset / axis_ref(&plane.normal, axis)
+    {
+        *derived = coordinate;
     }
 }
 

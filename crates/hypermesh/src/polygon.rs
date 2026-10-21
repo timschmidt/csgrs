@@ -7,7 +7,8 @@ use std::sync::{Arc, OnceLock};
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
-    Classification, Plane, affine_projective_point_decision, axis_ref, cross_arrays, sub_points,
+    Classification, Plane, affine_projective_point_decision, axis_ref, cross_arrays,
+    retain_exact_axis_plane_coordinate, sub_points,
 };
 use crate::predicate::{
     Point3PredicateQuery, classify_projective_point_decision, compare_real_decision,
@@ -1038,7 +1039,16 @@ impl ConvexPolygon {
         decisions: &DecisionContext,
         i: usize,
     ) -> HypermeshResult<Point3> {
-        affine_projective_point_decision(decisions, &self.vertex(i))
+        let mut point = affine_projective_point_decision(decisions, &self.vertex(i))?;
+        let edges = self.edge_planes();
+        for plane in [
+            self.support_plane(),
+            &edges[i],
+            &edges[(i + 1) % self.vertex_count()],
+        ] {
+            retain_exact_axis_plane_coordinate(&mut point, plane);
+        }
+        Ok(point)
     }
 
     /// Computes all affine vertices.

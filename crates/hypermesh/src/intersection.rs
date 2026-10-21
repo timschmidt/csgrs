@@ -8,7 +8,9 @@ use hyperreal::{RationalLinearForm4Filter, RationalLinearForm4Query};
 use crate::bvh::ExactBvh;
 use crate::context::{DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Classification, Plane, compare_real_decision};
+use crate::geometry::{
+    Classification, Plane, compare_real_decision, retain_exact_axis_plane_coordinate,
+};
 use crate::point_interner::PointInterner;
 use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon};
 use crate::predicate::{
@@ -142,6 +144,7 @@ enum DeferredSegmentPlaneRatio<'a> {
         coordinate_numerator: Real,
         denominator: Real,
         parameter_numerator: Real,
+        plane: &'a Plane,
     },
     Lazy {
         plane: &'a Plane,
@@ -2915,19 +2918,40 @@ fn materialize_deferred_point(
         DeferredIntersectionGeometry::Affine { point, .. } => (*point).clone(),
         DeferredIntersectionGeometry::SegmentPlane {
             ratio, start, end, ..
-        } => match ratio {
-            DeferredSegmentPlaneRatio::Lazy { plane, .. } => {
-                crate::trace_dispatch!("deferred-segment-plane", "materialized");
-                let (parameter_numerator, denominator) =
-                    exact_segment_plane_parameter_ratio(plane, start, end);
-                intersect_segment_plane_from_ratio(start, end, &parameter_numerator, &denominator)?
-            }
-            DeferredSegmentPlaneRatio::Exact {
-                parameter_numerator,
-                denominator,
-                ..
-            } => intersect_segment_plane_from_ratio(start, end, parameter_numerator, denominator)?,
-        },
+        } => {
+            let (mut point, plane) = match ratio {
+                DeferredSegmentPlaneRatio::Lazy { plane, .. } => {
+                    crate::trace_dispatch!("deferred-segment-plane", "materialized");
+                    let (parameter_numerator, denominator) =
+                        exact_segment_plane_parameter_ratio(plane, start, end);
+                    (
+                        intersect_segment_plane_from_ratio(
+                            start,
+                            end,
+                            &parameter_numerator,
+                            &denominator,
+                        )?,
+                        *plane,
+                    )
+                }
+                DeferredSegmentPlaneRatio::Exact {
+                    parameter_numerator,
+                    denominator,
+                    plane,
+                    ..
+                } => (
+                    intersect_segment_plane_from_ratio(
+                        start,
+                        end,
+                        parameter_numerator,
+                        denominator,
+                    )?,
+                    *plane,
+                ),
+            };
+            retain_exact_axis_plane_coordinate(&mut point, plane);
+            point
+        }
     };
     Ok(ConstructedIntersectionPoint {
         point: affine,
@@ -3254,6 +3278,7 @@ fn extend_polygon_plane_slice_edge<'point>(
                     coordinate_numerator,
                     denominator,
                     parameter_numerator: positive_support.clone(),
+                    plane,
                 },
                 enclosure,
                 start: positive_endpoint,
@@ -3511,6 +3536,15 @@ mod tests {
     use crate::geometry::{Classification, Plane};
     use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity};
 
+    /// A crossing plane that fixes no coordinate, so retained ratios alone
+    /// determine the materialized point.
+    fn unaligned_test_plane() -> &'static Plane {
+        static PLANE: std::sync::OnceLock<Plane> = std::sync::OnceLock::new();
+        PLANE.get_or_init(|| {
+            Plane::from_coefficients(Real::one(), Real::one(), Real::one(), Real::zero())
+        })
+    }
+
     fn deferred_point_span<'point>(
         point: DeferredIntersectionPoint<'point>,
     ) -> DeferredIntersectionSpan<'point> {
@@ -3668,6 +3702,7 @@ mod tests {
                         coordinate_numerator: numerator,
                         denominator,
                         parameter_numerator: Real::zero(),
+                        plane: unaligned_test_plane(),
                     },
                     enclosure,
                     start: &origin,
@@ -3785,6 +3820,7 @@ mod tests {
                             coordinate_numerator: Real::from(x),
                             denominator: Real::one(),
                             parameter_numerator: Real::zero(),
+                            plane: unaligned_test_plane(),
                         },
                         enclosure: None,
                         start: point,
@@ -3883,6 +3919,7 @@ mod tests {
                     coordinate_numerator: Real::from(50),
                     denominator: Real::from(10),
                     parameter_numerator: Real::from(5),
+                    plane: unaligned_test_plane(),
                 },
                 enclosure: None,
                 start: &start,
@@ -4001,6 +4038,7 @@ mod tests {
                             coordinate_numerator: affine.x.clone(),
                             denominator: Real::one(),
                             parameter_numerator: Real::zero(),
+                            plane: unaligned_test_plane(),
                         },
                         enclosure: None,
                         start: origin,
