@@ -47,6 +47,35 @@ The crates that do not depend on `hypersdf` can be published now:
 `hypercurve`, `hypermesh`, `hyperphysics`, `hypergraphics`, `hyperevolution`,
 `hyperpack`, `hyperparts` and `hyperpath`.
 
+### Known limitations
+
+Every repository example completes under `STRICT`, and every result in the
+[successive-operations corpus](successive-operations.md) stays exact,
+certified and closed. These limits remain, each tracked where it will be
+fixed:
+
+- **Output growth.** Each Boolean keeps every corefinement vertex, so
+  repeated cuts leave Steiner vertices on coplanar faces and output grows
+  faster than the represented set; 16 square drills give 1,600 triangles
+  where 332 suffice ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#corefinement-vertices-accumulate)).
+- **Cost of symbolic chains.** On sampled-trigonometric geometry, derived
+  coordinates deepen each step and per-step cost rises far faster than
+  output. Eight hexagonal drills reach 9.8 GB allocated in the last step, and
+  a 10-degree-tilted 32-gon drill chain takes 159 s for its fourth cut in a
+  release build ([hypermesh](../crates/hypermesh/FUTURE_WORK.md#derived-coordinates-deepen-with-each-generation),
+  [hyperreal](../crates/hyperreal/FUTURE_WORK.md)).
+- **Decidable domain.** `STRICT` decides exact zeros over rationals,
+  `sin`/`cos` of rational multiples of pi, and sqrt(2), sqrt(3), sqrt(6),
+  within the cyclotomic proof's budgets. Other transcendental or radical
+  inputs can end `PredicateUndecided`, a typed outcome. A sweep along a
+  general sampled path has exact frames in nested square roots and does not
+  compose with a later strict Boolean ([properties.md](../properties.md)
+  target 15).
+- **Hull rows.** A second strict hull of the same mesh object in one process
+  can triangulate coplanar hull faces differently (same set, certified),
+  depending on facts cached by the first hull
+  ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#convex-hulls-of-sampled-spheres)).
+
 ## Checks
 
 Run these after the last change, in addition to the
