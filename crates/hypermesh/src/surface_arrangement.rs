@@ -32,6 +32,10 @@ use crate::predicate::{
     exact_rational_points_contradict,
 };
 use crate::storage_hash::StorageHashMap;
+use crate::surface_reduction::{
+    OutputFacet, RetainedPlaneClasses, SourcePlaneClasses, reduce_output_facets,
+    retained_plane_classes,
+};
 use crate::winding::{BooleanExpression, BooleanProgram};
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -3921,7 +3925,10 @@ fn planar_orientation(
     })
 }
 
-fn projection_axis(decisions: &DecisionContext, plane: &Plane) -> HypermeshResult<usize> {
+pub(crate) fn projection_axis(
+    decisions: &DecisionContext,
+    plane: &Plane,
+) -> HypermeshResult<usize> {
     let normal = [&plane.normal.x, &plane.normal.y, &plane.normal.z];
     if let Some(axis) = normal.iter().position(|component| {
         component
@@ -3940,7 +3947,7 @@ fn projection_axis(decisions: &DecisionContext, plane: &Plane) -> HypermeshResul
     })
 }
 
-fn projection_axes(dropped: usize) -> Option<[usize; 2]> {
+pub(crate) fn projection_axes(dropped: usize) -> Option<[usize; 2]> {
     match dropped {
         0 => Some([1, 2]),
         1 => Some([0, 2]),
@@ -3957,7 +3964,7 @@ fn point_axis(point: &Point3, axis: usize) -> &Real {
     }
 }
 
-fn project_point(point: &Point3, [u, v]: [usize; 2]) -> hypertri::ExactPoint {
+pub(crate) fn project_point(point: &Point3, [u, v]: [usize; 2]) -> hypertri::ExactPoint {
     hypertri::ExactPoint::new(point_axis(point, u).clone(), point_axis(point, v).clone())
 }
 
@@ -3993,7 +4000,7 @@ fn lift_planar_point(
     })
 }
 
-fn map_triangulation_error(error: hypertri::Error) -> HypermeshError {
+pub(crate) fn map_triangulation_error(error: hypertri::Error) -> HypermeshError {
     match error {
         hypertri::Error::PredicateUndecided { predicate } => {
             HypermeshError::PredicateUndecided { predicate }
@@ -4018,12 +4025,14 @@ fn sorted_edge(mut edge: [u32; 2]) -> [u32; 2] {
 pub(crate) struct ExactSurfaceArrangement {
     corefinement: SurfaceCorefinement,
     cells: SurfaceCellComplex,
+    planes: SourcePlaneClasses,
 }
 
 pub(crate) fn build_surface_arrangement(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     certified_embedded_inputs: &[bool],
+    retained_plane_classes: &[Option<std::sync::Arc<RetainedPlaneClasses>>],
     source_vertex_count: usize,
 ) -> HypermeshResult<ExactSurfaceArrangement> {
     let source_bvh = ExactBvh::build_for_query_hierarchy_decision(decisions, polygons)?;
@@ -4035,17 +4044,22 @@ pub(crate) fn build_surface_arrangement(
     )?;
     let source_bvh = source_bvh.into_query_hierarchy(polygons)?;
     let corefinement = corefine_surface(decisions, polygons, &graph, source_vertex_count)?;
-    let radially_separated_face_pair_keys = graph.into_radially_separated_face_pair_keys();
+    let planes = SourcePlaneClasses::new(
+        polygons,
+        graph.into_face_pair_facts(),
+        retained_plane_classes,
+    )?;
     let cells = assemble_surface_cells(
         decisions,
         polygons,
         &corefinement,
-        &radially_separated_face_pair_keys,
+        planes.radially_separated(),
         &source_bvh,
     )?;
     Ok(ExactSurfaceArrangement {
         corefinement,
         cells,
+        planes,
     })
 }
 
@@ -4088,6 +4102,7 @@ impl ExactSurfaceArrangement {
                     polygons,
                     &self.corefinement,
                     &self.cells,
+                    &self.planes,
                     1,
                     &classifications,
                     &[false],
@@ -4132,6 +4147,7 @@ impl ExactSurfaceArrangement {
             polygons,
             &self.corefinement,
             &self.cells,
+            &self.planes,
             1,
             classifications,
             &[false],
@@ -4154,6 +4170,7 @@ impl ExactSurfaceArrangement {
             polygons,
             &self.corefinement,
             &self.cells,
+            &self.planes,
             classifications.expression_count,
             &classifications.classifications,
             &classifications.exterior_inside,
@@ -4166,6 +4183,7 @@ fn materialize_surface_outputs(
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
     cells: &SurfaceCellComplex,
+    planes: &SourcePlaneClasses,
     expression_count: usize,
     classifications: &[i8],
     exterior_inside: &[bool],
@@ -4191,31 +4209,70 @@ fn materialize_surface_outputs(
             operation: "surface output used points",
         })?;
     used.resize(surface.points.len(), false);
-    let mut triangle_counts = Vec::new();
-    triangle_counts
+    let mut selected = Vec::new();
+    selected
         .try_reserve_exact(expression_count)
         .map_err(|_| HypermeshError::CapacityOverflow {
-            operation: "surface output triangle counts",
+            operation: "surface outputs",
         })?;
-    triangle_counts.resize(expression_count, 0_usize);
-    for (expression, triangle_count) in triangle_counts.iter_mut().enumerate() {
+    for expression in 0..expression_count {
         let start = expression * cells.facets.len();
         let row = &classifications[start..start + cells.facets.len()];
-        for (facet, &classification) in cells.facets.iter().zip(row) {
+        let mut triangle_count = 0_usize;
+        for &classification in row {
             if !matches!(classification, -1..=1) {
                 return Err(HypermeshError::SurfaceArrangementFailed {
                     reason: "surface output classification is invalid",
                 });
             }
+            triangle_count += usize::from(classification != 0);
+        }
+        certify_selected_surface_output(decisions, surface, cells, row)?;
+        let mut facets = Vec::new();
+        facets
+            .try_reserve_exact(triangle_count)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "surface output triangles",
+            })?;
+        for (facet_index, (facet, &classification)) in cells.facets.iter().zip(row).enumerate() {
             if classification == 0 {
                 continue;
             }
-            *triangle_count =
-                triangle_count
-                    .checked_add(1)
-                    .ok_or(HypermeshError::CapacityOverflow {
-                        operation: "surface output triangles",
-                    })?;
+            let mut triangle = facet.vertices;
+            if classification == -1 {
+                triangle.swap(1, 2);
+            }
+            let contribution = cells
+                .checked_facet_contributions(facet_index)?
+                .first()
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface output facet has no source contribution",
+                })?;
+            if !matches!(contribution.orientation, -1 | 1) {
+                return Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface output contribution orientation is invalid",
+                });
+            }
+            let polygon = polygons.get(contribution.face as usize).ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface output contribution references an absent face",
+                },
+            )?;
+            facets.push(OutputFacet {
+                vertices: triangle,
+                source: TriangleSource {
+                    mesh: polygon.mesh_index,
+                    triangle: polygon.polygon_index,
+                    orientation: classification * contribution.orientation,
+                },
+                face: contribution.face,
+            });
+        }
+        // The certified selection is closed. Reduction keeps its set,
+        // closure, orientation and embedding while dropping the vertices that
+        // the set does not need.
+        let facets = reduce_output_facets(decisions, &surface.points, polygons, planes, facets)?;
+        for facet in &facets {
             for &point in &facet.vertices {
                 *used.get_mut(point as usize).ok_or(
                     HypermeshError::SurfaceArrangementFailed {
@@ -4224,7 +4281,7 @@ fn materialize_surface_outputs(
                 )? = true;
             }
         }
-        certify_selected_surface_output(decisions, surface, cells, row)?;
+        selected.push(facets);
     }
 
     let vertex_count = used.iter().filter(|is_used| **is_used).count();
@@ -4249,45 +4306,35 @@ fn materialize_surface_outputs(
         vertices.push(source.clone());
     }
 
+    // Retained plane classes are strict facts. Record them only when no
+    // decision of this operation consumed the approximate terminal.
+    let retain_planes = decisions.certainty() == MeshCertainty::Certified;
     let mut outputs = Vec::new();
     outputs
         .try_reserve_exact(expression_count)
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "surface outputs",
         })?;
-    for &triangle_count in &triangle_counts {
+    let mut plane_classes = Vec::new();
+    plane_classes
+        .try_reserve_exact(expression_count)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface outputs",
+        })?;
+    for (facets, &exterior_inside) in selected.iter().zip(exterior_inside) {
         let mut triangles = Vec::new();
-        triangles.try_reserve_exact(triangle_count).map_err(|_| {
+        triangles.try_reserve_exact(facets.len()).map_err(|_| {
             HypermeshError::CapacityOverflow {
                 operation: "surface output triangles",
             }
         })?;
         let mut sources = Vec::new();
-        sources.try_reserve_exact(triangle_count).map_err(|_| {
-            HypermeshError::CapacityOverflow {
+        sources
+            .try_reserve_exact(facets.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
                 operation: "surface output provenance",
-            }
-        })?;
-        outputs.push(BooleanMeshResult {
-            triangles,
-            sources,
-            exterior_inside: exterior_inside[outputs.len()],
-        });
-    }
-
-    for expression in 0..expression_count {
-        let start = expression * cells.facets.len();
-        let row = &classifications[start..start + cells.facets.len()];
-        let output =
-            outputs
-                .get_mut(expression)
-                .ok_or(HypermeshError::SurfaceArrangementFailed {
-                    reason: "surface output row is absent",
-                })?;
-        for (facet_index, (facet, &classification)) in cells.facets.iter().zip(row).enumerate() {
-            if classification == 0 {
-                continue;
-            }
+            })?;
+        for facet in facets {
             let triangle = facet.vertices.map(|point| {
                 remap
                     .get(point as usize)
@@ -4298,39 +4345,26 @@ fn materialize_surface_outputs(
                     })
             });
             let [a, b, c] = triangle;
-            let mut triangle = [a?, b?, c?];
-            if classification == -1 {
-                triangle.swap(1, 2);
-            }
-            let contribution = cells
-                .checked_facet_contributions(facet_index)?
-                .first()
-                .ok_or(HypermeshError::SurfaceArrangementFailed {
-                    reason: "surface output facet has no source contribution",
-                })?;
-            if !matches!(contribution.orientation, -1 | 1) {
-                return Err(HypermeshError::SurfaceArrangementFailed {
-                    reason: "surface output contribution orientation is invalid",
-                });
-            }
-            let polygon = polygons.get(contribution.face as usize).ok_or(
-                HypermeshError::SurfaceArrangementFailed {
-                    reason: "surface output contribution references an absent face",
-                },
-            )?;
-            output.triangles.push(triangle);
-            output.sources.push(TriangleSource {
-                mesh: polygon.mesh_index,
-                triangle: polygon.polygon_index,
-                orientation: classification * contribution.orientation,
-            });
+            triangles.push([a?, b?, c?]);
+            sources.push(facet.source);
         }
+        outputs.push(BooleanMeshResult {
+            triangles,
+            sources,
+            exterior_inside,
+        });
+        plane_classes.push(if retain_planes {
+            retained_plane_classes(planes, facets)?
+        } else {
+            None
+        });
     }
     Ok(BooleanMeshBatch::from_arrangement(
         vertices,
         outputs,
         crate::ConstructionEvidence::DECLARED_COORDINATES
             .with_predicate_certainty(decisions.certainty()),
+        plane_classes,
     ))
 }
 
@@ -4506,7 +4540,7 @@ mod tests {
         decisions: &DecisionContext,
         polygons: &[ConvexPolygon],
     ) -> HypermeshResult<ExactSurfaceArrangement> {
-        build_surface_arrangement(decisions, polygons, &[], source_vertex_count(polygons))
+        build_surface_arrangement(decisions, polygons, &[], &[], source_vertex_count(polygons))
     }
 
     fn corefine_test_surface(

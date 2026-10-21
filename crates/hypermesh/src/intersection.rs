@@ -242,6 +242,17 @@ struct PairwiseIntersectionScratch<'point> {
 }
 
 impl ConstructedPairwiseIntersection {
+    /// Whether the decided pair lies in one support plane. Non-coplanar
+    /// classifications come from non-parallel supports, so their planes are
+    /// distinct. A disjoint pair carries no retained plane relation.
+    fn plane_relation(&self) -> Option<bool> {
+        match self {
+            Self::Disjoint => None,
+            Self::NonCoplanarPoint(_) | Self::NonCoplanarSegment(_) => Some(false),
+            Self::CoplanarPoint(_) | Self::CoplanarSegment(_) | Self::CoplanarOverlap => Some(true),
+        }
+    }
+
     fn into_public(self, other_polygon_idx: usize) -> PairwiseIntersection {
         match self {
             Self::Disjoint => PairwiseIntersection::Disjoint,
@@ -422,6 +433,26 @@ pub(crate) struct PairwiseIntersectionGraph {
     // its two source triangles can meet only on distinct radial rays along
     // their shared edge.
     radially_separated_face_pair_keys: Box<[u64]>,
+    // Support-plane relations of the decided pairs: one plane, or two
+    // distinct planes. Output reduction consumes them as plane facts.
+    coplanar_face_pair_keys: Box<[u64]>,
+    distinct_plane_face_pair_keys: Box<[u64]>,
+}
+
+/// Source-face pair facts that outlive the pairwise intersection graph.
+///
+/// Every key is a sorted [`source_face_pair_key`]; each list is sorted and
+/// free of duplicates. The facts were decided under the operation policy by
+/// the pairwise pass; none is recomputed from coordinates.
+#[derive(Debug, Default)]
+pub(crate) struct SourceFacePairFacts {
+    /// Pairs whose authored reversed edge separates two distinct radial rays,
+    /// so the two source triangles meet only along that edge.
+    pub(crate) radially_separated: Box<[u64]>,
+    /// Pairs decided to lie in one support plane.
+    pub(crate) coplanar: Box<[u64]>,
+    /// Pairs decided to lie in two distinct support planes.
+    pub(crate) distinct_planes: Box<[u64]>,
 }
 
 pub(crate) fn source_face_pair_key(left: u32, right: u32) -> Option<u64> {
@@ -556,10 +587,13 @@ impl PairwiseIntersectionGraph {
         Ok((point, identity))
     }
 
-    /// Consumes the graph and retains only source-face pairs whose authored
-    /// reversed edge was proved to separate two distinct radial rays.
-    pub(crate) fn into_radially_separated_face_pair_keys(self) -> Box<[u64]> {
-        self.radially_separated_face_pair_keys
+    /// Consumes the graph and retains only its source-face pair facts.
+    pub(crate) fn into_face_pair_facts(self) -> SourceFacePairFacts {
+        SourceFacePairFacts {
+            radially_separated: self.radially_separated_face_pair_keys,
+            coplanar: self.coplanar_face_pair_keys,
+            distinct_planes: self.distinct_plane_face_pair_keys,
+        }
     }
 }
 
@@ -579,6 +613,8 @@ pub(crate) struct PairwiseIntersectionGraphBuilder {
     segments: Vec<PairwiseIntersectionSegment>,
     events: Vec<PendingIntersectionEvent>,
     radially_separated_face_pair_keys: Vec<u64>,
+    coplanar_face_pair_keys: Vec<u64>,
+    distinct_plane_face_pair_keys: Vec<u64>,
 }
 
 impl PairwiseIntersectionGraphBuilder {
@@ -619,7 +655,30 @@ impl PairwiseIntersectionGraphBuilder {
             segments: Vec::new(),
             events: Vec::new(),
             radially_separated_face_pair_keys,
+            coplanar_face_pair_keys: Vec::new(),
+            distinct_plane_face_pair_keys: Vec::new(),
         })
+    }
+
+    fn append_face_plane_relation(
+        &mut self,
+        left: usize,
+        right: usize,
+        coplanar: bool,
+    ) -> HypermeshResult<()> {
+        let pair = source_face_pair_key(self.face_id(left)?, self.face_id(right)?)
+            .ok_or(HypermeshError::UnknownClassification)?;
+        let keys = if coplanar {
+            &mut self.coplanar_face_pair_keys
+        } else {
+            &mut self.distinct_plane_face_pair_keys
+        };
+        keys.try_reserve(1)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "source-face plane relations",
+            })?;
+        keys.push(pair);
+        Ok(())
     }
 
     fn append_radially_separated_face_pair(
@@ -1077,6 +1136,8 @@ impl PairwiseIntersectionGraphBuilder {
             segments,
             events,
             mut radially_separated_face_pair_keys,
+            mut coplanar_face_pair_keys,
+            mut distinct_plane_face_pair_keys,
         } = self;
         drop(point_interner);
         drop(construction_heads);
@@ -1084,8 +1145,14 @@ impl PairwiseIntersectionGraphBuilder {
         if point_identities.len() != points.len() {
             return Err(HypermeshError::UnknownClassification);
         }
-        radially_separated_face_pair_keys.sort_unstable();
-        radially_separated_face_pair_keys.dedup();
+        for keys in [
+            &mut radially_separated_face_pair_keys,
+            &mut coplanar_face_pair_keys,
+            &mut distinct_plane_face_pair_keys,
+        ] {
+            keys.sort_unstable();
+            keys.dedup();
+        }
 
         let offset_capacity =
             counts
@@ -1162,6 +1229,8 @@ impl PairwiseIntersectionGraphBuilder {
             segments,
             events: ordered,
             radially_separated_face_pair_keys: radially_separated_face_pair_keys.into_boxed_slice(),
+            coplanar_face_pair_keys: coplanar_face_pair_keys.into_boxed_slice(),
+            distinct_plane_face_pair_keys: distinct_plane_face_pair_keys.into_boxed_slice(),
         })
     }
 }
@@ -1655,7 +1724,7 @@ fn append_pairwise_intersection<'point>(
     }
     let left_vertices = vertices.row(global_i)?;
     let right_vertices = vertices.row(global_j)?;
-    let shares_manifold_edge = if same_mesh {
+    let shared_manifold_edge = if same_mesh {
         polygon_cycles_share_reversed_manifold_triangle_edge(
             decisions,
             left_vertices,
@@ -1664,11 +1733,12 @@ fn append_pairwise_intersection<'point>(
             &polygons[global_j],
         )?
     } else {
-        false
+        None
     };
-    if same_mesh && shares_manifold_edge {
+    if let Some(coplanar) = shared_manifold_edge {
         crate::trace_dispatch!("pairwise-intersection", "known-manifold-edge");
         graph.append_radially_separated_face_pair(global_i, global_j)?;
+        graph.append_face_plane_relation(global_i, global_j, coplanar)?;
         return Ok(());
     }
     crate::trace_dispatch!(
@@ -1701,6 +1771,9 @@ fn append_pairwise_intersection<'point>(
             );
         }
     })?;
+    if let Some(coplanar) = intersection.plane_relation() {
+        graph.append_face_plane_relation(global_i, global_j, coplanar)?;
+    }
     if same_mesh
         && pairwise_intersection_is_shared_input_feature(
             decisions,
@@ -2023,20 +2096,24 @@ fn triangle_plane_slice_vertex([c0, c1, c2]: [Classification; 3]) -> Option<usiz
     }
 }
 
+/// For two source triangles that traverse one authored edge in opposite
+/// directions and meet only along it, returns whether they are coplanar.
+/// Returns `None` when no such edge separates them; the full pairwise test
+/// then decides their intersection.
 fn polygon_cycles_share_reversed_manifold_triangle_edge(
     decisions: &DecisionContext,
     left: &[Point3],
     left_polygon: &ConvexPolygon,
     right: &[Point3],
     right_polygon: &ConvexPolygon,
-) -> HypermeshResult<bool> {
+) -> HypermeshResult<Option<bool>> {
     if left.len() != 3 || right.len() != 3 {
-        return Ok(false);
+        return Ok(None);
     }
     let Some((left_index, right_index)) =
         shared_reversed_triangle_edge(left_polygon, right_polygon)?
     else {
-        return Ok(false);
+        return Ok(None);
     };
     let left_opposite = (left_index + 2) % 3;
     let right_opposite = (right_index + 2) % 3;
@@ -2055,13 +2132,14 @@ fn polygon_cycles_share_reversed_manifold_triangle_edge(
             right_polygon.support_plane(),
         )? != Classification::On
     {
-        return Ok(true);
+        // An opposite vertex off the other support: distinct planes.
+        return Ok(Some(false));
     }
     // Coplanar PWN neighbors meet only at their authored edge when
     // each opposite vertex lies strictly outside the other's edge
     // half-space. Same-side or collinear folds still reach the full
     // coplanar-overlap path.
-    Ok(classify_polygon_vertex_decision(
+    let separated = classify_polygon_vertex_decision(
         decisions,
         right_polygon,
         right,
@@ -2074,7 +2152,8 @@ fn polygon_cycles_share_reversed_manifold_triangle_edge(
             left,
             left_opposite,
             &right_polygon.edge_planes()[right_index],
-        )? == Classification::Positive)
+        )? == Classification::Positive;
+    Ok(separated.then_some(true))
 }
 
 /// Edge indices `(left, right)` of the source-triangle edge that the two
@@ -4759,7 +4838,8 @@ mod tests {
             .vertices_decision(&decisions)
             .unwrap();
 
-        assert!(
+        // The coplanar authored neighbour lies across the shared edge.
+        assert_eq!(
             polygon_cycles_share_reversed_manifold_triangle_edge(
                 &decisions,
                 &host_vertices,
@@ -4767,10 +4847,11 @@ mod tests {
                 &neighbor_vertices,
                 &authored_neighbor,
             )
-            .unwrap()
+            .unwrap(),
+            Some(true)
         );
         assert!(
-            !polygon_cycles_share_reversed_manifold_triangle_edge(
+            polygon_cycles_share_reversed_manifold_triangle_edge(
                 &decisions,
                 &host_vertices,
                 &host,
@@ -4778,6 +4859,7 @@ mod tests {
                 &coincident_component_edge,
             )
             .unwrap()
+            .is_none()
         );
     }
 

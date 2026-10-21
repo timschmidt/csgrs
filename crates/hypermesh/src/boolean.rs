@@ -36,6 +36,7 @@ pub fn boolean(
         &decisions,
         &soup.polygons,
         &soup.certified_embedded_inputs,
+        &soup.retained_plane_classes,
         soup.source_vertex_count,
     )?;
     crate::trace_dispatch!("boolean", "surface-arranged");

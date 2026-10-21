@@ -424,7 +424,9 @@ fn assert_dense_crossing_grid(line_counts: &[usize]) {
 fn opposite_diagonal_coplanar_overlay_is_exact_under_both_policies() {
     let case = support::dense_coplanar_box_case(4);
     let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
-    let expected_triangles = [384, 384, 0, 0, 0];
+    // Both operands are the same 4 x 4 x 4 box with opposite subdivided
+    // diagonals; union and intersection keep only its eight corners.
+    let expected_triangles = [12, 12, 0, 0, 0];
     let expected_volumes = [64.0, 64.0, 0.0, 0.0, 0.0];
     let mut strict = None;
 

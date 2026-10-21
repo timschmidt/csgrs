@@ -32,6 +32,7 @@ mod construction;
 pub mod context;
 mod storage_hash;
 mod surface_arrangement;
+mod surface_reduction;
 #[cfg(test)]
 mod test_support;
 #[cfg(test)]

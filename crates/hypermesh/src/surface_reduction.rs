@@ -1,0 +1,1089 @@
+//! Planar reduction of selected Boolean boundaries.
+//!
+//! Corefinement triangulates every source face on its own and keeps every
+//! arrangement vertex, so a result carries crossings that its represented
+//! set does not need: points where a cut met an earlier fan diagonal, or
+//! where a cutter's own diagonal met a face plane. A later cut crosses the
+//! long edges left around them, and output size then grows faster than the
+//! set's complexity. This module removes those vertices from each selected
+//! boundary and retriangulates the space they leave, without new numeric
+//! predicates for plane identity.
+//!
+//! # Plane classes
+//!
+//! Facets of one source face lie in its support plane by construction. Source
+//! faces are joined into plane classes only from facts the arrangement has
+//! already decided or retained:
+//!
+//! - a pairwise classification that found two faces coplanar (overlap,
+//!   coplanar contact, or coplanar authored neighbours);
+//! - equal plane classes retained on an unedited earlier Boolean output.
+//!
+//! Two classes lie in *distinct* planes when a pairwise classification found
+//! non-parallel supports for faces in them, or when an earlier output retained
+//! that fact for its classes. A class that would be both is contradicted and
+//! never reduced; exact decisions cannot produce one.
+//!
+//! # Removable vertices
+//!
+//! Every Boolean output is an embedded complex: distinct facets meet only in
+//! shared vertices or edges. Two facets in one plane that share a manifold
+//! edge therefore lie on opposite sides of it and have the same normal. A
+//! vertex `v` whose incident edges are all manifold and whose incident facets
+//! form one cycle is then removed when, for a facet key (below):
+//!
+//! - all its facets have one key. They tile a disk around `v` in one plane
+//!   whose boundary, the link of `v`, is a simple polygon star-shaped from
+//!   `v`; or
+//! - its facets have exactly two keys `P` and `Q` that change at exactly two
+//!   edges `v a` and `v b`, and the two edges are collinear by a retained
+//!   fact. The `P` facets then sweep exactly a half-turn from `a` to `b` in
+//!   their plane: a full turn would overlap the edges, which the embedded
+//!   complex excludes. So `v` lies strictly between `a` and `b`, and each side
+//!   is a simple polygon closed by the straight edge `a b`.
+//!
+//! Removal triangulates each polygon with Hypertri under the operation
+//! policy, replacing the facets around `v` by facets with the same boundary
+//! edges. The represented set, closure, orientation and the embedded-complex
+//! property are unchanged. Corners, crease ends, non-manifold contacts and
+//! vertices shared with other facets stay.
+//!
+//! Removal runs in two passes in ascending vertex order:
+//!
+//! 1. The key is the source face. Collinearity holds for two adjacent source
+//!    triangles of one mesh that meet only along their shared authored edge,
+//!    or for two faces in distinct planes. This pass removes arrangement
+//!    vertices inside one source face or on its edges and restores every
+//!    source triangle that the result keeps whole, so a cut that leaves the
+//!    set unchanged reproduces its input rows.
+//! 2. The key is the plane class. Collinearity requires distinct planes. This
+//!    pass merges coplanar source faces and removes the vertices that only
+//!    their shared edges and diagonals needed.
+//!
+//! Removability depends only on the cyclic order of keys around a vertex,
+//! which earlier removals preserve, so one pass of each kind is complete. A
+//! result reduced this way keeps only vertices where three plane classes
+//! meet, crease ends, contacts and non-manifold points, and its regions use
+//! the fewest triangles any triangulation of them with those vertices has.
+
+use std::collections::BTreeMap;
+use std::sync::Arc;
+
+use hyperlattice::Point3;
+
+use crate::context::{DecisionContext, MeshCertainty};
+use crate::error::{HypermeshError, HypermeshResult};
+use crate::intersection::{SourceFacePairFacts, source_face_pair_key};
+use crate::output::TriangleSource;
+use crate::polygon::ConvexPolygon;
+use crate::storage_hash::StorageHashMap;
+use crate::surface_arrangement::{
+    map_triangulation_error, project_point, projection_axes, projection_axis,
+};
+
+/// Plane classes retained with one Boolean output mesh.
+///
+/// Triangles with equal classes lie in one plane. Each sorted class pair key
+/// records two classes decided to lie in distinct planes. Like the embedded-
+/// complex fact these bind to the unedited output buffers, and they are
+/// recorded only from arrangements whose decisions were all certified.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct RetainedPlaneClasses {
+    classes: Box<[u32]>,
+    distinct: Box<[u64]>,
+}
+
+impl RetainedPlaneClasses {
+    /// Number of triangles the classes describe.
+    pub(crate) fn len(&self) -> usize {
+        self.classes.len()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn class(&self, triangle: usize) -> u32 {
+        self.classes[triangle]
+    }
+
+    #[cfg(test)]
+    pub(crate) fn distinct(&self, left: u32, right: u32) -> bool {
+        source_face_pair_key(left, right)
+            .is_some_and(|key| self.distinct.binary_search(&key).is_ok())
+    }
+}
+
+/// Operation-wide plane classes of the source faces.
+#[derive(Debug)]
+pub(crate) struct SourcePlaneClasses {
+    /// Per source face: the least face index of its plane class.
+    class: Box<[u32]>,
+    /// Sorted class pair keys decided to lie in distinct planes.
+    distinct: Box<[u64]>,
+    /// Sorted classes with a distinct-plane fact inside themselves.
+    contradicted: Box<[u32]>,
+    /// Sorted source-face pairs that meet only along a shared authored edge.
+    radially_separated: Box<[u64]>,
+}
+
+fn split_pair_key(key: u64) -> [u32; 2] {
+    [(key >> u32::BITS) as u32, key as u32]
+}
+
+fn find_class(parent: &mut [u32], mut node: u32) -> u32 {
+    let mut root = node;
+    while parent[root as usize] != root {
+        root = parent[root as usize];
+    }
+    while parent[node as usize] != root {
+        let next = parent[node as usize];
+        parent[node as usize] = root;
+        node = next;
+    }
+    root
+}
+
+fn join_classes(parent: &mut [u32], left: u32, right: u32) {
+    let left = find_class(parent, left);
+    let right = find_class(parent, right);
+    // The least face index represents its class, independently of fact order.
+    if left < right {
+        parent[right as usize] = left;
+    } else if right < left {
+        parent[left as usize] = right;
+    }
+}
+
+impl SourcePlaneClasses {
+    pub(crate) fn new(
+        polygons: &[ConvexPolygon],
+        facts: SourceFacePairFacts,
+        retained: &[Option<Arc<RetainedPlaneClasses>>],
+    ) -> HypermeshResult<Self> {
+        let face_count =
+            u32::try_from(polygons.len()).map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "source plane classes",
+            })?;
+        let mut parent = Vec::new();
+        parent
+            .try_reserve_exact(polygons.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "source plane classes",
+            })?;
+        parent.extend(0..face_count);
+        let in_range = |face: u32| face < face_count;
+        for &key in facts.coplanar.iter() {
+            let [left, right] = split_pair_key(key);
+            if !in_range(left) || !in_range(right) {
+                return Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "coplanar source-face fact references an absent face",
+                });
+            }
+            join_classes(&mut parent, left, right);
+        }
+
+        // Retained classes name triangles of one earlier output, which is one
+        // contiguous run of source faces in mesh order.
+        let retained_faces = retained_class_faces(polygons, retained);
+        let mut first_face = BTreeMap::<(usize, u32), u32>::new();
+        for &(mesh, class, face) in &retained_faces {
+            match first_face.get(&(mesh, class)) {
+                Some(&first) => join_classes(&mut parent, first, face),
+                None => {
+                    first_face.insert((mesh, class), face);
+                }
+            }
+        }
+
+        let mut class = Vec::new();
+        class
+            .try_reserve_exact(polygons.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "source plane classes",
+            })?;
+        for face in 0..face_count {
+            class.push(find_class(&mut parent, face));
+        }
+        drop(parent);
+
+        let mut distinct = Vec::new();
+        let mut contradicted = Vec::new();
+        let mut record_distinct = |left: u32, right: u32| {
+            let [left, right] = [class[left as usize], class[right as usize]];
+            match source_face_pair_key(left, right) {
+                Some(key) => distinct.push(key),
+                None => contradicted.push(left),
+            }
+        };
+        for &key in facts.distinct_planes.iter() {
+            let [left, right] = split_pair_key(key);
+            if !in_range(left) || !in_range(right) {
+                return Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "distinct-plane source-face fact references an absent face",
+                });
+            }
+            record_distinct(left, right);
+        }
+        for (mesh, classes) in retained.iter().enumerate() {
+            let Some(classes) = classes else {
+                continue;
+            };
+            for &key in classes.distinct.iter() {
+                let [left, right] = split_pair_key(key);
+                if let (Some(&left), Some(&right)) = (
+                    first_face.get(&(mesh, left)),
+                    first_face.get(&(mesh, right)),
+                ) {
+                    record_distinct(left, right);
+                }
+            }
+        }
+        distinct.sort_unstable();
+        distinct.dedup();
+        contradicted.sort_unstable();
+        contradicted.dedup();
+        Ok(Self {
+            class: class.into_boxed_slice(),
+            distinct: distinct.into_boxed_slice(),
+            contradicted: contradicted.into_boxed_slice(),
+            radially_separated: facts.radially_separated,
+        })
+    }
+
+    /// Source-face pairs proved to meet only along one shared authored edge.
+    pub(crate) fn radially_separated(&self) -> &[u64] {
+        &self.radially_separated
+    }
+
+    fn class(&self, face: u32) -> HypermeshResult<u32> {
+        self.class
+            .get(face as usize)
+            .copied()
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "output facet references an absent source face",
+            })
+    }
+
+    fn planes_are_distinct(&self, left: u32, right: u32) -> bool {
+        source_face_pair_key(left, right)
+            .is_some_and(|key| self.distinct.binary_search(&key).is_ok())
+    }
+
+    fn is_contradicted(&self, class: u32) -> bool {
+        self.contradicted.binary_search(&class).is_ok()
+    }
+
+    fn faces_meet_only_along_shared_edge(&self, left: u32, right: u32) -> bool {
+        source_face_pair_key(left, right)
+            .is_some_and(|key| self.radially_separated.binary_search(&key).is_ok())
+    }
+}
+
+/// `(mesh, retained class, face)` for every source face whose mesh retains
+/// plane classes for exactly its triangles.
+fn retained_class_faces(
+    polygons: &[ConvexPolygon],
+    retained: &[Option<Arc<RetainedPlaneClasses>>],
+) -> Vec<(usize, u32, u32)> {
+    if retained.iter().all(Option::is_none) {
+        return Vec::new();
+    }
+    let mut runs = BTreeMap::<usize, (usize, usize)>::new();
+    let mut previous = None;
+    for (face, polygon) in polygons.iter().enumerate() {
+        let Ok(mesh) = usize::try_from(polygon.mesh_index) else {
+            return Vec::new();
+        };
+        match previous {
+            Some(last) if last == mesh => {}
+            Some(last) if last > mesh => return Vec::new(),
+            _ => {
+                if runs.insert(mesh, (face, face)).is_some() {
+                    return Vec::new();
+                }
+            }
+        }
+        if let Some(run) = runs.get_mut(&mesh) {
+            run.1 = face + 1;
+        }
+        previous = Some(mesh);
+    }
+    let mut faces = Vec::new();
+    for (&mesh, &(start, end)) in &runs {
+        let Some(Some(classes)) = retained.get(mesh) else {
+            continue;
+        };
+        if classes.len() != end - start {
+            continue;
+        }
+        for (offset, &class) in classes.classes.iter().enumerate() {
+            if let Ok(face) = u32::try_from(start + offset) {
+                faces.push((mesh, class, face));
+            }
+        }
+    }
+    faces
+}
+
+/// One oriented output facet before compaction.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct OutputFacet {
+    /// Arrangement point IDs in output orientation.
+    pub(crate) vertices: [u32; 3],
+    /// Published provenance.
+    pub(crate) source: TriangleSource,
+    /// Source face whose support plane contains the facet.
+    pub(crate) face: u32,
+}
+
+#[derive(Clone, Copy)]
+struct DirectedUse {
+    facet: u32,
+    count: u32,
+}
+
+const UNKNOWN_FACET: u32 = u32::MAX;
+
+/// Mutable oriented facet incidence of one selected boundary.
+struct ReductionMesh {
+    facets: Vec<OutputFacet>,
+    alive: Vec<bool>,
+    directed: StorageHashMap<[u32; 2], DirectedUse>,
+    vertices: Vec<u32>,
+    incident: Vec<Vec<u32>>,
+}
+
+fn facet_edges([a, b, c]: [u32; 3]) -> [[u32; 2]; 3] {
+    [[a, b], [b, c], [c, a]]
+}
+
+impl ReductionMesh {
+    fn new(facets: Vec<OutputFacet>) -> HypermeshResult<Self> {
+        let mut vertices = Vec::new();
+        vertices
+            .try_reserve_exact(facets.len().saturating_mul(3))
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "planar reduction vertices",
+            })?;
+        vertices.extend(facets.iter().flat_map(|facet| facet.vertices));
+        vertices.sort_unstable();
+        vertices.dedup();
+        let mut incident = Vec::new();
+        incident.try_reserve_exact(vertices.len()).map_err(|_| {
+            HypermeshError::CapacityOverflow {
+                operation: "planar reduction incidence",
+            }
+        })?;
+        incident.resize_with(vertices.len(), Vec::new);
+        let mut directed = StorageHashMap::default();
+        directed
+            .try_reserve(facets.len().saturating_mul(3))
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "planar reduction edges",
+            })?;
+        let mut mesh = Self {
+            facets: Vec::new(),
+            alive: Vec::new(),
+            directed,
+            vertices,
+            incident,
+        };
+        mesh.facets
+            .try_reserve(facets.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "planar reduction facets",
+            })?;
+        for facet in facets {
+            mesh.insert(facet)?;
+        }
+        Ok(mesh)
+    }
+
+    fn local(&self, vertex: u32) -> HypermeshResult<usize> {
+        self.vertices
+            .binary_search(&vertex)
+            .map_err(|_| HypermeshError::SurfaceArrangementFailed {
+                reason: "planar reduction references an absent vertex",
+            })
+    }
+
+    fn insert(&mut self, facet: OutputFacet) -> HypermeshResult<()> {
+        let id =
+            u32::try_from(self.facets.len()).map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "planar reduction facets",
+            })?;
+        for edge in facet_edges(facet.vertices) {
+            let entry = self.directed.entry(edge).or_insert(DirectedUse {
+                facet: id,
+                count: 0,
+            });
+            entry.count = entry
+                .count
+                .checked_add(1)
+                .ok_or(HypermeshError::CapacityOverflow {
+                    operation: "planar reduction edge multiplicity",
+                })?;
+            if entry.count == 1 || entry.facet == UNKNOWN_FACET {
+                entry.facet = id;
+            }
+        }
+        for vertex in facet.vertices {
+            let local = self.local(vertex)?;
+            self.incident[local]
+                .try_reserve(1)
+                .map_err(|_| HypermeshError::CapacityOverflow {
+                    operation: "planar reduction incidence",
+                })?;
+            self.incident[local].push(id);
+        }
+        self.facets.push(facet);
+        self.alive.push(true);
+        Ok(())
+    }
+
+    fn remove(&mut self, id: u32) -> HypermeshResult<()> {
+        let facet = self.facets[id as usize];
+        self.alive[id as usize] = false;
+        for edge in facet_edges(facet.vertices) {
+            let entry =
+                self.directed
+                    .get_mut(&edge)
+                    .ok_or(HypermeshError::SurfaceArrangementFailed {
+                        reason: "planar reduction lost a facet edge",
+                    })?;
+            entry.count -= 1;
+            if entry.count == 0 {
+                self.directed.remove(&edge);
+            } else if entry.facet == id {
+                entry.facet = UNKNOWN_FACET;
+            }
+        }
+        for vertex in facet.vertices {
+            let local = self.local(vertex)?;
+            self.incident[local].retain(|&facet| facet != id);
+        }
+        Ok(())
+    }
+
+    fn directed_count(&self, edge: [u32; 2]) -> u32 {
+        self.directed.get(&edge).map_or(0, |entry| entry.count)
+    }
+
+    /// The facet using `edge`, when exactly one facet uses it in each direction.
+    fn manifold_facet(&self, [from, to]: [u32; 2]) -> HypermeshResult<Option<u32>> {
+        let Some(entry) = self.directed.get(&[from, to]) else {
+            return Ok(None);
+        };
+        if entry.count != 1 || self.directed_count([to, from]) != 1 {
+            return Ok(None);
+        }
+        if entry.facet != UNKNOWN_FACET {
+            return Ok(Some(entry.facet));
+        }
+        let local = self.local(from)?;
+        Ok(self.incident[local]
+            .iter()
+            .copied()
+            .find(|&facet| facet_edges(self.facets[facet as usize].vertices).contains(&[from, to])))
+    }
+
+    /// Incident facets of `vertex` in cyclic order, each with the two other
+    /// vertices `[a, b]` such that the facet is `(vertex, a, b)`, or `None`
+    /// unless every incident edge is manifold and the facets form one cycle.
+    fn fan(&self, vertex: u32) -> HypermeshResult<Option<Vec<(u32, [u32; 2])>>> {
+        let incident = &self.incident[self.local(vertex)?];
+        let Some(&start) = incident.iter().min() else {
+            return Ok(None);
+        };
+        if incident.len() < 3 {
+            return Ok(None);
+        }
+        let mut fan = Vec::new();
+        fan.try_reserve_exact(incident.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "planar reduction vertex fan",
+            })?;
+        let mut current = start;
+        loop {
+            let [a, b, c] = self.facets[current as usize].vertices;
+            let others = if a == vertex {
+                [b, c]
+            } else if b == vertex {
+                [c, a]
+            } else if c == vertex {
+                [a, b]
+            } else {
+                return Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "planar reduction incidence is inconsistent",
+                });
+            };
+            fan.push((current, others));
+            let Some(next) = self.manifold_facet([vertex, others[1]])? else {
+                return Ok(None);
+            };
+            if next == start {
+                break;
+            }
+            if fan.len() == incident.len() {
+                return Ok(None);
+            }
+            current = next;
+        }
+        // One cycle that misses an incident facet is a non-manifold vertex.
+        Ok((fan.len() == incident.len()).then_some(fan))
+    }
+}
+
+/// A vertex removal: one or two facet runs around the vertex, each with the
+/// boundary polygon of the space it covers.
+struct Removal {
+    sides: Vec<(Vec<u32>, Vec<u32>)>,
+    // An interior vertex's link closes along an existing edge; a crease
+    // vertex's two sides close along the new straight crease edge.
+    interior: bool,
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum Pass {
+    SourceFace,
+    PlaneClass,
+}
+
+fn removal(
+    mesh: &ReductionMesh,
+    planes: &SourcePlaneClasses,
+    pass: Pass,
+    fan: &[(u32, [u32; 2])],
+) -> HypermeshResult<Option<Removal>> {
+    let mut keys = Vec::new();
+    keys.try_reserve_exact(fan.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "planar reduction vertex fan",
+        })?;
+    for &(facet, _) in fan {
+        let face = mesh.facets[facet as usize].face;
+        let key = match pass {
+            Pass::SourceFace => face,
+            Pass::PlaneClass => {
+                let class = planes.class(face)?;
+                if planes.is_contradicted(class) {
+                    return Ok(None);
+                }
+                class
+            }
+        };
+        keys.push(key);
+    }
+    // A change at `i` is the edge from the vertex to the first other vertex
+    // of facet `i`, between facets `i - 1` and `i`.
+    let changes = (0..fan.len())
+        .filter(|&index| keys[index] != keys[(index + fan.len() - 1) % fan.len()])
+        .collect::<Vec<_>>();
+    let ring = |start: usize, end: usize| {
+        // Facets start..end (cyclic) and the vertices from the first edge to
+        // the last.
+        let mut facets = Vec::new();
+        let mut boundary = Vec::new();
+        let mut index = start;
+        loop {
+            facets.push(fan[index].0);
+            boundary.push(fan[index].1[0]);
+            index = (index + 1) % fan.len();
+            if index == end {
+                break;
+            }
+        }
+        (facets, boundary)
+    };
+    match changes.as_slice() {
+        [] => {
+            let (facets, boundary) = ring(0, 0);
+            Ok(Some(Removal {
+                sides: vec![(facets, boundary)],
+                interior: true,
+            }))
+        }
+        &[first, second] => {
+            let [left, right] = [keys[first], keys[second]];
+            let collinear = match pass {
+                Pass::SourceFace => {
+                    planes.faces_meet_only_along_shared_edge(left, right)
+                        || planes.planes_are_distinct(planes.class(left)?, planes.class(right)?)
+                }
+                Pass::PlaneClass => planes.planes_are_distinct(left, right),
+            };
+            if !collinear {
+                return Ok(None);
+            }
+            let mut sides = Vec::new();
+            for (start, end) in [(first, second), (second, first)] {
+                let (facets, mut boundary) = ring(start, end);
+                // Close each half at the far crease vertex.
+                boundary.push(fan[end].1[0]);
+                if facets.len() < 2 {
+                    return Err(HypermeshError::SurfaceArrangementFailed {
+                        reason: "a straight crease vertex has a one-facet side",
+                    });
+                }
+                sides.push((facets, boundary));
+            }
+            Ok(Some(Removal {
+                sides,
+                interior: false,
+            }))
+        }
+        _ => Ok(None),
+    }
+}
+
+fn triangulate_boundary(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    polygon: &ConvexPolygon,
+    boundary: &[u32],
+) -> HypermeshResult<Vec<[u32; 3]>> {
+    if boundary.len() < 3 {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "planar reduction polygon has fewer than three vertices",
+        });
+    }
+    if boundary.len() == 3 {
+        // The facets around the vertex tile exactly this triangle.
+        return Ok(vec![[boundary[0], boundary[1], boundary[2]]]);
+    }
+    let axes = projection_axes(projection_axis(decisions, polygon.support_plane())?).ok_or(
+        HypermeshError::SurfaceArrangementFailed {
+            reason: "source face projection axis is invalid",
+        },
+    )?;
+    let mut projected = Vec::new();
+    projected
+        .try_reserve_exact(boundary.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "planar reduction polygon",
+        })?;
+    for &vertex in boundary {
+        let point =
+            points
+                .get(vertex as usize)
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "planar reduction references an absent point",
+                })?;
+        projected.push(project_point(point, axes));
+    }
+    let context = hypertri::TriangulationContext::new(decisions.policy());
+    let outcome =
+        hypertri::triangulate_simple_ring(&context, &projected).map_err(map_triangulation_error)?;
+    decisions.absorb(match outcome.certainty {
+        hypertri::TriangulationCertainty::Certified => MeshCertainty::Certified,
+        hypertri::TriangulationCertainty::Approximate512Consumed => {
+            MeshCertainty::Approximate512Consumed
+        }
+    });
+    let indices = outcome.value.triangles;
+    if indices.len() != 3 * (boundary.len() - 2) {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "planar reduction polygon triangulation is incomplete",
+        });
+    }
+    // Hypertri keeps the input winding, which is the facets' orientation.
+    let mut triangles = Vec::new();
+    triangles
+        .try_reserve_exact(indices.len() / 3)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "planar reduction triangles",
+        })?;
+    for triangle in indices.chunks_exact(3) {
+        let vertex = |index: usize| {
+            boundary
+                .get(index)
+                .copied()
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "planar reduction triangle index is out of range",
+                })
+        };
+        triangles.push([
+            vertex(triangle[0])?,
+            vertex(triangle[1])?,
+            vertex(triangle[2])?,
+        ]);
+    }
+    Ok(triangles)
+}
+
+fn apply_removal(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    polygons: &[ConvexPolygon],
+    mesh: &mut ReductionMesh,
+    pass: Pass,
+    removal: Removal,
+) -> HypermeshResult<()> {
+    let mut replacements = Vec::new();
+    for (facets, boundary) in &removal.sides {
+        let mut unique = boundary.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        if unique.len() != boundary.len() {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "planar reduction polygon repeats a vertex",
+            });
+        }
+        // A source face run keeps its one provenance row. A merged plane
+        // class names its least source row; every row lies in that plane
+        // with the same output orientation.
+        let template = facets
+            .iter()
+            .map(|&facet| mesh.facets[facet as usize])
+            .min_by_key(|facet| (facet.source, facet.face))
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "planar reduction side has no facets",
+            })?;
+        debug_assert!(
+            pass == Pass::PlaneClass
+                || facets
+                    .iter()
+                    .all(|&facet| mesh.facets[facet as usize].source == template.source)
+        );
+        let polygon = polygons.get(template.face as usize).ok_or(
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "output facet references an absent source face",
+            },
+        )?;
+        // Triangulate the polygon in its source face's winding from its least
+        // vertex, so a boundary and its complement, which traverses every
+        // polygon backwards, receive the same triangles.
+        let reverse = template.source.orientation < 0;
+        let mut canonical = boundary.clone();
+        if reverse {
+            canonical.reverse();
+        }
+        let least = (0..canonical.len())
+            .min_by_key(|&index| canonical[index])
+            .unwrap_or(0);
+        canonical.rotate_left(least);
+        let mut triangles = triangulate_boundary(decisions, points, polygon, &canonical)?;
+        if reverse {
+            for triangle in &mut triangles {
+                triangle.swap(1, 2);
+            }
+        }
+        replacements.push((template, triangles));
+    }
+
+    // Boundary edges keep their multiplicity; every new diagonal is used once
+    // in each direction. Anything else would change closure or embedding.
+    let mut boundary_counts = Vec::new();
+    for (_, boundary) in &removal.sides {
+        let edges = if removal.interior {
+            boundary.len()
+        } else {
+            boundary.len() - 1
+        };
+        for index in 0..edges {
+            let edge = [boundary[index], boundary[(index + 1) % boundary.len()]];
+            boundary_counts.push((edge, mesh.directed_count(edge)));
+        }
+    }
+    for (facets, _) in &removal.sides {
+        for &facet in facets {
+            mesh.remove(facet)?;
+        }
+    }
+    let mut diagonals = Vec::new();
+    for (template, triangles) in replacements {
+        for vertices in triangles {
+            for edge in facet_edges(vertices) {
+                if !boundary_counts
+                    .iter()
+                    .any(|&(boundary, _)| boundary == edge)
+                {
+                    diagonals.push(edge);
+                }
+            }
+            mesh.insert(OutputFacet {
+                vertices,
+                source: template.source,
+                face: template.face,
+            })?;
+        }
+    }
+    if boundary_counts
+        .iter()
+        .any(|&(edge, count)| mesh.directed_count(edge) != count)
+        || diagonals.iter().any(|&[from, to]| {
+            mesh.directed_count([from, to]) != 1 || mesh.directed_count([to, from]) != 1
+        })
+    {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "planar reduction would change boundary closure",
+        });
+    }
+    Ok(())
+}
+
+/// Removes every vertex of one selected boundary that its exact set does not
+/// need, as described in the module documentation. Facets are returned in
+/// their input order, followed by the replacement facets in creation order.
+pub(crate) fn reduce_output_facets(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    polygons: &[ConvexPolygon],
+    planes: &SourcePlaneClasses,
+    facets: Vec<OutputFacet>,
+) -> HypermeshResult<Vec<OutputFacet>> {
+    let mut mesh = ReductionMesh::new(facets)?;
+    for pass in [Pass::SourceFace, Pass::PlaneClass] {
+        for index in 0..mesh.vertices.len() {
+            let vertex = mesh.vertices[index];
+            let Some(fan) = mesh.fan(vertex)? else {
+                continue;
+            };
+            let Some(removal) = removal(&mesh, planes, pass, &fan)? else {
+                continue;
+            };
+            apply_removal(decisions, points, polygons, &mut mesh, pass, removal)?;
+        }
+    }
+    let ReductionMesh { facets, alive, .. } = mesh;
+    Ok(facets
+        .into_iter()
+        .zip(alive)
+        .filter_map(|(facet, alive)| alive.then_some(facet))
+        .collect())
+}
+
+/// Plane classes of one reduced boundary, numbered by first use, with the
+/// distinct-plane facts between them. `None` when a class is contradicted.
+pub(crate) fn retained_plane_classes(
+    planes: &SourcePlaneClasses,
+    facets: &[OutputFacet],
+) -> HypermeshResult<Option<Arc<RetainedPlaneClasses>>> {
+    let mut numbering = StorageHashMap::<u32, u32>::default();
+    let mut classes = Vec::new();
+    classes
+        .try_reserve_exact(facets.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "retained plane classes",
+        })?;
+    for facet in facets {
+        let class = planes.class(facet.face)?;
+        if planes.is_contradicted(class) {
+            return Ok(None);
+        }
+        let next =
+            u32::try_from(numbering.len()).map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "retained plane classes",
+            })?;
+        classes.push(*numbering.entry(class).or_insert(next));
+    }
+    let mut distinct = planes
+        .distinct
+        .iter()
+        .filter_map(|&key| {
+            let [left, right] = split_pair_key(key);
+            source_face_pair_key(*numbering.get(&left)?, *numbering.get(&right)?)
+        })
+        .collect::<Vec<_>>();
+    distinct.sort_unstable();
+    Ok(Some(Arc::new(RetainedPlaneClasses {
+        classes: classes.into_boxed_slice(),
+        distinct: distinct.into_boxed_slice(),
+    })))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mesh::{Triangle, TriangleMesh};
+    use crate::{BooleanOp, BooleanProgram, MeshContext, PredicatePolicy, Real};
+
+    const STRICT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
+
+    fn integer_box(min: [i64; 3], max: [i64; 3]) -> TriangleMesh {
+        let corner = |index: usize| {
+            let pick =
+                |axis: usize, high: bool| Real::from(if high { max[axis] } else { min[axis] });
+            Point3::new(
+                pick(0, matches!(index % 4, 1 | 2)),
+                pick(1, matches!(index % 4, 2 | 3)),
+                pick(2, index >= 4),
+            )
+        };
+        TriangleMesh::new(
+            (0..8).map(corner).collect(),
+            [
+                [4, 5, 6],
+                [4, 6, 7],
+                [0, 3, 2],
+                [0, 2, 1],
+                [1, 2, 6],
+                [1, 6, 5],
+                [0, 4, 7],
+                [0, 7, 3],
+                [3, 7, 6],
+                [3, 6, 2],
+                [0, 1, 5],
+                [0, 5, 4],
+            ]
+            .into_iter()
+            .map(|[a, b, c]| Triangle::new(a, b, c))
+            .collect(),
+        )
+    }
+
+    fn difference(left: &TriangleMesh, right: &TriangleMesh) -> TriangleMesh {
+        crate::boolean(
+            &STRICT,
+            &[left.as_ref(), right.as_ref()],
+            BooleanProgram::Operation(BooleanOp::Difference),
+        )
+        .unwrap()
+        .into_value()
+        .into_triangle_meshes()
+        .unwrap()
+        .pop()
+        .unwrap()
+    }
+
+    fn facts(coplanar: &[[u32; 2]], distinct: &[[u32; 2]]) -> SourceFacePairFacts {
+        let keys = |pairs: &[[u32; 2]]| {
+            let mut keys = pairs
+                .iter()
+                .map(|&[left, right]| source_face_pair_key(left, right).unwrap())
+                .collect::<Vec<_>>();
+            keys.sort_unstable();
+            keys.into_boxed_slice()
+        };
+        SourceFacePairFacts {
+            radially_separated: Box::default(),
+            coplanar: keys(coplanar),
+            distinct_planes: keys(distinct),
+        }
+    }
+
+    fn source_faces(count: usize) -> Vec<ConvexPolygon> {
+        let block = integer_box([0, 0, 0], [1, 1, 1]);
+        let soup = crate::test_support::approximate_polygon_soup(&[block.as_ref()]).unwrap();
+        soup.polygons.into_iter().take(count).collect()
+    }
+
+    #[test]
+    fn plane_classes_name_their_least_face_independently_of_fact_order() {
+        let polygons = source_faces(6);
+        let forward =
+            SourcePlaneClasses::new(&polygons, facts(&[[4, 2], [2, 5], [0, 1]], &[[5, 1]]), &[])
+                .unwrap();
+        let backward =
+            SourcePlaneClasses::new(&polygons, facts(&[[0, 1], [5, 2], [2, 4]], &[[1, 4]]), &[])
+                .unwrap();
+        for classes in [&forward, &backward] {
+            assert_eq!(&*classes.class, &[0, 0, 2, 3, 2, 2]);
+            assert!(classes.planes_are_distinct(0, 2));
+            assert!(!classes.planes_are_distinct(0, 3));
+            assert!(classes.contradicted.is_empty());
+        }
+    }
+
+    #[test]
+    fn a_class_with_an_internal_distinct_plane_fact_is_contradicted() {
+        let polygons = source_faces(3);
+        let classes =
+            SourcePlaneClasses::new(&polygons, facts(&[[0, 1], [1, 2]], &[[0, 2]]), &[]).unwrap();
+        assert!(classes.is_contradicted(0));
+        assert!(!classes.planes_are_distinct(0, 0));
+        let facet = OutputFacet {
+            vertices: [0, 1, 2],
+            source: TriangleSource::default(),
+            face: 2,
+        };
+        assert_eq!(retained_plane_classes(&classes, &[facet]).unwrap(), None);
+    }
+
+    #[test]
+    fn certified_outputs_retain_plane_classes_bound_to_their_buffers() {
+        let block = integer_box([0, 0, 0], [8, 8, 4]);
+        let drilled = difference(&block, &integer_box([3, 2, -1], [5, 6, 5]));
+        let classes = drilled.retained_plane_classes().expect("certified output");
+        assert_eq!(classes.len(), drilled.triangles.len());
+        let mut distinct_classes = (0..classes.len())
+            .map(|triangle| classes.class(triangle))
+            .collect::<Vec<_>>();
+        distinct_classes.sort_unstable();
+        distinct_classes.dedup();
+        // Six block faces and four hole walls.
+        assert_eq!(distinct_classes.len(), 10);
+        let plane_of = |triangle: usize| {
+            let [a, b, c] = drilled.triangles[triangle]
+                .indices()
+                .map(|index| drilled.positions[index].clone());
+            let ab = [&b.x - &a.x, &b.y - &a.y, &b.z - &a.z];
+            let ac = [&c.x - &a.x, &c.y - &a.y, &c.z - &a.z];
+            let normal = [
+                &ab[1] * &ac[2] - &ab[2] * &ac[1],
+                &ab[2] * &ac[0] - &ab[0] * &ac[2],
+                &ab[0] * &ac[1] - &ab[1] * &ac[0],
+            ];
+            let offset = &normal[0] * &a.x + &normal[1] * &a.y + &normal[2] * &a.z;
+            let [x, y, z] = normal;
+            [x, y, z, offset].map(|value| value.exact_rational().unwrap())
+        };
+        let same_plane = |left: usize, right: usize| {
+            let [l, r] = [plane_of(left), plane_of(right)];
+            (0..4).all(|i| (0..4).all(|j| &l[i] * &r[j] == &l[j] * &r[i]))
+        };
+        for left in 0..classes.len() {
+            for right in 0..classes.len() {
+                let same = classes.class(left) == classes.class(right);
+                assert_eq!(same, same_plane(left, right), "{left} {right}");
+                let shared = drilled.triangles[left]
+                    .indices()
+                    .iter()
+                    .filter(|index| drilled.triangles[right].indices().contains(index))
+                    .count();
+                if !same && shared == 2 {
+                    // Neighbouring classes were decided to be distinct planes.
+                    assert!(classes.distinct(classes.class(left), classes.class(right)));
+                }
+            }
+        }
+        // Editing or rebuilding the buffers drops the fact.
+        let mut edited = drilled.clone();
+        Arc::make_mut(&mut edited.triangles).swap(0, 1);
+        assert!(edited.retained_plane_classes().is_none());
+        let rebuilt = TriangleMesh::new(drilled.positions.to_vec(), drilled.triangles.to_vec());
+        assert!(rebuilt.retained_plane_classes().is_none());
+    }
+
+    #[test]
+    fn approximate_terminal_outputs_record_no_plane_classes() {
+        // A notch whose face coincides with the block face x = 0 only by an
+        // exact zero that strict policy cannot decide.
+        let unresolved = crate::test_uncertainty::terminal_zero(
+            Real::e().sin() * Real::e().sin() + Real::e().cos() * Real::e().cos() - Real::one(),
+        );
+        let notch = integer_box([0, 2, -1], [5, 6, 5]);
+        let notch = TriangleMesh::new(
+            notch
+                .positions
+                .iter()
+                .map(|point| Point3::new(&point.x + &unresolved, point.y.clone(), point.z.clone()))
+                .collect(),
+            notch.triangles.to_vec(),
+        );
+        let block = integer_box([0, 0, 0], [8, 8, 4]);
+        let outcome = crate::boolean(
+            &MeshContext::new(PredicatePolicy::APPROXIMATE_512),
+            &[block.as_ref(), notch.as_ref()],
+            BooleanProgram::Operation(BooleanOp::Difference),
+        )
+        .unwrap();
+        assert_eq!(outcome.certainty, MeshCertainty::Approximate512Consumed);
+        let output = outcome
+            .into_value()
+            .into_triangle_meshes()
+            .unwrap()
+            .pop()
+            .unwrap();
+        assert!(output.is_certified_embedded_complex());
+        assert!(output.retained_plane_classes().is_none());
+    }
+}

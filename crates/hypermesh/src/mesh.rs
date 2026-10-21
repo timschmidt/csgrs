@@ -23,6 +23,7 @@ use crate::polygon::{
 };
 use crate::predicate::classify_point_decision;
 use crate::storage_hash::StorageHashMap;
+use crate::surface_reduction::RetainedPlaneClasses;
 use crate::winding::mesh_winding_number_decision;
 
 mod concatenation;
@@ -64,10 +65,18 @@ pub(crate) struct TriangleMeshFacts {
     // Distinct triangles meet only in shared vertex indices or a shared edge,
     // as in every surface-arrangement output. Bound to the buffers above.
     embedded_complex: bool,
+    // Plane classes of a certified surface-arrangement output, one per
+    // triangle. Bound to the buffers above.
+    plane_classes: Option<Arc<RetainedPlaneClasses>>,
 }
 
 impl TriangleMeshFacts {
-    fn new(positions: &Arc<[Point3]>, triangles: &Arc<[Triangle]>, embedded_complex: bool) -> Self {
+    fn new(
+        positions: &Arc<[Point3]>,
+        triangles: &Arc<[Triangle]>,
+        embedded_complex: bool,
+        plane_classes: Option<Arc<RetainedPlaneClasses>>,
+    ) -> Self {
         Self {
             source_positions: Arc::downgrade(positions),
             source_triangles: Arc::downgrade(triangles),
@@ -77,6 +86,7 @@ impl TriangleMeshFacts {
             source_polygon_planes: OnceLock::new(),
             wide_dyadic_plane_schedule: AtomicU8::new(0),
             embedded_complex,
+            plane_classes,
         }
     }
 
@@ -163,19 +173,21 @@ impl TriangleMesh {
         triangles: Vec<Triangle>,
         construction: ConstructionEvidence,
     ) -> Self {
-        Self::from_shared_parts(positions, triangles, construction, false)
+        Self::from_shared_parts(positions, triangles, construction, false, None)
     }
 
     /// Mesh whose distinct triangles meet only in shared vertex indices or a
     /// shared edge. Only exact surface-arrangement output has this structure
     /// by construction; it lets later arrangements skip testing the mesh
-    /// against itself.
+    /// against itself. Retained plane classes, one per triangle, let a later
+    /// arrangement merge its coplanar triangles without retesting them.
     pub(crate) fn from_shared_embedded_complex(
         positions: Arc<[Point3]>,
         triangles: Vec<Triangle>,
         construction: ConstructionEvidence,
+        plane_classes: Option<Arc<RetainedPlaneClasses>>,
     ) -> Self {
-        Self::from_shared_parts(positions, triangles, construction, true)
+        Self::from_shared_parts(positions, triangles, construction, true, plane_classes)
     }
 
     fn from_shared_parts(
@@ -183,12 +195,14 @@ impl TriangleMesh {
         triangles: Vec<Triangle>,
         construction: ConstructionEvidence,
         embedded_complex: bool,
+        plane_classes: Option<Arc<RetainedPlaneClasses>>,
     ) -> Self {
         let triangles = Arc::<[Triangle]>::from(triangles);
         let facts = Arc::new(TriangleMeshFacts::new(
             &positions,
             &triangles,
             embedded_complex,
+            plane_classes,
         ));
         Self {
             positions,
@@ -205,6 +219,13 @@ impl TriangleMesh {
     pub(crate) fn is_certified_embedded_complex(&self) -> bool {
         self.geometry_facts()
             .is_some_and(|facts| facts.embedded_complex)
+    }
+
+    /// Plane classes retained with the current buffers, if any.
+    #[cfg(test)]
+    pub(crate) fn retained_plane_classes(&self) -> Option<&RetainedPlaneClasses> {
+        self.geometry_facts()
+            .and_then(|facts| facts.plane_classes.as_deref())
     }
 
     /// Construction qualifications bound to the current geometry buffers.
@@ -1397,6 +1418,8 @@ pub struct PolygonSoup {
     /// in shared vertices or edges, so no arrangement needs to test the mesh
     /// against itself.
     pub(crate) certified_embedded_inputs: Vec<bool>,
+    /// Per input mesh: retained plane classes of its triangles.
+    pub(crate) retained_plane_classes: Vec<Option<Arc<RetainedPlaneClasses>>>,
 }
 
 impl PolygonSoup {
@@ -1492,6 +1515,12 @@ pub(crate) fn build_polygon_soup_internal(
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "source embedded-complex facts",
         })?;
+    let mut retained_plane_classes = Vec::new();
+    retained_plane_classes
+        .try_reserve_exact(meshes.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "source plane-class facts",
+        })?;
     for (mesh_index, mesh) in meshes.iter().enumerate() {
         let signed_mesh_index =
             isize::try_from(mesh_index).map_err(|_| HypermeshError::CapacityOverflow {
@@ -1500,6 +1529,12 @@ pub(crate) fn build_polygon_soup_internal(
         let position_owner = mesh.position_owner();
         let geometry_facts = mesh.geometry_facts();
         certified_embedded_inputs.push(geometry_facts.is_some_and(|facts| facts.embedded_complex));
+        retained_plane_classes.push(
+            geometry_facts
+                .filter(|facts| facts.embedded_complex)
+                .and_then(|facts| facts.plane_classes.clone())
+                .filter(|classes| classes.len() == mesh.triangles.len()),
+        );
         let normalize_wide_dyadic = position_owner
             .and_then(TriangleMesh::position_facts)
             .map_or_else(
@@ -1570,6 +1605,7 @@ pub(crate) fn build_polygon_soup_internal(
         num_meshes: meshes.len(),
         source_vertex_count,
         certified_embedded_inputs,
+        retained_plane_classes,
     })
 }
 
