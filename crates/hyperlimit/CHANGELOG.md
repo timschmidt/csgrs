@@ -114,6 +114,11 @@
 - The package includes the Apache-2.0 license text (`LICENSE-APACHE`) for its
   declared `MIT OR Apache-2.0` license; 0.4.0 shipped only the MIT text.
 
+- Strict `orient2` and `orient3` decide exact zeros among points whose
+  coordinates are sines and cosines of rational multiples of pi, such as the
+  collinear plane crossings and coplanar vertices of sampled spheres, through
+  hyperreal's cyclotomic zero proof.
+
 ### Removed
 
 - The session and construction-provenance APIs: `ExactGeometrySession`,

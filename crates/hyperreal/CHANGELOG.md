@@ -83,6 +83,16 @@
   nodes. It reads stored fields only and is meant for observing growth across
   repeated operations, not as a cost bound.
 
+- `Real::exact_rational_normal_form` proves exact zeros whose leaves are
+  rationals, `sin(pi * r)` and `cos(pi * r)` for rational `r`, `sqrt(2)`,
+  `sqrt(3)` and square roots of rationals with square-free part dividing 6.
+  These values lie in one cyclotomic field, so relations between different
+  angles, such as `cot(pi/16) = tan(7 pi/16)`, now decide. The proof reduces
+  the expression modulo primes at every conjugate and bounds its norm; it
+  never approximates, proves only zero, and declines beyond 4096 nodes, field
+  order 16384, degree 1024 or 2^25 work charges. It runs right after the
+  polynomial attempt.
+
 ### Changed
 
 - `Real` and `Computable` are now `Sync` and `RefUnwindSafe`; they were

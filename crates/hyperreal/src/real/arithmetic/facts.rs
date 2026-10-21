@@ -84,8 +84,24 @@ impl Real {
     /// 64 monomials, degree 8 and 4096 stored coefficient bits. Its 8192 work
     /// charges count node visits, coefficient operations, term insertion and
     /// structural comparisons; one comparison can inspect a larger opaque DAG.
-    /// After that fallback declines, quotient recognition gets a separate
-    /// attempt with the same limits. Its charges also count comparisons of
+    /// After that fallback declines, a cyclotomic attempt can prove the value
+    /// exactly zero when every leaf is a rational, `sin(pi * r)` or
+    /// `cos(pi * r)` for rational `r`, `sqrt(2)`, `sqrt(3)`, or the square root
+    /// of a nonnegative rational whose square-free part divides 6. These all
+    /// lie in one cyclotomic field, so multiple-angle, complementary-angle and
+    /// other field relations between different arguments are decided, not
+    /// only identities of opaque atoms. The proof reduces the expression modulo
+    /// primes `p = 1 (mod N)` at every conjugate of `zeta_N`; a norm bound
+    /// carried through the graph turns enough zero residues into a proof. Each
+    /// reciprocal needs a nonzero residue of its operand. Distinct DAG nodes
+    /// are visited once. Limits: 4096 distinct nodes, field order 16384 and
+    /// degree 1024, a carried bound of 2^16 bits, reciprocal exponents up to
+    /// 1024, and 2^25 work charges for prime selection and modular arithmetic. This attempt proves only zero. A nonzero residue proves the
+    /// value nonzero and passes the query to the attempts below, which may still
+    /// prove a nonzero rational value; for a zero in this domain they are not
+    /// reached.
+    /// Quotient recognition then gets a separate
+    /// attempt with the polynomial fallback's limits. Its charges also count comparisons of
     /// denominator coefficients. Earlier successful proofs remain preferred.
     /// Within that attempt, shared nodes reuse completed projections. Each hit
     /// consumes a work charge and checks cancellation, without another node
@@ -142,6 +158,7 @@ impl Real {
         let rational = computable
             .bounded_laurent_rational(64)
             .or_else(|| computable.bounded_ring_rational())
+            .or_else(|| computable.bounded_cyclotomic_zero())
             .or_else(|| computable.bounded_quotient_rational())
             .or_else(|| computable.bounded_root_square_rational())
             .or_else(|| computable.bounded_trig_congruence_rational())

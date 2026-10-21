@@ -67,6 +67,8 @@ include!("node/ring_relations.rs");
 include!("node/ring_relations_tests.rs");
 include!("node/ring_trig_relations.rs");
 include!("node/ring_trig_relations_tests.rs");
+include!("node/cyclotomic_zero.rs");
+include!("node/cyclotomic_zero_tests.rs");
 include!("node/quadratic_tower.rs");
 include!("node/radical_tower.rs");
 include!("node/radical_eighth_angle_tests.rs");

@@ -53,18 +53,32 @@ fn assert_cause(error: AdapterError, native: ValidationError, kind: ValidationEr
 fn boolean_failures<A: ScalarAdapter>() {
     let square = curve::square(Real::from(2)).unwrap();
     let shifted = curve::translated(&square, unresolved_zero(), Real::zero()).unwrap();
+    let a = ScalarCurve::<A>::from_native(square.clone());
+    let b = ScalarCurve::<A>::from_native(shifted);
+    for operation in OPERATIONS {
+        let native = a.native().boolean_region(b.native(), operation).unwrap_err();
+        let error = boolean(&a, &b, operation)
+            .err()
+            .expect("undecided is an error");
+        assert_cause(error, native.into(), ValidationErrorKind::Undecided);
+    }
+    // Rotating by 13 degrees and back returns the square exactly. That
+    // coincidence was the second undecided fixture; it is a cyclotomic
+    // identity, which the scalar normal form now proves, so every operation
+    // completes with the exact set.
     let rotated =
         curve::try_rotated(&curve::try_rotated(&square, 13.into()).unwrap(), (-13).into())
             .unwrap();
-    let a = ScalarCurve::<A>::from_native(square);
-    for region in [shifted, rotated] {
-        let b = ScalarCurve::<A>::from_native(region);
-        for operation in OPERATIONS {
-            let native = a.native().boolean_region(b.native(), operation).unwrap_err();
-            let error = boolean(&a, &b, operation)
-                .err()
-                .expect("undecided is an error");
-            assert_cause(error, native.into(), ValidationErrorKind::Undecided);
+    let r = ScalarCurve::<A>::from_native(rotated);
+    let square_area = Some(Real::from(4));
+    for operation in OPERATIONS {
+        let native = a.native().boolean_region(r.native(), operation).unwrap();
+        let result = boolean(&a, &r, operation).unwrap();
+        let area = result.native().filled_area().unwrap();
+        assert_eq!(area, native.filled_area().unwrap());
+        match operation {
+            BooleanOp::Union | BooleanOp::Intersection => assert_eq!(area, square_area),
+            BooleanOp::Difference | BooleanOp::Xor => assert!(result.native().is_empty()),
         }
     }
 }
