@@ -87,12 +87,15 @@ pub struct StepRecord {
 
 pub type StepResult = Result<GeometryOutcome<TriangleMesh>, ValidationError>;
 
+/// The operation a chain applies at a step, given the previous result.
+pub type Step = Box<dyn Fn(usize, &TriangleMesh) -> StepResult>;
+
 /// One named chain: an initial body and an operation applied `steps` times.
 pub struct Chain {
     pub name: &'static str,
     pub steps: usize,
     pub initial: Box<dyn Fn() -> TriangleMesh>,
-    pub step: Box<dyn Fn(usize, &TriangleMesh) -> StepResult>,
+    pub step: Step,
 }
 
 /// Run a chain, calling `check` on every completed step. A failed step ends it.

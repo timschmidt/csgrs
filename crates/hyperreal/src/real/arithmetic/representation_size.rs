@@ -109,7 +109,7 @@ mod representation_size_tests {
     fn deep_chains_do_not_use_the_call_stack() {
         let mut chain = Real::pi();
         for index in 1..=4_000_u32 {
-            chain = chain + Real::from(index).sqrt().unwrap();
+            chain += Real::from(index).sqrt().unwrap();
         }
         let size = chain.representation_size(usize::MAX);
         assert!(size.complete);
