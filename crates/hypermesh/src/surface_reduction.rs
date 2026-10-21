@@ -42,11 +42,16 @@
 //!   complex excludes. So `v` lies strictly between `a` and `b`, and each side
 //!   is a simple polygon closed by the straight edge `a b`.
 //!
-//! Removal triangulates each polygon with Hypertri under the operation
-//! policy, replacing the facets around `v` by facets with the same boundary
-//! edges. The represented set, closure, orientation and the embedded-complex
-//! property are unchanged. Corners, crease ends, non-manifold contacts and
-//! vertices shared with other facets stay.
+//! Removal triangulates each polygon with Hypertri, replacing the facets
+//! around `v` by facets with the same boundary edges. The represented set,
+//! closure, orientation and the embedded-complex property are unchanged.
+//! Corners, crease ends, non-manifold contacts and vertices shared with other
+//! facets stay.
+//!
+//! Reduction is optional, so it never weakens the operation: it triangulates
+//! under strict policy whatever the operation policy, and a vertex whose
+//! polygon strict policy cannot triangulate stays. The result keeps the
+//! certainty and the success of its selection.
 //!
 //! Removal runs in two passes in ascending vertex order:
 //!
@@ -85,7 +90,8 @@ use std::sync::Arc;
 
 use hyperlattice::Point3;
 
-use crate::context::{DecisionContext, MeshCertainty};
+use crate::PredicatePolicy;
+use crate::context::{DecisionContext, MeshContext};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Plane;
 use crate::intersection::{SourceFacePairFacts, source_face_pair_key};
@@ -659,12 +665,14 @@ fn removal(
     }
 }
 
+/// Triangulates one reduction polygon under strict policy. `None` when a
+/// strict predicate is undecided; the caller then keeps the vertex.
 fn triangulate_boundary(
-    decisions: &DecisionContext,
+    strict: &DecisionContext,
     points: &[Point3],
     polygon: &ConvexPolygon,
     boundary: &[u32],
-) -> HypermeshResult<Vec<[u32; 3]>> {
+) -> HypermeshResult<Option<Vec<[u32; 3]>>> {
     if boundary.len() < 3 {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "planar reduction polygon has fewer than three vertices",
@@ -672,13 +680,16 @@ fn triangulate_boundary(
     }
     if boundary.len() == 3 {
         // The facets around the vertex tile exactly this triangle.
-        return Ok(vec![[boundary[0], boundary[1], boundary[2]]]);
+        return Ok(Some(vec![[boundary[0], boundary[1], boundary[2]]]));
     }
-    let axes = projection_axes(projection_axis(decisions, polygon.support_plane())?).ok_or(
-        HypermeshError::SurfaceArrangementFailed {
-            reason: "source face projection axis is invalid",
-        },
-    )?;
+    let axis = match projection_axis(strict, polygon.support_plane()) {
+        Ok(axis) => axis,
+        Err(HypermeshError::PredicateUndecided { .. }) => return Ok(None),
+        Err(error) => return Err(error),
+    };
+    let axes = projection_axes(axis).ok_or(HypermeshError::SurfaceArrangementFailed {
+        reason: "source face projection axis is invalid",
+    })?;
     let mut projected = Vec::new();
     projected
         .try_reserve_exact(boundary.len())
@@ -694,15 +705,17 @@ fn triangulate_boundary(
                 })?;
         projected.push(project_point(point, axes));
     }
-    let context = hypertri::TriangulationContext::new(decisions.policy());
-    let outcome =
-        hypertri::triangulate_simple_ring(&context, &projected).map_err(map_triangulation_error)?;
-    decisions.absorb(match outcome.certainty {
-        hypertri::TriangulationCertainty::Certified => MeshCertainty::Certified,
-        hypertri::TriangulationCertainty::Approximate512Consumed => {
-            MeshCertainty::Approximate512Consumed
-        }
-    });
+    let context = hypertri::TriangulationContext::new(strict.policy());
+    let outcome = match hypertri::triangulate_simple_ring(&context, &projected) {
+        Ok(outcome) => outcome,
+        Err(hypertri::Error::PredicateUndecided { .. }) => return Ok(None),
+        Err(error) => return Err(map_triangulation_error(error)),
+    };
+    if outcome.certainty != hypertri::TriangulationCertainty::Certified {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "strict planar reduction consumed an approximate decision",
+        });
+    }
     let indices = outcome.value.triangles;
     if indices.len() != 3 * (boundary.len() - 2) {
         return Err(HypermeshError::SurfaceArrangementFailed {
@@ -731,17 +744,19 @@ fn triangulate_boundary(
             vertex(triangle[2])?,
         ]);
     }
-    Ok(triangles)
+    Ok(Some(triangles))
 }
 
+/// Replaces the facets around one removable vertex. Returns `false`, with the
+/// mesh unchanged, when strict policy cannot triangulate a side.
 fn apply_removal(
-    decisions: &DecisionContext,
+    strict: &DecisionContext,
     points: &[Point3],
     polygons: &[ConvexPolygon],
     mesh: &mut ReductionMesh,
     pass: Pass,
     removal: Removal,
-) -> HypermeshResult<()> {
+) -> HypermeshResult<bool> {
     let mut replacements = Vec::new();
     for (facets, boundary) in &removal.sides {
         let mut unique = boundary.clone();
@@ -794,7 +809,9 @@ fn apply_removal(
             .unwrap_or(0);
         let start = (least + 1) % canonical.len();
         canonical.rotate_left(start);
-        let mut triangles = triangulate_boundary(decisions, points, polygon, &canonical)?;
+        let Some(mut triangles) = triangulate_boundary(strict, points, polygon, &canonical)? else {
+            return Ok(false);
+        };
         if reverse {
             for triangle in &mut triangles {
                 triangle.swap(1, 2);
@@ -851,19 +868,19 @@ fn apply_removal(
             reason: "planar reduction would change boundary closure",
         });
     }
-    Ok(())
+    Ok(true)
 }
 
 /// Removes every vertex of one selected boundary that its exact set does not
 /// need, as described in the module documentation. Facets are returned in
 /// their input order, followed by the replacement facets in creation order.
 pub(crate) fn reduce_output_facets(
-    decisions: &DecisionContext,
     points: &[Point3],
     polygons: &[ConvexPolygon],
     planes: &SourcePlaneClasses,
     facets: Vec<OutputFacet>,
 ) -> HypermeshResult<Vec<OutputFacet>> {
+    let strict = DecisionContext::new(&MeshContext::new(PredicatePolicy::STRICT));
     let mut mesh = ReductionMesh::new(facets)?;
     for pass in [Pass::SourceFace, Pass::PlaneClass] {
         for index in 0..mesh.vertices.len() {
@@ -874,7 +891,7 @@ pub(crate) fn reduce_output_facets(
             let Some(removal) = removal(&mesh, planes, pass, &fan)? else {
                 continue;
             };
-            apply_removal(decisions, points, polygons, &mut mesh, pass, removal)?;
+            apply_removal(&strict, points, polygons, &mut mesh, pass, removal)?;
         }
     }
     let ReductionMesh { facets, alive, .. } = mesh;
@@ -979,7 +996,7 @@ pub(crate) fn retained_plane_classes(
 mod tests {
     use super::*;
     use crate::mesh::{Triangle, TriangleMesh};
-    use crate::{BooleanOp, BooleanProgram, MeshContext, PredicatePolicy, Real};
+    use crate::{BooleanOp, BooleanProgram, MeshCertainty, Real};
 
     const STRICT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 
@@ -1196,6 +1213,45 @@ mod tests {
                     + &support.normal.z * &winding[2];
                 assert!(exact(&agreement) > hyperreal::Rational::zero());
             }
+        }
+    }
+
+    #[test]
+    fn a_vertex_whose_polygon_strict_policy_cannot_triangulate_stays() {
+        // A flat fan around (2, 2, 1) in the top face of the unit box. Its
+        // polygon's vertex (2, y, 1) lies on the edge from (0, 0, 1) to
+        // (4, 0, 1) exactly when y = 0.
+        let polygons = source_faces(1);
+        let planes = SourcePlaneClasses::new(&polygons, facts(&[], &[]), &[]).unwrap();
+        let point = |x: i64, y: Real| Point3::new(Real::from(x), y, Real::one());
+        let facets = [[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 5], [0, 5, 1]]
+            .map(|vertices| OutputFacet {
+                vertices,
+                source: TriangleSource {
+                    mesh: 0,
+                    triangle: 0,
+                    orientation: 1,
+                },
+                face: 0,
+            })
+            .to_vec();
+        let unresolved = crate::test_uncertainty::terminal_zero(
+            Real::e().sin() * Real::e().sin() + Real::e().cos() * Real::e().cos() - Real::one(),
+        );
+        for (y, removed) in [(Real::zero(), true), (unresolved, false)] {
+            let points = [
+                point(2, Real::from(2)),
+                point(0, Real::zero()),
+                point(2, y),
+                point(4, Real::zero()),
+                point(4, Real::from(4)),
+                point(0, Real::from(4)),
+            ];
+            let reduced = reduce_output_facets(&points, &polygons, &planes, facets.clone())
+                .expect("an undecided reduction keeps its vertex instead of failing");
+            let centre_kept = reduced.iter().any(|facet| facet.vertices.contains(&0));
+            assert_eq!(centre_kept, !removed);
+            assert_eq!(reduced.len(), if removed { 3 } else { 5 });
         }
     }
 

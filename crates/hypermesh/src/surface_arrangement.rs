@@ -4271,7 +4271,7 @@ fn materialize_surface_outputs(
         // The certified selection is closed. Reduction keeps its set,
         // closure, orientation and embedding while dropping the vertices that
         // the set does not need.
-        let facets = reduce_output_facets(decisions, &surface.points, polygons, planes, facets)?;
+        let facets = reduce_output_facets(&surface.points, polygons, planes, facets)?;
         for facet in &facets {
             for &point in &facet.vertices {
                 *used.get_mut(point as usize).ok_or(
