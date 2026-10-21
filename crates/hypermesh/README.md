@@ -47,7 +47,8 @@ closed PWN TriangleMesh views
           │ absolute winding vectors and Boolean truth DAG
           ▼
  oriented boundary selection + exact output certification
-          │
+          │ coplanar merge: drop vertices inside one plane or on a
+          │ straight crease, retriangulate with Hypertri
           ▼
  BooleanMeshBatch
    ├─ one shared Point3<Real> vertex arena
@@ -57,6 +58,13 @@ closed PWN TriangleMesh views
 There is one public Boolean entry point: `boolean`. Additional expression
 roots reuse the same intersections, corefinement, cells, windings, and exact
 vertex arena.
+
+Each result keeps only the vertices its set needs. Coplanar facets are
+grouped by plane from coplanarity the arrangement already decided or that an
+earlier result retained; vertices inside one plane, or on a straight crease
+between two, are removed. Corners, crease ends and non-manifold contacts
+stay, and no vertex is added, so results fed into further Booleans stay
+proportional to the represented set.
 
 ## Quick start
 

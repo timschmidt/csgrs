@@ -364,6 +364,29 @@ pub fn polygon_drills(segments: usize, steps: usize) -> Chain {
     }
 }
 
+/// Polygonal drills tilted by `degrees` about the block's long axis, so each
+/// wall crosses the block faces obliquely.
+pub fn tilted_polygon_drills(segments: usize, degrees: i64, steps: usize) -> Chain {
+    Chain {
+        name: match (segments, degrees) {
+            (32, 10) => "32-gon drills tilted 10 degrees",
+            _ => "tilted polygon drills",
+        },
+        steps,
+        initial: Box::new(|| solid::cuboid(r(68), r(8), r(4)).unwrap()),
+        step: Box::new(move |k, body| {
+            let drill = solid::try_rotate(
+                &solid::cylinder(r(1), r(6), segments)?,
+                r(degrees),
+                r(0),
+                r(0),
+            )?
+            .translated(r(4 * k as i64), r(4), r(-1))?;
+            difference(body, &drill)
+        }),
+    }
+}
+
 /// Bar holes that cross pairwise: a z bar and a y bar sharing their x faces,
 /// repeated along a block. Integer inputs; the reproduction from review.
 pub fn cross_bars(steps: usize) -> (Chain, Vec<BoxSet>) {

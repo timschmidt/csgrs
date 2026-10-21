@@ -361,9 +361,15 @@ pub(crate) struct RetainedSourcePlanes {
 }
 
 impl RetainedSourcePlanes {
+    /// `supports`, when present, gives each triangle's exact support plane,
+    /// oriented with its winding, retained from the arrangement that made
+    /// the mesh. It replaces the plane through the triangle's vertices, which
+    /// is the same plane but is rebuilt from derived coordinates. Lossless
+    /// primitive rows take precedence: their planes are exact and cheap.
     pub(crate) fn new(
         face_count: usize,
         compact: Option<Arc<CompactSourcePolygons>>,
+        supports: Option<&dyn Fn(usize) -> Plane>,
         normalize_wide_dyadic: bool,
     ) -> HypermeshResult<Arc<Self>> {
         if compact
@@ -378,8 +384,10 @@ impl RetainedSourcePlanes {
             || {
                 SourcePlaneStorage::Lazy(
                     (0..face_count)
-                        .map(|_| SourceTrianglePlaneCache {
-                            support: OnceLock::new(),
+                        .map(|face| SourceTrianglePlaneCache {
+                            support: supports.map_or_else(OnceLock::new, |support| {
+                                OnceLock::from(Box::new(support(face)))
+                            }),
                             edges: OnceLock::new(),
                         })
                         .collect(),
@@ -1734,7 +1742,7 @@ mod tests {
             }]
             .into_boxed_slice(),
         ));
-        let error = RetainedSourcePlanes::new(2, Some(compact), false).unwrap_err();
+        let error = RetainedSourcePlanes::new(2, Some(compact), None, false).unwrap_err();
         assert!(matches!(
             error,
             crate::HypermeshError::SurfaceArrangementFailed {
@@ -1742,7 +1750,7 @@ mod tests {
             }
         ));
 
-        let source_planes = RetainedSourcePlanes::new(1, None, false).unwrap();
+        let source_planes = RetainedSourcePlanes::new(1, None, None, false).unwrap();
         let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
         let decisions = DecisionContext::new(&context);
         let error = ConvexPolygon::from_source_triangle(

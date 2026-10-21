@@ -112,6 +112,7 @@ fn corpus() -> Vec<Chain> {
         chains::polygon_drills(8, 6),
         chains::polygon_drills(16, 4),
         chains::polygon_drills(32, 2),
+        chains::tilted_polygon_drills(32, 10, 4),
         chains::cross_bars(20).0,
         chains::rational_rotation_cuts(16),
         chains::degree_rotation_cuts(30, 8),

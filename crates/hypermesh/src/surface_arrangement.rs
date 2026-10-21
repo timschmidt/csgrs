@@ -4354,7 +4354,7 @@ fn materialize_surface_outputs(
             exterior_inside,
         });
         plane_classes.push(if retain_planes {
-            retained_plane_classes(planes, facets)?
+            retained_plane_classes(planes, polygons, facets)?
         } else {
             None
         });

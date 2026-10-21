@@ -360,6 +360,70 @@ fn complement_and_operand_rows_reduce_identically() {
     assert_eq!(oriented(difference, false), oriented(complement, true));
 }
 
+/// A hexagonal prism of circumradius 1 around `(cx, cy)` for `z` in
+/// `[-1, 5]`, with `sqrt(3)` coordinates.
+fn hexagonal_drill(cx: i64, cy: i64) -> TriangleMesh {
+    let half_root = (Real::from(3).sqrt().unwrap() / r(2)).unwrap();
+    let (half, one) = (q(1, 2), r(1));
+    let ring = [
+        (one.clone(), r(0)),
+        (half.clone(), half_root.clone()),
+        (-&half, half_root.clone()),
+        (-&one, r(0)),
+        (-&half, -&half_root),
+        (half.clone(), -&half_root),
+    ];
+    let mut positions = Vec::new();
+    for z in [-1, 5] {
+        for (x, y) in &ring {
+            positions.push(Point3::new(x + &r(cx), y + &r(cy), r(z)));
+        }
+    }
+    let mut triangles = vec![
+        [0, 2, 1],
+        [0, 3, 2],
+        [0, 4, 3],
+        [0, 5, 4],
+        [6, 7, 8],
+        [6, 8, 9],
+        [6, 9, 10],
+        [6, 10, 11],
+    ];
+    for i in 0..6 {
+        let next = (i + 1) % 6;
+        triangles.extend([[i, next, next + 6], [i, next + 6, i + 6]]);
+    }
+    mesh(positions, &triangles)
+}
+
+#[test]
+fn symbolic_reduction_is_independent_of_cached_approximations() {
+    // The block's top diagonal crosses the hole, so reduction triangulates
+    // polygons with sqrt(3) coordinates.
+    let cold = || {
+        operation(
+            &integer_box([0, 0, 0], [8, 8, 4]),
+            &hexagonal_drill(3, 4),
+            BooleanOp::Difference,
+        )
+    };
+    let block = integer_box([0, 0, 0], [8, 8, 4]);
+    let drill = hexagonal_drill(3, 4);
+    let first = operation(&block, &drill, BooleanOp::Difference);
+    // Repeating on the same inputs reuses their cached approximations.
+    let warm = operation(&block, &drill, BooleanOp::Difference);
+    let fresh = cold();
+    for other in [&warm, &fresh] {
+        assert_eq!(first.triangles, other.triangles);
+        assert_eq!(first.positions, other.positions);
+    }
+    // Eight block and twelve hole corners; the top and bottom are squares
+    // with one hexagonal hole, plus four sides and six walls.
+    let evidence = boolean_mesh_closure_evidence(&as_result(&first));
+    assert!(evidence.is_closed(), "{evidence:?}");
+    assert_eq!((first.triangles.len(), first.positions.len()), (40, 20));
+}
+
 #[test]
 fn reduced_outputs_record_plane_provenance() {
     // Every output triangle names a source triangle in its own plane. The

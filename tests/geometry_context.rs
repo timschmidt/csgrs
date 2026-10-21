@@ -507,7 +507,9 @@ fn javascript_mesh_results_expose_the_consumed_certainty() {
         assert_eq!(result.certainty(), GeometryCertaintyJs::Certified);
         assert!(!result.approximate_512_consumed());
         let mesh = result.into_mesh();
-        assert_eq!(mesh.triangle_count(), 144);
+        // Block and hole corners only: two 20-vertex faces with one hole,
+        // four sides and sixteen walls.
+        assert_eq!(mesh.triangle_count(), 80);
         for (coordinates, expected) in [
             ([1.0, 1.0, 2.0], true),
             ([6.0, 6.0, 2.0], false),

@@ -421,6 +421,18 @@ fn long_symbolic_drills() {
     // the cyclotomic zero proof decides.
     certified_chain(&chains::polygon_drills(16, 4), None);
     certified_chain(&chains::polygon_drills(32, 2), None);
+    // Tilted walls meet the block faces obliquely, so every hole corner is
+    // constructed on a face plane. Results retain the block's own face planes
+    // for their merged faces, so later corners are not built on planes
+    // through earlier corners and the coordinate graphs keep one size.
+    // Without retained planes the fourth cut was undecided.
+    let records = certified_chain(&chains::tilted_polygon_drills(32, 10, 4), None);
+    assert!(
+        records
+            .windows(2)
+            .all(|pair| pair[0].size.max_depth == pair[1].size.max_depth
+                && pair[0].size.max_nodes == pair[1].size.max_nodes)
+    );
 }
 
 #[test]

@@ -17,8 +17,12 @@
 //!
 //! Boolean output is selected directly from exact cell truth. Degenerate,
 //! duplicate, open, or directionally unbalanced output is rejected rather than
-//! repaired. Expressions containing the exterior cell remain representable as
-//! oriented finite boundaries and are marked by
+//! repaired. Each certified selection then drops the vertices its set does not
+//! need: vertices inside one plane, or on a straight crease between two
+//! planes, are removed and the space around them is retriangulated, without
+//! changing the represented set, closure or orientation. Expressions
+//! containing the exterior cell remain representable as oriented finite
+//! boundaries and are marked by
 //! [`BooleanMeshResult::exterior_inside`]; converting such a result to a finite
 //! [`TriangleMesh`] is a typed error.
 

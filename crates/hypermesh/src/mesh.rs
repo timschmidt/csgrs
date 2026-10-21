@@ -1574,8 +1574,18 @@ pub(crate) fn build_polygon_soup_internal(
         } else {
             None
         };
-        let source_planes =
-            RetainedSourcePlanes::new(mesh.triangles.len(), compact, normalize_wide_dyadic)?;
+        let retained_supports = retained_plane_classes
+            .last()
+            .and_then(Option::as_ref)
+            .map(|classes| move |triangle: usize| classes.support(triangle));
+        let source_planes = RetainedSourcePlanes::new(
+            mesh.triangles.len(),
+            compact,
+            retained_supports
+                .as_ref()
+                .map(|support| support as &dyn Fn(usize) -> Plane),
+            normalize_wide_dyadic,
+        )?;
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let polygon_index =
                 isize::try_from(polygons.len()).map_err(|_| HypermeshError::CapacityOverflow {

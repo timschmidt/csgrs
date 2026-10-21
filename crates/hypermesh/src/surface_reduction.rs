@@ -65,6 +65,18 @@
 //! result reduced this way keeps only vertices where three plane classes
 //! meet, crease ends, contacts and non-manifold points, and its regions use
 //! the fewest triangles any triangulation of them with those vertices has.
+//!
+//! # Retained facts
+//!
+//! A certified result retains, bound to its unedited buffers, the plane class
+//! of every triangle, the distinct-plane facts between its classes, and the
+//! exact support plane of the source face each triangle was cut from,
+//! oriented with the triangle. The next Boolean merges its coplanar
+//! triangles from the classes without testing the mesh against itself, and
+//! uses the retained planes as their support planes. A reduced triangle often
+//! spans earlier derived vertices; the plane through them is the same plane
+//! but its expression would grow with every generation, and so would every
+//! point later constructed on it.
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -73,6 +85,7 @@ use hyperlattice::Point3;
 
 use crate::context::{DecisionContext, MeshCertainty};
 use crate::error::{HypermeshError, HypermeshResult};
+use crate::geometry::Plane;
 use crate::intersection::{SourceFacePairFacts, source_face_pair_key};
 use crate::output::TriangleSource;
 use crate::polygon::ConvexPolygon;
@@ -81,22 +94,32 @@ use crate::surface_arrangement::{
     map_triangulation_error, project_point, projection_axes, projection_axis,
 };
 
-/// Plane classes retained with one Boolean output mesh.
+/// Plane facts retained with one Boolean output mesh.
 ///
 /// Triangles with equal classes lie in one plane. Each sorted class pair key
-/// records two classes decided to lie in distinct planes. Like the embedded-
+/// records two classes decided to lie in distinct planes. Every triangle also
+/// keeps the exact support plane of the source face it was cut from, oriented
+/// with the triangle: the plane through its vertices, but without rebuilding
+/// it from derived coordinates in the next operation. Like the embedded-
 /// complex fact these bind to the unedited output buffers, and they are
 /// recorded only from arrangements whose decisions were all certified.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub(crate) struct RetainedPlaneClasses {
     classes: Box<[u32]>,
     distinct: Box<[u64]>,
+    support_rows: Box<[u32]>,
+    supports: Box<[Plane]>,
 }
 
 impl RetainedPlaneClasses {
     /// Number of triangles the classes describe.
     pub(crate) fn len(&self) -> usize {
         self.classes.len()
+    }
+
+    /// The retained support plane of one triangle, oriented with it.
+    pub(crate) fn support(&self, triangle: usize) -> Plane {
+        self.supports[self.support_rows[triangle] as usize].clone()
     }
 
     #[cfg(test)]
@@ -860,18 +883,29 @@ pub(crate) fn reduce_output_facets(
 }
 
 /// Plane classes of one reduced boundary, numbered by first use, with the
-/// distinct-plane facts between them. `None` when a class is contradicted.
+/// distinct-plane facts between them and each triangle's oriented support
+/// plane. `None` when a class is contradicted.
+///
+/// Every facet lies in its source face's support plane: arrangement facets by
+/// corefinement, and reduction facets because every facet they replace lies
+/// in one plane class. Its provenance orientation relates its winding to that
+/// face's, so the oriented plane needs no predicate.
 pub(crate) fn retained_plane_classes(
     planes: &SourcePlaneClasses,
+    polygons: &[ConvexPolygon],
     facets: &[OutputFacet],
 ) -> HypermeshResult<Option<Arc<RetainedPlaneClasses>>> {
     let mut numbering = StorageHashMap::<u32, u32>::default();
+    let mut support_numbering = StorageHashMap::<(u32, bool), u32>::default();
     let mut classes = Vec::new();
-    classes
-        .try_reserve_exact(facets.len())
-        .map_err(|_| HypermeshError::CapacityOverflow {
-            operation: "retained plane classes",
-        })?;
+    let mut support_rows = Vec::new();
+    let mut supports = Vec::new();
+    for rows in [&mut classes, &mut support_rows] {
+        rows.try_reserve_exact(facets.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "retained plane classes",
+            })?;
+    }
     for facet in facets {
         let class = planes.class(facet.face)?;
         if planes.is_contradicted(class) {
@@ -882,6 +916,44 @@ pub(crate) fn retained_plane_classes(
                 operation: "retained plane classes",
             })?;
         classes.push(*numbering.entry(class).or_insert(next));
+        let reversed = match facet.source.orientation {
+            1 => false,
+            -1 => true,
+            _ => {
+                return Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface output contribution orientation is invalid",
+                });
+            }
+        };
+        let row = match support_numbering.get(&(facet.face, reversed)) {
+            Some(&row) => row,
+            None => {
+                let support = polygons
+                    .get(facet.face as usize)
+                    .ok_or(HypermeshError::SurfaceArrangementFailed {
+                        reason: "output facet references an absent source face",
+                    })?
+                    .support_plane();
+                let row = u32::try_from(supports.len()).map_err(|_| {
+                    HypermeshError::CapacityOverflow {
+                        operation: "retained support planes",
+                    }
+                })?;
+                supports
+                    .try_reserve(1)
+                    .map_err(|_| HypermeshError::CapacityOverflow {
+                        operation: "retained support planes",
+                    })?;
+                supports.push(if reversed {
+                    support.inverted()
+                } else {
+                    support.clone()
+                });
+                support_numbering.insert((facet.face, reversed), row);
+                row
+            }
+        };
+        support_rows.push(row);
     }
     let mut distinct = planes
         .distinct
@@ -895,6 +967,8 @@ pub(crate) fn retained_plane_classes(
     Ok(Some(Arc::new(RetainedPlaneClasses {
         classes: classes.into_boxed_slice(),
         distinct: distinct.into_boxed_slice(),
+        support_rows: support_rows.into_boxed_slice(),
+        supports: supports.into_boxed_slice(),
     })))
 }
 
@@ -1003,7 +1077,10 @@ mod tests {
             source: TriangleSource::default(),
             face: 2,
         };
-        assert_eq!(retained_plane_classes(&classes, &[facet]).unwrap(), None);
+        assert_eq!(
+            retained_plane_classes(&classes, &polygons, &[facet]).unwrap(),
+            None
+        );
     }
 
     #[test]
@@ -1059,6 +1136,64 @@ mod tests {
         assert!(edited.retained_plane_classes().is_none());
         let rebuilt = TriangleMesh::new(drilled.positions.to_vec(), drilled.triangles.to_vec());
         assert!(rebuilt.retained_plane_classes().is_none());
+    }
+
+    #[test]
+    fn retained_support_planes_contain_and_orient_every_triangle() {
+        let block = integer_box([0, 0, 0], [8, 8, 4]);
+        let overlapping = integer_box([4, -2, 2], [10, 6, 6]);
+        let hole = integer_box([3, 2, -1], [5, 6, 5]);
+        let drilled = difference(&block, &hole);
+        let mut outputs = Vec::new();
+        for (left, right) in [(&block, &overlapping), (&drilled, &overlapping)] {
+            for op in [
+                BooleanOp::Union,
+                BooleanOp::Intersection,
+                BooleanOp::Difference,
+            ] {
+                outputs.push(
+                    crate::boolean(
+                        &STRICT,
+                        &[left.as_ref(), right.as_ref()],
+                        BooleanProgram::Operation(op),
+                    )
+                    .unwrap()
+                    .into_value()
+                    .into_triangle_meshes()
+                    .unwrap()
+                    .pop()
+                    .unwrap(),
+                );
+            }
+        }
+        // The overlapping box's reversed faces bound the difference.
+        outputs.push(difference(&overlapping, &drilled));
+        for output in &outputs {
+            let classes = output.retained_plane_classes().expect("certified output");
+            for (index, triangle) in output.triangles.iter().enumerate() {
+                let support = classes.support(index);
+                let exact = |value: &Real| value.exact_rational().unwrap();
+                let [a, b, c] = triangle.indices().map(|vertex| &output.positions[vertex]);
+                for point in [a, b, c] {
+                    let value = &support.normal.x * &point.x
+                        + &support.normal.y * &point.y
+                        + &support.normal.z * &point.z
+                        + &support.offset;
+                    assert_eq!(exact(&value), hyperreal::Rational::zero());
+                }
+                let ab = [&b.x - &a.x, &b.y - &a.y, &b.z - &a.z];
+                let ac = [&c.x - &a.x, &c.y - &a.y, &c.z - &a.z];
+                let winding = [
+                    &ab[1] * &ac[2] - &ab[2] * &ac[1],
+                    &ab[2] * &ac[0] - &ab[0] * &ac[2],
+                    &ab[0] * &ac[1] - &ab[1] * &ac[0],
+                ];
+                let agreement = &support.normal.x * &winding[0]
+                    + &support.normal.y * &winding[1]
+                    + &support.normal.z * &winding[2];
+                assert!(exact(&agreement) > hyperreal::Rational::zero());
+            }
+        }
     }
 
     #[test]
