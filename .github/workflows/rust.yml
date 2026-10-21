@@ -116,6 +116,36 @@ jobs:
       - name: Run every example
         run: bash scripts/run-examples.sh
 
+  release:
+    name: Release check (${{ matrix.toolchain }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        # The declared minimum supported compiler of every released crate.
+        toolchain: [stable, 1.95.0]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        env:
+          TOOLCHAIN: ${{ matrix.toolchain }}
+        run: |
+          rustup toolchain install "${TOOLCHAIN}" --profile minimal
+          rustup default "${TOOLCHAIN}"
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: release-${{ matrix.toolchain }}
+      # The Go binding tests run against the packaged C ABI.
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.27.3"
+          cache: false
+      - name: Package, verify and consume the released crates
+        run: bash scripts/release-check.sh
+
   repository-budget:
     name: Repository budget
     runs-on: ubuntu-latest
