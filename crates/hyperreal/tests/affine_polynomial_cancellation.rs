@@ -87,6 +87,32 @@ fn unit_circle_proofs_preserve_offsets_and_unproved_angle_addition() {
 }
 
 #[test]
+fn unit_circle_proofs_cover_rational_turns_beyond_the_cyclotomic_order_limit() {
+    // Exact cos(pi * r) is stored as sin(pi * (1/2 - r)), so the pair has
+    // complementary arguments. 1/10000, 1/360 and 12.345 degrees are turns of
+    // cyclotomic order 3,600,000, 129,600 and 72,000, beyond the cyclotomic
+    // proof's admitted order; the unit-circle relation still applies.
+    for (numerator, denominator) in [(1, 10_000_u64), (1, 360), (12_345, 1_000)] {
+        let angle = Real::new(Rational::fraction(numerator, denominator).unwrap()).to_radians();
+        let (sine, cosine) = (angle.clone().sin(), angle.cos());
+        for offset in [-1, 0, 1] {
+            let offset = Rational::fraction(offset, 1_000_000_000_000_u64).unwrap();
+            let value =
+                &sine * &sine + &cosine * &cosine - Real::one() + Real::from(offset.clone());
+            assert_eq!(value.exact_rational_normal_form(), Some(offset));
+        }
+        // Rotating (3, -5) by the angle and back returns its coordinates.
+        let (x, y) = (Real::from(3), Real::from(-5));
+        let (u, v) = (&cosine * &x - &sine * &y, &sine * &x + &cosine * &y);
+        let back = &cosine * &u + &sine * &v;
+        assert_eq!(
+            (back - &x).exact_rational_normal_form(),
+            Some(Rational::zero())
+        );
+    }
+}
+
+#[test]
 fn a_proved_identity_survives_precision_changes_and_concurrent_queries() {
     let value = affine_residual();
     let clone = value.clone();

@@ -707,6 +707,48 @@ self-contact validation, or changing the smoothing stencil would change quality
 or exactness rather than optimize the same result, so those substitutions were
 not attempted.
 
+## 2026-10-22: complementary unit-circle pairs in hyperreal
+
+Hyperreal's final ring-relation attempt now pairs two sines, or two cosines,
+whose arguments sum to exactly pi/2, so `sin^2 + cos^2 = 1` applies to the
+sine and cosine of one rational turn, which exact `cos(pi * r)` stores as
+`sin(pi * (1/2 - r))`. This is a completeness change: rotations by 0.0001
+or 12.345 degrees that ended `PredicateUndecided` now decide
+(`tests/downstream_solids.rs`). Its costs:
+
+- **Successive-operations corpus.** One release run of the bench before and
+  after the change (first version, before the fast path below): all 200
+  steps keep their outcome, rows, sizes and allocated bytes at 0.1 MB
+  resolution, 63,408.3 MB in total. No chain reaches the new pairing. Times
+  varied by up to 2x between the runs on the shared host. Raw output
+  SHA-256 `5661f094…7de2` (before) and `7b9fdca4…3ce2` (after), not
+  archived.
+- **Worst case: declined queries with many sine atoms.** A probe with a
+  counting allocator called `exact_rational_normal_form` once on a sum of
+  n sines of distinct turns of order 2,000,006, which every attempt
+  declines, and on sums of `sin^2 + cos^2 - 1` over n such turns, which only
+  the new pairing proves. A first version added the turns' quotients for
+  every same-function pair and allocated 11%, 17% and 22% more bytes for
+  n = 8, 16 and 31. The kept version compares the pi coefficients of two
+  rational turns directly and clones a previous argument only when quotient
+  arithmetic is needed:
+
+  | Query | Bytes before | Bytes after | Calls before | Calls after |
+  | --- | ---: | ---: | ---: | ---: |
+  | decline, n = 8 | 84,546 | 89,670 | 1,534 | 1,586 |
+  | decline, n = 16 | 233,292 | 252,180 | 4,694 | 4,862 |
+  | decline, n = 31 | 704,745 | 772,728 | 15,420 | 15,978 |
+  | prove, n = 1 | 19,845 (declined) | 14,890 | 371 | 279 |
+  | prove, n = 4 | 118,226 (declined) | 99,767 | 2,118 | 1,792 |
+  | prove, n = 8 | 309,684 (declined) | 282,251 | 6,059 | 5,506 |
+
+  The remaining 6–10% on declined queries is one rational sum per pair of
+  same-function atoms, at most 496 pairs under the attempt's 32-atom limit
+  and inside its unchanged 8,192-charge budget. Kept: completeness ranks
+  above this cost, which only declined queries with several sines or
+  several cosines pay. Wall times of the same probes varied up to 4x between
+  repeated runs of one binary on the shared host, so no time claim is made.
+
 ## 2026-10-22: exact line profiles in sweep, twist and revolution
 
 `curve::try_sweep`, `extrude_twisted` and `revolve` now consume exact line

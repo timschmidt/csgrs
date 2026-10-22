@@ -94,6 +94,15 @@
   never approximates, proves only zero, and declines beyond 4096 nodes, field
   order 16384, degree 1024 or 2^25 work charges. It runs right after the
   polynomial attempt.
+- `Real::exact_rational_normal_form` applies `sin(a)^2 + sin(b)^2 = 1` and
+  `cos(a)^2 + cos(b)^2 = 1` when `a + b` is proved to be exactly `pi / 2`.
+  Exact `cos(pi * r)` is stored as `sin(pi * (1/2 - r))`, so this is the form
+  in which the sine and cosine of one rational turn meet; before, only a
+  sine and a cosine of one argument were related. Turns beyond the
+  cyclotomic order limit now decide, such as `sin^2 + cos^2 - 1` at 1/10000,
+  1/360 or 12.345 degrees, and so do Booleans that need it: a cube rotated by
+  12.345 degrees and back, or rotated by 1/10000 degree and subtracted from
+  itself, was `PredicateUndecided` under strict policy.
 
 ### Changed
 

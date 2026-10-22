@@ -133,7 +133,12 @@ impl Real {
     /// scans and coefficient arithmetic share that attempt's remaining limits.
     /// Earlier successful proofs retain their original paths and budgets.
     /// This attempt may also project rational quarter-turn atan trigonometry
-    /// and apply `sin(a)^2 + cos(a)^2 = 1` for certified equal arguments.
+    /// and apply `sin(a)^2 + cos(a)^2 = 1` for certified equal arguments, and
+    /// `sin(a)^2 + sin(b)^2 = 1` or `cos(a)^2 + cos(b)^2 = 1` when `a + b`
+    /// is proved to be exactly `pi / 2`. The latter is the form the sine and
+    /// cosine of one rational turn take, since exact `cos(pi * r)` is stored
+    /// as `sin(pi * (1/2 - r))`; it covers turns beyond the cyclotomic order
+    /// limit.
     /// After those attempts decline, a final attempt can use matching native Jacobi square relations,
     /// square roots with nonnegative radicand evidence, and exact inverse
     /// exponential relations. Its degree limit is 12; the other outer limits

@@ -116,6 +116,87 @@ mod ring_trig_relations_tests {
         );
     }
 
+    fn pi_turn(n: i32, d: i32) -> Computable {
+        mul(Computable::pi(), rational(n, d))
+    }
+
+    fn squares_minus_one(first: Computable, second: Computable) -> Computable {
+        add(
+            add(mul(first.clone(), first), mul(second.clone(), second)),
+            rational(-1, 1),
+        )
+    }
+
+    #[test]
+    fn complementary_sines_and_cosines_lie_on_the_unit_circle() {
+        // Exact cos(pi * r) is stored as sin(pi * (1/2 - r)), so the sine and
+        // cosine of one rational turn reach the recognizer as two sines. The
+        // cyclotomic proof cannot reach turns of order above 2^14 such as
+        // these, which 1/10000, 1/360 and 12.345 degrees give.
+        for (n, d) in [(1, 1_800_000), (1, 64_800), (2469, 36_000)] {
+            let complement = pi_turn(d - 2 * n, 2 * d);
+            for cosine in [false, true] {
+                let first = function(cosine, pi_turn(n, d));
+                let second = function(cosine, complement.clone());
+                assert_eq!(
+                    squares_minus_one(first.clone(), second.clone()).bounded_relation_rational(),
+                    Some(Rational::zero()),
+                    "{n}/{d} pi, cosine {cosine}"
+                );
+                // Either operand order and a residual constant keep the value.
+                assert_eq!(
+                    add(squares_minus_one(second, first), rational(5, 7))
+                        .bounded_relation_rational(),
+                    Some(Rational::fraction(5, 7).unwrap())
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn complementary_arguments_need_not_be_rational_turns() {
+        // atan(1/2) has no rational sine, so both functions stay atoms, and
+        // the sum pi/2 - atan(1/2) + atan(1/2) cancels in quotient arithmetic.
+        let a = angle(1, 2);
+        let b = add(mul(rational(1, 2), Computable::pi()), negate(a.clone()));
+        for cosine in [false, true] {
+            assert_eq!(
+                squares_minus_one(function(cosine, a.clone()), function(cosine, b.clone()))
+                    .bounded_relation_rational(),
+                Some(Rational::zero())
+            );
+        }
+    }
+
+    #[test]
+    fn complementary_pairs_require_an_exact_half_pi_sum() {
+        let a = pi_turn(1, 1_800_000);
+        let complement = pi_turn(899_999, 1_800_000);
+        let gap = raw(Approximation::Ratio(
+            Rational::fraction(1, 1_000_000_000_000_u64).unwrap(),
+        ));
+        for second in [
+            // Misses pi/2 by 10^-12.
+            add(complement.clone(), gap),
+            // sin(pi/2 + a) is cos(a), but the sum is not exactly pi/2.
+            pi_turn(900_001, 1_800_000),
+            // The same argument: sin(a)^2 + sin(a)^2 is not one.
+            a.clone(),
+        ] {
+            assert_eq!(
+                squares_minus_one(function(false, a.clone()), function(false, second))
+                    .bounded_relation_rational(),
+                None
+            );
+        }
+        // A sine and a cosine still need equal arguments, not complementary ones.
+        assert_eq!(
+            squares_minus_one(function(false, a.clone()), function(true, complement))
+                .bounded_relation_rational(),
+            None
+        );
+    }
+
     #[test]
     fn unsupported_and_oversized_trig_projections_do_not_guess() {
         for a in [
