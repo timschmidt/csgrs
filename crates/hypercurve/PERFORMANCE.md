@@ -59,6 +59,46 @@ completing. The benchmark executable grows by 3,048 bytes (42,014,880 →
 42,017,928). Raw logs were not archived in the evidence repository; this
 entry records the commands and their summary.
 
+## Restricted-support and relation-restriction refactors (2026-10-22)
+
+The 2026-10-22 remaining-research queue (items H01–H03, written from
+source inspection of older revisions) proposed three internal refactors: one
+chart-qualified restricted-support view shared by open spans and region
+carriers, one support-pair query for the open and filled consumers, and one
+relation-restriction contract that separates empty, singleton and
+one-dimensional components. A refactor is retained only for a measured
+benefit, so the defects they name were rechecked at `282a3eac52` through the
+public API with a temporary probe, not committed:
+
+- **Singleton at the end of a clipped overlap.** Pieces of one support that
+  touch at a single point give exactly one non-transverse contact there, and
+  both contact parameters replay to that point. Checked in all four traversal
+  combinations, both operand orders and both predicate policies, for: lines
+  [0,1] and [1,2], and a line split at a rational and at an irrational
+  parameter; touching and split arcs; quadratic, cubic, circle conic, ellipse
+  conic, rational cubic, spline (inside a span and at a knot) and NURBS
+  splits; authored quadratics touching on one parabola; a line against a
+  degree-elevated line; and a retraced quadratic against a line. Arcs over
+  [0°, 270°] and [180°, 360°] keep both the overlap and the separate contact
+  at 0°. Region Booleans of corner-touching squares and of arc, conic and
+  parabola segments touching at one point give the expected area for all four
+  operations in both orders.
+- **Restrict, reverse, restrict.** Cutting a curve at an algebraic contact
+  parameter, reversing the tail and cutting it again keeps the singleton
+  contacts, including against the first prefix and after a 3-4-5 rotation and
+  a reflection. Checked for a line, minor and major arcs, quadratic and cubic
+  Béziers, circle, ellipse and hyperbola conics, a rational cubic, a spline
+  and a NURBS curve.
+
+No case failed or stayed undecided, so none of the three refactors has a
+completion benefit to measure; what remains is source consolidation, which
+does not justify migrating several pair families in one change. H01 and H03
+are therefore not retained, and H02 is deferred until a support-pair defect
+or a measured cost names a family to migrate first.
+`CurveIntersectionOverlap2::restrict` still returns `None` for a singleton
+restriction, as its documentation states: it reports positive-length
+components only, and intersecting the restricted curves reports the point.
+
 ## Point equality from shared scalar facts (2026-10-18)
 
 Point2 consumes Hyperreal's exact `immediate_equality` fact for coordinate pairs
