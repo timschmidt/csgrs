@@ -685,6 +685,51 @@ self-contact validation, or changing the smoothing stencil would change quality
 or exactness rather than optimize the same result, so those substitutions were
 not attempted.
 
+## 2026-10-22: exact line profiles in sweep, twist and revolution
+
+`curve::try_sweep`, `extrude_twisted` and `revolve` now consume exact line
+profiles instead of their binary64 projection. This is an exactness change
+with a recorded migration, not a performance change; the costs below are what
+it adds or saves. A temporary release-profile probe ran each workload once to
+warm up, then timed 50 runs of each small sweep, 20 of each twist or quarter
+revolution, and 5 or 3 of the example workloads, reporting medians and
+counting allocator calls in the timed runs. The host was shared with other
+jobs, so time differences under about 10% are noise.
+
+| Workload | Before | After | Allocations per run |
+| --- | ---: | ---: | ---: |
+| Straight sweep, integer holed profile | 0.080 ms | 0.084 ms | 173 → 238 |
+| Straight sweep, holed profile in thirds | 0.079 ms | 0.086 ms | 559 → 192 |
+| Sweep along a rational bent path, integer profile | 0.781 ms | 0.755 ms | 9,724 → 9,789 |
+| Sweep along a rational bent path, profile in thirds | 0.919 ms | 0.780 ms | 12,583 → 10,425 |
+| 90 degree twist in 8 slices, integer profile | 2.881 ms | 2.815 ms | 45,519 → 45,584 |
+| 90 degree twist in 8 slices, profile in thirds | 3.229 ms | 3.035 ms | 54,247 → 48,889 |
+| Quarter revolution in 12 steps, integer profile | 2.690 ms | 2.740 ms | 54,336 → 54,393 |
+| Quarter revolution in 12 steps, profile in thirds | 3.000 ms | 2.980 ms | 60,939 → 57,469 |
+| Full revolution of a 32-gon in 48 steps (`extrude` example) | 34.70 ms | 52.21 ms | 763,464 → 1,118,441 |
+| 40-point helix sweep of a 12-gon (`extrude` example) | 373.2 ms | 338.8 ms | 6,495,297 → 6,510,876 |
+
+A second pair of runs gave the same allocation counts. Across both pairs
+the integer-profile workloads changed by −3% to +6%, the 32-gon revolution
+took 52.2–57.3 ms against 34.7 ms, and the helix sweep 339–352 ms against
+368–373 ms.
+
+Profiles that binary64 represents exactly, such as the integer ones, pay
+about 65 extra allocations per run for the exact-profile query and the
+loop-orientation decision. Their output is unchanged. Exact coordinates and
+triangle rows were identical before and after for eleven such fixtures,
+covering full, partial and negative-angle revolution, open and closed sweeps,
+twist with scale or negative height, and holes. A profile in thirds is
+smaller as exact rationals than as their binary64 roundings, so it allocates
+less. The 32-gon revolution costs 50–65% more time and 46% more allocations,
+55.1 MB instead of 38.2 MB allocated per run. Its vertices are now the
+authored cosines and sines times the exact slice angles, where they were
+dyadic roundings. That is the cost of exactness, as for `supershape` above.
+The `extrude` example writes byte-identical STL files before and after. Its
+peak resident set fell from 16.8 MB to 15.7 MB in release builds, and the
+debug run that `scripts/run-examples.sh` uses took 5.0–5.1 s before and
+5.2 s after.
+
 ## 2026-07-28: thin retained-evidence handoff and historical corpus gate
 
 The corpus rows below were measured before the fixture moved to the optional

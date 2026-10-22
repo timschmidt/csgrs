@@ -161,21 +161,58 @@ fn translate_with(
     })?)
 }
 
-fn contour_ring_sign(
-    ring: &Contour2,
+/// Pairs each boundary loop of one profile with whether its side walls must
+/// traverse it backwards, so that the profile's material lies to the left.
+///
+/// Hypertri emits caps with a normalized positive outer winding and negative
+/// hole winding. Exact curve-region profiles preserve authored loop
+/// orientation, so each loop is aligned with its cap role from its exact
+/// signed area instead of assuming that every material loop arrived CCW.
+fn oriented_profile_rings<'a>(
+    material: &'a Contour2,
+    holes: &'a [Contour2],
     decisions: &GeometryDecisions,
-) -> Result<hyperlimit::Sign, ValidationError> {
-    let points = ring
-        .segments()
-        .iter()
-        .map(|segment| {
-            hyperlimit::Point2::new(segment.start().x().clone(), segment.start().y().clone())
+) -> Result<Vec<(&'a Contour2, bool)>, ValidationError> {
+    std::iter::once((material, false))
+        .chain(holes.iter().map(|ring| (ring, true)))
+        .map(|(ring, is_hole)| {
+            let points = ring
+                .segments()
+                .iter()
+                .map(|segment| {
+                    hyperlimit::Point2::new(
+                        segment.start().x().clone(),
+                        segment.start().y().clone(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            let reverse = match decisions.decide(
+                hyperlimit::ring_area_sign(&points, decisions.predicate_policy()),
+                "profile side-ring signed area",
+            )? {
+                hyperlimit::Sign::Positive => is_hole,
+                hyperlimit::Sign::Negative => !is_hole,
+                hyperlimit::Sign::Zero => {
+                    return Err(ValidationError::Geometry(
+                        "profile side ring has zero signed area".into(),
+                    ));
+                },
+            };
+            Ok((ring, reverse))
         })
-        .collect::<Vec<_>>();
-    decisions.decide(
-        hyperlimit::ring_area_sign(&points, decisions.predicate_policy()),
-        "extrusion side-ring signed area",
-    )
+        .collect()
+}
+
+/// The start and end points of each loop edge, in the side-wall direction
+/// chosen by [`oriented_profile_rings`].
+fn oriented_ring_edges(ring: &Contour2, reverse: bool) -> impl Iterator<Item = [&Point2; 2]> {
+    ring.segments().iter().map(move |segment| {
+        if reverse {
+            [segment.end(), segment.start()]
+        } else {
+            [segment.start(), segment.end()]
+        }
+    })
 }
 
 fn exact_ratio(numerator: usize, denominator: usize) -> Result<Real, ValidationError> {
@@ -2244,8 +2281,21 @@ fn try_triangulate_with(
     validate_surface_mesh(TriangleMesh::new(positions, triangles), decisions)
 }
 
+/// Chord-error budget at which modeling operations sample a profile that has
+/// no exact line boundary.
+///
+/// [`try_triangulate`], [`try_extrude`], [`try_extrude_vector`], [`try_sweep`],
+/// [`extrude_twisted`] and [`revolve`] consume an exact line profile's own
+/// coordinates. Only a boundary with an arc or curve segment passes through
+/// [`try_finite_profiles`] at this budget, and their result then records
+/// sampling and coordinate projection in its construction evidence. To sample
+/// at another budget, project the region with
+/// [`CurveRegion2::project_to_finite_profiles_exact`] and pass the resulting
+/// line profile, which these operations then consume without further loss.
+pub const SAMPLED_PROFILE_CHORD_ERROR: f64 = 1.0e-3;
+
 /// Prefer the authoritative exact linear boundary before any finite projection.
-/// Other representations retain the existing sampled-profile contract; the separate
+/// Other representations are sampled at [`SAMPLED_PROFILE_CHORD_ERROR`]; that
 /// finite projection remains a fidelity boundary, not proof of the source curve.
 fn try_modeling_profiles_with(
     input: &CurveRegion2,
@@ -2295,6 +2345,9 @@ fn try_modeling_profiles_with(
 }
 
 /// Finite polygon-with-holes boundary view for rendering and interchange.
+///
+/// Every boundary, including an exact line, is projected to `f64` at
+/// [`SAMPLED_PROFILE_CHORD_ERROR`].
 pub fn try_finite_profiles(
     input: &CurveRegion2,
     context: &GeometryContext,
@@ -2313,7 +2366,7 @@ fn try_finite_profiles_with(
             .with_sampling()
             .with_coordinate_projection(),
     );
-    let options = FiniteProjectionOptions::try_new(1.0e-3)
+    let options = FiniteProjectionOptions::try_new(SAMPLED_PROFILE_CHORD_ERROR)
         .expect("positive finite projection tolerance");
     let profiles =
         decisions.exact_curve(|| input.project_to_finite_profiles_exact(&options))?;
@@ -2392,28 +2445,10 @@ fn try_extrude_vector_with(
                 return Err(ValidationError::InvalidArguments);
             }
         }
-        for (ring, is_hole) in
-            std::iter::once((&material, false)).chain(holes.iter().map(|ring| (ring, true)))
-        {
-            // Hypertri emits caps with a normalized positive outer winding and
-            // negative hole winding. Exact curve-region projection preserves
-            // authored loop orientation, so align each side ring with the cap
-            // role instead of assuming every material loop arrived CCW.
-            let reverse_ring = match contour_ring_sign(ring, decisions)? {
-                hyperlimit::Sign::Positive => is_hole,
-                hyperlimit::Sign::Negative => !is_hole,
-                hyperlimit::Sign::Zero => {
-                    return Err(ValidationError::Geometry(
-                        "extrusion side ring has zero signed area".into(),
-                    ));
-                },
-            };
-            for edge in ring.segments() {
-                let mut bottom_a = point(edge.start());
-                let mut bottom_b = point(edge.end());
-                if reverse_ring {
-                    std::mem::swap(&mut bottom_a, &mut bottom_b);
-                }
+        for (ring, reverse) in oriented_profile_rings(&material, &holes, decisions)? {
+            for [start, end] in oriented_ring_edges(ring, reverse) {
+                let bottom_a = point(start);
+                let bottom_b = point(end);
                 let top_a = bottom_a.clone() + &direction;
                 let top_b = bottom_b.clone() + &direction;
                 if flip {
@@ -2528,15 +2563,20 @@ fn emit_certified_triangle(
     true
 }
 
-fn finite_point([x, y]: [f64; 2], z: Real) -> Option<Point3> {
-    Some(Point3::new(
-        Real::try_from(x).ok()?,
-        Real::try_from(y).ok()?,
-        z,
-    ))
-}
-
-/// Surface of revolution from a native filled region.
+/// Segmented solid of revolution of a native filled region about the Y axis.
+///
+/// The X coordinate of the profile is its radius. Each profile point `(x, y)`
+/// is placed at `(x cos t, y, x sin t)` for `segments + 1` equally spaced
+/// angles `t` from zero to `angle_degrees`, or `segments` angles for a full
+/// turn, which has no caps. An exact line profile keeps its own coordinates,
+/// so the start cap is the authored profile; other profiles are sampled at
+/// [`SAMPLED_PROFILE_CHORD_ERROR`]. The result is the polyhedron through these
+/// slices, not the analytic solid of revolution.
+///
+/// Each profile loop must lie on one side of the axis, which it may touch; a
+/// vertex on the axis is one position shared by every slice. A loop crossing
+/// the axis, a zero angle or one beyond a full turn returns
+/// [`ValidationError::InvalidArguments`].
 pub fn revolve(
     region: &CurveRegion2,
     angle_degrees: Real,
@@ -2589,81 +2629,91 @@ pub fn revolve(
         })
         .collect::<Option<Vec<_>>>()
         .ok_or(ValidationError::InvalidArguments)?;
-    let map = |point: [f64; 2], sample: &(Real, Real)| -> Option<Point3> {
-        let radius = Real::try_from(point[0]).ok()?;
-        Some(Point3::new(
-            radius.clone() * sample.1.clone(),
-            Real::try_from(point[1]).ok()?,
-            radius * sample.0.clone(),
-        ))
+    let map = |point: &Point2, sample: &(Real, Real)| {
+        Point3::new(
+            point.x().clone() * sample.1.clone(),
+            point.y().clone(),
+            point.x().clone() * sample.0.clone(),
+        )
     };
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
-    for profile in try_finite_profiles_with(region, &decisions)? {
-        for ring in std::iter::once(profile.material()).chain(profile.holes().iter()) {
-            if ring.points().iter().any(|point| point[0].is_sign_negative())
-                && ring.points().iter().any(|point| point[0].is_sign_positive())
-            {
+    for (material, holes) in try_modeling_profiles_with(region, &decisions)? {
+        // The material loop comes first; its holes lie on the same side.
+        let mut material_radial_positive = true;
+        for (index, (ring, reverse_ring)) in
+            oriented_profile_rings(&material, &holes, &decisions)?
+                .into_iter()
+                .enumerate()
+        {
+            let vertices = ring
+                .segments()
+                .iter()
+                .map(Segment2::start)
+                .collect::<Vec<_>>();
+            let mut on_axis = Vec::with_capacity(vertices.len());
+            let (mut negative, mut positive) = (false, false);
+            for vertex in &vertices {
+                let radial = decisions.sign(vertex.x(), "revolution profile radius sign")?;
+                negative |= radial == hyperreal::RealSign::Negative;
+                positive |= radial == hyperreal::RealSign::Positive;
+                on_axis.push(radial == hyperreal::RealSign::Zero);
+            }
+            if negative && positive {
                 return Err(ValidationError::InvalidArguments);
             }
-            if ring.points().windows(2).any(|edge| edge[0] == edge[1]) {
-                return Err(ValidationError::InvalidArguments);
+            if index == 0 {
+                material_radial_positive = positive;
             }
-            let radial_positive = ring.points().iter().any(|point| point[0] > 0.0);
-            let reverse = (sign == hyperlimit::Sign::Positive) != radial_positive;
-            let mut unique_rows = Vec::<([f64; 2], Vec<usize>)>::new();
-            let mut point_rows = Vec::with_capacity(ring.points().len());
-            for &point in ring.points() {
-                if let Some((_, row)) =
-                    unique_rows.iter().find(|(candidate, _)| *candidate == point)
-                {
-                    point_rows.push(row.clone());
-                    continue;
+            // With material on the left of each edge, a positive turn of a
+            // positive-radius edge sweeps its side wall outward.
+            let reverse = (sign == hyperlimit::Sign::Positive) != positive;
+            let rows = vertices
+                .iter()
+                .zip(&on_axis)
+                .map(|(vertex, &on_axis)| {
+                    if on_axis {
+                        let index = positions.len();
+                        positions.push(Point3::new(
+                            Real::zero(),
+                            vertex.y().clone(),
+                            Real::zero(),
+                        ));
+                        vec![index; samples.len()]
+                    } else {
+                        samples
+                            .iter()
+                            .map(|sample| {
+                                positions.push(map(vertex, sample));
+                                positions.len() - 1
+                            })
+                            .collect()
+                    }
+                })
+                .collect::<Vec<_>>();
+            for index in 0..vertices.len() {
+                let mut edge = [index, (index + 1) % vertices.len()];
+                if reverse_ring {
+                    edge.reverse();
                 }
-                let radius =
-                    Real::try_from(point[0]).map_err(|_| ValidationError::InvalidArguments)?;
-                let height =
-                    Real::try_from(point[1]).map_err(|_| ValidationError::InvalidArguments)?;
-                let row = if point[0] == 0.0 {
-                    let index = positions.len();
-                    positions.push(Point3::new(Real::zero(), height, Real::zero()));
-                    vec![index; samples.len()]
-                } else {
-                    samples
-                        .iter()
-                        .map(|sample| {
-                            let index = positions.len();
-                            positions.push(Point3::new(
-                                radius.clone() * sample.1.clone(),
-                                height.clone(),
-                                radius.clone() * sample.0.clone(),
-                            ));
-                            index
-                        })
-                        .collect()
-                };
-                unique_rows.push((point, row.clone()));
-                point_rows.push(row);
-            }
-            for (edge_index, edge) in ring.points().windows(2).enumerate() {
+                let [start, end] = edge;
                 for slice in 0..segments {
                     let next = if full {
                         (slice + 1) % samples.len()
                     } else {
                         slice + 1
                     };
-                    let a = point_rows[edge_index][slice];
-                    let b = point_rows[edge_index + 1][slice];
-                    let c = point_rows[edge_index + 1][next];
-                    let d = point_rows[edge_index][next];
+                    let a = rows[start][slice];
+                    let b = rows[end][slice];
+                    let c = rows[end][next];
+                    let d = rows[start][next];
                     // Rotation maps an axis endpoint to the same point in both
                     // adjacent slices. OpenSCAD-style rotate_extrude omits that
                     // collapsed fan triangle while retaining its nondegenerate
                     // neighbor.
-                    for (axis_endpoint, indices) in [
-                        (edge[1][0] == 0.0, [a, b, c]),
-                        (edge[0][0] == 0.0, [a, c, d]),
-                    ] {
+                    for (axis_endpoint, indices) in
+                        [(on_axis[end], [a, b, c]), (on_axis[start], [a, c, d])]
+                    {
                         if axis_endpoint
                             || indices[0] == indices[1]
                             || indices[1] == indices[2]
@@ -2682,36 +2732,29 @@ pub fn revolve(
         }
         if !full {
             let cap_faces =
-                decisions
-                    .exact_curve(|| profile.triangulate())
-                    .map_err(|error| {
-                        ValidationError::Geometry(format!("revolution cap: {error}"))
-                    })?;
+                decisions.consume_triangulation(hypercurve::triangulate_linear_contours(
+                    &decisions.triangulation_context(),
+                    &material,
+                    &holes,
+                )?);
+            // Caps are counterclockwise in the profile plane. The start cap
+            // faces away from the swept material, whose side follows the turn
+            // direction and the profile's radial side.
+            let reverse_start =
+                (sign == hyperlimit::Sign::Positive) == material_radial_positive;
             for face in cap_faces {
-                let [Some(a), Some(b), Some(c)] = face.map(|point| map(point, &samples[0]))
-                else {
-                    return Err(ValidationError::InvalidArguments);
-                };
-                if !emit_certified_triangle(
-                    &mut positions,
-                    &mut triangles,
-                    [a, b, c],
-                    sign == hyperlimit::Sign::Positive,
-                ) {
-                    return Err(ValidationError::InvalidArguments);
-                }
-                let [Some(a), Some(b), Some(c)] = face
-                    .map(|point| map(point, samples.last().expect("samples are nonempty")))
-                else {
-                    return Err(ValidationError::InvalidArguments);
-                };
-                if !emit_certified_triangle(
-                    &mut positions,
-                    &mut triangles,
-                    [a, b, c],
-                    sign == hyperlimit::Sign::Negative,
-                ) {
-                    return Err(ValidationError::InvalidArguments);
+                for (sample, reverse) in [
+                    (&samples[0], reverse_start),
+                    (samples.last().expect("samples are nonempty"), !reverse_start),
+                ] {
+                    if !emit_certified_triangle(
+                        &mut positions,
+                        &mut triangles,
+                        face.clone().map(|point| map(&point, sample)),
+                        reverse,
+                    ) {
+                        return Err(ValidationError::InvalidArguments);
+                    }
                 }
             }
         }
@@ -2827,15 +2870,16 @@ fn sweep_initial_frame(
 ///
 /// Consecutive points proved equal are coalesced, and a path whose last point
 /// equals its first is closed. Each remaining point carries one copy of the
-/// finite projected profile, placed rigidly in the plane through that point
-/// whose normal is the unit chord at an open endpoint, or otherwise the
-/// normalized bisector of the two adjacent unit chords. The first slice is
-/// rotated minimally from `+z` (a half turn about `y` for `-z`), and every
-/// later frame is transported by the exact minimal rotation between
-/// consecutive normals. Slice coordinates are exact. They are rational when
-/// every unit chord and bisector is rational; for a general path they are
-/// nested square roots, and later strict predicates on them can be
-/// undecidable.
+/// profile, placed rigidly in the plane through that point whose normal is the
+/// unit chord at an open endpoint, or otherwise the normalized bisector of the
+/// two adjacent unit chords. The first slice is rotated minimally from `+z` (a
+/// half turn about `y` for `-z`), and every later frame is transported by the
+/// exact minimal rotation between consecutive normals. An exact line profile
+/// keeps its own coordinates; other profiles are sampled at
+/// [`SAMPLED_PROFILE_CHORD_ERROR`]. Slice coordinates are exact images of
+/// those profile coordinates. They are rational when the profile and every
+/// unit chord and bisector are rational; for a general path they are nested
+/// square roots, and later strict predicates on them can be undecidable.
 ///
 /// Fewer than two distinct points, a closed path with fewer than three, a
 /// revisited point, or a chord that exactly reverses its predecessor returns
@@ -2929,36 +2973,32 @@ pub fn try_sweep(
         orientation = transport * orientation;
         frames.push((orientation.clone(), path[index].clone()));
     }
-    let map = |point: [f64; 2],
-               frame: &(Matrix4, Point3)|
-     -> Result<Option<Point3>, ValidationError> {
-        let Some(local) = finite_point(point, Real::zero()) else {
-            return Ok(None);
-        };
+    let map = |point: &Point2, frame: &(Matrix4, Point3)| -> Result<Point3, ValidationError> {
         frame
             .0
-            .transform_point3(&local)
-            .map(|point| Some(point + frame.1.to_vector()))
+            .transform_point3(&Point3::new(
+                point.x().clone(),
+                point.y().clone(),
+                Real::zero(),
+            ))
+            .map(|point| point + frame.1.to_vector())
             .map_err(|problem| {
                 sweep_scalar_error(problem, "sweep slice placement", &decisions)
             })
     };
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
-    for profile in try_finite_profiles_with(region, &decisions)? {
-        for ring in std::iter::once(profile.material()).chain(profile.holes().iter()) {
-            for edge in ring.points().windows(2) {
-                let segment_count = if closed { slice_count } else { slice_count - 1 };
+    for (material, holes) in try_modeling_profiles_with(region, &decisions)? {
+        for (ring, reverse) in oriented_profile_rings(&material, &holes, &decisions)? {
+            for [start, end] in oriented_ring_edges(ring, reverse) {
                 for slice in 0..segment_count {
                     let next = (slice + 1) % slice_count;
-                    let [Some(a), Some(b), Some(c), Some(d)] = [
-                        map(edge[0], &frames[slice])?,
-                        map(edge[1], &frames[slice])?,
-                        map(edge[1], &frames[next])?,
-                        map(edge[0], &frames[next])?,
-                    ] else {
-                        return Err(ValidationError::InvalidArguments);
-                    };
+                    let [a, b, c, d] = [
+                        map(start, &frames[slice])?,
+                        map(end, &frames[slice])?,
+                        map(end, &frames[next])?,
+                        map(start, &frames[next])?,
+                    ];
                     if !emit_certified_triangle(
                         &mut positions,
                         &mut triangles,
@@ -2976,24 +3016,23 @@ pub fn try_sweep(
             }
         }
         if !closed {
-            let cap_faces = decisions
-                .exact_curve(|| profile.triangulate())
-                .map_err(|error| ValidationError::Geometry(format!("sweep cap: {error}")))?;
+            let cap_faces =
+                decisions.consume_triangulation(hypercurve::triangulate_linear_contours(
+                    &decisions.triangulation_context(),
+                    &material,
+                    &holes,
+                )?);
             for face in cap_faces {
                 for (frame, reverse) in [
                     (&frames[0], true),
                     (frames.last().expect("frames are nonempty"), false),
                 ] {
-                    let [a, b, c] = face;
-                    let [Some(a), Some(b), Some(c)] =
-                        [map(a, frame)?, map(b, frame)?, map(c, frame)?]
-                    else {
-                        return Err(ValidationError::InvalidArguments);
-                    };
+                    let [a, b, c] = &face;
+                    let points = [map(a, frame)?, map(b, frame)?, map(c, frame)?];
                     if !emit_certified_triangle(
                         &mut positions,
                         &mut triangles,
-                        [a, b, c],
+                        points,
                         reverse,
                     ) {
                         return Err(ValidationError::InvalidArguments);
@@ -3013,6 +3052,19 @@ pub fn try_sweep(
 }
 
 /// Extrudes while varying twist and terminal XY scale.
+///
+/// The section at fraction `f = i / slices`, for `i` in `0..=slices`, scales
+/// the profile by `1 + (end_scale - 1) f` on each axis, then rotates it by
+/// `twist_degrees f` about `+z` at height `height f`. An exact line profile
+/// keeps its own coordinates, so zero twist with unit scale bounds the
+/// ordinary [`try_extrude`] prism; other profiles are sampled at
+/// [`SAMPLED_PROFILE_CHORD_ERROR`].
+///
+/// Each side quadrilateral between consecutive sections is split along a
+/// fixed diagonal, and the result is validated as a closed manifold, not as an
+/// embedded solid. Side walls of a thin profile can cross: the strip
+/// `[1, 1 + 2^-20] x [0, 2]` with a 90 degree twist in three slices and end
+/// scale `(1/2, 2/3)` gives a closed mesh with negative signed volume.
 pub fn extrude_twisted(
     input: &CurveRegion2,
     height: Real,
@@ -3060,33 +3112,28 @@ pub fn extrude_twisted(
         })
         .collect::<Option<Vec<_>>>()
         .ok_or(ValidationError::InvalidArguments)?;
-    let map = |point: [f64; 2], parameter: &(Real, Real, Real, Real, Real)| {
-        let x = Real::try_from(point[0]).ok()? * parameter.2.clone();
-        let y = Real::try_from(point[1]).ok()? * parameter.3.clone();
-        Some(Point3::new(
+    let map = |point: &Point2, parameter: &(Real, Real, Real, Real, Real)| {
+        let x = point.x().clone() * parameter.2.clone();
+        let y = point.y().clone() * parameter.3.clone();
+        Point3::new(
             x.clone() * parameter.1.clone() - y.clone() * parameter.0.clone(),
             x * parameter.0.clone() + y * parameter.1.clone(),
             parameter.4.clone(),
-        ))
+        )
     };
     let reverse_sides = height_sign == hyperlimit::Sign::Negative;
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
-    for profile in try_finite_profiles_with(input, &decisions)? {
-        for ring in std::iter::once(profile.material()).chain(profile.holes().iter()) {
-            if ring.points().windows(2).any(|edge| edge[0] == edge[1]) {
-                return Err(ValidationError::InvalidArguments);
-            }
-            for edge in ring.points().windows(2) {
+    for (material, holes) in try_modeling_profiles_with(input, &decisions)? {
+        for (ring, reverse) in oriented_profile_rings(&material, &holes, &decisions)? {
+            for [start, end] in oriented_ring_edges(ring, reverse) {
                 for slice in 0..slices {
-                    let [Some(a), Some(b), Some(c), Some(d)] = [
-                        map(edge[0], &parameters[slice]),
-                        map(edge[1], &parameters[slice]),
-                        map(edge[1], &parameters[slice + 1]),
-                        map(edge[0], &parameters[slice + 1]),
-                    ] else {
-                        return Err(ValidationError::InvalidArguments);
-                    };
+                    let [a, b, c, d] = [
+                        map(start, &parameters[slice]),
+                        map(end, &parameters[slice]),
+                        map(end, &parameters[slice + 1]),
+                        map(start, &parameters[slice + 1]),
+                    ];
                     if !emit_certified_triangle(
                         &mut positions,
                         &mut triangles,
@@ -3103,11 +3150,12 @@ pub fn extrude_twisted(
                 }
             }
         }
-        let cap_faces = decisions
-            .exact_curve(|| profile.triangulate())
-            .map_err(|error| {
-                ValidationError::Geometry(format!("twisted-extrusion cap: {error}"))
-            })?;
+        let cap_faces =
+            decisions.consume_triangulation(hypercurve::triangulate_linear_contours(
+                &decisions.triangulation_context(),
+                &material,
+                &holes,
+            )?);
         for face in cap_faces {
             for (parameter, reverse) in [
                 (&parameters[0], !reverse_sides),
@@ -3116,12 +3164,8 @@ pub fn extrude_twisted(
                     reverse_sides,
                 ),
             ] {
-                let [Some(a), Some(b), Some(c)] = face.map(|point| map(point, parameter))
-                else {
-                    return Err(ValidationError::InvalidArguments);
-                };
-                if !emit_certified_triangle(&mut positions, &mut triangles, [a, b, c], reverse)
-                {
+                let points = face.clone().map(|point| map(&point, parameter));
+                if !emit_certified_triangle(&mut positions, &mut triangles, points, reverse) {
                     return Err(ValidationError::InvalidArguments);
                 }
             }

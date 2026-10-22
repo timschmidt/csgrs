@@ -62,6 +62,11 @@ will be fixed:
   general sampled path has exact frames in nested square roots and does not
   compose with a later strict Boolean ([properties.md](../properties.md)
   target 15).
+- **Twisted side walls.** `curve::extrude_twisted` checks that its result is
+  a closed manifold, not that it is embedded. A thin profile can get side
+  walls that cross: the strip `[1, 1 + 2^-20] x [0, 2]` with a 90 degree
+  twist in three slices and end scale `(1/2, 2/3)` gives a closed mesh with
+  negative signed volume.
 - **Hull rows.** A second strict hull of the same mesh object in one process
   can triangulate coplanar hull faces differently (same set, certified),
   depending on facts cached by the first hull

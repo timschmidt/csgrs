@@ -150,6 +150,16 @@ migrations, including changed serialized output, are listed in
 - In WebAssembly, `CurveRegionJs.sweep`, `revolve` and `extrudeTwisted` throw
   a `GeometryError` with a `code`, as `extrude` does, instead of a bare
   message string.
+- `curve::try_sweep`, `extrude_twisted` and `revolve` use an exact line
+  profile's own coordinates, as `try_extrude` does, instead of rounding them
+  to binary64. Widths of 1/3, sqrt(2) and 2^-80, holes 2^-80 apart after a
+  2^60 translation, and the authored meridian of a partial revolution stay
+  exact. These results no longer report sampling or coordinate projection.
+  Previously a 2^-80 sliver swept into a certified closed surface of zero
+  volume, and the separated holes failed to sweep. A partial revolution of a
+  profile at negative radius, which failed, now completes. Profiles with arc
+  or curve boundaries are still sampled, at the chord error now published as
+  `curve::SAMPLED_PROFILE_CHORD_ERROR`, and their results still say so.
 
 - Strict Booleans and convex hulls of sampled spheres complete. The
   `boolean_operations` and `convex_hull` examples stopped under `STRICT` on

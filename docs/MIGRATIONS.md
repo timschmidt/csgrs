@@ -99,6 +99,17 @@ These changes alter represented sets, coordinates, file lengths or checksums.
 - **Triangulation and linear extrusion.** Certified line profiles go through
   Hypertri without finite-coordinate projection. Exact vertices and output
   artifacts can differ from the former quantized output.
+- **Sweep, twisted extrusion and revolution.** `curve::try_sweep`,
+  `extrude_twisted` and `revolve` consume certified line profiles the same
+  way. A profile whose vertices binary64 represents exactly keeps its rows.
+  The vertices of other line profiles, such as coordinates in thirds or
+  multiples of sqrt(2), are now the exact authored values, so their rows,
+  exported coordinates and checksums change. Their construction evidence no longer reports
+  `source_sampled()` or `coordinates_projected()`. Caps are triangulated by
+  `hypercurve::triangulate_linear_contours`, as in extrusion. An undecided
+  loop orientation in any of these operations, extrusion included, reports
+  `PredicateUndecided` for `"profile side-ring signed area"`; extrusion
+  reported `"extrusion side-ring signed area"`.
 - **Minkowski sums.** `solid::minkowski_sum` adds the represented bounded
   closed-PWN solids. The former convexification of all stored vertex sums is
   `solid::minkowski_hull`; move point-cloud or intentional convex-hull callers

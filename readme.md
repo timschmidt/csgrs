@@ -346,6 +346,11 @@ These functions consume a `CurveRegion2` and return a native `TriangleMesh`:
 | <img src="docs/sweep.png" width="144" alt="Planar region swept along a path into a solid with visible faces, edges, and vertices"/> | `curve::try_sweep(region: &CurveRegion2, path: &[Point3], context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/loft.png" width="144" alt="Corresponding planar sections lofted into a solid with visible faces, edges, and vertices"/> | `solid::loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError>` |
 
+The extrusions, `revolve` and `try_sweep` use the exact coordinates of a
+profile bounded by lines. A profile with arc or curve boundaries is sampled
+at `curve::SAMPLED_PROFILE_CHORD_ERROR` first, and the mesh's construction
+evidence records the sampling.
+
 ### Solid construction
 
 Functions in `csgrs::solid` return `TriangleMesh`:
