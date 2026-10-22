@@ -42,8 +42,10 @@ struct PolynomialCurveSource2 {
 /// after reversal and similarity transforms. Endpoints retain the selected
 /// event fiber; interior points retain the branch's ordered fiber root.
 /// Regular derivatives and smooth-event tangent directions retain that joint
-/// source. Singular limits, rational Bézier promotion, and filled arrangements
-/// report their typed capability blockers.
+/// source. An unmapped branch intersects authored rational vertical lines
+/// through [`Curve2::intersect_curve`] and [`Curve2::intersection_topology`].
+/// Other intersections, singular limits, rational Bézier promotion, and filled
+/// arrangements report their typed capability blockers.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolynomialCurveBranch2 {
     source: Arc<PolynomialCurveSource2>,
@@ -54,6 +56,18 @@ pub struct PolynomialCurveBranch2 {
     transform: Option<Similarity2>,
     maps: Vec<crate::RationalMap2>,
     pub(super) reversed: bool,
+}
+
+/// One point of a graph branch on a vertical line of its source plane.
+#[derive(Debug)]
+pub(crate) struct PolynomialVerticalSection2 {
+    /// The source abscissa, or the retained boundary parameter it equals.
+    pub(crate) parameter: CurveParameter2,
+    /// The branch's correlated fiber point.
+    pub(crate) point: CurvePoint2,
+    /// `F_y` is certified nonzero: the branch is locally a graph with a
+    /// nonvertical tangent.
+    pub(crate) regular: bool,
 }
 
 fn blocked(reason: UncertaintyReason) -> ExactCurveError {
@@ -284,6 +298,78 @@ impl PolynomialCurveBranch2 {
 
     pub(super) fn endpoint(&self, start: bool) -> CurvePoint2 {
         self.endpoints[usize::from(start == self.reversed)].clone()
+    }
+
+    /// Whether this branch lies in its polynomial's own plane.
+    pub(crate) fn is_source_image(&self) -> bool {
+        self.transform.is_none() && self.maps.is_empty()
+    }
+
+    /// The point of this source-plane branch on the vertical line `x = value`.
+    ///
+    /// A graph branch meets each vertical line of its plane at most once.
+    /// An active boundary returns its retained parameter and stored endpoint,
+    /// so an event keeps the event fiber's incidence rather than an open-slab
+    /// root ordinal. An interior point is a simple root of an open fiber, so
+    /// `F_y` is nonzero and the tangent is not vertical. A boundary is regular
+    /// only when `F_y` is proved nonzero there: vertical-tangent and singular
+    /// events are not. An undecided sign leaves the point unclassified; it
+    /// is not a tangency proof. Budget exhaustion propagates.
+    pub(crate) fn vertical_section(
+        &self,
+        value: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<PolynomialVerticalSection2>> {
+        debug_assert!(self.is_source_image());
+        let parameter = CurveParameter2::from(value.clone());
+        let compare = |boundary: &CurveParameter2| {
+            decided(
+                parameter
+                    .cmp_by_refinement(boundary, policy)
+                    .map_err(invalid)?,
+            )
+        };
+        let start = compare(self.range.start())?;
+        if start.is_lt() {
+            return Ok(None);
+        }
+        let end = compare(self.range.end())?;
+        if end.is_gt() {
+            return Ok(None);
+        }
+        if start.is_gt() && end.is_lt() {
+            let point = self.interior_point(&parameter, policy)?;
+            return Ok(Some(PolynomialVerticalSection2 {
+                parameter,
+                point,
+                regular: true,
+            }));
+        }
+        let index = usize::from(start.is_gt());
+        let point = self.endpoints[index].clone();
+        let fy = hypersolve::bivariate_arithmetic::bivariate_parameter_derivative(
+            self.topology().equation(),
+            CurveResultantParameter::Second,
+        );
+        let regular = match crate::bezier_offset::point_rational_form_sign(
+            &point,
+            &fy,
+            &hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
+            policy,
+        )
+        .map_err(invalid)?
+        {
+            Classification::Decided(sign) => sign != hyperreal::RealSign::Zero,
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Err(blocked(UncertaintyReason::BudgetExhausted));
+            }
+            Classification::Uncertain(_) => false,
+        };
+        Ok(Some(PolynomialVerticalSection2 {
+            parameter: [self.range.start(), self.range.end()][index].clone(),
+            point,
+            regular,
+        }))
     }
 
     pub(super) fn point_at(

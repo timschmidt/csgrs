@@ -149,6 +149,41 @@ The first keeps the exact-only principal API smallest. The second makes the exis
 - The earlier record listed six cases on this board, four with nonparallel `A` and `B` crossing on the arc. They do not occur on the current board. If such a case recurs: `A` and `B` meet in one point `Q` in their own field. The contacts are equal exactly when `Q` lies on the circle, an exact zero test of `|Q - C|² - r²`, and the branch sign above then selects `Q` on each line.
 - The earlier options remain for such cases: line-conic contacts on a circular conic in tower-representable form, from the circle's exact center and radius as `line_circle_relation_at_endpoints` does for native arcs; `quadratic_tower` beyond one outer radical; or a zero-separation bound, which `algebraic_separation_bound_bits` does not give past 256 nodes or at `Inverse` nodes without an exact child sign.
 
+## 8. Polynomial-branch sections and filled arrangements
+
+**Admitted.** An unmapped graph branch meets an authored rational vertical
+line, or a returned restriction of one, in both intersection APIs and both
+operand orders; both operands split and the pieces re-enter the same query
+(`PERFORMANCE.md`, 2026-10-22). A branch's other intersections, its
+self-intersections and point location still report typed `Unsupported`
+blockers.
+
+**Open, in dependency order:**
+- **Split cost.** Splitting a branch at `n` cuts isolates each cut fiber twice,
+  once per adjacent piece, although the contact already holds the point. The
+  quintic topology costs about 312 µs against 101 µs for the section alone.
+  Computing each cut point once in the branch split, or passing the contact
+  points to it, would remove those isolations. This is a cost, not a defect.
+- **Other lines (H06, milestone 1).** For `a*x + b*y + d = 0` with `b != 0`,
+  isolate the real roots of `F(x, -(a*x + d)/b)` in the branch's range, keep a
+  root only when the branch's own fiber point satisfies the line exactly, and
+  classify tangency from the sign of `dy*F_y + dx*F_x`. An identically zero
+  substitution is a shared component, which needs overlap evidence or a typed
+  `SharedComponent` blocker, never an empty result.
+- **Selected abscissas and mapped branches (H06, milestones 2 and 3).** An
+  irrational `c`, algebraic line coefficients, and branches with a similarity
+  or rational image need the query pulled back through the image map;
+  source-x monotonicity is not world-x monotonicity. Branch pairs need
+  resultant events and exact fiber signs.
+- **Repeated and vertical components (H07).** See `hypersolve/FUTURE_WORK.md`.
+- **Filled regions and BRep trims (H08).** `CurveRegion2` construction and
+  `CurvePath2::simple_loop_orientation` with polynomial boundary pieces return
+  `Blocked(Construction, ImplicitPolynomial, Unsupported)`; a test records
+  this. Source-span and boundary ownership, pair incidence, point location,
+  local sectors and BRep consumers must all retain the graph, selector and
+  domain. The chart-qualified views and shared incidence of H01–H04 come
+  first.
+
 ## Fast paths added in this round
 
 Keep these in mind when measuring:

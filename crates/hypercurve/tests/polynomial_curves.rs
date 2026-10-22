@@ -36,3 +36,31 @@ fn every_similarity_branch_keeps_exact_coordinate_comparisons() {
 fn public_source_restrictions_keep_polynomial_bounds_and_traversal() {
     support::public_source_restrictions_keep_polynomial_bounds_and_traversal();
 }
+
+#[path = "support/polynomial_sections.rs"]
+mod sections;
+
+#[test]
+fn quintic_section_splits_both_operands_and_continues() {
+    sections::quintic_section_splits_both_operands_and_continues();
+}
+
+#[test]
+fn quintic_sections_respect_both_active_domains() {
+    sections::quintic_sections_respect_both_active_domains();
+}
+
+#[test]
+fn vertical_tangent_and_cusp_events_are_not_transverse() {
+    sections::vertical_tangent_and_cusp_events_are_not_transverse();
+}
+
+#[test]
+fn unadmitted_polynomial_pairs_keep_typed_blockers() {
+    sections::unadmitted_polynomial_pairs_keep_typed_blockers();
+}
+
+#[test]
+fn sections_survive_context_drop_budgets_and_policies() {
+    sections::sections_survive_context_drop_budgets_and_policies();
+}

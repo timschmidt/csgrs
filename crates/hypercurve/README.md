@@ -50,6 +50,10 @@ transforms keep the original first-coordinate parameter chart and shared source.
 `CurvePointDefinition2::PolynomialFiber` replays the selected base and fiber
 together; untrusted singleton claims are checked. Isolated points remain separate
 from branches. This collection does not establish winding or a filled region.
+A branch in its polynomial's own plane intersects an authored rational vertical
+line, and the pieces either split returns, through `Curve2::intersect_curve` and
+`intersection_topology`; the line parameter replays the branch's fiber point.
+Other branch intersections report typed blockers.
 General derivatives, rational Bézier promotion, filled arrangements, and branch
 archive replay remain unsupported. Mixed affine forms can be signed in the local
 fiber; constructing their scalar parameter is restricted when both coefficients

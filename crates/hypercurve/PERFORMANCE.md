@@ -99,6 +99,76 @@ or a measured cost names a family to migrate first.
 restriction, as its documentation states: it reports positive-length
 components only, and intersecting the restricted curves reports the point.
 
+## Polynomial-branch vertical sections (2026-10-22)
+
+An unmapped `PolynomialCurveBranch2` now meets an authored rational vertical
+`LineSeg2`, or a returned restriction of one, through `intersect_curve` and
+`intersection_topology` in either operand order. At baseline `61da737db3`
+all four entry points returned `Blocked(Intersection, ImplicitPolynomial,
+Unsupported)`, and `split_curve` lowered every cut through Bézier support
+spans, which a graph branch does not have. With the dispatch alone, the
+topology still failed with `Blocked(Arrangement, ImplicitPolynomial,
+Unsupported)`; graph-branch cuts now go to `split_at_parameters` in the source
+abscissa chart.
+
+At `x = c` the branch's own fiber authority selects at most one point. An
+active boundary returns the retained boundary parameter and stored endpoint,
+so an event keeps its event-fiber incidence. The line parameter is the affine
+form `(y - y0) / dy` of that point, so evaluating the line, including at a
+returned piece's endpoint, replays the polynomial point rather than building
+coordinates. Neither operand is promoted to a Bézier carrier. Interior
+contacts are simple open-fiber roots, so `F_y` is nonzero and they are
+certified transverse with a cross sign from traversal alone. A boundary
+contact is transverse only when `F_y` is proved nonzero there; the vertical
+tangent of `y^2 = x` and the cusp of `y^2 = x^3` are not. Non-vertical and
+irrational lines, mapped branches, branch pairs and filled regions with
+polynomial boundaries keep their typed `Unsupported` blockers.
+
+Acceptance, `tests/polynomial_curves.rs`: `y^5 + 5y + 5 - x` on
+`[-1, 1] x [-2, 2]` (irreducible quintic fiber at `x = 0`) sectioned at
+`x = 0`, both operands split, the right piece restricted and reversed and
+sectioned at `x = 1/2`, and every returned line piece re-intersected with the
+returned branch pieces at their shared endpoint. Coordinates are checked
+against independently bracketed fiber roots, with reversal sign rules, and
+with outside, short-line, rational-endpoint, domain-event, `2^-80` near-cut,
+vertical-tangent and cusp cases, budget denial and recovery, strict →
+approximate → strict certainty, and context drop before reuse. A unit test
+covers duplicate, endpoint, unknown-span and out-of-range cuts. Four of the
+five new integration tests fail at baseline; the fifth records the blockers
+that remain and passes on both.
+
+The change adds two carrier matches to the geometry-free intersection
+dispatch and one to `split_curve` for other pairs. A counting allocator
+(release, CPU-pinned, 20 iterations after one warm-up) recorded identical
+per-iteration counts at baseline and candidate:
+
+| Workload | Allocation calls | Requested bytes |
+| --- | ---: | ---: |
+| Native line/line `intersection_topology` | 75 | 12,544 |
+| Selected-range quadratic/line evidence and topology | 1,357 | 129,724 |
+
+Five alternating CPU-pinned process pairs of the `curve_path` bench gave a
+median per-row ratio of 0.9925 (range 0.832–1.041;
+`curve_path_immediate_intersection_topology` 14.809 → 15.017 µs). Three
+pairs of `rational_bezier` gave 0.9923 (range 0.909–1.143). Every checksum
+matched. The host load average was about 23 on 16 CPUs, so these are
+descriptive and establish neither a speedup nor a regression ceiling. The
+stripped bench executables grow 4,224 bytes (`curve_path`) and 10,128 bytes
+(`rational_bezier`).
+
+The new capability's own cost, for the quintic at `x = 0`:
+
+| Operation | Allocation calls | Requested bytes | Median |
+| --- | ---: | ---: | ---: |
+| `intersect_curve` | 654 | 43,134 | 101 µs |
+| `intersection_topology` | 2,093 | 130,284 | 312 µs |
+| Returned line piece against returned branch piece, topology | 242 | 15,471 | 31 µs |
+
+The topology costs about three times the section because each cut fiber is
+re-isolated once for each adjacent piece; see `FUTURE_WORK.md` section 8.
+Raw samples stayed in the working session and are not archived in the
+evidence repository.
+
 ## Point equality from shared scalar facts (2026-10-18)
 
 Point2 consumes Hyperreal's exact `immediate_equality` fact for coordinate pairs

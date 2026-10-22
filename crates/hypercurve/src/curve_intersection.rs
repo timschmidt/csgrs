@@ -2,6 +2,8 @@
 
 #[path = "curve_support_intersection.rs"]
 mod curve_support_intersection;
+#[path = "polynomial_curve_section.rs"]
+mod polynomial_curve_section;
 
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -2285,7 +2287,11 @@ impl CurveIntersectionContext {
         mut batch_cache: Option<&mut CurveIntersectionBatchCache>,
     ) -> ExactCurveResult<Self> {
         if first.geometry().is_none() || second.geometry().is_none() {
-            let result = curve_support_intersection::intersect(first, second, policy, None)?;
+            let result =
+                match polynomial_curve_section::polynomial_line_section(first, second, policy)? {
+                    Some(result) => result,
+                    None => curve_support_intersection::intersect(first, second, policy, None)?,
+                };
             return Ok(Self {
                 data: CurveIntersectionContextData {
                     first: first.clone(),
@@ -3303,6 +3309,27 @@ pub(crate) fn split_curve(
     let parameters = parameters.collect::<Vec<_>>();
     if parameters.is_empty() {
         return Ok(vec![curve.clone()]);
+    }
+    if curve.polynomial_branch().is_some() {
+        // A graph branch is one span in its source-abscissa chart, which is
+        // also its public chart. Cut it there; it has no Bezier support span.
+        let mut cuts = Vec::with_capacity(parameters.len());
+        for (span_index, parameter) in parameters {
+            if span_index != 0 {
+                return Err(ExactCurveError::invalid(
+                    CurveOperation2::Arrangement,
+                    curve.family(),
+                    CurveError::Topology(
+                        "an intersection cut references an unknown source span".into(),
+                    ),
+                ));
+            }
+            cuts.push(parameter);
+        }
+        return curve
+            .split_at_parameters(cuts, policy)
+            .map(|pieces| pieces.into_iter().map(|(_, curve)| curve).collect())
+            .map_err(|error| error.with_operation(CurveOperation2::Arrangement));
     }
     let spans = curve_support_intersection::spans(curve, policy)
         .map_err(|error| error.with_operation(CurveOperation2::Arrangement))?;
