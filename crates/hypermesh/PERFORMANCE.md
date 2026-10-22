@@ -10,6 +10,48 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## 2026-10-22: bound the search for equal output coordinates
+
+Status: **kept**
+
+Coordinate sharing compared each new coordinate structurally with every
+expression of every group in its approximation window, then attempted a
+strict proof against every group. Distinct values crowded into one window
+made the pass quadratic: 4,096 dyadics `i / 2^60` beside a distant `sqrt(2)`
+took 8,386,560 structural comparisons and as many strict proofs (196 ms in
+release), and 256 distinct values `sqrt(1 + i / 2^50)` took 32,640 failed
+proofs (141 ms). Each coordinate now compares with the groups of at most the
+four nearest approximations, structurally with at most eight of their
+expressions, and attempts at most two proofs, so a pass over `n` vertices
+makes at most `24 n` comparisons and `6 n` proofs. Two exact rationals are not
+proved, since equal rationals already compare structurally. The scratch
+storage is flat (one record per coordinate, distinct expression and group,
+with groups' expressions linked by index) instead of two vectors per group,
+and it is reserved only when an axis holds a coordinate that is not an exact
+rational. The pass is optional: a coordinate that finds no equal expression
+within the bounds, or a pass whose scratch cannot be reserved, keeps every
+expression, so it no longer fails the operation with `CapacityOverflow`.
+Boolean operations have no cancellation or work budget, so the bounds are
+fixed counts.
+
+Preserved evidence: a probe over the whole successive-operation corpus
+before the change found at most one open group whenever a coordinate looked
+for candidates, and all 216 strict proofs succeeded against the nearest group,
+so the bounds discard nothing there. A full `cargo bench --bench
+successive_operations` run before and after gives identical outcomes,
+triangle and vertex counts, coordinate counts and graph sizes on all 201
+steps, and identical allocation at 0.1 MB resolution (63,408.4 MB and
+63,408.3 MB in total); six icosahedron unions run alone still allocate
+3,963.8 MB, the last three steps 652.9, 679.3 and 685.0 MB. After the change,
+the dyadic fixture takes 16,374 comparisons, no proofs and 0.66 ms; the
+square roots take 509 proofs and 3.4 ms; 32 undecided multiples of one zero
+take 61 proofs and 2.0 ms instead of 496 and 12.1 ms (focused release probes,
+not committed). `shared_coordinate_search_is_bounded_in_a_crowded_window`,
+`undecided_coordinates_attempt_a_bounded_number_of_proofs` and
+`exact_rational_outputs_reserve_no_sharing_storage` check the counts, the
+unchanged values and an equal pair found inside a crowded window; the
+existing equal-coordinate tests pass unchanged.
+
 ## 2026-10-22: store equal output coordinates as one expression
 
 Status: **kept**

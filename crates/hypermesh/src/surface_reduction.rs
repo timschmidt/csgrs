@@ -107,6 +107,21 @@
 //! approximate value; one that matches an expression its group already holds
 //! needs no proof, so a new coordinate needs at most one equality proof.
 //! Values never change, and an undecided comparison keeps both expressions.
+//!
+//! Sharing is optional, so its search is bounded however densely distinct
+//! values crowd one approximation window. A coordinate is compared with the
+//! groups of at most the four nearest approximations, structurally with at
+//! most eight of their expressions, and attempts at most two proofs; two
+//! exact rationals need none, because equal rationals compare structurally.
+//! A pass over `n` vertices thus makes at most `24 n` structural comparisons
+//! and `6 n` proofs, besides one approximation of each coordinate and one size
+//! measurement of each expression in a group of several. A coordinate that
+//! finds no equal expression within these bounds keeps its own. The scratch
+//! storage is flat and reserved once, only when an axis holds a coordinate
+//! that is not an exact rational; if it cannot be reserved, every coordinate
+//! keeps its expression. Boolean operations have no cancellation or work
+//! budget, so these bounds are fixed counts rather than an allowance taken
+//! from the operation.
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -987,29 +1002,74 @@ pub(crate) fn reduce_output_facets(
 /// pair the window misses only keeps two expressions.
 const SHARED_COORDINATE_WINDOW: f64 = 1.0 / 1_099_511_627_776.0;
 
+/// Groups in the window that a coordinate is compared with, nearest
+/// approximation first.
+const SHARED_COORDINATE_CANDIDATES: usize = 4;
+
+/// Held expressions that a coordinate is compared with structurally.
+const SHARED_COORDINATE_COMPARISONS: usize = 8;
+
+/// Equality proofs that a coordinate attempts.
+const SHARED_COORDINATE_PROOFS: usize = 2;
+
 /// Graph traversal limit when choosing the smallest of equal expressions; a
 /// larger graph counts as larger than any complete one.
 const SHARED_COORDINATE_NODE_LIMIT: usize = 1 << 12;
 
-/// Coordinates on one axis proved equal, with the distinct expressions that
-/// store them.
-struct SharedCoordinateGroup {
+/// Ends the expression list of a shared group.
+const NO_SHARED_EXPRESSION: u32 = u32::MAX;
+
+/// One output coordinate on the current axis.
+struct SharedCoordinate {
     approximate: f64,
-    expressions: Vec<Real>,
-    /// Vertex and index of the expression it stores.
-    members: Vec<(usize, usize)>,
+    vertex: u32,
+    /// The distinct expression it stores, once assigned.
+    expression: u32,
+}
+
+/// A distinct expression that coordinates of one group store.
+struct SharedExpression {
+    /// The vertex whose coordinate holds it.
+    vertex: u32,
+    /// The earliest vertex that stores it.
+    earliest: u32,
+    group: u32,
+    /// The next expression of its group.
+    next: u32,
+}
+
+/// Coordinates on one axis proved equal, with their distinct expressions.
+struct SharedGroup {
+    /// Approximation of its first coordinate.
+    approximate: f64,
+    first: u32,
+    last: u32,
+    /// The expression that every coordinate of the group stores afterwards.
+    representative: u32,
+}
+
+/// Work of one coordinate-sharing pass.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub(crate) struct SharedCoordinateWork {
+    /// Coordinates of scratch storage reserved; zero when no axis needs it.
+    pub(crate) reserved: usize,
+    /// Structural comparisons with held expressions.
+    pub(crate) comparisons: usize,
+    /// Equality proofs attempted under strict policy.
+    pub(crate) proofs: usize,
 }
 
 /// Stores each set of equal output coordinates on one axis as one expression,
 /// as described in the module documentation.
-pub(crate) fn share_equal_output_coordinates(points: &mut [Point3]) -> HypermeshResult<()> {
-    let overflow = || HypermeshError::CapacityOverflow {
-        operation: "shared output coordinates",
-    };
-    let mut order = Vec::new();
-    order
-        .try_reserve_exact(points.len())
-        .map_err(|_| overflow())?;
+pub(crate) fn share_equal_output_coordinates(points: &mut [Point3]) -> SharedCoordinateWork {
+    let mut work = SharedCoordinateWork::default();
+    // Expression and vertex numbers below are `u32`, like output vertex IDs.
+    if u32::try_from(points.len()).is_err() {
+        return work;
+    }
+    let mut coordinates = Vec::new();
+    let mut expressions = Vec::new();
+    let mut groups = Vec::new();
     for axis in 0..3 {
         // Equal exact rationals already compare structurally.
         if points
@@ -1018,72 +1078,190 @@ pub(crate) fn share_equal_output_coordinates(points: &mut [Point3]) -> Hypermesh
         {
             continue;
         }
-        order.clear();
-        order.extend(points.iter().enumerate().filter_map(|(index, point)| {
-            let approximate = axis_ref(point, axis).to_f64_lossy()?;
-            approximate.is_finite().then_some((approximate, index))
-        }));
-        order.sort_unstable_by(|left, right| left.0.total_cmp(&right.0).then(left.1.cmp(&right.1)));
-        let mut groups = Vec::<SharedCoordinateGroup>::new();
-        // Groups from `open` on start inside the current window.
-        let mut open = 0;
-        for &(approximate, index) in &order {
-            let window = SHARED_COORDINATE_WINDOW * approximate.abs().max(1.0);
-            while open < groups.len() && approximate - groups[open].approximate > window {
-                open += 1;
+        if work.reserved == 0 {
+            // Sharing is optional: without scratch storage every coordinate
+            // keeps its expression.
+            if coordinates.try_reserve_exact(points.len()).is_err()
+                || expressions.try_reserve_exact(points.len()).is_err()
+                || groups.try_reserve_exact(points.len()).is_err()
+            {
+                return work;
             }
-            let value = axis_ref(&points[index], axis);
-            // An expression the group already holds needs no proof.
-            let held = groups[open..]
-                .iter()
-                .enumerate()
-                .find_map(|(offset, group)| {
-                    let expression = group.expressions.iter().position(|held| held == value)?;
-                    Some((open + offset, expression))
-                });
-            let target = held.or_else(|| {
-                let group = (open..groups.len())
-                    .find(|&group| strictly_equal(value, &groups[group].expressions[0]))?;
-                Some((group, groups[group].expressions.len()))
-            });
-            match target {
-                Some((group, expression)) => {
-                    let group = &mut groups[group];
-                    if expression == group.expressions.len() {
-                        group.expressions.push(value.clone());
-                    }
-                    group.members.push((index, expression));
+            work.reserved = points.len();
+        }
+        coordinates.clear();
+        expressions.clear();
+        groups.clear();
+        share_axis(
+            points,
+            axis,
+            &mut coordinates,
+            &mut expressions,
+            &mut groups,
+            &mut work,
+        );
+    }
+    debug_assert!(
+        work.comparisons <= 3 * SHARED_COORDINATE_COMPARISONS * points.len()
+            && work.proofs <= 3 * SHARED_COORDINATE_PROOFS * points.len()
+    );
+    work
+}
+
+/// Groups the coordinates of one axis and stores each group's smallest
+/// expression in all of them. The scratch vectors are empty, with capacity
+/// for every vertex.
+fn share_axis(
+    points: &mut [Point3],
+    axis: usize,
+    coordinates: &mut Vec<SharedCoordinate>,
+    expressions: &mut Vec<SharedExpression>,
+    groups: &mut Vec<SharedGroup>,
+    work: &mut SharedCoordinateWork,
+) {
+    // Vertex numbers fit `u32`, as the caller checked.
+    let number = |index: usize| index as u32;
+    coordinates.extend(points.iter().enumerate().filter_map(|(vertex, point)| {
+        let approximate = axis_ref(point, axis).to_f64_lossy()?;
+        approximate.is_finite().then_some(SharedCoordinate {
+            approximate,
+            vertex: number(vertex),
+            expression: NO_SHARED_EXPRESSION,
+        })
+    }));
+    coordinates.sort_unstable_by(|left, right| {
+        left.approximate
+            .total_cmp(&right.approximate)
+            .then(left.vertex.cmp(&right.vertex))
+    });
+    // Groups from `open` on start inside the current window.
+    let mut open = 0;
+    for coordinate in coordinates.iter_mut() {
+        let window = SHARED_COORDINATE_WINDOW * coordinate.approximate.abs().max(1.0);
+        while open < groups.len() && coordinate.approximate - groups[open].approximate > window {
+            open += 1;
+        }
+        let value = axis_ref(&points[coordinate.vertex as usize], axis);
+        let nearest =
+            open.max(groups.len().saturating_sub(SHARED_COORDINATE_CANDIDATES))..groups.len();
+        // An expression the group already holds needs no proof. Groups from
+        // `compared` on had their first expression compared.
+        let mut compared = nearest.end;
+        let mut comparisons = 0;
+        let mut target = None;
+        'groups: for group in nearest.clone().rev() {
+            let mut expression = groups[group].first;
+            while expression != NO_SHARED_EXPRESSION {
+                if comparisons == SHARED_COORDINATE_COMPARISONS {
+                    break 'groups;
                 }
-                None => groups.push(SharedCoordinateGroup {
-                    approximate,
-                    expressions: vec![value.clone()],
-                    members: vec![(index, 0)],
-                }),
+                comparisons += 1;
+                compared = group;
+                if held_expression(points, expressions, axis, expression) == value {
+                    target = Some((group, expression));
+                    break 'groups;
+                }
+                expression = expressions[expression as usize].next;
             }
         }
-        for group in groups {
-            if group.expressions.len() < 2 {
-                continue;
-            }
-            let mut earliest = vec![usize::MAX; group.expressions.len()];
-            for &(index, expression) in &group.members {
-                earliest[expression] = earliest[expression].min(index);
-            }
-            let representative = (0..group.expressions.len())
-                .min_by_key(|&expression| {
-                    let size = group.expressions[expression]
-                        .representation_size(SHARED_COORDINATE_NODE_LIMIT);
-                    (!size.complete, size.depth, size.nodes, earliest[expression])
-                })
-                .expect("a shared group holds an expression");
-            for &(index, expression) in &group.members {
-                if expression != representative {
-                    *axis_mut(&mut points[index], axis) = group.expressions[representative].clone();
+        work.comparisons += comparisons;
+        if target.is_none() {
+            let mut proofs = 0;
+            for group in (compared..nearest.end).rev() {
+                let first = held_expression(points, expressions, axis, groups[group].first);
+                // Two exact rationals compared above are unequal.
+                if value.exact_rational_ref().is_some() && first.exact_rational_ref().is_some() {
+                    continue;
+                }
+                if proofs == SHARED_COORDINATE_PROOFS {
+                    break;
+                }
+                proofs += 1;
+                if strictly_equal(value, first) {
+                    target = Some((group, NO_SHARED_EXPRESSION));
+                    break;
                 }
             }
+            work.proofs += proofs;
+        }
+        coordinate.expression = match target {
+            Some((_, expression)) if expression != NO_SHARED_EXPRESSION => {
+                let record = &mut expressions[expression as usize];
+                record.earliest = record.earliest.min(coordinate.vertex);
+                expression
+            }
+            Some((group, _)) => {
+                let expression = number(expressions.len());
+                expressions.push(SharedExpression {
+                    vertex: coordinate.vertex,
+                    earliest: coordinate.vertex,
+                    group: number(group),
+                    next: NO_SHARED_EXPRESSION,
+                });
+                let last = groups[group].last;
+                expressions[last as usize].next = expression;
+                groups[group].last = expression;
+                expression
+            }
+            None => {
+                let expression = number(expressions.len());
+                expressions.push(SharedExpression {
+                    vertex: coordinate.vertex,
+                    earliest: coordinate.vertex,
+                    group: number(groups.len()),
+                    next: NO_SHARED_EXPRESSION,
+                });
+                groups.push(SharedGroup {
+                    approximate: coordinate.approximate,
+                    first: expression,
+                    last: expression,
+                    representative: expression,
+                });
+                expression
+            }
+        };
+    }
+    for group in groups.iter_mut().filter(|group| group.first != group.last) {
+        let mut smallest = None;
+        let mut expression = group.first;
+        while expression != NO_SHARED_EXPRESSION {
+            let record = &expressions[expression as usize];
+            let size = axis_ref(&points[record.vertex as usize], axis)
+                .representation_size(SHARED_COORDINATE_NODE_LIMIT);
+            let key = (!size.complete, size.depth, size.nodes, record.earliest);
+            if smallest
+                .as_ref()
+                .is_none_or(|(smallest, _)| key < *smallest)
+            {
+                smallest = Some((key, expression));
+            }
+            expression = record.next;
+        }
+        if let Some((_, expression)) = smallest {
+            group.representative = expression;
         }
     }
-    Ok(())
+    for coordinate in coordinates.iter() {
+        let group = expressions[coordinate.expression as usize].group;
+        let representative = groups[group as usize].representative;
+        if coordinate.expression != representative {
+            let value = held_expression(points, expressions, axis, representative).clone();
+            *axis_mut(&mut points[coordinate.vertex as usize], axis) = value;
+        }
+    }
+}
+
+/// The expression `expression` of a shared group.
+fn held_expression<'point>(
+    points: &'point [Point3],
+    expressions: &[SharedExpression],
+    axis: usize,
+    expression: u32,
+) -> &'point Real {
+    axis_ref(
+        &points[expressions[expression as usize].vertex as usize],
+        axis,
+    )
 }
 
 /// Equality decided exactly under strict policy; `false` when undecided.
@@ -1490,7 +1668,7 @@ mod tests {
             Point3::new(Real::from(5), near.clone(), Real::zero()),
             Point3::new(direct.clone(), root.clone(), Real::one()),
         ];
-        share_equal_output_coordinates(&mut points).unwrap();
+        share_equal_output_coordinates(&mut points);
         // The equal x values share the smaller expression and keep their value.
         for index in [0, 1, 2, 4] {
             assert_eq!(&points[index].x, smallest);
@@ -1502,6 +1680,86 @@ mod tests {
         // An equality strict policy cannot decide keeps both expressions.
         assert_eq!(points[0].z, unresolved);
         assert_eq!(points[1].z, Real::zero());
+    }
+
+    fn on_x_axis(values: &[Real]) -> Vec<Point3> {
+        values
+            .iter()
+            .map(|x| Point3::new(x.clone(), Real::zero(), Real::zero()))
+            .collect()
+    }
+
+    #[test]
+    fn shared_coordinate_search_is_bounded_in_a_crowded_window() {
+        // 4096 distinct dyadics i / 2^60 lie in one approximation window, and
+        // a distant sqrt(2) makes the axis symbolic. Comparing every pair took
+        // 8,386,560 structural comparisons and as many strict proofs.
+        let mut dyadics = (0..4096)
+            .map(|i| Real::from(hyperreal::Rational::fraction(i, 1 << 60).unwrap()))
+            .collect::<Vec<_>>();
+        dyadics.push(Real::from(2).sqrt().unwrap() + Real::from(1000));
+        let mut points = on_x_axis(&dyadics);
+        let work = share_equal_output_coordinates(&mut points);
+        assert_eq!(work.reserved, points.len());
+        assert!(work.comparisons <= SHARED_COORDINATE_CANDIDATES * points.len());
+        assert_eq!(work.proofs, 0);
+        assert_eq!(points, on_x_axis(&dyadics));
+
+        // Distinct symbolic values sqrt(1 + i / 2^50) - 1 in one window, and
+        // one of them built a second way, (a - 1) / (sqrt(a) + 1).
+        let radicand =
+            |i: i64| Real::from(hyperreal::Rational::fraction((1 << 50) + i, 1 << 50).unwrap());
+        let mut values = (1..=256)
+            .map(|i| radicand(i).sqrt().unwrap() - Real::one())
+            .collect::<Vec<_>>();
+        let other = ((radicand(100) - Real::one()) / (radicand(100).sqrt().unwrap() + Real::one()))
+            .unwrap();
+        assert_ne!(other, values[99]);
+        values.push(other);
+        let mut points = on_x_axis(&values);
+        let work = share_equal_output_coordinates(&mut points);
+        assert!(work.comparisons <= SHARED_COORDINATE_COMPARISONS * points.len());
+        assert!(work.proofs <= SHARED_COORDINATE_PROOFS * points.len());
+        // The two equal values share one expression, and every other value
+        // keeps its own.
+        assert!(points[256].x == points[99].x);
+        assert!([&values[99], &values[256]].contains(&&points[99].x));
+        for (index, point) in points.iter().enumerate().take(256) {
+            if index != 99 {
+                assert_eq!(point.x, values[index]);
+            }
+        }
+    }
+
+    #[test]
+    fn undecided_coordinates_attempt_a_bounded_number_of_proofs() {
+        // Multiples of one zero that strict policy cannot decide are equal,
+        // and every proof of that is undecided.
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero =
+            crate::test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
+        let values = (1..=64).map(|k| &zero * &Real::from(k)).collect::<Vec<_>>();
+        let mut points = on_x_axis(&values);
+        let work = share_equal_output_coordinates(&mut points);
+        assert!(work.proofs <= SHARED_COORDINATE_PROOFS * points.len());
+        assert_eq!(points, on_x_axis(&values));
+        for (point, value) in points.iter().zip(&values) {
+            assert_eq!(&point.x, value);
+        }
+    }
+
+    #[test]
+    fn exact_rational_outputs_reserve_no_sharing_storage() {
+        let mut points = (0..64)
+            .map(|i| Point3::new(Real::from(i % 7), Real::from(i % 5), Real::from(i)))
+            .collect::<Vec<_>>();
+        let expected = points.clone();
+        assert_eq!(
+            share_equal_output_coordinates(&mut points),
+            SharedCoordinateWork::default()
+        );
+        assert_eq!(points, expected);
     }
 
     #[test]

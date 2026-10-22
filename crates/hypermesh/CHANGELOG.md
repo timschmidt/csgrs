@@ -85,7 +85,11 @@ grammar belong to adapters such as csgrs.
   certainty are unchanged, and an undecided comparison keeps both
   expressions. Twelve unions of translated icosahedra allocate 712 MB at the
   fourth union and 812 MB at the twelfth, where the cost rose from 780 MB to
-  1,354 MB before.
+  1,354 MB before. The search is bounded per coordinate (four candidate
+  groups, eight structural comparisons and two proofs), so many distinct
+  values in one approximation window no longer make it quadratic; outputs
+  whose coordinates are all exact rationals reserve no storage for it, and a
+  coordinate the bounded search does not match keeps its expression.
 - The changes to built points, shared coordinates and reduced triangulations
   change published rows, not sets or sizes; see the csgrs migration notes.
 - `minkowski_sum` computes the regularized Minkowski sum of bounded

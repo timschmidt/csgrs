@@ -74,7 +74,11 @@ groups, is not separated from the effect of different diagonals there.
 Sharing equal output coordinates, the last of these changes, changes no
 rational chain's allocation, lowers the icosahedron chain from 4,225 MB to
 3,972 MB and the 10-degree cuts by 0.4%, and raises the sampled sphere cut by
-5.7 MB (0.3%), measured against `76a7d8aa76` in one run.
+5.7 MB (0.3%), measured against `76a7d8aa76` in one run. Bounding the
+sharing search per coordinate (2026-10-22) changes no row and no step's
+allocation at 0.1 MB resolution, measured against `cc0d350d04` in one full
+run each: no chain had more than one candidate group in an approximation
+window.
 
 Separate probes of the same chains found constant depth beyond the table:
 the 30-degree chain stays at depth 16 and 41 graph nodes from its fourth cut

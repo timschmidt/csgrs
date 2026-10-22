@@ -144,6 +144,20 @@ to 308 triangles; the same probe before rose from 780 MB to 1,354 MB and from
 915 ms to 1,554 ms. Rational chains allocate the same, since equal rationals
 already compare structurally, and the sampled sphere cut allocates 0.3% more.
 
+The candidate search was unbounded: distinct values crowded into one window,
+such as 4,096 dyadics `i / 2^60`, cost a structural comparison and a strict
+proof for every pair. Since 2026-10-22 a coordinate compares with the groups
+of at most the four nearest approximations, structurally with at most eight
+of their expressions, and attempts at most two proofs, none between two
+exact rationals; the scratch is flat and reserved only for an axis with a
+symbolic coordinate. No corpus chain had more than one candidate group in a
+window, so its rows and allocation are unchanged. The bounds count
+comparisons and proofs, not their cost: one structural comparison walks both
+expression graphs, one proof refines to the maximum precision, each
+coordinate is approximated once (possibly refining far), and each expression
+in a group of several is measured up to 4,096 nodes. Boolean operations have
+no cancellation, so none of these steps observes one.
+
 What remains per step is work over the whole input, such as exact bounds and
 the hierarchy build, at about 0.5 MB per input triangle on this chain.
 **Option:** retain exact per-triangle extrema and node bounds with a result,

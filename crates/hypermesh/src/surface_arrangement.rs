@@ -4305,7 +4305,7 @@ fn materialize_surface_outputs(
         remap[point] = compact_len(vertices.len(), "surface output vertex IDs")?;
         vertices.push(source.clone());
     }
-    share_equal_output_coordinates(&mut vertices)?;
+    share_equal_output_coordinates(&mut vertices);
 
     // Retained plane classes are strict facts. Record them only when no
     // decision of this operation consumed the approximate terminal.
