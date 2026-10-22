@@ -134,25 +134,20 @@ The first keeps the exact-only principal API smallest. The second makes the exis
 
 ## 7. Concurrent contacts across independent radicals
 
-hypercircuit's Easyduino `stm32f103` board (`benches/easyduino_full_pipeline.rs`, `EASYDUINO_BOARD=stm32f103`) fails in the copper-layer union with "exact Construction for RationalQuadraticBezier was blocked by RealSign".
+**Resolved for one shared circle and one shared line (2026-10-22).** hypercircuit's Easyduino `stm32f103` board (`benches/easyduino_full_pipeline.rs`, `EASYDUINO_BOARD=stm32f103`) failed in the copper-layer union with "exact Construction for RationalQuadraticBezier was blocked by RealSign". The failure reproduced at `282a3eac52` and now completes; `PERFORMANCE.md` records the runs.
 
-**Where.** `CurveRegionBooleanContext::build_split_topology` finds two contacts on one conic arc carrier, at the same point but with two different straight carriers `A` and `B`. Two copper edges cross each other exactly on a clearance arc. The contacts are computed separately, each with its own square root, so `same_point` would need an equality across two independent radicals. The contact pair goes to `deferred_contact_matches`, and the topology vertices disagree.
+**Where.** `CurveRegionBooleanContext::build_split_topology` found two contacts on the corner arc of pad U2:8, a circular conic whose center carries the radicals of two 135-degree rotations. The first is with a 45-degree route edge `A`. The zero-clearance GND zone is cut by that route, so its boundary keeps a fragment `B` of the same edge, cut from the same support-line allocation. The second contact is with `B`, at the same point. Both are exact `Point2` values with their own square roots, and `B`'s ends are line-circle crossings, so `same_point` could not prove them equal and the pair stayed in `deferred_contact_matches`.
+
+**Fix.** `contacts_decided_same_from_shared_circle_and_line` applies when both contacts share one circle (one carrier or one retained circle) and one line (one carrier or one support allocation, `LineSeg2::shares_support_line`). The line meets the circle in at most the two points `M ± τu`, where `M` is the projection of the center `C`, so the sign of `(P - C)·u` selects the point: equal signs prove equality and different signs prove distinctness. Both signs are exact predicates. `tests/hypercurve_pcb_boolean_regressions.rs` keeps the minimized board case, a 3-4-5 rotation and a reflection, crossings on both sides of the projection, near-tangent crossings 2.4e-5 apart and an exact tangency.
 
 **Already fixed on this board's path (commit 5a4e8aebd).**
 - Reversing a straight quadratic fragment kept its retained line support.
 - A line-circle relation deflated an endpoint certified on the circle, even when it is not an arc endpoint.
 
-Before these fixes the board failed earlier, in the zone fill.
-
-**Tried, not enough.** One contact equals the other exactly when the new point lies on `A`, the existing point lies on `B`, and `A` and `B` cross. Each incidence is a sign in one point's field.
-- The straight carriers here are offsets of stroked traces. They carry `LineOffsetProvenance2` but no retained support. An exact incidence against the offset's source, `u x (P - S) = d |u|`, reaches the test once `with_endpoint_representations` keeps offset provenance.
-- The contact points come from the rational-quadratic (conic) intersection kernel. Their coordinates relative to the source still have no `quadratic_tower` form, so the residual stays undecided.
-- In two of the six cases `A` and `B` are parallel, coincident offsets, which needs a branch argument instead.
-
-**Options:**
-- Have line-conic contact points that lie on a circular conic come out in tower-representable form. For example, use the circle's exact center and radius, as `line_circle_relation_at_endpoints` does for native arcs, instead of the general conic root.
-- Extend `quadratic_tower` beyond one outer radical: elements of `Q(sqrt(d))(sqrt(a1), ..., sqrt(ak))` for small `k`.
-- A zero-separation bound for this expression size. `algebraic_separation_bound_bits` stops at 256 nodes and at `Inverse` nodes without an exact child sign. It would also need precision below the strict policy's 512-bit floor.
+**Still open.**
+- Shared supports are recognized by allocation identity. If the route and the zone are transformed separately after the cut, their supports are separate allocations and the case is undecided again; the regressions transform the inputs before the cut.
+- The earlier record listed six cases on this board, four with nonparallel `A` and `B` crossing on the arc. They do not occur on the current board. If such a case recurs: `A` and `B` meet in one point `Q` in their own field. The contacts are equal exactly when `Q` lies on the circle, an exact zero test of `|Q - C|² - r²`, and the branch sign above then selects `Q` on each line.
+- The earlier options remain for such cases: line-conic contacts on a circular conic in tower-representable form, from the circle's exact center and radius as `line_circle_relation_at_endpoints` does for native arcs; `quadratic_tower` beyond one outer radical; or a zero-separation bound, which `algebraic_separation_bound_bits` does not give past 256 nodes or at `Inverse` nodes without an exact child sign.
 
 ## Fast paths added in this round
 

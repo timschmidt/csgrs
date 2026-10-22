@@ -10,6 +10,55 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Concurrent contacts on a shared circle and line (2026-10-22)
+
+Region construction now decides two contacts that share one circle and one
+supporting line by the side of the circle center's projection on the line
+(`contacts_decided_same_from_shared_circle_and_line`; `FUTURE_WORK.md`
+section 7 has the argument). It runs before the general `same_point`
+comparison and applies only when both contacts share the circle and share the
+line, by carrier or by retained allocation. This is a capability extension:
+the Easyduino STM32F103 copper aggregate previously ended in a typed
+`RealSign` blocker.
+
+Full release pipeline, one board per process, baseline `282a3eac52` and the
+candidate built from the same tree. The two variants ran concurrently on a
+shared 16-core host, one sample each, so the times are noisy evidence only.
+Command, from `crates/hypercircuit`:
+`EASYDUINO_BOARD=<board> /usr/bin/time -v <easyduino_full_pipeline binary>`,
+built with `cargo bench --locked -p hypercircuit --bench easyduino_full_pipeline --features "drc interchange" --no-run`.
+
+| Board | Baseline | Candidate | Findings, release blockers | Peak RSS, KiB |
+| --- | --- | --- | --- | --- |
+| nano | 80.9 s | 81.3 s | 268, 6 → 268, 6 | 302,456 → 302,648 |
+| uno | 79.0 s | 78.6 s | 847, 6 → 847, 6 | 270,072 → 270,400 |
+| esp32 | 82.2 s | 81.5 s | 911, 5 → 911, 5 | 276,688 → 277,260 |
+| esp32s3 | 160.1 s | 159.2 s | 1,705, 5 → 1,705, 5 | 381,728 → 381,944 |
+| rp2040 | 119.7 s | 120.7 s | 1,362, 6 → 1,362, 6 | 351,468 → 351,916 |
+| stm32f103 | typed termination after 153.5 s | completed in 201.2 s | none → 1,389, 6 | 229,776 → 315,168 |
+
+The release-snapshot comparison in the benchmark runs only without a board
+filter, and its fixture (`tests/fixtures/easyduino/ordinary-release.json`)
+predates later changes: Nano's 268 findings already differ from its 236, so
+that fixture was not used as evidence and is left unchanged.
+
+Allocation calls and requested bytes, from a temporary counting-allocator test
+(not committed), debug build, two rounds, identical inputs per variant:
+
+| Workload | Baseline | Candidate |
+| --- | --- | --- |
+| Two circles, `boolean_regions` | 17,788 / 1,316,467 B | 17,788 / 1,316,467 B |
+| Pad ∪ route | 239,654 / 16,389,943 B | 239,654 / 16,389,943 B |
+| Pad, route and zone outline, one compound region | 663,570 / 44,726,162 B | 663,570 / 44,726,162 B |
+| Zone outline cut by the route | 168,329 / 10,364,849 B | 168,329 / 10,364,849 B |
+| Pad, route and cut zone (the regression) | 1,828,837 / 115,124,044 B, `RealSign` blocker | 1,647,109 / 106,228,039 B, completed |
+
+The second round repeats each count pattern: unchanged rows are equal in both
+variants, and the regression row is 1,804,253 failing against 1,622,251
+completing. The benchmark executable grows by 3,048 bytes (42,014,880 →
+42,017,928). Raw logs were not archived in the evidence repository; this
+entry records the commands and their summary.
+
 ## Point equality from shared scalar facts (2026-10-18)
 
 Point2 consumes Hyperreal's exact `immediate_equality` fact for coordinate pairs

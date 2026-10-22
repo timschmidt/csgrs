@@ -2438,6 +2438,31 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         Classification::Decided(false) => continue,
                         Classification::Uncertain(_) => {}
                     }
+                    if let Some(point) = contact.point() {
+                        match contacts_decided_same_from_shared_circle_and_line(
+                            existing,
+                            point,
+                            [pair.first_carrier_index, pair.second_carrier_index],
+                            &self.data.carriers,
+                            &self.data.policy,
+                        ) {
+                            Classification::Decided(true) => {
+                                if let Some(vertex) = topology_vertex {
+                                    if vertex != existing.topology_vertex
+                                        && !merge_vertices.contains(&existing.topology_vertex)
+                                    {
+                                        merge_vertices.push(existing.topology_vertex);
+                                    }
+                                } else {
+                                    topology_vertex = Some(existing.topology_vertex);
+                                }
+                                matching_contact_index.get_or_insert(existing_index);
+                                continue;
+                            }
+                            Classification::Decided(false) => continue,
+                            Classification::Uncertain(_) => {}
+                        }
+                    }
                     if let (Some(existing_point), Some(point)) =
                         (existing.point.as_ref(), contact.point())
                     {
@@ -7637,6 +7662,108 @@ fn contacts_decided_same_from_circular_carriers(
         }
     }
     Classification::Uncertain(uncertainty.unwrap_or(UncertaintyReason::Unsupported))
+}
+
+/// Decides whether two contacts are one point when each lies on one circle
+/// and one line, and both contacts share that circle and that line.
+///
+/// Let `C` be the circle's center and `u` a nonzero direction of the line.
+/// The perpendicular foot `M` of `C` satisfies `(M - C)·u = 0`, so a point
+/// `P = M + t·u` of the line has `(P - C)·u = t·|u|²`. On the circle,
+/// `t² = (r² - |M - C|²) / |u|²`; the line meets it in at most the points
+/// `t = ±τ`. Two such points are therefore equal exactly when `(P - C)·u` has
+/// the same sign at both, including the tangent case `τ = 0`. Different signs
+/// prove distinct points by themselves.
+///
+/// Incidence is supplied by the topology, not by coordinates. Each contact
+/// lies on both of its carriers. The circles are shared through one carrier
+/// or one retained circle, and the lines through one carrier or one retained
+/// support allocation. Separate storage proves nothing, so such pairs stay
+/// with the other matchers. Both signs are exact predicates; either one left
+/// undecided keeps the match uncertain.
+fn contacts_decided_same_from_shared_circle_and_line(
+    existing: &ContactVertex,
+    point: &CurvePoint2,
+    carrier_indices: [usize; 2],
+    carriers: &[RegionCarrier],
+    policy: &CurveContext,
+) -> Classification<bool> {
+    let Some(existing_point) = existing.point.as_ref() else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let circle = |carrier_index: usize| match &carriers[carrier_index].geometry {
+        CurveSupport2::Bezier(curve) => retained_circular_support(curve).map(|(_, circle)| circle),
+        _ => None,
+    };
+    let line = |carrier_index: usize| match &carriers[carrier_index].geometry {
+        CurveSupport2::Bezier(BezierSubcurve2::Quadratic(curve)) => {
+            curve.retained_exact_line_image()
+        }
+        CurveSupport2::Bezier(BezierSubcurve2::Rational(curve)) => {
+            curve.retained_exact_line_image()
+        }
+        _ => None,
+    };
+    // Each contact contributes the circular carrier in one slot and the
+    // straight carrier in the other.
+    let split = |indices: [usize; 2]| {
+        [(0, 1), (1, 0)]
+            .into_iter()
+            .find_map(|(circle_slot, line_slot)| {
+                Some((
+                    indices[circle_slot],
+                    circle(indices[circle_slot])?,
+                    indices[line_slot],
+                    line(indices[line_slot])?,
+                ))
+            })
+    };
+    let (
+        Some((existing_circle_index, existing_circle, existing_line_index, existing_line)),
+        Some((current_circle_index, current_circle, current_line_index, current_line)),
+    ) = (split(existing.carrier_indices), split(carrier_indices))
+    else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    if !(existing_circle_index == current_circle_index
+        || Arc::ptr_eq(existing_circle, current_circle))
+        || !(existing_line_index == current_line_index
+            || existing_line.shares_support_line(current_line))
+    {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    }
+    let (ux, uy) = existing_line.support_delta();
+    if real_sign(&Real::dot2_refs([&ux, &uy], [&ux, &uy]), policy) != Some(RealSign::Positive) {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    }
+    let center = &existing_circle.center;
+    let center_value = Real::dot2_refs([&ux, &uy], [center.x(), center.y()]);
+    // This test only adds a proof; an unsupported side evaluation leaves the
+    // pair to the remaining matchers.
+    let side = |point: &CurvePoint2| {
+        crate::bezier_offset::point_affine_form_order_to_real(
+            point,
+            &ux,
+            &uy,
+            &center_value,
+            policy,
+        )
+        .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported))
+    };
+    match (side(existing_point), side(point)) {
+        (Classification::Decided(existing_side), Classification::Decided(current_side)) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "contact-point-equality",
+                "shared-circle-line-branch",
+            );
+            Classification::Decided(existing_side == current_side)
+        }
+        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+            Classification::Uncertain(reason)
+        }
+    }
 }
 
 fn exact_point_decided_outside_carrier(

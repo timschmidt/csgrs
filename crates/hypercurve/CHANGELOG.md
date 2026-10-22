@@ -119,6 +119,16 @@
   [csgrs repository](https://github.com/timschmidt/csgrs), which the
   `repository` field now names.
 
+### Fixed
+
+- Region construction and Booleans no longer fail with a `RealSign` blocker
+  when two contacts lie on one circle and one supporting line but carry
+  independent square roots. The line meets the circle in at most two points,
+  and the side of the circle center's projection on the line decides whether
+  the contacts are the same one. The Easyduino STM32F103 copper aggregate,
+  where a route edge and a zero-clearance zone's fragment of that edge cross
+  a pad's corner arc at one point, now completes.
+
 ### Removed
 
 - Prepared query views (`PreparedLineSeg2`, `PreparedCircularArc2`,

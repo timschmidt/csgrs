@@ -170,6 +170,21 @@ impl LineSeg2 {
         self.endpoints_decided_distinct
     }
 
+    /// Returns whether both segments borrow one support-line allocation.
+    ///
+    /// A shared allocation is a positive proof that both segments lie on the
+    /// line through that support's endpoints: a segment either created the
+    /// support from its own endpoints, was cut from it at certified points,
+    /// or was mapped together with it by one affine transform, which gives
+    /// the image its own allocation. Separate allocations prove nothing about
+    /// the two lines.
+    pub(crate) fn shares_support_line(&self, other: &Self) -> bool {
+        matches!(
+            (self.support.get(), other.support.get()),
+            (Some(first), Some(second)) if Arc::ptr_eq(first, second)
+        )
+    }
+
     pub(crate) fn support_start(&self) -> &Point2 {
         self.support
             .get()
