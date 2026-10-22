@@ -1883,6 +1883,89 @@ mod tests {
     }
 
     #[test]
+    fn grouped_self_candidates_are_the_ungrouped_ones_outside_shared_groups() {
+        // Overlapping triangles in runs along x, so the hierarchy has leaves
+        // and internal nodes inside one run and across runs.
+        let polygons = (0_i64..48)
+            .map(|index| {
+                let x = index + 4 * (index / 8);
+                approximate_convex_triangle(
+                    &point(x, 0, 0),
+                    &point(x + 3, 0, 0),
+                    &point(x, 3, (index % 3) - 1),
+                    (index / 16) as isize,
+                    index as isize,
+                )
+            })
+            .collect::<Vec<_>>();
+        let none = NO_EXCLUSION_GROUP;
+        let patterns: Vec<(&str, Vec<u32>)> = vec![
+            ("ungrouped", vec![none; 48]),
+            ("one group", vec![0; 48]),
+            ("runs", (0..48).map(|index| index / 8).collect()),
+            ("interleaved", (0..48).map(|index| index % 3).collect()),
+            (
+                "mixed",
+                (0..48)
+                    .map(|index| if index % 5 == 0 { none } else { index / 12 })
+                    .collect(),
+            ),
+            (
+                "half ungrouped",
+                (0..48)
+                    .map(|index| if index < 24 { 7 } else { none })
+                    .collect(),
+            ),
+        ];
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let bvh = ExactBvh::build_decision(&decisions, &polygons).unwrap();
+            let mut all = Vec::new();
+            bvh.intersect_self_candidates_decision(&decisions, |first, second| {
+                all.push((first, second));
+            })
+            .unwrap();
+            assert!(all.len() > 48);
+            for (name, groups) in &patterns {
+                let mut grouped = Vec::new();
+                bvh.intersect_self_candidates_excluding_decision(
+                    &decisions,
+                    Some(groups),
+                    |first, second| grouped.push((first, second)),
+                )
+                .unwrap();
+                // The same pairs in the same order, less those in one group.
+                let expected = all
+                    .iter()
+                    .copied()
+                    .filter(|&(first, second)| {
+                        groups[first] == none || groups[first] != groups[second]
+                    })
+                    .collect::<Vec<_>>();
+                assert_eq!(grouped, expected, "{name}");
+            }
+            // A group list that does not cover every polygon is malformed.
+            for groups in [vec![0; 47], Vec::new()] {
+                assert!(matches!(
+                    bvh.intersect_self_candidates_excluding_decision(
+                        &decisions,
+                        Some(&groups),
+                        |_, _| {}
+                    ),
+                    Err(HypermeshError::SurfaceArrangementFailed {
+                        reason: "exclusion groups and hierarchy primitives differ"
+                    })
+                ));
+            }
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
     fn canonical_self_candidates_retain_binary32_false_positives_for_exact_consumers() {
         let base = 1_i64 << 30;
         let polygons = vec![

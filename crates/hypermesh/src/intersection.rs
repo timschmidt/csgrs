@@ -4469,6 +4469,382 @@ mod tests {
         assert!(point_depth(&from_planes) < point_depth(&interpolated));
     }
 
+    /// The point a Boolean materializes where the segment from `positive` to
+    /// `negative` crosses `cutting`, with the crease planes if any.
+    fn materialized_crossing(
+        cutting: &Plane,
+        positive: &Point3,
+        negative: &Point3,
+        crease: Option<[&Plane; 2]>,
+    ) -> Point3 {
+        let point = DeferredIntersectionPoint {
+            geometry: DeferredIntersectionGeometry::SegmentPlane {
+                ratio: DeferredSegmentPlaneRatio::Lazy {
+                    plane: cutting,
+                    axis: super::SupportLineAxis::X,
+                },
+                enclosure: None,
+                start: positive,
+                end: negative,
+                crease,
+            },
+            identity: None,
+            discovery_order: (false, 0),
+        };
+        super::materialize_deferred_point(super::DeferredIntersectionEndpoint {
+            source: &point,
+            identity: None,
+        })
+        .unwrap()
+        .point
+    }
+
+    /// An expression deeper than any plane coefficient below.
+    fn deep_positive() -> Real {
+        let root = |value: i64| Real::from(value).sqrt().unwrap();
+        ((root(2) + root(3)) * root(5) + root(7)) * root(11) + root(13)
+    }
+
+    #[test]
+    fn crease_crossing_with_an_undecided_cramer_division_interpolates() {
+        // The crease y = 0, z = 1 of two axis planes, cut by a plane through
+        // (1/3, 0, 1) whose normal (e, 1, 1) is nearly perpendicular to it.
+        // Here e = 2^-2200 + u, where u is a zero that no proof decides, so
+        // e has no structural nonzero fact. The three normals are
+        // independent, but their determinant -e is too small for division
+        // to decide. Endpoints 2^1800 away along the crease are about
+        // e 2^1800 from the cutting plane on opposite sides, which strict
+        // refinement decides, so the crossing is proper and interpolation
+        // builds it.
+        let tiny = (0..55).fold(Real::one(), |tiny, _| {
+            (tiny / Real::from(1_i64 << 40)).unwrap()
+        });
+        let e = &tiny + &terminally_unresolved_zero();
+        let third = (Real::one() / Real::from(3)).unwrap();
+        let top = Plane::from_coefficients(Real::zero(), Real::zero(), Real::one(), -Real::one());
+        let wall = Plane::from_coefficients(Real::zero(), Real::one(), Real::zero(), Real::zero());
+        let cutting = Plane::from_coefficients(
+            e.clone(),
+            Real::one(),
+            Real::one(),
+            -(Real::one() + &third * &e),
+        );
+        let far = (0..45).fold(deep_positive(), |far, _| far * Real::from(1_i64 << 40));
+        let [positive, negative] =
+            [far.clone(), -far].map(|x| Point3::new(x, Real::zero(), Real::one()));
+        assert!(
+            point_depth(&positive)
+                > super::construction_depth(
+                    super::plane_coefficients(&top)
+                        .into_iter()
+                        .chain(super::plane_coefficients(&wall))
+                )
+        );
+        // Before any refinement of e, Cramer's division does not decide, and
+        // the planes leave the crossing to interpolation.
+        let homogeneous = hyperlattice::intersect_three_planes(&top, &wall, &cutting);
+        assert!((&homogeneous.x / &homogeneous.w).is_err());
+        assert_eq!(
+            super::crease_plane_crossing(&positive, &negative, &top, &wall, &cutting),
+            None
+        );
+
+        let point = materialized_crossing(&cutting, &positive, &negative, Some([&top, &wall]));
+        assert_eq!(
+            point,
+            materialized_crossing(&cutting, &positive, &negative, None)
+        );
+        // The crease's own coordinates stay exact. The crossing's x equals
+        // 1/3 exactly, by a proof that needs u = 0, so check it to 2^-600.
+        assert_eq!([&point.y, &point.z], [&Real::zero(), &Real::one()]);
+        let [lower, upper] = (&point.x - &third)
+            .certified_rational_interval(-640)
+            .unwrap();
+        let bound = (0..15)
+            .fold(Real::one(), |bound, _| {
+                (bound / Real::from(1_i64 << 40)).unwrap()
+            })
+            .exact_rational()
+            .unwrap();
+        assert!(-bound.clone() < lower && upper < bound);
+        // Strict policy decides the sides of the endpoints, so the crossing
+        // is proper.
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+        let side = |point: &Point3| {
+            crate::geometry::compare_real_decision(
+                &decisions,
+                &cutting.expression_at_point(point),
+                &Real::zero(),
+            )
+            .unwrap()
+        };
+        assert_eq!(side(&positive), std::cmp::Ordering::Greater);
+        assert_eq!(side(&negative), std::cmp::Ordering::Less);
+        assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+    }
+
+    #[test]
+    fn crease_crossing_keeps_a_shared_symbolic_coordinate() {
+        // The supports z - a y + a t = 0 and z - b y + b t = 0, with a, b and
+        // t the square roots of 2, 3 and 5, meet in the line y = t, z = 0.
+        // Endpoints (-h, t, 0) and (h, t, 0) store t as one expression; the
+        // crossing with x = 0 is (0, t, 0) and keeps that expression, both
+        // from the planes and by interpolation. Without it, Cramer's rule
+        // gives y as (b - a) t / (b - a), equal to t only by a proof.
+        let root = |value: i64| Real::from(value).sqrt().unwrap();
+        let [a, b, t] = [root(2), root(3), root(5)];
+        let support =
+            |slope: &Real| Plane::from_coefficients(Real::zero(), -slope, Real::one(), slope * &t);
+        let [first, second] = [support(&a), support(&b)];
+        let cutting =
+            Plane::from_coefficients(Real::one(), Real::zero(), Real::zero(), Real::zero());
+        let h = deep_positive();
+        let [positive, negative] = [h.clone(), -h].map(|x| Point3::new(x, t.clone(), Real::zero()));
+        assert!(
+            point_depth(&positive)
+                > super::construction_depth(
+                    super::plane_coefficients(&first)
+                        .into_iter()
+                        .chain(super::plane_coefficients(&second))
+                )
+        );
+        let from_planes =
+            super::crease_plane_crossing(&positive, &negative, &first, &second, &cutting)
+                .expect("the endpoints are deeper than the supports");
+        assert_eq!(from_planes.y, t);
+        assert_eq!(from_planes.z, Real::zero());
+        let materialized =
+            materialized_crossing(&cutting, &positive, &negative, Some([&first, &second]));
+        let interpolated = materialized_crossing(&cutting, &positive, &negative, None);
+        for point in [&materialized, &interpolated] {
+            assert_eq!(point, &Point3::new(Real::zero(), t.clone(), Real::zero()));
+        }
+        assert_eq!(materialized, from_planes);
+    }
+
+    fn integer_box(min: [i64; 3], max: [i64; 3]) -> crate::TriangleMesh {
+        let corners = (0..8)
+            .map(|corner: usize| {
+                let pick = |axis: usize| {
+                    Real::from(if corner >> axis & 1 == 1 {
+                        max[axis]
+                    } else {
+                        min[axis]
+                    })
+                };
+                Point3::new(pick(0), pick(1), pick(2))
+            })
+            .collect::<Vec<_>>();
+        crate::test_support::approximate_convex_hull(&corners).unwrap()
+    }
+
+    /// The pairwise graph built by the plain canonical traversal, without
+    /// exclusion groups, and the same pairwise tests.
+    fn ungrouped_pairwise_graph(
+        decisions: &DecisionContext,
+        polygons: &[crate::polygon::ConvexPolygon],
+        certified_embedded_inputs: &[bool],
+    ) -> super::PairwiseIntersectionGraph {
+        let bvh = ExactBvh::build_for_query_hierarchy_decision(decisions, polygons).unwrap();
+        let mut graph = PairwiseIntersectionGraphBuilder::new(polygons.len()).unwrap();
+        let vertices = PolygonVertexArena::build(decisions, polygons).unwrap();
+        let mut scratch = PairwiseIntersectionScratch::default();
+        let mut failure = None;
+        bvh.intersect_self_candidates_excluding_decision(decisions, None, |first, second| {
+            if failure.is_none() {
+                failure = super::append_pairwise_intersection(
+                    decisions,
+                    polygons,
+                    &vertices,
+                    certified_embedded_inputs,
+                    &mut graph,
+                    &mut scratch,
+                    first,
+                    second,
+                )
+                .err();
+            }
+        })
+        .unwrap();
+        assert!(failure.is_none(), "{failure:?}");
+        graph.finish().unwrap()
+    }
+
+    #[test]
+    fn embedded_input_groups_publish_the_ungrouped_pairwise_graph() {
+        // A drilled block is a certified embedded input. Excluding pairs of
+        // its own triangles from the broad phase, and taking their radial
+        // separations from edge adjacency, must give the graph that the
+        // plain traversal gives with the same pairwise tests. A triangle
+        // without its source identity, or with another mesh's, leaves its
+        // whole mesh to the plain traversal.
+        let strict = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let drilled = crate::boolean(
+            &strict,
+            &[
+                integer_box([0, 0, 0], [8, 8, 4]).as_ref(),
+                integer_box([3, 2, -1], [5, 6, 5]).as_ref(),
+            ],
+            crate::BooleanProgram::Operation(crate::BooleanOp::Difference),
+        )
+        .unwrap()
+        .into_value()
+        .into_triangle_meshes()
+        .unwrap()
+        .pop()
+        .unwrap();
+        assert!(drilled.is_certified_embedded_complex());
+        let cutter = integer_box([2, -1, 1], [6, 9, 3]);
+        let decisions = DecisionContext::new(&strict);
+        let group = |polygons: &[crate::polygon::ConvexPolygon], certified: &[bool]| {
+            let mut graph = PairwiseIntersectionGraphBuilder::new(polygons.len()).unwrap();
+            super::embedded_input_exclusion_groups(polygons, certified, &mut graph).unwrap()
+        };
+        let none = crate::bvh::NO_EXCLUSION_GROUP;
+        // The drilled block with a plain cutter, and the drilled block as
+        // both operands.
+        for meshes in [
+            [drilled.as_ref(), cutter.as_ref()],
+            [drilled.as_ref(), drilled.as_ref()],
+        ] {
+            let soup = crate::mesh::build_polygon_soup_internal(&decisions, &meshes).unwrap();
+            let certified = soup.certified_embedded_inputs.clone();
+            let both = certified == [true, true];
+            assert_eq!(certified, [true, both]);
+            let polygons = soup.polygons;
+            let groups = group(&polygons, &certified).unwrap();
+            for (polygon, &group) in polygons.iter().zip(&groups) {
+                let expected = match polygon.mesh_index {
+                    0 => 0,
+                    _ if both => 1,
+                    _ => none,
+                };
+                assert_eq!(group, expected);
+            }
+            let first = polygons.iter().position(|p| p.mesh_index == 0).unwrap();
+            let mut missing = polygons.clone();
+            missing[first].known_identities = None;
+            let mut mismatched = polygons.clone();
+            let Some(crate::polygon::RetainedIdentityCycles::SourceTriangle { mesh, .. }) =
+                &mut mismatched[first].known_identities
+            else {
+                panic!("source triangles keep their identities");
+            };
+            *mesh = 9;
+            for (name, polygons) in [
+                ("complete", &polygons),
+                ("missing", &missing),
+                ("mismatched", &mismatched),
+            ] {
+                if name != "complete" {
+                    let groups = group(polygons, &certified).unwrap();
+                    assert!(
+                        polygons
+                            .iter()
+                            .zip(&groups)
+                            .all(|(polygon, &group)| polygon.mesh_index != 0 || group == none),
+                        "{name}"
+                    );
+                }
+                let bvh =
+                    ExactBvh::build_for_query_hierarchy_decision(&decisions, polygons).unwrap();
+                assert_eq!(
+                    pairwise_intersections_by_polygon_from_bvh(
+                        &decisions, polygons, &certified, &bvh
+                    )
+                    .unwrap(),
+                    ungrouped_pairwise_graph(&decisions, polygons, &certified),
+                    "{name}, both operands retained: {both}"
+                );
+            }
+        }
+        assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+    }
+
+    #[test]
+    fn retained_radial_separations_include_the_full_self_test_on_non_manifold_edges() {
+        // Two boxes that share the edge x = y = 2 form a union whose edge
+        // there has four triangles. The retained output records radial
+        // separation for exactly the triangle pairs that traverse a shared
+        // edge in opposite directions, at that edge too; the full self test
+        // of the same rows, rebuilt, proves no other pair separated.
+        let strict = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let union = crate::boolean(
+            &strict,
+            &[
+                integer_box([0, 0, 0], [2, 2, 2]).as_ref(),
+                integer_box([2, 2, 0], [4, 4, 2]).as_ref(),
+            ],
+            crate::BooleanProgram::Operation(crate::BooleanOp::Union),
+        )
+        .unwrap()
+        .into_value()
+        .into_triangle_meshes()
+        .unwrap()
+        .pop()
+        .unwrap();
+        assert!(union.is_certified_embedded_complex());
+        let rebuilt = crate::TriangleMesh::new(union.positions.to_vec(), union.triangles.to_vec());
+        let mut reversed_edge_pairs = Vec::new();
+        let mut four_sheet_edge = false;
+        for (index, left) in union.triangles.iter().enumerate() {
+            let edges = |triangle: &crate::Triangle| {
+                let [a, b, c] = triangle.indices();
+                [[a, b], [b, c], [c, a]]
+            };
+            for [from, to] in edges(left) {
+                let sheets = union
+                    .triangles
+                    .iter()
+                    .filter(|triangle| {
+                        edges(triangle)
+                            .iter()
+                            .any(|&edge| edge == [from, to] || edge == [to, from])
+                    })
+                    .count();
+                four_sheet_edge |= sheets == 4;
+            }
+            for (other, right) in union.triangles.iter().enumerate().skip(index + 1) {
+                if edges(left)
+                    .iter()
+                    .any(|&[from, to]| edges(right).contains(&[to, from]))
+                {
+                    let face = |index: usize| u32::try_from(index).unwrap();
+                    reversed_edge_pairs
+                        .push(source_face_pair_key(face(index), face(other)).unwrap());
+                }
+            }
+        }
+        assert!(four_sheet_edge);
+        reversed_edge_pairs.sort_unstable();
+        let decisions = DecisionContext::new(&strict);
+        let radial = |mesh: &crate::TriangleMesh| {
+            let soup =
+                crate::mesh::build_polygon_soup_internal(&decisions, &[mesh.as_ref()]).unwrap();
+            let bvh =
+                ExactBvh::build_for_query_hierarchy_decision(&decisions, &soup.polygons).unwrap();
+            let graph = pairwise_intersections_by_polygon_from_bvh(
+                &decisions,
+                &soup.polygons,
+                &soup.certified_embedded_inputs,
+                &bvh,
+            )
+            .unwrap();
+            (
+                soup.certified_embedded_inputs,
+                graph.radially_separated_face_pair_keys.to_vec(),
+            )
+        };
+        let (certified, retained) = radial(&union);
+        assert_eq!(certified, [true]);
+        assert_eq!(retained, reversed_edge_pairs);
+        let (certified, full) = radial(&rebuilt);
+        assert_eq!(certified, [false]);
+        assert!(full.iter().all(|key| retained.binary_search(key).is_ok()));
+        assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+    }
+
     #[test]
     fn equal_slice_endpoints_choose_the_canonical_construction_identity() {
         let identity = |vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex };

@@ -1750,6 +1750,101 @@ mod tests {
     }
 
     #[test]
+    fn shared_symbolic_coordinates_keep_retained_supports_through_later_operations() {
+        // Unions of translated tetrahedra with golden-ratio corners, whose
+        // outputs store equal symbolic coordinates as one expression (the
+        // integration test `equal_output_coordinates_share_one_expression`
+        // fails without that). Every output triangle must still lie in its
+        // retained support plane, with the plane's orientation, by strict
+        // decisions on the shared expressions; the next union of the
+        // retained output and of the same rows rebuilt must be the same set;
+        // and an edit through copy-on-write must drop the retained facts.
+        let phi = ((Real::one() + Real::from(5).sqrt().unwrap()) / Real::from(2)).unwrap();
+        let tetrahedron = |dx: i64| {
+            let shift = (Real::from(dx) / Real::from(2)).unwrap();
+            let corner = |x: Real, y: Real, z: Real| Point3::new(&x + &shift, y, z);
+            TriangleMesh::new(
+                vec![
+                    corner(-phi.clone(), Real::zero(), Real::zero()),
+                    corner(phi.clone(), Real::zero(), Real::zero()),
+                    corner(Real::zero(), phi.clone(), Real::zero()),
+                    corner(Real::zero(), Real::zero(), phi.clone()),
+                ],
+                [[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]]
+                    .into_iter()
+                    .map(|[a, b, c]| Triangle::new(a, b, c))
+                    .collect(),
+            )
+        };
+        let union = |left: &TriangleMesh, right: &TriangleMesh| {
+            let outcome = crate::boolean(
+                &STRICT,
+                &[left.as_ref(), right.as_ref()],
+                BooleanProgram::Operation(BooleanOp::Union),
+            )
+            .unwrap();
+            assert_eq!(outcome.certainty, MeshCertainty::Certified);
+            outcome
+                .into_value()
+                .into_triangle_meshes()
+                .unwrap()
+                .pop()
+                .unwrap()
+        };
+        let strict = |value: &Real| {
+            hyperlimit::compare_reals(value, &Real::zero(), PredicatePolicy::STRICT).value()
+        };
+        let six_volume = |mesh: &TriangleMesh| {
+            mesh.triangles.iter().fold(Real::zero(), |sum, triangle| {
+                let [a, b, c] = triangle.indices().map(|index| &mesh.positions[index]);
+                sum + &a.x * &(&b.y * &c.z - &b.z * &c.y)
+                    + &a.y * &(&b.z * &c.x - &b.x * &c.z)
+                    + &a.z * &(&b.x * &c.y - &b.y * &c.x)
+            })
+        };
+        let mut body = tetrahedron(0);
+        for k in 1..=2 {
+            body = union(&body, &tetrahedron(k));
+            assert!(
+                body.positions
+                    .iter()
+                    .any(|point| point.x.exact_rational_ref().is_none())
+            );
+            let classes = body.retained_plane_classes().expect("certified output");
+            for (index, triangle) in body.triangles.iter().enumerate() {
+                let support = classes.support(index);
+                let [a, b, c] = triangle.indices().map(|vertex| &body.positions[vertex]);
+                for point in [a, b, c] {
+                    let value = &support.normal.x * &point.x
+                        + &support.normal.y * &point.y
+                        + &support.normal.z * &point.z
+                        + &support.offset;
+                    assert_eq!(strict(&value), Some(Ordering::Equal), "union {k}");
+                }
+                let ab = [&b.x - &a.x, &b.y - &a.y, &b.z - &a.z];
+                let ac = [&c.x - &a.x, &c.y - &a.y, &c.z - &a.z];
+                let agreement = &support.normal.x * &(&ab[1] * &ac[2] - &ab[2] * &ac[1])
+                    + &support.normal.y * &(&ab[2] * &ac[0] - &ab[0] * &ac[2])
+                    + &support.normal.z * &(&ab[0] * &ac[1] - &ab[1] * &ac[0]);
+                assert_eq!(strict(&agreement), Some(Ordering::Greater), "union {k}");
+            }
+            let rebuilt = TriangleMesh::new(body.positions.to_vec(), body.triangles.to_vec());
+            assert!(rebuilt.retained_plane_classes().is_none());
+            let next = tetrahedron(k + 1);
+            let [retained, recomputed] = [&body, &rebuilt].map(|mesh| union(mesh, &next));
+            let difference = six_volume(&retained) - six_volume(&recomputed);
+            assert_eq!(strict(&difference), Some(Ordering::Equal), "union {k}");
+            let mut edited = body.clone();
+            assert!(edited.retained_plane_classes().is_some());
+            let _ = Arc::make_mut(&mut edited.positions);
+            assert!(edited.retained_plane_classes().is_none());
+            assert!(!edited.is_certified_embedded_complex());
+            assert!(body.retained_plane_classes().is_some());
+            assert_eq!(union(&edited, &next), union(&rebuilt, &next), "union {k}");
+        }
+    }
+
+    #[test]
     fn exact_rational_outputs_reserve_no_sharing_storage() {
         let mut points = (0..64)
             .map(|i| Point3::new(Real::from(i % 7), Real::from(i % 5), Real::from(i)))

@@ -157,3 +157,121 @@ fn retained_arrangement_structure_does_not_change_later_outputs() {
     assert_eq!(closed.certainty, MeshCertainty::Certified);
     assert!(closed.value);
 }
+
+fn operation(left: &TriangleMesh, right: &TriangleMesh, op: BooleanOp) -> TriangleMesh {
+    let outcome = hypermesh::boolean(
+        &STRICT,
+        &[left.as_ref(), right.as_ref()],
+        BooleanProgram::Operation(op),
+    )
+    .unwrap();
+    assert_eq!(outcome.certainty, MeshCertainty::Certified);
+    outcome.value.into_triangle_meshes().unwrap().pop().unwrap()
+}
+
+fn integer_box(min: [i64; 3], max: [i64; 3]) -> TriangleMesh {
+    exact_box(min.map(Real::from), max.map(Real::from))
+}
+
+/// Exact enclosed volume, six times over: the sum of the triangles'
+/// determinants. An independent check of the represented set's measure.
+fn six_volume(mesh: &TriangleMesh) -> Real {
+    mesh.triangles.iter().fold(Real::zero(), |sum, triangle| {
+        let [a, b, c] = triangle.indices().map(|index| &mesh.positions[index]);
+        let cross = [
+            &b.y * &c.z - &b.z * &c.y,
+            &b.z * &c.x - &b.x * &c.z,
+            &b.x * &c.y - &b.y * &c.x,
+        ];
+        sum + &a.x * &cross[0] + &a.y * &cross[1] + &a.z * &cross[2]
+    })
+}
+
+#[test]
+fn retained_nonmanifold_outputs_match_rebuilt_ones_in_later_operations() {
+    // Unions of boxes that touch along an edge, at a vertex, and along an
+    // edge from both sides (a balanced four-sheet edge), each a certified
+    // embedded output with non-manifold features. Later Booleans of the
+    // retained output, and of the same rows rebuilt without retained
+    // structure, must publish identical rows, including with the output as
+    // both operands, and the volumes the boxes give independently.
+    let block = integer_box([0, 0, 0], [2, 2, 2]);
+    let touching = [
+        ("edge", vec![integer_box([2, 2, 0], [4, 4, 2])], 16),
+        ("vertex", vec![integer_box([2, 2, 2], [4, 4, 4])], 16),
+        (
+            "balanced edge",
+            vec![
+                integer_box([2, 2, 0], [4, 4, 2]),
+                integer_box([-2, -2, 0], [0, 0, 2]),
+            ],
+            24,
+        ),
+    ];
+    // Overlaps every touching feature: it contains the edge x = y = 2 for
+    // 0 < z < 2, the vertex (2, 2, 2) and the edge x = y = 0.
+    let cutter = integer_box([-1, -1, 1], [3, 3, 3]);
+    for (name, others, volume) in touching {
+        let mut body = block.clone();
+        for other in &others {
+            body = operation(&body, other, BooleanOp::Union);
+        }
+        assert_eq!(six_volume(&body), Real::from(6 * volume), "{name}");
+        // The edge contacts have edges of four triangles. The vertex contact
+        // keeps every edge manifold and shares one vertex row.
+        let manifold = body.is_closed_manifold_geometry(&STRICT).unwrap();
+        assert_eq!(manifold.certainty, MeshCertainty::Certified);
+        assert_eq!(manifold.value, name == "vertex", "{name}");
+        if name == "vertex" {
+            let corner = Point3::new(Real::from(2), Real::from(2), Real::from(2));
+            let rows = body
+                .positions
+                .iter()
+                .filter(|point| **point == corner)
+                .count();
+            assert_eq!(rows, 1);
+        }
+        let rebuilt = TriangleMesh::new(body.positions.to_vec(), body.triangles.to_vec());
+        // The cutter removes the part of each box inside it.
+        let removed = std::iter::once(&block)
+            .chain(&others)
+            .fold(Real::zero(), |sum, part| {
+                sum + six_volume(&operation(part, &cutter, BooleanOp::Intersection))
+            });
+        let total = Real::from(6 * volume);
+        for (left, right, op, expected) in [
+            (&body, &cutter, BooleanOp::Difference, &total - &removed),
+            (&body, &cutter, BooleanOp::Intersection, removed.clone()),
+            (
+                &cutter,
+                &body,
+                BooleanOp::Difference,
+                Real::from(6 * 32) - &removed,
+            ),
+            (&body, &body, BooleanOp::Union, total.clone()),
+            (&body, &body, BooleanOp::Intersection, total.clone()),
+            (&body, &body, BooleanOp::Difference, Real::zero()),
+        ] {
+            let role = |mesh: &TriangleMesh| {
+                if std::ptr::eq(mesh, &body) {
+                    "the union"
+                } else {
+                    "the cutter"
+                }
+            };
+            let substitute = |mesh: &TriangleMesh| {
+                if std::ptr::eq(mesh, &body) {
+                    rebuilt.clone()
+                } else {
+                    mesh.clone()
+                }
+            };
+            let retained = operation(left, right, op);
+            let recomputed = operation(&substitute(left), &substitute(right), op);
+            let label = format!("{name}: {op:?} of {} and {}", role(left), role(right));
+            assert_eq!(retained.positions, recomputed.positions, "{label}");
+            assert_eq!(retained.triangles, recomputed.triangles, "{label}");
+            assert_eq!(six_volume(&retained), expected, "{label}");
+        }
+    }
+}
