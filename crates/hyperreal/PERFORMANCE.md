@@ -41,6 +41,64 @@ cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates
 cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates --features dispatch-trace -- --write-dispatch-trace-md
 ```
 
+## Imported operand-domain proofs (2026-10-22)
+
+`Real` import now proves the domain of every partial operation in a computable
+payload, operands first. This is a correctness change. Before it, import admitted
+any opaque operand that bounded rational admission could not refute, and strict
+queries on such values gave wrong answers. Probes on `cc0d350d04` decoded
+`asin(pi)` and `atanh(pi)` as certified positive, and `NthRoot(sqrt(2) - 2, 3)`
+as certified zero. `0 * sqrt(-pi)`, a zero outer scale over `sqrt(-pi)`, and
+`z / z` for the hidden zero `z = sqrt(2)*sqrt(2) - 2` were all certified zero.
+Sign queries on `sqrt(-pi)`, `acos` of `pi` and `cot(z)` panicked, and queries on
+`1/z` or a quantile of `pi` did not terminate. Hyperlimit's strict `orient2`
+returned `Decided`, `Exact` for the first four cases, and a Hyperbrep cuboid
+archive with forged coordinates validated as a trusted model.
+
+Each condition is decided by one of these routes, in order:
+
+1. an exact rational operand, or a defined exact identity of the node itself
+   (`quantile(Phi(r)) = r`);
+2. the existing outward-rounded 32-node binary64 filter on the operand;
+3. for tangent and cotangent poles, the exact pi-Laurent normal form, which
+   proves that an algebraic operand has no pole;
+4. the certified sign query `Computable::sign_until(-2048)`, the same floor that
+   native `Real` partial operations use.
+
+Release-build decode cost was measured with a temporary counting-allocator
+harness: 2,000 decodes per sample, the median of 15 samples per process, and
+three alternating baseline/candidate process pairs pinned to CPU 6 of a Ryzen 7
+5800X3D. The build used Rust 1.98.1 on a shared host. The values below are
+medians of the three process medians.
+
+| Payload | Before ns | After ns | Change | Allocations |
+| --- | ---: | ---: | ---: | --- |
+| rational 3/2 | 270 | 285 | +5.4% | 4 → 4 |
+| pi | 383 | 393 | +2.5% | 6 → 6 |
+| sqrt(2) | 853 | 896 | +5.1% | 20 → 20 |
+| 1/(pi - 3) | 1,250 | 1,368 | +9.4% | 26 → 26 |
+| sqrt(pi) | 473 | 518 | +9.5% | 7 → 7 |
+| asin(1/pi) | 484 | 1,730 | +257% | 7 → 49 |
+| tan(sqrt(2)) | 650 | 1,017 | +56% | 13 → 27 |
+| qnorm(1/3) | 798 | 893 | +12% | 13 → 13 |
+| (sqrt(3)/2 + 5/7) pi - 2 sqrt(3) | 1,945 | 2,081 | +7.0% | 39 → 39 |
+| sum of sqrt(2..17) | 6,352 | 7,015 | +10.4% | 138 → 138 |
+| sin(1) | 498 | 535 | +7.4% | 8 → 8 |
+
+The rational row runs no new code. Its change was -0.1% in the previous run of
+the same pair. `asin(1/pi)` is the adverse row: the filter does not enclose
+`1/pi`, so both endpoint conditions build a shifted node and refine it.
+`tan(sqrt(2))` builds the pi-Laurent form. The harness binary's text grows by
+9,268 bytes (+0.49%) and its data by 64 bytes.
+
+Two earlier variants were rejected. The first proved every condition through
+`sign_until`, walked the graph with a visited set, and decided poles from the
+cosine or sine image. It cost +15% to +387% on the same rows, with up to 53
+extra allocations. It also stopped an existing test from completing: an
+imported `quantile(Phi(1000))` was still refining `1 - Phi(1000)`, which is
+about 10^-217000, when the run was stopped after more than ten minutes. With
+the exact identity route that test binary finishes in 4.5 s.
+
 ## Shared exact equality facts (2026-10-18)
 
 `Real::immediate_equality` exposes existing rational proofs without constructing

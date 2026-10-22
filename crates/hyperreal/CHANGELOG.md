@@ -10,7 +10,9 @@
   value without its computable payload, a payload that contradicts its class,
   and known domain violations return `Problem::ParseError`; a certificate or
   payload relationship that cannot be proved returns the new
-  `Problem::UnknownCertificate`. The wire layout is unchanged.
+  `Problem::UnknownCertificate`. Every partial operation in a computable
+  payload must have its operand domain proved, so an undecided domain also
+  returns `Problem::UnknownCertificate`. The wire layout is unchanged.
 - Removed `Computable::sign`, which reported both zero and an unresolved sign
   as `Sign::NoSign`. Use `Computable::sign_until`, which returns `None` when
   bounded refinement cannot decide the sign.
@@ -115,6 +117,18 @@
 
 ### Fixed
 
+- `Real` import accepted a computable payload whose partial operation had an
+  operand outside its domain whenever bounded rational admission could not
+  refute it, such as `sqrt(-pi)`, `asin(pi)`, `1/(sqrt(2)*sqrt(2) - 2)` or
+  `tan(pi/2)`. Strict queries on such a value then certified a sign
+  (`asin(pi) > 0`), certified zero under a zero factor or scale, panicked, or
+  did not terminate; a Hyperbrep archive with such coordinates validated as a
+  trusted model. Import now proves each operand domain, operands first, from
+  an exact identity, the existing binary64 filter, or the certified sign
+  query that native `Real` operations use. A refuted domain returns
+  `Problem::ParseError` and an undecided one `Problem::UnknownCertificate`.
+  `Computable` decoding keeps its rejection-only checks, like its unchecked
+  native constructors.
 - Parsing a decimal with more digits than fit a machine word left its
   fraction unreduced without recording that, although stored parts are read
   as reduced. Equal values then hashed differently and kept dyadic facts

@@ -26,8 +26,18 @@ impl Real {
     /// arithmetic arguments and symbolic domain contradictions, return
     /// [`Problem::ParseError`] before an outer scale or identity can hide them.
     /// Conditional algebraic identities are used only to reject invalid inputs,
-    /// never to certify their values. General expression domains and expressions
-    /// exceeding the bounded recognizer's budget are not fully validated.
+    /// never to certify their values.
+    ///
+    /// Every partial operation in a computable payload must also have its
+    /// operand domain proved, operands first: a nonzero reciprocal, a
+    /// nonnegative root, an inverse-trigonometric or hyperbolic argument in
+    /// range, a tangent or cotangent away from its poles, a quantile
+    /// probability in (0, 1). A proof is an exact identity, a structural sign,
+    /// or the bounded certified sign query that native `Real` operations use,
+    /// refining to 2^-2048. A refuted domain returns [`Problem::ParseError`];
+    /// an undecided one returns [`Problem::UnknownCertificate`]. This bounds
+    /// precision, not total work: an operand that is slow to approximate is
+    /// approximated during import, as its first sign query would otherwise do.
     pub fn from_json(json: &str) -> Result<Self, Problem> {
         serde_json::from_str::<RealWire>(json)
             .map_err(|_| Problem::ParseError)?

@@ -96,6 +96,16 @@ impl RealWire {
                 problem,
                 detail: "Class parameter certificate is invalid or unproved",
             })?;
+        // Prove operand domains before any payload comparison refines the
+        // graph, and regardless of the outer scale: 0 * sqrt(-pi) is not zero.
+        if let Some(payload) = &self.computable {
+            payload
+                .prove_imported_domains()
+                .map_err(|problem| RealDecodeError {
+                    problem,
+                    detail: "Computable payload operation domain is invalid or unproved",
+                })?;
+        }
         if !matches!(self.class, Irrational)
             && let Some(payload) = &self.computable
         {

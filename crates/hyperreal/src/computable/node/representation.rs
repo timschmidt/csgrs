@@ -10,8 +10,10 @@
 /// evaluator, and symbolic identities that contradict a required domain.
 /// Conditional identities can reject a graph but never certify its value.
 /// An inconclusive proof leaves the domain unproved; decoding does not validate
-/// arbitrary expression domains or refine an operand to decide them. Valid
-/// expression graphs are preserved.
+/// arbitrary expression domains or refine an operand to decide them, matching
+/// the unchecked native constructors. Valid expression graphs are preserved.
+/// A [`Real`](crate::Real) is the checked carrier: its import also proves
+/// every operand domain, as described at [`Real::from_json`](crate::Real::from_json).
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg(not(verus_keep_ghost))]
@@ -184,6 +186,244 @@ impl Node {
         } else {
             Ok(())
         }
+    }
+}
+
+#[cfg(all(feature = "serde", not(verus_keep_ghost)))]
+impl Binary64Interval {
+    /// `Some(true)` proves and `Some(false)` refutes a condition on a value
+    /// enclosed by this interval; `None` leaves it to the exact routes.
+    fn decide_imported_domain_condition(&self, condition: &ImportedDomainCondition) -> Option<bool> {
+        let (lower, upper) = (self.lower, self.upper);
+        let (endpoint, inclusive, above) = match condition {
+            ImportedDomainCondition::NonZero => {
+                return if lower > 0.0 || upper < 0.0 {
+                    Some(true)
+                } else if lower == 0.0 && upper == 0.0 {
+                    Some(false)
+                } else {
+                    None
+                };
+            }
+            // 3/2 < pi/2 and 3 < pi, so these windows contain no pole.
+            ImportedDomainCondition::TrigNonZero(true) => {
+                return (lower > -1.5 && upper < 1.5).then_some(true);
+            }
+            ImportedDomainCondition::TrigNonZero(false) => {
+                return ((lower > 0.0 && upper < 3.0) || (lower > -3.0 && upper < 0.0))
+                    .then_some(true);
+            }
+            ImportedDomainCondition::Above(endpoint, inclusive) => (endpoint, *inclusive, true),
+            ImportedDomainCondition::Below(endpoint, inclusive) => (endpoint, *inclusive, false),
+        };
+        // Compare with an enclosure of the endpoint; ties fall through.
+        let endpoint = Self::from_rational(endpoint)?;
+        let (near, far) = if above {
+            (lower, upper)
+        } else {
+            (-upper, -lower)
+        };
+        let (endpoint_low, endpoint_high) = if above {
+            (endpoint.lower, endpoint.upper)
+        } else {
+            (-endpoint.upper, -endpoint.lower)
+        };
+        if near > endpoint_high || (inclusive && near >= endpoint_high) {
+            Some(true)
+        } else if far < endpoint_low || (!inclusive && far <= endpoint_low) {
+            Some(false)
+        } else {
+            None
+        }
+    }
+}
+
+/// One sign condition on the operand of a partial operation.
+#[cfg(all(feature = "serde", not(verus_keep_ghost)))]
+enum ImportedDomainCondition {
+    NonZero,
+    /// `operand - endpoint` is nonnegative (`true`) or positive (`false`).
+    Above(Rational, bool),
+    /// `endpoint - operand` is nonnegative (`true`) or positive (`false`).
+    Below(Rational, bool),
+    /// The cosine (`true`) or sine (`false`) of the operand is nonzero.
+    TrigNonZero(bool),
+}
+
+#[cfg(all(feature = "serde", not(verus_keep_ghost)))]
+impl Computable {
+    /// Prove the real domain of every partial operation in an imported graph.
+    ///
+    /// Node decoding only rejects domains that bounded rational admission
+    /// refutes, matching the unchecked native `Computable` constructors. A
+    /// `Real` is the checked carrier: native `Real` operations prove each
+    /// operand domain before building a partial node, so `Real` import must too.
+    /// Operands are proved first, so every query refines only graphs whose
+    /// partial operations are already proved defined. A refuted condition is
+    /// `ParseError`. An undecided one is `UnknownCertificate` and stops the
+    /// walk before an ancestor could refine the unproved operation.
+    pub(crate) fn prove_imported_domains(&self) -> Result<(), crate::Problem> {
+        // Decoding builds a tree: serde copies the value behind every shared
+        // pointer, so the walk needs no visited set. Iterate in post-order so
+        // deep payloads do not use the call stack.
+        let mut stack = InlineStack::<(&Self, bool), 32>::new();
+        stack.push((self, false));
+        while let Some((value, expanded)) = stack.pop() {
+            if expanded {
+                value.prove_imported_operation_domain()?;
+                continue;
+            }
+            stack.push((value, true));
+            value
+                .internal
+                .approximation
+                .for_each_operand(|operand| stack.push((operand, false)));
+        }
+        Ok(())
+    }
+
+    fn prove_imported_operation_domain(&self) -> Result<(), crate::Problem> {
+        use ImportedDomainCondition::{Above, Below, NonZero, TrigNonZero};
+        let one = Rational::one;
+        let small = || Rational::fraction(3, 4).expect("nonzero constant denominator");
+        let (operand, conditions) = match &self.internal.approximation {
+            Approximation::Inverse(x) => (x, [Some(NonZero), None]),
+            // The quotient kernels need a nonzero denominator; tan(x) and
+            // cot(x) have poles where cos(x) or sin(x) vanishes.
+            Approximation::PrescaledTan(x) => (x, [Some(TrigNonZero(true)), None]),
+            Approximation::PrescaledCot(x) => (x, [Some(TrigNonZero(false)), None]),
+            // x^2 >= 0 for every defined x. Real::abs builds sqrt(x^2) when
+            // the sign of x is unresolved, possibly because x is zero.
+            Approximation::Sqrt(x) | Approximation::NthRoot(x, _)
+                if matches!(x.internal.approximation, Approximation::Square(_)) =>
+            {
+                return Ok(());
+            }
+            Approximation::Sqrt(x) | Approximation::NthRoot(x, _) => {
+                (x, [Some(Above(Rational::zero(), true)), None])
+            }
+            // Stores x for ln(1+x).
+            Approximation::PrescaledLn(x) => (x, [Some(Above(-one(), false)), None]),
+            Approximation::PrescaledAsin(x) | Approximation::AsinDeferred(x) => (
+                x,
+                [Some(Above(-one(), true)), Some(Below(one(), true))],
+            ),
+            Approximation::AcosPositive(x) => (
+                x,
+                [Some(Above(Rational::zero(), true)), Some(Below(one(), true))],
+            ),
+            Approximation::AcoshNearOne(x) | Approximation::AcoshDirect(x) => {
+                (x, [Some(Above(one(), true)), None])
+            }
+            Approximation::PrescaledAtanh(x) | Approximation::AtanhDirect(x) => (
+                x,
+                [Some(Above(-one(), false)), Some(Below(one(), false))],
+            ),
+            Approximation::NormalQuantile(data) => (
+                &data.p,
+                [Some(Above(Rational::zero(), false)), Some(Below(one(), false))],
+            ),
+            // The removable small-angle kernels evaluate their analytic
+            // continuations only on the constructor-certified |x| <= 3/4.
+            Approximation::SincSmall(x) | Approximation::CoscSmall(x) => (
+                x,
+                [Some(Above(-small(), true)), Some(Below(small(), true))],
+            ),
+            _ => return Ok(()),
+        };
+        // A defined exact identity of the node itself proves its domain without
+        // refinement: quantile(Phi(r)) = r needs 0 < Phi(r) < 1 for rational r,
+        // which refinement cannot separate from 1 when r is large.
+        if self.exact_rational().is_some() {
+            return Ok(());
+        }
+        // The existing outward-rounded 32-node filter decides most separated
+        // operands without refinement or symbolic expansion.
+        let interval = operand.binary64_filter_interval(&mut 32);
+        let mut undecided = false;
+        for condition in conditions.into_iter().flatten() {
+            let decided = interval
+                .as_ref()
+                .and_then(|interval| interval.decide_imported_domain_condition(&condition));
+            match decided.or_else(|| operand.imported_domain_condition(condition)) {
+                Some(true) => {}
+                Some(false) => return Err(crate::Problem::ParseError),
+                None => undecided = true,
+            }
+        }
+        if undecided {
+            Err(crate::Problem::UnknownCertificate)
+        } else {
+            Ok(())
+        }
+    }
+
+    /// `Some(true)` proves the condition and `Some(false)` refutes it.
+    fn imported_domain_condition(&self, condition: ImportedDomainCondition) -> Option<bool> {
+        // Native Real partial operations certify operand signs at this floor.
+        let floor = crate::Real::PARTIAL_CMP_MIN_PRECISION;
+        let (endpoint, inclusive, above) = match condition {
+            ImportedDomainCondition::NonZero => {
+                return self.sign_until(floor).map(|sign| sign != RealSign::Zero);
+            }
+            ImportedDomainCondition::TrigNonZero(cosine) => {
+                // Bounded refinement cannot prove a transcendental zero, so
+                // read the exact pi-Laurent normal form first. Since pi is
+                // transcendental, an algebraic x has cos(x) != 0 and has
+                // sin(x) = 0 only at x = 0. For x = q*pi, sin(x) = 0 iff q is
+                // an integer and cos(x) = 0 iff q + 1/2 is, as in Real::tan.
+                if let Some(polynomial) = self.pi_laurent_polynomial(48) {
+                    let terms = polynomial.terms.as_slice();
+                    if terms
+                        .iter()
+                        .all(|(power, coefficient)| *power == 0 && coefficient.atoms.is_empty())
+                    {
+                        return if cosine {
+                            Some(true)
+                        } else {
+                            self.sign_until(floor).map(|sign| sign != RealSign::Zero)
+                        };
+                    }
+                    if let [(1, coefficient)] = terms
+                        && coefficient.radicals.is_empty()
+                        && coefficient.atoms.is_empty()
+                    {
+                        let half = Rational::fraction(1, 2).expect("nonzero constant denominator");
+                        let shifted = if cosine {
+                            coefficient.rational.clone() + half
+                        } else {
+                            coefficient.rational.clone()
+                        };
+                        return Some(!shifted.is_integer());
+                    }
+                }
+                let image = if cosine {
+                    self.clone().cos()
+                } else {
+                    self.clone().sin()
+                };
+                return image.sign_until(floor).map(|sign| sign != RealSign::Zero);
+            }
+            ImportedDomainCondition::Above(endpoint, inclusive) => (endpoint, inclusive, true),
+            ImportedDomainCondition::Below(endpoint, inclusive) => (endpoint, inclusive, false),
+        };
+        let difference = match self.exact_rational() {
+            Some(value) => match value.partial_cmp(&endpoint)? {
+                Ordering::Less => RealSign::Negative,
+                Ordering::Equal => RealSign::Zero,
+                Ordering::Greater => RealSign::Positive,
+            },
+            None if endpoint.is_zero() => self.sign_until(floor)?,
+            None => self
+                .clone()
+                .add(Self::rational(-endpoint))
+                .sign_until(floor)?,
+        };
+        Some(match (difference, above) {
+            (RealSign::Zero, _) => inclusive,
+            (RealSign::Positive, true) | (RealSign::Negative, false) => true,
+            (RealSign::Positive, false) | (RealSign::Negative, true) => false,
+        })
     }
 }
 
