@@ -32,7 +32,30 @@ since the cascade order is a stack-wide performance policy.
 `Real::representation_size`. Dropping the value aborts the process with a
 stack overflow at n = 20,000 on a 2 MiB test thread; n = 5,000 succeeds.
 That violates P6. Repeated Booleans deepen derived coordinates by about ten
-nodes per step, so the abort is far off in today's chains. **Option:** an
-iterative `Drop` that moves uniquely owned operands to a work list. It runs on
-every node drop, so it needs allocation and timing evidence on the hot scalar
-benches.
+nodes per step, so the abort is far off in today's chains.
+
+**Tried, 2026-10-22, not kept.** On `3836df74fa` a child process that builds
+the 80,000-term sum on a 2 MiB thread aborts with `SIGABRT`. An iterative
+`Drop for Node` fixed it. It released operands through `Arc::into_inner` and
+queued uniquely owned interior nodes in four inline slots, with a fallible
+overflow vector. Shared operands were only decremented. The 80,000-level
+chain then dropped with no scratch allocation, and its live bytes returned
+exactly to their starting total. Shared roots, shared interior partial sums
+and eight concurrent final owners all stayed valid.
+
+Every variant made ordinary drops materially slower, so none was kept.
+PERFORMANCE.md lists the variants and measurements. The best kept the derived
+recursive order within 16 KiB of stack below the outermost node drop. That
+variant cost 13–14% more instructions and 16–30% more drop time on fresh
+`sqrt(2)`, mesh-coordinate, rotated-coordinate and 16-root values. It also
+doubled teardown time per level once the iterative path took over.
+Thread-local bookkeeping is the floor of that approach, because every value's
+outermost node drop pays for it.
+
+**Remaining option.** Store a saturating graph depth in the node's fact word,
+which has five free bits (11–15), when the node is constructed. Drop would then
+read one word and compare it to the limit, and only nodes beyond the limit
+would be released iteratively. This moves a load per operand into `Node::new`.
+It also changes the cache encoding modelled in
+`verification/cache_encoding_model.rs`, so it needs Verus proof updates and
+construction-bench evidence beside the drop evidence.

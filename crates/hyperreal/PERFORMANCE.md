@@ -99,6 +99,49 @@ imported `quantile(Phi(1000))` was still refining `1 - Phi(1000)`, which is
 about 10^-217000, when the run was stopped after more than ten minutes. With
 the exact identity route that test binary finishes in 4.5 s.
 
+## Rejected experiment: iterative node teardown (2026-10-22)
+
+The aim was to remove the recursive-drop abort recorded in
+[`FUTURE_WORK.md`](FUTURE_WORK.md). The candidate released operands with
+`Arc::into_inner` and queued uniquely owned interior nodes in four inline
+slots, with a fallible overflow vector. Shared operands were only decremented.
+A child-process regression on a 2 MiB thread exercised an 80,000-term sum, a
+shared root, shared interior partial sums and eight concurrent final owners.
+It aborted on `3836df74fa` and passed with every variant below. The unique
+chain dropped with no scratch allocation, and once its bounded caches were warm
+its live bytes returned exactly to their starting total.
+
+Teardown time was measured in release with a temporary harness. Each sample
+built 1,024 fresh values outside the timer and timed only the drop of the
+batch. Each process took the median of 41 samples, pinned to CPU 6. The table
+gives the change in median drop time across three or four alternating
+baseline/candidate process pairs. Baselines were 19 ns for `sqrt(2)`, 12 ns
+for `1/(pi - 3)`, 88 ns for `(sqrt(3)/2 + 5/7) pi - 2 sqrt(3)`, 145 ns for
+`3 sin(pi/18) - 2/5 cos(pi/18)`, 560 ns for `sqrt(2) + ... + sqrt(17)`, and
+52–62 ns per level for 1,000- and 10,000-level chains.
+
+| Variant | sqrt(2) | 1/(pi-3) | mesh | rotated | 16 roots | deep, per level |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| always iterative | +129% | +101% | +247% | +201% | +161% | +106% to +119% |
+| recursive while a thread-local depth is below 64, payload moved out | +43% | +25% | +57% | +44% | +48% | +104% to +110% |
+| as above, leaf test by tag, iterative path out of line | +34% | +28% | +53% | +34% | +34% | +105% |
+| as above, payload dropped in place | +20% | +12% | +30% | +23% | +22% | +104% to +108% |
+| recursive within 16 KiB of stack below the outermost node drop | +30% | +19% | +29% | +19% | +16% | +100% |
+
+Exact rationals, `pi`, `sin(1)` and drops of shared clones stayed within
+noise in every variant: they have no uniquely owned interior node. User-space
+instruction counts confirm the last two rows. They were measured with
+`perf stat`, and construction was excluded by subtracting a run that leaks the
+same values. Per value, `sqrt(2)` went from 490 to 545 and 553 instructions,
+the mesh coordinate from 2,246 to 2,590 and 2,552, and the 16-root sum from
+9,970 to 11,410 and 11,230.
+
+None of these is kept, because ordinary small-value drops regress
+materially. The cost that remains is the bracket on each value's outermost
+node drop, plus the doubled per-level cost wherever the iterative path takes
+over. [`FUTURE_WORK.md`](FUTURE_WORK.md) records the remaining design, a
+construction-time depth hint.
+
 ## Shared exact equality facts (2026-10-18)
 
 `Real::immediate_equality` exposes existing rational proofs without constructing
