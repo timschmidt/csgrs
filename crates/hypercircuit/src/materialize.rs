@@ -4073,6 +4073,27 @@ mod tests {
     use hyperpath::{CubicBezier, TraceLayer};
     use hyperreal::Real;
 
+    /// A zero that strict policy cannot decide. Hyperreal proves the
+    /// Pythagorean identity `sin(e)^2 + cos(e)^2 - 1 = 0`, which these tests
+    /// once used for the purpose, so they use the sine addition identity,
+    /// which lies outside its admitted normal form, as Hypermesh's tests do.
+    fn terminally_unresolved_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        assert_eq!(
+            (&sine * &sine + &cosine * &cosine - Real::one()).exact_rational_normal_form(),
+            Some(hyperreal::Rational::zero())
+        );
+        let zero = (Real::e() + Real::one()).sin()
+            - Real::e().sin() * Real::one().cos()
+            - Real::e().cos() * Real::one().sin();
+        assert!(matches!(
+            hyperlimit::compare_reals(&zero, &Real::zero(), hyperlimit::PredicatePolicy::STRICT),
+            hyperlimit::PredicateOutcome::Unknown { .. }
+        ));
+        zero
+    }
+
     #[test]
     fn rectangle_materialization_preserves_errors_and_consumed_certainty() {
         use csgrs::errors::ValidationError;
@@ -4086,9 +4107,7 @@ mod tests {
             })
         ));
         assert!(error.source().is_some());
-        let sine = Real::e().sin();
-        let cosine = Real::e().cos();
-        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let zero = terminally_unresolved_zero();
         assert!(matches!(
             strict.rectangle(zero.clone(), Real::one()),
             Err(super::GeometryMaterializationError::Construction(
@@ -4256,9 +4275,7 @@ mod tests {
     #[test]
     fn approximate_materialization_marks_consumed_terminal_pad_ordering() {
         let mut pad = rounded_pad("terminal", 0);
-        let sine = Real::e().sin();
-        let cosine = Real::e().cos();
-        let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let unresolved_zero = terminally_unresolved_zero();
         pad.shape = PadShape::Obround {
             width: Real::from(6),
             height: Real::from(6) + unresolved_zero,
