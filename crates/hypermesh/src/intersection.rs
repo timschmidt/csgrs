@@ -9,7 +9,7 @@ use crate::bvh::ExactBvh;
 use crate::context::{DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
-    Classification, Plane, compare_real_decision, retain_exact_axis_plane_coordinate,
+    Classification, Plane, axis_ref, compare_real_decision, retain_exact_axis_plane_coordinate,
 };
 use crate::point_interner::PointInterner;
 use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon};
@@ -135,6 +135,9 @@ enum DeferredIntersectionGeometry<'a> {
         enclosure: Option<[f64; 2]>,
         start: &'a Point3,
         end: &'a Point3,
+        /// Two retained distinct support planes that meet exactly in the
+        /// segment's line, when the segment is a source crease.
+        crease: Option<[&'a Plane; 2]>,
     },
 }
 
@@ -2778,12 +2781,14 @@ fn compare_deferred_points_with_segment(
                 enclosure: left_enclosure,
                 start: left_start,
                 end: left_end,
+                ..
             },
             DeferredIntersectionGeometry::SegmentPlane {
                 ratio: right_ratio,
                 enclosure: right_enclosure,
                 start: right_start,
                 end: right_end,
+                ..
             },
         ) => {
             if let (Some(left), Some(right)) = (left_enclosure, right_enclosure)
@@ -2811,6 +2816,7 @@ fn compare_deferred_points_with_segment(
                 enclosure,
                 start,
                 end,
+                ..
             },
             DeferredIntersectionGeometry::Affine {
                 point: affine,
@@ -2844,6 +2850,7 @@ fn compare_deferred_points_with_segment(
                 enclosure,
                 start,
                 end,
+                ..
             },
         ) => {
             if let (Some(left), Some(right)) = (*affine_enclosure, *enclosure)
@@ -3023,37 +3030,45 @@ fn materialize_deferred_point(
     let affine = match &point.source.geometry {
         DeferredIntersectionGeometry::Affine { point, .. } => (*point).clone(),
         DeferredIntersectionGeometry::SegmentPlane {
-            ratio, start, end, ..
+            ratio,
+            start,
+            end,
+            crease,
+            ..
         } => {
-            let (mut point, plane) = match ratio {
-                DeferredSegmentPlaneRatio::Lazy { plane, .. } => {
+            let plane = match ratio {
+                DeferredSegmentPlaneRatio::Lazy { plane, .. }
+                | DeferredSegmentPlaneRatio::Exact { plane, .. } => *plane,
+            };
+            let crease_point = crease.and_then(|[first, second]| {
+                crease_plane_crossing(start, end, first, second, plane)
+            });
+            let mut point = match (crease_point, ratio) {
+                (Some(point), _) => point,
+                (None, DeferredSegmentPlaneRatio::Lazy { plane, .. }) => {
                     crate::trace_dispatch!("deferred-segment-plane", "materialized");
                     let (parameter_numerator, denominator) =
                         exact_segment_plane_parameter_ratio(plane, start, end);
-                    (
-                        intersect_segment_plane_from_ratio(
-                            start,
-                            end,
-                            &parameter_numerator,
-                            &denominator,
-                        )?,
-                        *plane,
-                    )
-                }
-                DeferredSegmentPlaneRatio::Exact {
-                    parameter_numerator,
-                    denominator,
-                    plane,
-                    ..
-                } => (
                     intersect_segment_plane_from_ratio(
                         start,
                         end,
+                        &parameter_numerator,
+                        &denominator,
+                    )?
+                }
+                (
+                    None,
+                    DeferredSegmentPlaneRatio::Exact {
                         parameter_numerator,
                         denominator,
-                    )?,
-                    *plane,
-                ),
+                        ..
+                    },
+                ) => intersect_segment_plane_from_ratio(
+                    start,
+                    end,
+                    parameter_numerator,
+                    denominator,
+                )?,
             };
             retain_exact_axis_plane_coordinate(&mut point, plane);
             point
@@ -3288,7 +3303,7 @@ fn collect_polygon_plane_slice<'point>(
 fn extend_polygon_plane_slice_edge<'point>(
     decisions: &DecisionContext,
     span: &mut DeferredIntersectionSpan<'point>,
-    edge_polygon: &ConvexPolygon,
+    edge_polygon: &'point ConvexPolygon,
     edge_index: usize,
     vertex_discovery_edge: usize,
     start: &'point Point3,
@@ -3329,6 +3344,7 @@ fn extend_polygon_plane_slice_edge<'point>(
     } else {
         (end, start)
     };
+    let crease = edge_polygon.crease_supports(edge_index);
     let geometry = match crossing_schedule {
         PolygonPlaneCrossingSchedule::Lazy { filter, queries } => {
             crate::trace_dispatch!("deferred-segment-plane", "lazy-certified-schedule");
@@ -3350,6 +3366,7 @@ fn extend_polygon_plane_slice_edge<'point>(
                 enclosure,
                 start: positive_endpoint,
                 end: negative_endpoint,
+                crease,
             }
         }
         PolygonPlaneCrossingSchedule::Eager => {
@@ -3389,6 +3406,7 @@ fn extend_polygon_plane_slice_edge<'point>(
                 enclosure,
                 start: positive_endpoint,
                 end: negative_endpoint,
+                crease,
             }
         }
     };
@@ -3421,6 +3439,90 @@ fn edge_plane_intersection_identity(
             .get(edge)?
             .intersection_identity(plane?),
     )
+}
+
+/// Graph traversal limit when comparing construction depths; a larger graph
+/// counts as deeper than any complete one.
+const CREASE_DEPTH_NODE_LIMIT: usize = 1 << 12;
+
+fn construction_depth<'a>(values: impl IntoIterator<Item = &'a Real>) -> usize {
+    values
+        .into_iter()
+        .map(|value| {
+            let size = value.representation_size(CREASE_DEPTH_NODE_LIMIT);
+            if size.complete {
+                size.depth
+            } else {
+                usize::MAX
+            }
+        })
+        .max()
+        .unwrap_or(0)
+}
+
+fn plane_coefficients(plane: &Plane) -> [&Real; 4] {
+    [
+        &plane.normal.x,
+        &plane.normal.y,
+        &plane.normal.z,
+        &plane.offset,
+    ]
+}
+
+/// The crossing of a source crease with a cutting plane, from planes alone.
+///
+/// `first` and `second` are distinct planes that both contain the segment
+/// from `start` to `end`, so they meet exactly in its line, and the segment
+/// crosses `cutting` properly. The three normals are therefore independent,
+/// and their unique common point is the crossing: the same point as
+/// interpolation between the segment's endpoints. Built from the planes, its
+/// expression does not grow with the endpoints' construction history.
+///
+/// The planes are used only when the endpoints' expression graphs are deeper
+/// than the crease planes', which happens when the endpoints were derived by
+/// earlier operations; rational endpoints and endpoints that are still source
+/// vertices interpolate as before. A coordinate the point shares exactly with
+/// both endpoints, or fixes through an exact axis-aligned plane, keeps that
+/// exact rational. `None` leaves the caller to interpolate, also when the
+/// division by the determinant does not decide.
+fn crease_plane_crossing(
+    start: &Point3,
+    end: &Point3,
+    first: &Plane,
+    second: &Plane,
+    cutting: &Plane,
+) -> Option<Point3> {
+    let endpoints = construction_depth(
+        [start, end]
+            .into_iter()
+            .flat_map(|point| [&point.x, &point.y, &point.z]),
+    );
+    if endpoints
+        <= construction_depth(
+            plane_coefficients(first)
+                .into_iter()
+                .chain(plane_coefficients(second)),
+        )
+    {
+        return None;
+    }
+    let homogeneous = hyperlattice::intersect_three_planes(first, second, cutting);
+    let coordinate = |axis: usize, value: &Real| {
+        let [start, end] = [start, end].map(|point| axis_ref(point, axis));
+        match (start.exact_rational_ref(), end.exact_rational_ref()) {
+            (Some(start_value), Some(end_value)) if start_value == end_value => Some(start.clone()),
+            _ => (value / &homogeneous.w).ok(),
+        }
+    };
+    let mut point = Point3::new(
+        coordinate(0, &homogeneous.x)?,
+        coordinate(1, &homogeneous.y)?,
+        coordinate(2, &homogeneous.z)?,
+    );
+    retain_exact_axis_plane_coordinate(&mut point, first);
+    retain_exact_axis_plane_coordinate(&mut point, second);
+    crate::trace_dispatch!("deferred-segment-plane", "crease-plane-triple");
+    Some(point)
 }
 
 fn intersect_segment_plane_from_ratio(
@@ -3813,6 +3915,7 @@ mod tests {
                     enclosure,
                     start: &origin,
                     end: &origin,
+                    crease: None,
                 },
                 identity: None,
                 discovery_order: (false, 0),
@@ -3931,6 +4034,7 @@ mod tests {
                         enclosure: None,
                         start: point,
                         end: point,
+                        crease: None,
                     }
                 } else {
                     affine_deferred_geometry(point, super::SupportLineAxis::X)
@@ -4030,6 +4134,7 @@ mod tests {
                 enclosure: None,
                 start: &start,
                 end: &end,
+                crease: None,
             },
             identity: None,
             discovery_order: (false, 0),
@@ -4079,6 +4184,7 @@ mod tests {
                     enclosure: None,
                     start: &positive,
                     end: &negative,
+                    crease: None,
                 },
                 identity: None,
                 discovery_order: (false, 0),
@@ -4102,6 +4208,172 @@ mod tests {
             assert_eq!(point.point, affine_point);
             assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
         }
+    }
+
+    /// The crease where the top `z = 3` meets the wall `x = sqrt(2) y`.
+    fn crease_planes() -> [Plane; 2] {
+        let root = Real::from(2).sqrt().unwrap();
+        [
+            Plane::from_coefficients(Real::zero(), Real::zero(), Real::one(), Real::from(-3)),
+            Plane::from_coefficients(Real::one(), -root, Real::zero(), Real::zero()),
+        ]
+    }
+
+    /// The plane `x + y + z = 3 + (sqrt(2) + 1) s`, which crosses the crease
+    /// at `(sqrt(2) s, s, 3)`.
+    fn crease_parameter_plane(parameter: Real) -> Plane {
+        let root = Real::from(2).sqrt().unwrap();
+        let offset = -(Real::from(3) + (root + Real::one()) * parameter);
+        Plane::from_coefficients(Real::one(), Real::one(), Real::one(), offset)
+    }
+
+    fn crease_point(parameter: Real) -> Point3 {
+        let root = Real::from(2).sqrt().unwrap();
+        Point3::new(&root * &parameter, parameter, Real::from(3))
+    }
+
+    /// Two crease points after `generations` interpolations, each between
+    /// the previous generation's points, as successive cuts build them.
+    fn derived_crease_endpoints(generations: usize) -> [Point3; 2] {
+        let root = (Real::from(3).sqrt().unwrap() / Real::from(10)).unwrap();
+        let [mut low, mut high] = [crease_point(Real::zero()), crease_point(Real::from(8))];
+        for generation in 1..=generations {
+            let step = Real::from(generation as i64);
+            let [next_low, next_high] = [&step + &root, Real::from(8) - &step - &root].map(|s| {
+                let plane = crease_parameter_plane(s);
+                let (numerator, denominator) =
+                    super::exact_segment_plane_parameter_ratio(&plane, &high, &low);
+                super::intersect_segment_plane_from_ratio(&high, &low, &numerator, &denominator)
+                    .unwrap()
+            });
+            [low, high] = [next_low, next_high];
+        }
+        [low, high]
+    }
+
+    fn point_depth(point: &Point3) -> usize {
+        super::construction_depth([&point.x, &point.y, &point.z])
+    }
+
+    #[test]
+    fn crease_crossing_from_planes_equals_interpolation_without_its_history() {
+        let [top, wall] = crease_planes();
+        let cutting = crease_parameter_plane(Real::from(4));
+        let expected = crease_point(Real::from(4));
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+        let mut depths = Vec::new();
+        for generations in 1..=4 {
+            let [negative, positive] = derived_crease_endpoints(generations);
+            let (numerator, denominator) =
+                super::exact_segment_plane_parameter_ratio(&cutting, &positive, &negative);
+            let interpolated = super::intersect_segment_plane_from_ratio(
+                &positive,
+                &negative,
+                &numerator,
+                &denominator,
+            )
+            .unwrap();
+            let from_planes =
+                super::crease_plane_crossing(&positive, &negative, &top, &wall, &cutting)
+                    .expect("derived endpoints are deeper than the crease planes");
+            // Both constructions are the same exact point.
+            for point in [&interpolated, &from_planes] {
+                for (value, exact) in [
+                    (&point.x, &expected.x),
+                    (&point.y, &expected.y),
+                    (&point.z, &expected.z),
+                ] {
+                    assert_eq!(
+                        crate::geometry::compare_real_decision(&decisions, value, exact).unwrap(),
+                        std::cmp::Ordering::Equal,
+                        "generation {generations}"
+                    );
+                }
+            }
+            // The top is an exact axis plane, so the crossing keeps z = 3.
+            assert_eq!(from_planes.z, Real::from(3));
+            depths.push((point_depth(&interpolated), point_depth(&from_planes)));
+        }
+        assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        // Interpolation deepens with the endpoints' history; the planes do not.
+        assert!(
+            depths.windows(2).all(|pair| pair[0].0 < pair[1].0),
+            "{depths:?}"
+        );
+        assert!(
+            depths.iter().all(|&(_, planes)| planes == depths[0].1),
+            "{depths:?}"
+        );
+        assert!(depths[0].1 < depths[0].0, "{depths:?}");
+    }
+
+    #[test]
+    fn crease_crossing_from_planes_is_used_only_where_it_is_shallower() {
+        let [top, wall] = crease_planes();
+        let cutting = crease_parameter_plane(Real::from(4));
+        // Source vertices as shallow as the planes interpolate as before,
+        // and so do exact rational endpoints.
+        let [negative, positive] = derived_crease_endpoints(0);
+        assert!(
+            super::crease_plane_crossing(&positive, &negative, &top, &wall, &cutting).is_none()
+        );
+        let rational =
+            [Real::zero(), Real::from(4)].map(|y| Point3::new(y, Real::one(), Real::zero()));
+        assert!(
+            super::crease_plane_crossing(&rational[1], &rational[0], &top, &wall, &cutting)
+                .is_none()
+        );
+        // A determinant that no proof decides leaves the crossing to
+        // interpolation instead of failing. The cutting normal (0, e, 1)
+        // makes the determinant exactly e, a zero that strict policy and
+        // hyperreal division cannot decide.
+        let undecided = Plane::from_coefficients(
+            Real::zero(),
+            terminally_unresolved_zero(),
+            Real::one(),
+            Real::from(-3),
+        );
+        let [negative, positive] = derived_crease_endpoints(2);
+        assert!(
+            super::crease_plane_crossing(&positive, &negative, &top, &wall, &undecided).is_none()
+        );
+    }
+
+    #[test]
+    fn surviving_crease_crossing_materializes_from_its_planes() {
+        let [top, wall] = crease_planes();
+        let cutting = crease_parameter_plane(Real::from(4));
+        let [negative, positive] = derived_crease_endpoints(3);
+        let crossing = |crease| DeferredIntersectionPoint {
+            geometry: DeferredIntersectionGeometry::SegmentPlane {
+                ratio: DeferredSegmentPlaneRatio::Lazy {
+                    plane: &cutting,
+                    axis: super::SupportLineAxis::X,
+                },
+                enclosure: None,
+                start: &positive,
+                end: &negative,
+                crease,
+            },
+            identity: None,
+            discovery_order: (false, 0),
+        };
+        let materialize = |point: &DeferredIntersectionPoint<'_>| {
+            super::materialize_deferred_point(super::DeferredIntersectionEndpoint {
+                source: point,
+                identity: None,
+            })
+            .unwrap()
+            .point
+        };
+        let from_planes = materialize(&crossing(Some([&top, &wall])));
+        let interpolated = materialize(&crossing(None));
+        assert_eq!(
+            Some(from_planes.clone()),
+            super::crease_plane_crossing(&positive, &negative, &top, &wall, &cutting)
+        );
+        assert!(point_depth(&from_planes) < point_depth(&interpolated));
     }
 
     #[test]
@@ -4149,6 +4421,7 @@ mod tests {
                         enclosure: None,
                         start: origin,
                         end: origin,
+                        crease: None,
                     }
                 } else {
                     affine_deferred_geometry(affine, super::SupportLineAxis::X)

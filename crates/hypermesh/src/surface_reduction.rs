@@ -83,7 +83,11 @@
 //! uses the retained planes as their support planes. A reduced triangle often
 //! spans earlier derived vertices; the plane through them is the same plane
 //! but its expression would grow with every generation, and so would every
-//! point later constructed on it.
+//! point later constructed on it. For the same reason, where a later cut
+//! crosses an edge between two triangles whose classes were retained as
+//! distinct planes, the crossing is built from those two planes and the
+//! cutting plane rather than by interpolating between the edge's derived
+//! endpoints ([`RetainedPlaneClasses::crease_partners`]).
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -96,7 +100,7 @@ use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Plane;
 use crate::intersection::{SourceFacePairFacts, source_face_pair_key};
 use crate::output::TriangleSource;
-use crate::polygon::ConvexPolygon;
+use crate::polygon::{ConvexPolygon, NO_CREASE};
 use crate::storage_hash::StorageHashMap;
 use crate::surface_arrangement::{
     map_triangulation_error, project_point, projection_axes, projection_axis,
@@ -135,10 +139,59 @@ impl RetainedPlaneClasses {
         self.classes[triangle]
     }
 
-    #[cfg(test)]
     pub(crate) fn distinct(&self, left: u32, right: u32) -> bool {
         source_face_pair_key(left, right)
             .is_some_and(|key| self.distinct.binary_search(&key).is_ok())
+    }
+
+    /// For each triangle edge `[v_i, v_(i+1)]`, the unique triangle using the
+    /// reverse edge when the two lie in classes retained as distinct planes,
+    /// or [`NO_CREASE`]. Both triangles contain the edge's endpoints, so
+    /// their two distinct support planes meet exactly in the edge's line.
+    /// `None` when the triangles are not the ones these classes describe.
+    pub(crate) fn crease_partners(
+        &self,
+        triangles: &[[usize; 3]],
+    ) -> HypermeshResult<Option<Box<[[u32; 3]]>>> {
+        if triangles.len() != self.classes.len() {
+            return Ok(None);
+        }
+        let overflow = || HypermeshError::CapacityOverflow {
+            operation: "retained crease partners",
+        };
+        // Directed edge to its triangle, or `NO_CREASE` when it repeats.
+        let mut directed = StorageHashMap::<[usize; 2], u32>::default();
+        directed
+            .try_reserve(triangles.len().saturating_mul(3))
+            .map_err(|_| overflow())?;
+        for (triangle, &[a, b, c]) in triangles.iter().enumerate() {
+            let triangle = u32::try_from(triangle).map_err(|_| overflow())?;
+            for edge in [[a, b], [b, c], [c, a]] {
+                directed
+                    .entry(edge)
+                    .and_modify(|owner| *owner = NO_CREASE)
+                    .or_insert(triangle);
+            }
+        }
+        let mut partners = Vec::new();
+        partners
+            .try_reserve_exact(triangles.len())
+            .map_err(|_| overflow())?;
+        for (triangle, &[a, b, c]) in triangles.iter().enumerate() {
+            let class = self.classes[triangle];
+            partners.push([[a, b], [b, c], [c, a]].map(
+                |[from, to]| match directed.get(&[to, from]) {
+                    Some(&partner)
+                        if partner != NO_CREASE
+                            && self.distinct(class, self.classes[partner as usize]) =>
+                    {
+                        partner
+                    }
+                    _ => NO_CREASE,
+                },
+            ));
+        }
+        Ok(Some(partners.into_boxed_slice()))
     }
 }
 
@@ -1156,6 +1209,48 @@ mod tests {
         assert!(edited.retained_plane_classes().is_none());
         let rebuilt = TriangleMesh::new(drilled.positions.to_vec(), drilled.triangles.to_vec());
         assert!(rebuilt.retained_plane_classes().is_none());
+    }
+
+    #[test]
+    fn crease_partners_cross_exactly_the_edges_between_distinct_planes() {
+        let block = integer_box([0, 0, 0], [8, 8, 4]);
+        let drilled = difference(&block, &integer_box([3, 2, -1], [5, 6, 5]));
+        let classes = drilled.retained_plane_classes().expect("certified output");
+        let triangles = drilled
+            .triangles
+            .iter()
+            .map(|triangle| triangle.indices())
+            .collect::<Vec<_>>();
+        let partners = classes
+            .crease_partners(&triangles)
+            .unwrap()
+            .expect("the classes describe these triangles");
+        let mut creases = 0;
+        for (triangle, &[a, b, c]) in triangles.iter().enumerate() {
+            for (edge, [from, to]) in [[a, b], [b, c], [c, a]].into_iter().enumerate() {
+                // The closed manifold result has exactly one reverse edge.
+                let neighbour = triangles
+                    .iter()
+                    .position(|other| {
+                        let [p, q, r] = *other;
+                        [[p, q], [q, r], [r, p]].contains(&[to, from])
+                    })
+                    .unwrap();
+                let partner = partners[triangle][edge];
+                if classes.class(triangle) == classes.class(neighbour) {
+                    // A diagonal inside one plane class is not a crease.
+                    assert_eq!(partner, NO_CREASE, "{triangle} {edge}");
+                } else {
+                    assert_eq!(partner as usize, neighbour, "{triangle} {edge}");
+                    creases += 1;
+                }
+            }
+        }
+        // Each of the 12 block edges and 4 hole edges, at both mouths, plus
+        // the 4 vertical hole edges, seen from both sides.
+        assert_eq!(creases, 2 * (12 + 2 * 4 + 4));
+        // Triangles the classes do not describe have no partners.
+        assert_eq!(classes.crease_partners(&triangles[1..]).unwrap(), None);
     }
 
     #[test]

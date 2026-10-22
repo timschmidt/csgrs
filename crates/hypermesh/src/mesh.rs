@@ -1574,16 +1574,36 @@ pub(crate) fn build_polygon_soup_internal(
         } else {
             None
         };
-        let retained_supports = retained_plane_classes
-            .last()
-            .and_then(Option::as_ref)
-            .map(|classes| move |triangle: usize| classes.support(triangle));
+        let retained_classes = retained_plane_classes.last().and_then(Option::as_ref);
+        let retained_supports =
+            retained_classes.map(|classes| move |triangle: usize| classes.support(triangle));
+        // A crossing of a crease between two retained distinct planes is
+        // built from those planes instead of the edge's derived endpoints.
+        // Exact rational endpoints already interpolate to the same reduced
+        // rational, so only meshes with other coordinates need the table.
+        let creases = match retained_classes {
+            Some(classes)
+                if mesh
+                    .positions
+                    .iter()
+                    .any(|point| !point.has_exact_rational_coordinates()) =>
+            {
+                let triangles = mesh
+                    .triangles
+                    .iter()
+                    .map(|triangle| triangle.indices())
+                    .collect::<Vec<_>>();
+                classes.crease_partners(&triangles)?
+            }
+            _ => None,
+        };
         let source_planes = RetainedSourcePlanes::new(
             mesh.triangles.len(),
             compact,
             retained_supports
                 .as_ref()
                 .map(|support| support as &dyn Fn(usize) -> Plane),
+            creases,
             normalize_wide_dyadic,
         )?;
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {

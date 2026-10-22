@@ -358,7 +358,13 @@ enum SourcePlaneStorage {
 pub(crate) struct RetainedSourcePlanes {
     storage: SourcePlaneStorage,
     normalize_wide_dyadic: bool,
+    /// Per face and cyclic edge, the face across that edge whose retained
+    /// support is a distinct plane, or [`NO_CREASE`].
+    creases: Option<Box<[[u32; 3]]>>,
 }
+
+/// Marks a source edge with no retained crease partner.
+pub(crate) const NO_CREASE: u32 = u32::MAX;
 
 impl RetainedSourcePlanes {
     /// `supports`, when present, gives each triangle's exact support plane,
@@ -366,10 +372,16 @@ impl RetainedSourcePlanes {
     /// the mesh. It replaces the plane through the triangle's vertices, which
     /// is the same plane but is rebuilt from derived coordinates. Lossless
     /// primitive rows take precedence: their planes are exact and cheap.
+    ///
+    /// `creases`, when present with `supports`, names for each triangle edge
+    /// `[v_i, v_(i+1)]` a triangle that also contains both endpoints and whose
+    /// support was decided to be a distinct plane, or [`NO_CREASE`]. The two
+    /// supports then meet exactly in the edge's line.
     pub(crate) fn new(
         face_count: usize,
         compact: Option<Arc<CompactSourcePolygons>>,
         supports: Option<&dyn Fn(usize) -> Plane>,
+        creases: Option<Box<[[u32; 3]]>>,
         normalize_wide_dyadic: bool,
     ) -> HypermeshResult<Arc<Self>> {
         if compact
@@ -378,6 +390,20 @@ impl RetainedSourcePlanes {
         {
             return Err(crate::error::HypermeshError::SurfaceArrangementFailed {
                 reason: "retained source-plane and triangle counts differ",
+            });
+        }
+        if let Some(creases) = &creases
+            && (supports.is_none()
+                || creases.len() != face_count
+                || creases.iter().enumerate().any(|(face, partners)| {
+                    partners.iter().any(|&partner| {
+                        partner != NO_CREASE
+                            && (partner as usize >= face_count || partner as usize == face)
+                    })
+                }))
+        {
+            return Err(crate::error::HypermeshError::SurfaceArrangementFailed {
+                reason: "retained crease rows do not match the source triangles",
             });
         }
         let storage = compact.map_or_else(
@@ -411,7 +437,34 @@ impl RetainedSourcePlanes {
         Ok(Arc::new(Self {
             storage,
             normalize_wide_dyadic,
+            creases,
         }))
+    }
+
+    /// The retained supports of `face` and of its crease partner across
+    /// `edge`, ordered by face index so that both triangles of one crease
+    /// name the same two planes. Both planes contain the edge, and they are
+    /// distinct by a retained certified fact.
+    fn crease_supports(&self, face: usize, edge: usize) -> Option<[&Plane; 2]> {
+        let partner = *self.creases.as_deref()?.get(face)?.get(edge)?;
+        if partner == NO_CREASE {
+            return None;
+        }
+        let partner = partner as usize;
+        let [low, high] = if face < partner {
+            [face, partner]
+        } else {
+            [partner, face]
+        };
+        Some([self.retained_support(low)?, self.retained_support(high)?])
+    }
+
+    /// A support plane already held for `face`, without constructing one.
+    fn retained_support(&self, face: usize) -> Option<&Plane> {
+        match &self.storage {
+            SourcePlaneStorage::Eager(planes) => Some(&planes.get(face)?.support),
+            SourcePlaneStorage::Lazy(cache) => cache.get(face)?.support.get().map(Box::as_ref),
+        }
     }
 
     fn len(&self) -> usize {
@@ -866,6 +919,19 @@ impl ConvexPolygon {
                 self.retained_source_triangle_points()
                     .expect("an unmaterialized source plane retains its checked source vertices")
             }),
+        }
+    }
+
+    /// For a source triangle, the two retained support planes that meet
+    /// exactly in the line of its edge `[v_edge, v_(edge+1)]`: its own and
+    /// that of a neighbour across the edge decided to lie in a distinct
+    /// plane. Other polygons and edges without such a fact return `None`.
+    pub(crate) fn crease_supports(&self, edge: usize) -> Option<[&Plane; 2]> {
+        match &self.planes {
+            PolygonPlanes::SourceTriangle { owner, face } => {
+                owner.crease_supports(*face as usize, edge)
+            }
+            PolygonPlanes::Owned(_) => None,
         }
     }
 
@@ -1742,7 +1808,7 @@ mod tests {
             }]
             .into_boxed_slice(),
         ));
-        let error = RetainedSourcePlanes::new(2, Some(compact), None, false).unwrap_err();
+        let error = RetainedSourcePlanes::new(2, Some(compact), None, None, false).unwrap_err();
         assert!(matches!(
             error,
             crate::HypermeshError::SurfaceArrangementFailed {
@@ -1750,7 +1816,7 @@ mod tests {
             }
         ));
 
-        let source_planes = RetainedSourcePlanes::new(1, None, None, false).unwrap();
+        let source_planes = RetainedSourcePlanes::new(1, None, None, None, false).unwrap();
         let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
         let decisions = DecisionContext::new(&context);
         let error = ConvexPolygon::from_source_triangle(
@@ -1770,6 +1836,51 @@ mod tests {
                 reason: "source triangle has no retained plane-cache row"
             }
         ));
+    }
+
+    #[test]
+    fn retained_crease_rows_need_supports_and_name_present_faces() {
+        let support = |face: usize| {
+            Plane::axis_aligned(
+                2,
+                Real::from(i64::try_from(face).expect("small face index")),
+            )
+        };
+        let support = &support as &dyn Fn(usize) -> Plane;
+        // Face 0 and face 1 meet across their first edges.
+        let rows = |first: u32, second: u32| {
+            Some(
+                vec![
+                    [first, NO_CREASE, NO_CREASE],
+                    [second, NO_CREASE, NO_CREASE],
+                ]
+                .into_boxed_slice(),
+            )
+        };
+        for (supports, creases) in [
+            (None, rows(1, 0)),
+            (Some(support), rows(2, 0)),
+            (Some(support), rows(0, 0)),
+            (
+                Some(support),
+                Some(vec![[1, NO_CREASE, NO_CREASE]].into_boxed_slice()),
+            ),
+        ] {
+            let error = RetainedSourcePlanes::new(2, None, supports, creases, false).unwrap_err();
+            assert!(matches!(
+                error,
+                crate::HypermeshError::SurfaceArrangementFailed {
+                    reason: "retained crease rows do not match the source triangles"
+                }
+            ));
+        }
+        let planes = RetainedSourcePlanes::new(2, None, Some(support), rows(1, 0), false).unwrap();
+        // Both faces of one crease name the same two planes in face order.
+        for face in [0, 1] {
+            let [low, high] = planes.crease_supports(face, 0).unwrap();
+            assert_eq!((low, high), (&support(0), &support(1)));
+            assert!(planes.crease_supports(face, 1).is_none());
+        }
     }
 
     #[test]

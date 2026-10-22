@@ -284,17 +284,31 @@ fn rational_rotation_cuts_grow_linearly_with_bounded_coefficients() {
 #[test]
 fn sqrt3_rotation_cuts_certify() {
     let records = certified_chain(&chains::degree_rotation_cuts(30, 3), None);
+    // A corner where a cut crosses a crease left by the previous cut is
+    // built from the crease's two retained face planes and the cutting wall.
+    // Interpolating along the crease between earlier corners deepened the
+    // graphs to 25 and 29 here.
     assert_eq!(
         column(&records, |record| (record.triangles, record.size.max_depth)),
-        [(28, 15), (32, 25), (44, 29)]
+        [(28, 15), (32, 12), (44, 12)]
     );
 }
 
 #[test]
-fn ten_degree_rotation_cuts_stay_certified() {
+fn ten_degree_rotation_cuts_stay_certified_with_constant_depth() {
     // sin(pi/18) is cubic, so no radical tower decides the exact zeros among
     // later cuts' derived coordinates; the cyclotomic zero proof does.
-    certified_chain(&chains::degree_rotation_cuts(10, 3), None);
+    let records = certified_chain(&chains::degree_rotation_cuts(10, 3), None);
+    // Every cut overlaps the previous one. Its corners on the earlier walls'
+    // creases are built from planes, so the graphs keep one size; built by
+    // interpolation between earlier corners they reached depth 28 and 38.
+    assert_eq!(
+        column(&records, |record| (
+            record.size.max_nodes,
+            record.size.max_depth
+        )),
+        [(60, 18); 3]
+    );
 }
 
 #[test]

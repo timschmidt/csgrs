@@ -483,6 +483,47 @@ fn tilted_symbolic_drills_keep_constant_coordinate_size() {
 }
 
 #[test]
+fn overlapping_rotated_cuts_keep_constant_coordinate_depth() {
+    // Square cutters rotated 30 degrees about z, each overlapping the last.
+    // A cut's new corners are where its walls cross the creases between the
+    // block's faces and the previous cut's walls, and those creases run
+    // between corners built by earlier cuts. Built from the crease's two
+    // retained planes and the cutting wall, a corner does not depend on how
+    // the crease's endpoints were built. Interpolating between them
+    // deepened the corners with every cut: depth 17, 28, 39, 50 and 61.
+    let rotated = |dx: i64| {
+        let [c, s] = [(Real::from(3).sqrt().unwrap() / r(2)).unwrap(), q(1, 2)];
+        let square = integer_box([0, 0, -1], [3, 3, 5]);
+        let positions = square
+            .positions
+            .iter()
+            .map(|point| {
+                Point3::new(
+                    &(&c * &point.x - &s * &point.y) + &r(dx),
+                    &(&s * &point.x + &c * &point.y) + &r(7),
+                    point.z.clone(),
+                )
+            })
+            .collect::<Vec<_>>();
+        TriangleMesh::new(positions, square.triangles.to_vec())
+    };
+    let mut body = integer_box([0, 0, 0], [16, 10, 4]);
+    let mut depths = Vec::new();
+    for k in 1..=5 {
+        body = operation(&body, &rotated(2 * k), BooleanOp::Difference);
+        let evidence = boolean_mesh_closure_evidence(&as_result(&body));
+        assert!(evidence.is_closed(), "{evidence:?}");
+        depths.push(max_coordinate_depth(&body));
+    }
+    // The first cut keeps crossings between its own fresh corners; from the
+    // second cut on, every result has the same depth.
+    assert!(
+        depths[1..].windows(2).all(|pair| pair[0] == pair[1]) && depths[1] <= depths[0],
+        "{depths:?}"
+    );
+}
+
+#[test]
 fn reduced_outputs_record_plane_provenance() {
     // Every output triangle names a source triangle in its own plane. The
     // reduced top face of the drilled block spans both source triangles of
