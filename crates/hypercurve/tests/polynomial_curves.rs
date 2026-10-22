@@ -64,3 +64,18 @@ fn unadmitted_polynomial_pairs_keep_typed_blockers() {
 fn sections_survive_context_drop_budgets_and_policies() {
     sections::sections_survive_context_drop_budgets_and_policies();
 }
+
+#[test]
+fn sloped_section_splits_both_operands_and_continues() {
+    sections::sloped_section_splits_both_operands_and_continues();
+}
+
+#[test]
+fn horizontal_section_keeps_only_its_own_branch_roots() {
+    sections::horizontal_section_keeps_only_its_own_branch_roots();
+}
+
+#[test]
+fn tangent_lines_and_line_components_keep_their_meaning() {
+    sections::tangent_lines_and_line_components_keep_their_meaning();
+}

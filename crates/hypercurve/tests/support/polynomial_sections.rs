@@ -519,17 +519,17 @@ pub fn unadmitted_polynomial_pairs_keep_typed_blockers() {
             }
         }
     };
-    // Non-vertical lines are a separate query (H06).
+    // Lines with an irrational coordinate need selected-field substitution
+    // (H06, milestone 2), whether vertical or sloped.
+    let root = (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap();
+    unsupported(curve, &vertical(root.clone(), (-3).into(), 3.into()));
     let slanted: Curve2 = LineSeg2::try_new(
-        Point2::new((-1).into(), (-3).into()),
+        Point2::new((-1).into(), root),
         Point2::new(1.into(), 3.into()),
     )
     .unwrap()
     .into();
     unsupported(curve, &slanted);
-    // A vertical line at an irrational abscissa.
-    let root = (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap();
-    unsupported(curve, &vertical(root, (-3).into(), 3.into()));
     // A mapped branch: source-x is no longer the plane's x.
     let transform = Similarity2::try_from_real_affine(
         1.into(),
@@ -643,4 +643,287 @@ pub fn sections_survive_context_drop_budgets_and_policies() {
             ..
         }
     ));
+}
+
+fn segment(start: [Real; 2], end: [Real; 2]) -> Curve2 {
+    let [x0, y0] = start;
+    let [x1, y1] = end;
+    LineSeg2::try_new(Point2::new(x0, y0), Point2::new(x1, y1))
+        .unwrap()
+        .into()
+}
+
+/// `16x^2 - 16x + 16y^2 - 16y + 7`: the circle of radius 1/4 about (1/2, 1/2).
+const CIRCLE: &[(usize, usize, i64)] =
+    &[(0, 0, 7), (1, 0, -16), (2, 0, 16), (0, 1, -16), (0, 2, 16)];
+/// `y - x^2`, a single graph branch.
+const GRAPH_PARABOLA: &[(usize, usize, i64)] = &[(0, 1, 1), (2, 0, -1)];
+/// `y - x`, which contains the line `y = x`.
+const DIAGONAL: &[(usize, usize, i64)] = &[(0, 1, 1), (1, 0, -1)];
+
+fn assert_on_line(point: &CurvePoint2, [a, b, c]: [i64; 3]) {
+    assert_eq!(
+        point
+            .affine_form(a.into(), b.into(), c.into())
+            .compare_to_real(&Real::zero())
+            .unwrap(),
+        Ordering::Equal
+    );
+}
+
+/// Returns the branch abscissa and line parameter of a contact.
+fn check_contact_at(
+    contact: &CurveIntersectionContact2,
+    branch_first: bool,
+    cross: Option<RealSign>,
+) -> (CurveParameter2, CurveParameter2) {
+    let (branch, line) = if branch_first {
+        (contact.first(), contact.second())
+    } else {
+        (contact.second(), contact.first())
+    };
+    assert_eq!((branch.span_index(), line.span_index()), (0, 0));
+    assert_eq!(
+        contact.is_certified_transverse(),
+        cross.is_some_and(|sign| sign != RealSign::Zero)
+    );
+    assert_eq!(contact.tangent_cross_sign(), cross);
+    (branch.parameter().unwrap(), line.parameter().unwrap())
+}
+
+pub fn sloped_section_splits_both_operands_and_continues() {
+    let quintic = set(QUINTIC);
+    let equation = quintic.topology().equation().clone();
+    let curve = quintic.curves()[0].clone();
+    // y = 3x: F(x, 3x) = 243x^5 + 14x + 5 changes sign on (-31/100, -30/100).
+    let line = segment([(-1).into(), (-3).into()], [1.into(), 3.into()]);
+    let mut point = None;
+    for (first, second, branch_first) in [(&curve, &line, true), (&line, &curve, false)] {
+        let contact = one_contact(first, second);
+        let sign = if branch_first {
+            RealSign::Positive
+        } else {
+            RealSign::Negative
+        };
+        let (x, t) = check_contact_at(&contact, branch_first, Some(sign));
+        let contact_point = contact.point();
+        assert!(contact_point.coordinates().is_none());
+        assert_on_line(contact_point, [3, -1, 0]);
+        assert_eq!(order(contact_point, [1, 0], q(-31, 100)), Ordering::Greater);
+        assert_eq!(order(contact_point, [1, 0], q(-30, 100)), Ordering::Less);
+        assert_eq!(x.compare(&q(-31, 100).into()).unwrap(), Ordering::Greater);
+        let residual = contact_point
+            .rational_form(
+                equation.clone(),
+                BivariatePolynomial::new(vec![vec![Real::one()]]),
+            )
+            .unwrap();
+        assert_eq!(
+            residual.compare_to_real(&Real::zero()).unwrap(),
+            Ordering::Equal
+        );
+        // t = (y + 3) / 6 replays the branch point.
+        assert!(t.scalar().is_none());
+        assert_line_replays(&line, &t, contact_point);
+        for (a, b, sign) in [(first, second, sign), (second, first, opposite(sign))] {
+            let (a_reversed, b_reversed) = (a.reversed().unwrap(), b.reversed().unwrap());
+            for (a, b, sign) in [
+                (&a_reversed, b, opposite(sign)),
+                (a, &b_reversed, opposite(sign)),
+                (&a_reversed, &b_reversed, sign),
+            ] {
+                let contact = one_contact(a, b);
+                assert_eq!(contact.tangent_cross_sign(), Some(sign));
+                assert!(contact.point().coincides_with(contact_point).unwrap());
+            }
+        }
+        point = Some(contact_point.clone());
+    }
+    let point = point.unwrap();
+
+    let topology = curve.intersection_topology(&line).unwrap();
+    let swapped = line.intersection_topology(&curve).unwrap();
+    assert_eq!((topology.first().len(), topology.second().len()), (2, 2));
+    assert_eq!((swapped.first().len(), swapped.second().len()), (2, 2));
+    for pieces in [
+        topology.first(),
+        topology.second(),
+        swapped.first(),
+        swapped.second(),
+    ] {
+        assert!(pieces[0].end().coincides_with(&point).unwrap());
+        assert!(pieces[1].start().coincides_with(&point).unwrap());
+    }
+    let (left, right) = (&topology.first()[0], &topology.first()[1]);
+    let (below, above) = (&topology.second()[0], &topology.second()[1]);
+    assert!(below.end().coordinates().is_none());
+    // Each returned piece meets the other operand's adjacent pieces exactly
+    // at their retained boundaries, and nowhere else.
+    for (line_piece, line_end) in [(below, true), (above, false)] {
+        for (branch, branch_end) in [
+            (left.clone(), true),
+            (right.clone(), false),
+            (right.reversed().unwrap(), false),
+        ] {
+            let contact = one_contact(&branch, line_piece);
+            assert!(contact.point().coincides_with(&point).unwrap());
+            let domain = branch.parameter_domain();
+            let boundary = if branch_end {
+                domain.end()
+            } else {
+                domain.start()
+            };
+            assert_eq!(contact.first().parameter().unwrap(), *boundary);
+            let domain = line_piece.parameter_domain();
+            let boundary = if line_end {
+                domain.end()
+            } else {
+                domain.start()
+            };
+            assert_eq!(contact.second().parameter().unwrap(), *boundary);
+            let topology = line_piece.intersection_topology(&branch).unwrap();
+            assert_eq!((topology.first().len(), topology.second().len()), (1, 1));
+        }
+    }
+    // A second sloped line, y = x/2 - 9/10, crosses the restricted right
+    // piece on (0, 1/10) and misses the left piece.
+    let restricted = right
+        .restrict_source(
+            CurveParameterRange2::try_new(Real::zero().into(), Real::one().into()).unwrap(),
+        )
+        .unwrap();
+    let second = segment([(-1).into(), q(-7, 5)], [1.into(), q(-2, 5)]);
+    let contact = one_contact(&restricted, &second);
+    assert_on_line(contact.point(), [5, -10, -9]);
+    assert_eq!(
+        order(contact.point(), [1, 0], Real::zero()),
+        Ordering::Greater
+    );
+    assert_eq!(order(contact.point(), [1, 0], q(1, 10)), Ordering::Less);
+    assert!(
+        one_contact(&restricted.reversed().unwrap(), &second)
+            .point()
+            .coincides_with(contact.point())
+            .unwrap()
+    );
+    assert!(left.intersect_curve(&second).unwrap().is_disjoint());
+}
+
+pub fn horizontal_section_keeps_only_its_own_branch_roots() {
+    let circle = set(CIRCLE);
+    assert_eq!(circle.curves().len(), 2);
+    let (lower, upper) = (&circle.curves()[0], &circle.curves()[1]);
+    // y = 3/5: (x - 1/2)^2 = 21/400, and both roots lie on the upper branch.
+    let line = segment([Real::zero(), q(3, 5)], [1.into(), q(3, 5)]);
+    assert_disjoint(lower, &line);
+    let result = upper.intersect_curve(&line).unwrap();
+    assert!(result.is_complete());
+    assert_eq!(result.contacts().len(), 2);
+    // The upper branch rises, then falls: against an eastward line its cross
+    // sign is negative and then positive.
+    for (contact, (sign, bounds)) in result.contacts().iter().zip([
+        (RealSign::Negative, (q(27, 100), q(28, 100))),
+        (RealSign::Positive, (q(72, 100), q(73, 100))),
+    ]) {
+        let (x, t) = check_contact_at(contact, true, Some(sign));
+        assert_on_line(contact.point(), [0, 5, -3]);
+        assert_eq!(order(contact.point(), [1, 0], bounds.0), Ordering::Greater);
+        assert_eq!(order(contact.point(), [1, 0], bounds.1), Ordering::Less);
+        // t = x on this line, in the base root's own field.
+        assert_eq!(t.compare(&x).unwrap(), Ordering::Equal);
+        assert!(
+            line.point_at(&t)
+                .unwrap()
+                .coincides_with(contact.point())
+                .unwrap()
+        );
+    }
+    let topology = upper.intersection_topology(&line).unwrap();
+    assert_eq!((topology.first().len(), topology.second().len()), (3, 3));
+    // The middle pieces meet at both of their endpoints.
+    let (arc, chord) = (&topology.first()[1], &topology.second()[1]);
+    let result = arc.intersect_curve(chord).unwrap();
+    assert_eq!(result.contacts().len(), 2);
+    for contact in result.contacts() {
+        let s = contact.first().parameter().unwrap();
+        let domain = arc.parameter_domain();
+        assert!(s == *domain.start() || s == *domain.end());
+    }
+    let pieces = arc.intersection_topology(chord).unwrap();
+    assert_eq!((pieces.first().len(), pieces.second().len()), (1, 1));
+}
+
+pub fn tangent_lines_and_line_components_keep_their_meaning() {
+    let parabola = set(GRAPH_PARABOLA);
+    assert_eq!(parabola.curves().len(), 1);
+    let curve = &parabola.curves()[0];
+    // y = 0 is tangent at the origin: a contact with a certified zero cross
+    // sign, neither a crossing nor an empty result.
+    let tangent = segment([(-1).into(), Real::zero()], [1.into(), Real::zero()]);
+    for branch_first in [true, false] {
+        let contact = if branch_first {
+            one_contact(curve, &tangent)
+        } else {
+            one_contact(&tangent, curve)
+        };
+        let (x, t) = check_contact_at(&contact, branch_first, Some(RealSign::Zero));
+        assert_eq!(x.compare(&Real::zero().into()).unwrap(), Ordering::Equal);
+        assert_eq!(t.compare(&q(1, 2).into()).unwrap(), Ordering::Equal);
+        assert!(
+            contact
+                .point()
+                .coincides_with(&p(Real::zero(), Real::zero()))
+                .unwrap()
+        );
+    }
+    let topology = curve.intersection_topology(&tangent).unwrap();
+    assert_eq!((topology.first().len(), topology.second().len()), (2, 2));
+    // y = 1/4 crosses twice; y = -1/4 misses.
+    let secant = segment([(-1).into(), q(1, 4)], [1.into(), q(1, 4)]);
+    let result = curve.intersect_curve(&secant).unwrap();
+    assert_eq!(result.contacts().len(), 2);
+    for (contact, (x, sign)) in result.contacts().iter().zip([
+        (q(-1, 2), RealSign::Positive),
+        (q(1, 2), RealSign::Negative),
+    ]) {
+        check_contact_at(contact, true, Some(sign));
+        assert!(contact.point().coincides_with(&p(x, q(1, 4))).unwrap());
+    }
+    assert_disjoint(
+        curve,
+        &segment([(-1).into(), q(-1, 4)], [1.into(), q(-1, 4)]),
+    );
+    // A line through the domain-boundary event (-1, -1) of the quintic.
+    let quintic = set(QUINTIC);
+    let corner = segment([(-1).into(), (-1).into()], [1.into(), 1.into()]);
+    let contact = one_contact(&quintic.curves()[0], &corner);
+    let (x, t) = check_contact_at(&contact, true, Some(RealSign::Positive));
+    assert_eq!(x, *quintic.curves()[0].parameter_domain().start());
+    assert_eq!(t, *corner.parameter_domain().start());
+    // The line y = x is a component of y - x. That shared component is not an
+    // empty result; it stays a typed blocker until overlaps are admitted.
+    let diagonal = set(DIAGONAL);
+    for (a, b) in [
+        (&diagonal.curves()[0], &corner),
+        (&corner, &diagonal.curves()[0]),
+    ] {
+        for error in [
+            a.intersect_curve(b).unwrap_err(),
+            a.intersection_topology(b).unwrap_err(),
+        ] {
+            assert!(
+                matches!(&error, ExactCurveError::Blocked(blocker) if blocker.reason() == UncertaintyReason::Unsupported),
+                "{error:?}"
+            );
+        }
+    }
+    // A crossing line on the same branch is still admitted.
+    let crossing = segment([(-1).into(), 1.into()], [1.into(), (-1).into()]);
+    let contact = one_contact(&diagonal.curves()[0], &crossing);
+    assert!(
+        contact
+            .point()
+            .coincides_with(&p(Real::zero(), Real::zero()))
+            .unwrap()
+    );
 }

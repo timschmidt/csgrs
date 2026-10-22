@@ -61,11 +61,13 @@
   against a region. `CurvePath2` represents connected paths, and
   `CurvePoint2` and `CurveParameter2` keep exact algebraic points and
   parameters without rounding.
-- Graph branches of a `PolynomialCurveSet2` intersect authored rational
-  vertical lines through `Curve2::intersect_curve` and
+- Graph branches of a `PolynomialCurveSet2` intersect authored lines with
+  rational endpoints through `Curve2::intersect_curve` and
   `Curve2::intersection_topology`, in either operand order and after
-  restriction or reversal. The line parameter retains the branch's correlated
-  fiber point, and both operands split in their own parameter charts. Other
+  restriction or reversal. Every crossing and tangency is reported, with its
+  exact tangent cross sign where certified. The line parameter retains the
+  branch's correlated fiber point, and both operands split in their own
+  parameter charts. A line that is a component of the zero set, other
   polynomial pairs, mapped branches and filled regions with polynomial
   boundaries still report typed unsupported blockers.
 - `PolynomialSplineCurve2` and `NurbsCurve2` support periodic construction,

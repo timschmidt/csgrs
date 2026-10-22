@@ -151,25 +151,29 @@ The first keeps the exact-only principal API smallest. The second makes the exis
 
 ## 8. Polynomial-branch sections and filled arrangements
 
-**Admitted.** An unmapped graph branch meets an authored rational vertical
-line, or a returned restriction of one, in both intersection APIs and both
-operand orders; both operands split and the pieces re-enter the same query
-(`PERFORMANCE.md`, 2026-10-22). A branch's other intersections, its
-self-intersections and point location still report typed `Unsupported`
-blockers.
+**Admitted.** An unmapped graph branch meets an authored line with rational
+endpoints, or a returned restriction of one, in both intersection APIs and
+both operand orders, including tangencies; both operands split and the
+pieces re-enter the same query (`PERFORMANCE.md`, 2026-10-22). A branch's
+other intersections, its self-intersections and point location still report
+typed `Unsupported` blockers.
 
 **Open, in dependency order:**
 - **Split cost.** Splitting a branch at `n` cuts isolates each cut fiber twice,
   once per adjacent piece, although the contact already holds the point. The
-  quintic topology costs about 312 µs against 101 µs for the section alone.
+  vertical quintic topology costs about three times the section alone.
   Computing each cut point once in the branch split, or passing the contact
   points to it, would remove those isolations. This is a cost, not a defect.
-- **Other lines (H06, milestone 1).** For `a*x + b*y + d = 0` with `b != 0`,
-  isolate the real roots of `F(x, -(a*x + d)/b)` in the branch's range, keep a
-  root only when the branch's own fiber point satisfies the line exactly, and
-  classify tangency from the sign of `dy*F_y + dx*F_x`. An identically zero
-  substitution is a shared component, which needs overlap evidence or a typed
-  `SharedComponent` blocker, never an empty result.
+- **Line components.** When the line is a component of the zero set, the
+  substituted polynomial vanishes identically and the pair reports
+  `Unsupported`, for every branch of that zero set. Admitting it needs overlap
+  evidence on the branch that lies on the line and the finite contacts of the
+  others.
+- **Horizontal-line replay.** On a horizontal line the line parameter is the
+  branch abscissa's own root, so a returned line piece's endpoint is a line
+  point that is proved equal to, not stored as, the branch point. A
+  selected-fiber image of the abscissa would keep the replay identity at the
+  cost of fiber-field arithmetic.
 - **Selected abscissas and mapped branches (H06, milestones 2 and 3).** An
   irrational `c`, algebraic line coefficients, and branches with a similarity
   or rational image need the query pulled back through the image map;

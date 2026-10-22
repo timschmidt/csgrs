@@ -1,24 +1,25 @@
-//! Sections of retained polynomial graph branches by authored vertical lines.
+//! Sections of retained polynomial graph branches by authored rational lines.
 //!
 //! A graph branch is parameterized by the first coordinate of its source
-//! polynomial. In that plane, a vertical line `x = c` meets the branch at most
-//! once, at the point selected by the branch's own fiber authority. The line
-//! parameter is the affine form `(y - y0) / dy` of that correlated point, so
-//! evaluating the line there replays the polynomial point instead of building
-//! independent coordinates. Neither operand is promoted to a Bezier carrier.
+//! polynomial. The branch's own fiber authority selects every point it shares
+//! with a line of that plane. The line parameter is an affine form of that
+//! correlated point. Except on a horizontal line, where it is the abscissa's
+//! own root, evaluating the line there replays the polynomial point instead of
+//! building independent coordinates. Neither operand is promoted to a Bezier
+//! carrier.
 
 use std::cmp::Ordering;
 
 use super::*;
 use crate::CurveFamily2;
 
-/// An authored rational vertical line, or a retained restriction of one, in
-/// the source chart shared by its public parameter.
+/// An authored rational line, or a retained restriction of one, in the source
+/// chart shared by its public parameter.
 ///
 /// Only a native line evaluates an affine-form parameter by replaying its
 /// source point, which the split of the line operand relies on. A degree-
 /// elevated line image keeps its existing dispatch.
-fn rational_vertical_line(curve: &Curve2) -> Option<&crate::LineSeg2> {
+fn rational_line(curve: &Curve2) -> Option<&crate::LineSeg2> {
     let source = curve
         .source_restriction()
         .map_or(curve, |(source, _, _)| source);
@@ -26,11 +27,10 @@ fn rational_vertical_line(curve: &Curve2) -> Option<&crate::LineSeg2> {
         return None;
     };
     let (start, end) = (line.start(), line.end());
-    let [x0, x1] = [start.x(), end.x()].map(|value| value.exact_rational());
-    let rational = [start.y(), end.y()]
+    [start.x(), start.y(), end.x(), end.y()]
         .iter()
-        .all(|value| value.exact_rational_ref().is_some());
-    (rational && x0.is_some() && x0 == x1).then_some(line)
+        .all(|value| value.exact_rational_ref().is_some())
+        .then_some(line)
 }
 
 fn decided<T>(value: CurveResult<Classification<T>>) -> ExactCurveResult<T> {
@@ -106,14 +106,23 @@ fn admit_line_parameter(
     }
 }
 
+fn negate(sign: hyperreal::RealSign) -> hyperreal::RealSign {
+    match sign {
+        hyperreal::RealSign::Positive => hyperreal::RealSign::Negative,
+        hyperreal::RealSign::Negative => hyperreal::RealSign::Positive,
+        hyperreal::RealSign::Zero => hyperreal::RealSign::Zero,
+    }
+}
+
 /// Intersects an unmapped polynomial graph branch with an authored rational
-/// vertical line in either operand order.
+/// line in either operand order.
 ///
 /// Returns `None` for every other pair, which keeps its existing dispatch.
-/// Both active domains are checked. A contact is certified transverse only at
-/// a regular branch point; its tangent cross sign then follows from traversal
-/// alone, because the branch tangent has nonzero source-x component and the
-/// line tangent has none.
+/// Both active domains are checked. The line parameter is `(y - y0) / dy`
+/// of the branch point, or `(x - x0) / dx` for a horizontal line. A contact
+/// is certified transverse only when the branch classifies a nonzero tangent
+/// cross sign; a certified tangency publishes a zero sign. Reversing either
+/// traversal or swapping the operands negates the sign.
 pub(super) fn polynomial_line_section(
     first: &Curve2,
     second: &Curve2,
@@ -128,7 +137,7 @@ pub(super) fn polynomial_line_section(
     if !branch.is_source_image() {
         return Ok(None);
     }
-    let Some(line) = rational_vertical_line(line_curve) else {
+    let Some(line) = rational_line(line_curve) else {
         return Ok(None);
     };
     let spans = line_curve.source_spans(policy, CurveOperation2::Intersection)?;
@@ -141,64 +150,71 @@ pub(super) fn polynomial_line_section(
         // drop the affine source that lets the line replay the branch point.
         return Ok(None);
     }
-    let Some(section) = branch
-        .vertical_section(line.start().x(), policy)
-        .map_err(|error| error.with_operation(CurveOperation2::Intersection))?
-    else {
-        return Ok(Some(publish(Vec::new())));
+    let sections = branch
+        .line_sections(line, policy)
+        .map_err(|error| error.with_operation(CurveOperation2::Intersection))?;
+    let (dx, dy) = line.delta();
+    let inverse = |delta: &Real| {
+        (Real::one() / delta).map_err(|cause| {
+            ExactCurveError::invalid(
+                CurveOperation2::Intersection,
+                line_curve.family(),
+                cause.into(),
+            )
+        })
     };
-    let dy = line.end().y() - line.start().y();
-    let scale = (Real::one() / &dy).map_err(|cause| {
-        ExactCurveError::invalid(
-            CurveOperation2::Intersection,
-            line_curve.family(),
-            cause.into(),
-        )
-    })?;
-    let offset = -(line.start().y() * &scale);
-    let parameter = decided(crate::bezier_offset::point_affine_form_parameter(
-        &section.point,
-        &[Real::zero(), scale, offset],
-        policy,
-    ))?;
-    let Some(parameter) = admit_line_parameter(line_curve, parameter, &section.point, policy)?
-    else {
-        return Ok(Some(publish(Vec::new())));
-    };
-    let upward = dy
-        .exact_rational_ref()
-        .is_some_and(|value| value.is_positive());
-    let line_y = upward != line_curve.source_traversal_is_reversed();
-    let tangent_cross_sign = section.regular.then(|| {
-        // cross((s, *), (0, t)) = s * t with the branch first; swapping negates.
-        if (line_y != branch.is_reversed()) == branch_first {
-            hyperreal::RealSign::Positive
-        } else {
-            hyperreal::RealSign::Negative
-        }
-    });
-    let branch_location = CurveLocation2 {
-        span_index: 0,
-        span_range: CurveSpanRange2::from_affine_chart(&Real::one(), &Real::zero()),
-        local_parameter: section.parameter,
-    };
-    let line_location = CurveLocation2 {
-        span_index: 0,
-        span_range: chart,
-        local_parameter: parameter,
-    };
-    let (first, second) = if branch_first {
-        (branch_location, line_location)
+    let form = if dy.definitely_zero() {
+        let scale = inverse(&dx)?;
+        let offset = -(line.start().x() * &scale);
+        [scale, Real::zero(), offset]
     } else {
-        (line_location, branch_location)
+        let scale = inverse(&dy)?;
+        let offset = -(line.start().y() * &scale);
+        [Real::zero(), scale, offset]
     };
-    Ok(Some(publish(vec![CurveIntersectionContact2 {
-        first,
-        second,
-        point: section.point,
-        certified_transverse: section.regular,
-        tangent_cross_sign,
-    }])))
+    // The branch reports the sign toward increasing abscissa, along the
+    // line's source direction, with the branch first. Each reversed traversal
+    // and the swapped operand order negates it.
+    let flip = (branch.is_reversed() != line_curve.source_traversal_is_reversed()) == branch_first;
+    let mut contacts = Vec::with_capacity(sections.len());
+    for section in sections {
+        let parameter = decided(crate::bezier_offset::point_affine_form_parameter(
+            &section.point,
+            &form,
+            policy,
+        ))?;
+        let Some(parameter) = admit_line_parameter(line_curve, parameter, &section.point, policy)?
+        else {
+            continue;
+        };
+        let tangent_cross_sign = section
+            .cross
+            .map(|sign| if flip { negate(sign) } else { sign });
+        let branch_location = CurveLocation2 {
+            span_index: 0,
+            span_range: CurveSpanRange2::from_affine_chart(&Real::one(), &Real::zero()),
+            local_parameter: section.parameter,
+        };
+        let line_location = CurveLocation2 {
+            span_index: 0,
+            span_range: chart.clone(),
+            local_parameter: parameter,
+        };
+        let (first, second) = if branch_first {
+            (branch_location, line_location)
+        } else {
+            (line_location, branch_location)
+        };
+        contacts.push(CurveIntersectionContact2 {
+            first,
+            second,
+            point: section.point,
+            certified_transverse: tangent_cross_sign
+                .is_some_and(|sign| sign != hyperreal::RealSign::Zero),
+            tangent_cross_sign,
+        });
+    }
+    Ok(Some(publish(contacts)))
 }
 
 #[cfg(test)]

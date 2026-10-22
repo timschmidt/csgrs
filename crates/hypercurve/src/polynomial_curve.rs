@@ -42,8 +42,9 @@ struct PolynomialCurveSource2 {
 /// after reversal and similarity transforms. Endpoints retain the selected
 /// event fiber; interior points retain the branch's ordered fiber root.
 /// Regular derivatives and smooth-event tangent directions retain that joint
-/// source. An unmapped branch intersects authored rational vertical lines
-/// through [`Curve2::intersect_curve`] and [`Curve2::intersection_topology`].
+/// source. An unmapped branch intersects authored lines with rational
+/// endpoints through [`Curve2::intersect_curve`] and
+/// [`Curve2::intersection_topology`].
 /// Other intersections, singular limits, rational Bézier promotion, and filled
 /// arrangements report their typed capability blockers.
 #[derive(Clone, Debug, PartialEq)]
@@ -58,16 +59,34 @@ pub struct PolynomialCurveBranch2 {
     pub(super) reversed: bool,
 }
 
-/// One point of a graph branch on a vertical line of its source plane.
+/// One point of a graph branch on a line of its source plane.
 #[derive(Debug)]
-pub(crate) struct PolynomialVerticalSection2 {
+pub(crate) struct PolynomialLineSection2 {
     /// The source abscissa, or the retained boundary parameter it equals.
     pub(crate) parameter: CurveParameter2,
     /// The branch's correlated fiber point.
     pub(crate) point: CurvePoint2,
-    /// `F_y` is certified nonzero: the branch is locally a graph with a
-    /// nonvertical tangent.
-    pub(crate) regular: bool,
+    /// Sign of `t x d` for the branch tangent `t` toward increasing source
+    /// abscissa and the line's direction `d`. `Zero` is a certified tangency;
+    /// `None` leaves the contact unclassified.
+    pub(crate) cross: Option<RealSign>,
+}
+
+/// Exact sign queries of a branch point against one line.
+struct LineSectionForms {
+    one: hypersolve::BivariatePolynomial,
+    fy: hypersolve::BivariatePolynomial,
+    /// For a non-vertical line, `dy*x - dx*y + (dx*y0 - dy*x0)`, which
+    /// vanishes exactly on the line, and `dy*F_y + dx*F_x`.
+    sloped: Option<[hypersolve::BivariatePolynomial; 2]>,
+}
+
+fn negate(sign: RealSign) -> RealSign {
+    match sign {
+        RealSign::Positive => RealSign::Negative,
+        RealSign::Negative => RealSign::Positive,
+        RealSign::Zero => RealSign::Zero,
+    }
 }
 
 fn blocked(reason: UncertaintyReason) -> ExactCurveError {
@@ -305,71 +324,234 @@ impl PolynomialCurveBranch2 {
         self.transform.is_none() && self.maps.is_empty()
     }
 
-    /// The point of this source-plane branch on the vertical line `x = value`.
+    /// Every point of this source-plane branch on the rational `line`.
     ///
-    /// A graph branch meets each vertical line of its plane at most once.
+    /// A vertical line `x = c` meets the graph at most once. Otherwise the
+    /// candidate abscissas are all real roots of `F(x, y0 + (x - x0) dy/dx)`
+    /// in the source rectangle, which include crossings of every branch; a
+    /// root is kept only when this branch's own fiber point satisfies the
+    /// line exactly. A root of even multiplicity is a tangency and is kept.
+    /// An identically zero substitution means the line is a component of the
+    /// zero set; that is an unsupported blocker, never an empty result.
+    ///
     /// An active boundary returns its retained parameter and stored endpoint,
     /// so an event keeps the event fiber's incidence rather than an open-slab
     /// root ordinal. An interior point is a simple root of an open fiber, so
-    /// `F_y` is nonzero and the tangent is not vertical. A boundary is regular
-    /// only when `F_y` is proved nonzero there: vertical-tangent and singular
-    /// events are not. An undecided sign leaves the point unclassified; it
-    /// is not a tangency proof. Budget exhaustion propagates.
-    pub(crate) fn vertical_section(
+    /// `F_y` is nonzero and `t x d` has the sign of `(dy F_y + dx F_x) F_y`.
+    /// A boundary is classified only when `F_y` is proved nonzero there:
+    /// vertical-tangent and singular events are not. An undecided sign leaves
+    /// a contact unclassified, never tangent. Budget exhaustion propagates.
+    pub(crate) fn line_sections(
         &self,
-        value: &Real,
+        line: &crate::LineSeg2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Option<PolynomialVerticalSection2>> {
-        debug_assert!(self.is_source_image());
-        let parameter = CurveParameter2::from(value.clone());
-        let compare = |boundary: &CurveParameter2| {
-            decided(
-                parameter
-                    .cmp_by_refinement(boundary, policy)
-                    .map_err(invalid)?,
-            )
+    ) -> ExactCurveResult<Vec<PolynomialLineSection2>> {
+        use hypersolve::BivariatePolynomial;
+        use hypersolve::bivariate_arithmetic::{
+            bivariate_add, bivariate_parameter_derivative as derivative, bivariate_scale,
         };
-        let start = compare(self.range.start())?;
-        if start.is_lt() {
-            return Ok(None);
-        }
-        let end = compare(self.range.end())?;
-        if end.is_gt() {
-            return Ok(None);
-        }
-        if start.is_gt() && end.is_lt() {
-            let point = self.interior_point(&parameter, policy)?;
-            return Ok(Some(PolynomialVerticalSection2 {
+        debug_assert!(self.is_source_image());
+        let (dx, dy) = line.delta();
+        let (x0, y0) = (line.start().x(), line.start().y());
+        let vertical = dx.definitely_zero();
+        let dy_sign = if dy
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_positive())
+        {
+            RealSign::Positive
+        } else {
+            RealSign::Negative
+        };
+        // Sign queries are built on first use; an interior vertical section
+        // needs none of them.
+        let forms = std::cell::OnceCell::new();
+        let forms = || {
+            forms.get_or_init(|| {
+                let equation = self.topology().equation();
+                let fy = derivative(equation, CurveResultantParameter::Second);
+                // Where F_y != 0, t x d has the sign of (dy F_y + dx F_x) F_y;
+                // for a vertical line, that of dy.
+                let sloped = (!vertical).then(|| {
+                    [
+                        BivariatePolynomial::new(vec![
+                            vec![&dx * y0 - &dy * x0, -&dx],
+                            vec![dy.clone()],
+                        ]),
+                        bivariate_add(
+                            &bivariate_scale(fy.clone(), &dy),
+                            &bivariate_scale(
+                                derivative(equation, CurveResultantParameter::First),
+                                &dx,
+                            ),
+                        ),
+                    ]
+                });
+                LineSectionForms {
+                    one: BivariatePolynomial::new(vec![vec![Real::one()]]),
+                    fy,
+                    sloped,
+                }
+            })
+        };
+        let sign = |point: &CurvePoint2, polynomial: &BivariatePolynomial| {
+            match crate::bezier_offset::point_rational_form_sign(
+                point,
+                polynomial,
+                &forms().one,
+                policy,
+            )
+            .map_err(invalid)?
+            {
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    Err(blocked(UncertaintyReason::BudgetExhausted))
+                }
+                value => Ok(value),
+            }
+        };
+        let compare = |value: &CurveParameter2, boundary: &CurveParameter2| {
+            decided(value.cmp_by_refinement(boundary, policy).map_err(invalid)?)
+        };
+        let section_at = |candidate: CurveParameter2| -> ExactCurveResult<_> {
+            let start = compare(&candidate, self.range.start())?;
+            if start.is_lt() {
+                return Ok(None);
+            }
+            let end = compare(&candidate, self.range.end())?;
+            if end.is_gt() {
+                return Ok(None);
+            }
+            let interior = start.is_gt() && end.is_lt();
+            let (parameter, point) = if interior {
+                let point = self.interior_point(&candidate, policy)?;
+                (candidate, point)
+            } else {
+                let index = usize::from(start.is_gt());
+                (
+                    [self.range.start(), self.range.end()][index].clone(),
+                    self.endpoints[index].clone(),
+                )
+            };
+            if vertical && interior {
+                return Ok(Some(PolynomialLineSection2 {
+                    parameter,
+                    point,
+                    cross: Some(dy_sign),
+                }));
+            }
+            let forms = forms();
+            if let Some([residual, _]) = &forms.sloped {
+                match sign(&point, residual)? {
+                    Classification::Decided(RealSign::Zero) => {}
+                    Classification::Decided(_) => return Ok(None),
+                    Classification::Uncertain(reason) => return Err(blocked(reason)),
+                }
+            }
+            let cross = match (sign(&point, &forms.fy)?, &forms.sloped) {
+                (Classification::Decided(RealSign::Zero), _) if interior => {
+                    // Every open-slab fiber root is simple.
+                    return Err(invalid(CurveError::InvalidBezierAlgebraicParameter));
+                }
+                (Classification::Decided(RealSign::Zero) | Classification::Uncertain(_), _) => None,
+                (Classification::Decided(_), None) => Some(dy_sign),
+                (Classification::Decided(fy_sign), Some([_, tangent])) => {
+                    match sign(&point, tangent)? {
+                        Classification::Decided(sign) if fy_sign == RealSign::Negative => {
+                            Some(negate(sign))
+                        }
+                        Classification::Decided(sign) => Some(sign),
+                        Classification::Uncertain(_) => None,
+                    }
+                }
+            };
+            Ok(Some(PolynomialLineSection2 {
                 parameter,
                 point,
-                regular: true,
-            }));
+                cross,
+            }))
+        };
+        if vertical {
+            return Ok(section_at(x0.clone().into())?.into_iter().collect());
         }
-        let index = usize::from(start.is_gt());
-        let point = self.endpoints[index].clone();
-        let fy = hypersolve::bivariate_arithmetic::bivariate_parameter_derivative(
-            self.topology().equation(),
-            CurveResultantParameter::Second,
+        let slope = (&dy / &dx).map_err(|cause| invalid(cause.into()))?;
+        let mut sections = Vec::new();
+        for candidate in self.line_abscissas(&slope, &(y0 - &slope * x0))? {
+            sections.extend(section_at(candidate)?);
+        }
+        Ok(sections)
+    }
+
+    /// The distinct real roots of `F(x, slope*x + offset)` in the source
+    /// rectangle's first interval, in increasing order.
+    fn line_abscissas(
+        &self,
+        slope: &Real,
+        offset: &Real,
+    ) -> ExactCurveResult<Vec<CurveParameter2>> {
+        use hypersolve::bivariate_arithmetic::{
+            bivariate_substitute_second_equal_affine_first, polynomial_trim_structural_zeros,
+        };
+        let substituted =
+            polynomial_trim_structural_zeros(bivariate_substitute_second_equal_affine_first(
+                self.topology().equation(),
+                slope,
+                offset,
+            ));
+        if substituted.iter().all(Real::definitely_zero) {
+            // The line is a component of the zero set.
+            return Err(blocked(UncertaintyReason::Unsupported));
+        }
+        if substituted.len() <= 1 {
+            return Ok(Vec::new());
+        }
+        let polynomial =
+            hypersolve::square_free_part(substituted, hyperlimit::PredicatePolicy::STRICT)
+                .ok_or_else(|| blocked(UncertaintyReason::Predicate))?;
+        let domain = &self.topology().domain().first;
+        let zero = AlgebraicRootRepresentation::from_exact_value(&Real::zero());
+        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+            &hypersolve::BivariatePolynomial::new(vec![polynomial.clone()]),
+            CurveResultantParameter::First,
+            &zero,
+            &domain[0],
+            &domain[1],
+            self.source.fiber_config,
+            hyperlimit::PredicatePolicy::STRICT,
         );
-        let regular = match crate::bezier_offset::point_rational_form_sign(
-            &point,
-            &fy,
-            &hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
-            policy,
-        )
-        .map_err(invalid)?
-        {
-            Classification::Decided(sign) => sign != hyperreal::RealSign::Zero,
-            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+        match report.status {
+            AlgebraicFiberRootIsolationStatus::NoRoots => return Ok(Vec::new()),
+            AlgebraicFiberRootIsolationStatus::BudgetExhausted
+            | AlgebraicFiberRootIsolationStatus::DepthLimit => {
                 return Err(blocked(UncertaintyReason::BudgetExhausted));
             }
-            Classification::Uncertain(_) => false,
-        };
-        Ok(Some(PolynomialVerticalSection2 {
-            parameter: [self.range.start(), self.range.end()][index].clone(),
-            point,
-            regular,
-        }))
+            AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
+                return Err(blocked(UncertaintyReason::Unsupported));
+            }
+            _ => {}
+        }
+        if report.certainty != Certainty::Exact
+            || report.status != AlgebraicFiberRootIsolationStatus::Isolated
+        {
+            return Err(blocked(UncertaintyReason::Predicate));
+        }
+        report
+            .intervals
+            .into_iter()
+            .enumerate()
+            .map(|(index, interval)| {
+                let mut root = zero.clone();
+                root.polynomial_coefficients = polynomial.clone();
+                root.interval = interval;
+                root.interval_index = index;
+                root.validation = hypersolve::validate_algebraic_root_representation(
+                    &root,
+                    hyperlimit::PredicatePolicy::STRICT,
+                );
+                if !root.is_valid() {
+                    return Err(invalid(CurveError::InvalidBezierAlgebraicParameter));
+                }
+                parameter(&root).map(CurveParameter2::from)
+            })
+            .collect()
     }
 
     pub(super) fn point_at(

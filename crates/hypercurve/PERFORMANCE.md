@@ -99,6 +99,60 @@ or a measured cost names a family to migrate first.
 restriction, as its documentation states: it reports positive-length
 components only, and intersecting the restricted curves reports the point.
 
+## Polynomial-branch sections by rational lines (2026-10-22)
+
+The vertical section below now extends to every authored `LineSeg2` with
+rational endpoints, and to returned restrictions of one. For a non-vertical
+line the candidate abscissas are the distinct real roots of
+`F(x, y0 + (x - x0) dy/dx)` in the source rectangle. A root is kept only when
+the branch's own fiber point there satisfies `dy*x - dx*y + c = 0` exactly, so
+roots that belong to another branch of the same zero set are discarded; roots
+of even multiplicity are tangencies and are kept. Interior contacts carry the
+sign of `(dy F_y + dx F_x) F_y`, so a tangency publishes a certified zero
+cross sign and no transverse claim. Boundary contacts are classified only
+where `F_y` is proved nonzero, as before. An identically zero substitution
+means the line lies in the zero set; that remains a typed `Unsupported`
+blocker rather than an empty result. The line parameter is `(y - y0)/dy` of
+the branch point, which replays it, or `(x - x0)/dx` on a horizontal line,
+which stays in the abscissa's own field. At `a7532c51f8` every non-vertical
+line returned `Blocked(Intersection, ImplicitPolynomial, Unsupported)`.
+
+Acceptance, `tests/polynomial_curves.rs`: the quintic against `y = 3x` (a
+root of `243x^5 + 14x + 5`) in both orders and all reversals, both operands
+split, every returned line piece against the returned branch pieces at their
+shared boundary, and a second line `y = x/2 - 9/10` on a restricted piece; the
+upper half of a circle met twice by `y = 3/5` while the lower half, which
+shares the substituted roots, is disjoint; `y = 0` tangent to `y = x^2` with a
+zero cross sign, `y = 1/4` crossing it twice and `y = -1/4` missing it; the
+line through the quintic's domain event `(-1, -1)`; and the line `y = x` inside
+`y - x = 0` as a typed blocker in both APIs and orders. Contact coordinates
+are checked against independently bracketed or solved roots. All three new
+tests fail at `a7532c51f8`; the H05 tests pass unchanged.
+
+Per-iteration requested allocations and CPU-pinned medians of 20 iterations
+after one warm-up (load average about 16 on 16 CPUs; times are descriptive):
+
+| Workload | Allocation calls | Requested bytes | Median |
+| --- | ---: | ---: | ---: |
+| Quintic, vertical `x = 0`, `intersect_curve` | 655 | 43,217 | 89 µs |
+| Quintic, vertical, `intersection_topology` | 2,094 | 130,368 | 267–290 µs |
+| Quintic, `y = 3x`, `intersect_curve` | 4,335 | 231,796 | 464–495 µs |
+| Quintic, `y = 3x`, `intersection_topology` | 8,190 | 448,984 | 0.96–1.02 ms |
+| Returned `y = 3x` line piece against branch piece, topology | 2,331 | 130,642 | 223–281 µs |
+| Upper circle half, `y = 3/5`, two contacts | 5,023 | 266,498 | 414–483 µs |
+| Lower circle half, `y = 3/5`, disjoint | 3,711 | 214,184 | 305–365 µs |
+| `y = x^2` tangent to `y = 0` | 339 | 21,984 | 58–62 µs |
+
+The vertical path keeps its H05 work: each vertical row allocates one more
+83-byte vector of sections than at `a7532c51f8` (654 → 655 calls for the
+section, 2,093 → 2,094 for the topology, 242 → 243 for endpoint reuse). The
+sign-query polynomials are built only when a boundary or a non-vertical line
+needs them. A sloped section takes about five times the time and seven times
+the allocations of a vertical one, mostly for the fiber isolation over an
+algebraic abscissa and the exact zero proof of the line residual there. A
+disjoint branch still pays for root isolation and one residual sign per root
+of the substituted polynomial.
+
 ## Polynomial-branch vertical sections (2026-10-22)
 
 An unmapped `PolynomialCurveBranch2` now meets an authored rational vertical
