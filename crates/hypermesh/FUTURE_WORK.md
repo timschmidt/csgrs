@@ -227,3 +227,16 @@ with the plain traversal's pairwise graph, retained radial separations with
 the reversed shared-edge pairs on a four-sheet edge, and retained with
 rebuilt edge-touching, vertex-touching and balanced non-manifold unions in
 later Booleans against box volumes. No disagreement was found.
+
+## Coordinate-drop projection
+
+`surface_arrangement::projection_axis` chooses the coordinate dropped when a
+support plane is projected for Hypertri. It takes the first nonzero rational
+normal component, then classifies the components in order and returns the
+first undecided component's error. csgrs's `solid::certified_projection_axis`,
+used by `polyhedron` and by OBJ, DXF and VRML face triangulation, instead
+tries the later components, since any component proved nonzero gives an
+invertible projection. A support plane whose first component is undecided and
+whose later component is provably nonzero would fail here but not there. No
+such input has been reproduced; sharing one primitive would need a public
+Hypermesh entry point.

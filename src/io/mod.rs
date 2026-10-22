@@ -178,23 +178,44 @@ pub(crate) fn triangulate_planar_face(
             sum
         },
     );
-    let mut axis = 0;
-    for candidate in 1..normal.len() {
-        match decisions.probe(hyperlimit::compare_reals(
+    // Any proved nonzero normal component gives an invertible projection.
+    // The dominant component is kept as a preference, so faces whose strict
+    // comparisons decide it keep their triangulation, but magnitudes too close
+    // to order neither block the projection nor consume an approximate
+    // terminal decision.
+    let dominant = (1..normal.len()).try_fold(0, |axis, candidate| {
+        match hyperlimit::compare_reals(
             &normal[candidate].clone().abs(),
             &normal[axis].clone().abs(),
-            decisions.predicate_policy(),
-        )) {
-            Some(std::cmp::Ordering::Greater) => axis = candidate,
-            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Less) => {},
-            None => {
-                return Err(IoError::Geometry {
-                    format,
-                    detail: "dominant projection axis is indeterminate".into(),
-                });
-            },
+            hyperlimit::PredicatePolicy::STRICT,
+        ) {
+            hyperlimit::PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Greater,
+                ..
+            } => Some(candidate),
+            hyperlimit::PredicateOutcome::Decided { .. } => Some(axis),
+            hyperlimit::PredicateOutcome::Unknown { .. } => None,
         }
-    }
+    });
+    let axis = match dominant {
+        Some(axis) => axis,
+        None => {
+            crate::solid::certified_projection_axis(
+                &normal,
+                "face projection normal",
+                decisions,
+            )
+            .map_err(|error| IoError::Geometry {
+                format,
+                detail: format!("face projection normal is indeterminate: {error}"),
+            })?
+            .ok_or_else(|| IoError::Geometry {
+                format,
+                detail: "face has a zero projection normal".into(),
+            })?
+            .0
+        },
+    };
     let projected = points
         .iter()
         .map(|point| match axis {

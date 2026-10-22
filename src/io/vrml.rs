@@ -937,6 +937,64 @@ Group { children [
         assert_eq!(imported.ignored_degenerate_triangle_count, 1);
     }
 
+    /// A rotation about X by an angle within 1e-200 of pi/4 gives a face
+    /// normal (0, -sin, cos) whose two nonzero components cannot be ordered
+    /// within strict refinement precision. Either one proves the coordinate
+    /// projection invertible, so strict import succeeds, and the approximate
+    /// policy need not consume its terminal decision.
+    #[test]
+    fn unordered_normal_components_still_project_with_certified_nonzero_axis() {
+        use crate::{GeometryCertainty, GeometryContext};
+        use hyperlattice::{Point3, Vector3};
+
+        const NEAR_QUARTER_TURN: &str = "0.785398163397448309615660845819875721049292349843776455243736148076954101571552249657008706335529266995537021628320576661773461152387645557931339852032120279362571025675484630276389911155737238732595";
+        // A concave pentagon of area 3, so ear clipping must choose diagonals.
+        let points = [[0, 0], [2, 0], [1, 1], [2, 2], [0, 2]];
+        for (axis, plane_points) in [
+            ("1 0 0", points.map(|[x, y]| format!("{x} {y} 0"))),
+            ("0 0 1", points.map(|[x, z]| format!("{x} 0 {z}"))),
+        ] {
+            let source = format!(
+                "#VRML V2.0 utf8\nTransform {{ rotation {axis} {NEAR_QUARTER_TURN} children [\n\
+                 Shape {{ geometry IndexedFaceSet {{\n\
+                 coord Coordinate {{ point [ {} ] }}\n\
+                 coordIndex [ 0 1 2 3 4 -1 ] }} }} ] }}\n",
+                plane_points.join(", ")
+            );
+            for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
+                let outcome =
+                    super::from_vrml_with_context(source.as_bytes(), &context).unwrap();
+                assert_eq!(outcome.certainty, GeometryCertainty::Certified);
+                let mesh = outcome.value.mesh;
+                assert_eq!(mesh.triangles.len(), 3);
+                // The triangles' vector area equals the face's own vector area,
+                // so they cover it once with the authored winding.
+                let cross = |a: &Point3, b: &Point3| a.to_vector().cross(&b.to_vector());
+                let mut boundary = Vector3::zero();
+                for index in 0..mesh.positions.len() {
+                    let next = (index + 1) % mesh.positions.len();
+                    boundary = boundary + cross(&mesh.positions[index], &mesh.positions[next]);
+                }
+                let mut covered = Vector3::zero();
+                for triangle in mesh.triangles.iter() {
+                    let [a, b, c] = triangle.indices().map(|index| &mesh.positions[index]);
+                    covered = covered + cross(a, b) + cross(b, c) + cross(c, a);
+                }
+                for (covered, boundary) in covered.0.iter().zip(&boundary.0) {
+                    assert_eq!(
+                        hyperlimit::compare_reals(
+                            covered,
+                            boundary,
+                            hyperlimit::PredicatePolicy::STRICT
+                        )
+                        .value(),
+                        Some(std::cmp::Ordering::Equal)
+                    );
+                }
+            }
+        }
+    }
+
     #[test]
     fn rejects_vrml_one() {
         let error = from_vrml(b"#VRML V1.0 ascii\nSeparator { }").unwrap_err();

@@ -1028,6 +1028,32 @@ fn triangulate_planar_ring(
     Ok((ring, normal))
 }
 
+/// Selects the coordinate to drop when projecting a plane with normal `normal`
+/// onto the other two coordinates, with the sign of that normal component.
+///
+/// The projection is one-to-one exactly when the dropped component is nonzero,
+/// so any component the policy proves nonzero is sufficient; no comparison of
+/// magnitudes or normalization is needed. Components are tried in axis order,
+/// and an undecided component does not block a later component's proof.
+/// `Ok(None)` means every component was proved zero. When none is proved
+/// nonzero and some are undecided, the last undecided component's error is
+/// returned.
+pub(crate) fn certified_projection_axis(
+    normal: &[Real; 3],
+    predicate: &'static str,
+    decisions: &GeometryDecisions,
+) -> Result<Option<(usize, RealSign)>, ValidationError> {
+    let mut blocker = None;
+    for (axis, value) in normal.iter().enumerate() {
+        match decisions.sign(value, predicate) {
+            Ok(RealSign::Zero) => {},
+            Ok(sign) => return Ok(Some((axis, sign))),
+            Err(error) => blocker = Some(error),
+        }
+    }
+    blocker.map_or(Ok(None), Err)
+}
+
 // A planar ring only needs an invertible coordinate projection for triangulation.
 // Normalizing its support vectors adds square roots and strict scalar guards
 // that do not contribute to topology or to the returned triangle coordinates.
@@ -1064,22 +1090,9 @@ fn project_planar_ring(
             return Err(ValidationError::InvalidArguments);
         }
     }
-    // Any decidably nonzero normal component gives an invertible projection.
-    // An undecided component need not block another component's certified proof.
-    let mut projection = None;
-    let mut blocker = None;
-    for (axis, value) in normal.0.iter().enumerate() {
-        match decisions.sign(value, "ring projection normal") {
-            Ok(RealSign::Zero) => {},
-            Ok(sign) => {
-                projection = Some((axis, sign));
-                break;
-            },
-            Err(error) => blocker = Some(error),
-        }
-    }
     let (axis, sign) =
-        projection.ok_or_else(|| blocker.unwrap_or(ValidationError::InvalidArguments))?;
+        certified_projection_axis(&normal.0, "ring projection normal", decisions)?
+            .ok_or(ValidationError::InvalidArguments)?;
     let mut projected = reserved(points.len())?;
     projected.extend(points.iter().map(|point| {
         let (u, v) = match axis {

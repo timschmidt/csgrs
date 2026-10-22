@@ -110,6 +110,16 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   loop orientation in any of these operations, extrusion included, reports
   `PredicateUndecided` for `"profile side-ring signed area"`; extrusion
   reported `"extrusion side-ring signed area"`.
+- **Imported face triangulation.** OBJ, DXF and VRML import project each
+  planar polygon face onto two coordinates before triangulating it. The
+  dropped coordinate is still the largest normal component whenever strict
+  comparison decides it, so those faces keep their triangles. Otherwise it is
+  the first component the policy proves nonzero. Under `APPROXIMATE_512`, a
+  face whose largest component only the 512-bit terminal could decide now
+  takes that path: its triangles can differ, and it consumes the terminal only
+  if proving that component nonzero needs it. When no component is proved
+  nonzero, the error detail reads "face projection normal is indeterminate"
+  instead of "dominant projection axis is indeterminate".
 - **Minkowski sums.** `solid::minkowski_sum` adds the represented bounded
   closed-PWN solids. The former convexification of all stored vertex sums is
   `solid::minkowski_hull`; move point-cloud or intentional convex-hull callers

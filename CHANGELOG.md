@@ -160,6 +160,15 @@ migrations, including changed serialized output, are listed in
   profile at negative radius, which failed, now completes. Profiles with arc
   or curve boundaries are still sampled, at the chord error now published as
   `curve::SAMPLED_PROFILE_CHORD_ERROR`, and their results still say so.
+- Importing a planar polygon face no longer requires deciding which normal
+  component is largest. Any component the policy proves nonzero gives the
+  projection used to triangulate it. A VRML face turned about an axis in its
+  plane by pi/4 written to 200 decimal digits failed under `STRICT` with
+  "dominant projection axis is indeterminate", and under `APPROXIMATE_512`
+  consumed the approximate terminal; it now imports certified under both.
+  Faces whose largest component strict comparison decides keep their
+  triangles, which covers every OBJ and DXF face, since their coordinates
+  are rational.
 
 - Strict Booleans and convex hulls of sampled spheres complete. The
   `boolean_operations` and `convex_hull` examples stopped under `STRICT` on

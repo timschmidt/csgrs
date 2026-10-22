@@ -675,6 +675,28 @@ The experiment was removed. The format-level writer benchmark and byte-equality
 test remain, so a future retry must demonstrate a material improvement while
 preserving byte-identical output.
 
+On 22 October 2026, two planar API changes considered with the
+coordinate-drop fix were not adopted, because neither adds exactness,
+completeness or speed and neither simplifies a production caller. A
+six-coefficient `AffineMap2` type with a checked `Matrix4` adapter would add a
+public type and a deprecated alias for `CurveRegion2::transform_affine`.
+`curve::try_transformed_with_context` already is that checked adapter: it
+keeps shear, nonuniform scale and reflection, rejects perspective and
+out-of-plane images with typed errors, divides out a constant homogeneous
+weight, and leaves the nonsingularity proof to Hypercurve. The six-coefficient
+calls are one line each in the root transforms, Hyperdrc and Hypercircuit.
+Returning `hypercurve::RegionPointLocation` from `curve::contains_xy` instead
+of `Option<bool>` would change that function and its WASM and documentation
+surfaces, or add a second function beside it. Outside tests, only the WASM
+binding calls it. Its mapping is one to one, with a proved
+boundary as `None`, and the three-way answer is already public as
+`CurveRegion2::classify_point`. The adopted fix projects an imported face
+along any normal component proved nonzero when strict comparison cannot
+decide the largest one. Faces whose largest component decides take the same
+path and the same comparisons as before. With both changes, the release
+`extrude` example is 4,080 bytes smaller (19,078,128 bytes) and
+`libcsgrs_ffi.so` 8,320 bytes smaller (20,469,120 bytes).
+
 The isolated feature traces also keep the remaining large rows visible without
 weakening their contracts. Symbolic profile offsets recorded 24,005 refinement
 events because many trigonometric segment bounds cannot be decided structurally;
