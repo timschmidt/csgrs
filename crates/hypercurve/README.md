@@ -550,8 +550,9 @@ cargo run --example arrangement
 cargo check --features svg
 ```
 
-The browser demo lives in `examples/hypercurve_ui` and is built separately with
-Trunk. It is not part of the library API.
+The browser demo is deployed at <https://timschmidt.github.io/csgrs/hypercurve/>.
+It lives in `examples/hypercurve_ui` and is built separately with Trunk. It is
+not part of the library API.
 
 ## Validation and performance
 

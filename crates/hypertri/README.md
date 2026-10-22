@@ -263,7 +263,7 @@ cargo run --example nd --features nd
 ```
 
 The browser demonstration is deployed at
-<https://timschmidt.github.io/hypertri/> and its source lives in
+<https://timschmidt.github.io/csgrs/hypertri/> and its source lives in
 [`examples/hypertri_ui`](examples/hypertri_ui).
 
 ## Verification and profiling

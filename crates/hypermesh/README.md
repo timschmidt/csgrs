@@ -272,7 +272,8 @@ performance and differential signal; competitor output is never the sole
 correctness oracle.
 
 Set `YEAHRIGHT_BENCH=1` for the optional public-domain YeahRight benchmark
-fixture. The browser demo source is in
+fixture. The browser demo is deployed at
+<https://timschmidt.github.io/csgrs/hypermesh/> and its source is in
 [`examples/hypermesh_ui`](examples/hypermesh_ui).
 
 ## Optional benchmark fixture

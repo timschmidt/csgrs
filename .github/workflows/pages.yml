@@ -106,9 +106,9 @@ jobs:
   deploy:
     name: Deploy
     needs: build
-    # The live site is still published from the `pages` branch, and the
-    # github-pages environment admits only that branch. Pushes build and
-    # validate the demos; publishing them is a deliberate manual dispatch.
+    # Pages deploys from this workflow, and the github-pages environment
+    # admits main. Pushes build and validate the demos; publishing them is a
+    # deliberate manual dispatch.
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
