@@ -107,7 +107,10 @@ impl DemoScenes {
                     ui.selectable_value(&mut self.active, index, label);
                 }
                 ui.separator();
-                ui.hyperlink_to("GitHub", "https://github.com/timschmidt/hypercurve");
+                ui.hyperlink_to(
+                    "GitHub",
+                    "https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve",
+                );
                 #[cfg(target_arch = "wasm32")]
                 {
                     if ui

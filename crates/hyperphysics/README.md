@@ -274,11 +274,11 @@ models represented by the crate:
 ## Acknowledgements
 
 Hyperphysics builds on
-[Hyperreal](https://github.com/timschmidt/hyperreal),
-[Hyperlattice](https://github.com/timschmidt/hyperlattice),
-[Hyperlimit](https://github.com/timschmidt/hyperlimit),
-[Hypermesh](https://github.com/timschmidt/hypermesh), and
-[Hypersolve](https://github.com/timschmidt/hypersolve). The cited scientific
+[Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal),
+[Hyperlattice](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlattice),
+[Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit),
+[Hypermesh](https://github.com/timschmidt/csgrs/tree/main/crates/hypermesh), and
+[Hypersolve](https://github.com/timschmidt/csgrs/tree/main/crates/hypersolve). The cited scientific
 work informs the report models without implying source-code derivation.
 
 ## License and contributing

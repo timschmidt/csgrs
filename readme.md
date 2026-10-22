@@ -5,12 +5,12 @@ workspace. It provides an OpenSCAD-like vocabulary for primitives, Boolean
 composition, transforms, extrusion, revolution, sweep, loft, conversion, and
 CAD interchange without introducing another geometry kernel.
 
-- [Hypercurve](https://github.com/timschmidt/hypercurve) owns curves, paths, filled regions, and
+- [Hypercurve](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve) owns curves, paths, filled regions, and
   certified planar operations.
-- [Hypermesh](https://github.com/timschmidt/hypermesh) owns indexed triangle geometry, certified
+- [Hypermesh](https://github.com/timschmidt/csgrs/tree/main/crates/hypermesh) owns indexed triangle geometry, certified
   solid Booleans, topology facts, and mesh queries.
-- [Hypertri](https://github.com/timschmidt/hypertri) owns triangulation.
-- [Hyperphysics](https://github.com/timschmidt/hyperphysics) owns physical-property analysis.
+- [Hypertri](https://github.com/timschmidt/csgrs/tree/main/crates/hypertri) owns triangulation.
+- [Hyperphysics](https://github.com/timschmidt/csgrs/tree/main/crates/hyperphysics) owns physical-property analysis.
 - [HyperBRep](crates/hyperbrep/README.md) develops exact boundary-representation CAD;
   [HyperBRep IO](crates/hyperbrep-io/README.md) provides bounded Part 21 syntax for its
   planned STEP exchange layer.
@@ -802,7 +802,7 @@ coordinates are not finite; integer output requires an exact, in-range
 integer. The adapters do not implement another geometry kernel.
 
 The C ABI is the sibling
-[`csgrs-ffi`](https://github.com/timschmidt/csgrs-ffi) crate. C++, Go, Python,
+[`csgrs-ffi`](https://github.com/timschmidt/csgrs/tree/main/crates/csgrs-ffi) crate. C++, Go, Python,
 and TypeScript wrappers are documented in [bindings](bindings/README.md).
 The `wasm` feature provides browser-oriented wrappers over the same core;
 the [WASM binding guide](bindings/js/WASM.md) covers ownership, named certainty

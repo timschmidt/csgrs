@@ -291,13 +291,13 @@ certainty receipts, bounded work, and cold/warm equivalence.
 
 ## Ecosystem and further documentation
 
-- [Hyperreal](https://github.com/timschmidt/hyperreal) supplies exact-aware
+- [Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal) supplies exact-aware
   scalars, structural facts, and bounded refinement.
-- [Hyperlattice](https://github.com/timschmidt/hyperlattice) owns points,
+- [Hyperlattice](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlattice) owns points,
   homogeneous carriers, and linear algebra.
-- [Hypercurve](https://github.com/timschmidt/hypercurve),
-  [Hypertri](https://github.com/timschmidt/hypertri), and
-  [Hypermesh](https://github.com/timschmidt/hypermesh) consume these predicates.
+- [Hypercurve](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve),
+  [Hypertri](https://github.com/timschmidt/csgrs/tree/main/crates/hypertri), and
+  [Hypermesh](https://github.com/timschmidt/csgrs/tree/main/crates/hypermesh) consume these predicates.
 
 [`PERFORMANCE.md`](PERFORMANCE.md) records benchmark methodology and retained
 optimization evidence. [`benchmarks.md`](benchmarks.md) contains generated

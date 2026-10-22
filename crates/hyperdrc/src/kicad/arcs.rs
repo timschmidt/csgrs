@@ -38,7 +38,7 @@ pub(super) fn arc_center_start_angle(
 /// This is the parser-aware companion to [`arc_center_start_angle`]. The
 /// returned center and sweep are still `f64` compatibility geometry for the
 /// existing polygon stroker, but the collinearity decision consumes retained
-/// decimal-token [`Real`](https://github.com/timschmidt/hyperreal) values
+/// decimal-token [`Real`](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal) values
 /// whenever possible so the
 /// topology predicate retains source precision.
 pub(super) fn arc_center_start_angle_source(

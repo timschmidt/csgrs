@@ -257,15 +257,15 @@ That configuration retains `Primitive`, `Color3`, `RenderVertex64`, `Viewport`,
 
 ## Ecosystem and further documentation
 
-- [Hyperreal](https://github.com/timschmidt/hyperreal) supplies exact scalar
+- [Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal) supplies exact scalar
   values.
-- [Hyperlattice](https://github.com/timschmidt/hyperlattice) supplies points,
+- [Hyperlattice](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlattice) supplies points,
   vectors, and exact camera parameters.
-- [Hyperlimit](https://github.com/timschmidt/hyperlimit) supplies robust
+- [Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit) supplies robust
   orientation predicates.
-- [Hypercurve](https://github.com/timschmidt/hypercurve) supplies exact curve
+- [Hypercurve](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve) supplies exact curve
   carriers and certified source-chord subdivision.
-- [Hypertri](https://github.com/timschmidt/hypertri) triangulates exact planar
+- [Hypertri](https://github.com/timschmidt/csgrs/tree/main/crates/hypertri) triangulates exact planar
   polygons.
 
 API details are available through

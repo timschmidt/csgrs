@@ -237,7 +237,7 @@ The query benchmark and reference audit are in
 ## Acknowledgements
 
 Hyperparts builds directly on
-[Hyperreal](https://github.com/timschmidt/hyperreal). Geometry, physics,
+[Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal). Geometry, physics,
 circuit, path, and DRC handoffs are interpreted by their owning Hyper crates.
 The format and regulatory sources above remain authoritative for their
 respective external semantics.

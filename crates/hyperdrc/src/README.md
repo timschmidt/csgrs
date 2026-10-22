@@ -203,7 +203,7 @@ The source tree follows a few explicit boundaries:
   assembly, manifest, artifact, stackup/net-constraint, and surface-finish
   helper modules.
 - [geometry](geometry/README.md) contains exact
-  [Hypercurve](https://github.com/timschmidt/hypercurve) construction plus
+  [Hypercurve](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve) construction plus
   finite report and [CSGRS](https://github.com/timschmidt/csgrs) interchange
   adapters.
 - [kicad](kicad/README.md) contains the KiCad board model and parser helpers.

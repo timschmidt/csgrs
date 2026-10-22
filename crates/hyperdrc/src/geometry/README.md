@@ -78,7 +78,7 @@ This split keeps geometry helpers small and predictable:
 - [`circle.rs`](circle.rs) constructs native circles under STRICT policy and
   retains construction or budget failures for source adapters to report.
 - [`region.rs`](region.rs) combines exact-backed polygon inputs into native
-  [Hypercurve](https://github.com/timschmidt/hypercurve) filled regions while
+  [Hypercurve](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve) filled regions while
   preserving layer metadata.
 - [`violations.rs`](violations.rs) projects exact-backed multipolygons into
   reportable violation shapes, including exact area filtering and hole
@@ -101,7 +101,7 @@ vendor-specific geometry edge cases.
 ## Working With Profiles
 
 `hyperdrc` uses `PcbRegion`, an exact
-[Hypercurve](https://github.com/timschmidt/hypercurve) filled-region carrier
+[Hypercurve](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve) filled-region carrier
 with PCB metadata, as the common geometry container.
 [CSGRS](https://github.com/timschmidt/csgrs) remains an explicit import and
 adapter boundary. Parser modules build regions, check modules combine them with

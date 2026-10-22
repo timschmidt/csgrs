@@ -69,7 +69,7 @@ silently disappear because an adapter lacked data.
   `PcbGeometryUncertainty` is returned when a geometry decision cannot be
   certified.
 - `Scalar` is
-  [`hyperreal::Real`](https://github.com/timschmidt/hyperreal), used for exact
+  [`hyperreal::Real`](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal), used for exact
   finite rule values.
 
 ## Numerical and geometry crates
@@ -79,20 +79,20 @@ crate's own project rather than a source-file blob:
 
 - [CSGRS](https://github.com/timschmidt/csgrs) provides Gerber import and
   curve-region adapters.
-- [Hyperreal](https://github.com/timschmidt/hyperreal) owns exact-aware scalar
+- [Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal) owns exact-aware scalar
   arithmetic.
-- [Hyperlattice](https://github.com/timschmidt/hyperlattice) owns exact-aware
+- [Hyperlattice](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlattice) owns exact-aware
   lattice and bounding-volume primitives.
-- [Hyperlimit](https://github.com/timschmidt/hyperlimit) owns certified
+- [Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit) owns certified
   predicate policy.
-- [Hypercurve](https://github.com/timschmidt/hypercurve) owns exact curve and
+- [Hypercurve](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve) owns exact curve and
   filled-region topology.
-- [Hyperpath](https://github.com/timschmidt/hyperpath) owns exact PCB path
+- [Hyperpath](https://github.com/timschmidt/csgrs/tree/main/crates/hyperpath) owns exact PCB path
   models.
-- [Hypermesh](https://github.com/timschmidt/hypermesh),
-  [Hypertri](https://github.com/timschmidt/hypertri),
-  [Hyperphysics](https://github.com/timschmidt/hyperphysics), and
-  [Hypersolve](https://github.com/timschmidt/hypersolve) support integration
+- [Hypermesh](https://github.com/timschmidt/csgrs/tree/main/crates/hypermesh),
+  [Hypertri](https://github.com/timschmidt/csgrs/tree/main/crates/hypertri),
+  [Hyperphysics](https://github.com/timschmidt/csgrs/tree/main/crates/hyperphysics), and
+  [Hypersolve](https://github.com/timschmidt/csgrs/tree/main/crates/hypersolve) support integration
   and development checks.
 
 ## Installation

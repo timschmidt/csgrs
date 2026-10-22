@@ -483,9 +483,9 @@ source. Consumers matching every `SvgError` variant must handle the new
 
 ## Ecosystem and further documentation
 
-[Hyperlattice](https://github.com/timschmidt/hyperlattice) builds exact-aware
+[Hyperlattice](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlattice) builds exact-aware
 points, vectors, and matrices over `Real`.
-[Hyperlimit](https://github.com/timschmidt/hyperlimit) turns scalar and lattice
+[Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit) turns scalar and lattice
 facts into certified geometric predicates. Higher geometry crates own curves,
 triangulations, meshes, boundary representations, and CSG grammar.
 

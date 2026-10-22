@@ -272,10 +272,10 @@ preview-meshing ideas relevant to the crate:
 ## Acknowledgements
 
 Hypersdf builds on
-[Hyperreal](https://github.com/timschmidt/hyperreal),
-[Hyperlattice](https://github.com/timschmidt/hyperlattice), and
-[Hyperlimit](https://github.com/timschmidt/hyperlimit), with optional
-[Hypervoxel](https://github.com/timschmidt/hypervoxel) integration.
+[Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal),
+[Hyperlattice](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlattice), and
+[Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit), with optional
+[Hypervoxel](https://github.com/timschmidt/csgrs/tree/main/crates/hypervoxel) integration.
 
 Preview meshing uses the
 [`fast-surface-nets`](https://crates.io/crates/fast-surface-nets) crate as a

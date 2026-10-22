@@ -13,7 +13,7 @@ The crate owns planar curve geometry and topology. It deliberately does not own
 solid modeling or mesh topology: CSG grammar and operations such as extrusion,
 revolve, sweep, and loft belong in
 [CSGRS](https://github.com/timschmidt/csgrs), while triangle-mesh Boolean work
-belongs in [Hypermesh](https://github.com/timschmidt/hypermesh).
+belongs in [Hypermesh](https://github.com/timschmidt/csgrs/tree/main/crates/hypermesh).
 
 This README describes crate version `0.3.1`.
 
@@ -637,10 +637,10 @@ they are not claims of source-code derivation.
 ## Acknowledgements
 
 Hypercurve builds on
-[Hyperreal](https://github.com/timschmidt/hyperreal),
-[Hyperlimit](https://github.com/timschmidt/hyperlimit), and
-[Hypersolve](https://github.com/timschmidt/hypersolve), with optional
-[Hypertri](https://github.com/timschmidt/hypertri) integration. The wider
+[Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal),
+[Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit), and
+[Hypersolve](https://github.com/timschmidt/csgrs/tree/main/crates/hypersolve), with optional
+[Hypertri](https://github.com/timschmidt/csgrs/tree/main/crates/hypertri) integration. The wider
 [Hyper ecosystem](https://github.com/timschmidt?tab=repositories&q=hyper&type=source)
 provides the three-dimensional and engineering layers.
 

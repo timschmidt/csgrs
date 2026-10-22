@@ -220,7 +220,7 @@ Benchmark definitions and the per-reference performance audit are in
 ## Acknowledgements
 
 Hyperevolution builds directly on
-[Hyperreal](https://github.com/timschmidt/hyperreal). Domain replay is supplied
+[Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal). Domain replay is supplied
 by the owning Hyper crates rather than duplicated here. The references above
 inform search and evidence design without implying source-code derivation.
 

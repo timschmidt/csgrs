@@ -102,7 +102,10 @@ impl eframe::App for MainApp {
                 ui.selectable_value(&mut self.active, Scene::Constraints, "Constrained CDT");
                 ui.selectable_value(&mut self.active, Scene::Compare, "Runtime Compare");
                 ui.separator();
-                ui.hyperlink_to("GitHub", "https://github.com/timschmidt/hypertri");
+                ui.hyperlink_to(
+                    "GitHub",
+                    "https://github.com/timschmidt/csgrs/tree/main/crates/hypertri",
+                );
                 #[cfg(target_arch = "wasm32")]
                 {
                     if ui

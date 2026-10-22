@@ -283,13 +283,13 @@ large generated box fixtures remain available without external data.
 
 ## References
 
-- [Hyperreal](https://github.com/timschmidt/hyperreal) supplies canonical exact
+- [Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal) supplies canonical exact
   scalars.
-- [Hyperlimit](https://github.com/timschmidt/hyperlimit) supplies policy-aware
+- [Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit) supplies policy-aware
   certified predicates.
-- [Hyperlattice](https://github.com/timschmidt/hyperlattice) supplies exact
+- [Hyperlattice](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlattice) supplies exact
   point, vector, matrix, and projective carriers.
-- [Hypertri](https://github.com/timschmidt/hypertri) supplies policy-aware exact
+- [Hypertri](https://github.com/timschmidt/csgrs/tree/main/crates/hypertri) supplies policy-aware exact
   constrained triangulation.
 - [CSGRS](https://github.com/timschmidt/csgrs) owns CSG grammar, construction,
   file IO, and mesh-kernel adapters.

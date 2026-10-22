@@ -10,10 +10,10 @@ sidecar input where possible.
 ## Numerical Backbone Policy
 
 HyperDRC should inherit the workspace numerical policy: geometry through
-[Hyperreal](https://github.com/timschmidt/hyperreal),
+[Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal),
 [CSGRS](https://github.com/timschmidt/csgrs),
-[Hyperlattice](https://github.com/timschmidt/hyperlattice), and
-[Hyperlimit](https://github.com/timschmidt/hyperlimit) is the primary
+[Hyperlattice](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlattice), and
+[Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit) is the primary
 computational backbone for checks that affect geometry, clearance, topology,
 or readiness decisions.
 
@@ -35,11 +35,11 @@ During the future exact port, keep
 [CSGRS](https://github.com/timschmidt/csgrs) as the legacy geometry provider
 until its own migration is scheduled. New exact geometry should flow through
 the hyper stack instead: scalar facts in
-[Hyperreal](https://github.com/timschmidt/hyperreal), object-level algebra facts
-in [Hyperlattice](https://github.com/timschmidt/hyperlattice), exact predicates
-in [Hyperlimit](https://github.com/timschmidt/hyperlimit), curve/region
-operations in [Hypercurve](https://github.com/timschmidt/hypercurve), and
-triangulation in [Hypertri](https://github.com/timschmidt/hypertri).
+[Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal), object-level algebra facts
+in [Hyperlattice](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlattice), exact predicates
+in [Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit), curve/region
+operations in [Hypercurve](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve), and
+triangulation in [Hypertri](https://github.com/timschmidt/csgrs/tree/main/crates/hypertri).
 
 Parser and domain facts are still valuable and should be carried as metadata:
 source units/grid, layer/net, aperture primitive, pad/via kind, drill plating,

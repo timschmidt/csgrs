@@ -270,8 +270,8 @@ bounded search, and exact-replay boundary relevant to Hyperpack:
 ## Acknowledgements
 
 Hyperpack builds on
-[Hyperreal](https://github.com/timschmidt/hyperreal) and
-[Hypercurve](https://github.com/timschmidt/hypercurve). Related constraint,
+[Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal) and
+[Hypercurve](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve). Related constraint,
 physical, manufacturing, and search semantics remain in Hypersolve,
 Hyperphysics, Hyperpath, Hyperdrc, and Hyperevolution. The research cited above
 informs algorithms and report boundaries without implying source-code

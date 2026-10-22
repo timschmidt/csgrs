@@ -545,9 +545,9 @@ proposal, and geometric-constraint techniques relevant to Hypersolve:
 ## Acknowledgements
 
 Hypersolve builds on
-[Hyperreal](https://github.com/timschmidt/hyperreal),
-[Hyperlattice](https://github.com/timschmidt/hyperlattice), and
-[Hyperlimit](https://github.com/timschmidt/hyperlimit). The research cited
+[Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal),
+[Hyperlattice](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlattice), and
+[Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit). The research cited
 above informs its algorithms and evidence boundaries without implying
 source-code derivation.
 

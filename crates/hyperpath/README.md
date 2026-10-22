@@ -299,9 +299,9 @@ exchange standards relevant to Hyperpath:
 ## Acknowledgements
 
 Hyperpath builds on
-[Hyperreal](https://github.com/timschmidt/hyperreal),
-[Hyperlimit](https://github.com/timschmidt/hyperlimit), and
-[Hypersolve](https://github.com/timschmidt/hypersolve). The cited research and
+[Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal),
+[Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit), and
+[Hypersolve](https://github.com/timschmidt/csgrs/tree/main/crates/hypersolve). The cited research and
 format owners define algorithms and exchange semantics; they do not imply
 source-code derivation or vendor endorsement.
 

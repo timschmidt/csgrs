@@ -284,13 +284,13 @@ Symbolica; methodology and retained results live in
 
 ## Ecosystem and further documentation
 
-- [Hyperreal](https://github.com/timschmidt/hyperreal) supplies exact-aware
+- [Hyperreal](https://github.com/timschmidt/csgrs/tree/main/crates/hyperreal) supplies exact-aware
   scalars and scalar certificates.
-- [Hyperlimit](https://github.com/timschmidt/hyperlimit) supplies certified
+- [Hyperlimit](https://github.com/timschmidt/csgrs/tree/main/crates/hyperlimit) supplies certified
   geometric predicates over these carriers.
-- [Hypercurve](https://github.com/timschmidt/hypercurve),
-  [Hypertri](https://github.com/timschmidt/hypertri), and
-  [Hypermesh](https://github.com/timschmidt/hypermesh) own higher geometry.
+- [Hypercurve](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve),
+  [Hypertri](https://github.com/timschmidt/csgrs/tree/main/crates/hypertri), and
+  [Hypermesh](https://github.com/timschmidt/csgrs/tree/main/crates/hypermesh) own higher geometry.
 
 [`PERFORMANCE.md`](PERFORMANCE.md) records benchmark methodology and retained
 optimization evidence. [`benchmarks.md`](benchmarks.md) is refreshed after

@@ -229,7 +229,7 @@ reported so stale or double-exported fabrication layers appear during the same
 package sanity sweep.
 
 These checks mostly work by combining
-[Hypercurve](https://github.com/timschmidt/hypercurve) exact Boolean operations
+[Hypercurve](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve) exact Boolean operations
 with small role-specific heuristics, with
 [CSGRS](https://github.com/timschmidt/csgrs) retained at named import/adaptation
 boundaries. Morphological checks use an erode-and-grow pattern to detect thin

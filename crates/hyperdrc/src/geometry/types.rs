@@ -3,7 +3,7 @@
 //! [`Polygon`] and [`MultiPolygon`] deliberately resemble the small subset of
 //! the former finite polygon API used by parsers and reports, but every
 //! topology-bearing polygon owns a
-//! [`hypercurve::CurveRegion2`](https://github.com/timschmidt/hypercurve).
+//! [`hypercurve::CurveRegion2`](https://github.com/timschmidt/csgrs/tree/main/crates/hypercurve).
 //! Area, bounds, containment, and Boolean consumers therefore remain in
 //! Hypercurve; the coordinate rings are only finite output views.
 
