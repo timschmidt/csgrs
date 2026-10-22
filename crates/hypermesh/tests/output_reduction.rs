@@ -524,6 +524,59 @@ fn overlapping_rotated_cuts_keep_constant_coordinate_depth() {
 }
 
 #[test]
+fn coplanar_union_strips_fan_from_their_oldest_end() {
+    // Tetrahedra with faces in z = 0 and y = 0 that meet along the x axis,
+    // translated along it by half their base. The union's faces in each plane
+    // form a strip whose one side is a single straight edge, so its fewest
+    // triangles fan from that edge's two ends. Reduction fans from the oldest
+    // vertex, so the newest end, where the next tetrahedron lands, keeps two
+    // triangles in each strip, and a later coplanar face overlaps a bounded
+    // number of them. Plain ear clipping fanned a strip from its newest end
+    // instead, which had three triangles there after the second union.
+    let tetrahedron = |dx: i64| {
+        mesh(
+            vec![
+                Point3::new(r(dx - 1), r(0), r(0)),
+                Point3::new(r(dx + 1), r(0), r(0)),
+                Point3::new(r(dx), r(1), r(0)),
+                Point3::new(r(dx), r(0), r(1)),
+            ],
+            &[[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]],
+        )
+    };
+    let mut body = tetrahedron(0);
+    for k in 1..=6 {
+        body = operation(&body, &tetrahedron(k), BooleanOp::Union);
+        let evidence = boolean_mesh_closure_evidence(&as_result(&body));
+        assert!(evidence.is_closed(), "{evidence:?}");
+        let newest = body
+            .positions
+            .iter()
+            .position(|point| {
+                point.x == r(k + 1) && point.y == Real::zero() && point.z == Real::zero()
+            })
+            .expect("the newest crease end is a vertex");
+        for in_plane in [
+            (|point: &Point3| point.z == Real::zero()) as fn(&Point3) -> bool,
+            |point: &Point3| point.y == Real::zero(),
+        ] {
+            let incident = body
+                .triangles
+                .iter()
+                .filter(|triangle| {
+                    let indices = triangle.indices();
+                    indices.contains(&newest)
+                        && indices
+                            .iter()
+                            .all(|&index| in_plane(&body.positions[index]))
+                })
+                .count();
+            assert_eq!(incident, 2, "union {k}");
+        }
+    }
+}
+
+#[test]
 fn reduced_outputs_record_plane_provenance() {
     // Every output triangle names a source triangle in its own plane. The
     // reduced top face of the drilled block spans both source triangles of

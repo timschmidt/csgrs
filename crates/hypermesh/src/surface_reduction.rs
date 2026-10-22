@@ -46,7 +46,11 @@
 //! around `v` by facets with the same boundary edges. The represented set,
 //! closure, orientation and the embedded-complex property are unchanged.
 //! Corners, crease ends, non-manifold contacts and vertices shared with other
-//! facets stay.
+//! facets stay. Each polygon fans around its earliest-constructed vertex
+//! wherever that vertex sees it, so long fan edges gather at older geometry:
+//! a strip whose one side is a single straight edge must fan from that edge's
+//! ends, and fanning from the older end keeps the triangles that a later
+//! operation at the newer end overlaps bounded.
 //!
 //! Reduction is optional, so it never weakens the operation: it triangulates
 //! under strict policy whatever the operation policy, and a vertex whose
@@ -718,13 +722,15 @@ fn removal(
     }
 }
 
-/// Triangulates one reduction polygon under strict policy. `None` when a
-/// strict predicate is undecided; the caller then keeps the vertex.
+/// Triangulates one reduction polygon under strict policy, fanning around
+/// `boundary[apex]` wherever it sees the polygon. `None` when a strict
+/// predicate is undecided; the caller then keeps the vertex.
 fn triangulate_boundary(
     strict: &DecisionContext,
     points: &[Point3],
     polygon: &ConvexPolygon,
     boundary: &[u32],
+    apex: usize,
 ) -> HypermeshResult<Option<Vec<[u32; 3]>>> {
     if boundary.len() < 3 {
         return Err(HypermeshError::SurfaceArrangementFailed {
@@ -759,7 +765,7 @@ fn triangulate_boundary(
         projected.push(project_point(point, axes));
     }
     let context = hypertri::TriangulationContext::new(strict.policy());
-    let outcome = match hypertri::triangulate_simple_ring(&context, &projected) {
+    let outcome = match hypertri::triangulate_simple_ring_around(&context, &projected, apex) {
         Ok(outcome) => outcome,
         Err(hypertri::Error::PredicateUndecided { .. }) => return Ok(None),
         Err(error) => return Err(map_triangulation_error(error)),
@@ -841,17 +847,20 @@ fn apply_removal(
                 reason: "output facet references an absent source face",
             },
         )?;
-        // Triangulate the polygon in its source face's winding, ending at its
-        // least vertex, so a boundary and its complement, which traverses
-        // every polygon backwards, receive the same triangles. Hypertri clips
-        // ears from the start of the ring, which fans them around the last
-        // vertex. The least arena index is the earliest-constructed vertex:
-        // source vertices precede arrangement vertices and earlier operands
-        // precede later ones, so long fan edges gather at older geometry and
-        // the newest geometry keeps short edges. On the successive-operation
-        // corpus this allocated 6% less in total than starting at the least
-        // vertex, and 22% less on coplanar icosahedron unions, before support
-        // planes were retained.
+        // Triangulate the polygon in its source face's winding, so a boundary
+        // and its complement, which traverses every polygon backwards,
+        // receive the same triangles, and fan it around its least vertex
+        // wherever that vertex sees the polygon. The least arena index is the
+        // earliest-constructed vertex: source vertices precede arrangement
+        // vertices and earlier operands precede later ones, so long fan edges
+        // gather at older geometry and the newest geometry keeps short edges.
+        // A strip whose one side is a single straight edge must fan from that
+        // edge's ends; fanning from its older end leaves a later coplanar
+        // face at the newer end overlapping a bounded number of triangles.
+        // Ear clipping that merely starts beside the least vertex fans around
+        // whichever vertex its first rejected ear leaves, which put the fans
+        // at the growing end of half the strips in coplanar icosahedron
+        // unions.
         let reverse = template.source.orientation < 0;
         let mut canonical = boundary.clone();
         if reverse {
@@ -860,9 +869,9 @@ fn apply_removal(
         let least = (0..canonical.len())
             .min_by_key(|&index| canonical[index])
             .unwrap_or(0);
-        let start = (least + 1) % canonical.len();
-        canonical.rotate_left(start);
-        let Some(mut triangles) = triangulate_boundary(strict, points, polygon, &canonical)? else {
+        canonical.rotate_left(least);
+        let Some(mut triangles) = triangulate_boundary(strict, points, polygon, &canonical, 0)?
+        else {
             return Ok(false);
         };
         if reverse {
