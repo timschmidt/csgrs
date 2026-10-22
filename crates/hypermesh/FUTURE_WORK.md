@@ -67,41 +67,71 @@ sampled-polygon drill chains keep coordinate depth 4 or 5 instead of reaching
 from 113.8 GB to 33.7 GB. Changed rows are a P27 migration, recorded in
 [`docs/MIGRATIONS.md`](../../docs/MIGRATIONS.md).
 
-### Coplanar unions along a long crease concentrate fans
+### Kept: coplanar strips fan from their oldest end
 
 The fewest triangles for a long planar strip whose one side is a single
-straight edge include a fan from that edge's endpoints: every triangle near
-an end shares the end vertex. Unions of translated icosahedra build four such
-strips, because four face planes contain the translation direction. Each new
-icosahedron's coplanar face then overlaps every fan triangle at the growing
-end, and its corefinement handles constraints from all of them. This chain
-allocated 7.9 GB over six unions against 6.5 GB before reduction, although its
-output is 164 triangles instead of 276, and its per-step cost still grows with
-the number of unions. It is the only corpus chain whose cost grew beyond the
-reduction's own bookkeeping.
+straight edge include fans from that edge's two ends. Unions of translated
+icosahedra build four such strips, because four face planes contain the
+translation direction. Wherever a strip fanned from its growing end, each new
+icosahedron's coplanar face overlapped every fan triangle there: one more per
+union, each crossing adding exact collinearity proofs to the face's
+corefinement. Six unions allocated 7.9 GB, against 6.5 GB before reduction.
 
-Reduction fans each polygon around its earliest-constructed vertex, which puts
-the fans at the old end of these strips. Against starting the ring at that
-vertex, which fans around its predecessor, this cut the chain's allocation by
-22% and the corpus total by 6% without changing any chain's output size
-(measured before support planes were retained). It does not remove the cost.
-**Options:** overlay a new coplanar face against the retained plane-class
-region as one polygon instead of each of its triangles, which is the
-arrangement-side alternative to output reduction; or keep a bounded number of
-collinear vertices on long creases where the set does not need them, which
-gives up minimal size.
+Reduction meant to fan each polygon around its earliest-constructed vertex,
+but it relied on Hypertri's ear clipping starting beside that vertex, and ear
+clipping fans around whichever vertex its first rejected ear leaves. Two of
+the four strips fanned from their growing end. Since 2026-10-21 reduction uses
+Hypertri's `triangulate_simple_ring_around`, which tries the ears beside the
+chosen vertex first, so every strip fans from its oldest end; the newest end
+keeps two triangles in each strip. The face splitting of each union then
+takes the same work whatever the number of earlier unions: about 0.7 s from
+the fourth union on, where it took 1.2 s at the fourth union and 0.4 s more
+at each later one. Six unions allocate 4.2 GB.
 
-### Derived coordinates still deepen where cuts overlap
+The choice rests on age: geometry added next to the oldest end of a strip
+would meet the long fan edges instead. Without vertices on the straight edge,
+which the set does not need, no triangulation keeps both ends local.
+
+### Kept: crossings of retained creases are built from planes
 
 Cube cuts rotated by 30, 45 and 10 degrees overlap the previous cut, so their
-new corners are true intersections with earlier walls, and the crossed wall
-edges run between earlier derived corners. Their depth still grows (to 29, 31
-and 38), although less than before (53, 41 and 39), and their allocation fell
-3.6 to 17 times. Points constructed on one drill-wall plane and the face plane
-are collinear by construction, but `corefine_face` and Hypertri's constraint
-validation still prove it numerically. **Options:** certify incidence from
-construction identity before numeric tests run; represent a point by its
-defining planes, so that its coordinates do not depend on previous outputs.
+new corners lie where a cutting wall crosses an edge between a block face and
+an earlier wall, and that edge runs between corners built by earlier cuts.
+Interpolating between its endpoints deepened the coordinates with every
+generation, to depth 29, 31 and 38. Such an edge joins two triangles whose
+retained plane classes are distinct planes, so both retained supports contain
+it and meet exactly in its line; since the crossing is proper, the two planes
+and the cutting plane have independent normals and meet in exactly the
+crossing point. Since 2026-10-21 that point is built from the three planes
+by Cramer's rule when the endpoints' expression graphs are deeper than the
+two planes', which leaves rational endpoints and unchanged source vertices on
+interpolation. A coordinate that both endpoints share exactly, or that an
+exact axis plane fixes, keeps its rational value, and a division that does
+not decide falls back to interpolation. The three chains keep depth 16, 17
+and 18 from their fourth, third and first cut on, checked through 16, 8 and
+8 cuts, and allocate 13 to 27% less.
+
+Points constructed on one wall plane and a face plane are collinear by
+construction, but `corefine_face` and Hypertri's constraint validation still
+prove it numerically; these orientation zeros are now most of the instructions
+of a coplanar union step. **Option:** certify incidence from construction
+identity before numeric tests run.
+
+### Whole-input bounds on symbolic results
+
+Each Boolean computes exact bounds for every source triangle and every
+hierarchy node. Two equal symbolic coordinates built by different operations,
+such as the crease ends and valleys of a coplanar strip, compare equal only
+through refinement to the maximum precision followed by an exact zero proof,
+and every later Boolean repeats those proofs. On six unions of translated
+icosahedra this is the only part of a step that still grows with the result:
+after the fixes above, soup preparation and the hierarchy build took 48 ms and
+115 ms at the fourth union and 117 ms and 340 ms at the seventh, and the last
+three of six unions allocate 714, 755 and 893 MB. **Options:** retain exact
+per-triangle extrema and node bounds with a result, the way plane classes are
+retained, for the triangles the next Boolean reads unchanged; or let
+hyperreal recognize the equality of values built from the same planes
+without a fresh zero proof.
 
 ### Kept: embedded-complex evidence and exact axis-plane coordinates
 
@@ -110,6 +140,13 @@ or edges. A later arrangement then records radial separation for shared
 reversed edges from identity and skips the remaining self tests on that
 operand. On ten corpus chains this published identical rows to the full self
 test; with output reduction a hypermesh test still pins the two paths to
-identical rows. Crossings on an axis-aligned rational plane take the plane's
-exact coordinate instead of an interpolated expression. Before that, a
-revolved ring cut twice in the same plane was undecided at the second cut.
+identical rows. Since 2026-10-21 the broad phase no longer enumerates those
+pairs at all: it skips node pairs inside one such operand and records the
+radial separations from its edge adjacency. Enumerating them took exact
+bounds tests that grew with the operand: on the icosahedron chain the
+pairwise phase took 0.25 s at the third union and 1.1 s at the seventh, and
+now takes about 0.1 s at each. The arrangement receives the same facts, and
+the pinned paths still agree. Crossings on an axis-aligned rational plane
+take the plane's exact coordinate instead of an interpolated expression.
+Before that, a revolved ring cut twice in the same plane was undecided at the
+second cut.

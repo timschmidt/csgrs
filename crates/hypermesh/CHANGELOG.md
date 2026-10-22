@@ -53,6 +53,32 @@ grammar belong to adapters such as csgrs.
   through earlier derived vertices; a 10-degree-tilted 32-gon drill chain
   keeps constant coordinate size and completes cuts that were undecided
   without them. This changes published rows; see the csgrs migration notes.
+- Where a Boolean cuts an edge of an earlier certified result that joins two
+  triangles whose plane classes were retained as distinct planes, the new
+  vertex is built as the intersection of those two support planes and the
+  cutting plane, which is the point that interpolating between the edge's
+  endpoints gives. Its expression no longer grows with the endpoints'
+  construction history: chains of rotated cube cuts that overlap earlier
+  cuts keep coordinate depth 16, 17 and 18 instead of reaching 29, 31 and 38
+  and growing. Endpoints whose expression graphs are no deeper than the
+  planes', which includes exact rationals and unchanged source vertices,
+  are interpolated as before. The construction consumes no decision under
+  the operation's policy, and a division that does not decide falls back to
+  interpolation.
+- Polygons retriangulated by output reduction fan around their
+  earliest-constructed vertex wherever it sees them, through Hypertri's
+  `triangulate_simple_ring_around`. Coplanar strips grown by repeated unions
+  then fan from their old end, so a new coplanar face at the growing end
+  overlaps a bounded number of triangles; six unions of translated
+  icosahedra allocate 4.2 GB instead of 7.9 GB, and their corefinement cost
+  no longer grows per union.
+- The broad phase no longer enumerates pairs of triangles from one certified
+  embedded input. The only fact such a pair contributed, radial separation of
+  two triangles that traverse a shared edge in opposite directions, is
+  recorded from edge adjacency, so the arrangement receives the same facts
+  without exact bounds tests that grew with the input.
+- The two changes to built points and reduced triangulations change published
+  rows, not sets or sizes; see the csgrs migration notes.
 - `minkowski_sum` computes the regularized Minkowski sum of bounded
   closed-PWN solids; `minkowski_sum_with_options` adds count limits and
   cooperative cancellation, which do not bound total work or memory.

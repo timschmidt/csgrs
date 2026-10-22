@@ -109,8 +109,14 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   reports the least of them as its `hypermesh::TriangleSource`. Points that
   a later Boolean builds on such a result use the source face planes that the
   result retains, so symbolic coordinates keep their values but can be stored
-  as smaller expressions. Regenerate pinned Boolean rows, counts and
-  checksums.
+  as smaller expressions. Where a later cut crosses an edge between two of
+  the result's distinct planes, the new vertex is built from those two planes
+  and the cutting plane instead of interpolated between the edge's
+  endpoints: the same exact value, stored as an expression that does not
+  grow with earlier operations. Each retriangulated polygon fans around its
+  earliest-constructed vertex wherever that vertex sees it; that choice of
+  diagonals is part of the published rows. Regenerate pinned Boolean rows,
+  counts and checksums.
 
 ## Cargo features
 

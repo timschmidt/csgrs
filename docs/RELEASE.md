@@ -54,14 +54,16 @@ Every repository example completes under `STRICT`, and every result in the
 certified and closed. These limits remain, each tracked where it will be
 fixed:
 
-- **Cost of overlapping and coplanar chains.** Boolean results keep only the
-  vertices their set needs, so drill chains stay at their minimal size and,
-  on sampled-trigonometric geometry, at constant coordinate size. Cuts that
-  overlap earlier symbolic cuts still build corners from earlier derived
-  vertices, so their coordinates deepen more slowly but still grow. Unions of
-  translated icosahedra merge coplanar strips whose minimal triangulation fans
-  out at the growing end; that chain allocates 7.9 GB over six unions, more
-  than the 6.5 GB it allocated before outputs were reduced
+- **Whole-input bounds on symbolic results.** Boolean results keep only the
+  vertices their set needs and build later points from the planes they
+  retain, so drill, rotated-cut and union chains keep constant coordinate
+  size, and the face splitting of each step no longer grows with the number
+  of earlier steps. Every Boolean still computes exact bounds for each input
+  triangle and hierarchy node, and two equal symbolic coordinates built by
+  different operations need an exact zero proof each time they are compared.
+  That work grows with the input: the last three of six unions of translated
+  icosahedra allocate 714, 755 and 893 MB for results of 116, 140 and
+  164 triangles
   ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#successive-operations),
   [measurements](successive-operations.md)).
 - **Decidable domain.** `STRICT` decides exact zeros over rationals,

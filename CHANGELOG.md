@@ -108,9 +108,14 @@ migrations, including changed serialized output, are listed in
   or on a straight crease between two, so results of successive Booleans stay
   proportional to the represented set: sixteen square holes through a block
   give 332 triangles instead of 1,600, and drill chains through sampled
-  polygons keep constant coordinate size. Represented sets and certainty are
-  unchanged; triangle rows, counts and exported checksums change (see
-  "Boolean output rows" in [docs/MIGRATIONS.md](docs/MIGRATIONS.md)).
+  polygons keep constant coordinate size. Cuts that overlap earlier symbolic
+  cuts build their new corners from the earlier results' face planes, so
+  rotated-cut chains also keep constant coordinate size, and coplanar faces
+  merged by repeated unions are triangulated from their oldest end, so a
+  further union's face splitting no longer grows with the number of earlier
+  ones. Represented sets and certainty are unchanged; triangle rows,
+  counts and exported checksums change (see "Boolean output rows" in
+  [docs/MIGRATIONS.md](docs/MIGRATIONS.md)).
 - `bevymesh` targets Bevy 0.18 (was 0.16) through `solid::to_bevy_mesh`.
 - Raises the minimum supported Rust version (MSRV) from 1.85.1 to 1.95.0.
 
