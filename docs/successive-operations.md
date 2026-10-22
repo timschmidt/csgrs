@@ -22,10 +22,30 @@ assert exactly that size; the other chains pin their measured sizes, so a
 change to the growth below must update them.
 
 ```sh
-cargo test --test successive_operations              # default chains, 9 s in debug
+cargo test --test successive_operations              # default chains, 10 s in debug
 cargo test --release --test successive_operations -- --ignored   # long chains, about 50 s
 cargo bench --bench successive_operations            # table below, with allocation
+cargo bench --bench successive_operations -- --untouched [<chain>]   # no validation between steps
+SUCCESSIVE_OPERATIONS_RAW=rows.tsv cargo bench --bench successive_operations   # also exact raw rows
 ```
+
+The harness times `chain.step`, the closed-manifold validation after it, and
+the drop of the previous result once the new one replaces it, separately.
+Values the two results share stay alive, so the drop is the teardown of what
+the step did not reuse; the last result's drop is not timed. The bench's
+counting allocator reports, per step, the bytes allocated (every `alloc` and
+`alloc_zeroed` request plus the growth of every `realloc` that grows; a
+shrinking `realloc` adds nothing), the peak live-heap growth, the live heap
+when the step starts (the previous result plus everything the process
+retains) and the allocator calls (`alloc`, `alloc_zeroed` and `realloc`).
+Allocated bytes are traffic, not memory in use, and say nothing about peak
+or resident memory. `--untouched` feeds each result to the next step without
+validating it or measuring its sizes, so no later step can reuse what
+validation cached; the corpus test checks that this changes no result
+(`validation_between_steps_does_not_change_results`). The raw rows give
+every number in bytes and nanoseconds, after header lines with the revision,
+whether tracked files were modified, the `rustc` on `PATH` at run time, the
+profile, target and arguments.
 
 ## Measurements
 
@@ -89,6 +109,43 @@ counts each reallocation's full size, allocate 712 MB at the fourth union
 and 812 MB at the twelfth (849 and 928 ms) while the result grows from 116
 to 308 triangles, at depth 27 throughout; at `76a7d8aa76` the same probe
 grows from 780 to 1,354 MB (915 to 1,554 ms).
+
+### Validation, teardown and retained heap (2026-10-22)
+
+One release run of the whole corpus in each mode, at `61da737db3` with this
+change's harness (one thread, shared host): `-- --untouched` and the default,
+which validates between steps. Raw rows: SHA-256 `4b87ef12…f024` (untouched)
+and `64728486…2e3e` (validated), not archived. The steps' wall times differ
+between the runs because other jobs ran during the validated one, so they are
+not compared.
+
+- **Validation does not warm later steps.** Every row has the same outcome,
+  triangles and vertices in both modes. 197 of the 200 steps allocate the
+  same bytes and the same number of allocator calls; three steps (8-gon
+  drills 5 and 6, 30-degree cuts 5) allocate 336 to 344 bytes and 4 to 12
+  calls more when untouched. Validation's cached facts therefore save no
+  measurable later work here, and the published per-step costs, which
+  exclude validation, are also those of a pipeline that never inspects its
+  intermediate results.
+- **Validation and teardown are small next to the steps.** Validation took
+  258 ms over the corpus against 91.5 s of steps. Dropping each previous
+  result took 2.0 ms in all (1.3 ms untouched), at most 43 microseconds for
+  one result. Deep graphs that could make a drop expensive (see the open
+  recursive-drop item below) do not occur in this corpus.
+- **Retained heap stays small.** The live heap when a step starts is the
+  previous result plus everything the process keeps, including the
+  thread-local modeling caches. It grows from 0.04 MB at the first step to
+  4.3 MB at the last step of the corpus in both modes, and by at most 1.7 MB
+  within one chain (the tilted 32-gon drills, whose results grow to 540
+  triangles).
+
+Not adopted in the harness: resident-set sampling, which needs a
+platform-specific reader and would add the allocator's own retention to the
+live-heap numbers above; timing the last result's drop, which no later step
+depends on; and a driver that alternates processes for A/B timing, which
+would be a benchmarking framework rather than a record of this corpus. A/B
+comparisons should keep using allocated bytes, which are deterministic, and
+treat time as noisy.
 
 ## Conclusions
 

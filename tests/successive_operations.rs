@@ -423,6 +423,51 @@ fn planar_region_operations_then_extrusion_and_cut() {
     assert_eq!(chains::exact_volume(&outcome.value), Some(oracle.volume()));
 }
 
+/// Results of every step, validating each before the next step or not.
+fn chain_results(chain: &Chain, validate: bool) -> Vec<csgrs::TriangleMesh> {
+    let mut results: Vec<csgrs::TriangleMesh> = vec![(chain.initial)()];
+    for step in 1..=chain.steps {
+        let next = (chain.step)(step, results.last().unwrap()).unwrap().value;
+        if validate {
+            let closed = next
+                .is_closed_manifold_geometry(&chains::STRICT.mesh_context())
+                .unwrap();
+            assert!(closed.value);
+        }
+        results.push(next);
+    }
+    results
+}
+
+#[test]
+fn validation_between_steps_does_not_change_results() {
+    // Validation decides exact predicates on each result and can leave facts
+    // that the next step reuses. That may change how later steps decide, but
+    // never what they return: the same rows in the same order.
+    for make in [
+        || chains::degree_rotation_cuts(30, 2),
+        || chains::cube_unions(4).0,
+    ] {
+        let (validated, untouched) =
+            (chain_results(&make(), true), chain_results(&make(), false));
+        for (step, (left, right)) in validated.iter().zip(&untouched).enumerate() {
+            assert_eq!(left.triangles, right.triangles, "{} step {step}", make().name);
+            assert_eq!(left.positions.len(), right.positions.len());
+            for (a, b) in left.positions.iter().zip(right.positions.iter()) {
+                for (x, y) in [(&a.x, &b.x), (&a.y, &b.y), (&a.z, &b.z)] {
+                    assert_eq!(
+                        hyperlimit::compare_reals(x, y, hyperlimit::PredicatePolicy::STRICT)
+                            .value(),
+                        Some(std::cmp::Ordering::Equal),
+                        "{} step {step}",
+                        make().name
+                    );
+                }
+            }
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Long chains: `cargo test --release --test successive_operations -- --ignored`.
 

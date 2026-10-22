@@ -82,7 +82,26 @@ pub struct StepRecord {
     pub triangles: usize,
     pub vertices: usize,
     pub size: CoordinateSize,
+    /// Time inside `chain.step`.
     pub elapsed: Duration,
+    /// Time of the closed-manifold validation, when it ran.
+    pub validation: Option<Duration>,
+    /// Time to drop the previous result once this one replaces it. Values
+    /// the two share stay alive, so this is the teardown of what the step
+    /// did not reuse.
+    pub drop: Duration,
+}
+
+/// What [`run_with`] does with each result before the next step.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Between {
+    /// Validate its closed-manifold topology, measure its coordinate sizes
+    /// and pass it to the caller's check. Validation decides exact predicates
+    /// on the result, which can leave cached facts that the next step reuses.
+    Validate,
+    /// Pass it straight to the next step, as a pipeline that never inspects
+    /// intermediate results would. Topology and sizes are not recorded.
+    Untouched,
 }
 
 pub type StepResult = Result<GeometryOutcome<TriangleMesh>, ValidationError>;
@@ -98,8 +117,19 @@ pub struct Chain {
     pub step: Step,
 }
 
-/// Run a chain, calling `check` on every completed step. A failed step ends it.
-pub fn run(chain: &Chain, mut check: impl FnMut(usize, &TriangleMesh)) -> Vec<StepRecord> {
+/// Run a chain, validating every completed step and calling `check` on it.
+/// A failed step ends the chain.
+pub fn run(chain: &Chain, check: impl FnMut(usize, &TriangleMesh)) -> Vec<StepRecord> {
+    run_with(chain, Between::Validate, check)
+}
+
+/// Run a chain, doing `between` with each completed step. A failed step ends
+/// the chain. `check` is called only with [`Between::Validate`].
+pub fn run_with(
+    chain: &Chain,
+    between: Between,
+    mut check: impl FnMut(usize, &TriangleMesh),
+) -> Vec<StepRecord> {
     let mut current = (chain.initial)();
     let mut records = Vec::new();
     for step in 1..=chain.steps {
@@ -108,28 +138,39 @@ pub fn run(chain: &Chain, mut check: impl FnMut(usize, &TriangleMesh)) -> Vec<St
         let elapsed = start.elapsed();
         match result {
             Ok(outcome) => {
-                let closed_manifold = (!outcome.value.triangles.is_empty()).then(|| {
-                    let closed = outcome
-                        .value
-                        .is_closed_manifold_geometry(&STRICT.mesh_context())
-                        .expect("closed-manifold validation decides");
-                    assert_eq!(closed.certainty, hypermesh::MeshCertainty::Certified);
-                    closed.value
-                });
-                records.push(StepRecord {
+                let mut record = StepRecord {
                     step,
                     outcome: match outcome.certainty {
                         GeometryCertainty::Certified => Outcome::Certified,
                         GeometryCertainty::Approximate512Consumed => Outcome::Approximate,
                     },
-                    closed_manifold,
+                    closed_manifold: None,
                     triangles: outcome.value.triangles.len(),
                     vertices: outcome.value.positions.len(),
-                    size: coordinate_size(&outcome.value),
+                    size: CoordinateSize::default(),
                     elapsed,
-                });
-                check(step, &outcome.value);
-                current = outcome.value;
+                    validation: None,
+                    drop: Duration::ZERO,
+                };
+                if between == Between::Validate {
+                    let validation = Instant::now();
+                    record.closed_manifold =
+                        (!outcome.value.triangles.is_empty()).then(|| {
+                            let closed = outcome
+                                .value
+                                .is_closed_manifold_geometry(&STRICT.mesh_context())
+                                .expect("closed-manifold validation decides");
+                            assert_eq!(closed.certainty, hypermesh::MeshCertainty::Certified);
+                            closed.value
+                        });
+                    record.validation = Some(validation.elapsed());
+                    record.size = coordinate_size(&outcome.value);
+                    check(step, &outcome.value);
+                }
+                let replaced = Instant::now();
+                drop(std::mem::replace(&mut current, outcome.value));
+                record.drop = replaced.elapsed();
+                records.push(record);
             },
             Err(error) => {
                 records.push(StepRecord {
@@ -140,6 +181,8 @@ pub fn run(chain: &Chain, mut check: impl FnMut(usize, &TriangleMesh)) -> Vec<St
                     vertices: 0,
                     size: CoordinateSize::default(),
                     elapsed,
+                    validation: None,
+                    drop: Duration::ZERO,
                 });
                 break;
             },
@@ -159,26 +202,37 @@ pub fn table_rows(name: &str, records: &[StepRecord]) -> Vec<String> {
                 Outcome::Failed(kind, detail) => format!("{}: {detail}", kind.as_str()),
             };
             let size = record.size;
+            // An untouched run neither validates nor measures sizes.
+            let sizes = if record.validation.is_some() {
+                format!(
+                    "{}/{} | {} | {} | {}",
+                    size.rational,
+                    size.symbolic,
+                    size.max_denominator_bits,
+                    size.max_nodes,
+                    size.max_depth
+                )
+            } else {
+                "- | - | - | -".to_owned()
+            };
+            let ms = |duration: Duration| format!("{:.1}", duration.as_secs_f64() * 1e3);
             format!(
-                "| {name} | {} | {outcome} | {} | {} | {} | {}/{} | {} | {} | {} | {:.1} |",
+                "| {name} | {} | {outcome} | {} | {} | {} | {sizes} | {} | {} | {} |",
                 record.step,
                 record
                     .closed_manifold
                     .map_or("-", |closed| if closed { "yes" } else { "no" }),
                 record.triangles,
                 record.vertices,
-                size.rational,
-                size.symbolic,
-                size.max_denominator_bits,
-                size.max_nodes,
-                size.max_depth,
-                record.elapsed.as_secs_f64() * 1e3,
+                ms(record.elapsed),
+                record.validation.map_or_else(|| "-".to_owned(), ms),
+                ms(record.drop),
             )
         })
         .collect()
 }
 
-pub const TABLE_HEADER: &str = "| chain | step | outcome | manifold | triangles | vertices | rational/symbolic coordinates | max denominator bits | max graph nodes | max graph depth | ms |\n| --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |";
+pub const TABLE_HEADER: &str = "| chain | step | outcome | manifold | triangles | vertices | rational/symbolic coordinates | max denominator bits | max graph nodes | max graph depth | step ms | validation ms | drop ms |\n| --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |";
 
 pub fn q(numerator: i64, denominator: i64) -> Real {
     (Real::from(numerator) / Real::from(denominator)).unwrap()
