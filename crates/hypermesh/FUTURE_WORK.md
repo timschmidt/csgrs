@@ -240,3 +240,42 @@ invertible projection. A support plane whose first component is undecided and
 whose later component is provably nonzero would fail here but not there. No
 such input has been reproduced; sharing one primitive would need a public
 Hypermesh entry point.
+
+## Near-coincident rotations beyond the cyclotomic domain
+
+Found by `tests/downstream_solids.rs` (repository root), migrating the
+SynapsCAD fixture `cylinder(h = 40, r = 8, $fn = 8)` minus the same cylinder
+rotated by 0.0001 degree. The sine and cosine of 1/10000 degree are rational
+turns of order 3,600,000, beyond the cyclotomic zero proof's order 16384, so
+exact zeros among the two cylinders' coordinates must come from identities in
+independent atoms.
+
+**Fixed below this layer.** The first zero was the order of two crossings on
+the line shared by two side faces. They are mirror images across the
+rotation's bisector plane, which contains that line, so they are one point;
+proving it needs `sin^2 + cos^2 = 1`. Hyperreal stores exact `cos(pi * r)` as
+`sin(pi * (1/2 - r))`, and its ring recognizer related only a sine and a
+cosine of one argument. It now also relates two sines, or two cosines, whose
+arguments sum to `pi / 2` (2026-10-22). That decides rotations of a cube by
+1/10000 or 12.345 degree about any axis through a corner, and their round
+trips, all of which ended `PredicateUndecided` before.
+
+**Still undecided.** The cylinders then stop at `surface arrangement point on
+segment` or `surface arrangement orientation`; rotations about z, whose caps
+are coplanar, stop at the latter. The smallest reproduction is
+`solid::cylinder(8, 40, 4)` minus itself rotated by 0.0001 degree about y.
+The undecided value is the collinearity of an arrangement point with an
+authored face constraint, a 148-node expression that refinement leaves at
+zero to 2^-400. The point was constructed on that constraint's source
+segment, so its incidence follows from how it was built, but the face
+arrangement tests every point against every constraint numerically. This is
+the case the sampled-sphere Booleans met before the cyclotomic proof
+decided them (above), now outside that proof's domain, and it is research
+project M04: reuse retained incidence before numerical zero tests. Every
+variant of the fixture (the signed Euler axes, `1e-4` and `1/10000`
+spellings, axis-angle forms, 0.000001 and 0.01 degree, a compound rotation,
+and union, intersection and difference with and without centring) ends
+`PredicateUndecided` under `STRICT`. The differences of all thirteen rotation
+variants complete under `APPROXIMATE_512` with `Approximate512Consumed`, as
+closed manifolds, in 2 to 39 s each in a debug build. The root test pins the
+strict outcomes and one approximate completion.

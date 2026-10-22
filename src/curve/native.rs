@@ -3543,7 +3543,13 @@ pub fn contains_xy_with_context(
     Ok(decisions.finish(inside))
 }
 
-/// Returns the certified exact planar bounds, embedded in the XY plane.
+/// Returns certified planar bounds with exact coordinates, embedded in the XY
+/// plane.
+///
+/// Line and arc boundaries and native curve extrema give the region's exact
+/// bounds. A boundary fragment cut at an algebraic parameter contributes the
+/// certified envelope of its source curve over a rational parameter interval,
+/// which encloses the region but can be looser; see `CurveRegion2::bounds`.
 pub fn try_bounding_box(input: &CurveRegion2) -> Result<Option<Aabb>, ValidationError> {
     try_bounding_box_with_context(input, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)

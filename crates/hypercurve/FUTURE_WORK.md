@@ -181,3 +181,37 @@ subsequent demo-result record above repairs those gates. This does not close
 sections 1–7, public
 control-point access for general restricted fragments, retained higher moments,
 exterior traversal, or the ignored compositions.
+
+## Downstream workload findings (2026-10-22)
+
+Found by `tests/downstream_profiles.rs` (repository root), which migrates
+SynapsCAD and exactcore-hyper-comparison workloads. Both are typed or
+documented outcomes, not wrong answers.
+
+**Eroded polygons with normalized edge offsets.** `circle(15, 40)` from
+csgrs, offset by -1 with round corners (the inner half of SynapsCAD's
+`offset.scad` wall), is the regular 40-gon with every edge moved inward by 1.
+Its area agrees with `4500 sin(pi/20) (1 - sec(pi/40)/15)^2` to 10^-30, and
+every probe point away from its boundary classifies, but `bounds()` and the
+classification of its own vertex `(15 - sec(pi/40), 0)` end in
+`ExactCurveBlocker { reason: Ordering }`. The vertices are intersections of
+lines offset along unit normals, so they carry the square roots of the
+squared edge lengths `450 (1 - cos(pi/20))`. Coordinates equal by symmetry,
+or equal to an independently built `15 - sec(pi/40)`, are then not proved
+equal. This is the pattern of section 2 (line offsets by a unit normal):
+recognizing `sqrt(900 sin^2(pi/40)) = 30 sin(pi/40)`, or offsetting along an
+unnormalized normal, would keep the coordinates in Q(zeta_80). The erosion
+itself takes 12.9 s in a debug build; the outward offset takes 54 ms.
+
+**Bounds of regions with algebraic cut fragments are envelopes.** SynapsCAD's
+quadratic Bezier region `{x^2 <= y <= 4}` minus `[-3, 3] x [2, 5]` is
+`{x^2 <= y <= 2}`, with corners `(+-sqrt 2, 2)`. Its area, membership and
+transformed copies are exact, but `bounds()` reports x in `[-3/2, 3/2]`:
+each cut fragment ends at an algebraic parameter, and its envelope is the
+exact bound of the source curve over a rational parameter interval around
+that parameter (`bezier_retained_measure.rs`). The documented contract is an
+enclosure, so this is not wrong, but a consumer that centres a 2D region by
+its bounds, as OpenSCAD's `center = true` does, uses the envelope's midpoint,
+which for an asymmetric cut is not the set's. Tight bounds need the cut
+endpoints' exact coordinates; refining the parameter interval only narrows
+the envelope.

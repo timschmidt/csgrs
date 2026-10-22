@@ -58,7 +58,12 @@ will be fixed:
 - **Decidable domain.** `STRICT` decides exact zeros over rationals,
   `sin`/`cos` of rational multiples of pi, and sqrt(2), sqrt(3), sqrt(6),
   within the cyclotomic proof's budgets. Other transcendental or radical
-  inputs can end `PredicateUndecided`, a typed outcome. A sweep along a
+  inputs can end `PredicateUndecided`, a typed outcome. Beyond those budgets
+  the bounded ring recognizers decide identities in independent atoms and a
+  few built-in relations, among them `sin^2 + cos^2 = 1` for each angle;
+  Booleans of near-coincident rotations by such an angle, such as
+  0.0001 degree, can still need an incidence that is proved only numerically
+  ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#near-coincident-rotations-beyond-the-cyclotomic-domain)). A sweep along a
   general sampled path has exact frames in nested square roots and does not
   compose with a later strict Boolean ([properties.md](../properties.md)
   target 15).

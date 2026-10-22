@@ -175,6 +175,13 @@ migrations, including changed serialized output, are listed in
   exact zeros of the 32 x 16 sphere's trigonometric coordinates; hyperreal now
   proves them. Odd sample counts such as 17 x 9 and further operations on the
   results also decide.
+- Rotations by angles such as 0.0001 or 12.345 degrees, whose sine and cosine
+  lie beyond the cyclotomic proof's order limit, decide under `STRICT` where
+  they need only `sin^2 + cos^2 = 1`: the volume of the rotated solid, a
+  rotation followed by its inverse, and a cube's union, intersection and
+  difference with itself rotated by 0.0001 degree about a corner axis. These
+  ended `PredicateUndecided`. Near-coincident rotated cylinders still do
+  ([hypermesh future work](crates/hypermesh/FUTURE_WORK.md#near-coincident-rotations-beyond-the-cyclotomic-domain)).
 
 ### Removed
 

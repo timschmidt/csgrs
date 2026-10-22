@@ -383,6 +383,14 @@ pub fn frustum(
 }
 
 /// Tessellated conical frustum between two exact points.
+///
+/// Sample `k` of `segments` lies at angle `2 pi k / segments` in the frame
+/// `(u, v)` that `Vector3::orthonormal_basis_checked` returns for the axis.
+/// For the +Z axis of [`cylinder`] and [`frustum`], `u = -y` and `v = +x`,
+/// so sample 0 is at `(0, -radius)` and the samples run counterclockwise
+/// seen from +Z. `curve::circle` and OpenSCAD start at
+/// `(radius, 0)`; the two sample sets coincide only when `segments` is a
+/// multiple of four.
 pub fn frustum_between(
     start: Point3,
     end: Point3,
