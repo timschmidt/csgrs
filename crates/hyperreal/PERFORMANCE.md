@@ -99,6 +99,43 @@ imported `quantile(Phi(1000))` was still refining `1 - Phi(1000)`, which is
 about 10^-217000, when the run was stopped after more than ten minutes. With
 the exact identity route that test binary finishes in 4.5 s.
 
+## Not implemented: filter-first sign preflight (2026-10-22)
+
+The proposal was to try immediate facts, the cached root approximation and
+the existing 32-node binary64 filter before `exact_sign` expands a fresh
+predicate into its pi-Laurent normal form. The first two already run at the
+head of `exact_sign`. Only the filter would be new.
+
+A temporary probe on `5820b364f0` counted every root expansion. At the same
+point it also evaluated the filter, which never changed a result. Totals
+below are summed over test processes. "Filter decides" means a separated
+interval or an exact `[0, 0]`.
+
+| Workload | Expansions | Expansion CPU | Share of user CPU | Filter decides |
+| --- | ---: | ---: | ---: | ---: |
+| root `successive_operations`, release | 118,906 | 1.38 s | 39% | 0 |
+| same, `--ignored` long chains, one thread | 2,312,236 | 32.7 s | 52% | 0 |
+| Hypermesh `cargo test`, debug | 152,130 | 12.0 s | 2.2% | 9 |
+| Hypercurve composed workloads, boolean, offset and fillet tests, debug | 379,812 | 116 s | 5.6% | 565 |
+
+The lead holds: in the root chains, 99.8% of structural sign walks reach the
+expansion, and it is the largest single cost. The existing filter cannot be
+the preflight, though. In the root chains it evaluated none of the expanded
+graphs, even with an unlimited node budget, because every one contains a node
+kind the filter does not enclose. Its 565 decisions are all in the Hypercurve
+boolean tests: 0.43% of that binary's 132,820 expansions. They would save 10 ms
+of its 5.8 s of expansion time, while the attempts themselves cost 135 ms. No
+filter decision disagreed with an expansion result.
+
+The first node outside the filter, in depth-first order, was a shared
+constant other than pi and e (such as `sqrt(2)` or `sqrt(3)`) in 63% of the
+root-chain cases and 79% of the Hypercurve boolean cases. A trigonometric
+node came first in 26% and 4%, and a `Sqrt` or `NthRoot` node in 12% and 16%.
+A preflight would first need certified enclosures for those kinds, which is a
+separate change to a shared filter. Even then, the 5,192 and 34,150 exact zeros
+proved by the root-chain expansions would still pay for the failed filter
+attempt first. No preflight was implemented. Raw probe lines were not archived.
+
 ## Rejected experiment: iterative node teardown (2026-10-22)
 
 The aim was to remove the recursive-drop abort recorded in

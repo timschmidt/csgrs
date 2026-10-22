@@ -25,6 +25,14 @@ would still reach the expansion, the quadratic tower and the radical tower.
 Either change needs the hyperreal and hyperlimit benchmark suites as evidence,
 since the cascade order is a stack-wide performance policy.
 
+**Measured 2026-10-22.** Running the existing 32-node binary64 filter before
+the expansion is not such an option yet. In the root chains, 99.8% of
+structural sign walks reached the expansion, which took 39% of user CPU, or
+52% in the long chains. The filter could evaluate none of those graphs,
+because each contains a radical constant, a `Sqrt` node or a trigonometric
+node. PERFORMANCE.md has the counts. A preflight would first need certified
+enclosures for those node kinds.
+
 ## Dropping a deep expression graph recurses
 
 `Arc<Node>` drops its operands recursively. Building
