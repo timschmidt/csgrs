@@ -661,9 +661,32 @@ impl ExactBvh {
     /// `(right, left)`. Certified outward filters may retain false-positive
     /// leaf pairs, which the consuming exact polygon predicate must classify;
     /// they can never omit an intersecting pair.
+    #[cfg(test)]
     pub(crate) fn intersect_self_candidates_decision<F>(
         &self,
         decisions: &DecisionContext,
+        callback: F,
+    ) -> HypermeshResult<()>
+    where
+        F: FnMut(usize, usize),
+    {
+        self.intersect_self_candidates_excluding_decision(decisions, None, callback)
+    }
+
+    /// Calls `callback` once for each distinct conservative primitive pair in
+    /// this hierarchy whose polygons do not share an exclusion group.
+    ///
+    /// `groups[polygon]` names the group of each source polygon, or
+    /// [`NO_EXCLUSION_GROUP`]; `None` excludes nothing. A node pair whose
+    /// polygons all lie in one group is skipped before any bounds test. The
+    /// traversal is otherwise the canonical node-pair traversal: certified
+    /// outward filters may retain false-positive leaf pairs, which the
+    /// consuming exact polygon predicate must classify, and no intersecting
+    /// pair outside one group is omitted.
+    pub(crate) fn intersect_self_candidates_excluding_decision<F>(
+        &self,
+        decisions: &DecisionContext,
+        groups: Option<&[u32]>,
         mut callback: F,
     ) -> HypermeshResult<()>
     where
@@ -672,6 +695,26 @@ impl ExactBvh {
         if self.tree.nodes.is_empty() {
             return Ok(());
         }
+        let group_of = |item: usize| -> HypermeshResult<u32> {
+            let Some(groups) = groups else {
+                return Ok(NO_EXCLUSION_GROUP);
+            };
+            let primitive =
+                self.primitives
+                    .get(item)
+                    .ok_or(HypermeshError::SurfaceArrangementFailed {
+                        reason: "exact self-intersection hierarchy references an absent primitive",
+                    })?;
+            groups.get(primitive.polygon_index).copied().ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "exclusion groups and hierarchy primitives differ",
+                },
+            )
+        };
+        let node_groups = match groups {
+            Some(_) => Some(self.uniform_node_groups(&group_of)?),
+            None => None,
+        };
 
         let mut pending = vec![(0_usize, 0_usize)];
         while let Some((left_index, right_index)) = pending.pop() {
@@ -685,6 +728,12 @@ impl ExactBvh {
                     reason: "exact self-intersection hierarchy reached an absent node",
                 },
             )?;
+            if let Some(node_groups) = &node_groups {
+                let group = node_groups[left_index];
+                if group != NO_EXCLUSION_GROUP && group == node_groups[right_index] {
+                    continue;
+                }
+            }
             if left_index != right_index {
                 match left.certified_filter.may_overlap(right.certified_filter) {
                     Some(false) => continue,
@@ -736,6 +785,10 @@ impl ExactBvh {
                             right_items
                         };
                         for &right_item in right_items {
+                            let group = group_of(left_item)?;
+                            if group != NO_EXCLUSION_GROUP && group == group_of(right_item)? {
+                                continue;
+                            }
                             let left_primitive = self.primitives.get(left_item).ok_or(
                                 HypermeshError::SurfaceArrangementFailed {
                                     reason: "exact self-intersection hierarchy references an absent primitive",
@@ -785,7 +838,61 @@ impl ExactBvh {
         }
         Ok(())
     }
+
+    /// For each node, the exclusion group shared by all its polygons, or
+    /// [`NO_EXCLUSION_GROUP`]. Children follow their parent in node order.
+    fn uniform_node_groups(
+        &self,
+        group_of: &impl Fn(usize) -> HypermeshResult<u32>,
+    ) -> HypermeshResult<Vec<u32>> {
+        let mut node_groups = vec![NO_EXCLUSION_GROUP; self.tree.nodes.len()];
+        for (index, node) in self.tree.nodes.iter().enumerate().rev() {
+            node_groups[index] = match node.children {
+                Some([first, second]) => {
+                    let [first, second] = [first, second].map(|child| {
+                        node_groups
+                            .get(child)
+                            .copied()
+                            .filter(|_| child > index)
+                            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                                reason: "exact self-intersection hierarchy reached an absent node",
+                            })
+                    });
+                    let [first, second] = [first?, second?];
+                    if first == second {
+                        first
+                    } else {
+                        NO_EXCLUSION_GROUP
+                    }
+                }
+                None => {
+                    let items = self.tree.order.get(node.range.clone()).ok_or(
+                        HypermeshError::SurfaceArrangementFailed {
+                            reason: "exact self-intersection hierarchy has an invalid leaf range",
+                        },
+                    )?;
+                    let mut uniform = None;
+                    for &item in items {
+                        let group = group_of(item)?;
+                        match uniform {
+                            None => uniform = Some(group),
+                            Some(existing) if existing == group => {}
+                            Some(_) => {
+                                uniform = Some(NO_EXCLUSION_GROUP);
+                                break;
+                            }
+                        }
+                    }
+                    uniform.unwrap_or(NO_EXCLUSION_GROUP)
+                }
+            };
+        }
+        Ok(node_groups)
+    }
 }
+
+/// Marks a polygon outside every exclusion group.
+pub(crate) const NO_EXCLUSION_GROUP: u32 = u32::MAX;
 
 impl ExactBvhQueryHierarchy {
     pub(crate) fn query_bounds_decision<F>(

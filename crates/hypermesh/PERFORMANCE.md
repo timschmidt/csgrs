@@ -10,6 +10,34 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## 2026-10-21: skip broad-phase pairs inside one certified embedded input
+
+Status: **kept**
+
+A Boolean output retains that its triangles meet only in shared vertices or
+edges, and the pairwise phase already discarded every pair of its triangles
+after recording radial separation for pairs that traverse a shared edge in
+opposite directions. The broad phase still enumerated those pairs, with exact
+bounds tests that are expensive on symbolic coordinates and grow with the
+operand. It now groups the triangles of each such input, skips every node
+pair inside one group before any bounds test, and records the radial
+separations from the triangles' source edge identities. The fact keys are
+sorted and deduplicated as before, so the arrangement receives the same
+facts and the same cross-operand pairs in the same order.
+
+Preserved evidence: `retained_arrangement_structure_does_not_change_later_outputs`
+(`tests/repeated_operations.rs`) still publishes identical rows for the
+retained path and the full self test, and every successive-operation chain
+keeps its triangle and vertex counts and outcomes. On six unions of
+translated icosahedra, after reduction fans strips from their oldest end, the
+pairwise phase took 0.25 s at the third union and 1.1 s at the seventh before
+and about 0.1 s at each after (focused timer probe), and the chain allocates
+4,225 MB in total. Two small rational chains allocate 0.2 MB (square drills,
+32 steps) and 0.1 MB (feedback) more with this and the same day's
+triangulation change together; reserving the group's edge array exactly
+removed 0.7 MB of the square drills' increase. Measurements are
+in [`docs/successive-operations.md`](../../docs/successive-operations.md).
+
 ## 2026-07-28: canonical ordered-AABB predicates
 
 Status: **kept**

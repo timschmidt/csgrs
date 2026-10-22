@@ -1657,31 +1657,113 @@ pub(crate) fn pairwise_intersections_by_polygon_from_bvh(
         });
     }
     let mut graph = PairwiseIntersectionGraphBuilder::new(polygons.len())?;
+    let groups = embedded_input_exclusion_groups(polygons, certified_embedded_inputs, &mut graph)?;
     let vertices = PolygonVertexArena::build(decisions, polygons)?;
     let mut scratch = PairwiseIntersectionScratch::default();
     let mut failure = None;
 
-    bvh.intersect_self_candidates_decision(decisions, |global_i, global_j| {
-        if failure.is_some() {
-            return;
-        }
-        if let Err(error) = append_pairwise_intersection(
-            decisions,
-            polygons,
-            &vertices,
-            certified_embedded_inputs,
-            &mut graph,
-            &mut scratch,
-            global_i,
-            global_j,
-        ) {
-            failure = Some(error);
-        }
-    })?;
+    bvh.intersect_self_candidates_excluding_decision(
+        decisions,
+        groups.as_deref(),
+        |global_i, global_j| {
+            if failure.is_some() {
+                return;
+            }
+            if let Err(error) = append_pairwise_intersection(
+                decisions,
+                polygons,
+                &vertices,
+                certified_embedded_inputs,
+                &mut graph,
+                &mut scratch,
+                global_i,
+                global_j,
+            ) {
+                failure = Some(error);
+            }
+        },
+    )?;
     if let Some(error) = failure {
         return Err(error);
     }
     graph.finish()
+}
+
+/// Exclusion groups for the broad phase: each certified embedded input whose
+/// triangles all keep their source vertex identities is one group, and its
+/// radially separated pairs are recorded here from those identities.
+///
+/// Distinct triangles of such an input meet only in shared vertices or
+/// edges, so the only fact a pairwise test of two of them contributes is the
+/// radial separation of two that traverse a shared edge in opposite
+/// directions. Recording it from edge adjacency gives the same facts as
+/// testing every pair with overlapping bounds, without exact bounds tests
+/// that grow with the input.
+fn embedded_input_exclusion_groups(
+    polygons: &[ConvexPolygon],
+    certified_embedded_inputs: &[bool],
+    graph: &mut PairwiseIntersectionGraphBuilder,
+) -> HypermeshResult<Option<Vec<u32>>> {
+    if !certified_embedded_inputs.contains(&true) {
+        return Ok(None);
+    }
+    let overflow = || HypermeshError::CapacityOverflow {
+        operation: "embedded input exclusion groups",
+    };
+    let mut groups = Vec::new();
+    groups
+        .try_reserve_exact(polygons.len())
+        .map_err(|_| overflow())?;
+    groups.resize(polygons.len(), crate::bvh::NO_EXCLUSION_GROUP);
+    for (mesh, _) in certified_embedded_inputs
+        .iter()
+        .enumerate()
+        .filter(|(_, certified)| **certified)
+    {
+        let group = u32::try_from(mesh).map_err(|_| overflow())?;
+        let members = polygons
+            .iter()
+            .enumerate()
+            .filter(|(_, polygon)| usize::try_from(polygon.mesh_index).ok() == Some(mesh));
+        // Directed source edges `(from, to, polygon)`; a mesh with any other
+        // polygon keeps the ordinary pairwise tests.
+        let mut edges = Vec::new();
+        edges
+            .try_reserve_exact(members.clone().count().saturating_mul(3))
+            .map_err(|_| overflow())?;
+        let mut complete = true;
+        for (index, polygon) in members.clone() {
+            let index = u32::try_from(index).map_err(|_| overflow())?;
+            match polygon.known_source_triangle_identity() {
+                Some((identity_mesh, [a, b, c])) if identity_mesh == group => {
+                    edges.extend([(a, b, index), (b, c, index), (c, a, index)]);
+                }
+                _ => {
+                    complete = false;
+                    break;
+                }
+            }
+        }
+        if !complete {
+            continue;
+        }
+        edges.sort_unstable();
+        for &(from, to, index) in &edges {
+            let start = edges.partition_point(|&(f, t, _)| (f, t) < (to, from));
+            for &(_, _, other) in edges[start..]
+                .iter()
+                .take_while(|&&(f, t, _)| (f, t) == (to, from))
+            {
+                if index < other {
+                    graph.append_radially_separated_face_pair(index as usize, other as usize)?;
+                }
+            }
+        }
+        for (index, _) in members {
+            groups[index] = group;
+        }
+    }
+    Ok(Some(groups))
 }
 
 #[cfg(test)]
