@@ -51,21 +51,10 @@ The crates that do not depend on `hypersdf` can be published now:
 
 Every repository example completes under `STRICT`, and every result in the
 [successive-operations corpus](successive-operations.md) stays exact,
-certified and closed. These limits remain, each tracked where it will be
-fixed:
+certified and closed, with bounded coordinate size and a per-step cost that
+grows more slowly than the result. These limits remain, each tracked where it
+will be fixed:
 
-- **Whole-input bounds on symbolic results.** Boolean results keep only the
-  vertices their set needs and build later points from the planes they
-  retain, so drill, rotated-cut and union chains keep constant coordinate
-  size, and the face splitting of each step no longer grows with the number
-  of earlier steps. Every Boolean still computes exact bounds for each input
-  triangle and hierarchy node, and two equal symbolic coordinates built by
-  different operations need an exact zero proof each time they are compared.
-  That work grows with the input: the last three of six unions of translated
-  icosahedra allocate 714, 755 and 893 MB for results of 116, 140 and
-  164 triangles
-  ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#successive-operations),
-  [measurements](successive-operations.md)).
 - **Decidable domain.** `STRICT` decides exact zeros over rationals,
   `sin`/`cos` of rational multiples of pi, and sqrt(2), sqrt(3), sqrt(6),
   within the cyclotomic proof's budgets. Other transcendental or radical

@@ -113,7 +113,11 @@ migrations, including changed serialized output, are listed in
   rotated-cut chains also keep constant coordinate size, and coplanar faces
   merged by repeated unions are triangulated from their oldest end, so a
   further union's face splitting no longer grows with the number of earlier
-  ones. Represented sets and certainty are unchanged; triangle rows,
+  ones. Each result stores equal symbolic coordinates as one expression, so
+  later Booleans compare them structurally instead of proving them equal
+  again; a further union of translated icosahedra costs about the same at
+  the twelfth union as at the fourth. Represented sets and certainty are
+  unchanged; triangle rows,
   counts and exported checksums change (see "Boolean output rows" in
   [docs/MIGRATIONS.md](docs/MIGRATIONS.md)).
 - `bevymesh` targets Bevy 0.18 (was 0.16) through `solid::to_bevy_mesh`.

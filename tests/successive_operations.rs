@@ -334,7 +334,7 @@ fn polyhedron_unions_stay_linear() {
     let records = certified_chain(&chains::polyhedron_unions(true, 2), None);
     assert_eq!(
         column(&records, |record| (record.triangles, record.size.max_nodes)),
-        [(44, 88), (68, 93)]
+        [(44, 87), (68, 92)]
     );
 }
 
@@ -458,8 +458,8 @@ fn long_symbolic_cuts_and_unions() {
     // 38 after eight 30- and 45-degree cuts and three 10-degree cuts, and
     // was still growing.
     for (degrees, steps, depths) in [
-        (30, 8, [15, 12, 12, 16, 16, 16, 16, 16]),
-        (45, 8, [9, 9, 17, 17, 17, 17, 17, 17]),
+        (30, 8, [15, 12, 12, 15, 15, 15, 15, 15]),
+        (45, 8, [9, 9, 17, 17, 17, 17, 17, 16]),
         (10, 8, [18; 8]),
     ] {
         let records = certified_chain(&chains::degree_rotation_cuts(degrees, steps), None);
@@ -471,17 +471,19 @@ fn long_symbolic_cuts_and_unions() {
     }
     // Each icosahedron adds 24 triangles in four coplanar strips. The strips
     // fan from their oldest end, so the next icosahedron's coplanar faces
-    // overlap a bounded number of strip triangles.
+    // overlap a bounded number of strip triangles, and each result stores
+    // equal coordinates as one expression, which keeps depth at 27 (28 and
+    // 29 before).
     let records = certified_chain(&chains::polyhedron_unions(true, 6), None);
     assert_eq!(
         column(&records, |record| (record.triangles, record.size.max_depth)),
         [
-            (44, 28),
-            (68, 28),
-            (92, 28),
-            (116, 29),
-            (140, 29),
-            (164, 29)
+            (44, 27),
+            (68, 27),
+            (92, 27),
+            (116, 27),
+            (140, 27),
+            (164, 27)
         ]
     );
     certified_chain(&chains::revolved_ring_cuts(6), None);

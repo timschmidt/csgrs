@@ -115,8 +115,11 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   endpoints: the same exact value, stored as an expression that does not
   grow with earlier operations. Each retriangulated polygon fans around its
   earliest-constructed vertex wherever that vertex sees it; that choice of
-  diagonals is part of the published rows. Regenerate pinned Boolean rows,
-  counts and checksums.
+  diagonals is part of the published rows. Coordinates of one axis that
+  strict policy proves equal are stored as one expression, the smallest of
+  them, so a coordinate's expression can differ from the one its
+  construction produced while its value stays the same. Regenerate pinned
+  Boolean rows, counts and checksums.
 
 ## Cargo features
 

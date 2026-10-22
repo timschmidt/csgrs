@@ -59,7 +59,7 @@ grammar belong to adapters such as csgrs.
   cutting plane, which is the point that interpolating between the edge's
   endpoints gives. Its expression no longer grows with the endpoints'
   construction history: chains of rotated cube cuts that overlap earlier
-  cuts keep coordinate depth 16, 17 and 18 instead of reaching 29, 31 and 38
+  cuts keep coordinate depth 15, 17 and 18 instead of reaching 29, 31 and 38
   and growing. Endpoints whose expression graphs are no deeper than the
   planes', which includes exact rationals and unchanged source vertices,
   are interpolated as before. The construction consumes no decision under
@@ -77,8 +77,17 @@ grammar belong to adapters such as csgrs.
   two triangles that traverse a shared edge in opposite directions, is
   recorded from edge adjacency, so the arrangement receives the same facts
   without exact bounds tests that grew with the input.
-- The two changes to built points and reduced triangulations change published
-  rows, not sets or sizes; see the csgrs migration notes.
+- Each Boolean output stores the coordinates of one axis that strict policy
+  proves equal as one expression, the smallest of them, and a segment
+  crossing keeps a coordinate both endpoints store as one expression. Equal
+  values built by different operations then compare structurally in later
+  Booleans instead of through a fresh exact zero proof each time. Values and
+  certainty are unchanged, and an undecided comparison keeps both
+  expressions. Twelve unions of translated icosahedra allocate 712 MB at the
+  fourth union and 812 MB at the twelfth, where the cost rose from 780 MB to
+  1,354 MB before.
+- The changes to built points, shared coordinates and reduced triangulations
+  change published rows, not sets or sizes; see the csgrs migration notes.
 - `minkowski_sum` computes the regularized Minkowski sum of bounded
   closed-PWN solids; `minkowski_sum_with_options` adds count limits and
   cooperative cancellation, which do not bound total work or memory.

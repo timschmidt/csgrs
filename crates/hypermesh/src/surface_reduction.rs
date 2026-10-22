@@ -92,16 +92,34 @@
 //! distinct planes, the crossing is built from those two planes and the
 //! cutting plane rather than by interpolating between the edge's derived
 //! endpoints ([`RetainedPlaneClasses::crease_partners`]).
+//!
+//! # Shared coordinates
+//!
+//! Successive Booleans build equal coordinates in different ways: copies of
+//! one solid share values across their vertices, and crossings reproduce the
+//! coordinates of earlier vertices. Two such coordinates compare equal only
+//! by refining both to the maximum precision and proving their difference
+//! zero, and every later Boolean that bounds or orders them repeats that
+//! proof. Each output therefore stores the coordinates of one axis that strict
+//! policy proves equal as one expression, the smallest of them (fewest graph
+//! levels, then nodes, then earliest vertex). Later comparisons of shared
+//! expressions are structural. Candidates are coordinates of nearly equal
+//! approximate value; one that matches an expression its group already holds
+//! needs no proof, so a new coordinate needs at most one equality proof.
+//! Values never change, and an undecided comparison keeps both expressions.
 
+use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use hyperlattice::Point3;
+use hyperlimit::{Certainty, PredicateOutcome};
+use hyperreal::Real;
 
 use crate::PredicatePolicy;
 use crate::context::{DecisionContext, MeshContext};
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::Plane;
+use crate::geometry::{Plane, axis_ref};
 use crate::intersection::{SourceFacePairFacts, source_face_pair_key};
 use crate::output::TriangleSource;
 use crate::polygon::{ConvexPolygon, NO_CREASE};
@@ -964,6 +982,130 @@ pub(crate) fn reduce_output_facets(
         .collect())
 }
 
+/// Relative width of the approximation window inside which two output
+/// coordinates are compared exactly. Equal values approximate alike, and a
+/// pair the window misses only keeps two expressions.
+const SHARED_COORDINATE_WINDOW: f64 = 1.0 / 1_099_511_627_776.0;
+
+/// Graph traversal limit when choosing the smallest of equal expressions; a
+/// larger graph counts as larger than any complete one.
+const SHARED_COORDINATE_NODE_LIMIT: usize = 1 << 12;
+
+/// Coordinates on one axis proved equal, with the distinct expressions that
+/// store them.
+struct SharedCoordinateGroup {
+    approximate: f64,
+    expressions: Vec<Real>,
+    /// Vertex and index of the expression it stores.
+    members: Vec<(usize, usize)>,
+}
+
+/// Stores each set of equal output coordinates on one axis as one expression,
+/// as described in the module documentation.
+pub(crate) fn share_equal_output_coordinates(points: &mut [Point3]) -> HypermeshResult<()> {
+    let overflow = || HypermeshError::CapacityOverflow {
+        operation: "shared output coordinates",
+    };
+    let mut order = Vec::new();
+    order
+        .try_reserve_exact(points.len())
+        .map_err(|_| overflow())?;
+    for axis in 0..3 {
+        // Equal exact rationals already compare structurally.
+        if points
+            .iter()
+            .all(|point| axis_ref(point, axis).exact_rational_ref().is_some())
+        {
+            continue;
+        }
+        order.clear();
+        order.extend(points.iter().enumerate().filter_map(|(index, point)| {
+            let approximate = axis_ref(point, axis).to_f64_lossy()?;
+            approximate.is_finite().then_some((approximate, index))
+        }));
+        order.sort_unstable_by(|left, right| left.0.total_cmp(&right.0).then(left.1.cmp(&right.1)));
+        let mut groups = Vec::<SharedCoordinateGroup>::new();
+        // Groups from `open` on start inside the current window.
+        let mut open = 0;
+        for &(approximate, index) in &order {
+            let window = SHARED_COORDINATE_WINDOW * approximate.abs().max(1.0);
+            while open < groups.len() && approximate - groups[open].approximate > window {
+                open += 1;
+            }
+            let value = axis_ref(&points[index], axis);
+            // An expression the group already holds needs no proof.
+            let held = groups[open..]
+                .iter()
+                .enumerate()
+                .find_map(|(offset, group)| {
+                    let expression = group.expressions.iter().position(|held| held == value)?;
+                    Some((open + offset, expression))
+                });
+            let target = held.or_else(|| {
+                let group = (open..groups.len())
+                    .find(|&group| strictly_equal(value, &groups[group].expressions[0]))?;
+                Some((group, groups[group].expressions.len()))
+            });
+            match target {
+                Some((group, expression)) => {
+                    let group = &mut groups[group];
+                    if expression == group.expressions.len() {
+                        group.expressions.push(value.clone());
+                    }
+                    group.members.push((index, expression));
+                }
+                None => groups.push(SharedCoordinateGroup {
+                    approximate,
+                    expressions: vec![value.clone()],
+                    members: vec![(index, 0)],
+                }),
+            }
+        }
+        for group in groups {
+            if group.expressions.len() < 2 {
+                continue;
+            }
+            let mut earliest = vec![usize::MAX; group.expressions.len()];
+            for &(index, expression) in &group.members {
+                earliest[expression] = earliest[expression].min(index);
+            }
+            let representative = (0..group.expressions.len())
+                .min_by_key(|&expression| {
+                    let size = group.expressions[expression]
+                        .representation_size(SHARED_COORDINATE_NODE_LIMIT);
+                    (!size.complete, size.depth, size.nodes, earliest[expression])
+                })
+                .expect("a shared group holds an expression");
+            for &(index, expression) in &group.members {
+                if expression != representative {
+                    *axis_mut(&mut points[index], axis) = group.expressions[representative].clone();
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Equality decided exactly under strict policy; `false` when undecided.
+fn strictly_equal(left: &Real, right: &Real) -> bool {
+    matches!(
+        hyperlimit::compare_reals(left, right, PredicatePolicy::STRICT),
+        PredicateOutcome::Decided {
+            value: Ordering::Equal,
+            certainty: Certainty::Exact | Certainty::Filtered,
+            ..
+        }
+    )
+}
+
+fn axis_mut(point: &mut Point3, axis: usize) -> &mut Real {
+    match axis {
+        0 => &mut point.x,
+        1 => &mut point.y,
+        _ => &mut point.z,
+    }
+}
+
 /// Plane classes of one reduced boundary, numbered by first use, with the
 /// distinct-plane facts between them and each triangle's oriented support
 /// plane. `None` when a class is contradicted.
@@ -1318,6 +1460,48 @@ mod tests {
                 assert!(exact(&agreement) > hyperreal::Rational::zero());
             }
         }
+    }
+
+    #[test]
+    fn equal_output_coordinates_take_their_smallest_expression() {
+        let root = Real::from(2).sqrt().unwrap();
+        // One value built two ways.
+        let direct = &root - &Real::one();
+        let inverse = (Real::one() / (&root + &Real::one())).unwrap();
+        assert_ne!(direct, inverse);
+        let size = |value: &Real| {
+            let size = value.representation_size(1 << 12);
+            (size.depth, size.nodes)
+        };
+        let smallest = if size(&inverse) < size(&direct) {
+            &inverse
+        } else {
+            &direct
+        };
+        // Within the approximation window of sqrt(2), but a different value.
+        let near = &root + &(Real::one() / Real::from(1_i64 << 45)).unwrap();
+        let unresolved = crate::test_uncertainty::terminal_zero(
+            Real::e().sin() * Real::e().sin() + Real::e().cos() * Real::e().cos() - Real::one(),
+        );
+        let mut points = vec![
+            Point3::new(inverse.clone(), Real::zero(), unresolved.clone()),
+            Point3::new(direct.clone(), Real::zero(), Real::zero()),
+            Point3::new(inverse.clone(), root.clone(), Real::zero()),
+            Point3::new(Real::from(5), near.clone(), Real::zero()),
+            Point3::new(direct.clone(), root.clone(), Real::one()),
+        ];
+        share_equal_output_coordinates(&mut points).unwrap();
+        // The equal x values share the smaller expression and keep their value.
+        for index in [0, 1, 2, 4] {
+            assert_eq!(&points[index].x, smallest);
+        }
+        assert_eq!(points[3].x, Real::from(5));
+        // A different value inside the window stays itself.
+        assert_eq!(points[3].y, near);
+        assert_eq!([&points[2].y, &points[4].y], [&root, &root]);
+        // An equality strict policy cannot decide keeps both expressions.
+        assert_eq!(points[0].z, unresolved);
+        assert_eq!(points[1].z, Real::zero());
     }
 
     #[test]

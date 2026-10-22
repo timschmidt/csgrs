@@ -33,49 +33,58 @@ One release run of the timing harness per revision: default features, one
 thread, on a shared host. Times are focused timer-scale probes, not
 benchmarks; other work ran on the host during both runs, and two runs of
 identical work have differed by up to 2x in time. Allocated bytes are
-deterministic, so the comparison uses allocation. "Before" is revision
-`7c726d4c9e`, the first revision that reduced Boolean outputs; the values
-without parentheses are this change. Every chain keeps its triangle and
-vertex counts, and every step of both runs is certified, closed and manifold.
-Raw output: SHA-256 `260cfba7…6d56` (before) and `2b43e5cb…7e10` (after), not
-archived.
+deterministic up to the 0.1 MB rounding of each step, so the comparison uses
+allocation. "Before" is revision `7c726d4c9e`, the first revision that
+reduced Boolean outputs; the values without parentheses are this change,
+measured in a later run. Every chain keeps its triangle and vertex counts,
+and every step of both runs is certified, closed and manifold. Raw output:
+SHA-256 `260cfba7…6d56` (before) and `f7bc70dd…5411` (after), not archived.
 
 | Chain | Steps | Last outcome | Triangles, first → last | Max denominator bits | Max graph depth (before) | Last step ms (before) | Last step MB allocated (before) | Total MB allocated (before) |
 | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| square drills | 32 | certified | 32 → 652 | 3 | 0 (0) | 5.3 (6.8) | 4.8 (4.7) | 76.2 (76.0) |
+| square drills | 32 | certified | 32 → 652 | 3 | 0 (0) | 5.2 (6.8) | 4.8 (4.7) | 76.2 (76.0) |
 | 4-gon drills (rational) | 16 | certified | 32 → 332 | 1 | 0 (0) | 2.7 (2.9) | 2.1 (2.1) | 21.8 (21.8) |
-| 6-gon drills (sqrt 3) | 8 | certified | 40 → 236 | 2 | 4 (4) | 141 (150) | 171.2 (182.0) | 1,266 (1,305) |
-| 8-gon drills (sqrt 2) | 6 | certified | 48 → 228 | 1 | 4 (4) | 336 (355) | 421.6 (438.8) | 2,154 (2,206) |
-| 16-gon drills (sin pi/8) | 4 | certified | 80 → 284 | 1 | 5 (5) | 809 (853) | 846.6 (888.0) | 3,998 (4,078) |
-| 32-gon drills (sin pi/16) | 2 | certified | 144 → 276 | 1 | 5 (5) | 1,757 (1,807) | 1,820.7 (1,852.0) | 11,860 (11,892) |
-| 32-gon drills tilted 10 degrees | 4 | certified | 144 → 540 | 1 | 15 (15) | 6,911 (7,523) | 8,693.7 (9,371.2) | 34,337 (35,498) |
-| cross bars | 20 | certified | 32 → 612 | 1 | 0 (0) | 6.3 (6.9) | 4.7 (4.7) | 49.8 (50.0) |
+| 6-gon drills (sqrt 3) | 8 | certified | 40 → 236 | 2 | 4 (4) | 146 (150) | 171.2 (182.0) | 1,266 (1,305) |
+| 8-gon drills (sqrt 2) | 6 | certified | 48 → 228 | 1 | 4 (4) | 347 (355) | 421.6 (438.8) | 2,154 (2,206) |
+| 16-gon drills (sin pi/8) | 4 | certified | 80 → 284 | 1 | 5 (5) | 821 (853) | 846.5 (888.0) | 3,998 (4,078) |
+| 32-gon drills (sin pi/16) | 2 | certified | 144 → 276 | 1 | 5 (5) | 1,797 (1,807) | 1,820.7 (1,852.0) | 11,860 (11,892) |
+| 32-gon drills tilted 10 degrees | 4 | certified | 144 → 540 | 1 | 15 (15) | 7,066 (7,523) | 8,694.0 (9,371.2) | 34,337 (35,498) |
+| cross bars | 20 | certified | 32 → 612 | 1 | 0 (0) | 6.1 (6.9) | 4.7 (4.7) | 49.8 (50.0) |
 | 3-4-5 rotated cube cuts | 16 | certified | 24 → 204 | 5 | 0 (0) | 1.5 (1.6) | 1.0 (1.0) | 10.5 (10.5) |
-| 30-degree cube cuts (sqrt 3) | 8 | certified | 28 → 144 | 2 | 16 (29) | 90.6 (106) | 111.8 (131.5) | 733 (840) |
-| 45-degree cube cuts (sqrt 2) | 8 | certified | 24 → 144 | 1 | 17 (31) | 49.3 (84.2) | 63.3 (115.6) | 768 (903) |
-| 10-degree cube cuts (sin pi/18) | 3 | certified | 28 → 60 | 2 | 18 (38) | 168 (303) | 181.1 (347.8) | 508 (697) |
+| 30-degree cube cuts (sqrt 3) | 8 | certified | 28 → 144 | 2 | 15 (29) | 93.7 (106) | 112.0 (131.5) | 733 (840) |
+| 45-degree cube cuts (sqrt 2) | 8 | certified | 24 → 144 | 1 | 17 (31) | 49.3 (84.2) | 62.2 (115.6) | 768 (903) |
+| 10-degree cube cuts (sin pi/18) | 3 | certified | 28 → 60 | 2 | 18 (38) | 169 (303) | 178.7 (347.8) | 506 (697) |
 | cube unions | 16 | certified | 36 → 316 | 3 | 0 (0) | 2.1 (2.2) | 1.4 (1.4) | 13.5 (13.6) |
-| octahedron unions | 16 | certified | 24 → 264 | 3 | 0 (0) | 1.6 (1.5) | 1.2 (1.2) | 10.5 (10.5) |
-| icosahedron unions (sqrt 5) | 6 | certified | 44 → 164 | 2 | 29 (29) | 1,174 (3,346) | 892.6 (2,492.6) | 4,225 (7,913) |
-| ((A-B)-C)+D feedback | 6 | certified | 64 → 324 | 5 | 0 (0) | 5.5 (6.2) | 4.4 (4.4) | 16.0 (15.9) |
+| octahedron unions | 16 | certified | 24 → 264 | 3 | 0 (0) | 1.4 (1.5) | 1.2 (1.2) | 10.5 (10.5) |
+| icosahedron unions (sqrt 5) | 6 | certified | 44 → 164 | 2 | 27 (29) | 928 (3,346) | 686.3 (2,492.6) | 3,972 (7,913) |
+| ((A-B)-C)+D feedback | 6 | certified | 64 → 324 | 5 | 0 (0) | 5.4 (6.2) | 4.4 (4.4) | 16.0 (15.9) |
 | square drills, binary STL round trip | 8 | certified | 32 → 172 | 23 | 0 (0) | 5.1 (5.3) | 3.1 (3.1) | 13.6 (13.6) |
 | square drills, OBJ round trip | 8 | certified | 32 → 172 | 52 | 0 (0) | 4.7 (4.9) | 1.9 (1.9) | 9.3 (9.4) |
 | extruded L profile cuts | 6 | certified | 40 → 120 | 3 | 0 (0) | 1.6 (1.7) | 0.7 (0.7) | 3.6 (3.6) |
-| revolved ring, adjacent axis cuts | 6 | certified | 124 → 16 | 2 | 12 (12) | 205 (219) | 216.6 (226.9) | 1,392 (1,440) |
-| sampled 32x16 sphere cut | 1 | certified | 992 → 992 | 1 | 22 (22) | 1,907 (1,924) | 2,194.9 (2,212.5) | 2,195 (2,212) |
+| revolved ring, adjacent axis cuts | 6 | certified | 124 → 16 | 2 | 12 (12) | 208 (219) | 216.6 (226.9) | 1,391 (1,440) |
+| sampled 32x16 sphere cut | 1 | certified | 992 → 992 | 1 | 22 (22) | 1,936 (1,924) | 2,200.6 (2,212.5) | 2,201 (2,212) |
 
-Allocation over the corpus fell from 69.2 GB to 63.7 GB. The rotated cube
-cuts allocate 13 to 27% less and icosahedron unions 47% less, also below the
+Allocation over the corpus fell from 69.2 GB to 63.4 GB. The rotated cube
+cuts allocate 13 to 27% less and icosahedron unions 50% less, also below the
 6,518 MB they allocated before outputs were reduced (`432a2d7ebd`). Drill,
 ring and sphere chains allocate 0.3 to 3.4% less. Square drills allocate
 0.2 MB more over 32 steps and the feedback chain 0.1 MB more (0.3% and
 0.6%); the change's own bookkeeping, such as the broad phase's exclusion
 groups, is not separated from the effect of different diagonals there.
+Sharing equal output coordinates, the last of these changes, changes no
+rational chain's allocation, lowers the icosahedron chain from 4,225 MB to
+3,972 MB and the 10-degree cuts by 0.4%, and raises the sampled sphere cut by
+5.7 MB (0.3%), measured against `76a7d8aa76` in one run.
 
 Separate probes of the same chains found constant depth beyond the table:
 the 30-degree chain stays at depth 16 and 41 graph nodes from its fourth cut
 through its sixteenth, and the 10-degree chain at depth 18 and 60 nodes for
-eight cuts, between 101 and 226 MB per cut.
+eight cuts, between 101 and 226 MB per cut (both before coordinates were
+shared). Twelve icosahedron unions, counted with a probe allocator that also
+counts each reallocation's full size, allocate 712 MB at the fourth union
+and 812 MB at the twelfth (849 and 928 ms) while the result grows from 116
+to 308 triangles, at depth 27 throughout; at `76a7d8aa76` the same probe
+grows from 780 to 1,354 MB (915 to 1,554 ms).
 
 ## Conclusions
 
@@ -98,23 +107,24 @@ eight cuts, between 101 and 226 MB per cut.
   between a block face and an earlier wall, whose endpoints earlier cuts
   built. Those corners are now built from the crease's two retained face
   planes and the cutting wall, so the 30-, 45- and 10-degree chains keep depth
-  16, 17 and 18, where interpolation along the crease reached 29, 31 and 38
+  15, 17 and 18, where interpolation along the crease reached 29, 31 and 38
   and kept growing. Per-step cost no longer rises with the step on these
   chains; the first cut of either 32-gon chain still allocates 9 to 10 GB.
-- **Coplanar unions keep their face splitting constant; whole-input bounds
-  still grow.** Unions of translated icosahedra merge four coplanar strips
-  whose one side is a single straight edge, so their fewest triangles fan
-  from that edge's ends. Reduction now fans from the oldest end, so each new
-  icosahedron's coplanar faces overlap a bounded number of strip triangles,
-  and the broad phase no longer enumerates pairs of the previous result's
-  own triangles. The six unions allocate 4,225 MB instead of 7,913 MB, and
-  corefinement and pairwise tests take the same time at every union from the
-  fourth on. What still grows is exact bounds work over the whole input:
-  soup preparation and the hierarchy build compare symbolic coordinates whose
-  equal values need exact zero proofs, so the fourth to sixth unions allocate
-  714, 755 and 893 MB for 116, 140 and 164 triangles. That is slower than the
-  result grows, but not constant
-  ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#whole-input-bounds-on-symbolic-results)).
+- **Coplanar unions keep a constant per-step cost.** Unions of translated
+  icosahedra merge four coplanar strips whose one side is a single straight
+  edge, so their fewest triangles fan from that edge's ends. Reduction now
+  fans from the oldest end, so each new icosahedron's coplanar faces overlap a
+  bounded number of strip triangles, and the broad phase no longer enumerates
+  pairs of the previous result's own triangles. The copies also share
+  coordinate values that successive unions built in different ways, and every
+  exact bound or order over them proved the equality again; each output now
+  stores equal coordinates as one expression, so later comparisons are
+  structural. The six unions allocate 3,972 MB instead of 7,913 MB, and the
+  fourth to sixth allocate 654, 681 and 686 MB for 116, 140 and 164
+  triangles, where they allocated 714, 755 and 893 MB. Over twelve unions the
+  per-step cost rises 14% while the result grows 2.65-fold, the work of
+  reading a larger input
+  ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#kept-equal-output-coordinates-share-one-expression)).
 - **Interchange stays certified and minimal.** STL and OBJ round trips between
   steps stay certified. Reimport marks missing source history, and STL also
   marks binary32 projection. The reimported mesh carries none of the
@@ -134,10 +144,10 @@ eight cuts, between 101 and 226 MB per cut.
   so the three normals are independent and the point is the one that
   interpolating between the edge's endpoints gives. It is used only when the
   endpoints' expression graphs are deeper than the two planes', so rational
-  endpoints and unchanged source vertices interpolate as before. Coordinates
-  that both endpoints share exactly, or that an exact axis plane fixes, keep
-  their rational values, and a division that does not decide falls back to
-  interpolation.
+  endpoints and unchanged source vertices interpolate as before. A coordinate
+  that both endpoints store as one expression keeps it, one that an exact
+  axis plane fixes keeps its rational value, and a division that does not
+  decide falls back to interpolation.
 - `hypertri`: `triangulate_simple_ring_around` fans a simple ring around a
   chosen vertex wherever it sees the polygon. `hypermesh` output reduction
   uses it to fan every retriangulated polygon around its earliest-constructed
@@ -147,6 +157,12 @@ eight cuts, between 101 and 226 MB per cut.
 - `hypermesh`: the broad phase skips pairs of triangles from one certified
   embedded input and records their radial separation from edge adjacency,
   which gives the arrangement the same facts.
+- `hypermesh`: each Boolean output stores the coordinates of one axis that
+  strict policy proves equal as one expression, the smallest of them, so a
+  later Boolean compares them structurally instead of proving their
+  difference zero again. Values never change, and an undecided comparison
+  keeps both expressions. A segment crossing keeps a coordinate both
+  endpoints store as one expression, which keeps shared coordinates shared.
 
 These change published rows but not sets or sizes; see "Boolean output rows"
 in [`MIGRATIONS.md`](MIGRATIONS.md). Earlier changes for this record: Boolean
@@ -159,7 +175,7 @@ long decimals on parse; and `Real::representation_size` reports the growth
 measure used here. The reduction itself cut corpus allocation from 113.8 GB
 to 33.7 GB over the twenty chains measured before it.
 
-Open: the whole-input bounds cost above; numeric proofs of collinearity that
+Open: numeric proofs of collinearity that
 construction identity already implies, now most of a coplanar union's
 instructions; the earcut cost noted in
 [hypertri future work](../crates/hypertri/FUTURE_WORK.md); and a recursive

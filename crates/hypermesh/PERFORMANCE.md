@@ -10,6 +10,36 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## 2026-10-22: store equal output coordinates as one expression
+
+Status: **kept**
+
+Exact bounds and orderings compare input coordinates. Two equal symbolic
+coordinates built by different operations compare equal only after
+refinement to the maximum precision and an exact zero proof, which every
+later Boolean repeated; on unions of translated icosahedra the number of such
+pairs grew with every union. Each output now stores the coordinates of one
+axis that strict policy proves equal as the smallest of their expressions,
+and hyperreal compares shared expressions by identity. Candidates come from a
+narrow approximate window; a coordinate matching an expression its group
+already holds needs no proof, so a new coordinate needs at most one equality
+proof. A segment crossing keeps a coordinate that both endpoints store as one
+expression. Values and certainty never change, and an undecided comparison
+keeps both expressions.
+
+Preserved evidence: every successive-operation chain keeps its triangle and
+vertex counts and outcomes. `equal_output_coordinates_share_one_expression`
+(`tests/output_reduction.rs`) fails without the pass, and
+`equal_output_coordinates_take_their_smallest_expression` covers the
+smallest choice, a nearby unequal value and an undecided zero. Six icosahedron
+unions allocate 3,972 MB instead of 4,225 MB, the last three steps 654, 681
+and 686 MB instead of 714, 755 and 893 MB. Over twelve unions a focused probe
+measured 712 MB and 849 ms at the fourth union and 812 MB and 928 ms at the
+twelfth, against 780 MB and 915 ms rising to 1,354 MB and 1,554 ms before.
+Rational chains allocate the same; the sampled sphere cut allocates 5.7 MB
+(0.3%) more. Measurements are in
+[`docs/successive-operations.md`](../../docs/successive-operations.md).
+
 ## 2026-10-21: skip broad-phase pairs inside one certified embedded input
 
 Status: **kept**

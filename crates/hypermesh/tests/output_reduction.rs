@@ -523,6 +523,59 @@ fn overlapping_rotated_cuts_keep_constant_coordinate_depth() {
     );
 }
 
+/// Pairs of coordinates on one axis that are equal but stored as different
+/// expressions, which every comparison must prove equal again.
+fn unshared_equal_coordinates(mesh: &TriangleMesh) -> usize {
+    let mut count = 0;
+    for axis in 0..3 {
+        let values = mesh
+            .positions
+            .iter()
+            .map(|point| [&point.x, &point.y, &point.z][axis])
+            .collect::<Vec<_>>();
+        for (index, left) in values.iter().enumerate() {
+            for right in &values[index + 1..] {
+                if left != right
+                    && hyperlimit::compare_reals(left, right, PredicatePolicy::STRICT).value()
+                        == Some(std::cmp::Ordering::Equal)
+                {
+                    count += 1;
+                }
+            }
+        }
+    }
+    count
+}
+
+#[test]
+fn equal_output_coordinates_share_one_expression() {
+    // Translated copies of a tetrahedron with golden-ratio corners. The
+    // copies share their y and z values, and the union's crossings
+    // reproduce coordinates of earlier vertices through other expressions.
+    // Each output stores the coordinates strict policy proves equal as one
+    // expression, so the next union decides them structurally.
+    let phi = ((r(1) + Real::from(5).sqrt().unwrap()) / r(2)).unwrap();
+    let tetrahedron = |dx: i64| {
+        let corner = |x: Real, y: Real, z: Real| Point3::new(&x + &q(dx, 2), y, z);
+        mesh(
+            vec![
+                corner(-phi.clone(), r(0), r(0)),
+                corner(phi.clone(), r(0), r(0)),
+                corner(r(0), phi.clone(), r(0)),
+                corner(r(0), r(0), phi.clone()),
+            ],
+            &[[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]],
+        )
+    };
+    let mut body = tetrahedron(0);
+    for k in 1..=3 {
+        body = operation(&body, &tetrahedron(k), BooleanOp::Union);
+        let evidence = boolean_mesh_closure_evidence(&as_result(&body));
+        assert!(evidence.is_closed(), "{evidence:?}");
+        assert_eq!(unshared_equal_coordinates(&body), 0, "union {k}");
+    }
+}
+
 #[test]
 fn coplanar_union_strips_fan_from_their_oldest_end() {
     // Tetrahedra with faces in z = 0 and y = 0 that meet along the x axis,

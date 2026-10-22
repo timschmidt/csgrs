@@ -7,8 +7,9 @@ The Boolean output reduction of 21 October 2026 is a recorded migration, not a
 performance change, and changes Boolean output rows, sizes and checksums; the
 Boolean rows below describe the revisions they were measured on. So is its
 follow-up of the same day, which builds crease crossings from retained planes
-and fans reduced polygons from their oldest vertex and changes rows but not
-sizes. Their measurements are in
+and fans reduced polygons from their oldest vertex, and the sharing of equal
+output coordinates of 22 October; both change rows but not sizes. Their
+measurements are in
 [docs/successive-operations.md](docs/successive-operations.md).
 
 | Workload | Before | After | Change | Preserved evidence |

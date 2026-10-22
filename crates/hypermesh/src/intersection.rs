@@ -3563,10 +3563,11 @@ fn plane_coefficients(plane: &Plane) -> [&Real; 4] {
 /// The planes are used only when the endpoints' expression graphs are deeper
 /// than the crease planes', which happens when the endpoints were derived by
 /// earlier operations; rational endpoints and endpoints that are still source
-/// vertices interpolate as before. A coordinate the point shares exactly with
-/// both endpoints, or fixes through an exact axis-aligned plane, keeps that
-/// exact rational. `None` leaves the caller to interpolate, also when the
-/// division by the determinant does not decide.
+/// vertices interpolate as before. A coordinate both endpoints store as one
+/// expression is constant along the segment and keeps that expression, and
+/// one an exact axis-aligned plane fixes keeps its exact rational. `None`
+/// leaves the caller to interpolate, also when the division by the
+/// determinant does not decide.
 fn crease_plane_crossing(
     start: &Point3,
     end: &Point3,
@@ -3591,9 +3592,10 @@ fn crease_plane_crossing(
     let homogeneous = hyperlattice::intersect_three_planes(first, second, cutting);
     let coordinate = |axis: usize, value: &Real| {
         let [start, end] = [start, end].map(|point| axis_ref(point, axis));
-        match (start.exact_rational_ref(), end.exact_rational_ref()) {
-            (Some(start_value), Some(end_value)) if start_value == end_value => Some(start.clone()),
-            _ => (value / &homogeneous.w).ok(),
+        if start == end {
+            Some(start.clone())
+        } else {
+            (value / &homogeneous.w).ok()
         }
     };
     let mut point = Point3::new(
@@ -3636,11 +3638,20 @@ fn intersect_segment_plane_from_ratio(
         return Ok(Point3::new(x, y, z));
     }
     let t = (numerator / denominator).map_err(|_| HypermeshError::UnknownClassification)?;
+    // A coordinate both endpoints store as one expression is constant along
+    // the segment; keeping it lets later comparisons decide it structurally.
+    let coordinate = |start: &Real, end: &Real| {
+        if start == end {
+            start.clone()
+        } else {
+            start + &(t.clone() * (end - start))
+        }
+    };
 
     Ok(Point3::new(
-        &start.x + &(t.clone() * (&end.x - &start.x)),
-        &start.y + &(t.clone() * (&end.y - &start.y)),
-        &start.z + &(t * (&end.z - &start.z)),
+        coordinate(&start.x, &end.x),
+        coordinate(&start.y, &end.y),
+        coordinate(&start.z, &end.z),
     ))
 }
 

@@ -105,11 +105,12 @@ and the cutting plane have independent normals and meet in exactly the
 crossing point. Since 2026-10-21 that point is built from the three planes
 by Cramer's rule when the endpoints' expression graphs are deeper than the
 two planes', which leaves rational endpoints and unchanged source vertices on
-interpolation. A coordinate that both endpoints share exactly, or that an
-exact axis plane fixes, keeps its rational value, and a division that does
-not decide falls back to interpolation. The three chains keep depth 16, 17
-and 18 from their fourth, third and first cut on, checked through 16, 8 and
-8 cuts, and allocate 13 to 27% less.
+interpolation. A coordinate that both endpoints store as one expression keeps
+it, one that an exact axis plane fixes keeps its rational value, and a
+division that does not decide falls back to interpolation. The three chains
+keep depth 16, 17 and 18 from their fourth, third and first cut on, checked
+through 16, 8 and 8 cuts, and allocate 13 to 27% less; with shared output
+coordinates (below) the 30- and 45-degree chains reach at most 15 and 17.
 
 Points constructed on one wall plane and a face plane are collinear by
 construction, but `corefine_face` and Hypertri's constraint validation still
@@ -117,21 +118,37 @@ prove it numerically; these orientation zeros are now most of the instructions
 of a coplanar union step. **Option:** certify incidence from construction
 identity before numeric tests run.
 
-### Whole-input bounds on symbolic results
+### Kept: equal output coordinates share one expression
 
 Each Boolean computes exact bounds for every source triangle and every
-hierarchy node. Two equal symbolic coordinates built by different operations,
-such as the crease ends and valleys of a coplanar strip, compare equal only
-through refinement to the maximum precision followed by an exact zero proof,
-and every later Boolean repeats those proofs. On six unions of translated
-icosahedra this is the only part of a step that still grows with the result:
-after the fixes above, soup preparation and the hierarchy build took 48 ms and
-115 ms at the fourth union and 117 ms and 340 ms at the seventh, and the last
-three of six unions allocate 714, 755 and 893 MB. **Options:** retain exact
-per-triangle extrema and node bounds with a result, the way plane classes are
-retained, for the triangles the next Boolean reads unchanged; or let
-hyperreal recognize the equality of values built from the same planes
-without a fresh zero proof.
+hierarchy node. Two equal symbolic coordinates built by different operations
+compare equal only through refinement to the maximum precision followed by an
+exact zero proof, and every later Boolean repeated those proofs. Translated
+icosahedra share their y and z values across copies, and the unions' crossings
+reproduce earlier coordinates through other expressions: after six unions, 184
+pairs of y coordinates were equal but stored differently, up from 4 after one.
+The hierarchy build took 115 ms at the fourth union and 340 ms at the seventh,
+and the last three of six unions allocated 714, 755 and 893 MB.
+
+Since 2026-10-22 each output stores the coordinates of one axis that strict
+policy proves equal as one expression, the smallest of them; hyperreal then
+decides their comparisons by structural identity. Candidates are coordinates
+within a narrow approximate window, a coordinate matching an expression its
+group already holds needs no proof, and an undecided comparison keeps both
+expressions, so values and certainty never change. A segment crossing also
+keeps a coordinate that both endpoints store as one expression. The last three
+of six unions now allocate 654, 681 and 686 MB, and the chain 3,972 MB in
+total; depth falls from 29 to 27. Over twelve unions the per-step cost rises
+from 712 MB to 812 MB and from 849 ms to 928 ms while the result grows from 116
+to 308 triangles; the same probe before rose from 780 MB to 1,354 MB and from
+915 ms to 1,554 ms. Rational chains allocate the same, since equal rationals
+already compare structurally, and the sampled sphere cut allocates 0.3% more.
+
+What remains per step is work over the whole input, such as exact bounds and
+the hierarchy build, at about 0.5 MB per input triangle on this chain.
+**Option:** retain exact per-triangle extrema and node bounds with a result,
+the way plane classes are retained, for the triangles the next Boolean reads
+unchanged.
 
 ### Kept: embedded-complex evidence and exact axis-plane coordinates
 
