@@ -38,6 +38,12 @@
   holes and returns a `SimpleRingTriangulation` whose triangles keep the input
   winding. Crossings, self-touching, backtracking and repeated points return
   `Error::InvalidInput`.
+- `triangulate_simple_ring_around` validates the same rings and fans the
+  triangulation around a chosen ring vertex wherever that vertex sees the
+  polygon, clipping other ears only in the pockets it cannot see. The result
+  does not depend on where the ring starts. Hypermesh uses it to fan the
+  polygons its Boolean output reduction retriangulates around their oldest
+  vertex.
 - `cdt::delaunay_spatial` and `f64::delaunay_spatial` insert points in a
   deterministic BRIO-style order while keeping caller indices. On cocircular
   input they can choose different valid diagonals than `cdt::delaunay`.

@@ -80,8 +80,140 @@ pub fn triangulate_simple_ring(
     vertices: &[ExactPoint],
 ) -> Result<TriangulationOutcome<SimpleRingTriangulation>> {
     let evaluator = PredicateEvaluator::new(context);
+    let (rings, ring, winding) = validated_simple_ring(&evaluator, vertices)?;
+    let triangles = triangulate_report_inner(&evaluator, vertices, &[])?.triangles;
+    let triangles =
+        oriented_simple_ring_triangles(&evaluator, vertices, &rings, &ring, triangles, winding)?;
+    Ok(evaluator.finish(SimpleRingTriangulation { triangles, winding }))
+}
+
+/// Validate and triangulate one simple ring like [`triangulate_simple_ring`],
+/// keeping as many triangles as possible at the ring vertex `apex`.
+///
+/// `apex` indexes `vertices` and must be a ring vertex. Ear clipping tries the
+/// two ears beside `apex` before any other and clips elsewhere only when
+/// neither is an ear, so every vertex that `apex` can still see is joined to
+/// it and only the pockets it cannot see are cut into other triangles. The
+/// triangulation depends only on the cyclic ring, its direction and `apex`,
+/// not on which vertex the ring starts at, and every triangle keeps the
+/// input winding. Callers that retriangulate parts of one surface can choose
+/// `apex` consistently, such as its oldest vertex, so long fan edges gather
+/// at one place instead of where the ring happens to start. Clipping takes cubic
+/// work in the ring length at worst; like [`triangulate_simple_ring`], this
+/// API has no total-work, heap-byte or cancellation bound.
+pub fn triangulate_simple_ring_around(
+    context: &TriangulationContext,
+    vertices: &[ExactPoint],
+    apex: usize,
+) -> Result<TriangulationOutcome<SimpleRingTriangulation>> {
+    let evaluator = PredicateEvaluator::new(context);
+    let (rings, ring, winding) = validated_simple_ring(&evaluator, vertices)?;
+    if !ring.contains(&apex) {
+        return Err(Error::InvalidInput {
+            reason: "ring triangulation apex is not a ring vertex",
+        });
+    }
+    let triangles = clip_ring_around_apex(&evaluator, vertices, ring.clone(), apex, winding)?;
+    let triangles =
+        oriented_simple_ring_triangles(&evaluator, vertices, &rings, &ring, triangles, winding)?;
+    Ok(evaluator.finish(SimpleRingTriangulation { triangles, winding }))
+}
+
+/// Ear clipping that prefers the ears beside `apex`; see
+/// [`triangulate_simple_ring_around`]. Every simple ring with more than three
+/// vertices has two ears that do not overlap, so at least one is not `apex`
+/// itself, and `apex` stays in the ring until its last triangle.
+fn clip_ring_around_apex(
+    evaluator: &PredicateEvaluator,
+    vertices: &[Point2],
+    mut ring: Vec<usize>,
+    apex: usize,
+    winding: Sign,
+) -> Result<TriangleIndices> {
+    let mut diagnostics = EarcutDiagnostics::default();
+    let mut triangles = Vec::with_capacity(ring.len().saturating_sub(2) * 3);
+    let mut convex =
+        prepare_local_convexity(evaluator, vertices, &ring, winding, &mut diagnostics)?;
+    while ring.len() > 3 {
+        let len = ring.len();
+        let at = ring
+            .iter()
+            .position(|&vertex| vertex == apex)
+            .ok_or(Error::NoEarFound)?;
+        let mut clipped = None;
+        for offset in [1, len - 1].into_iter().chain(2..len - 1) {
+            let cursor = (at + offset) % len;
+            if is_ear(
+                evaluator,
+                vertices,
+                &ring,
+                &convex,
+                cursor,
+                &mut diagnostics,
+            )? {
+                clipped = Some(cursor);
+                break;
+            }
+        }
+        let cursor = clipped.ok_or(Error::NoEarFound)?;
+        push_triangle(
+            &mut triangles,
+            ring[(cursor + len - 1) % len],
+            ring[cursor],
+            ring[(cursor + 1) % len],
+            winding,
+        );
+        ring.remove(cursor);
+        convex.remove(cursor);
+        let cursor = if cursor == ring.len() { 0 } else { cursor };
+        update_prepared_convexity_after_clip(
+            evaluator,
+            vertices,
+            &ring,
+            &mut convex,
+            cursor,
+            winding,
+            &mut diagnostics,
+        )?;
+    }
+    push_triangle(&mut triangles, ring[0], ring[1], ring[2], winding);
+    Ok(triangles)
+}
+
+/// Check that `triangles`, emitted counterclockwise, tile the validated ring
+/// with its boundary edges, and give them the ring's own winding.
+fn oriented_simple_ring_triangles(
+    evaluator: &PredicateEvaluator,
+    vertices: &[Point2],
+    rings: &PolygonRings,
+    ring: &[usize],
+    mut triangles: TriangleIndices,
+    winding: Sign,
+) -> Result<TriangleIndices> {
+    if triangles.len() / 3 != ring.len() - 2
+        || !triangles_match_input_boundary(evaluator, vertices, rings, &triangles)?
+    {
+        return Err(Error::NoEarFound);
+    }
+    // Triangles are emitted CCW. Retain the input orientation for consumers
+    // attaching these faces to an already oriented boundary.
+    if winding == Sign::Negative {
+        for triangle in triangles.as_chunks_mut::<3>().0 {
+            triangle.swap(1, 2);
+        }
+    }
+    Ok(triangles)
+}
+
+/// The open ring of a simple, nonzero-area polygon and its winding, or
+/// `InvalidInput` for repeated points, crossing, overlapping or touching
+/// edges and zero area.
+fn validated_simple_ring(
+    evaluator: &PredicateEvaluator,
+    vertices: &[ExactPoint],
+) -> Result<(PolygonRings, Vec<usize>, Sign)> {
     let rings = rings_from_hole_indices(vertices, &[])?;
-    let ring = open_ring_indices(&evaluator, vertices, rings.exterior())?;
+    let ring = open_ring_indices(evaluator, vertices, rings.exterior())?;
     if ring.len() < 3 {
         return Err(Error::InvalidInput {
             reason: "simple ring requires at least three distinct vertices",
@@ -91,7 +223,7 @@ pub fn triangulate_simple_ring(
         let next_left = (left + 1) % ring.len();
         let a = &vertices[ring[left]];
         let b = &vertices[ring[next_left]];
-        if points_equal(&evaluator, a, b)? {
+        if points_equal(evaluator, a, b)? {
             return Err(Error::InvalidInput {
                 reason: "simple ring has a zero-length edge",
             });
@@ -99,7 +231,7 @@ pub fn triangulate_simple_ring(
         for right in left + 1..ring.len() {
             let next_right = (right + 1) % ring.len();
             let intersection = predicates::segment_intersection(
-                &evaluator,
+                evaluator,
                 a,
                 b,
                 &vertices[ring[right]],
@@ -118,26 +250,13 @@ pub fn triangulate_simple_ring(
             }
         }
     }
-    let winding = ring_area_sign(&evaluator, vertices, &ring)?;
+    let winding = ring_area_sign(evaluator, vertices, &ring)?;
     if winding == Sign::Zero {
         return Err(Error::InvalidInput {
             reason: "simple ring has zero signed area",
         });
     }
-    let mut triangles = triangulate_report_inner(&evaluator, vertices, &[])?.triangles;
-    if triangles.len() / 3 != ring.len() - 2
-        || !triangles_match_input_boundary(&evaluator, vertices, &rings, &triangles)?
-    {
-        return Err(Error::NoEarFound);
-    }
-    // The shared earcut core emits CCW triangles. Retain the input orientation
-    // for consumers attaching these faces to an already oriented boundary.
-    if winding == Sign::Negative {
-        for triangle in triangles.as_chunks_mut::<3>().0 {
-            triangle.swap(1, 2);
-        }
-    }
-    Ok(evaluator.finish(SimpleRingTriangulation { triangles, winding }))
+    Ok((rings, ring, winding))
 }
 
 /// Triangulate an exact polygon.

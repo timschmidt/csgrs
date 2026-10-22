@@ -119,6 +119,7 @@ admissible evidence under the selected policy.
 | Return flat indices and certainty | `earcut` |
 | Include diagnostics and certainty | `earcut_report` |
 | Validate one simple ring and retain its winding | `triangulate_simple_ring` |
+| The same, fanning around a chosen ring vertex | `triangulate_simple_ring_around` |
 
 The result contains three indices per triangle. Diagnostics measure candidate,
 containment, bounding-box, cure, and split-fallback work; they are not topology
@@ -133,6 +134,15 @@ the earcut implementation and aggregates validation and triangulation certainty.
 Its edge-pair validation takes quadratic work; total work, heap bytes and
 cancellation are not internally bounded. General `earcut` retains its existing
 normalization and hole behavior.
+
+`triangulate_simple_ring_around` validates the same rings and keeps as many
+triangles as possible at one ring vertex: it clips the two ears beside that
+vertex first and other ears only when neither is valid, so the result fans
+around the vertex across everything it sees. The result depends on the cyclic
+ring, its direction and the chosen vertex, not on where the ring starts. A
+caller that retriangulates pieces of one surface can choose the vertex
+consistently, for example the oldest, so long fan edges collect in one place.
+Clipping takes cubic work in the ring length at worst.
 
 Every predicate-bearing operation takes a [`TriangulationContext`] selecting
 either `PredicatePolicy::STRICT` or `PredicatePolicy::APPROXIMATE_512`.

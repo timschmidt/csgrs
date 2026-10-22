@@ -43,7 +43,7 @@ pub use context::{TriangulationCertainty, TriangulationContext, TriangulationOut
 #[cfg(feature = "earcut")]
 pub use earcut::{
     EarcutDiagnostics, EarcutReport, SimpleRingTriangulation, triangulate as earcut,
-    triangulate_report as earcut_report, triangulate_simple_ring,
+    triangulate_report as earcut_report, triangulate_simple_ring, triangulate_simple_ring_around,
 };
 pub use error::{Error, Result};
 pub use hyperlimit::PredicatePolicy;
