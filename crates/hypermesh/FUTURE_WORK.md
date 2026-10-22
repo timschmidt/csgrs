@@ -91,6 +91,10 @@ at each later one. Six unions allocate 4.2 GB.
 The choice rests on age: geometry added next to the oldest end of a strip
 would meet the long fan edges instead. Without vertices on the straight edge,
 which the set does not need, no triangulation keeps both ends local.
+Hypertri's `simple_ring` tests check every apex, rotation and orientation of
+concave, deep-pocket, star, chevron, collinear and strip rings against the
+ring alone (positive areas, each edge once, no edge over a vertex) and that
+every rotation gives the same triangles.
 
 ### Kept: crossings of retained creases are built from planes
 
@@ -111,6 +115,10 @@ division that does not decide falls back to interpolation. The three chains
 keep depth 16, 17 and 18 from their fourth, third and first cut on, checked
 through 16, 8 and 8 cuts, and allocate 13 to 27% less; with shared output
 coordinates (below) the 30- and 45-degree chains reach at most 15 and 17.
+Regressions (2026-10-22) cover a proper crossing whose determinant is
+nonzero but too small for division to decide, which is interpolated, and a
+crossing that keeps a symbolic coordinate both endpoints store as one
+expression, which fails without that rule.
 
 Points constructed on one wall plane and a face plane are collinear by
 construction, but `corefine_face` and Hypertri's constraint validation still
@@ -181,3 +189,41 @@ the pinned paths still agree. Crossings on an axis-aligned rational plane
 take the plane's exact coordinate instead of an interpolated expression.
 Before that, a revolved ring cut twice in the same plane was undecided at the
 second cut.
+
+**What the fact rests on.** An output's facets are a subset of its
+arrangement's facets, and output reduction triangulates under strict policy
+without changing the complex. So the output meets only in shared vertices or
+edges whenever the arrangement's pairwise, corefinement and triangulation
+decisions are correct, which certified decisions prove. A decision that
+consumed the `APPROXIMATE_512` terminal is not a proof: it reads a value
+within 2^-512 of zero as zero, and the value may be a nonzero one. Until
+2026-10-22 every output nevertheless recorded the fact as proved. A slot
+whose front face lies `u + 2^-600` behind a block face (`u` an exact zero
+that no proof decides) is undecided under strict policy; the approximate
+difference is the exact one, with a wall `2^-600` thick, and recorded the
+fact. A strict union of it with a disjoint box then completed as certified,
+while the same rows rebuilt were undecided, and an approximate union reported
+`Certified`. The output was in fact embedded, so no wrong set was shown, but
+the receipt rested on the consumed terminal. The fact now keeps the
+certainty of the arrangement's decisions, like the PWN validation fact:
+strict policy uses it only when certified, and an approximate operation that
+uses an approximate one consumes the terminal (`tests/boolean.rs`,
+`approximate_results_do_not_certify_their_structure_for_later_operations`).
+Certified outputs, and so every successive-operation chain, are unchanged.
+
+Open: the certainty recorded is that of the whole operation, as for plane
+classes, though embeddedness depends only on decisions up to corefinement;
+an operation that consumed the terminal only to classify windings could
+record a certified fact. Approximate outputs also publish different rows
+when reused with the retained fact than when rebuilt: in the slot fixture
+with `u` alone, later approximate Booleans gave 42, 30, 50, 78 and 74
+triangles against 40, 28, 44, 64 and 60, because the full self test finds
+coplanar faces that the retained path, without plane classes, never learns.
+
+Independent regressions (2026-10-22) compare the grouped broad phase with
+the plain traversal less same-group pairs, embedded-input groups (including
+missing or mismatched source identities and one output as both operands)
+with the plain traversal's pairwise graph, retained radial separations with
+the reversed shared-edge pairs on a four-sheet edge, and retained with
+rebuilt edge-touching, vertex-touching and balanced non-manifold unions in
+later Booleans against box volumes. No disagreement was found.

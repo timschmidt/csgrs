@@ -4365,6 +4365,7 @@ fn materialize_surface_outputs(
         outputs,
         crate::ConstructionEvidence::DECLARED_COORDINATES
             .with_predicate_certainty(decisions.certainty()),
+        decisions.certainty(),
         plane_classes,
     ))
 }

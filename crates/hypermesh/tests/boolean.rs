@@ -475,6 +475,57 @@ fn boolean_terminal_equality_obeys_strict_and_approximate_512() {
 }
 
 #[test]
+fn approximate_results_do_not_certify_their_structure_for_later_operations() {
+    // A slot through a block, with its front face 2^-600 behind the block's
+    // face x = 0: the offset is u + 2^-600, where u is an exact zero that no
+    // proof decides. Strict policy cannot separate the two faces, so it
+    // cannot build the difference; APPROXIMATE_512 builds it by consuming
+    // its terminal. That result's claim that its triangles meet only in
+    // shared vertices or edges rests on the consumed decision. A later strict
+    // Boolean must decide the retained result as it decides the same rows
+    // rebuilt, and an approximate Boolean that uses the claim must report the
+    // consumed terminal.
+    let tiny = (0..15).fold(Real::one(), |tiny, _| {
+        (tiny / Real::from(1_i64 << 40)).unwrap()
+    });
+    let offset = &tiny + &terminally_unresolved_zero();
+    let block = integer_box([0, 0, 0], [8, 8, 4]);
+    let slot = integer_box([0, 2, -1], [5, 6, 5]);
+    let slot = TriangleMesh::new(
+        slot.positions
+            .iter()
+            .map(|point| Point3::new(&point.x + &offset, point.y.clone(), point.z.clone()))
+            .collect(),
+        slot.triangles.to_vec(),
+    );
+    let strict = MeshContext::new(PredicatePolicy::STRICT);
+    let approximate = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
+    let difference = BooleanProgram::Operation(BooleanOp::Difference);
+    assert!(matches!(
+        run(&strict, &[&block, &slot], difference),
+        Err(HypermeshError::PredicateUndecided { .. })
+    ));
+    let outcome = run(&approximate, &[&block, &slot], difference).unwrap();
+    assert_eq!(outcome.certainty, MeshCertainty::Approximate512Consumed);
+    let slotted = outcome.value.into_triangle_meshes().unwrap().pop().unwrap();
+    let rebuilt = TriangleMesh::new(slotted.positions.to_vec(), slotted.triangles.to_vec());
+    let far = integer_box([20, 20, 20], [21, 21, 21]);
+    let union = BooleanProgram::Operation(BooleanOp::Union);
+    for body in [&slotted, &rebuilt] {
+        assert!(matches!(
+            run(&strict, &[body, &far], union),
+            Err(HypermeshError::PredicateUndecided { .. })
+        ));
+    }
+    let outcome = run(&approximate, &[&slotted, &far], union).unwrap();
+    assert_eq!(outcome.certainty, MeshCertainty::Approximate512Consumed);
+    assert_eq!(
+        outcome.value.results[0].triangles.len(),
+        slotted.triangles.len() + 12
+    );
+}
+
+#[test]
 fn same_operand_coplanar_shell_overlap_is_order_invariant() {
     let first = with_rotated_triangle_order(integer_box([-5, -4, -3], [-3, -1, -1]), 4);
     let second = with_rotated_triangle_order(integer_box([-5, -5, -5], [-3, -2, -1]), 8);

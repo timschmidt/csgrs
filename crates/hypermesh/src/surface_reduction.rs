@@ -26,8 +26,11 @@
 //!
 //! # Removable vertices
 //!
-//! Every Boolean output is an embedded complex: distinct facets meet only in
-//! shared vertices or edges. Two facets in one plane that share a manifold
+//! Every Boolean output is an embedded complex as its arrangement's decisions
+//! found it: distinct facets meet only in shared vertices or edges. This is
+//! proved when every decision was certified; a decision that consumed the
+//! approximate terminal qualifies it, and the output then records the fact
+//! as approximate. Two facets in one plane that share a manifold
 //! edge therefore lie on opposite sides of it and have the same normal. A
 //! vertex `v` whose incident edges are all manifold and whose incident facets
 //! form one cycle is then removed when, for a facet key (below):
@@ -1926,7 +1929,13 @@ mod tests {
             .unwrap()
             .pop()
             .unwrap();
-        assert!(output.is_certified_embedded_complex());
+        // The embedded-complex fact keeps the certainty of the decisions
+        // that built it.
+        assert!(!output.is_certified_embedded_complex());
+        assert_eq!(
+            output.embedded_complex_certainty(),
+            Some(MeshCertainty::Approximate512Consumed)
+        );
         assert!(output.retained_plane_classes().is_none());
     }
 }

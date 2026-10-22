@@ -31,7 +31,10 @@ grammar belong to adapters such as csgrs.
 - Boolean results can be fed into further Booleans. An unedited result
   retains that its triangles meet only in shared vertices or edges, so a later
   Boolean does not test it against itself; the published rows are the same as
-  with the full self test. Crossings on an axis-aligned plane with rational
+  with the full self test. The fact keeps the certainty of the Boolean that
+  built it: a `STRICT` Boolean uses it only when that Boolean was certified,
+  and an `APPROXIMATE_512` Boolean that uses an approximate one reports
+  `Approximate512Consumed`. Crossings on an axis-aligned plane with rational
   coefficients store that coordinate exactly, so a later cut in the same plane
   decides even when the crossed edges have symbolic coordinates.
 - Boolean results keep only the vertices their represented set needs.

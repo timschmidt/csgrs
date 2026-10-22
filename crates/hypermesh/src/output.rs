@@ -6,6 +6,7 @@ use std::sync::{Arc, Weak};
 use hyperlattice::Point3;
 
 use crate::ConstructionEvidence;
+use crate::context::MeshCertainty;
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::mesh::{Triangle, TriangleMesh};
 use crate::surface_reduction::RetainedPlaneClasses;
@@ -55,10 +56,11 @@ pub struct BooleanMeshBatch {
     source_vertices: Weak<[Point3]>,
     source_results: Weak<[BooleanMeshResult]>,
     construction: ConstructionEvidence,
-    // Set only for surface-arrangement output and honored only while both
-    // buffers are unchanged: each result's distinct triangles then meet only
-    // in shared vertex indices or a shared edge.
-    embedded_complex: bool,
+    // Set only for surface-arrangement output, to the certainty of its
+    // decisions, and honored only while both buffers are unchanged: each
+    // result's distinct triangles then meet only in shared vertex indices or
+    // a shared edge.
+    embedded_complex: Option<MeshCertainty>,
     // Per result, under the same condition: the plane classes of its
     // triangles, recorded only from certified arrangements.
     plane_classes: Vec<Option<Arc<RetainedPlaneClasses>>>,
@@ -88,27 +90,35 @@ impl BooleanMeshBatch {
         results: Vec<BooleanMeshResult>,
         construction: ConstructionEvidence,
     ) -> Self {
-        Self::from_parts(vertices, results, construction, false, Vec::new())
+        Self::from_parts(vertices, results, construction, None, Vec::new())
     }
 
-    /// Output of one exact surface arrangement. Its facets meet only in
-    /// shared arrangement vertices or edges, and every result selects a
-    /// subset of those facets over one deduplicated vertex arena. Each
-    /// result may retain the plane classes of its triangles.
+    /// Output of one surface arrangement whose decisions had `certainty`.
+    /// Its facets meet only in shared arrangement vertices or edges, as
+    /// those decisions found them, and every result selects a subset of those
+    /// facets over one deduplicated vertex arena. Each result may retain the
+    /// plane classes of its triangles.
     pub(crate) fn from_arrangement(
         vertices: Vec<Point3>,
         results: Vec<BooleanMeshResult>,
         construction: ConstructionEvidence,
+        certainty: MeshCertainty,
         plane_classes: Vec<Option<Arc<RetainedPlaneClasses>>>,
     ) -> Self {
-        Self::from_parts(vertices, results, construction, true, plane_classes)
+        Self::from_parts(
+            vertices,
+            results,
+            construction,
+            Some(certainty),
+            plane_classes,
+        )
     }
 
     fn from_parts(
         vertices: Vec<Point3>,
         results: Vec<BooleanMeshResult>,
         construction: ConstructionEvidence,
-        embedded_complex: bool,
+        embedded_complex: Option<MeshCertainty>,
         plane_classes: Vec<Option<Arc<RetainedPlaneClasses>>>,
     ) -> Self {
         let vertices: Arc<[Point3]> = vertices.into();
@@ -185,7 +195,7 @@ impl BooleanMeshBatch {
         }
 
         let evidence = self.construction_evidence();
-        let embedded_complex = self.embedded_complex && self.buffers_unchanged();
+        let embedded_complex = self.embedded_complex.filter(|_| self.buffers_unchanged());
         let plane_classes = self.plane_classes;
         let positions = self.vertices;
         let mut meshes = Vec::new();
@@ -216,13 +226,15 @@ impl BooleanMeshBatch {
                     .map(|&[a, b, c]| Triangle::new(a as usize, b as usize, c as usize)),
             );
             let positions = Arc::clone(&positions);
-            meshes.push(if embedded_complex {
+            meshes.push(if let Some(certainty) = embedded_complex {
                 let classes = plane_classes
                     .get(index)
                     .cloned()
                     .flatten()
                     .filter(|classes| classes.len() == triangles.len());
-                TriangleMesh::from_shared_embedded_complex(positions, triangles, evidence, classes)
+                TriangleMesh::from_shared_embedded_complex(
+                    positions, triangles, evidence, certainty, classes,
+                )
             } else {
                 TriangleMesh::from_shared_construction(positions, triangles, evidence)
             });

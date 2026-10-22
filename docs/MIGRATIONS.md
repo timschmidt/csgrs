@@ -60,6 +60,17 @@ remain an open migration target.
 - **WASM curve meshes.** `CurveRegionJs.sweep`, `revolve` and
   `extrudeTwisted` throw a `GeometryError` with a `code`, as `extrude`
   does, instead of a bare message string for native failures.
+- **Booleans of approximate results.** A Hypermesh Boolean result, and so a
+  csgrs solid Boolean result, retains that its triangles meet only in shared
+  vertices or edges, so a later Boolean skips testing it against itself.
+  When the result's own Boolean consumed the `APPROXIMATE_512` terminal, that
+  fact now keeps the approximate certainty. A later `STRICT` Boolean no
+  longer takes it as proved: it tests the result against itself, as it does
+  the same rows rebuilt, and can report `PredicateUndecided` where it
+  reported a certified result. A later `APPROXIMATE_512` Boolean still uses
+  the fact, publishes the same rows, and reports `Approximate512Consumed`
+  where it could report `Certified`. Results whose Booleans were certified
+  are unaffected.
 
 ## Serialized output and geometry
 

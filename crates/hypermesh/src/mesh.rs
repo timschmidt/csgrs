@@ -63,8 +63,9 @@ pub(crate) struct TriangleMeshFacts {
     source_polygon_planes: OnceLock<Arc<CompactSourcePolygons>>,
     wide_dyadic_plane_schedule: AtomicU8,
     // Distinct triangles meet only in shared vertex indices or a shared edge,
-    // as in every surface-arrangement output. Bound to the buffers above.
-    embedded_complex: bool,
+    // as in every surface-arrangement output, with the certainty of the
+    // arrangement's decisions. Bound to the buffers above.
+    embedded_complex: CertaintyFact,
     // Plane classes of a certified surface-arrangement output, one per
     // triangle. Bound to the buffers above.
     plane_classes: Option<Arc<RetainedPlaneClasses>>,
@@ -74,9 +75,13 @@ impl TriangleMeshFacts {
     fn new(
         positions: &Arc<[Point3]>,
         triangles: &Arc<[Triangle]>,
-        embedded_complex: bool,
+        embedded_complex: Option<MeshCertainty>,
         plane_classes: Option<Arc<RetainedPlaneClasses>>,
     ) -> Self {
+        let embedded = CertaintyFact::default();
+        if let Some(certainty) = embedded_complex {
+            embedded.record(certainty);
+        }
         Self {
             source_positions: Arc::downgrade(positions),
             source_triangles: Arc::downgrade(triangles),
@@ -85,7 +90,7 @@ impl TriangleMeshFacts {
             axis_aligned_box: OnceLock::new(),
             source_polygon_planes: OnceLock::new(),
             wide_dyadic_plane_schedule: AtomicU8::new(0),
-            embedded_complex,
+            embedded_complex: embedded,
             plane_classes,
         }
     }
@@ -173,28 +178,37 @@ impl TriangleMesh {
         triangles: Vec<Triangle>,
         construction: ConstructionEvidence,
     ) -> Self {
-        Self::from_shared_parts(positions, triangles, construction, false, None)
+        Self::from_shared_parts(positions, triangles, construction, None, None)
     }
 
     /// Mesh whose distinct triangles meet only in shared vertex indices or a
-    /// shared edge. Only exact surface-arrangement output has this structure
-    /// by construction; it lets later arrangements skip testing the mesh
-    /// against itself. Retained plane classes, one per triangle, let a later
-    /// arrangement merge its coplanar triangles without retesting them.
+    /// shared edge. Only surface-arrangement output has this structure by
+    /// construction, with the certainty of the arrangement's decisions; it
+    /// lets a later arrangement whose policy admits that certainty skip
+    /// testing the mesh against itself. Retained plane classes, one per
+    /// triangle, let a later arrangement merge its coplanar triangles without
+    /// retesting them.
     pub(crate) fn from_shared_embedded_complex(
         positions: Arc<[Point3]>,
         triangles: Vec<Triangle>,
         construction: ConstructionEvidence,
+        certainty: MeshCertainty,
         plane_classes: Option<Arc<RetainedPlaneClasses>>,
     ) -> Self {
-        Self::from_shared_parts(positions, triangles, construction, true, plane_classes)
+        Self::from_shared_parts(
+            positions,
+            triangles,
+            construction,
+            Some(certainty),
+            plane_classes,
+        )
     }
 
     fn from_shared_parts(
         positions: Arc<[Point3]>,
         triangles: Vec<Triangle>,
         construction: ConstructionEvidence,
-        embedded_complex: bool,
+        embedded_complex: Option<MeshCertainty>,
         plane_classes: Option<Arc<RetainedPlaneClasses>>,
     ) -> Self {
         let triangles = Arc::<[Triangle]>::from(triangles);
@@ -213,12 +227,19 @@ impl TriangleMesh {
     }
 
     /// Whether the current buffers are a retained surface-arrangement output,
-    /// whose distinct triangles meet only in shared vertices or edges.
-    /// Editing or replacing either buffer drops this fact.
+    /// whose distinct triangles meet only in shared vertices or edges, from
+    /// certified decisions. Editing or replacing either buffer drops this
+    /// fact.
     #[cfg(test)]
     pub(crate) fn is_certified_embedded_complex(&self) -> bool {
+        self.embedded_complex_certainty() == Some(MeshCertainty::Certified)
+    }
+
+    /// The certainty of the retained embedded-complex fact, if any.
+    #[cfg(test)]
+    pub(crate) fn embedded_complex_certainty(&self) -> Option<MeshCertainty> {
         self.geometry_facts()
-            .is_some_and(|facts| facts.embedded_complex)
+            .and_then(|facts| facts.embedded_complex.certainty())
     }
 
     /// Plane classes retained with the current buffers, if any.
@@ -1528,10 +1549,15 @@ pub(crate) fn build_polygon_soup_internal(
             })?;
         let position_owner = mesh.position_owner();
         let geometry_facts = mesh.geometry_facts();
-        certified_embedded_inputs.push(geometry_facts.is_some_and(|facts| facts.embedded_complex));
+        // An embedded-complex fact from approximate decisions is no proof
+        // under strict policy, and an approximate operation that uses it
+        // consumes the terminal.
+        let embedded =
+            geometry_facts.is_some_and(|facts| facts.embedded_complex.consume(decisions));
+        certified_embedded_inputs.push(embedded);
         retained_plane_classes.push(
             geometry_facts
-                .filter(|facts| facts.embedded_complex)
+                .filter(|_| embedded)
                 .and_then(|facts| facts.plane_classes.clone())
                 .filter(|classes| classes.len() == mesh.triangles.len()),
         );
