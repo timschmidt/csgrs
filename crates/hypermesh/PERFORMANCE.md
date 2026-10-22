@@ -39,10 +39,11 @@ before the change found at most one open group whenever a coordinate looked
 for candidates, and all 216 strict proofs succeeded against the nearest group,
 so the bounds discard nothing there. A full `cargo bench --bench
 successive_operations` run before and after gives identical outcomes,
-triangle and vertex counts, coordinate counts and graph sizes on all 201
+triangle and vertex counts, coordinate counts and graph sizes on all 200
 steps, and identical allocation at 0.1 MB resolution (63,408.4 MB and
-63,408.3 MB in total); six icosahedron unions run alone still allocate
-3,963.8 MB, the last three steps 652.9, 679.3 and 685.0 MB. After the change,
+63,408.3 MB in total). Six icosahedron unions allocate 3,971.6 MB in the full
+run, the last three steps 654.2, 680.6 and 686.3 MB, and 3,963.8 MB when run
+alone (652.9, 679.3 and 685.0 MB), before and after. After the change,
 the dyadic fixture takes 16,374 comparisons, no proofs and 0.66 ms; the
 square roots take 509 proofs and 3.4 ms; 32 undecided multiples of one zero
 take 61 proofs and 2.0 ms instead of 496 and 12.1 ms (focused release probes,
