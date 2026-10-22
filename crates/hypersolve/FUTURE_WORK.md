@@ -21,6 +21,34 @@ result for current callers.
   pair these embeddings with `RecursiveQuadraticValue::rebased_to_equivalent_base`
   instead. Composing them directly would remove that two-step requirement.
 
+## Finite-fiber topology domains
+
+`decompose_bivariate_curve` reproduces its documented blockers at
+`61da737db3`. With the circle `F = 16x^2 + 16y^2 - 4` on `[-1, 1]^2`:
+
+| Input | Result |
+| --- | --- |
+| `F`, `(x - 3)F`, `(x - 3)^2 F` | Topology; rootless `x`-content is already harmless |
+| `(2y - 1)F` | Topology; the horizontal line is a graph component |
+| `F^2`, `(2y - 1)^2 F` | `RepeatedComponent` |
+| `(2x - 1)F`, `(x + 1)F` | `VerticalComponent`, also with the root on the boundary |
+| `(y - 1)F` | `BoundaryComponent` |
+
+Square-free reduction is exact and needs no selected field: divide the
+`x`-content `c(x)` out first, then any common factor of the primitive part
+`p` and `p_y` has every irreducible factor at least squared in `p`, so
+dividing it out keeps the zero set. Dividing `F` by a common factor of `F` and
+`F_y` instead would remove a simple vertical component `c(x)`. The reduction
+was not adopted inside `decompose_bivariate_curve`. The topology is a set
+package, and its consumers read multiplicity from the absence of the blocker:
+HyperBRep's plane–tensor section expects `RepeatedComponent` for a plane
+tangent along a line (`(y - 1/2)^2`), and admitting it as an ordinary section
+would present a tangential contact as a crossing curve. Admission needs a
+published multiplicity record for each branch and isolated point, and
+consumers that read it. Vertical components need a topology carrier for
+vertical segments and their adjacency to graph branches. Both are new public
+API on a crate prepared for release, so they are deferred.
+
 ## Represented-root completeness
 
 `represented_strict_sign` refines a represented value's image interval at
