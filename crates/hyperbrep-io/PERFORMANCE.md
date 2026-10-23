@@ -1,5 +1,37 @@
 # HyperBRep IO performance
 
+## 2026-10-23: exchange-continuation recheck, no change
+
+The 2026-10-22 research queue (C06, written from older sources) asked whether
+selected STEP export of a `1/3` or irrational coordinate fails, rounds or
+mislabels exactness. Rechecked at `1a279a3f6f`: it fails explicitly with the
+source body and entity, and returns no artifact. `1/3` gives
+`NonTerminatingDecimal` (`tests/step_write.rs`,
+`strict_writer_diagnoses_nonrepresentable_coordinates_units_and_limits`); a
+coordinate without a retained exact rational view gives `NonRational`, which
+is documented as missing evidence, not a proof of irrationality
+(`tests/support/prism_export.rs`, the rotated covering cut); unit factors 0,
+-1, `pi` and `1/3` are rejected, and an inch output unit, `127/5000` m, makes
+metre-decimal coordinates fail unless they lie on its grid
+(`exact_output_units_preserve_inch_grid_and_nearby_distinct_bodies`).
+Selected points without coordinates and cavity shells fail with their sites
+(`unsupported_curves_cavities_and_selected_images_fail_with_source_sites`).
+No source file in this crate formats a binary float. There is no exactness
+defect to fix.
+
+Not present: a per-entity export preflight. Both writers stop at the first
+entity they cannot encode. A report would walk the same selection without
+emitting and classify each vertex, edge, face and body as an exact selected
+mapping, not representable in the encoding under the chosen unit
+(`NonTerminatingDecimal`, `NonRational`), or unsupported (`UnsupportedSurface`,
+`UnsupportedCurve`, `UnmaterializedPoint`, `VoidShells`), with an explicit
+approximation class left empty until an approximate exporter with its own
+error and topology report exists. It must reuse the writers' encoders and
+`WriteLimits`, so that the report cannot disagree with the writer. Deferred:
+it is new public API on a crate prepared for release, and it improves
+diagnostics, not exactness or completion. Root mesh exports were rechecked in
+the same pass; AMF's fixed-digit spelling was fixed there (root `CHANGELOG.md`).
+
 ## 2026-10-17: partial-depth axial shells and continued modeling
 
 Kept for exact capability and downstream consumption. [Admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md)
