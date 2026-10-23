@@ -130,6 +130,15 @@
 
 ### Fixed
 
+- Two retained local polynomial roots whose isolating brackets still
+  overlap after refinement are now ordered by one sign of either defining
+  polynomial at the other root, in their own coefficient fields. Equal roots
+  no longer go through 512 bisection steps and a global algebraic projection
+  of both, and two distinct roots 2^-603 apart, which that route left
+  undecided, are now ordered. A local root also keeps the native algebraic
+  roots it has been proved equal to. Rebuilding the bevel stroke of a
+  chamfered quadratic path from its exported boundary now completes in
+  about a minute; it did not finish within forty minutes.
 - Region construction and Booleans no longer fail with a `RealSign` blocker
   when two contacts lie on one circle and one supporting line but carry
   independent square roots. The line meets the circle in at most two points,

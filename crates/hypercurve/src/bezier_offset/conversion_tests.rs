@@ -25990,6 +25990,410 @@ fn recursive_polynomial_refinement_reuses_certified_bounds_and_identity() {
     }
 }
 
+/// The selected unit root of `x^2 - radicand`.
+fn selected_square_root_source(radicand: Real) -> AlgebraicRootRepresentation {
+    bezier_parameter_root_representation(&algebraic_parameter(vec![
+        -radicand,
+        Real::zero(),
+        Real::one(),
+    ]))
+}
+
+/// A recursive field over `sources` with unit speed radicals.
+fn selected_source_field(sources: Vec<AlgebraicRootRepresentation>) -> RecursiveQuadraticField {
+    let one = DenseTensorPolynomial::try_new(vec![1; sources.len()], vec![Real::one()]).unwrap();
+    RecursiveQuadraticField::base(sources, one.clone(), one).unwrap()
+}
+
+/// Twice the retained value of `source` in `field`.
+fn doubled_source_value(
+    field: &RecursiveQuadraticField,
+    source: &AlgebraicRootRepresentation,
+) -> RecursiveQuadraticValue {
+    field
+        .retained_root_value(source)
+        .unwrap()
+        .scale(&Real::from(2_i8))
+        .unwrap()
+}
+
+/// A local polynomial root whose bracket `[lower, upper]` isolates one simple
+/// root of `coefficients`, with the given opposite endpoint signs.
+fn local_polynomial_root(
+    field: &RecursiveQuadraticField,
+    coefficients: Vec<RecursiveQuadraticValue>,
+    (lower, upper): (Real, Real),
+    signs: [RealSign; 2],
+    policy: &CurveContext,
+) -> BezierRecursiveProjectiveParameter2 {
+    BezierRecursiveProjectiveParameter2 {
+        data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+            projection: Arc::default(),
+            authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
+                authority: Arc::new(BezierRecursivePolynomialParameterAuthority2::new(
+                    field.clone(),
+                    coefficients,
+                )),
+                endpoint_signs: signs.map(OnceLock::from),
+            },
+            lower,
+            upper,
+            refinement_steps: 0,
+            identity: None,
+            line_branch: 0,
+            policy: policy.retained_object_policy(),
+        }),
+    }
+}
+
+/// `t^2 - (2 + alpha)` over `field`, with `alpha = +sqrt 2` from `source`.
+fn shifted_square_relation(
+    field: &RecursiveQuadraticField,
+    source: &AlgebraicRootRepresentation,
+) -> Vec<RecursiveQuadraticValue> {
+    let constant = |value: i8| field.constant(Real::from(value)).unwrap();
+    vec![
+        constant(-2)
+            .subtract(&doubled_source_value(field, source))
+            .unwrap(),
+        constant(0),
+        constant(1),
+    ]
+}
+
+/// A retained polynomial root `t` with `t^2 = 2 + alpha`, `alpha = +sqrt 2`,
+/// whose field knows only `alpha`, should sign queries over an independently
+/// built field that also adjoins `beta = +sqrt 3`, in either source order,
+/// by replaying its defining relation and isolating bracket over the union
+/// of both selected sources. `recursive_polynomial_sign_joined` returns
+/// `Unsupported` when a query source is absent from the root's base. No
+/// supported operation in the test suite or the open-path workflows reaches
+/// that case, so the join is not implemented; see `FUTURE_WORK.md`.
+#[test]
+#[ignore = "open: a query source absent from a retained root's base is not joined"]
+fn recursive_polynomial_root_signs_queries_over_an_independent_source() {
+    // alpha = 2 sqrt(1/2) and beta = 2 sqrt(3/4) are selected unit roots.
+    let alpha_source = selected_square_root_source((Real::one() / Real::from(2_i8)).unwrap());
+    let beta_source = selected_square_root_source((Real::from(3_i8) / Real::from(4_i8)).unwrap());
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let root_field = selected_source_field(vec![alpha_source.clone()]);
+        // T^2 - (2 + alpha) is -(1 + alpha) < 0 at 1 and 2 - alpha > 0 at 2.
+        let root = local_polynomial_root(
+            &root_field,
+            shifted_square_relation(&root_field, &alpha_source),
+            (Real::one(), Real::from(2_i8)),
+            [RealSign::Negative, RealSign::Positive],
+            &policy,
+        );
+        for sources in [
+            vec![alpha_source.clone(), beta_source.clone()],
+            vec![beta_source.clone(), alpha_source.clone()],
+        ] {
+            let field = selected_source_field(sources);
+            let constant = |value: i8| field.constant(Real::from(value)).unwrap();
+            let alpha = doubled_source_value(&field, &alpha_source);
+            let beta = doubled_source_value(&field, &beta_source);
+            let two_plus_alpha = constant(2).add(&alpha).unwrap();
+            for (query, expected) in [
+                // beta (t^2 - (2 + alpha)) vanishes at the selected root.
+                (
+                    vec![
+                        beta.multiply(&two_plus_alpha)
+                            .unwrap()
+                            .scale(&Real::from(-1_i8))
+                            .unwrap(),
+                        constant(0),
+                        beta.clone(),
+                    ],
+                    RealSign::Zero,
+                ),
+                // beta > 0, as a degree-one query with a zero leading term.
+                (vec![beta.clone(), constant(0)], RealSign::Positive),
+                // t = 1.8477... exceeds beta = 1.7320...
+                (
+                    vec![beta.scale(&Real::from(-1_i8)).unwrap(), constant(1)],
+                    RealSign::Positive,
+                ),
+                // (t^2 - 2) - beta = alpha - beta < 0.
+                (
+                    vec![
+                        constant(-2).subtract(&beta).unwrap(),
+                        constant(0),
+                        constant(1),
+                    ],
+                    RealSign::Negative,
+                ),
+            ] {
+                let sign = policy
+                    .bounded_exact_predicate_pass(|| {
+                        root.recursive_polynomial_sign_joined(&query, &policy)
+                    })
+                    .unwrap();
+                assert_eq!(sign, Classification::Decided(expected));
+            }
+        }
+        // A query whose only source is foreign to the root's field.
+        let beta_field = selected_source_field(vec![beta_source.clone()]);
+        let beta = doubled_source_value(&beta_field, &beta_source);
+        let sign = policy
+            .bounded_exact_predicate_pass(|| {
+                root.recursive_polynomial_sign_joined(
+                    &[
+                        beta.scale(&Real::from(-1_i8)).unwrap(),
+                        beta_field.constant(Real::one()).unwrap(),
+                    ],
+                    &policy,
+                )
+            })
+            .unwrap();
+        assert_eq!(sign, Classification::Decided(RealSign::Positive));
+        assert!(root.data.projection.parameter.get().is_none());
+    }
+}
+
+/// Two retained polynomial roots with overlapping isolators are ordered by
+/// one sign of either defining polynomial at the other root, in that root's
+/// field: equal roots of `f` and `7f` over independently built fields, of a
+/// reciprocal chart and of its own relation, distinct roots of `f` and
+/// `f - 2^-600`, and the roots of `f` and of its conjugate relation.
+/// Neither root is refined to separation or promoted to a global parameter.
+#[test]
+fn recursive_polynomial_roots_compare_through_retained_defining_signs() {
+    let alpha_source = selected_square_root_source((Real::one() / Real::from(2_i8)).unwrap());
+    let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+    let interval = |lower: Real, upper: Real| (lower, upper);
+    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+    let rising = [RealSign::Negative, RealSign::Positive];
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let field = selected_source_field(vec![alpha_source.clone()]);
+        let rebuilt = selected_source_field(vec![alpha_source.clone()]);
+        let relation = shifted_square_relation(&field, &alpha_source);
+        // t = sqrt(2 + sqrt 2) = 1.8477...
+        let root = local_polynomial_root(
+            &field,
+            relation.clone(),
+            interval(Real::one(), Real::from(2_i8)),
+            rising,
+            &policy,
+        );
+        let scaled = local_polynomial_root(
+            &rebuilt,
+            shifted_square_relation(&rebuilt, &alpha_source)
+                .iter()
+                .map(|coefficient| coefficient.scale(&Real::from(7_i8)).unwrap())
+                .collect(),
+            interval(three_halves.clone(), Real::from(2_i8)),
+            rising,
+            &policy,
+        );
+        let mut shifted_relation = relation.clone();
+        shifted_relation[0] = shifted_relation[0]
+            .subtract(&field.constant(tiny.clone()).unwrap())
+            .unwrap();
+        let shifted = local_polynomial_root(
+            &field,
+            shifted_relation,
+            interval(Real::one(), Real::from(2_i8)),
+            rising,
+            &policy,
+        );
+        // T^2 - (2 - alpha) has the conjugate root sqrt(2 - sqrt 2) = 0.7653...
+        let alpha = doubled_source_value(&field, &alpha_source);
+        let conjugate_relation = vec![
+            field
+                .constant(Real::from(-2_i8))
+                .unwrap()
+                .add(&alpha)
+                .unwrap(),
+            field.constant(Real::zero()).unwrap(),
+            field.constant(Real::one()).unwrap(),
+        ];
+        let wide_root = local_polynomial_root(
+            &field,
+            relation.clone(),
+            interval(half.clone(), Real::from(2_i8)),
+            rising,
+            &policy,
+        );
+        let conjugate = local_polynomial_root(
+            &field,
+            conjugate_relation,
+            interval(half.clone(), Real::from(2_i8)),
+            rising,
+            &policy,
+        );
+        // 1/t is the root of (2 + alpha) v^2 - 1 in [1/2, 1].
+        let Classification::Decided(reciprocal) = root
+            .projective_image_unbounded(
+                &[Real::one(), Real::zero()],
+                &[Real::zero(), Real::one()],
+                &policy,
+            )
+            .unwrap()
+        else {
+            panic!("a nonzero retained root has a reciprocal chart")
+        };
+        let two_plus_alpha = rebuilt
+            .constant(Real::from(2_i8))
+            .unwrap()
+            .add(&doubled_source_value(&rebuilt, &alpha_source))
+            .unwrap();
+        let reciprocal_relation = local_polynomial_root(
+            &rebuilt,
+            vec![
+                rebuilt.constant(Real::from(-1_i8)).unwrap(),
+                rebuilt.constant(Real::zero()).unwrap(),
+                two_plus_alpha,
+            ],
+            interval(half.clone(), Real::one()),
+            rising,
+            &policy,
+        );
+        for (first, second, expected) in [
+            (&root, &scaled, std::cmp::Ordering::Equal),
+            (&root, &shifted, std::cmp::Ordering::Less),
+            (&wide_root, &conjugate, std::cmp::Ordering::Greater),
+            (&reciprocal, &reciprocal_relation, std::cmp::Ordering::Equal),
+        ] {
+            for (left, right, expected) in [
+                (first, second, expected),
+                (second, first, expected.reverse()),
+            ] {
+                assert_eq!(
+                    policy
+                        .bounded_exact_predicate_pass(
+                            || left.order_against_polynomial_root(right, &policy)
+                        )
+                        .unwrap(),
+                    Some(expected)
+                );
+                assert_eq!(
+                    left.cmp_by_refinement(right, &policy).unwrap(),
+                    Classification::Decided(expected)
+                );
+                assert_eq!(
+                    left.clone()
+                        .cmp_by_refinement(&left.clone(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+            }
+            assert!(first.data.projection.parameter.get().is_none());
+            assert!(second.data.projection.parameter.get().is_none());
+        }
+        assert!(root.data.projection.parameter.get().is_none());
+    }
+}
+
+/// A recursive root proved equal to a native algebraic root retains that
+/// proof for its refinements and clones. The root `t / 2`, with
+/// `t^2 = 2 + sqrt 2`, is also the larger unit root of `8x^4 - 8x^2 + 1`.
+/// The smaller root and a root of a perturbed relation stay distinct and
+/// leave no entry, and only the first comparison replays the relation.
+#[test]
+fn recursive_root_retains_its_proved_native_equality() {
+    let alpha_source = selected_square_root_source((Real::one() / Real::from(2_i8)).unwrap());
+    let quartic = |perturbation: Real| {
+        algebraic_parameters(vec![
+            Real::one() + perturbation,
+            Real::zero(),
+            Real::from(-8_i8),
+            Real::zero(),
+            Real::from(8_i8),
+        ])
+    };
+    let roots = quartic(Real::zero());
+    let [smaller, larger] = roots.as_slice() else {
+        panic!("8x^4 - 8x^2 + 1 has two unit roots")
+    };
+    let BezierParameter2::Algebraic(native) = larger else {
+        panic!("the selected root is irrational")
+    };
+    let perturbed = quartic(Real::from(2_i8).powi_i64(-200).unwrap());
+    let perturbed = perturbed
+        .iter()
+        .find(|root| {
+            root.cmp_by_refinement_with_policy(smaller, &CurveContext::STRICT)
+                .unwrap()
+                == Classification::Decided(std::cmp::Ordering::Greater)
+        })
+        .unwrap()
+        .clone();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let field = selected_source_field(vec![alpha_source.clone()]);
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        // x^2 - (2 + alpha) / 4 is negative at 1/2 and positive at 1.
+        let relation = shifted_square_relation(&field, &alpha_source)
+            .into_iter()
+            .enumerate()
+            .map(|(power, coefficient)| {
+                if power == 2 {
+                    coefficient
+                } else {
+                    coefficient.scale(&quarter).unwrap()
+                }
+            })
+            .collect();
+        let root = local_polynomial_root(
+            &field,
+            relation,
+            ((Real::one() / Real::from(2_i8)).unwrap(), Real::one()),
+            [RealSign::Negative, RealSign::Positive],
+            &policy,
+        );
+        let retained = |root: &BezierRecursiveProjectiveParameter2| {
+            root.data.projection.equal_natives.lock().unwrap().len()
+        };
+        for (other, expected) in [
+            (smaller.clone(), std::cmp::Ordering::Greater),
+            // Raising the relation moves its increasing root left.
+            (perturbed.clone(), std::cmp::Ordering::Greater),
+        ] {
+            assert_eq!(
+                root.cmp_bezier_parameter(&other, &policy).unwrap(),
+                Classification::Decided(expected)
+            );
+        }
+        assert_eq!(retained(&root), 0);
+        assert_eq!(
+            root.cmp_bezier_parameter(larger, &policy).unwrap(),
+            Classification::Decided(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(retained(&root), 1);
+        let Classification::Decided(refined) = root.refined(12, &policy).unwrap() else {
+            panic!("the retained root refines exactly")
+        };
+        let narrowed = BezierParameter2::Algebraic(native.clone())
+            .refined_isolating_interval(24, &CurveContext::STRICT);
+        for (left, right) in [(&refined, larger), (&root.clone(), &narrowed)] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let compare = || left.cmp_bezier_parameter(right, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let order = hyperreal::dispatch_trace::with_recording(compare).unwrap();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let order = compare().unwrap();
+            assert_eq!(order, Classification::Decided(std::cmp::Ordering::Equal));
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                hyperreal::dispatch_trace::take_trace().path_count(
+                    "hypercurve",
+                    "recursive-parameter-comparison",
+                    "retained-native-equality",
+                ),
+                1
+            );
+        }
+        assert_eq!(retained(&refined), 1);
+        assert_eq!(
+            root.cmp_bezier_parameter(&perturbed, &policy).unwrap(),
+            Classification::Decided(std::cmp::Ordering::Greater)
+        );
+        assert_eq!(retained(&root), 1);
+    }
+}
+
 #[test]
 fn recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse() {
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();

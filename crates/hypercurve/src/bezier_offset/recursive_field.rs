@@ -4397,6 +4397,21 @@ impl BezierRecursiveProjectiveParameter2 {
                 }));
             }
         }
+        // Isolators that still overlap usually enclose equal values. One sign
+        // of either defining polynomial at the other value decides the order
+        // exactly, before deep bisection or global promotion. The bounded
+        // pass keeps an expensive sign from replacing the refinement below.
+        for (first, second, reversed) in [(self, other, false), (other, self, true)] {
+            if let Some(order) = policy.bounded_exact_predicate_pass(|| {
+                first.order_against_polynomial_root(second, policy)
+            })? {
+                return Ok(Classification::Decided(if reversed {
+                    order.reverse()
+                } else {
+                    order
+                }));
+            }
+        }
         for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
             let first = match self.refined(refinement_steps, policy)? {
                 Classification::Decided(parameter) => parameter,
@@ -4438,6 +4453,76 @@ impl BezierRecursiveProjectiveParameter2 {
             }
         };
         policy.strict_predicate_pass(|| first.cmp_by_refinement_with_policy(&second, policy))
+    }
+
+    /// Orders this value against a retained local polynomial root.
+    ///
+    /// `root`'s stored bracket `[a, b]` isolates the unique distinct root `q`
+    /// of its defining polynomial `g`, with opposite nonzero signs `g(a)` and
+    /// `g(b)`. So `g` has the sign of `g(a)` on `[a, q)` and of `g(b)` on
+    /// `(q, b]`. Once this value is ordered strictly inside `(a, b)`, the sign
+    /// of `g` here decides its order against `q`, and a zero proves equality.
+    /// The sign is evaluated in this value's retained field, joined with
+    /// `g`'s coefficient field where an existing tower join applies; neither
+    /// value is projected to a global algebraic parameter. `None` means a
+    /// precondition or a sign is unavailable and makes no claim about either
+    /// value.
+    pub(super) fn order_against_polynomial_root(
+        &self,
+        root: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<std::cmp::Ordering>> {
+        use std::cmp::Ordering;
+        let Some(authority) = root.polynomial_authority() else {
+            return Ok(None);
+        };
+        let strict = policy.strict_counterpart();
+        let decided_order = |value: &Real| -> CurveResult<Option<Ordering>> {
+            Ok(match self.order_to_real(value, policy)? {
+                Classification::Decided(order) => Some(order),
+                Classification::Uncertain(_) => None,
+            })
+        };
+        if root.data.lower == root.data.upper {
+            return decided_order(&root.data.lower);
+        }
+        let (Classification::Decided(lower_sign), Classification::Decided(upper_sign)) = (
+            root.polynomial_endpoint_sign(0, &strict)?,
+            root.polynomial_endpoint_sign(1, &strict)?,
+        ) else {
+            return Ok(None);
+        };
+        if !strict_signs_are_opposite(Some(lower_sign), Some(upper_sign)) {
+            return Ok(None);
+        }
+        match decided_order(&root.data.lower)? {
+            Some(Ordering::Less | Ordering::Equal) => return Ok(Some(Ordering::Less)),
+            Some(Ordering::Greater) => {}
+            None => return Ok(None),
+        }
+        match decided_order(&root.data.upper)? {
+            Some(Ordering::Greater | Ordering::Equal) => return Ok(Some(Ordering::Greater)),
+            Some(Ordering::Less) => {}
+            None => return Ok(None),
+        }
+        let Classification::Decided(sign) =
+            self.recursive_polynomial_sign_joined(&authority.coefficients, policy)?
+        else {
+            return Ok(None);
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "recursive-projective-parameter-order",
+            "retained-polynomial-root-sign",
+        );
+        Ok(Some(if sign == RealSign::Zero {
+            Ordering::Equal
+        } else if sign == lower_sign {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        }))
     }
 
     /// Orders this singleton against an existing coefficient-field root.
@@ -4570,6 +4655,20 @@ impl BezierRecursiveProjectiveParameter2 {
         if let Some(value) = other.scalar() {
             return self.order_to_real(value, policy);
         }
+        if let BezierParameter2::Algebraic(native) = other
+            && self.data.projection.proved_equal_to(native)
+        {
+            // A boundary arrangement asks the same equality at every
+            // consumer of one contact. Its exact proof can dominate a whole
+            // stroke reconstruction, so reuse it for this root identity.
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-parameter-comparison",
+                "retained-native-equality",
+            );
+            return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+        }
         if let Some(scalar) = self.projective_scalar() {
             let field = scalar.denominator.field();
             if let Some(root) =
@@ -4677,6 +4776,7 @@ impl BezierRecursiveProjectiveParameter2 {
                     "recursive-parameter-comparison",
                     "native-root-replay",
                 );
+                self.data.projection.retain_equal(selection);
                 return Ok(Classification::Decided(std::cmp::Ordering::Equal));
             }
             if policy.has_bounded_exact_predicate_budget() && refinement_steps >= 8 {
@@ -4703,7 +4803,10 @@ impl BezierRecursiveProjectiveParameter2 {
                         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                     }
                 })?;
-                if let Classification::Decided(_) = exact {
+                if let Classification::Decided(order) = exact {
+                    if order == std::cmp::Ordering::Equal {
+                        self.data.projection.retain_equal(selection);
+                    }
                     return Ok(exact);
                 }
                 if refinement_steps >= 512 {
@@ -5007,6 +5110,7 @@ impl BezierRecursiveProjectiveParameter2 {
             let field = source_authority.field.clone();
             let projection = Arc::new(BezierRecursiveParameterProjection2 {
                 parameter: OnceLock::new(),
+                equal_natives: Mutex::default(),
                 chart: Some(Arc::new(BezierRecursiveParameterChart2 {
                     source,
                     numerator,

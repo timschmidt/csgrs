@@ -1301,6 +1301,15 @@ impl BezierAlgebraicParameter2 {
         parameter
     }
 
+    /// Whether both values name the same selected root by construction: one
+    /// shared refinement authority, or the same polynomial, isolating
+    /// interval and root count. `false` makes no claim about their values.
+    pub(crate) fn shares_root_identity(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data)
+            || Arc::ptr_eq(&self.data.shared, &other.data.shared)
+            || self == other
+    }
+
     /// Returns the certified chart `self = N(other) / D(other)` when both
     /// roots descend from the same selected root. Shared refinement authority
     /// proves identity even when their current isolating intervals differ.

@@ -2812,10 +2812,40 @@ struct BezierRecursiveProjectiveParameterData2 {
 #[derive(Debug, Default)]
 struct BezierRecursiveParameterProjection2 {
     parameter: OnceLock<BezierParameter2>,
+    /// Native algebraic roots already proved equal to this root by an exact
+    /// comparison, at most `RECURSIVE_EQUAL_NATIVE_LIMIT` of them. Refinements
+    /// and clones share the entries. Only equality is retained; an undecided
+    /// or unequal comparison leaves no entry.
+    equal_natives: Mutex<Vec<BezierAlgebraicParameter2>>,
     /// One composed chart back to an unmapped selected root. Refinements
     /// share this identity; a later projection replays the map rather than
     /// eliminating an independently reconstructed image polynomial.
     chart: Option<Arc<BezierRecursiveParameterChart2>>,
+}
+
+/// Native roots one recursive root retains as proved equal to it.
+const RECURSIVE_EQUAL_NATIVE_LIMIT: usize = 4;
+
+impl BezierRecursiveParameterProjection2 {
+    fn proved_equal_to(&self, native: &BezierAlgebraicParameter2) -> bool {
+        self.equal_natives.lock().is_ok_and(|natives| {
+            natives
+                .iter()
+                .any(|known| known.shares_root_identity(native))
+        })
+    }
+
+    /// Retains an exact proof that this root equals `native`.
+    fn retain_equal(&self, native: &BezierAlgebraicParameter2) {
+        if let Ok(mut natives) = self.equal_natives.lock()
+            && natives.len() < RECURSIVE_EQUAL_NATIVE_LIMIT
+            && !natives
+                .iter()
+                .any(|known| known.shares_root_identity(native))
+        {
+            natives.push(native.clone());
+        }
+    }
 }
 
 #[derive(Debug)]
