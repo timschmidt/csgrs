@@ -139,9 +139,12 @@ debug = false
 debug-assertions = false
 overflow-checks = false
 
-# Size- and link-optimized artifacts. These stay out of the release profile,
-# which builds and tests every workspace crate: `panic = "abort"` cannot link
-# release test harnesses for crates with binary targets.
+# Size- and link-optimized artifacts for very small installations such as
+# microcontroller flash. `opt-level = "z"` trades speed for size; PERFORMANCE.md
+# ("Artifact size and dependency attribution") measures it against `s`. These
+# stay out of the release profile, which builds and tests every workspace
+# crate: `panic = "abort"` cannot link release test harnesses for crates with
+# binary targets.
 [profile.embedded]
 inherits = "release"
 opt-level = "z"

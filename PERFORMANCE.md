@@ -741,10 +741,10 @@ Absolute times moved between sessions with host load; the ratios did not.
 `opt-level = 3`, whose allocated bytes are 1,722,288 (`primitive`) and
 11,902,099 (`composed`). Every run printed the same rows. `s` is therefore a
 measured intermediate: 12–20% more allocated native bytes and 20–38% more WASM
-code than `z`, for 25–32% less time. The profile is unchanged. `embedded`
-is the repository's explicit minimum-size profile and `release` and `wasm` are
-its speed profiles; whether `embedded` should trade size for this speed is a
-profile-contract decision that these measurements inform but do not make.
+code than `z`, for 25–32% less time. The profile is unchanged: `embedded`
+targets very small installations such as microcontroller flash, where size
+is the constraint, so it keeps `z`. `release` and `wasm` are the speed
+profiles.
 
 ### Crate attribution
 
