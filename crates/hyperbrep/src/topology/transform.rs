@@ -500,6 +500,7 @@ impl ArenaModel {
                                 u_path: transform_vector_curve(&certificate.u_path, transform)?,
                                 v_path: transform_vector_curve(&certificate.v_path, transform)?,
                                 area_scale_integral: certificate.area_scale_integral.clone(),
+                                progress: certificate.progress,
                             })
                         })
                         .transpose()

@@ -402,11 +402,14 @@ pub fn sweep_region(
 /// Sweeps one exact polygon along a rational Bézier path in a fixed frame.
 ///
 /// `path(t) + u*x + v*y` embeds every section. The path is the absolute locus
-/// of the profile origin and must advance affinely and strictly positively
-/// through the oriented profile plane: normalized plane progress is therefore
-/// exactly the path's public parameter. Lateral path curvature is unrestricted.
-/// Side faces are native tensor rational Bézier translation surfaces and no
-/// moving-frame, sampling, or corner policy is inferred.
+/// of the profile origin and must cross the oriented profile planes with
+/// certified strictly positive speed at every parameter, so each section plane
+/// meets it exactly once. Affine progress is recognized by an exact Bernstein
+/// identity; other progress by a Bernstein or exact Sturm proof that its
+/// derivative never vanishes. A stationary or retreating parameter returns
+/// [`ConstructionError::NonMonotoneSweepPath`]. Lateral path curvature is
+/// unrestricted. Side faces are native tensor rational Bézier translation
+/// surfaces and no moving-frame, sampling, or corner policy is inferred.
 pub fn sweep_curve(
     profile: &[Point2],
     u: Vector3,
@@ -454,7 +457,8 @@ pub fn sweep_moving_frame(
 ///
 /// The authored frame is accepted only when its complete Bernstein form proves
 /// parallel section planes, positive affine plane progress, and an exactly
-/// strictly positive supported section-area law. Those restrictions make the
+/// strictly positive supported section-area law. Monotone non-affine progress
+/// is admitted only when every frame axis is constant, as in [`sweep_curve`]. Those restrictions make the
 /// resulting shell globally injective without sampling while still permitting
 /// exact shear, polynomial taper, and other non-rigid in-plane motion.
 pub fn sweep_moving_frame_region(

@@ -47,8 +47,9 @@ pub enum ConstructionError {
     IncompatibleLoftSections,
     /// A curve sweep currently requires a rational Bézier path.
     UnsupportedSweepPath,
-    /// A curve sweep path is not an exact positive affine graph through the
-    /// initial profile plane.
+    /// A curve sweep path lacks a certificate that it crosses the initial
+    /// profile planes with strictly positive speed at every parameter, or a
+    /// moving frame pairs such a non-affine path with varying axes.
     NonMonotoneSweepPath,
     /// A rational Bézier moving frame has inconsistent control counts or
     /// invalid projective data.
@@ -223,7 +224,7 @@ impl fmt::Display for ConstructionError {
                 formatter.write_str("curve sweep requires a rational Bézier path")
             }
             Self::NonMonotoneSweepPath => formatter.write_str(
-                "curve sweep path must advance affinely and positively through the profile plane",
+                "curve sweep path must cross the profile planes with certified positive speed",
             ),
             Self::InvalidSweepFrame => formatter.write_str(
                 "moving sweep frame requires matching valid rational Bezier control data",
@@ -2766,11 +2767,14 @@ pub fn sweep_region(
 /// Sweeps one exact polygon along a rational Bézier path in a fixed frame.
 ///
 /// `path(t) + u*x + v*y` embeds every section. The path is the absolute locus
-/// of the profile origin and must advance affinely and strictly positively
-/// through the oriented profile plane: normalized plane progress is therefore
-/// exactly the path's public parameter. Lateral path curvature is unrestricted.
-/// Side faces are native tensor rational Bézier translation surfaces and no
-/// moving-frame, sampling, or corner policy is inferred.
+/// of the profile origin and must cross the oriented profile planes with
+/// certified strictly positive speed at every parameter, so each section plane
+/// meets it exactly once. Affine progress is recognized by an exact Bernstein
+/// identity; other progress by a Bernstein or exact Sturm proof that its
+/// derivative never vanishes. A stationary or retreating parameter returns
+/// [`ConstructionError::NonMonotoneSweepPath`]. Lateral path curvature is
+/// unrestricted. Side faces are native tensor rational Bézier translation
+/// surfaces and no moving-frame, sampling, or corner policy is inferred.
 pub fn sweep_curve(
     profile: &[Point2],
     u: Vector3,
@@ -2826,7 +2830,8 @@ pub fn sweep_moving_frame(
 ///
 /// The authored frame is accepted only when its complete Bernstein form proves
 /// parallel section planes, positive affine plane progress, and an exactly
-/// strictly positive supported section-area law. Those restrictions make the
+/// strictly positive supported section-area law. Monotone non-affine progress
+/// is admitted only when every frame axis is constant, as in [`sweep_curve`]. Those restrictions make the
 /// resulting shell globally injective without sampling while still permitting
 /// exact shear, polynomial taper, and other non-rigid in-plane motion.
 pub fn sweep_moving_frame_region(
@@ -2864,7 +2869,16 @@ fn sweep_rational_bezier_frame_region(
     loops.push(outer);
     loops.extend(holes);
     let (normal, _) = certify_sweep_frame(&origins, &u_axes, &v_axes, &weights)?;
-    certify_sweep_path_progress(&origins, &weights, &normal)?;
+    match crate::topology::certified_sweep_progress(&origins, &weights, &normal)? {
+        Some(crate::topology::SweepProgress::Affine) => {}
+        // Non-affine progress is inverted through the path's plane contacts,
+        // which locate a profile section only in one fixed frame.
+        Some(crate::topology::SweepProgress::Monotone)
+            if sweep_frame_is_fixed(&u_axes, &v_axes)? => {}
+        Some(crate::topology::SweepProgress::Monotone) | None => {
+            return Err(ConstructionError::NonMonotoneSweepPath);
+        }
+    }
 
     let count = loops.iter().map(Vec::len).sum::<usize>();
     let mut loop_offsets = Vec::with_capacity(loops.len());
@@ -3219,69 +3233,25 @@ fn binomial_real(n: usize, k: usize) -> Result<Real, ConstructionError> {
     Ok(result)
 }
 
-fn certify_sweep_path_progress(
-    controls: &[Point3],
-    weights: &[Real],
-    normal: &Vector3,
-) -> Result<Real, ConstructionError> {
-    let degree = controls
-        .len()
-        .checked_sub(1)
-        .ok_or(ConstructionError::UnsupportedSweepPath)?;
-    let scalar = |point: &Point3| normal.dot(&Vector3::from(point.clone()));
-    let start = scalar(&controls[0]);
-    let end = scalar(&controls[degree]);
-    let progress = &end - &start;
-    if decided_construction_order(compare_reals(
-        &progress,
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ))? != std::cmp::Ordering::Greater
-    {
-        return Err(ConstructionError::NonMonotoneSweepPath);
-    }
-    let denominator =
-        Real::from(u128::try_from(degree + 1).expect("usize is representable as u128"));
-    let numerators = controls
-        .iter()
-        .zip(weights)
-        .map(|(control, weight)| weight * scalar(control))
-        .collect::<Vec<_>>();
-    for index in 0..=degree + 1 {
-        let lower_count =
-            Real::from(u128::try_from(degree + 1 - index).expect("usize is representable as u128"));
-        let upper_count =
-            Real::from(u128::try_from(index).expect("usize is representable as u128"));
-        let elevated_numerator = (if index <= degree {
-            &lower_count * &numerators[index]
-        } else {
-            Real::zero()
-        }) + if index > 0 {
-            &upper_count * &numerators[index - 1]
-        } else {
-            Real::zero()
-        };
-        let affine_times_weight = (if index <= degree {
-            &lower_count * &start * &weights[index]
-        } else {
-            Real::zero()
-        }) + if index > 0 {
-            &upper_count * &end * &weights[index - 1]
-        } else {
-            Real::zero()
-        };
-        let difference = (elevated_numerator / &denominator).map_err(GeometryError::Numeric)?
-            - (affine_times_weight / &denominator).map_err(GeometryError::Numeric)?;
-        if decided_construction_order(compare_reals(
-            &difference,
-            &Real::zero(),
-            crate::STRICT_PREDICATES,
-        ))? != std::cmp::Ordering::Equal
-        {
-            return Err(ConstructionError::NonMonotoneSweepPath);
+fn sweep_frame_is_fixed(u_axes: &[Vector3], v_axes: &[Vector3]) -> Result<bool, ConstructionError> {
+    for axes in [u_axes, v_axes] {
+        for axis in &axes[1..] {
+            if axis == &axes[0] {
+                continue;
+            }
+            for (component, first) in axis.0.iter().zip(&axes[0].0) {
+                if decided_construction_order(compare_reals(
+                    component,
+                    first,
+                    crate::STRICT_PREDICATES,
+                ))? != std::cmp::Ordering::Equal
+                {
+                    return Ok(false);
+                }
+            }
         }
     }
-    Ok(progress)
+    Ok(true)
 }
 
 fn place_linear_sweep(
@@ -10231,13 +10201,48 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
 
+        // z = 2t + 2t² is not affine but rises at every parameter, so its
+        // sections are the same profile and the volume is unchanged.
         let nonlinear_progress = Curve3::rational_bezier(
             vec![p(0, 0, 0), p(1, 0, 1), p(0, 0, 4)],
             vec![Real::one(), Real::one(), Real::one()],
         )
         .unwrap();
+        let (monotone, monotone_solid) =
+            sweep_curve(&profile, Vector3::x(), Vector3::y(), nonlinear_progress).unwrap();
         assert_eq!(
-            sweep_curve(&profile, Vector3::x(), Vector3::y(), nonlinear_progress,).unwrap_err(),
+            compare_reals(
+                &monotone.solid_volume(monotone_solid).unwrap(),
+                &r(16),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        // z = 3/2 is reached at t = 1/2, where the path is at x = 1/2.
+        let level = (r(3) / r(2)).unwrap();
+        for (x, expected) in [
+            (r(1) + &half, SolidPointLocation::Inside),
+            (half.clone(), SolidPointLocation::Boundary),
+            ((r(5) / r(2)).unwrap(), SolidPointLocation::Boundary),
+            ((r(13) / r(5)).unwrap(), SolidPointLocation::Outside),
+            ((r(2) / r(5)).unwrap(), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(
+                monotone
+                    .classify_point(monotone_solid, &Point3::new(x, Real::one(), level.clone()))
+                    .unwrap(),
+                expected
+            );
+        }
+        // z = 12t - 8t² ends above its start but descends after t = 3/4.
+        let backtracking = Curve3::rational_bezier(
+            vec![p(0, 0, 0), p(1, 0, 6), p(0, 0, 4)],
+            vec![Real::one(), Real::one(), Real::one()],
+        )
+        .unwrap();
+        assert_eq!(
+            sweep_curve(&profile, Vector3::x(), Vector3::y(), backtracking).unwrap_err(),
             ConstructionError::NonMonotoneSweepPath
         );
         assert_eq!(

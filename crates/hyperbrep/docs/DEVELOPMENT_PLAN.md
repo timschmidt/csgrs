@@ -2598,6 +2598,32 @@ These extend existing records and transforms; they add no whole-solid
 recognizer or surface-pair case. Measurements are in
 [`PERFORMANCE.md`](../PERFORMANCE.md).
 
+- **Monotone sweep progress (C02).** `sweep_curve` and `sweep_curve_region`
+  accepted only plane progress that is an exact affine function of the path
+  parameter, so `z = (t + t²)/2` returned `NonMonotoneSweepPath` although it
+  sweeps the same prism as `z = t`. Construction and the curve-sweep record
+  now share one certificate: the affine identity, else a positive
+  `N'W - NW'` on `[0, 1]` from Bernstein coefficients or an exact Sturm
+  count. Classification locates a monotone sweep's section by the path's
+  unique plane contact, retained as a selected root when needed. The volume
+  formula is unchanged because the frame is fixed. Remaining:
+  - a zero rate (the stationary endpoint of `z = t²`, a stationary interior
+    point) is still `NonMonotoneSweepPath`. Admitting it needs a
+    strict-monotonicity proof and a contract for the singular side
+    parameterization at that parameter;
+  - non-affine progress with a moving frame stays rejected. Its section
+    point needs the frame's rational inverse at a selected root, and its
+    volume the integral of the area law times the progress rate;
+  - a cold archive of a monotone sweep cut by a plane stores the cut path by
+    its subdivided controls (in `Q(√3, √7)` for the tested cut). A boundary
+    point at an irrational section offset, `(3 - √5)/2`, then needs a
+    nested-radical zero proof and stays `PlanarClassificationUnresolved`;
+    the live result decides it. Retaining the restricted connector's source
+    chart through the archive is the likely remedy; it is untested;
+  - the reunion of a sweep's cap-cut pieces fails with
+    `FallbackFailed { FacePartitionUnsupported }`, for affine progress too;
+  - the Sturm fallback is a fixed exact computation of degree `2d - 1` that
+    `WorkBudget` does not charge.
 - **Straight degree-elevated sweeps.** A straight sweep along an affine path
   written with degree two or more failed construction with
   `PlanarCurve(DisconnectedCurvePath)`. Its planar side patches were taken as

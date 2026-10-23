@@ -43,7 +43,9 @@ pub use correspondence::ParameterCorrespondence;
 pub use edit::*;
 pub use error::*;
 use helpers::*;
-pub(crate) use helpers::{circle_data_parameterizations_equal, compare_curve3_exact_data};
+pub(crate) use helpers::{
+    certified_sweep_progress, circle_data_parameterizations_equal, compare_curve3_exact_data,
+};
 pub use ids::*;
 use records::FaceBoundary;
 pub use records::*;
@@ -520,6 +522,19 @@ enum CertifiedLoftInterpolation {
     },
 }
 
+/// How a certified sweep path advances through its parallel section planes.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum SweepProgress {
+    /// Plane progress is an exact affine function of the path parameter, so
+    /// one exact division gives the section parameter of a point.
+    Affine,
+    /// Plane progress has a certified positive derivative on the closed
+    /// parameter domain without being affine. A point's section parameter is
+    /// the path's unique exact contact with the point's section plane. This is
+    /// admitted only for a fixed profile frame.
+    Monotone,
+}
+
 #[derive(Clone, Debug)]
 struct CertifiedCurveSweepShell {
     profile: Contour2,
@@ -528,6 +543,7 @@ struct CertifiedCurveSweepShell {
     u_path: Curve3,
     v_path: Curve3,
     area_scale_integral: Real,
+    progress: SweepProgress,
 }
 
 struct TensorPathChain {

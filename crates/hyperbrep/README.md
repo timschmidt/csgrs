@@ -303,19 +303,22 @@ The clean-break implementation currently provides:
   sweeps in an explicit model-space profile frame, including through-holes
   and shear without a hidden moving-frame policy;
 - exact `builder::{sweep_curve, sweep_curve_region}` for fixed-frame polygon
-  or through-hole region sweeps along rational Bézier paths whose normalized
-  profile-plane progress is proven affine and strictly positive by Bernstein
-  coefficient identity; cap holes remain inner wires in one genus shell,
-  lateral curvature is unrestricted, side faces are native tensor rational
-  Bézier translation surfaces, and no moving frame or sampling policy is
-  inferred;
+  or through-hole region sweeps along rational Bézier paths that cross the
+  profile planes with certified strictly positive speed at every parameter:
+  affine progress by Bernstein coefficient identity, other progress by a
+  Bernstein or exact Sturm proof that its derivative never vanishes. A point's
+  section is the path's unique exact plane contact, retained as a selected
+  root when it has no stored scalar. Stationary or retreating parameters are
+  rejected. Cap holes remain inner wires in one genus shell, lateral curvature
+  is unrestricted, side faces are native tensor rational Bézier translation
+  surfaces, and no moving frame or sampling policy is inferred;
 - exact `builder::{sweep_moving_frame, sweep_moving_frame_region}` for polygon
   or through-hole region sweeps through an explicit shared-weight rational
   Bézier origin/axis frame; complete Bernstein identities prove parallel
-  section planes, positive affine progress, and either constant rational or
-  strictly positive polynomial oriented section area; the latter is integrated
-  exactly, retaining authored shear and taper without inferred Frenet
-  transport or sampling;
+  section planes, positive affine progress (or monotone progress with constant
+  axes), and either constant rational or strictly positive polynomial oriented
+  section area; the latter is integrated exactly, retaining authored shear and
+  taper without inferred Frenet transport or sampling;
 - exact multi-section `builder::loft` for vertex-corresponding polygons:
   every span independently retains planar homothetic sides or certifies convex
   non-homothetic interpolation with native bilinear tensor patches;

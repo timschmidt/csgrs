@@ -1,5 +1,36 @@
 # HyperBREP Performance Contract
 
+## 2026-10-23: monotone fixed-frame sweep progress
+
+`sweep_curve` and `sweep_curve_region` required the path's plane progress to
+be an exact affine function of the parameter. `z = (t + t²)/2` on `[0, 1]`,
+which sweeps the same prism as `z = t`, returned `NonMonotoneSweepPath`
+(reproduced at `1a279a3f6f`). Construction and the curve-sweep record now
+share one certificate: the existing affine identity first, then `N'W - NW' > 0`
+on `[0, 1]` from its degree `2d - 1` Bernstein coefficients, then an exact
+Sturm count when an interior coefficient is negative. A zero rate anywhere
+stays rejected. Affine certificates take the former query path unchanged;
+a monotone one locates a point's section by the path's unique plane contact
+and classifies a selected contact through Hypercurve's retained-point
+classifier. Fixed frames keep the existing volume formula. Moving frames
+still require affine progress.
+
+Same probe, host and protocol as the entry below.
+
+| Case | Calls | Requested bytes | Median time |
+| --- | --- | --- | --- |
+| Affine curved sweep (build, volume, classification) | 1,520 → 1,518 | 391,169 → 390,633 | 358.8 → 356.3 us |
+| Affine moving-frame taper | 1,268 → 1,266 | 310,241 → 309,897 | 287.5 → 283.5 us |
+| `z = (t + t²)/2`, `x = t²`, classified at an irrational section | typed error after 54 → 1,888 | 11,400 → 412,969 | 16.6 → 398.7 us |
+| `z = (t + t³)/2`, `x = t²`, classified at a selected root | typed error after 55 → 3,427 | 12,584 → 588,823 | 23.7 → 604.0 us |
+| Sturm-certified dipping cubic (build, volume) | typed error after 60 → 1,739 | 12,744 → 472,953 | 23.9 → 430.8 us |
+
+The affine rows save two allocation calls: construction now uses the
+recognizer's division-free identity instead of its own divided copy, which is
+removed. The new rows are former failures and have no speedup baseline;
+their cost is comparable to the affine sweep. The Sturm fallback is not
+charged to `WorkBudget`.
+
 ## 2026-10-23: straight sweeps along degree-elevated paths
 
 A straight `sweep_curve` along an affine path written with degree two or

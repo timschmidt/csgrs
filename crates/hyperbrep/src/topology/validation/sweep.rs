@@ -202,7 +202,6 @@ impl ArenaModelBuilder {
         let path = connector_by_lower[&reference].clone();
         if !real_values_equal(path.domain().represented_start()?, &Real::zero())?
             || !real_values_equal(path.domain().represented_end()?, &Real::one())?
-            || !certified_affine_sweep_progress(&path, &lower_u.cross(&lower_v))?
         {
             return Ok(None);
         }
@@ -212,6 +211,11 @@ impl ArenaModelBuilder {
         } = path.exact_data()
         else {
             unreachable!("connector kind was checked");
+        };
+        let Some(progress) =
+            certified_sweep_progress(&path_controls, &path_weights, &lower_u.cross(&lower_v))?
+        else {
+            return Ok(None);
         };
         let mut lower_coordinates = HashMap::with_capacity(count);
         let mut connector_controls = HashMap::with_capacity(count);
@@ -284,6 +288,15 @@ impl ArenaModelBuilder {
                 second_difference * first_coordinate.x() - first_difference * second_coordinate.x(),
                 &basis_determinant,
             )?);
+        }
+        if progress == SweepProgress::Monotone {
+            // Non-affine progress is inverted through one plane contact of the
+            // path; the section frame must then be the same at every parameter.
+            for (u, v) in u_controls.iter().zip(&v_controls) {
+                if !vectors_equal(u, &u_controls[0])? || !vectors_equal(v, &v_controls[0])? {
+                    return Ok(None);
+                }
+            }
         }
         let Some(area_scale_integral) = certified_sweep_frame_area_integral(
             &u_controls,
@@ -486,6 +499,7 @@ impl ArenaModelBuilder {
             u_path: vector_control_curve(u_controls, &path_weights)?,
             v_path: vector_control_curve(v_controls, &path_weights)?,
             area_scale_integral,
+            progress,
         }))
     }
 
@@ -993,7 +1007,6 @@ impl ArenaModelBuilder {
         let path = connector_by_lower[&reference].clone();
         if !real_values_equal(path.domain().represented_start()?, &Real::zero())?
             || !real_values_equal(path.domain().represented_end()?, &Real::one())?
-            || !certified_affine_sweep_progress(&path, &lower_u.cross(&lower_v))?
         {
             return Ok(None);
         }
@@ -1003,6 +1016,11 @@ impl ArenaModelBuilder {
         } = path.exact_data()
         else {
             unreachable!("connector kind was checked");
+        };
+        let Some(progress) =
+            certified_sweep_progress(&path_controls, &path_weights, &lower_u.cross(&lower_v))?
+        else {
+            return Ok(None);
         };
         for lower in &lower_vertices {
             let offset = self.vertex_ref(*lower)?.represented_point()? - &reference_point;
@@ -1160,6 +1178,7 @@ impl ArenaModelBuilder {
             u_path: constant_vector_curve(&lower_u, &path_weights)?,
             v_path: constant_vector_curve(&lower_v, &path_weights)?,
             area_scale_integral: Real::one(),
+            progress,
         }))
     }
 }

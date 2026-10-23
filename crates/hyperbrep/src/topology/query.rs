@@ -326,31 +326,64 @@ impl ArenaModel {
                 .v_path
                 .evaluate_real(sweep.v_path.domain().represented_start()?)?,
         );
-        let normal = start_u.cross(&start_v);
-        let progress = normal.dot(&(end - &start));
-        let parameter = (normal.dot(&(point - &start)) / &progress)
-            .map_err(|problem| QueryError::from(GeometryError::Numeric(problem)))?;
-        let lower_order = decided_model_order(compare_reals(
-            &parameter,
-            &Real::zero(),
-            crate::STRICT_PREDICATES,
-        ))?;
-        let upper_order = decided_model_order(compare_reals(
-            &parameter,
-            &Real::one(),
-            crate::STRICT_PREDICATES,
-        ))?;
-        if lower_order == std::cmp::Ordering::Less || upper_order == std::cmp::Ordering::Greater {
-            return Ok(SolidPointLocation::Outside);
-        }
-        let path_point = sweep.path.evaluate_real(&parameter)?;
-        let u = Vector3::from(sweep.u_path.evaluate_real(&parameter)?);
-        let v = Vector3::from(sweep.v_path.evaluate_real(&parameter)?);
-        let profile_point = project_point_to_plane_frame(point, &path_point, &u, &v)
-            .map_err(build_error_geometry)?;
-        let location = match crate::error::classified(sweep.profile.classify_point(&profile_point))
-            .map_err(GeometryError::from)?
-        {
+        let (lower_order, upper_order, profile_point) = match sweep.progress {
+            SweepProgress::Affine => {
+                let normal = start_u.cross(&start_v);
+                let progress = normal.dot(&(end - &start));
+                let parameter = (normal.dot(&(point - &start)) / &progress)
+                    .map_err(|problem| QueryError::from(GeometryError::Numeric(problem)))?;
+                let lower_order = decided_model_order(compare_reals(
+                    &parameter,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))?;
+                let upper_order = decided_model_order(compare_reals(
+                    &parameter,
+                    &Real::one(),
+                    crate::STRICT_PREDICATES,
+                ))?;
+                if lower_order == std::cmp::Ordering::Less
+                    || upper_order == std::cmp::Ordering::Greater
+                {
+                    return Ok(SolidPointLocation::Outside);
+                }
+                let path_point = sweep.path.evaluate_real(&parameter)?;
+                let u = Vector3::from(sweep.u_path.evaluate_real(&parameter)?);
+                let v = Vector3::from(sweep.v_path.evaluate_real(&parameter)?);
+                let profile_point = project_point_to_plane_frame(point, &path_point, &u, &v)
+                    .map_err(build_error_geometry)?;
+                (lower_order, upper_order, profile_point.into())
+            }
+            SweepProgress::Monotone => {
+                let Some(section) =
+                    monotone_sweep_section(sweep, point, &start, &end, &start_u, &start_v)?
+                else {
+                    return Ok(SolidPointLocation::Outside);
+                };
+                section
+            }
+        };
+        let classify = |contour: &Contour2| -> Result<_, QueryError> {
+            let classified = match profile_point.coordinates() {
+                Some(coordinates) => crate::error::classified(contour.classify_point(coordinates)),
+                // A selected section point keeps its root; Hypercurve's
+                // retained-point classifier decides it on the same boundary.
+                None => crate::error::classified(
+                    CurvePath2::try_new(
+                        contour
+                            .segments()
+                            .iter()
+                            .cloned()
+                            .map(curve2_from_segment)
+                            .collect(),
+                    )
+                    .map_err(GeometryError::from)?
+                    .classify_point(&profile_point),
+                ),
+            };
+            Ok(classified.map_err(GeometryError::from)?)
+        };
+        let location = match classify(&sweep.profile)? {
             Classification::Decided(location) => location,
             Classification::Uncertain(reason) => {
                 return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
@@ -362,9 +395,7 @@ impl ArenaModel {
             ContourPointLocation::Inside => {}
         }
         for hole in &sweep.holes {
-            match crate::error::classified(hole.classify_point(&profile_point))
-                .map_err(GeometryError::from)?
-            {
+            match classify(hole)? {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     return Ok(SolidPointLocation::Outside);
                 }
@@ -1694,4 +1725,94 @@ impl ArenaModel {
             _ => Err(GeometryError::UnsupportedPcurveContour),
         }
     }
+}
+
+/// Orders of a point's section parameter against the domain ends, and the
+/// point's profile coordinates in that section.
+type SweepSection = (
+    std::cmp::Ordering,
+    std::cmp::Ordering,
+    hypercurve::CurvePoint2,
+);
+
+/// Section orders and profile point of `point` in a monotone-progress sweep.
+///
+/// Plane progress is strictly monotone along the path, so the plane through
+/// `point` parallel to the caps meets the path exactly once when the point's
+/// level lies between the cap levels; `None` means the point is outside that
+/// slab. A represented contact keeps the scalar profile projection. A
+/// selected contact keeps its root: the profile point is the same root's image
+/// on the path's exact control projection into the fixed profile frame.
+fn monotone_sweep_section(
+    sweep: &CertifiedCurveSweepShell,
+    point: &Point3,
+    start: &Point3,
+    end: &Point3,
+    u: &Vector3,
+    v: &Vector3,
+) -> Result<Option<SweepSection>, QueryError> {
+    let normal = u.cross(v);
+    let level = normal.dot(&Vector3::from(point.clone()));
+    // A reflected model keeps its path; its progress then descends.
+    let ascending = decided_model_order(compare_reals(
+        &normal.dot(&(end - start)),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == std::cmp::Ordering::Greater;
+    let order = |cap: &Point3| -> Result<std::cmp::Ordering, QueryError> {
+        let order = decided_model_order(compare_reals(
+            &level,
+            &normal.dot(&Vector3::from(cap.clone())),
+            crate::STRICT_PREDICATES,
+        ))?;
+        Ok(if ascending { order } else { order.reverse() })
+    };
+    let lower_order = order(start)?;
+    let upper_order = order(end)?;
+    if lower_order == std::cmp::Ordering::Less || upper_order == std::cmp::Ordering::Greater {
+        return Ok(None);
+    }
+    let path_point = if lower_order == std::cmp::Ordering::Equal {
+        start.clone()
+    } else if upper_order == std::cmp::Ordering::Equal {
+        end.clone()
+    } else {
+        let section = Surface::plane(point.clone(), u.clone(), v.clone())?;
+        let crate::CurveSurfaceIntersection::Points(contacts) =
+            section.intersect_curve(&sweep.path)?
+        else {
+            return Err(GeometryError::UnsupportedIntersection.into());
+        };
+        // The progress certificate excludes any second contact.
+        let [contact] = contacts.as_slice() else {
+            return Err(GeometryError::UnsupportedIntersection.into());
+        };
+        match contact.point.try_coordinates() {
+            Some(coordinates) => coordinates.clone(),
+            None => {
+                let Curve3ExactData::RationalBezier {
+                    control_points,
+                    weights,
+                } = sweep.path.exact_data()
+                else {
+                    return Err(GeometryError::UnsupportedSelectedEvaluation.into());
+                };
+                let projected = control_points
+                    .iter()
+                    .map(|control| project_point_to_plane_frame(point, control, u, v))
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(build_error_geometry)?;
+                let image = Curve2::from(
+                    RationalBezier2::try_new(projected, weights).map_err(GeometryError::from)?,
+                );
+                let profile_point = image
+                    .point_at(&contact.parameter.curve_parameter())
+                    .map_err(GeometryError::from)?;
+                return Ok(Some((lower_order, upper_order, profile_point)));
+            }
+        }
+    };
+    let profile_point =
+        project_point_to_plane_frame(point, &path_point, u, v).map_err(build_error_geometry)?;
+    Ok(Some((lower_order, upper_order, profile_point.into())))
 }
