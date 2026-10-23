@@ -1,5 +1,35 @@
 # HyperBREP Performance Contract
 
+## 2026-10-23: reflected charts of shared pcurves
+
+An orientation-reversing transform reflected every pcurve about one pivot,
+the first coordinate's reversal sum of its owning surface chart, and returned
+`UnsupportedTransform` when one pcurve was shared by charts with different
+pivots (reproduced at `1a279a3f6f`). The public `Edit::replace_edge_use` and
+the native archive admit such a model: a curved sweep whose top-cap use of
+the segment `(0,0)→(1,0)` shares the side patch's record, plane pivot 0 and
+rational Bézier pivot 1. Reflection now keeps one transported record per
+pivot. The first keeps its arena position and later ones are appended, so a
+model without conflicting pivots produces the same records as before; the
+axial chart path, which already did this, is unchanged. Sharing follows
+certified pivot equality; an undecided comparison now yields one more equally
+exact record instead of `PredicateUnresolved`.
+
+Same probe, host and protocol as the straight-sweep entry below. Archives of
+the reflected cuboid, curved sweep, cylinder (both branches), NURBS and arc
+prisms, torus and sphere are byte-identical before and after.
+
+| Reflection (build, transform, volume) | Calls | Requested bytes | Median time |
+| --- | --- | --- | --- |
+| Cuboid, `x → -x` | 1,518 → 1,512 | 228,394 → 227,442 | 273.2 → 272.3 us |
+| Curved sweep, `x → -x` | 1,741 → 1,733 | 479,358 → 477,830 | 452.0 → 445.7 us |
+| Cylinder, `x → -x` | 4,255 → 4,249 | 439,502 → 438,550 | 554.1 → 558.9 us |
+| Cylinder, `diag(-2, 2, 2)` (axial path, unchanged) | 4,557 → 4,557 | 474,990 → 475,062 | 612.5 → 611.2 us |
+
+The reflected cases save allocations because the pcurve and edge-use vectors
+are reserved once instead of growing while fallible results are collected.
+The shared-pcurve model is a former failure.
+
 ## 2026-10-23: monotone fixed-frame sweep progress
 
 `sweep_curve` and `sweep_curve_region` required the path's plane progress to

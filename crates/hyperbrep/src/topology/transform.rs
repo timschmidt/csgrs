@@ -87,6 +87,73 @@ impl ArenaModel {
         Ok((pcurves, uses))
     }
 
+    /// Orientation reversal reflects every chart's first coordinate about
+    /// its surface's pivot. A pcurve shared by charts with different pivots
+    /// gets one transported record per pivot: the first keeps its arena
+    /// position and later ones are appended. Records are shared only on a
+    /// certified pivot equality; an undecided comparison costs one more
+    /// record, which is equally exact.
+    fn reflected_charts(&self) -> Result<(Vec<Pcurve>, Vec<EdgeUse>), GeometryError> {
+        let equal = |first: &Real, second: &Real| {
+            compare_reals(first, second, crate::STRICT_PREDICATES).value()
+                == Some(std::cmp::Ordering::Equal)
+        };
+        let source_count = self.data.pcurves.len();
+        let mut first_pivots = vec![None::<Real>; source_count];
+        let mut added = Vec::<(PcurveId, Real)>::new();
+        let mut uses = Vec::with_capacity(self.data.edge_uses.len());
+        for (index, edge_use) in self.data.edge_uses.iter().enumerate() {
+            let face = self.data.wire_face[self.data.edge_use_wire[index].index()];
+            let surface = &self.data.surfaces[self.data.faces[face.index()].surface.index()];
+            let pivot = surface.reflection_sum();
+            let slot = &mut first_pivots[edge_use.pcurve.index()];
+            let pcurve = match slot {
+                None => {
+                    *slot = Some(pivot.clone());
+                    edge_use.pcurve
+                }
+                Some(first) if equal(first, &pivot) => edge_use.pcurve,
+                Some(_) => {
+                    let position = match added.iter().position(|(source, prior)| {
+                        *source == edge_use.pcurve && equal(prior, &pivot)
+                    }) {
+                        Some(position) => position,
+                        None => {
+                            added.try_reserve(1).map_err(|_| {
+                                GeometryError::Numeric(hyperreal::Problem::Exhausted)
+                            })?;
+                            added.push((edge_use.pcurve, pivot.clone()));
+                            added.len() - 1
+                        }
+                    };
+                    PcurveId::from_index(source_count + position)
+                        .ok_or(GeometryError::Numeric(hyperreal::Problem::Exhausted))?
+                }
+            };
+            uses.push(EdgeUse {
+                edge: edge_use.edge,
+                direction: edge_use.direction.reversed(),
+                pcurve,
+                parameter_correspondence: edge_use
+                    .parameter_correspondence
+                    .reflected_and_reversed_pcurve(
+                        &self.data.pcurves[edge_use.pcurve.index()],
+                        &pivot,
+                    )?,
+                image_certificate: edge_use.image_certificate,
+            });
+        }
+        let mut pcurves = Vec::with_capacity(source_count + added.len());
+        // A pcurve no edge uses keeps the zero-pivot reflection.
+        for (pcurve, pivot) in self.data.pcurves.iter().zip(first_pivots) {
+            pcurves.push(pcurve.reflected_and_reversed_x(pivot.unwrap_or_else(Real::zero))?);
+        }
+        for (source, pivot) in added {
+            pcurves.push(self.data.pcurves[source.index()].reflected_and_reversed_x(pivot)?);
+        }
+        Ok((pcurves, uses))
+    }
+
     /// Applies one certified invertible affine transform to the entire model.
     ///
     /// Exact curve and surface carriers are rebuilt in arena order. Analytic
@@ -157,82 +224,14 @@ impl ArenaModel {
                 } else {
                     None
                 };
-            let (pcurves, edge_uses) = if let Some(scale) =
-                axial_scale.filter(|scale| *scale != &Real::one())
-            {
-                self.transformed_axial_charts(scale, reverses_orientation)?
-            } else {
-                let pcurves = if reverses_orientation {
-                    let mut reflection_sums = vec![None::<Real>; self.data.pcurves.len()];
-                    for (edge_use_index, edge_use) in self.data.edge_uses.iter().enumerate() {
-                        let wire = self.data.edge_use_wire[edge_use_index];
-                        let face = self.data.wire_face[wire.index()];
-                        let surface =
-                            &self.data.surfaces[self.data.faces[face.index()].surface.index()];
-                        let reflection_sum = surface.reflection_sum();
-                        let slot = &mut reflection_sums[edge_use.pcurve.index()];
-                        if let Some(existing) = slot {
-                            match compare_reals(existing, &reflection_sum, crate::STRICT_PREDICATES)
-                            {
-                                PredicateOutcome::Decided {
-                                    value: std::cmp::Ordering::Equal,
-                                    ..
-                                } => {}
-                                PredicateOutcome::Decided { .. } => {
-                                    return Err(GeometryError::UnsupportedTransform);
-                                }
-                                PredicateOutcome::Unknown { needed, stage } => {
-                                    return Err(GeometryError::PredicateUnresolved {
-                                        needed,
-                                        stage,
-                                    });
-                                }
-                            }
-                        } else {
-                            *slot = Some(reflection_sum);
-                        }
-                    }
-                    self.data
-                        .pcurves
-                        .iter()
-                        .zip(reflection_sums)
-                        .map(|(pcurve, reflection_sum)| {
-                            pcurve
-                                .reflected_and_reversed_x(reflection_sum.unwrap_or_else(Real::zero))
-                        })
-                        .collect::<Result<Vec<_>, _>>()?
+            let (pcurves, edge_uses) =
+                if let Some(scale) = axial_scale.filter(|scale| *scale != &Real::one()) {
+                    self.transformed_axial_charts(scale, reverses_orientation)?
+                } else if reverses_orientation {
+                    self.reflected_charts()?
                 } else {
-                    self.data.pcurves.clone()
+                    (self.data.pcurves.clone(), self.data.edge_uses.clone())
                 };
-                let edge_uses = if reverses_orientation {
-                    self.data
-                        .edge_uses
-                        .iter()
-                        .enumerate()
-                        .map(|(index, edge_use)| {
-                            let face = self.data.wire_face[self.data.edge_use_wire[index].index()];
-                            let surface =
-                                &self.data.surfaces[self.data.faces[face.index()].surface.index()];
-                            let pcurve = &self.data.pcurves[edge_use.pcurve.index()];
-                            Ok::<_, GeometryError>(EdgeUse {
-                                edge: edge_use.edge,
-                                direction: edge_use.direction.reversed(),
-                                pcurve: edge_use.pcurve,
-                                parameter_correspondence: edge_use
-                                    .parameter_correspondence
-                                    .reflected_and_reversed_pcurve(
-                                        pcurve,
-                                        &surface.reflection_sum(),
-                                    )?,
-                                image_certificate: edge_use.image_certificate,
-                            })
-                        })
-                        .collect::<Result<Vec<_>, _>>()?
-                } else {
-                    self.data.edge_uses.clone()
-                };
-                (pcurves, edge_uses)
-            };
             let certified_cylinders = self
                 .data
                 .certified_cylinders

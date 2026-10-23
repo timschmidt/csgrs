@@ -2631,6 +2631,14 @@ recognizer or surface-pair case. Measurements are in
   patch chart, were mixed with projections into the canonical plane frame. A
   cap pair is now declined unless every curved boundary pcurve's chart is
   that frame; the sweep keeps its curve-sweep record.
+- **Reflected shared pcurves (C03).** An orientation-reversing transform
+  reflected each pcurve about one pivot and returned `UnsupportedTransform`
+  when a pcurve was shared by charts with different pivots, such as a plane
+  cap (pivot 0) and a rational Bézier side (pivot 1). The public edit API and
+  the native archive admit such models. Reflection now keeps one transported
+  record per pivot, as the axial chart path already did. The broader C03
+  extension, general affine images of partial-depth analytic shells, is not
+  attempted.
 
 ### Current implementation priority
 
