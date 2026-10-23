@@ -2592,6 +2592,20 @@ Defects fixed during the merge:
   panicked otherwise. A shared accessor now returns
   `GeometryError::UnsupportedIntersection`.
 
+### Research program increments (2026-10-23)
+
+These extend existing records and transforms; they add no whole-solid
+recognizer or surface-pair case. Measurements are in
+[`PERFORMANCE.md`](../PERFORMANCE.md).
+
+- **Straight degree-elevated sweeps.** A straight sweep along an affine path
+  written with degree two or more failed construction with
+  `PlanarCurve(DisconnectedCurvePath)`. Its planar side patches were taken as
+  prism caps, and their curved boundary pcurves, which are coordinates in the
+  patch chart, were mixed with projections into the canonical plane frame. A
+  cap pair is now declined unless every curved boundary pcurve's chart is
+  that frame; the sweep keeps its curve-sweep record.
+
 ### Current implementation priority
 
 Apply the [upstream acceptance order](#acceptance-order-after-the-upstream-integration)

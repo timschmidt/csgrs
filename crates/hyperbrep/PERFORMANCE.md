@@ -1,5 +1,42 @@
 # HyperBREP Performance Contract
 
+## 2026-10-23: straight sweeps along degree-elevated paths
+
+A straight `sweep_curve` along an affine path written with degree two or
+more, such as `z = t` with controls `0, 1/2, 1`, failed construction with
+`PlanarCurve(DisconnectedCurvePath)` (reproduced at `1a279a3f6f`). Its side
+patches are planar, so the prism recognizer took two opposite sides as caps.
+Their curved path-edge pcurves are coordinates in the patch chart, which is
+the canonical plane frame scaled by the degree along the path, and were joined
+with line edges projected into that frame. A cap pair is now declined unless
+each curved boundary pcurve's face chart is the frame: the native plane that
+defines it, an identical plane, or a constant-weight tensor patch on the
+frame's affine grid. A degree-one path, whose patch chart is the frame, keeps
+its prism record; the degree-elevated sweep keeps its curve-sweep record.
+
+Measured with a temporary counting-allocator example (not committed), built
+by `cargo build --release -p hyperbrep --example <probe>` with Rust 1.98.1 on
+a shared 16-thread Ryzen 7 5800X3D (load average 6.6-11.7). Baseline
+`1a279a3f6f` and the candidate tree of this research batch alternated for
+three rounds. Each case runs once warm, then once for its allocation calls and
+requested bytes, then 15 samples of five iterations; the table gives the
+median sample. Allocation counts were identical in every round; times are
+noisy evidence only. Archives of the unchanged cases are byte-identical.
+
+| Case (build, volume, one classification) | Calls | Requested bytes | Median time |
+| --- | --- | --- | --- |
+| `cuboid` | 1,423 → 1,423 | 164,893 → 164,933 | 242.4 → 237.0 us |
+| Prism over a NURBS-edged path | 1,738 → 1,738 | 239,657 → 239,697 | 279.3 → 270.9 us |
+| Prism over a half disk (arc edge) | 929 → 929 | 123,685 → 123,725 | 143.1 → 140.5 us |
+| Straight sweep, degree-one path | 4,549 → 4,561 | 695,885 → 697,301 | 871.3 → 849.3 us |
+| Straight sweep, degree-two path | typed error after 3,089 → 5,590 | 552,584 → 881,221 | 663.2 → 1,149.4 us |
+
+The prism rows add no allocation call; their 40 extra bytes are consistent
+with the 8-byte progress field that the monotone-sweep entry adds to each
+curve-sweep record slot. The degree-one sweep's 12 extra calls are the exact
+affine-grid comparison of its two planar side patches. The probe executable
+grows by 38,720 bytes (+0.17%) for all of this batch's changes together.
+
 ## 2026-10-18: upstream equality integration
 
 Three alternating pairs of each complete six-group native, nine-group spline and seven-group measurement consumer preserve every outcome, assertion and iteration count (22 groups; 18 processes). Observed time ratios range 0.773215–1.036326, with median 0.986173; 0 exceed the 10% review marker and 0 increase allocation requests. All slower and adverse rows remain. This is a finite downstream comparison on a shared host, not a rerun of the preceding 192-case catalogue, a general speedup, statistical significance or an internal resource bound.

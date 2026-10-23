@@ -104,6 +104,13 @@ impl ArenaModelBuilder {
                 let first_boundary = self
                     .cap_boundary_use_loops(faces, first_group)?
                     .expect("certified cap group has a manifold boundary");
+                if !self.curved_cap_pcurves_use_frame(
+                    &first_boundary,
+                    first_face.surface,
+                    &first_plane,
+                )? {
+                    continue;
+                }
                 let second_boundary = self
                     .cap_boundary_use_loops(faces, second_group)?
                     .expect("certified cap group has a manifold boundary");
@@ -278,6 +285,66 @@ impl ArenaModelBuilder {
         Ok(None)
     }
 
+    /// A curved cap edge contributes its face-local pcurve, which is a
+    /// coordinate curve in the cap frame only when its face's chart is that
+    /// frame. A tensor patch recognized as a plane need not be parameterized
+    /// by the frame (a straight degree-elevated sweep side is not), so such a
+    /// cap pair is declined rather than mixing coordinate systems.
+    fn curved_cap_pcurves_use_frame(
+        &self,
+        boundary: &[Vec<EdgeUseId>],
+        frame_surface: SurfaceId,
+        frame: &Surface,
+    ) -> Result<bool, BuildError> {
+        // A native plane is its own canonical frame, so the common cap needs
+        // no comparison and no allocation.
+        let native_frame = self.surface_ref(frame_surface)?.kind() == SurfaceKind::Plane;
+        let mut checked = Vec::new();
+        for edge_use_id in boundary.iter().flatten() {
+            let edge = self.edge_ref(self.edge_use_ref(*edge_use_id)?.edge)?;
+            if self.curve_ref(edge.curve)?.kind() == Curve3Kind::Line {
+                continue;
+            }
+            let face = self.wire_face[self.edge_use_wire[edge_use_id.index()]
+                .expect("cap boundary uses belong to wires")
+                .index()]
+            .expect("cap boundary wires belong to faces");
+            let surface = self.face_ref(face)?.surface;
+            if (native_frame && surface == frame_surface) || checked.contains(&surface) {
+                continue;
+            }
+            checked.push(surface);
+            let SurfaceExactData::Plane { origin, u, v } = frame.exact_data() else {
+                unreachable!("canonical prism support is a plane");
+            };
+            let chart_is_frame = match self.surface_ref(surface)?.exact_data() {
+                SurfaceExactData::Plane {
+                    origin: chart_origin,
+                    u: chart_u,
+                    v: chart_v,
+                } => {
+                    points_equal(&chart_origin, &origin)?
+                        && vectors_equal(&chart_u, &u)?
+                        && vectors_equal(&chart_v, &v)?
+                }
+                // `S(s, t) = origin + s u + t v` holds exactly when the
+                // weights are constant and every control lies on that grid.
+                SurfaceExactData::RationalBezier {
+                    control_points,
+                    weights,
+                } => {
+                    tensor_weights_are_constant(&weights)?
+                        && affine_grid_matches_frame(&control_points, &origin, &u, &v)?
+                }
+                _ => false,
+            };
+            if !chart_is_frame {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
     /// Exact signed profile-coordinate area of an admitted planar cap with
     /// native conics. Multiple closed wires contribute their oriented integrals.
     pub(crate) fn conic_cap_area(&self, face: FaceId) -> Result<Option<Real>, BuildError> {
@@ -376,6 +443,35 @@ fn prism_paths_have_positive_material(
                         .map_err(GeometryError::from)?,
                 )?
             {
+                return Ok(false);
+            }
+        }
+    }
+    Ok(true)
+}
+
+fn affine_grid_matches_frame(
+    control_points: &[Vec<Point3>],
+    origin: &Point3,
+    u: &Vector3,
+    v: &Vector3,
+) -> Result<bool, BuildError> {
+    let column_span = Real::from(
+        u128::try_from(control_points[0].len() - 1).expect("usize is representable as u128"),
+    );
+    let row_span = Real::from(
+        u128::try_from(control_points.len() - 1).expect("usize is representable as u128"),
+    );
+    for (row_index, row) in control_points.iter().enumerate() {
+        let t = (Real::from(u128::try_from(row_index).expect("usize is representable as u128"))
+            / &row_span)
+            .map_err(GeometryError::Numeric)?;
+        for (column_index, point) in row.iter().enumerate() {
+            let s =
+                (Real::from(u128::try_from(column_index).expect("usize is representable as u128"))
+                    / &column_span)
+                    .map_err(GeometryError::Numeric)?;
+            if !points_equal(point, &(origin.clone() + u.clone() * &s + v.clone() * &t))? {
                 return Ok(false);
             }
         }

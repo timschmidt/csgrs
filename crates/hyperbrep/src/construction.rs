@@ -10253,6 +10253,67 @@ mod tests {
     }
 
     #[test]
+    fn straight_sweeps_along_degree_elevated_paths_keep_exact_queries() {
+        // Straight affine paths written with elevated degree make every side
+        // a planar tensor patch whose chart is not the canonical plane frame.
+        let profile = [p2(0, 0), p2(2, 0), p2(2, 2), p2(0, 2)];
+        let third = (Real::one() / r(3)).unwrap();
+        let two_thirds = (r(2) / r(3)).unwrap();
+        let half = (Real::one() / r(2)).unwrap();
+        for (controls, slope) in [
+            (vec![p(0, 0, 0), p(0, 0, 2), p(0, 0, 4)], Real::zero()),
+            (
+                vec![
+                    p(0, 0, 0),
+                    Point3::new(Real::zero(), Real::zero(), r(4) * &third),
+                    Point3::new(Real::zero(), Real::zero(), r(4) * &two_thirds),
+                    p(0, 0, 4),
+                ],
+                Real::zero(),
+            ),
+            (vec![p(0, 0, 0), p(1, 0, 2), p(2, 0, 4)], half.clone()),
+        ] {
+            let count = controls.len();
+            let path = Curve3::rational_bezier(controls, vec![Real::one(); count]).unwrap();
+            let (model, solid) = sweep_curve(&profile, Vector3::x(), Vector3::y(), path).unwrap();
+            let rebuilt = crate::ImportedModel::from_json(
+                &model.to_json().unwrap(),
+                &crate::ArchiveLimits::default(),
+            )
+            .unwrap()
+            .validate()
+            .unwrap();
+            for model in [&model, &rebuilt] {
+                assert_eq!(
+                    compare_reals(
+                        &model.solid_volume(solid).unwrap(),
+                        &r(16),
+                        crate::STRICT_PREDICATES
+                    )
+                    .value(),
+                    Some(std::cmp::Ordering::Equal)
+                );
+                // The section at z = 2 starts at x = 2 * slope.
+                let start = r(2) * &slope;
+                for (x, expected) in [
+                    (&start + Real::one(), SolidPointLocation::Inside),
+                    (start.clone(), SolidPointLocation::Boundary),
+                    (&start + r(2), SolidPointLocation::Boundary),
+                    (&start - &half, SolidPointLocation::Outside),
+                    (&start + r(3), SolidPointLocation::Outside),
+                ] {
+                    assert_eq!(
+                        model
+                            .classify_point(solid, &Point3::new(x, Real::one(), r(2)))
+                            .unwrap(),
+                        expected
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn curved_sweep_region_retains_exact_through_hole_certificate() {
         let outer = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let hole = vec![p2(1, 1), p2(3, 1), p2(3, 3), p2(1, 3)];
