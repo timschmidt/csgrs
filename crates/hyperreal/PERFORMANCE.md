@@ -152,6 +152,74 @@ as the angle-addition identity `sin(e + 1) - sin(e) cos(1) - cos(e) sin(1)`).
 A decline
 costs at most four times the work charges of the ordinary relation attempt.
 
+## Deferred: cross-predicate reuse of pi-Laurent forms (2026-10-23)
+
+Research project S01. `exact_quadratic_surd_parts` expands each fresh
+predicate value into its pi-Laurent normal form with a memo that lives for
+one call, so shared descendants (arrangement coordinates, plane
+coefficients) are expanded again by every predicate that uses them.
+
+**The lead holds on `6d1f6e467c`.** A temporary probe kept, for every
+expanded node, the kind of result an earlier root call produced, keyed by a
+`Weak` so that no address could be reused. Over the successive-operation
+corpus (release, `--untouched`), expansion took 42-67% of the step time of
+every symbolic chain, measured around each root call. In the 6-gon, 8-gon,
+30-degree and 45-degree chains every root form was atom-free, and 80-85% of
+the node visits re-expanded a subtree that an earlier root call had already
+completed atom-free; more than 99% of those earlier calls ran in the same
+Boolean operation. In the trigonometric chains (16- and 32-gon, 10-degree,
+ring, sphere, icosahedron) 91% (10-degree) to more than 99% of the root
+forms contain atoms (`sin(pi/8)` and similar nodes), and the atom-free
+repeats are mostly single-node subtrees.
+
+**Prototype.** A thread-local cache of atom-free forms (measurement only),
+cleared at each Boolean step: lookups and insertions only at shared nodes,
+admission of results with at least two node visits from a call that had not
+yet met a work or depth limit, a 16 MiB bound with clear-all eviction, and
+one node visit charged per hit, so a warm call never visits more nodes than
+a cold one. A verification run computed the cold expansion beside every warm
+root that used a hit (2.25 million hits over the corpus): warm and cold
+always agreed on whether the form was a quadratic surd, and on its parts.
+Running the cold recognizer again after every warm decline, as the research
+proposed, raised allocation in the trigonometric chains by 13-53% and was
+dropped.
+
+User-space instructions for one process per chain (`perf stat`, release,
+untouched; repeated runs agreed to 0.05%), against the same binary with the
+cache disabled. The compaction columns use the prototype of the change M05
+kept, which compacted at two construction sites; the kept version is
+measured in hypermesh `PERFORMANCE.md`:
+
+| Chain | Baseline | Operation cache | Per-triangulation cache | Hypermesh predicates only | Compaction (M05) | Compaction + operation cache | Compaction + Hypermesh only |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 8-gon drills | 14.87 G | -52.5% | -42.8% | -3.8% | -43.9% | -51.9% | -46.9% |
+| 30-degree cuts | 4.84 G | -52.4% | -39.6% | -5.0% | -46.8% | -53.0% | -49.1% |
+| 45-degree cuts | 4.91 G | -55.4% | -42.1% | -4.5% | -51.8% | -57.9% | -53.7% |
+| 10-degree cuts | 2.74 G | -5.0% | -4.0% | -0.3% | -2.5% | -4.9% | -2.7% |
+| 16-gon drills | 30.37 G | -5.2% | -4.7% | -0.5% | -0.1% | -5.2% | -0.5% |
+| icosahedron unions | 20.51 G | +0.8% | +0.7% | +0.4% | +0.9% | +1.5% | +1.1% |
+
+The operation cache also lowered corpus allocation from 45,125 MB to
+41,057 MB, but raised the peak live heap of a 6-gon drill step from 0.6 MB to
+11.7 MB.
+
+**Why it is deferred.** The research admits only an operation-owned
+workspace in Hypermesh's `DecisionContext`, reached through a minimal public
+sign entry point. 84-90% of the root expansions, however, come from
+predicates that do not pass through Hypermesh's sign and comparison
+wrappers, mostly Hypertri's triangulation of each corefined face through
+Hyperlimit's `orient2`, segment and comparison predicates, which receive
+only a policy (sampled call stacks; Hypermesh's own BVH and segment tests
+make up the rest). A workspace
+reachable from Hypermesh's own sign and comparison calls ("Hypermesh
+predicates only") saves 4-5% alone and 2-3 points after the coordinate
+compaction that M05 kept (hypermesh `PERFORMANCE.md`), which captures most of
+the same cost without any new API. Reaching the triangulation needs a
+workspace in Hypertri's per-operation `PredicateEvaluator` and workspace
+variants of about eight Hyperlimit predicates; with the compaction in place
+it would save a further 12-16% on the quadratic chains and 5% on the 16-gon
+chain. That API decision is open; the measurements above are its evidence.
+
 ## Not implemented: filter-first sign preflight (2026-10-22)
 
 The proposal was to try immediate facts, the cached root approximation and

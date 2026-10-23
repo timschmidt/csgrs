@@ -33,6 +33,18 @@ because each contains a radical constant, a `Sqrt` node or a trigonometric
 node. PERFORMANCE.md has the counts. A preflight would first need certified
 enclosures for those node kinds.
 
+**Measured 2026-10-23 (research S01).** Retaining completed atom-free forms
+across the predicates of one Boolean operation saves 52-55% of the
+instructions of the quadratic chains and 5% of the 16-gon and 10-degree
+chains, and a verification run found no warm result that differed from the
+cold one. Most of the reuse is in Hypertri's triangulation predicates, which
+a workspace in Hypermesh's decision context does not reach; there it saves
+only 4-5%. Compacting arrangement coordinates at construction (Hypermesh,
+2026-10-23) now captures most of the same cost. The remaining 12-16% needs
+workspace variants of Hyperlimit's 2D predicates and a workspace in
+Hypertri's `PredicateEvaluator`. PERFORMANCE.md has the measurements and the
+prototype's contract.
+
 ## Dropping a deep expression graph recurses
 
 `Arc<Node>` drops its operands recursively. Building
