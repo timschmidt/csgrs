@@ -1,0 +1,61 @@
+[package]
+name = "csgrs-size-harness"
+version = "0.0.0"
+edition = "2024"
+publish = false
+default-run = "primitive"
+
+# This package stays outside the workspace so CSGRS development dependencies
+# (competitor kernels, Criterion, proptest) never enter a measured artifact.
+# The empty table makes the harness its own workspace root, so it resolves the
+# same way from a checkout, a git worktree, or an unpacked copy.
+[workspace]
+
+[dependencies]
+csgrs = { path = "../..", default-features = false }
+# The raster consumer builds its own grayscale buffer, exactly as a CSGRS
+# consumer must: `curve::from_image` takes an already-decoded `GrayImage`.
+image = { version = "0.25", optional = true, default-features = false }
+
+[features]
+default = []
+# One composed CAD consumer: profile construction, extrusion, a solid Boolean,
+# exact bounds, and two export formats.
+cad = ["csgrs/curve", "csgrs/stl-io", "csgrs/obj-io"]
+# One raster consumer that calls the image-tracing entry point.
+raster = ["csgrs/image-io", "dep:image"]
+
+[[bin]]
+name = "primitive"
+path = "src/bin/primitive.rs"
+
+[[bin]]
+name = "composed"
+path = "src/bin/composed.rs"
+required-features = ["cad"]
+
+[[bin]]
+name = "raster"
+path = "src/bin/raster.rs"
+required-features = ["raster"]
+
+# Profiles mirror the workspace root so harness artifacts and root artifacts
+# are built with the same optimization, LTO, codegen-unit, and panic settings.
+[profile.release]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
+
+[profile.embedded]
+inherits = "release"
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.wasm]
+inherits = "release"
+lto = true
+codegen-units = 1
+panic = "abort"

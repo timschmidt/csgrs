@@ -106,6 +106,7 @@ members = ["crates/*"]
 # directories; hypervoxel owns its voxelis crates, and comparisons requires
 # the external exactCorelib C++ oracle and serialized native tests.
 exclude = [
+  "benchmarks/size-harness",
   "fuzz",
   "crates/comparisons",
   "crates/hypervoxel",

@@ -625,6 +625,204 @@ CSGRS_BENCH_WARMUP=2 \
 cargo bench --bench feature_pipeline --features offset,bevymesh
 ```
 
+## Artifact size and dependency attribution
+
+Measured 22–23 October 2026 with
+[`benchmarks/size-harness`](benchmarks/size-harness/README.md), which links
+real root consumers outside the workspace so development dependencies never
+enter an artifact. `primitive` builds an exact cube, translates it, and reads
+exact bounds and triangles with no CSGRS features. `composed` extrudes a square
+profile, subtracts it from a cube, reads bounds and the certainty receipt, and
+writes binary STL and OBJ (`curve`, `stl-io`, `obj-io`). `raster` traces a
+grayscale buffer with `curve::from_image` (`image-io`). A C program drives the
+same drilled body through `csgrs-ffi`. Harness profiles mirror the root
+`release`, `embedded` and `wasm` profiles, and its lockfile is seeded from the
+root `Cargo.lock`, so every shared dependency is the workspace version.
+`opt-level = "s"` rows override only that setting of `embedded` through
+`CARGO_PROFILE_EMBEDDED_OPT_LEVEL`. Toolchain: rustc 1.98.1 (LLVM 22.1.8),
+`x86_64-unknown-linux-gnu` and `wasm32-unknown-unknown`, `wasm-opt` 116,
+`wasm-bindgen` 0.2.126, on a shared, unpinned AMD Ryzen 7 5800X3D running other
+builds.
+
+Every consumer prints the same result under every profile: 12 triangles;
+32 triangles, 1,684 STL bytes, 1,342 OBJ bytes and `Certified`; a bounded
+raster region; 32 triangles and 16 vertices through the C ABI. Allocated bytes
+are the loaded sections (code, read-only data, unwind tables, data). Symbol and
+debug bytes are counted separately, and the stripped size is what a deployment
+ships. Rebuilding an unchanged configuration reproduced the WASM bindings and
+the embedded native consumers byte for byte. The tables describe revision
+`cc0d350d04`. After the two dependency changes below, the native `primitive`,
+`composed` and C ABI artifacts still rebuild byte for byte and the WASM
+bindings keep every section size; the `raster` changes are listed under
+"Dependency features".
+
+### Native artifacts
+
+| Artifact | Profile | File | Allocated | `.text` | Symbols | Debug | Stripped |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `primitive` | release | 4,714,392 | 3,615,034 | 1,596,607 | 1,095,259 | 0 | 3,618,912 |
+| `primitive` | embedded `z` | 1,449,192 | 1,154,018 | 710,995 | 291,084 | 0 | 1,157,888 |
+| `primitive` | embedded `s` | 1,555,520 | 1,318,404 | 909,273 | 233,020 | 0 | 1,322,280 |
+| `composed` | release | 19,613,728 | 15,877,243 | 12,365,455 | 3,732,408 | 0 | 15,881,104 |
+| `composed` | embedded `z` | 8,590,888 | 6,915,115 | 5,543,315 | 1,671,674 | 0 | 6,918,992 |
+| `composed` | embedded `s` | 9,739,528 | 8,235,267 | 7,054,831 | 1,500,175 | 0 | 8,239,136 |
+| `raster` | release | 17,534,304 | 14,133,463 | 10,861,471 | 3,396,739 | 0 | 14,137,344 |
+| `raster` | embedded `z` | 7,725,592 | 6,232,191 | 5,007,523 | 1,489,311 | 0 | 6,236,064 |
+| `raster` | embedded `s` | 8,853,632 | 7,477,351 | 6,404,511 | 1,372,198 | 0 | 7,481,216 |
+| `libcsgrs_ffi.so` | release | 20,477,464 | 16,561,312 | 12,986,479 | 3,912,632 | 0 | 16,564,640 |
+| `libcsgrs_ffi.so` | embedded `z` | 12,766,448 | 8,178,089 | 6,071,251 | 4,584,818 | 0 | 8,181,440 |
+| `libcsgrs_ffi.so` | embedded `s` | 12,484,360 | 9,146,217 | 7,414,927 | 3,334,619 | 0 | 9,149,552 |
+| C consumer, static | release | 36,586,952 | 25,494,268 | 20,789,606 | 7,028,755 | 4,055,243 | 25,502,144 |
+| C consumer, static | embedded `z` | 25,379,480 | 12,630,286 | 9,703,955 | 8,664,093 | 4,077,976 | 12,636,608 |
+| C consumer, static | embedded `s` | 26,684,360 | 14,558,894 | 11,994,147 | 8,046,909 | 4,070,824 | 14,565,824 |
+| C consumer, `--gc-sections` | release | 22,042,360 | 14,971,176 | 12,277,990 | 3,007,255 | 4,055,243 | 14,979,048 |
+| C consumer, `--gc-sections` | embedded `z` | 15,730,544 | 7,436,262 | 5,765,139 | 4,209,357 | 4,077,976 | 7,442,408 |
+| C consumer, `--gc-sections` | embedded `s` | 15,604,280 | 8,447,502 | 7,068,659 | 3,074,434 | 4,070,824 | 8,458,216 |
+
+Rust-linked artifacts carry no debug sections: the profiles set `debug = false`
+and Cargo then strips debug information, so only symbol tables remain. The C
+consumer also carries the `.debug_*` sections that the static archive's
+precompiled standard library brings with it. The shared library carries the
+whole exported ABI. The ordinary static link is larger than it, because the
+linker keeps every object section the archive supplies; with
+`-Wl,--gc-sections` the same consumer keeps 41% less and falls below the
+shared library.
+
+### WASM artifacts
+
+| Artifact | Profile | File | Code section | Name section | `wasm-opt -Oz` |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `primitive` | release | 1,578,022 | 1,339,135 | 167,123 | 1,134,902 |
+| `primitive` | embedded `z` | 836,293 | 607,951 | 172,461 | 569,669 |
+| `primitive` | embedded `s` | 1,014,547 | 836,125 | 125,347 | 774,569 |
+| `composed` | release | 13,159,115 | 11,202,709 | 1,632,713 | 9,472,388 |
+| `composed` | embedded `z` | 7,237,699 | 5,670,346 | 1,319,700 | 5,141,614 |
+| `composed` | embedded `s` | 8,571,369 | 7,141,675 | 1,195,908 | 6,460,369 |
+| `raster` | release | 11,534,823 | 9,797,401 | 1,457,038 | 8,419,128 |
+| `raster` | embedded `z` | 6,491,483 | 5,105,411 | 1,163,806 | 4,647,689 |
+| `raster` | embedded `s` | 7,746,277 | 6,444,080 | 1,090,703 | 5,842,969 |
+| bindings, `--no-default-features --features wasm` | wasm | 12,652,937 | 10,797,465 | 1,278,644 | 9,723,398 |
+| bindings, `--no-default-features --features wasm` | embedded `z` | 10,665,364 | 6,584,882 | 3,485,371 | 5,974,271 |
+| bindings, `--no-default-features --features wasm` | embedded `s` | 11,052,034 | 7,928,619 | 2,546,023 | 7,230,752 |
+| bindings, `--features wasm` (README) | wasm | 12,678,968 | 10,811,334 | 1,285,351 | 9,740,432 |
+
+After `wasm-bindgen`, the `wasm`-profile bindings are 11,580,995 bytes and
+9,392,390 after `wasm-opt -Oz` (3,490,496 gzip), with 89,259 bytes of
+JavaScript and 34,950 of TypeScript declarations. The README build with the
+default features adds 26,031 raw bytes; link-time optimization removes almost
+all of the unused formats. Debug sections are empty in every row; the WASM
+name section is the symbol table, and `wasm-opt` drops it.
+
+### Optimization level `s` against `z`
+
+The root `embedded` profile already uses `opt-level = "z"`, fat LTO, one
+codegen unit and `panic = "abort"`; this compares that setting with `s`.
+`z` is smaller on every allocated and code measure: native allocated bytes
+are 12.5% (`primitive`), 16.0% (`composed`), 16.7% (`raster`), 10.6% (shared
+library) and 13.2% (static C consumer) smaller, and WASM code sections 17–27%
+smaller. File bytes alone point the other way for the shared library, which is
+12,484,360 bytes at `s` and 12,766,448 at `z` because the `z` build keeps
+1,250,199 more symbol bytes; stripped, `z` ships 8,181,440 bytes and `s`
+9,149,552. Comparing unstripped files would have chosen the larger deployment.
+
+`z` is also slower. `./measure.sh perf` (seven runs of 500 timed iterations
+after one warm iteration, levels alternating) and a second interleaved session
+that added `opt-level = 3` gave these medians per completed workflow:
+
+| Consumer | Session | `z` | `s` | `3` |
+| --- | --- | ---: | ---: | ---: |
+| `primitive` | 1 | 22.30 µs | 15.95 µs | — |
+| `primitive` | 2 | 11.65 µs | 7.96 µs | 7.10 µs |
+| `composed` | 1 | 1.166 ms | 0.825 ms | — |
+| `composed` | 2 | 1.132 ms | 0.848 ms | 0.655 ms |
+
+Absolute times moved between sessions with host load; the ratios did not.
+`z` takes 1.34–1.46 times as long as `s`, and 1.64–1.73 times as long as
+`opt-level = 3`, whose allocated bytes are 1,722,288 (`primitive`) and
+11,902,099 (`composed`). Every run printed the same rows. `s` is therefore a
+measured intermediate: 12–20% more allocated native bytes and 20–38% more WASM
+code than `z`, for 25–32% less time. The profile is unchanged. `embedded`
+is the repository's explicit minimum-size profile and `release` and `wasm` are
+its speed profiles; whether `embedded` should trade size for this speed is a
+profile-contract decision that these measurements inform but do not make.
+
+### Crate attribution
+
+`./measure.sh attribute` runs `cargo bloat --crates` on the embedded `z`
+consumers. `primitive`'s 694 KiB of `.text` is 49.8% Hyperreal, 34.2% `std`,
+4.5% `num-bigint` and under 2.5% each for Hyperlimit, CSGRS and Hypermesh.
+`composed`'s 5.3 MiB is 63.4% Hypercurve, 10.1% Hypersolve, 8.7% Hyperreal,
+7.5% `std`, 5.5% Hypermesh and 1.6% Hypertri; CSGRS is 37 KiB and the STL
+writer under 1 KiB. Even a square profile links most of the curve kernel, so
+Hypercurve is where root CAD artifact size is decided. `cargo bloat`'s
+attribution is heuristic: before the `image` change below it assigned 9.5 KiB
+of `raster` to `miniz_oxide`, `rayon_core`, `fdeflate` and `color_quant`; after
+it those rows vanished and `std` grew by about the same amount while total
+`.text` changed by 112 bytes. That code is the standard library's own
+decompressor, not a linked image codec.
+
+### Dependency features
+
+Kept: `image-io` now depends on `image` without its default features. Raster
+tracing consumes a decoded `GrayImage`; no CSGRS code, example, test, benchmark,
+binding or workspace crate decodes images except the README render example,
+which encodes PNG and now gets `png` from a development dependency, and `dxf`,
+which requests its own BMP codec. Linked artifacts are effectively unchanged,
+as dead-code elimination predicted; the dependency graph is not:
+
+| Measure | Before | After |
+| --- | ---: | ---: |
+| Normal dependencies, `--no-default-features --features image-io` | 102 | 34 |
+| Normal dependencies, default features | 142 | 81 |
+| Normal dependencies, `--all-features` | 259 | 205 |
+| `Cargo.lock` packages | 616 | 572 |
+| Clean `cargo build --release --lib`, default: packages compiled | 146 | 84 |
+| Same build: CPU seconds (user) | 703.9 | 577.4 |
+| Same build: wall seconds | 112.5 | 114.6 |
+| Same build: target directory | 581 MB | 422 MB |
+| Clean `--no-default-features --features image-io` release build: CPU seconds | 532.8 | 422.9 |
+| `raster`, embedded `z`, native allocated bytes | 6,232,191 | 6,231,983 |
+| `raster`, embedded `s`, native allocated bytes | 7,477,351 | 7,477,471 |
+| `raster`, embedded `z`, WASM after `wasm-opt -Oz` | 4,647,689 | 4,631,450 |
+| `raster`, release, WASM after `wasm-opt -Oz` | 8,419,128 | 8,406,113 |
+| README WASM build, after `wasm-bindgen` and `wasm-opt -Oz` | 9,408,447 | 9,408,297 |
+| README WASM build, generated JavaScript and declarations | 124,943 | 124,209 |
+
+Wall time is unchanged because the Hyper crates are the critical path; the
+removed codecs, `rayon` and the AVIF encoder compiled beside them. The native
+`s` row grows by 120 bytes (112 of them `.text`) while the `z` and release rows
+shrink; the change adds no code path to this consumer, so this is attributed
+to code layout within the single LTO unit and kept as an adverse control. The
+44 packages leaving `Cargo.lock` include `rav1e`, `ravif`, `exr`, `tiff`,
+`gif`, `image-webp`, `zune-jpeg` and `qoi`. The feature change is user-visible
+and recorded in [docs/MIGRATIONS.md](docs/MIGRATIONS.md).
+
+Kept: the `wasm32`-only `uuid` dependency, which exists for the transitive
+needs of `dxf` and `gerber-types`, is now enabled by `dxf-io` and `gerber-io`
+instead of every `wasm32` build. This is a dependency-graph change only:
+`--no-default-features --features wasm` resolves 76 packages instead of 77,
+and its `wasm`-profile artifact keeps every section's size (12,652,937 bytes;
+the function order differs). `uuid` keeps its `js` feature whenever `dxf-io`
+or `gerber-io` is enabled on `wasm32`.
+
+Rejected: removing `svg-io`, `amf-io`, `gltf-io`, `sdf` and `serde_json` from
+the `wasm` feature. No binding calls them, and the trimmed `wasm32` graph
+resolves 50 packages instead of 77, but the shipped artifact does not shrink:
+after `wasm-bindgen` and `wasm-opt -Oz` it is 9,392,901 bytes against
+9,392,390, with byte-identical JavaScript and declarations, and the embedded
+`z` raw module is 10,657,663 bytes against 10,665,364. The change was below the
+1% deployed-size threshold set before measuring, and it would withdraw Rust
+APIs that `wasm` currently implies, so it was reverted.
+
+Already satisfied: Hyperphysics, Hypercurve, Hypermesh, Hypertri, Hyperreal and
+Hypersdf have `default = []`, so there are no default compatibility features
+to trim. The triangulation features in the graph have live consumers: CSGRS
+triangulates curve profiles through Hypercurve's `triangulation` and Hypertri's
+`earcut`, and Hypermesh requests `earcut` and `cdt` itself to retriangulate
+reduced Boolean output, so dropping a root request would change nothing.
+Chrono's `clock` feature remains because DXF export converts its timestamp to
+local time.
+
 ## Audited non-adoptions
 
 The reference section's cubic Bezier GPU distance algorithm is a finite
