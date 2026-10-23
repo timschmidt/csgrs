@@ -77,24 +77,75 @@ icosahedron's coplanar face overlapped every fan triangle there: one more per
 union, each crossing adding exact collinearity proofs to the face's
 corefinement. Six unions allocated 7.9 GB, against 6.5 GB before reduction.
 
-Reduction meant to fan each polygon around its earliest-constructed vertex,
-but it relied on Hypertri's ear clipping starting beside that vertex, and ear
+Reduction meant to fan each polygon around its least arena vertex, but it
+relied on Hypertri's ear clipping starting beside that vertex, and ear
 clipping fans around whichever vertex its first rejected ear leaves. Two of
 the four strips fanned from their growing end. Since 2026-10-21 reduction uses
 Hypertri's `triangulate_simple_ring_around`, which tries the ears beside the
-chosen vertex first, so every strip fans from its oldest end; the newest end
-keeps two triangles in each strip. The face splitting of each union then
+chosen vertex first, so every strip fans from its least vertex; the newest
+end keeps two triangles in each strip. The face splitting of each union then
 takes the same work whatever the number of earlier unions: about 0.7 s from
 the fourth union on, where it took 1.2 s at the fourth union and 0.4 s more
 at each later one. Six unions allocate 4.2 GB.
 
-The choice rests on age: geometry added next to the oldest end of a strip
-would meet the long fan edges instead. Without vertices on the straight edge,
-which the set does not need, no triangulation keeps both ends local.
+The least arena index is the first-used vertex, not the oldest: the arena
+numbers source vertices in operand and row order, then the points the
+Boolean builds, and each operation rebuilds it. In `body.union(&tool)` the
+previous result's vertices come first, which is why its strips fan from
+their old end. Without vertices on the straight edge, which the set does not
+need, no triangulation keeps both ends local.
 Hypertri's `simple_ring` tests check every apex, rotation and orientation of
 concave, deep-pocket, star, chevron, collinear and strip rings against the
 ring alone (positive areas, each edge once, no edge over a vertex) and that
 every rotation gives the same triangles.
+
+**Measured (2026-10-23, research project M06).** A release probe (not
+committed) ran eight unions of translated icosahedra in six ways and counted
+the coplanar-overlap pairs each union's arrangement found, through a
+temporary dispatch-trace label. Every variant gave certified closed
+manifolds of 44 + 24k triangles, and the five with one set had exactly
+equal volumes at every step.
+
+| Variant | Overlap pairs, unions 1 to 8 | MB at union 8 | MB, 8 unions |
+| --- | --- | ---: | ---: |
+| `body.union(&tool)`, the corpus chain | 4, 8, 12, then 8 | 392 | 2,755 |
+| `tool.union(&body)` | 4, 8, ... 26, one or two more per union | 2,209 | 9,714 |
+| ends alternating, `body.union(&tool)` | 4, 8, 8, 12, 13, 15, 13, 16 | 911 | 4,414 |
+| `body` rebuilt from its rows | as the corpus chain | 2,201 | 9,126 |
+| `body`'s rows reversed | as the corpus chain | 2,252 | 9,123 |
+| each row's vertices rotated | as the corpus chain | 2,113 | 8,974 |
+
+Rebuilding the body from its own rows drops the facts a result retains
+(plane classes, supports, the embedded-complex fact), and that, not the fan
+apex, makes each union cost more; reversing or rotating the rows changes the
+cost by -4% to +2% beside the rebuilt rows. Strips growing at both ends
+overlap more fan triangles, as no triangulation without extra vertices can
+avoid. Swapping the operands put every new tool's vertices first, so a
+strip fanned from the growing end and each union met one or two more of its
+triangles.
+
+**Kept (2026-10-23).** Reduction now ranks the vertices of an operand that
+retains an earlier Boolean's facts before the other operands' vertices and
+the points the Boolean builds, and only then by arena index. When such
+operands already come first, as in every corpus chain, the order is the
+arena order and needs no storage, so the corpus keeps its rows and
+allocation exactly. In `tool.union(&body)` the eighth union allocates
+665 MB instead of 2,209 MB and the eight 4,926 MB instead of 9,714 MB, with
+10 to 12 overlap pairs per union from the fourth on. `coplanar_union_strips_fan_from_their_oldest_end_with_the_new_operand_first`
+checks the tetrahedron strips that way round: one strip kept `k + 1`
+triangles at its newest end after union `k`, and now keeps three.
+
+**Open.** The rank is an operand's provenance, not each vertex's age:
+within the earlier result, first use follows that result's own rows, which
+list the geometry its first operand brought first. That is why swapped
+unions still meet more overlaps than the corpus chain (10 against 8) and
+allocate 1.7 times as much, and why one tetrahedron strip keeps three
+triangles at its newest end. A retained per-vertex age would fix this at
+four bytes a vertex. An operation-local plane-class region view (overlay
+each class's boundaries once, triangulate the selected output) would also
+remove the dependence on fans, and retained collinear vertices could keep
+both ends of a strip local at the cost of output size; neither is justified
+by these numbers yet.
 
 ### Kept: crossings of retained creases are built from planes
 

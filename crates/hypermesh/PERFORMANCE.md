@@ -10,6 +10,42 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## 2026-10-23: rank retained operands' vertices first as fan apexes
+
+Status: **kept**
+
+Output reduction fans each retriangulated polygon around its least arena
+vertex. The arena numbers source vertices by first use, operands in order,
+so that vertex is the first used, not the oldest. A probe of eight unions of
+translated icosahedra (research project M06; table and method in
+[`FUTURE_WORK.md`](FUTURE_WORK.md#kept-coplanar-strips-fan-from-their-oldest-end))
+found the corpus order `body.union(&tool)` bounded at 8 coplanar-overlap
+pairs and 392 MB per union, but `tool.union(&body)` growing by one or two
+pairs per union, to 26 pairs and 2,209 MB at the eighth. Reduction now ranks
+the vertices of operands that retain an earlier Boolean's facts first. The
+swapped chain's eighth union allocates 665 MB and the eight 4,926 MB instead
+of 9,714 MB (focused release probe, one run each, counting allocator).
+
+Preserved evidence: when such operands already come first the ranking is
+the arena order and reserves nothing. A full `SUCCESSIVE_OPERATIONS_RAW=<file>
+cargo bench --locked --bench successive_operations` run gives the same
+bytes and allocator calls on all 200 steps as without the ranking, and the
+row digests of the incidence change above are unchanged. Sets do not
+change: every variant of the probe published certified closed manifolds of
+44 + 24k triangles with exactly equal volumes. Rows change for Booleans
+whose retained operand follows one without retained facts, a migration
+recorded under "Boolean output rows" in `docs/MIGRATIONS.md`.
+`coplanar_union_strips_fan_from_their_oldest_end_with_the_new_operand_first`
+fails without the ranking (four triangles at a strip's newest end after the
+third union) and passes with it (three in one strip and two in the other
+after every union from the second).
+
+Deferred, not yet justified by measurement: a retained per-vertex age,
+which would remove the remaining 1.7-fold cost of the swapped order at four
+bytes a vertex; an operation-local plane-class region view; and retained
+collinear vertices, which trade output size for locality. Alternating growth at both ends of a
+strip (911 MB at the eighth union) has no fan-only fix.
+
 ## 2026-10-22: take incidences from construction instead of zero proofs
 
 Status: **kept**

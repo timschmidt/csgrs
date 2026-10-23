@@ -471,6 +471,10 @@ struct SurfaceCorefinement {
     points: Vec<Point3>,
     face_offsets: Box<[u32]>,
     triangles: Vec<[u32; 3]>,
+    // Per source point, whether it is a vertex of an operand that retains an
+    // earlier Boolean's facts, when such an operand follows one that does
+    // not; otherwise point order already ranks those vertices first.
+    older_points: Option<Box<[bool]>>,
     #[cfg(test)]
     constraint_offsets: Box<[u32]>,
     #[cfg(test)]
@@ -2833,6 +2837,7 @@ fn corefine_surface(
     intersections: &PairwiseIntersectionGraph,
     source_vertex_count: usize,
     planes: &SourcePlaneClasses,
+    retained_plane_classes: &[Option<std::sync::Arc<RetainedPlaneClasses>>],
 ) -> HypermeshResult<SurfaceCorefinement> {
     if intersections.len() != polygons.len() {
         return Err(HypermeshError::SurfaceArrangementFailed {
@@ -2867,6 +2872,7 @@ fn corefine_surface(
             ..FaceWork::default()
         });
     }
+    let older_points = older_source_points(polygons, retained_plane_classes, &work)?;
     // Pairwise point IDs are already operation-wide aliases. Translate each
     // one only after source vertices establish identity precedence, then
     // release this transient table before per-face triangulation.
@@ -2979,6 +2985,7 @@ fn corefine_surface(
         points: arena.points,
         face_offsets: face_offsets.into_boxed_slice(),
         triangles,
+        older_points,
         #[cfg(test)]
         constraint_offsets: constraint_offsets.into_boxed_slice(),
         #[cfg(test)]
@@ -2988,6 +2995,57 @@ fn corefine_surface(
         #[cfg(test)]
         contacts,
     })
+}
+
+/// Source points that are vertices of an operand retaining an earlier
+/// Boolean's facts, which output reduction ranks as older than the other
+/// operands' vertices and the points this Boolean builds. Arena points are
+/// numbered by first use, operands in order, so the marks are needed only
+/// when a retained operand follows one that is not.
+fn older_source_points(
+    polygons: &[ConvexPolygon],
+    retained_plane_classes: &[Option<std::sync::Arc<RetainedPlaneClasses>>],
+    work: &[FaceWork],
+) -> HypermeshResult<Option<Box<[bool]>>> {
+    let retained = |mesh: isize| {
+        usize::try_from(mesh)
+            .ok()
+            .and_then(|mesh| retained_plane_classes.get(mesh))
+            .is_some_and(Option::is_some)
+    };
+    let mut fresh_seen = false;
+    let mut needed = false;
+    for mesh in 0..retained_plane_classes.len() {
+        let mesh = mesh as isize;
+        if retained(mesh) {
+            needed |= fresh_seen;
+        } else {
+            fresh_seen = true;
+        }
+    }
+    if !needed {
+        return Ok(None);
+    }
+    let count = work
+        .iter()
+        .flat_map(|face| face.boundary)
+        .max()
+        .map_or(0, |point| point as usize + 1);
+    let mut older = Vec::new();
+    older
+        .try_reserve_exact(count)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "older source points",
+        })?;
+    older.resize(count, false);
+    for (polygon, face) in polygons.iter().zip(work) {
+        if retained(polygon.mesh_index) {
+            for point in face.boundary {
+                older[point as usize] = true;
+            }
+        }
+    }
+    Ok(Some(older.into_boxed_slice()))
 }
 
 fn compact_len(len: usize, operation: &'static str) -> HypermeshResult<u32> {
@@ -4646,7 +4704,14 @@ pub(crate) fn build_surface_arrangement(
         graph.take_face_pair_facts(),
         retained_plane_classes,
     )?;
-    let corefinement = corefine_surface(decisions, polygons, &graph, source_vertex_count, &planes)?;
+    let corefinement = corefine_surface(
+        decisions,
+        polygons,
+        &graph,
+        source_vertex_count,
+        &planes,
+        retained_plane_classes,
+    )?;
     drop(graph);
     let cells = assemble_surface_cells(
         decisions,
@@ -4871,7 +4936,13 @@ fn materialize_surface_outputs(
         // The certified selection is closed. Reduction keeps its set,
         // closure, orientation and embedding while dropping the vertices that
         // the set does not need.
-        let facets = reduce_output_facets(&surface.points, polygons, planes, facets)?;
+        let facets = reduce_output_facets(
+            &surface.points,
+            surface.older_points.as_deref(),
+            polygons,
+            planes,
+            facets,
+        )?;
         for facet in &facets {
             for &point in &facet.vertices {
                 *used.get_mut(point as usize).ok_or(
@@ -5180,6 +5251,7 @@ mod tests {
             graph,
             source_vertex_count(polygons),
             &planes,
+            &[],
         )
     }
 
@@ -5898,6 +5970,7 @@ mod tests {
             ],
             face_offsets: Vec::new().into_boxed_slice(),
             triangles: Vec::new(),
+            older_points: None,
             constraint_offsets: Vec::new().into_boxed_slice(),
             constraints: Vec::new(),
             contact_offsets: Vec::new().into_boxed_slice(),

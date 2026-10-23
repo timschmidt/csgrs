@@ -146,8 +146,11 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   and the cutting plane instead of interpolated between the edge's
   endpoints: the same exact value, stored as an expression that does not
   grow with earlier operations. Each retriangulated polygon fans around its
-  earliest-constructed vertex wherever that vertex sees it; that choice of
-  diagonals is part of the published rows. Coordinates of one axis that
+  least vertex wherever that vertex sees it, ranking the vertices of an
+  operand that retains an earlier Boolean's facts first and then by first
+  use; that choice of diagonals is part of the published rows. The ranking
+  changes the diagonals only when such an operand follows one that does not,
+  as in `tool.union(&body)`. Coordinates of one axis that
   strict policy proves equal are stored as one expression, the smallest of
   them, so a coordinate's expression can differ from the one its
   construction produced while its value stays the same. Regenerate pinned

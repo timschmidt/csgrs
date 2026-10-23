@@ -576,30 +576,56 @@ fn equal_output_coordinates_share_one_expression() {
     }
 }
 
+/// A tetrahedron with faces in z = 0 and y = 0 that meet along the x axis,
+/// its base edge `[dx - 1, dx + 1]` on that axis.
+fn strip_tetrahedron(dx: i64) -> TriangleMesh {
+    mesh(
+        vec![
+            Point3::new(r(dx - 1), r(0), r(0)),
+            Point3::new(r(dx + 1), r(0), r(0)),
+            Point3::new(r(dx), r(1), r(0)),
+            Point3::new(r(dx), r(0), r(1)),
+        ],
+        &[[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]],
+    )
+}
+
 #[test]
 fn coplanar_union_strips_fan_from_their_oldest_end() {
-    // Tetrahedra with faces in z = 0 and y = 0 that meet along the x axis,
-    // translated along it by half their base. The union's faces in each plane
-    // form a strip whose one side is a single straight edge, so its fewest
-    // triangles fan from that edge's two ends. Reduction fans from the oldest
-    // vertex, so the newest end, where the next tetrahedron lands, keeps two
+    // Tetrahedra translated along the x axis by half their base. The union's
+    // faces in each plane form a strip whose one side is a single straight
+    // edge, so its fewest triangles fan from that edge's two ends. Reduction
+    // fans from the least vertex, and the previous union's vertices are used
+    // first, so the newest end, where the next tetrahedron lands, keeps two
     // triangles in each strip, and a later coplanar face overlaps a bounded
     // number of them. Plain ear clipping fanned a strip from its newest end
     // instead, which had three triangles there after the second union.
-    let tetrahedron = |dx: i64| {
-        mesh(
-            vec![
-                Point3::new(r(dx - 1), r(0), r(0)),
-                Point3::new(r(dx + 1), r(0), r(0)),
-                Point3::new(r(dx), r(1), r(0)),
-                Point3::new(r(dx), r(0), r(1)),
-            ],
-            &[[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]],
-        )
-    };
-    let mut body = tetrahedron(0);
+    assert_strips_fan_from_their_oldest_end(false);
+}
+
+#[test]
+fn coplanar_union_strips_fan_from_their_oldest_end_with_the_new_operand_first() {
+    // The same unions with the new tetrahedron as the first operand. Its
+    // vertices are then used first, and fanning from the first-used vertex
+    // put a strip's fan at the growing end, with one more triangle there
+    // after every union. Vertices of the operand that retains an earlier
+    // Boolean's facts now rank first.
+    assert_strips_fan_from_their_oldest_end(true);
+}
+
+fn assert_strips_fan_from_their_oldest_end(new_operand_first: bool) {
+    // With the new operand first, the earlier results' own rows still list
+    // their newest geometry first, and first use is not an age within one
+    // operand, so from the second union on the strip in y = 0 keeps three
+    // triangles at its newest end. Without the ranking it kept `k + 1` after
+    // union `k`.
+    let mut body = strip_tetrahedron(0);
     for k in 1..=6 {
-        body = operation(&body, &tetrahedron(k), BooleanOp::Union);
+        body = if new_operand_first {
+            operation(&strip_tetrahedron(k), &body, BooleanOp::Union)
+        } else {
+            operation(&body, &strip_tetrahedron(k), BooleanOp::Union)
+        };
         let evidence = boolean_mesh_closure_evidence(&as_result(&body));
         assert!(evidence.is_closed(), "{evidence:?}");
         let newest = body
@@ -609,10 +635,13 @@ fn coplanar_union_strips_fan_from_their_oldest_end() {
                 point.x == r(k + 1) && point.y == Real::zero() && point.z == Real::zero()
             })
             .expect("the newest crease end is a vertex");
-        for in_plane in [
+        for (plane, in_plane) in [
             (|point: &Point3| point.z == Real::zero()) as fn(&Point3) -> bool,
             |point: &Point3| point.y == Real::zero(),
-        ] {
+        ]
+        .into_iter()
+        .enumerate()
+        {
             let incident = body
                 .triangles
                 .iter()
@@ -624,7 +653,12 @@ fn coplanar_union_strips_fan_from_their_oldest_end() {
                             .all(|&index| in_plane(&body.positions[index]))
                 })
                 .count();
-            assert_eq!(incident, 2, "union {k}");
+            let expected = if new_operand_first && k > 1 && plane == 1 {
+                3
+            } else {
+                2
+            };
+            assert_eq!(incident, expected, "union {k}, plane {plane}");
         }
     }
 }

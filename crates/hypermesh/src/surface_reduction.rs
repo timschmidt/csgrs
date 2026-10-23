@@ -49,11 +49,13 @@
 //! around `v` by facets with the same boundary edges. The represented set,
 //! closure, orientation and the embedded-complex property are unchanged.
 //! Corners, crease ends, non-manifold contacts and vertices shared with other
-//! facets stay. Each polygon fans around its earliest-constructed vertex
-//! wherever that vertex sees it, so long fan edges gather at older geometry:
-//! a strip whose one side is a single straight edge must fan from that edge's
-//! ends, and fanning from the older end keeps the triangles that a later
-//! operation at the newer end overlaps bounded.
+//! facets stay. Each polygon fans around its least vertex wherever that vertex
+//! sees it: vertices of an operand that retains an earlier Boolean's facts
+//! first, then the least arena index, which is the first-used vertex, not
+//! the oldest. Long fan edges then gather at geometry an earlier Boolean
+//! kept: a strip whose one side is a single straight edge must fan from that
+//! edge's ends, and fanning from the end an earlier operation built keeps the
+//! triangles that a later operation at the newer end overlaps bounded.
 //!
 //! Reduction is optional, so it never weakens the operation: it triangulates
 //! under strict policy whatever the operation policy, and a vertex whose
@@ -855,6 +857,7 @@ fn triangulate_boundary(
 fn apply_removal(
     strict: &DecisionContext,
     points: &[Point3],
+    older_points: Option<&[bool]>,
     polygons: &[ConvexPolygon],
     mesh: &mut ReductionMesh,
     pass: Pass,
@@ -894,24 +897,30 @@ fn apply_removal(
         // Triangulate the polygon in its source face's winding, so a boundary
         // and its complement, which traverses every polygon backwards,
         // receive the same triangles, and fan it around its least vertex
-        // wherever that vertex sees the polygon. The least arena index is the
-        // earliest-constructed vertex: source vertices precede arrangement
-        // vertices and earlier operands precede later ones, so long fan edges
-        // gather at older geometry and the newest geometry keeps short edges.
-        // A strip whose one side is a single straight edge must fan from that
-        // edge's ends; fanning from its older end leaves a later coplanar
-        // face at the newer end overlapping a bounded number of triangles.
-        // Ear clipping that merely starts beside the least vertex fans around
-        // whichever vertex its first rejected ear leaves, which put the fans
-        // at the growing end of half the strips in coplanar icosahedron
-        // unions.
+        // wherever that vertex sees the polygon. Vertices of an operand that
+        // retains an earlier Boolean's facts come first, then the arena
+        // index, which numbers points by first use: source vertices before
+        // arrangement vertices, each operand's before the next one's. So long
+        // fan edges gather at geometry an earlier Boolean kept, and the
+        // geometry this Boolean adds keeps short edges, whichever operand
+        // brings it. A strip whose one side is a single straight edge must fan
+        // from that edge's ends; fanning from its older end leaves a later
+        // coplanar face at the newer end overlapping a bounded number of
+        // triangles. The index is not an age within one operand, and nothing
+        // keeps both ends of a strip local when it grows at both. Ear clipping
+        // that merely starts beside the least vertex fans around whichever
+        // vertex its first rejected ear leaves, which put the fans at the
+        // growing end of half the strips in coplanar icosahedron unions.
         let reverse = template.source.orientation < 0;
         let mut canonical = boundary.clone();
         if reverse {
             canonical.reverse();
         }
+        let older = |point: u32| {
+            older_points.is_some_and(|older| older.get(point as usize).copied().unwrap_or(false))
+        };
         let least = (0..canonical.len())
-            .min_by_key(|&index| canonical[index])
+            .min_by_key(|&index| (!older(canonical[index]), canonical[index]))
             .unwrap_or(0);
         canonical.rotate_left(least);
         let Some(mut triangles) = triangulate_boundary(strict, points, polygon, &canonical, 0)?
@@ -982,6 +991,7 @@ fn apply_removal(
 /// their input order, followed by the replacement facets in creation order.
 pub(crate) fn reduce_output_facets(
     points: &[Point3],
+    older_points: Option<&[bool]>,
     polygons: &[ConvexPolygon],
     planes: &SourcePlaneClasses,
     facets: Vec<OutputFacet>,
@@ -997,7 +1007,15 @@ pub(crate) fn reduce_output_facets(
             let Some(removal) = removal(&mesh, planes, pass, &fan)? else {
                 continue;
             };
-            apply_removal(&strict, points, polygons, &mut mesh, pass, removal)?;
+            apply_removal(
+                &strict,
+                points,
+                older_points,
+                polygons,
+                &mut mesh,
+                pass,
+                removal,
+            )?;
         }
     }
     let ReductionMesh { facets, alive, .. } = mesh;
@@ -1899,7 +1917,7 @@ mod tests {
                 point(4, Real::from(4)),
                 point(0, Real::from(4)),
             ];
-            let reduced = reduce_output_facets(&points, &polygons, &planes, facets.clone())
+            let reduced = reduce_output_facets(&points, None, &polygons, &planes, facets.clone())
                 .expect("an undecided reduction keeps its vertex instead of failing");
             let centre_kept = reduced.iter().any(|facet| facet.vertices.contains(&0));
             assert_eq!(centre_kept, !removed);

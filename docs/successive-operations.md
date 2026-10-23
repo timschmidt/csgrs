@@ -187,8 +187,9 @@ treat time as noisy.
 - **Coplanar unions keep a constant per-step cost.** Unions of translated
   icosahedra merge four coplanar strips whose one side is a single straight
   edge, so their fewest triangles fan from that edge's ends. Reduction now
-  fans from the oldest end, so each new icosahedron's coplanar faces overlap a
-  bounded number of strip triangles, and the broad phase no longer enumerates
+  fans from the end the previous result brought (its vertices are used
+  first, not because they are older), so each new icosahedron's coplanar faces
+  overlap a bounded number of strip triangles, and the broad phase no longer enumerates
   pairs of the previous result's own triangles. The copies also share
   coordinate values that successive unions built in different ways, and every
   exact bound or order over them proved the equality again; each output now
@@ -224,10 +225,10 @@ treat time as noisy.
   decide falls back to interpolation.
 - `hypertri`: `triangulate_simple_ring_around` fans a simple ring around a
   chosen vertex wherever it sees the polygon. `hypermesh` output reduction
-  uses it to fan every retriangulated polygon around its earliest-constructed
-  vertex; Hypertri's ear clipping had fanned around whichever vertex its first
-  rejected ear left, which put two of the icosahedron chain's four strips'
-  fans at their growing end.
+  uses it to fan every retriangulated polygon around its least arena vertex,
+  the first used; Hypertri's ear clipping had fanned around whichever vertex
+  its first rejected ear left, which put two of the icosahedron chain's four
+  strips' fans at their growing end.
 - `hypermesh`: the broad phase skips pairs of triangles from one certified
   embedded input and records their radial separation from edge adjacency,
   which gives the arrangement the same facts.

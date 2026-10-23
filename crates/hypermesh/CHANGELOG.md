@@ -68,13 +68,15 @@ grammar belong to adapters such as csgrs.
   are interpolated as before. The construction consumes no decision under
   the operation's policy, and a division that does not decide falls back to
   interpolation.
-- Polygons retriangulated by output reduction fan around their
-  earliest-constructed vertex wherever it sees them, through Hypertri's
-  `triangulate_simple_ring_around`. Coplanar strips grown by repeated unions
-  then fan from their old end, so a new coplanar face at the growing end
-  overlaps a bounded number of triangles; six unions of translated
-  icosahedra allocate 4.2 GB instead of 7.9 GB, and their corefinement cost
-  no longer grows per union.
+- Polygons retriangulated by output reduction fan around their least vertex
+  wherever it sees them, through Hypertri's `triangulate_simple_ring_around`:
+  vertices of an operand that retains an earlier Boolean's facts first, then
+  the first used. Coplanar strips grown by repeated unions then fan from
+  their old end, whichever operand brings the new solid, so a new coplanar
+  face at the growing end overlaps a bounded number of triangles; six unions
+  of translated icosahedra allocate 4.2 GB instead of 7.9 GB, and their
+  corefinement cost no longer grows per union. With the new solid as the
+  first operand, eight unions allocate 4.9 GB instead of 9.7 GB.
 - The broad phase no longer enumerates pairs of triangles from one certified
   embedded input. The only fact such a pair contributed, radial separation of
   two triangles that traverse a shared edge in opposite directions, is
