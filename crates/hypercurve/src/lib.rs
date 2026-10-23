@@ -39,6 +39,7 @@ mod bulge;
 mod classify;
 mod contour;
 mod curve;
+mod curve_box_containment;
 mod curve_intersection;
 mod curve_native_image;
 mod curve_native_segment;
@@ -181,6 +182,7 @@ pub use curve::{
     CurveParameterSide2, CurvePath2, CurveSpanRange2, CurveVector2, NativeBezierFragment2,
     PolynomialCurveBranch2, PolynomialCurveSet2,
 };
+pub use curve_box_containment::{BoxBoundary2, CurveBoxContainment2, CurveBoxEscape2};
 pub(crate) use curve_intersection::CurveIntersectionCandidates2;
 pub use curve_intersection::{
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,

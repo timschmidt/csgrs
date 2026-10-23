@@ -70,6 +70,17 @@
   parameter charts. A line that is a component of the zero set, other
   polynomial pairs, mapped branches and filled regions with polynomial
   boundaries still report typed unsupported blockers.
+- `Curve2::box_containment` and `CurvePath2::box_containment` decide whether
+  a curve lies in a closed axis-aligned box. They return
+  `CurveBoxContainment2::Contained`, or `Escapes` with a `CurveBoxEscape2`
+  naming the curve, axis, `BoxBoundary2` and an exact curve point outside the
+  box. `bounds()` is a conservative enclosure, the control hull for
+  polynomial Bézier spans, and remains the fast path; sides it does not settle
+  are decided from exact coordinate extrema. The cubic with controls
+  `(8, 0), (9, 3), (11, 3), (12, 0)` has hull height 3 and curve height 9/4,
+  so the box `y <= 5/2` contains it however the curve is split, and `y <= 2`
+  is left at `(10, 9/4)`. Curves without exact extremum candidates report a
+  typed blocker when the enclosure is not enough.
 - `PolynomialSplineCurve2` and `NurbsCurve2` support periodic construction,
   knot insertion, splitting and subcurves; `NurbsCurve2` also supports knot
   removal and degree elevation. `NurbsCurve2::interpolate_global`,

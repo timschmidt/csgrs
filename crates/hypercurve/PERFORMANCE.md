@@ -122,6 +122,55 @@ The historical workflows at `916e1e5f41`, same host and limit:
 | `refilleting_a_filleted_vertex_completes` | killed at 2,400 s (first fillet 29 ms) | unchanged; dense two-radical signs in the second fillet |
 | fillet, round stroke, rebuild, reverse, second fillet, erosion | not present | line/line corner completes; arc/line corner blocks in the erosion |
 
+## Exact box containment (2026-10-23)
+
+`Curve2::box_containment` and `CurvePath2::box_containment` are new queries
+(C07 of the 2026-10-22 research queue). At `1a279a3f6f` the only path-level
+answer was `bounds()`, the cached control-hull box for polynomial Béziers. For
+the cubic `(8, 0), (9, 3), (11, 3), (12, 0)`, which reaches `y = 9/4`, that box
+reaches `y = 3`, so Alumina's travel check rejects `y <= 5/2`. The decision
+also depends on the representation: the halves at `t = 1/2` have hull height
+9/4 and are accepted, and the pieces at `t = 1/3` reach 8/3 and are rejected.
+The new query keeps `bounds()` as the fast path and decides each remaining side
+from exact extremum candidates, so the same image gives the same answer for
+the unsplit cubic, splits at 1/2, 1/3 and (1/3, 5/8), cubic splines with
+knots inserted at 1/2 or at 1/3 and 3/4, and all their reversals. The answer for
+`y <= 2` is an escape at `(10, 9/4)`; for `y` at most the irrational peak
+`5/9 + 7 sqrt(7)/18` of `(0, 0), (1, 3), (2, 1), (3, 0)` it is contained.
+Existing operations are unchanged: no shared path was edited.
+
+Per-query requested allocations and medians of 200 iterations after one
+warm-up, release build, from a temporary counting-allocator test (not
+committed). Load average was about 22 on 16 CPUs, so times are descriptive.
+"Warm" reuses one path, whose `bounds()` is cached; "cold" constructs it.
+
+| Workload | Allocation calls | Requested bytes | Median |
+| --- | ---: | ---: | ---: |
+| Fixture, `bounds()` and four comparisons, `y <= 5` (warm) | 0 | 0 | 0.1 µs |
+| Fixture, `box_containment`, `y <= 5` (warm) | 0 | 0 | 0.1 µs |
+| Fixture, `bounds()` and four comparisons, `y <= 5/2` (warm, wrongly rejects) | 0 | 0 | 0.1 µs |
+| Fixture, `box_containment`, `y <= 5/2` (warm) | 8 | 656 | 2.1 µs |
+| Fixture, `box_containment`, `y <= 2` (warm, escapes) | 8 | 656 | 2.1 µs |
+| Fixture, construct and `bounds()` check, `y <= 5/2` (cold) | 11 | 2,112 | 1.4 µs |
+| Fixture, construct and `box_containment`, `y <= 5/2` (cold) | 19 | 2,768 | 3.6 µs |
+| Irrational peak + 2^-200 (warm) | 412 | 26,429 | 43.4 µs |
+| Irrational peak, tangent (warm) | 401 | 25,936 | 41.4 µs |
+| Irrational peak - 2^-200 (warm, escapes) | 412 | 26,416 | 42.1 µs |
+| Arc of radius sqrt 2, `y <= 7/5` (warm, escapes at `(0, sqrt 2)`) | 150 | 8,904 | 13.4 µs |
+| Arc of radius sqrt 2, `y <= 3/2` (warm, decided by `bounds()`) | 24 | 1,416 | 1.9 µs |
+| Three-span cubic spline, `y <= 5/2` (warm, decided by `bounds()`) | 0 | 0 | 0.1 µs |
+| Three-span cubic spline, `y <= 7/3` (warm, middle span refined) | 23 | 1,832 | 2.3 µs |
+
+A second run at lower load reproduced every allocation count, with medians
+25 to 45 percent lower; the spline row is from that run.
+
+The rejected alternative, halving until every piece's control hull lies in
+the box (public `split_at` and `bounds()`), needs 3 hull tests for the
+dyadic-peak fixture at any gap. For the irrational peak it needs 5, 9, 17, 25,
+65 and 201 hull tests for gaps of 2^-4, 2^-8, 2^-16, 2^-24, 2^-64 and 2^-200,
+taking 0.09 to 10.7 ms, and at the tangent bound it is still undecided after
+12 levels. Tests: `tests/curve_box_containment.rs`.
+
 ## Concurrent contacts on a shared circle and line (2026-10-22)
 
 Region construction now decides two contacts that share one circle and one

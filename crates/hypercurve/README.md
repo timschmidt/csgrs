@@ -311,9 +311,13 @@ exact signatures.
   point_locations,
   try_polynomial_bspline, try_nurbs,
   try_periodic_polynomial_bspline, try_periodic_nurbs, family, point_at,
-  derivative_at, bounds, split_at, subcurve, reversed,
+  derivative_at, bounds, box_containment, split_at, subcurve, reversed,
   transform_similarity, native_bezier_fragments, trim_inside_region,
   trim_inside_region_with_parameters}` is the common owned carrier.
+  `bounds` is a cached conservative enclosure, the control hull for polynomial
+  Bézier spans; `box_containment` decides whether the curve itself lies in a
+  closed box, from that enclosure and the exact coordinate extrema, and
+  returns an exact curve point outside the box when it does not.
   `try_line` joins two general exact points, which may be selected algebraic
   intersection or corner locations, without rounding either endpoint.
   `point_locations` reports every exact parameter visit of a represented
@@ -395,8 +399,8 @@ exact signatures.
   trim_between_points}` edits connected line/arc strings without owning corner
   construction semantics.
 - `CurvePath2::{try_new, reversed, transform_similarity,
-  chamfer_vertex_by_setbacks, fillet_vertex, bounds, classify_point,
-  native_bezier_fragments}` is the sole connected-curve
+  chamfer_vertex_by_setbacks, fillet_vertex, bounds, box_containment,
+  classify_point, native_bezier_fragments}` is the sole connected-curve
   corner-edit authority and handles general connected curves. Chamfers
   enumerate exact solutions from design setbacks. Fillets take `CurveFillet2`
   with an exact radius and optional center or contact constraints. Contact

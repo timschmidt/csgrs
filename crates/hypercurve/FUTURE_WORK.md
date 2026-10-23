@@ -207,6 +207,63 @@ Items H09–H12 of the 2026-10-22 research queue, rechecked at `916e1e5f41`. `PE
 - `refilleting_a_filleted_vertex_completes`: the second fillet signs point-incidence predicates at recursive roots through `dense_two_positive_square_root_sum_sign` (section 1). It did not finish in forty minutes.
 - `round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes`: fillet, round stroke, boundary reconstruction, reversal and a second fillet all complete; eroding the result then blocks with `RealSign`. At a tangent junction left by the second fillet, one offset span keeps an analytic parallel's retained tangent and the other the fillet arc's represented tangent. Their cross product is zero, but neither it nor the equality of the two offset ends is decided. The fillet certified that tangency when it was built; the rebuilt region does not keep it. The same workflow from a line/line corner completes (`round_stroke_boundary_of_a_filleted_line_corner_refillets_and_erodes`). Either the boundary keeps the tangency certificate or `curve_tangent_cross_sign` proves this zero exactly.
 
+## 10. Box containment and CAM-derived contracts
+
+**Admitted.** `Curve2::box_containment` and `CurvePath2::box_containment`
+decide whether a curve image lies in a closed axis-aligned box, with an exact
+witness point when it does not (`PERFORMANCE.md`, 2026-10-23). The cached
+`bounds()` enclosure is the fast path; unsettled sides use the exact extremum
+candidates of lines, arcs, polynomial quadratic and cubic Béziers, rational
+quadratics and spline spans of those kinds.
+
+**Open:**
+- **General rational spans.** A rational span of degree three or more, or a
+  polynomial spline span of degree four or more, contributes only when its
+  coordinate is certified monotone; otherwise a crossing enclosure reports
+  `Unsupported`. `RationalBezier2::axis_monotonicity_classified` already
+  isolates the quotient-derivative roots. Deciding the coordinate at each
+  isolated root against the bound would complete these spans, including
+  rational cubic NURBS.
+- **Retained, source-range and implicit-polynomial carriers** contribute only
+  their endpoints. A source-range carrier could reuse the derivative roots
+  that `retained_algebraic_source_extrema_bounds` certifies inside its
+  parameter range.
+- **Witness parameter.** The witness is a point. An arc's native fragment
+  parameter is not its curve chart, so a curve parameter is not published.
+
+**Rejected: hull subdivision as the refinement.** Halving until each piece's
+control hull lies in the box decides the 9/4 fixture after one split, but a
+bound `2^-k` above an irrational peak needs about `k` levels (201 hull tests
+and 10.7 ms for `k = 200`, against 42 µs for the derivative roots), and a
+tangent bound at an irrational parameter is never decided, because a hull
+exceeds the curve wherever the curve's maximum is interior. Derivative roots
+decide both exactly.
+
+**Rechecked, no change (C07 fixtures 2 to 4, Alumina `ef94d9e`).**
+- *Set distance and same-parameter distance.* `BezierFlatteningCertificate`
+  bounds the distance between the curve and its chords as point sets: each
+  control lies in the capsule around its chord, so every curve point is
+  within the bound of the chord and, by continuity of the projection on the
+  chord, every chord point is within the bound of the curve. It is not a
+  same-parameter bound: `C(t) = (t^3, 0)` flattens to one chord at any bound,
+  while `L(t) = (t, 0)` is 3/8 away at `t = 1/2` (a test records this). No
+  API names it as one, and the offset verifiers name their same-parameter
+  bounds explicitly, so there is no conflation to fix. The polyline does not
+  publish each chord's source parameter interval; a consumer that needs a
+  pointwise certificate builds it from the control net, as Alumina does.
+- *Fidelity across split and copy.* `Curve2` lineage keeps source parameter
+  identity through split, reversal and transform, but there is no fidelity
+  classification on curves. `CertifiedCurvePathParallel2` keeps only aggregate
+  exact and approximated counts: after `path()` or `into_path()` a split or
+  copied path cannot tell exact parallel curves from verified approximations.
+  A per-output-curve source index and fidelity record would preserve it.
+  Alumina's moving-join policy uses its own span classification, so this is
+  recorded, not changed.
+- *Step quantization.* No Hypercurve or Hyperpath API rounds to a machine
+  lattice or writes commands back into source geometry. Alumina rounds with
+  `Real::round_certified` and keeps source and canonical-command travel checks
+  separate; `8 * 1600/3 = 12800/3` rounds to 4267 steps, `8.000625` mm.
+
 ## Fast paths added in this round
 
 Keep these in mind when measuring:
