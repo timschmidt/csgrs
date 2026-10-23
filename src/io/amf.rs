@@ -1,6 +1,6 @@
 //! AMF export for native Hypermesh triangles.
 
-use crate::io::{IoError, finite_f64, xml_metadata};
+use crate::io::{IoError, decimal_f64, finite_f64, xml_metadata};
 use hyperlattice::Real;
 use hypermesh::TriangleMesh;
 use std::io::Write;
@@ -45,18 +45,20 @@ fn serialize(
     );
     if let Some([red, green, blue]) = color {
         output.push_str(&format!(
-            "<material id=\"1\"><color><r>{red:.17}</r><g>{green:.17}</g>\
-             <b>{blue:.17}</b><a>1</a></color></material>\n"
+            "<material id=\"1\"><color><r>{}</r><g>{}</g><b>{}</b><a>1</a></color></material>\n",
+            decimal_f64(red),
+            decimal_f64(green),
+            decimal_f64(blue),
         ));
     }
     output.push_str("<object id=\"0\"><mesh><vertices>\n");
     for point in mesh.positions.iter() {
         output.push_str(&format!(
-            "<vertex><coordinates><x>{:.17}</x><y>{:.17}</y><z>{:.17}</z>\
+            "<vertex><coordinates><x>{}</x><y>{}</y><z>{}</z>\
              </coordinates></vertex>\n",
-            finite_f64(&point.x, "AMF", "vertex x")?,
-            finite_f64(&point.y, "AMF", "vertex y")?,
-            finite_f64(&point.z, "AMF", "vertex z")?,
+            decimal_f64(finite_f64(&point.x, "AMF", "vertex x")?),
+            decimal_f64(finite_f64(&point.y, "AMF", "vertex y")?),
+            decimal_f64(finite_f64(&point.z, "AMF", "vertex z")?),
         ));
     }
     output.push_str(if color.is_some() {
@@ -83,10 +85,22 @@ fn serialize(
     Ok(output)
 }
 
+/// Export native triangle geometry as AMF.
+///
+/// Coordinates are projected to finite binary64 values and each is spelled
+/// exactly in decimal, with the same formatter as OBJ, PLY and ASCII STL: the
+/// existing 17 fractional digits when they are exact, and up to 1074 where a
+/// value needs them. The file therefore preserves the selected projection, not
+/// arbitrary exact source coordinates. `units` must be an AMF unit name; it
+/// labels the coordinates and does not scale them. Topology validation and
+/// fidelity to the source are separate claims.
 pub fn to_amf(mesh: &TriangleMesh, object_name: &str, units: &str) -> Result<String, IoError> {
     serialize(mesh, object_name, units, None)
 }
 
+/// [`to_amf`] with one material whose color components lie in `0..=1`.
+///
+/// Color components are projected and spelled like coordinates.
 pub fn to_amf_with_color(
     mesh: &TriangleMesh,
     object_name: &str,
@@ -96,6 +110,7 @@ pub fn to_amf_with_color(
     serialize(mesh, object_name, units, Some(color))
 }
 
+/// Write [`to_amf`] output to a stream after the complete text is formed.
 pub fn write_amf<W: Write>(
     mesh: &TriangleMesh,
     writer: &mut W,

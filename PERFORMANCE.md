@@ -947,6 +947,29 @@ or 12.345 degrees that ended `PredicateUndecided` now decide
   several cosines pay. Wall times of the same probes varied up to 4x between
   repeated runs of one binary on the shared host, so no time claim is made.
 
+## 2026-10-23: exact AMF decimal spelling
+
+`io::amf` now spells each binary64 coordinate and color component exactly, with
+the formatter OBJ, PLY and ASCII STL use. This is a fidelity fix with a
+recorded serialization migration, not a performance change. Its 17 fixed
+fractional digits wrote all eight vertices of the `2^-70` cube at the origin;
+the fixed writer writes only the origin vertex there. A temporary
+release-profile probe timed 21 calls of `to_amf` after one warm-up and counted
+allocator calls. The host was shared, so times are descriptive.
+
+| Workload | Bytes | Allocation calls per export | Median |
+| --- | ---: | ---: | ---: |
+| `sphere(4, 20, 10)`, before | 43,099 | 556 | 130 µs |
+| `sphere(4, 20, 10)`, after | 58,089 | 732 | 297–376 µs |
+| `cube(2)`, before and after | 1,862 | 29 | 3 µs |
+
+The cube's output is byte-identical, since every coordinate is already exact
+at 17 fractional digits. The sphere's trigonometric coordinates need their
+full binary64 expansions: the file is 35% larger and the export about 2.5
+times slower, the same exactness cost PLY accepted. Contract tests:
+`tests/amf_projection_contracts.rs`; three of its five tests fail with the
+former writer.
+
 ## 2026-10-22: exact line profiles in sweep, twist and revolution
 
 `curve::try_sweep`, `extrude_twisted` and `revolve` now consume exact line

@@ -81,6 +81,13 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   is now spelled exactly, with up to 1074 fractional digits where needed.
   Already exact spellings, headers and face rows keep their bytes. Affected
   files change length and checksum, and some become larger.
+- **AMF decimal spelling.** Vertex coordinates and color components used a
+  fixed 17 fractional digits, which rounded magnitudes below `5 * 10^-18` to
+  zero and could change the binary64 value of others below 0.1. Each binary64
+  value is now spelled exactly, with the formatter PLY, OBJ and ASCII STL
+  use. Already exact spellings, such as integers and dyadics with at most 17
+  fractional binary digits, keep their bytes; other files change length and
+  checksum and become larger.
 - **TrueType outlines.** Native lines and quadratic/cubic Bézier curves
   replace the former eight-chord sampling. The point size uses exactly
   `127/360` millimeters per point instead of binary64 `0.3527777`. Represented

@@ -138,6 +138,12 @@ migrations, including changed serialized output, are listed in
   Steiner vertex with denominator 3 or 6, could be written one ulp away the
   second time, because hyperreal's float conversion depended on how the
   value was stored.
+- AMF export writes each coordinate's binary64 value exactly, as PLY, OBJ
+  and ASCII STL do. It used 17 fixed fractional digits, so a coordinate of
+  magnitude below `5 * 10^-18` became zero and the 2^-70 cube was written
+  with every vertex at the origin; coordinates below 0.1 could also change
+  their binary64 value. The serialization change is listed in
+  [docs/MIGRATIONS.md](docs/MIGRATIONS.md).
 - The involute and cycloidal gear and rack constructors, marked "under
   construction" in 0.20.1, now produce corrected tooth profiles and validate
   their parameters.

@@ -769,6 +769,8 @@ using the same formatter as OBJ and ASCII STL, with up to 1074 fractional
 digits where a value needs them. This preserves the selected finite projection, not arbitrary exact source
 geometry. PLY carries no construction receipt; a consumer validating a parsed
 mesh establishes a new claim about its projected coordinates and topology.
+AMF spells its binary64 coordinates and color components with the same
+formatter, so a coordinate of `2^-70` is no longer written as zero.
 
 glTF supports canonical empty meshes, named empty scene objects, and scenes
 with no objects. Empty objects become named nodes without meshes; a scene
