@@ -964,12 +964,14 @@ fn round_stroke_of_a_filleted_heavy_nurbs_path_completes() {
 /// A bevel stroke of a chamfered quadratic/quadratic/rational-quadratic path
 /// (weight 1, so all low-degree). Rebuilding its exported boundary runs the
 /// recursive chord/parallel system, whose local candidates are filtered by
-/// `parameter_is_in_ordered_range`. A candidate equal to a range endpoint is
-/// compared by refining both recursive projective parameters; every step
-/// evaluates near-zero defining signs in a recursive quadratic tower, and
-/// the comparison did not finish within ten minutes.
+/// `parameter_is_in_ordered_range`. A candidate equal to a range endpoint
+/// was once compared by refining both recursive projective parameters, and
+/// did not finish within forty minutes. Equal local polynomial roots are now
+/// ordered by one defining sign, and a range endpoint keeps its proof of
+/// equality with the degree-192 eliminant root that the system projects;
+/// that one proof is most of the remaining time.
 #[test]
-#[ignore = "open: equal recursive projective parameters are compared by refinement"]
+#[ignore = "slow: the chamfered quadratic bevel stroke round trip takes about a minute"]
 fn chamfered_quadratic_bevel_stroke_round_trips() {
     let seed = Seed {
         x: 2,
@@ -1146,4 +1148,197 @@ fn round_stroke_of_a_filleted_nurbs_pair_completes() {
         weight: 6,
     };
     run_sequence(&seed, &[Step::Fillet(1, 2), Step::Stroke(1, 0)]).unwrap();
+}
+
+/// Fillets a vertex, round-strokes the path wider than the fillet radius,
+/// rebuilds the stroke from its exported boundary, reverses that boundary,
+/// fillets the inner corner left where the inner offsets meet, and erodes
+/// the result. Each generation consumes the previous exact output.
+fn fillet_stroke_rebuild_reverse_refillet_erode(seed: &Seed) -> Result<(), TestCaseError> {
+    let path = seed_path(seed);
+    let (start, end) = (path.start(), path.end());
+    let filleted = required(
+        "fillet",
+        crate::support::under(&STRICT, || {
+            path.fillet_vertex(
+                1,
+                &CurveFillet2::new(fraction(1, 4)),
+                CurveCornerMode2::TrimOnly,
+            )
+        }),
+    )?
+    .into_value()
+    .into_solutions()
+    .into_iter()
+    .next()
+    .ok_or_else(|| TestCaseError::fail("the authored corner admits a fillet"))?;
+    same_point("fillet", &filleted.start(), &start)?;
+    same_point("fillet", &filleted.end(), &end)?;
+    let stroke = required(
+        "stroke",
+        crate::support::under(&STRICT, || {
+            CurveRegion2::stroke_path(
+                &filleted,
+                fraction(1, 2),
+                &OffsetCornerStyle2::Round,
+                OffsetCap::Round,
+            )
+        }),
+    )?
+    .into_value();
+    for vertex in path_vertices(&filleted) {
+        prop_assert_eq!(
+            region_location("stroke", &stroke, &vertex)?,
+            RegionPointLocation::Inside
+        );
+    }
+    assert_round_trip("stroke", &stroke)?;
+    let boundary = required(
+        "boundary",
+        crate::support::under(&STRICT, || stroke.boundary_paths()),
+    )?
+    .into_value();
+    let mut reversed = Vec::with_capacity(boundary.len());
+    for path in &boundary {
+        reversed.push(
+            required(
+                "reverse",
+                crate::support::under(&STRICT, || path.reversed()),
+            )?
+            .into_value(),
+        );
+    }
+    let rebuilt = required(
+        "reversed boundary",
+        crate::support::under(&STRICT, || {
+            CurveRegion2::try_from_boundary_paths(&reversed, FillRule::NonZero)
+        }),
+    )?
+    .into_value();
+    let difference = required(
+        "reversed boundary",
+        crate::support::under(&STRICT, || rebuilt.boolean_region(&stroke, BooleanOp::Xor)),
+    )?;
+    prop_assert!(
+        difference.value.is_empty(),
+        "a reversed boundary rebuilt a different set"
+    );
+    // The fillet radius is smaller than the half-width, so the inner
+    // offsets meet at a corner of the boundary. Every other junction is
+    // tangent and admits no trimming fillet.
+    let [outline] = reversed.as_slice() else {
+        return Err(TestCaseError::fail("the stroke has one boundary loop"));
+    };
+    let mut refilleted = Vec::new();
+    for vertex in 1..outline.curves().len() {
+        let solutions = required(
+            "second fillet",
+            crate::support::under(&STRICT, || {
+                outline.fillet_vertex(
+                    vertex,
+                    &CurveFillet2::new(fraction(1, 8)),
+                    CurveCornerMode2::TrimOnly,
+                )
+            }),
+        )?
+        .into_value()
+        .into_solutions();
+        for solution in &solutions {
+            same_point("second fillet", &solution.start(), &outline.start())?;
+            same_point("second fillet", &solution.end(), &outline.end())?;
+        }
+        refilleted.extend(solutions);
+    }
+    let [refilleted] = refilleted.as_slice() else {
+        return Err(TestCaseError::fail(
+            "exactly the inner corner admits a second fillet",
+        ));
+    };
+    let refilleted = required(
+        "refilleted region",
+        crate::support::under(&STRICT, || {
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(refilleted),
+                FillRule::NonZero,
+            )
+        }),
+    )?
+    .into_value();
+    // The inner corner is reflex, so its fillet only adds material.
+    let removed = required(
+        "refilleted region",
+        crate::support::under(&STRICT, || {
+            stroke.boolean_region(&refilleted, BooleanOp::Difference)
+        }),
+    )?;
+    prop_assert!(
+        removed.value.is_empty(),
+        "the second fillet removed material"
+    );
+    let added = required(
+        "refilleted region",
+        crate::support::under(&STRICT, || {
+            refilleted.boolean_region(&stroke, BooleanOp::Difference)
+        }),
+    )?;
+    prop_assert!(!added.value.is_empty(), "the second fillet left the corner");
+    let eroded = required(
+        "erosion",
+        crate::support::under(&STRICT, || {
+            refilleted.offset(-fraction(1, 16), &OffsetCornerStyle2::Round)
+        }),
+    )?
+    .into_value();
+    prop_assert!(!eroded.is_empty(), "a thin erosion kept material");
+    let outside = required(
+        "erosion",
+        crate::support::under(&STRICT, || {
+            eroded.boolean_region(&refilleted, BooleanOp::Difference)
+        }),
+    )?;
+    prop_assert!(outside.value.is_empty(), "the erosion left its region");
+    Ok(())
+}
+
+/// A filleted line/line corner through round stroke, boundary
+/// reconstruction, reversal, a second fillet and erosion.
+#[test]
+fn round_stroke_boundary_of_a_filleted_line_corner_refillets_and_erodes() {
+    fillet_stroke_rebuild_reverse_refillet_erode(&corner_seed(0)).unwrap();
+}
+
+/// The same workflow from an arc/line corner. The second fillet meets one
+/// of its neighbours tangentially. Eroding the result offsets both at that
+/// vertex: one span keeps an analytic parallel's retained tangent, the other
+/// the fillet arc's represented tangent. Neither their cross product, which
+/// is zero, nor the equality of the two offset ends is decided, so the join
+/// blocks the offset with `RealSign`. The fillet certified that tangency
+/// when it was constructed; the rebuilt region does not retain it.
+#[test]
+#[ignore = "open: erosion cannot decide the tangent junction a second fillet leaves on a stroke boundary"]
+fn round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes() {
+    fillet_stroke_rebuild_reverse_refillet_erode(&corner_seed(1)).unwrap();
+}
+
+/// A corner whose first edge has the given family, followed by a line.
+fn corner_seed(first: u8) -> Seed {
+    Seed {
+        x: 0,
+        y: 0,
+        edges: vec![
+            Edge {
+                family: first,
+                dx: 4,
+                dy: 3,
+                outward: 1,
+            },
+            Edge {
+                family: 0,
+                dx: 5,
+                dy: -3,
+                outward: 1,
+            },
+        ],
+        weight: 1,
+    }
 }

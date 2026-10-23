@@ -10,6 +10,118 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Local selected-root comparison (2026-10-23)
+
+Items H09–H12 of the 2026-10-22 research queue, rechecked at `916e1e5f41`.
+`FUTURE_WORK.md` section 9 records what remains open.
+
+**Overlapping polynomial roots.** When the isolators of two recursive roots
+still overlap after the 32-step native refinement and the projective-scalar
+routes do not apply, `cmp_by_refinement` now asks
+`order_against_polynomial_root` in each direction, in a bounded exact pass.
+The stored bracket `[a, b]` of a polynomial root `q` isolates one simple root
+of its defining polynomial `g`, with `g(a)` and `g(b)` nonzero and of
+opposite signs. The other value is ordered exactly against `a` and `b`;
+strictly inside, the sign of `g` there decides the order against `q`, and a
+zero proves equality. The sign is evaluated in that value's field through
+`recursive_polynomial_sign_joined`. If both directions decline, the former
+512-step bisection and global promotion follow unchanged.
+
+**Proved native equalities.** A recursive root's shared projection cache now
+keeps up to four native algebraic roots it has been proved equal to, by the
+native-root replay or by the exact promoted comparison. A later comparison
+with the same root identity (shared refinement authority, or equal
+polynomial, interval and root count) answers `Equal` from that entry. Only
+exact equality proofs are kept; the `APPROXIMATE_512` terminal, unequal and
+undecided comparisons leave no entry. The entries live as long as the root's
+projection, which its clones and refinements share; each holds one reference
+to a native root's data, the first four are kept and none is evicted, and a
+poisoned lock reads as empty. A warm entry changes only the route to the same
+exact answer.
+
+`chamfered_quadratic_bevel_stroke_round_trips`, release build, one process
+per row, run directly from the test binary with
+`HYPERCURVE_OPEN_PATH_TRACE=1 <binary> chamfered_quadratic_bevel_stroke_round_trips --ignored --exact --nocapture`
+under `/usr/bin/time -v`, single samples on a shared 16-core host with load
+8–21:
+
+| Variant | Outcome | Wall | User | Peak RSS |
+| --- | --- | --- | --- | --- |
+| `916e1e5f41` | killed at the 2,400 s limit | 2,400 s | 2,149 s | 151,492 KiB |
+| order certificate only | completed (five runs) | 539–647 s | 468–563 s | 24,840–25,044 KiB |
+| certificate and native-equality retention | completed (two runs) | 61–67 s | 63 s | 24,220 KiB |
+
+A temporary route trace (not committed) located each cost. The baseline
+spends its first 19.7 s in one comparison of two equal local roots that
+exhausts the 512 bisection steps, then promotes both (0.98 s and 0.49 s); a
+backtrace at eight minutes is still refining equal local roots while it
+rebuilds the stroke region from its boundary. With the
+certificate, the six comparisons of equal local roots take 0.11–0.34 ms each,
+and 97% of the time is one pair: a degree-6 local root over a two-source,
+one-extension tower against the equal root of the degree-192 polynomial that
+the chord/parallel system projects for its candidates. Each exact proof of
+that equality takes 44–80 s, and the arrangement asked it nine times for one
+root identity. With retention it is proved once (47.6 s) and answered from
+the entry eight times (3–40 µs).
+
+Allocation calls and requested bytes, from a temporary counting allocator
+(not committed). Comparisons of the fixtures in
+`recursive_polynomial_roots_compare_through_retained_defining_signs`, STRICT,
+two runs each with identical counts:
+
+| Pair | Certificate disabled | Certificate |
+| --- | --- | --- |
+| roots of `f` and `7f` over rebuilt fields | `Equal`, 2,786,129 / 160.9 MB, 118 ms | `Equal`, 17,744 / 0.95 MB, 0.95 ms |
+| roots of `f` and `f - 2^-600` | `Uncertain(Ordering)`, 2,891,495 / 172.9 MB, 120 ms | `Less`, 20,767 / 1.14 MB, 1.2 ms |
+| reciprocal chart and its own relation | `Equal`, 3,339,889 / 190.3 MB, 129 ms | `Equal`, 20,047 / 1.10 MB, 1.1 ms |
+
+The second row is a completion change: the two roots are 2^-603 apart, 512
+bisection steps cannot separate them, and the promoted comparison stays
+undecided. The whole chamfered case, certificate in both variants:
+
+| Variant | Allocation calls | Requested bytes |
+| --- | --- | --- |
+| without retention | 5,478,337,501 | 1,220.6 GB |
+| with retention | 841,295,069 | 149.5 GB |
+
+Release suite with the route trace (`cargo test --release --locked
+--all-features --no-fail-fast -- --test-threads=2`): before, 64 comparisons
+of two polynomial roots and 12 of a formula root with a polynomial root ran
+all 512 steps and then promoted both roots; the polynomial pairs alone spent
+31.0 s of thread time in that loop. After, 76 polynomial pairs are decided by
+the certificate (72 `Equal`, two `Less`, two `Greater`), and the 12 mixed
+pairs decline and keep the former route, about 0.1 s each. Every test passed
+in both runs.
+
+**Rejected: promotion first against high-degree native roots.** Promoting
+the local root and comparing two native roots, before the local vanishing
+test, when the native degree exceeds eight times the local degree: the
+chamfered case took 631 s against 559 s for the local test, and each of the
+nine equalities took 62–82 s either way. The local root's promotion itself
+took 0.13 s; the native comparison with the degree-192 root is the cost.
+
+**Not kept: two-sided coefficient-field joins (H09).** The internal
+regression reproduces: `t^2 = 2 + alpha` over a field with only
+`alpha = +sqrt 2`, queried over an independent field that adjoins
+`beta = +sqrt 3`, returns `Unsupported`, in both source orders, with no
+fallback inside `recursive_polynomial_sign_joined`. A join over the union of
+both source tuples, factored from `recursive_merge_projective_point_fields`,
+decides all of its queries in a bounded pass without promotion. In the traced
+release suite, before and after the certificate, and in the four open-path
+workflows, the only queries that reached that case came from the new
+regression, so the join and the refactor were removed. The regression stays
+as the ignored test
+`recursive_polynomial_root_signs_queries_over_an_independent_source`.
+
+The historical workflows at `916e1e5f41`, same host and limit:
+
+| Workflow | Baseline | Now |
+| --- | --- | --- |
+| `chamfered_quadratic_bevel_stroke_round_trips` | killed at 2,400 s | 61–67 s |
+| `round_stroke_of_a_filleted_nurbs_pair_completes` | killed at 2,400 s (fillet 18.2 s) | unchanged; selected-fiber isolation over a degree-214 fillet centre |
+| `refilleting_a_filleted_vertex_completes` | killed at 2,400 s (first fillet 29 ms) | unchanged; dense two-radical signs in the second fillet |
+| fillet, round stroke, rebuild, reverse, second fillet, erosion | not present | line/line corner completes; arc/line corner blocks in the erosion |
+
 ## Concurrent contacts on a shared circle and line (2026-10-22)
 
 Region construction now decides two contacts that share one circle and one
