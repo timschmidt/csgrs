@@ -30,7 +30,8 @@
 //!   `hypertri` dependency.
 //! - **truetype-text**: filled regions from TrueType fonts
 //! - **hershey-text**: open strings from Hershey fonts
-//! - **image-io**: filled regions from raster contours
+//! - **image-io**: filled regions traced from a decoded `image::GrayImage`;
+//!   enables no image codecs
 //!
 //! #### Optional
 //! - **offset**: enables `curve`; Hypercurve's `CurveRegion2::offset` is not

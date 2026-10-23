@@ -828,7 +828,7 @@ features of their own; enable the feature that names the capability.
 | `gerber-io` | yes | Gerber curve interchange |
 | `svg-io` | no | SVG curve interchange |
 | `offset` | no | enables `curve` only; Hypercurve's `CurveRegion2::offset` is not feature-gated |
-| `truetype-text`, `hershey-text`, `image-io` | yes | text and raster curve construction |
+| `truetype-text`, `hershey-text`, `image-io` | yes | text and raster curve construction; `image-io` traces a decoded `GrayImage` and enables no image codecs |
 | `metaballs`, `sdf` | yes | sampled implicit geometry |
 | `bevymesh` | no | Bevy conversion |
 | `wasm` | no | WebAssembly/browser wrappers |

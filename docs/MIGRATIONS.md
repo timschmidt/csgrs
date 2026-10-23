@@ -165,3 +165,14 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   are not valid `csgrs` features. Enable the capability feature instead, for
   example `stl-io` for `stl_io`, `image-io` for `image` and `sdf` or
   `metaballs` for `hypersdf`. The [README](../readme.md#features) lists them.
+- **`image-io` enables no image codecs.** `image-io` depends on `image`
+  without its default features. `curve::from_image` still takes an
+  already-decoded `image::GrayImage`, and its regions are unchanged. CSGRS no
+  longer turns on `image`'s format decoders and encoders or its `rayon`
+  feature. A program that decodes or encodes image files, and relied on CSGRS
+  to enable those formats, must request them in its own manifest, for example
+  `image = { version = "0.25", default-features = false, features = ["png"] }`;
+  Cargo unifies them with the CSGRS dependency. Without them, `image::open`
+  and `image::load_from_memory` report an unsupported format at run time
+  rather than failing to compile. DXF thumbnail reading under `dxf-io` is
+  unaffected: the `dxf` crate requests the BMP codec it uses itself.
