@@ -39,6 +39,9 @@ struct RingRecognition<'a> {
     // Root-branch completion follows the original native strategy and uses
     // only its remaining node and operation budget.
     root_completion: bool,
+    // The final extended relation attempt raises the degree limit; every
+    // earlier attempt keeps its original limits.
+    extended_degree: bool,
     native_signs: Vec<Option<RealSign>>,
     relations: Vec<Option<NativeRingRelation>>,
     root_relation_seen: bool,
@@ -54,6 +57,10 @@ impl<'a> RingRecognition<'a> {
     const MAX_DEGREE: usize = 8;
     const MAX_COEFFICIENT_BITS: u64 = 4096;
     const MAX_OPERATIONS: usize = 8192;
+    // Limits of the final extended relation attempt, which runs only after
+    // every other exact sign stage declined.
+    const EXTENDED_DEGREE: usize = 12;
+    const EXTENDED_OPERATIONS: usize = 32_768;
 
     fn new(value: &'a Computable) -> Self {
         Self {
@@ -73,6 +80,7 @@ impl<'a> RingRecognition<'a> {
             additional_relation_used: false,
             native_relations: false,
             root_completion: false,
+            extended_degree: false,
             native_signs: Vec::new(),
             relations: Vec::new(),
             root_relation_seen: false,
@@ -82,7 +90,13 @@ impl<'a> RingRecognition<'a> {
     }
 
     fn degree_limit(&self) -> usize {
-        if self.native_relations { 12 } else { Self::MAX_DEGREE }
+        if self.native_relations {
+            12
+        } else if self.extended_degree {
+            Self::EXTENDED_DEGREE
+        } else {
+            Self::MAX_DEGREE
+        }
     }
 
     // Charges coefficient operations, term insertion and atom comparisons.

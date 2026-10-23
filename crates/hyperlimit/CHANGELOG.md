@@ -108,6 +108,12 @@
 - Sign resolution tries Hyperreal's exact sign certificates for nested
   quadratic and square-root tower expressions before refinement or
   approximation.
+- After the towers decline, sign resolution tries one last exact stage,
+  `Real::extended_rational_normal_form`, before the approximate terminal or
+  `Unknown`. It runs only where every earlier stage declined, so decided
+  predicates keep their stage and cost; a strict predicate that was `Unknown`
+  can now decide, for example the zeros of a cylinder rotated by 1/10000
+  degree about the axis (1, 1, 1).
 - Predicate dispatch paths were reworked for speed. Each retained change and
   its measurement is recorded in [`PERFORMANCE.md`](PERFORMANCE.md).
 - Declares a minimum supported Rust version (MSRV) of 1.95.0; 0.4.0 declared

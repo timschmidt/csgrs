@@ -13,7 +13,8 @@ use hyperreal::{CertifiedRealSign, Real, RealSignCertificate, ZeroKnowledge};
 /// exact determinant/sign work for the whole predicate, while Real facts only
 /// certify signs that are already exposed by the computed Real value. If both
 /// stages and bounded refinement are inconclusive, an exact rational normal
-/// form is attempted before policy-authorized approximation.
+/// form, the quadratic and radical towers and finally one larger relation
+/// attempt are tried before policy-authorized approximation.
 pub(crate) fn resolve_real_sign(
     value: &Real,
     policy: PredicatePolicy,
@@ -66,6 +67,11 @@ pub(crate) fn resolve_real_sign(
         return PredicateOutcome::decided(map_real_sign(sign), Certainty::Exact, Escalation::Exact);
     }
 
+    if let Some(sign) = extended_rational_normal_form_sign(value) {
+        crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "extended-normal-form");
+        return PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact);
+    }
+
     if let Some(outcome) = approximate_real_sign(value, policy) {
         crate::trace_dispatch!(
             "hyperlimit",
@@ -83,10 +89,10 @@ pub(crate) fn resolve_real_sign(
 /// exists between structural inspection and bounded refinement.
 ///
 /// Calling `certified_sign_until` once avoids the duplicate structural-facts
-/// pass in the general resolver. If bounded refinement is inconclusive, an
-/// exact rational normal form is still attempted before any policy-authorized
-/// terminal approximation so approximate zero cannot mask an exact nonzero
-/// result.
+/// pass in the general resolver. If bounded refinement is inconclusive, the
+/// same exact stages as in [`resolve_real_sign`] are still attempted before
+/// any policy-authorized terminal approximation so approximate zero cannot
+/// mask an exact nonzero result.
 pub(crate) fn resolve_real_sign_direct(
     value: &Real,
     policy: PredicatePolicy,
@@ -139,6 +145,14 @@ pub(crate) fn resolve_real_sign_direct(
                     Escalation::Exact,
                 );
             }
+            if let Some(sign) = extended_rational_normal_form_sign(value) {
+                crate::trace_dispatch!(
+                    "hyperlimit",
+                    "resolve_real_sign_direct",
+                    "extended-normal-form"
+                );
+                return PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact);
+            }
             approximate_real_sign(value, policy).unwrap_or_else(|| {
                 crate::trace_dispatch!("hyperlimit", "resolve_real_sign_direct", "unknown");
                 PredicateOutcome::unknown(unknown_need, Escalation::Undecided)
@@ -148,7 +162,16 @@ pub(crate) fn resolve_real_sign_direct(
 }
 
 fn exact_rational_normal_form_sign(value: &Real) -> Option<Sign> {
-    let rational = value.exact_rational_normal_form()?;
+    rational_sign(value.exact_rational_normal_form()?)
+}
+
+/// The final exact stage, after the towers: one larger relation attempt.
+/// Its declines cost more, so it never runs before a cheaper exact proof.
+fn extended_rational_normal_form_sign(value: &Real) -> Option<Sign> {
+    rational_sign(value.extended_rational_normal_form()?)
+}
+
+fn rational_sign(rational: hyperreal::Rational) -> Option<Sign> {
     let zero = hyperreal::Rational::zero();
     Some(
         match rational

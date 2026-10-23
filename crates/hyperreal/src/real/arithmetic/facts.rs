@@ -172,6 +172,37 @@ impl Real {
         Some(rational * &self.rational)
     }
 
+    /// Return the exact rational value proved by one larger relation attempt.
+    ///
+    /// This repeats the attempt of [`Self::exact_rational_normal_form`] that
+    /// admits the built-in `sqrt(2)` and `sqrt(3)` squares, nonnegative
+    /// rational square-root radicands, `pi * inv_pi = 1`, rational quarter-turn
+    /// trigonometry and `sin^2 + cos^2 = 1` for equal or complementary
+    /// arguments, with a degree limit of 12 instead of 8 and 32,768 work
+    /// charges instead of 8,192. The other polynomial limits are unchanged:
+    /// 512 node visits, depth 64, 32 atoms, 64 monomials and 4096 stored
+    /// coefficient bits. A completed projection is a proof whether or not one
+    /// of those relations was needed. Zeros of rotations by rational turns
+    /// beyond the cyclotomic order limit, such as a rotation by 1/10000 degree
+    /// about a skew axis or a compound Euler rotation, need this degree or work.
+    ///
+    /// It performs no approximation, and `None` means only that recognition
+    /// declined; nothing is retained as negative evidence. A completed proof is
+    /// retained as the node's exact sign. A decline can cost four times the
+    /// work of the ordinary attempt, so callers should try this only after
+    /// [`Self::exact_rational_normal_form`], [`Self::quadratic_tower_sign`] and
+    /// [`Self::radical_tower_sign`] decline, as Hyperlimit's sign
+    /// cascade does.
+    pub fn extended_rational_normal_form(&self) -> Option<Rational> {
+        if let Some(rational) = self.exact_rational() {
+            return Some(rational);
+        }
+        let rational = self
+            .computable_ref()
+            .bounded_extended_relation_rational()?;
+        Some(rational * &self.rational)
+    }
+
     /// Returns `(a, b, d)` when bounded symbolic normalization proves that
     /// this value equals `a + b * sqrt(d)`, with rational coefficients and
     /// nonnegative `d`. Rational values use `b = d = 0`.

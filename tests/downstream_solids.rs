@@ -319,42 +319,46 @@ fn near_coincident_rotated_cylinder_booleans_complete_exactly() {
     assert_eq!(approximate.value.triangles, strict.triangles);
 }
 
-#[test]
-fn skew_near_coincident_cylinder_rotations_are_undecided_under_strict() {
-    // Current limitation, recorded in crates/hypermesh/FUTURE_WORK.md: about a
-    // skew axis the pairwise face tests meet zeros that no construction
-    // implies, an input vertex on the other cylinder's face plane and two
-    // crossings of one face pair that coincide. Only trigonometric
-    // identities of the rotation decide them, so STRICT reports a typed
-    // undecided predicate rather than a guess.
-    let cylinder = solid::cylinder(r(8), r(40), 8).expect("cylinder");
+/// The SynapsCAD rotations about a skew axis. Their pairwise face tests meet
+/// zeros that no construction implies, an input vertex on the other
+/// cylinder's face plane and two crossings of one face pair that coincide;
+/// identities of the rotation's sines and cosines of degree above 8 decide
+/// them, through Hyperlimit's final extended relation stage.
+fn skew_cylinder_rotations(cylinder: &TriangleMesh) -> Vec<(&'static str, TriangleMesh)> {
     let angle = literal("0.0001");
-    for (label, rotated) in [
-        ("axis (1, 1, 1)", axis_angle(&cylinder, [1, 1, 1], &angle)),
+    vec![
+        ("axis (1, 1, 1)", axis_angle(cylinder, [1, 1, 1], &angle)),
         (
             "compound",
-            euler(&cylinder, [angle.clone(), -angle.clone(), angle.clone()]),
+            euler(cylinder, [angle.clone(), -angle.clone(), angle]),
         ),
-    ] {
-        assert!(
-            matches!(
-                solid::boolean_with_context(
-                    &cylinder,
-                    &rotated,
-                    hypermesh::BooleanOp::Difference,
-                    &GeometryContext::STRICT,
-                ),
-                Err(hypermesh::HypermeshError::PredicateUndecided {
-                    predicate: "Real sign classification"
-                })
-            ),
+    ]
+}
+
+#[test]
+fn skew_near_coincident_cylinder_rotations_complete_exactly() {
+    // Before the extended stage both differences ended `PredicateUndecided`
+    // at "Real sign classification" (crates/hypermesh/FUTURE_WORK.md).
+    let cylinder = solid::cylinder(r(8), r(40), 8).expect("cylinder");
+    for (label, rotated) in skew_cylinder_rotations(&cylinder) {
+        let sliver = assert_exact_cylinder_boolean(
+            &cylinder,
+            &rotated,
+            hypermesh::BooleanOp::Difference,
+            label,
+        );
+        let volume = six_volume(&sliver);
+        assert_eq!(strict_sign(&volume), Sign::Positive, "{label}");
+        assert_eq!(
+            strict_order(&volume, &six_volume(&cylinder)),
+            Ordering::Less,
             "{label}"
         );
     }
 }
 
 #[test]
-#[ignore = "full rotation matrix; run with --release -- --ignored (about ten seconds)"]
+#[ignore = "full rotation matrix; run with --release -- --ignored (under a minute)"]
 fn near_coincident_rotated_cylinder_boolean_matrix_completes_exactly() {
     let cylinder = solid::cylinder(r(8), r(40), 8).expect("cylinder");
     for (label, rotated) in decided_cylinder_rotations(&cylinder) {
@@ -364,6 +368,19 @@ fn near_coincident_rotated_cylinder_boolean_matrix_completes_exactly() {
             hypermesh::BooleanOp::Difference,
             label,
         );
+    }
+    for (label, rotated) in skew_cylinder_rotations(&cylinder) {
+        for operation in [
+            hypermesh::BooleanOp::Union,
+            hypermesh::BooleanOp::Intersection,
+        ] {
+            assert_exact_cylinder_boolean(
+                &cylinder,
+                &rotated,
+                operation,
+                &format!("{label} {operation:?}"),
+            );
+        }
     }
     let centered = solid::try_center(&cylinder).expect("center");
     for base in [&cylinder, &centered] {

@@ -114,4 +114,29 @@ impl Computable {
         crate::trace_dispatch!("computable", "normal_form", "rational-root-reciprocal");
         Some(rational)
     }
+
+    /// The relation attempt above with degree 12 and 32,768 work charges.
+    ///
+    /// A completed projection is a proof whether or not one of the additional
+    /// relations was needed: the earlier attempts may have declined only at
+    /// their degree or work limit. Callers run this after every cheaper exact
+    /// stage, because a decline can now cost four times the work.
+    pub(crate) fn bounded_extended_relation_rational(&self) -> Option<Rational> {
+        let mut recognition = RingRecognition::new(self);
+        recognition.root_squares = true;
+        recognition.trig_arguments = Some(Vec::new());
+        recognition.rational_squares = Some(Vec::new());
+        recognition.extended_degree = true;
+        recognition.operations_left = RingRecognition::EXTENDED_OPERATIONS;
+        let quotient = recognition.expand_quotient(self, RingRecognition::MAX_DEPTH)?;
+        let rational = recognition.project_quotient(&quotient)?;
+        if should_stop(&self.signal) {
+            return None;
+        }
+        self.internal
+            .facts
+            .replace_exact_sign(ExactSignCache::Valid(rational.sign()));
+        crate::trace_dispatch!("computable", "normal_form", "extended-relation");
+        Some(rational)
+    }
 }

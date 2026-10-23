@@ -59,6 +59,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "exact_rational",
     "exact_quadratic_normal_form",
     "exact_rational_normal_form",
+    "extended_rational_normal_form",
     "exact_rational_affine_det2_word_sign",
     "exact_rational_affine_det3_word_sign",
     "certified_rational_linear_form4_sign",

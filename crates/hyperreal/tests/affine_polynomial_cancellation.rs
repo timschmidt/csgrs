@@ -112,6 +112,69 @@ fn unit_circle_proofs_cover_rational_turns_beyond_the_cyclotomic_order_limit() {
     }
 }
 
+/// `(sin^2 + cos^2)^5 - 1 + offset` for the turn of 1/10000 degree: degree
+/// ten in two atoms that only the unit-circle relation relates.
+fn unit_circle_fifth_power(offset: &Rational) -> Real {
+    let angle = Real::new(Rational::fraction(1, 10_000).unwrap()).to_radians();
+    let (sine, cosine) = (angle.clone().sin(), angle.cos());
+    let circle = &sine * &sine + &cosine * &cosine;
+    let squared = &circle * &circle;
+    &squared * &squared * &circle - Real::one() + Real::from(offset.clone())
+}
+
+#[test]
+fn degree_twelve_identities_need_the_extended_relation_attempt() {
+    // Both values exceed the ordinary degree limit of 8; the extended attempt
+    // allows degree 12. The first needs sin^2 + cos^2 = 1, the second no
+    // relation at all: (x + y)^5 (x - y)^5 = (x^2 - y^2)^5 for opaque x, y.
+    for offset in [-1, 0, 1] {
+        let offset = Rational::fraction(offset, 1_000_000_000_000_u64).unwrap();
+        let value = unit_circle_fifth_power(&offset);
+        assert_eq!(value.exact_rational_normal_form(), None);
+        assert_eq!(value.extended_rational_normal_form(), Some(offset));
+    }
+    let (x, y) = (Real::e(), Real::from(3).ln().unwrap());
+    let fifth = |value: Real| {
+        let squared = &value * &value;
+        &squared * &squared * &value
+    };
+    let value = fifth(&x + &y) * fifth(&x - &y) - fifth(&x * &x - &y * &y);
+    assert_eq!(value.exact_rational_normal_form(), None);
+    assert_eq!(
+        value.extended_rational_normal_form(),
+        Some(Rational::zero())
+    );
+    // A completed proof is retained, so a later sign query is immediate.
+    assert_eq!(value.certified_sign_until(0).sign(), Some(RealSign::Zero));
+}
+
+#[test]
+fn the_extended_relation_attempt_does_not_guess() {
+    // Angle addition is outside every attempt; declining is not a proof.
+    let value = (Real::e() + Real::one()).sin()
+        - Real::e().sin() * Real::one().cos()
+        - Real::e().cos() * Real::one().sin();
+    assert_eq!(value.extended_rational_normal_form(), None);
+    assert_eq!(value.certified_sign_until(-512).sign(), None);
+    // Degree 14 is beyond the extended limit too.
+    let angle = Real::new(Rational::fraction(1, 10_000).unwrap()).to_radians();
+    let (sine, cosine) = (angle.clone().sin(), angle.cos());
+    let circle = &sine * &sine + &cosine * &cosine;
+    let cubed = &circle * &circle * &circle;
+    let seventh = &cubed * &cubed * &circle - Real::one();
+    assert_eq!(seventh.extended_rational_normal_form(), None);
+    // Cancellation stops the attempt without retaining negative evidence.
+    let mut cancelled = unit_circle_fifth_power(&Rational::zero());
+    let signal = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+    cancelled.abort(signal.clone());
+    assert_eq!(cancelled.extended_rational_normal_form(), None);
+    signal.store(false, std::sync::atomic::Ordering::Relaxed);
+    assert_eq!(
+        cancelled.extended_rational_normal_form(),
+        Some(Rational::zero())
+    );
+}
+
 #[test]
 fn a_proved_identity_survives_precision_changes_and_concurrent_queries() {
     let value = affine_residual();

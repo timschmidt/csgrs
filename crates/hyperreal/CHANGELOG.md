@@ -103,6 +103,14 @@
   1/360 or 12.345 degrees, and so do Booleans that need it: a cube rotated by
   12.345 degrees and back, or rotated by 1/10000 degree and subtracted from
   itself, was `PredicateUndecided` under strict policy.
+- `Real::extended_rational_normal_form` repeats the relation attempt of
+  `exact_rational_normal_form` with degree 12 instead of 8 and 32,768 work
+  charges instead of 8,192, and accepts a completed projection whether or
+  not a relation was used. It is meant to run after every cheaper exact
+  stage declines. It decides the zeros of a cylinder rotated by 1/10000
+  degree about the axis (1, 1, 1) or by the Euler angles `[a, -a, a]` (degree
+  above 8 in the rotation's sines and cosines), which no fixed number field
+  of small degree contains.
 
 ### Changed
 

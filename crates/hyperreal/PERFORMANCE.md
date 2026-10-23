@@ -99,6 +99,59 @@ imported `quantile(Phi(1000))` was still refining `1 - Phi(1000)`, which is
 about 10^-217000, when the run was stopped after more than ten minutes. With
 the exact identity route that test binary finishes in 4.5 s.
 
+## Extended relation attempt as the last exact sign stage (2026-10-23)
+
+Research project M05 asked whether an embedded number-field descriptor would
+decide the zeros that stopped strict Booleans of near-coincident rotations
+(`tests/downstream_solids.rs`). It would not: 1/10000 degree is a rational
+turn of order 3,600,000, so its cosine has degree 480,000, and the binary64
+angle 13.1 degrees is a turn of order 45 * 2^52. A
+temporary probe captured the undecided values (157 to 203 nodes) and ran
+each normal-form attempt on them. Every attempt declined at a limit, not for
+want of an identity: the polynomial attempts at degree 8, the relation
+attempt at 8,192 work charges. Raising the limits one at a time decided them:
+
+| Value | Decides with | Declines with |
+| --- | --- | --- |
+| cylinder rotated by 1/10000 degree about (1, 1, 1) | relation attempt, 24,576 charges | 16,384 charges |
+| cylinder rotated by Euler angles `[a, -a, a]` | quotient attempt, degree 12 | degree 10 |
+| cube rotated about z by binary64 13.1, 17.3, -13.1, -17.3 degrees | degree 24, 4,096 terms, 4,194,304 charges | degree 16, 256 terms, 262,144 charges |
+
+Raising the ordinary limits to degree 12 and 65,536 charges cost 13.9% more
+instructions on the icosahedron union chain, whose 702 normal-form declines
+then each ran longer, and nothing elsewhere in the corpus. The kept change
+leaves every ordinary attempt as it was and adds
+`Real::extended_rational_normal_form`, the relation attempt at degree 12 and
+32,768 charges, which Hyperlimit tries only after the radical towers decline.
+Both cylinder rotations then complete all three Booleans as certified closed
+manifolds, about 2 s each in release against 0.2 s to fail before. The
+binary64 compound rotation stays undecided.
+
+User-space instructions with and without the stage, in one build (`perf stat`,
+release test binaries, four test threads):
+
+| Workload | Without | With | Change |
+| --- | ---: | ---: | ---: |
+| nine symbolic successive-operation chains, one process each | | | below 0.001% each |
+| Hypercurve composed workloads | 1,553.2 G | 1,554.0 G | +0.05% |
+| Hypercurve open-path compositions | 875.4 G | 876.0 G | +0.07% |
+| Hypercurve stationary fillets | 602.8 G | 602.5 G | -0.05% |
+| Hypercurve PCB Boolean regressions | 81.4 G | 83.8 G | +2.9% |
+| Hypercurve region Booleans | 29.7 G | 30.0 G | +1.1% |
+| Hypercurve region strokes | 14.8 G | 15.3 G | +3.5% |
+| Hypermesh Boolean tests | 9.57 G | 9.81 G | +2.6% |
+| Hypermesh repeated operations | 0.31 G | 0.31 G | 0.0% |
+| csgrs downstream profiles | 36.8 G | 37.0 G | +0.4% |
+
+The stage runs only where every earlier exact stage declined, so no decided
+predicate changes its stage or cost; certified corpus chains execute the same
+instructions. The added cost is on predicates that end undecided under
+`STRICT` or consume the 512-bit terminal under `APPROXIMATE_512`, which the
+Hypermesh and Hypercurve test suites exercise on purpose (hidden zeros such
+as the angle-addition identity `sin(e + 1) - sin(e) cos(1) - cos(e) sin(1)`).
+A decline
+costs at most four times the work charges of the ordinary relation attempt.
+
 ## Not implemented: filter-first sign preflight (2026-10-22)
 
 The proposal was to try immediate facts, the cached root approximation and

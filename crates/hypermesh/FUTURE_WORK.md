@@ -396,10 +396,27 @@ separates the exact set from its complement, checked against the convex
 operands' half-spaces. For the 4-gon prism `APPROXIMATE_512` gives the same
 rows as `STRICT` without consuming its terminal.
 
-**Still undecided.** About a skew axis, `rotate(0.0001, [1, 1, 1])` and the
-compound Euler rotation `[a, -a, a]` stop earlier, in the pairwise face
-tests, at `Real sign classification`: the order of two crossings of one face
-pair along their common line, and an input vertex against the other
-cylinder's face plane. No construction relates these points; if they are
-zeros, only identities of the rotation's sines and cosines would prove them,
-which is scalar-layer work. The root test pins these two outcomes.
+**Fixed below this layer (2026-10-23).** About a skew axis,
+`rotate(0.0001, [1, 1, 1])` and the compound Euler rotation `[a, -a, a]`
+stopped earlier, in the pairwise face tests, at `Real sign classification`:
+the order of two crossings of one face pair along their common line, and an
+input vertex against the other cylinder's face plane. No construction
+relates these points. They are zeros of degree above 8 in the rotation's
+sines and cosines: Hyperreal's relation attempt proves the skew-axis zero
+with 32,768 work charges instead of 8,192, and its quotient attempt proves
+the compound zero at degree 12; neither needs angle addition. No number field
+of small degree holds them, since 1/10000 degree is a rational turn of order
+3,600,000. Hyperlimit now runs one extended relation attempt with both
+limits after every other exact stage declines, and the union, intersection
+and difference of both rotations complete as certified closed manifolds
+(`tests/downstream_solids.rs`). Each takes about 2 s in release, against
+about 0.2 s to fail before.
+
+**Still undecided.** A unit cube rotated about z by the binary64 angles
+13.1, 17.3, -13.1 and -17.3 degrees, unioned with the cube, stops at
+`Real sign classification`. Its zeros involve four atoms, the sines and
+cosines of two binary64 rational turns, at degree up to about 24; a probe
+with degree 24, 4,096 terms and 4,194,304 work charges decided it, which is
+too much work for a stage that every undecided predicate pays. The same
+angles written as decimal literals are rational turns of order 3,600 and
+decide through the cyclotomic proof.
