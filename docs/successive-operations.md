@@ -139,6 +139,19 @@ not compared.
   within one chain (the tilted 32-gon drills, whose results grow to 540
   triangles).
 
+### Construction incidences (2026-10-22)
+
+One release run of the whole corpus at `2aea178386` and one with the change
+that takes incidences from construction (shared host, one thread). Every step
+keeps its outcome, validation, triangle, vertex and coordinate counts,
+denominator bits and graph sizes, and a digest of every validated step's
+exact rows is identical. Allocation over the corpus falls from 63,408 MB to
+45,125 MB (28.8%): the symbolic chains allocate 5 to 50% less, the icosahedron
+unions 1,998 MB instead of 3,972 MB and the tilted 32-gon drills 20,465 MB
+instead of 34,337 MB, and the rational chains the same bytes when run alone.
+Details are in the
+[hypermesh performance record](../crates/hypermesh/PERFORMANCE.md#2026-10-22-take-incidences-from-construction-instead-of-zero-proofs).
+
 Not adopted in the harness: resident-set sampling, which needs a
 platform-specific reader and would add the allocator's own retention to the
 live-heap numbers above; timing the last result's drop, which no later step
@@ -224,21 +237,25 @@ treat time as noisy.
   difference zero again. Values never change, and an undecided comparison
   keeps both expressions. A segment crossing keeps a coordinate both
   endpoints store as one expression, which keeps shared coordinates shared.
+- `hypermesh`, `hypertri`, `hyperlimit`: a Boolean arrangement takes the
+  incidences its points have by construction (on a face's plane or edges, on
+  an authored line, on the plane of a coplanar face) instead of proving the
+  zeros, and passes each line's points to Hypertri's triangulation as
+  collinear facts. Rows are unchanged.
 
-These change published rows but not sets or sizes; see "Boolean output rows"
-in [`MIGRATIONS.md`](MIGRATIONS.md). Earlier changes for this record: Boolean
-results keep only the vertices their set needs and retain their plane
-classes, distinct-plane facts and source support planes; a crossing on an
-axis-aligned rational plane keeps the plane's exact coordinate; Boolean
+All but the last change published rows but not sets or sizes; see "Boolean
+output rows" in [`MIGRATIONS.md`](MIGRATIONS.md). Earlier changes for this
+record: Boolean results keep only the vertices their set needs and retain
+their plane classes, distinct-plane facts and source support planes; a
+crossing on an axis-aligned rational plane keeps the plane's exact
+coordinate; Boolean
 outputs retain that their triangles meet only in shared vertices or edges, so
 a later Boolean does not test them against each other; `hyperreal` reduces
 long decimals on parse; and `Real::representation_size` reports the growth
 measure used here. The reduction itself cut corpus allocation from 113.8 GB
 to 33.7 GB over the twenty chains measured before it.
 
-Open: numeric proofs of collinearity that
-construction identity already implies, now most of a coplanar union's
-instructions; the earcut cost noted in
+Open: the earcut cost noted in
 [hypertri future work](../crates/hypertri/FUTURE_WORK.md); and a recursive
 drop of deep expression graphs that aborts at depth 20,000. Raw harness
 output was not archived in the evidence repository; regenerate it with the

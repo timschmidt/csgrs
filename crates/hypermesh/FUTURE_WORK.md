@@ -121,10 +121,73 @@ crossing that keeps a symbolic coordinate both endpoints store as one
 expression, which fails without that rule.
 
 Points constructed on one wall plane and a face plane are collinear by
-construction, but `corefine_face` and Hypertri's constraint validation still
-prove it numerically; these orientation zeros are now most of the instructions
-of a coplanar union step. **Option:** certify incidence from construction
-identity before numeric tests run.
+construction. `corefine_face` and Hypertri's constraint validation proved that
+numerically, and these orientation zeros were most of the instructions of a
+coplanar union step; since 2026-10-22 the arrangement takes them from
+construction (next section).
+
+### Kept: incidences from construction replace zero proofs
+
+Every arrangement point has construction identities: a source vertex, a
+source edge crossing a support plane, three support planes, or two lines of
+one plane. Each puts the point exactly on planes and lines, because
+interpolation and Cramer's rule solve the defining equations without
+approximation. A face arrangement nevertheless proved every incidence again
+by an exact zero, which the scalar layer must prove rather than refine: that
+each point lies in its face's plane and on the edges it was built on, which
+points lie on each authored line, and, in Hypertri, the orientation of every
+three collinear points.
+
+Since 2026-10-22 each point keeps all its identities, also those of an equal
+point the interner merged it with, and plane classes are built before
+corefinement, so support planes compare by class: a point built on one
+face's plane lies on that of every face decided or retained coplanar with it.
+A split line is the meeting of two faces decided non-coplanar, so a point on
+both classes lies on it. From these facts the arrangement decides, without a
+determinant:
+
+- that a point lies in its face's plane, or on one of the face's edges, when
+  checking that it lies inside the face;
+- that a point lies on an authored line, leaving only its position along the
+  line to exact comparisons, and that two constraints on one line, or with an
+  endpoint on the other's line, cannot cross properly;
+- for Hypertri's constrained triangulation, the points of each authored line,
+  whether known from construction or decided collinear by the pass above,
+  through `constrained_triangulation_convex_hull_with_collinear_facts`; three
+  points of one line then have orientation zero;
+- that two facets cut from faces of one class are coplanar around a shared
+  edge, and that the seed of a cell, the centroid of its facet, lies in the
+  plane of that facet and of every face of its class.
+
+The facts only ever decide that a point is on a plane or line, never that it
+is off one. Imported or edited meshes carry only source identities, so their
+other incidences are proved as before. Two classes with a contradictory fact
+give no incidence, which exact decisions cannot produce. Exact rational
+arithmetic decides every zero of rational geometry cheaply, so the identity
+bookkeeping is skipped when every input coordinate is rational. Hypertri
+trusts the sets it receives and records their certainty: a set that consumed
+the approximate terminal is used only under `APPROXIMATE_512`.
+
+The change also fixed `boundary_line_for_segment`, which named a coplanar
+contact segment by the edge before the one it lies on; edge plane `i` and
+edge identity `i` describe the same edge. The wrong name reached only the
+constraint deduplication, where either name is that of the same segment,
+but the incidence facts rely on it.
+
+On the successive-operation corpus every step keeps its outcome, triangle,
+vertex and coordinate counts and graph sizes, and every validated step's
+exact rows (triangle indices, rational coordinates, and the value and graph
+size of each symbolic coordinate) are identical. Allocation over the corpus
+falls from 63.4 GB to 45.1 GB: icosahedron unions 3,972 MB to 1,998 MB, the
+tilted 32-gon drills 34.3 GB to 20.5 GB, the revolved ring 1,391 MB to
+987 MB, and the other symbolic chains by 5 to 28%. Rational chains allocate
+the same bytes when run alone; in the full run, four of their steps allocate
+up to 296 bytes more, from state that the symbolic chains before them leave
+in the process. On five traced symbolic chains Hyperlimit makes 7 to 22%
+fewer `orient2d` calls and, on the icosahedron and ring chains, 30% fewer
+`orient3d` calls; the rational square drills make the same calls. The
+near-coincident cylinders below decide because of it. Measurements and commands are in
+[`PERFORMANCE.md`](PERFORMANCE.md).
 
 ### Kept: equal output coordinates share one expression
 
@@ -260,22 +323,32 @@ arguments sum to `pi / 2` (2026-10-22). That decides rotations of a cube by
 1/10000 or 12.345 degree about any axis through a corner, and their round
 trips, all of which ended `PredicateUndecided` before.
 
-**Still undecided.** The cylinders then stop at `surface arrangement point on
-segment` or `surface arrangement orientation`; rotations about z, whose caps
-are coplanar, stop at the latter. The smallest reproduction is
-`solid::cylinder(8, 40, 4)` minus itself rotated by 0.0001 degree about y.
-The undecided value is the collinearity of an arrangement point with an
-authored face constraint, a 148-node expression that refinement leaves at
-zero to 2^-400. The point was constructed on that constraint's source
-segment, so its incidence follows from how it was built, but the face
-arrangement tests every point against every constraint numerically. This is
-the case the sampled-sphere Booleans met before the cyclotomic proof
-decided them (above), now outside that proof's domain, and it is research
-project M04: reuse retained incidence before numerical zero tests. Every
-variant of the fixture (the signed Euler axes, `1e-4` and `1/10000`
-spellings, axis-angle forms, 0.000001 and 0.01 degree, a compound rotation,
-and union, intersection and difference with and without centring) ends
-`PredicateUndecided` under `STRICT`. The differences of all thirteen rotation
-variants complete under `APPROXIMATE_512` with `Approximate512Consumed`, as
-closed manifolds, in 2 to 39 s each in a debug build. The root test pins the
-strict outcomes and one approximate completion.
+**Fixed in the arrangement (2026-10-22).** The cylinders then stopped at
+`surface arrangement point on segment` or, for rotations about z, whose caps
+are coplanar, `surface arrangement orientation`. In the smallest
+reproduction, `solid::cylinder(8, 40, 4)` minus itself rotated by 0.0001
+degree about y, a side face of the first prism meets both triangles of the
+rotated top cap along one line. Its arrangement holds three points on that
+line: one built on each cap triangle's plane and one on the triangles' shared
+edge. The two triangles were decided coplanar, so the points are collinear
+by construction, but the face arrangement tested each point against each
+constraint numerically, and the collinearity was a 148-node expression that
+refinement leaves at zero to 2^-400. Hypertri's triangulation of the face then
+needed the orientation of the same three points. Larger fixtures met the same
+kind of zero in a point's containment in its face, in the radial order of
+coplanar facets and in the cell seed's ray parameter. All are now taken from
+construction (above). The differences for rotations by 0.0001 degree about
+each signed coordinate axis and by 0.000001 and 0.01 degree about y, and the
+union, intersection and difference about y with and without centring, now
+complete as certified closed manifolds. Every boundary triangle of each
+separates the exact set from its complement, checked against the convex
+operands' half-spaces. For the 4-gon prism `APPROXIMATE_512` gives the same
+rows as `STRICT` without consuming its terminal.
+
+**Still undecided.** About a skew axis, `rotate(0.0001, [1, 1, 1])` and the
+compound Euler rotation `[a, -a, a]` stop earlier, in the pairwise face
+tests, at `Real sign classification`: the order of two crossings of one face
+pair along their common line, and an input vertex against the other
+cylinder's face plane. No construction relates these points; if they are
+zeros, only identities of the rotation's sines and cosines would prove them,
+which is scalar-layer work. The root test pins these two outcomes.

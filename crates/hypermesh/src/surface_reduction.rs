@@ -395,6 +395,14 @@ impl SourcePlaneClasses {
         self.contradicted.binary_search(&class).is_ok()
     }
 
+    /// The plane class of a source face, for incidence facts: every face in
+    /// it lies in one plane. `None` for an absent face or a class whose facts
+    /// contradict each other, which exact decisions cannot produce.
+    pub(crate) fn incidence_class(&self, face: u32) -> Option<u32> {
+        let class = *self.class.get(face as usize)?;
+        (!self.is_contradicted(class)).then_some(class)
+    }
+
     fn faces_meet_only_along_shared_edge(&self, left: u32, right: u32) -> bool {
         source_face_pair_key(left, right)
             .is_some_and(|key| self.radially_separated.binary_search(&key).is_ok())

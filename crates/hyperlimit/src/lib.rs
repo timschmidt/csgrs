@@ -211,11 +211,13 @@ pub use predicates::ring::{
     ring2_facts_with_policy as ring2_facts,
 };
 pub use predicates::segment::{
+    classify_point_segment_with_known_orientation_and_policy as classify_point_segment_with_known_orientation,
     classify_point_segment_with_orientation_and_policy as classify_point_segment_with_orientation,
     classify_point_segment_with_orientation_and_query_and_policy as classify_point_segment_with_orientation_and_query,
     classify_point_segment_with_policy as classify_point_segment,
     classify_point_segment_with_policy_and_facts as classify_point_segment_with_facts,
     classify_point_segment3_with_policy as classify_point_segment3,
+    classify_segment_intersection_with_known_orientations_and_policy as classify_segment_intersection_with_known_orientations,
     classify_segment_intersection_with_policy as classify_segment_intersection,
     classify_segment_intersection_with_policy_and_facts as classify_segment_intersection_with_facts,
     classify_segment3_intersection_with_policy as classify_segment3_intersection,

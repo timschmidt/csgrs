@@ -154,66 +154,233 @@ fn near_coincident_rotated_cube_booleans_complete_exactly() {
     assert_eq!(six_volume(&union).exact_rational(), Some(Rational::new(48)));
 }
 
-#[test]
-fn near_coincident_rotated_cylinder_booleans_are_undecided_under_strict() {
-    // Current limitation, recorded in crates/hypermesh/FUTURE_WORK.md: the
-    // cylinders' arrangement constructs points on face edges whose exact
-    // incidence with those edges follows from how they were built, but is
-    // proved only numerically, which cannot prove a zero. Under STRICT every
-    // variant ends with a typed undecided predicate rather than a guess.
-    let cylinder = solid::cylinder(r(8), r(40), 8).expect("cylinder");
+/// Whether `point` lies strictly inside the closed convex mesh `mesh`: every
+/// face plane, oriented outward by the face's winding, is negative there.
+/// Each sign is decided exactly from the operand's own vertices, so the
+/// answer does not depend on the Boolean kernel.
+fn strictly_inside_convex(mesh: &TriangleMesh, point: &hyperlattice::Vector3) -> bool {
+    mesh.triangles.iter().all(|triangle| {
+        let [a, b, c] = triangle
+            .indices()
+            .map(|index| mesh.positions[index].to_vector());
+        let normal = (&b - &a).cross(&(&c - &a));
+        strict_sign(&normal.dot(&(point - &a))) == Sign::Negative
+    })
+}
+
+fn convex_membership(
+    operation: hypermesh::BooleanOp,
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+    point: &hyperlattice::Vector3,
+) -> bool {
+    let (left, right) = (
+        strictly_inside_convex(left, point),
+        strictly_inside_convex(right, point),
+    );
+    match operation {
+        hypermesh::BooleanOp::Union => left || right,
+        hypermesh::BooleanOp::Intersection => left && right,
+        hypermesh::BooleanOp::Difference => left && !right,
+        other => panic!("{other:?} is not exercised here"),
+    }
+}
+
+/// Checks a Boolean of two convex operands against exact membership: for
+/// every result triangle, the point `2^-60` times its outward normal behind
+/// its centroid must belong to the operation's set and the point in front
+/// must not. The operands are convex, so their membership is exact
+/// half-space arithmetic on the input vertices, an oracle independent of
+/// the arrangement. The offset is far below every feature of these solids,
+/// so neither point crosses another boundary. Every result triangle that
+/// does not separate the set from its complement fails the check; a
+/// component of the set missing from the result entirely would not.
+fn assert_boundary_matches_convex_operands(
+    result: &TriangleMesh,
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+    operation: hypermesh::BooleanOp,
+    label: &str,
+) {
+    let offset = q(1, 1 << 60);
+    let third = q(1, 3);
+    for triangle in result.triangles.iter() {
+        let [a, b, c] = triangle
+            .indices()
+            .map(|index| result.positions[index].to_vector());
+        let centroid = hyperlattice::Vector3(
+            [0, 1, 2].map(|axis| (&a.0[axis] + &b.0[axis] + &c.0[axis]) * third.clone()),
+        );
+        let normal = (&b - &a).cross(&(&c - &a));
+        let step =
+            |sign: i64| {
+                hyperlattice::Vector3([0, 1, 2].map(|axis| {
+                    &centroid.0[axis] + &normal.0[axis] * (offset.clone() * r(sign))
+                }))
+            };
+        assert!(
+            convex_membership(operation, left, right, &step(-1)),
+            "{label}: the set does not lie behind a boundary triangle"
+        );
+        assert!(
+            !convex_membership(operation, left, right, &step(1)),
+            "{label}: the set lies in front of a boundary triangle"
+        );
+    }
+}
+
+fn assert_exact_cylinder_boolean(
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+    operation: hypermesh::BooleanOp,
+    label: &str,
+) -> TriangleMesh {
+    let outcome =
+        solid::boolean_with_context(left, right, operation, &GeometryContext::STRICT)
+            .unwrap_or_else(|error| panic!("{label}: {error:?}"));
+    assert_eq!(outcome.certainty, GeometryCertainty::Certified, "{label}");
+    let mesh = outcome.into_value();
+    assert!(!mesh.triangles.is_empty(), "{label}: empty");
+    assert_certified_closed_manifold(&mesh, label);
+    assert_boundary_matches_convex_operands(&mesh, left, right, operation, label);
+    mesh
+}
+
+/// The SynapsCAD rotations whose Booleans with the unrotated cylinder decide
+/// under `STRICT`.
+fn decided_cylinder_rotations(cylinder: &TriangleMesh) -> Vec<(&'static str, TriangleMesh)> {
     let angle = literal("0.0001");
     let zero = || r(0);
-    let variants = [
-        euler(&cylinder, [angle.clone(), zero(), zero()]),
-        euler(&cylinder, [-angle.clone(), zero(), zero()]),
-        euler(&cylinder, [zero(), angle.clone(), zero()]),
-        euler(&cylinder, [zero(), -angle.clone(), zero()]),
-        euler(&cylinder, [zero(), zero(), angle.clone()]),
-        euler(&cylinder, [zero(), zero(), -angle.clone()]),
-        axis_angle(&cylinder, [1, 1, 1], &angle),
-        euler(&cylinder, [zero(), literal("0.000001"), zero()]),
-        euler(&cylinder, [zero(), literal("0.01"), zero()]),
-        euler(&cylinder, [angle.clone(), -angle.clone(), angle.clone()]),
-    ];
-    let undecided = |left: &TriangleMesh, right: &TriangleMesh, operation| {
-        matches!(
-            solid::boolean_with_context(left, right, operation, &GeometryContext::STRICT),
-            Err(hypermesh::HypermeshError::PredicateUndecided { .. })
-        )
-    };
-    for (index, rotated) in variants.iter().enumerate() {
+    vec![
+        ("+x", euler(cylinder, [angle.clone(), zero(), zero()])),
+        ("-x", euler(cylinder, [-angle.clone(), zero(), zero()])),
+        ("+y", euler(cylinder, [zero(), angle.clone(), zero()])),
+        ("-y", euler(cylinder, [zero(), -angle.clone(), zero()])),
+        ("+z", euler(cylinder, [zero(), zero(), angle.clone()])),
+        ("-z", euler(cylinder, [zero(), zero(), -angle])),
+        (
+            "0.000001 about y",
+            euler(cylinder, [zero(), literal("0.000001"), zero()]),
+        ),
+        (
+            "0.01 about y",
+            euler(cylinder, [zero(), literal("0.01"), zero()]),
+        ),
+    ]
+}
+
+#[test]
+fn near_coincident_rotated_cylinder_booleans_complete_exactly() {
+    // The cylinders' arrangement builds points on face edges and on the
+    // shared plane of coplanar cap triangles. Their incidences follow from how
+    // they were built, and the arrangement now takes them from construction
+    // instead of proving the zeros numerically (crates/hypermesh/FUTURE_WORK.md).
+    // The differences about y and z are checked here; every decided rotation
+    // and operation is the ignored test below.
+    let cylinder = solid::cylinder(r(8), r(40), 8).expect("cylinder");
+    for (label, rotated) in decided_cylinder_rotations(&cylinder)
+        .iter()
+        .filter(|(label, _)| matches!(*label, "+y" | "+z"))
+    {
+        let sliver = assert_exact_cylinder_boolean(
+            &cylinder,
+            rotated,
+            hypermesh::BooleanOp::Difference,
+            label,
+        );
+        let volume = six_volume(&sliver);
+        assert_eq!(strict_sign(&volume), Sign::Positive, "{label}");
+        assert_eq!(
+            strict_order(&volume, &six_volume(&cylinder)),
+            Ordering::Less,
+            "{label}"
+        );
+    }
+    // The smallest recorded reproduction, a rotated 4-gon prism, decides too,
+    // and the approximate policy reaches the same rows without consuming its
+    // terminal.
+    let prism = solid::cylinder(r(8), r(40), 4).expect("prism");
+    let rotated = euler(&prism, [r(0), literal("0.0001"), r(0)]);
+    let strict = assert_exact_cylinder_boolean(
+        &prism,
+        &rotated,
+        hypermesh::BooleanOp::Difference,
+        "4-gon",
+    );
+    let approximate = solid::boolean_with_context(
+        &prism,
+        &rotated,
+        hypermesh::BooleanOp::Difference,
+        &GeometryContext::APPROXIMATE_512,
+    )
+    .expect("approximate difference");
+    assert_eq!(approximate.certainty, GeometryCertainty::Certified);
+    assert!(same_positions(&approximate.value, &strict));
+    assert_eq!(approximate.value.triangles, strict.triangles);
+}
+
+#[test]
+fn skew_near_coincident_cylinder_rotations_are_undecided_under_strict() {
+    // Current limitation, recorded in crates/hypermesh/FUTURE_WORK.md: about a
+    // skew axis the pairwise face tests meet zeros that no construction
+    // implies, an input vertex on the other cylinder's face plane and two
+    // crossings of one face pair that coincide. Only trigonometric
+    // identities of the rotation decide them, so STRICT reports a typed
+    // undecided predicate rather than a guess.
+    let cylinder = solid::cylinder(r(8), r(40), 8).expect("cylinder");
+    let angle = literal("0.0001");
+    for (label, rotated) in [
+        ("axis (1, 1, 1)", axis_angle(&cylinder, [1, 1, 1], &angle)),
+        (
+            "compound",
+            euler(&cylinder, [angle.clone(), -angle.clone(), angle.clone()]),
+        ),
+    ] {
         assert!(
-            undecided(&cylinder, rotated, hypermesh::BooleanOp::Difference),
-            "variant {index}"
+            matches!(
+                solid::boolean_with_context(
+                    &cylinder,
+                    &rotated,
+                    hypermesh::BooleanOp::Difference,
+                    &GeometryContext::STRICT,
+                ),
+                Err(hypermesh::HypermeshError::PredicateUndecided {
+                    predicate: "Real sign classification"
+                })
+            ),
+            "{label}"
+        );
+    }
+}
+
+#[test]
+#[ignore = "full rotation matrix; run with --release -- --ignored (about ten seconds)"]
+fn near_coincident_rotated_cylinder_boolean_matrix_completes_exactly() {
+    let cylinder = solid::cylinder(r(8), r(40), 8).expect("cylinder");
+    for (label, rotated) in decided_cylinder_rotations(&cylinder) {
+        assert_exact_cylinder_boolean(
+            &cylinder,
+            &rotated,
+            hypermesh::BooleanOp::Difference,
+            label,
         );
     }
     let centered = solid::try_center(&cylinder).expect("center");
     for base in [&cylinder, &centered] {
-        let rotated = euler(base, [zero(), angle.clone(), zero()]);
+        let rotated = euler(base, [r(0), literal("0.0001"), r(0)]);
         for operation in [
             hypermesh::BooleanOp::Union,
             hypermesh::BooleanOp::Intersection,
             hypermesh::BooleanOp::Difference,
         ] {
-            assert!(undecided(base, &rotated, operation), "{operation:?}");
+            assert_exact_cylinder_boolean(
+                base,
+                &rotated,
+                operation,
+                &format!("{operation:?}"),
+            );
         }
     }
-    // The approximate policy completes the same Boolean and says so.
-    let rotated = &variants[2];
-    let outcome = solid::boolean_with_context(
-        &cylinder,
-        rotated,
-        hypermesh::BooleanOp::Difference,
-        &GeometryContext::APPROXIMATE_512,
-    )
-    .expect("approximate difference");
-    assert_eq!(outcome.certainty, GeometryCertainty::Approximate512Consumed);
-    let sliver = outcome.into_value();
-    assert!(!sliver.triangles.is_empty());
-    let volume = six_volume(&sliver);
-    assert_eq!(strict_sign(&volume), Sign::Positive);
-    assert_eq!(strict_order(&volume, &six_volume(&cylinder)), Ordering::Less);
 }
 
 // ---------------------------------------------------------------------------

@@ -95,6 +95,19 @@ grammar belong to adapters such as csgrs.
   coordinate the bounded search does not match keeps its expression.
 - The changes to built points, shared coordinates and reduced triangulations
   change published rows, not sets or sizes; see the csgrs migration notes.
+- Boolean arrangements take incidences that follow from how their points were
+  built instead of proving them by exact zeros: a point built on a face's
+  plane, a face edge, an authored line, or the plane of a face decided
+  coplanar with it lies on it. Corefinement uses them for face containment,
+  points on constraints and proper crossings, Hypertri's constrained
+  triangulation receives each line's points as collinear facts, and cell
+  assembly uses plane classes for coplanar radial facets and the cell seed.
+  Answers and rows are unchanged where the zero proofs decided. Where they
+  did not, as for a sampled cylinder and its copy rotated by 0.0001 degree
+  about a coordinate axis, strict Booleans now complete as certified closed
+  solids. Symbolic successive-operation chains allocate 5 to 50% less; rational
+  arrangements skip the bookkeeping. A coplanar contact segment is now named
+  by the face edge it lies on, not by the edge before it.
 - `minkowski_sum` computes the regularized Minkowski sum of bounded
   closed-PWN solids; `minkowski_sum_with_options` adds count limits and
   cooperative cancellation, which do not bound total work or memory.

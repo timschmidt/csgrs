@@ -25,6 +25,8 @@ pub(crate) struct PredicateEvaluator {
     #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
     policy: PredicatePolicy,
     certainty: Cell<TriangulationCertainty>,
+    #[cfg(feature = "cdt")]
+    collinear: Option<crate::collinear::CollinearIndex>,
 }
 
 impl PredicateEvaluator {
@@ -35,7 +37,36 @@ impl PredicateEvaluator {
             #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
             policy: context.predicate_policy(),
             certainty: Cell::new(TriangulationCertainty::Certified),
+            #[cfg(feature = "cdt")]
+            collinear: None,
         }
+    }
+
+    /// An evaluator that takes three points of one line in `facts` as
+    /// collinear, for one operation over `points`.
+    #[cfg(feature = "cdt")]
+    pub(crate) fn with_collinear_facts(
+        context: &TriangulationContext,
+        points: &[Point2],
+        facts: &crate::collinear::CollinearPointFacts,
+    ) -> Result<Self> {
+        let mut evaluator = Self::new(context);
+        if !facts.is_empty() {
+            evaluator.collinear = Some(crate::collinear::CollinearIndex::new(points, facts)?);
+        }
+        Ok(evaluator)
+    }
+
+    /// The zero orientation of three points that recorded facts place on one
+    /// line, consumed under this operation's policy.
+    #[cfg(feature = "cdt")]
+    pub(crate) fn known_zero(
+        &self,
+        a: &Point2,
+        b: &Point2,
+        c: &Point2,
+    ) -> Option<PredicateOutcome<hyperlimit::Sign>> {
+        self.collinear.as_ref()?.known_zero(a, b, c, self.policy)
     }
 
     #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
@@ -119,6 +150,10 @@ impl PredicateEvaluator {
         // application topology from arithmetic policy. The predicate
         // implementation keeps robust-orientation logic and exact
         // rational/common-scale schedules near their use.
+        #[cfg(feature = "cdt")]
+        if let Some(zero) = self.known_zero(a, b, c) {
+            return self.decide(zero, "orient2").map(map_hyperlimit_sign);
+        }
         self.decide(hyperlimit::orient2(a, b, c, self.policy), "orient2")
             .map(map_hyperlimit_sign)
     }

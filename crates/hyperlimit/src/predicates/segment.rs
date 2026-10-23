@@ -103,6 +103,61 @@ pub fn classify_point_segment_with_orientation_and_query_and_policy(
     classify_point_segment_impl(a, b, point, policy, None, Some(orientation), Some(query))
 }
 
+/// Classify `point` relative to closed segment `ab` using a retained
+/// orientation.
+///
+/// `orientation` must be a decided outcome of [`crate::orient2`] for `a`, `b`
+/// and `point`, either computed earlier or established by a certificate the
+/// caller holds, such as a construction that placed `point` on the line
+/// through `a` and `b`. A nonzero sign classifies the point as off the line. A
+/// zero sign skips the determinant and decides only the position along the
+/// line, by the exact comparisons [`classify_point_segment_with_policy`] makes
+/// after a zero determinant. An undecided outcome, or one the policy does not
+/// accept, is replaced by the determinant. The result carries the weaker of
+/// the retained certainty and that of the comparisons.
+pub fn classify_point_segment_with_known_orientation_and_policy(
+    a: &Point2,
+    b: &Point2,
+    point: &Point2,
+    orientation: PredicateOutcome<Sign>,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PointSegmentLocation> {
+    let mut trace = DecisionTrace::default();
+    let orientation = match reusable_orientation(orientation, policy) {
+        Some(orientation) => orientation,
+        None => orient2d_with_policy(a, b, point, policy),
+    };
+    let orientation = match decided(orientation, &mut trace) {
+        Ok(sign) => sign,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+    if orientation != Sign::Zero {
+        return PredicateOutcome::decided(
+            PointSegmentLocation::OffLine,
+            trace.certainty,
+            trace.stage,
+        );
+    }
+    match classify_collinear_point_segment(a, b, point, policy, &mut trace) {
+        Ok(location) => PredicateOutcome::decided(location, trace.certainty, trace.stage),
+        Err(unknown) => unknown.into_outcome(),
+    }
+}
+
+/// A retained orientation outcome that `policy` may consume in place of the
+/// determinant, or `None` when the determinant must be evaluated.
+fn reusable_orientation(
+    orientation: PredicateOutcome<Sign>,
+    policy: PredicatePolicy,
+) -> Option<PredicateOutcome<Sign>> {
+    match orientation {
+        PredicateOutcome::Decided { certainty, .. } if policy.accepts(certainty) => {
+            Some(orientation)
+        }
+        _ => None,
+    }
+}
+
 /// Classify a point already certified collinear with the segment endpoints.
 ///
 /// This is an internal composition helper for predicates that already retain
@@ -577,23 +632,57 @@ fn classify_segment_intersection_impl(
         return outcome;
     }
 
+    classify_segment_intersection_from_orientations(a, b, c, d, None, policy)
+}
+
+/// Classify closed segments `ab` and `cd` using retained orientations.
+///
+/// `orientations` must hold decided outcomes of [`crate::orient2`] for
+/// `(a, b, c)`, `(a, b, d)`, `(c, d, a)` and `(c, d, b)`, in that order,
+/// either computed earlier or established by a certificate the caller holds,
+/// such as constructions that placed points on a known line. Each undecided
+/// outcome, or one the policy does not accept, is replaced by its
+/// determinant. Collinear and endpoint cases are then decided by the exact
+/// comparisons of [`classify_segment_intersection_with_policy`], and the
+/// result carries the weakest certainty consumed.
+pub fn classify_segment_intersection_with_known_orientations_and_policy(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    d: &Point2,
+    orientations: [PredicateOutcome<Sign>; 4],
+    policy: PredicatePolicy,
+) -> PredicateOutcome<SegmentIntersection> {
+    classify_segment_intersection_from_orientations(a, b, c, d, Some(orientations), policy)
+}
+
+fn classify_segment_intersection_from_orientations(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    d: &Point2,
+    retained: Option<[PredicateOutcome<Sign>; 4]>,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<SegmentIntersection> {
     let mut trace = DecisionTrace::default();
 
     // This is the standard four-orientation segment classifier. Every
     // orientation and interval comparison routes through exact
-    // hyperreal-backed determinant signs.
-    let orientations: Result<[Sign; 4], UnknownDecision> = (|| {
-        Ok([
-            decided(orient2d_with_policy(a, b, c, policy), &mut trace)?,
-            decided(orient2d_with_policy(a, b, d, policy), &mut trace)?,
-            decided(orient2d_with_policy(c, d, a, policy), &mut trace)?,
-            decided(orient2d_with_policy(c, d, b, policy), &mut trace)?,
-        ])
-    })();
-    let [o1, o2, o3, o4] = match orientations {
-        Ok(signs) => signs,
-        Err(unknown) => return unknown.into_outcome(),
-    };
+    // hyperreal-backed determinant signs, unless a caller retained one.
+    let triples = [(a, b, c), (a, b, d), (c, d, a), (c, d, b)];
+    let mut signs = [Sign::Zero; 4];
+    for (index, (first, second, point)) in triples.into_iter().enumerate() {
+        let outcome =
+            match retained.and_then(|retained| reusable_orientation(retained[index], policy)) {
+                Some(outcome) => outcome,
+                None => orient2d_with_policy(first, second, point, policy),
+            };
+        signs[index] = match decided(outcome, &mut trace) {
+            Ok(sign) => sign,
+            Err(unknown) => return unknown.into_outcome(),
+        };
+    }
+    let [o1, o2, o3, o4] = signs;
 
     if o1 == Sign::Zero && o2 == Sign::Zero && o3 == Sign::Zero && o4 == Sign::Zero {
         return match classify_collinear_segments(a, b, c, d, policy, &mut trace) {
@@ -2292,5 +2381,139 @@ mod tests {
         ));
 
         assert_eq!(b, p2(1, 0));
+    }
+
+    #[test]
+    fn retained_collinearity_decides_only_the_position_along_the_line() {
+        // `point` is on the line through `a` and `b` by construction, but the
+        // determinant is four times a zero no proof decides.
+        let a = p2(0, 0);
+        let b = p2(4, 4);
+        let inside = Point2::new(real(2), real(2) + terminal_zero());
+        let outside = Point2::new(real(6), real(6) + terminal_zero());
+        let off = p2(2, 3);
+        let zero = PredicateOutcome::decided(Sign::Zero, Certainty::Exact, Escalation::Structural);
+        let strict = PredicatePolicy::STRICT;
+        assert!(matches!(
+            classify_point_segment_with_policy(&a, &b, &inside, strict),
+            PredicateOutcome::Unknown { .. }
+        ));
+        for (point, expected) in [
+            (&inside, PointSegmentLocation::OnSegment),
+            (&outside, PointSegmentLocation::CollinearOutside),
+        ] {
+            assert_eq!(
+                classify_point_segment_with_known_orientation_and_policy(
+                    &a, &b, point, zero, strict
+                )
+                .value(),
+                Some(expected)
+            );
+        }
+        // A nonzero retained sign is off the line; an approximate one is not
+        // a strict proof, and an undecided one is replaced by the determinant.
+        let positive =
+            PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Structural);
+        assert_eq!(
+            classify_point_segment_with_known_orientation_and_policy(
+                &a, &b, &off, positive, strict
+            )
+            .value(),
+            Some(PointSegmentLocation::OffLine)
+        );
+        let approximate =
+            PredicateOutcome::decided(Sign::Zero, Certainty::Approximate, Escalation::Undecided);
+        let unknown =
+            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Undecided);
+        for retained in [approximate, unknown] {
+            assert!(matches!(
+                classify_point_segment_with_known_orientation_and_policy(
+                    &a, &b, &inside, retained, strict
+                ),
+                PredicateOutcome::Unknown { .. }
+            ));
+            assert_eq!(
+                classify_point_segment_with_known_orientation_and_policy(
+                    &a, &b, &off, retained, strict
+                )
+                .value(),
+                Some(PointSegmentLocation::OffLine)
+            );
+        }
+        assert_eq!(
+            classify_point_segment_with_known_orientation_and_policy(
+                &a,
+                &b,
+                &inside,
+                approximate,
+                APPROX
+            ),
+            PredicateOutcome::decided(
+                PointSegmentLocation::OnSegment,
+                Certainty::Approximate,
+                Escalation::Undecided
+            )
+        );
+
+        // Segments: `cd` lies beyond `ab` on the same line, and `ed` overlaps
+        // it, which only the retained orientations of their endpoints
+        // establish.
+        let c = Point2::new(real(5), real(5) + terminal_zero());
+        let d = Point2::new(real(8), real(8) + terminal_zero());
+        let e = Point2::new(real(1), real(1) + terminal_zero());
+        let retained = |known: [bool; 4]| known.map(|known| if known { zero } else { unknown });
+        assert!(matches!(
+            classify_segment_intersection_with_policy(&a, &b, &c, &d, strict),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert_eq!(
+            classify_segment_intersection_with_known_orientations_and_policy(
+                &a,
+                &b,
+                &c,
+                &d,
+                retained([true; 4]),
+                strict
+            )
+            .value(),
+            Some(SegmentIntersection::Disjoint)
+        );
+        assert_eq!(
+            classify_segment_intersection_with_known_orientations_and_policy(
+                &a,
+                &b,
+                &e,
+                &d,
+                retained([true; 4]),
+                strict
+            )
+            .value(),
+            Some(SegmentIntersection::CollinearOverlap)
+        );
+        // An unretained orientation is still evaluated, and here undecided.
+        assert!(matches!(
+            classify_segment_intersection_with_known_orientations_and_policy(
+                &a,
+                &b,
+                &c,
+                &d,
+                retained([true, false, true, true]),
+                strict
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        // A segment crossing `ab` keeps the ordinary classification.
+        assert_eq!(
+            classify_segment_intersection_with_known_orientations_and_policy(
+                &a,
+                &b,
+                &p2(0, 4),
+                &p2(4, 0),
+                retained([false; 4]),
+                strict
+            )
+            .value(),
+            Some(SegmentIntersection::Proper)
+        );
     }
 }

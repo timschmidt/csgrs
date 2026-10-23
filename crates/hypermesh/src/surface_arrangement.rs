@@ -4,7 +4,7 @@
 //! `hyperreal::Real` geometry through one operation-wide predicate policy and
 //! materializes one or many results from a shared exact arrangement.
 
-use crate::winding::{RayFacetRelation, ray_triangle_relation};
+use crate::winding::{RayFacetRelation, ray_triangle_relation_with_origin_plane};
 
 use std::cmp::Ordering;
 
@@ -22,7 +22,7 @@ use crate::intersection::{
 use crate::output::{
     BooleanMeshBatch, BooleanMeshClosureEvidence, BooleanMeshResult, TriangleSource,
 };
-use crate::point_interner::PointInterner;
+use crate::point_interner::{PointCoordinates, PointInterner};
 use crate::polygon::{
     ApproxBounds, ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity,
     ConvexPolygon,
@@ -107,9 +107,18 @@ impl FaceWork {
 struct ArrangementPointArena {
     points: Vec<Point3>,
     structural: StorageHashMap<ArrangementPointIdentity, u32>,
+    // Every construction identity that names each point, as one singly
+    // linked list per point: the first link per point and `(identity, next)`
+    // links. A point that the interner merged with an equal one keeps the
+    // identities of both, and so the incidences of both.
+    identity_heads: Vec<u32>,
+    identity_links: Vec<(ArrangementPointIdentity, u32)>,
+    record_identities: bool,
     source_edge_points: Vec<(u32, [u32; 2], u32)>,
     numeric: PointInterner<()>,
 }
+
+const NO_IDENTITY_LINK: u32 = u32::MAX;
 
 impl ArrangementPointArena {
     fn with_capacity(capacity: usize) -> HypermeshResult<Self> {
@@ -128,6 +137,9 @@ impl ArrangementPointArena {
         Ok(Self {
             points,
             structural,
+            identity_heads: Vec::new(),
+            identity_links: Vec::new(),
+            record_identities: true,
             source_edge_points: Vec::new(),
             // Exact-rational points have a complete identity/fingerprint
             // schedule and need no interval grid. The interner promotes all
@@ -163,8 +175,51 @@ impl ArrangementPointArena {
         let compact = u32::try_from(index).map_err(|_| HypermeshError::CapacityOverflow {
             operation: "surface arrangement point arena",
         })?;
+        if self.record_identities {
+            self.record_identity(&identity, compact)?;
+        }
         self.structural.insert(identity, compact);
         Ok(compact)
+    }
+
+    fn record_identity(
+        &mut self,
+        identity: &ArrangementPointIdentity,
+        point: u32,
+    ) -> HypermeshResult<()> {
+        let overflow = || HypermeshError::CapacityOverflow {
+            operation: "surface arrangement point identities",
+        };
+        let link = u32::try_from(self.identity_links.len())
+            .ok()
+            .filter(|&link| link != NO_IDENTITY_LINK)
+            .ok_or_else(overflow)?;
+        let slot = point as usize;
+        if self.identity_heads.len() <= slot {
+            self.identity_heads
+                .try_reserve(slot + 1 - self.identity_heads.len())
+                .map_err(|_| overflow())?;
+            self.identity_heads.resize(slot + 1, NO_IDENTITY_LINK);
+        }
+        self.identity_links.try_reserve(1).map_err(|_| overflow())?;
+        self.identity_links
+            .push((identity.clone(), self.identity_heads[slot]));
+        self.identity_heads[slot] = link;
+        Ok(())
+    }
+
+    /// The construction identities that name `point`.
+    fn identities(&self, point: u32) -> impl Iterator<Item = &ArrangementPointIdentity> {
+        let mut link = self
+            .identity_heads
+            .get(point as usize)
+            .copied()
+            .unwrap_or(NO_IDENTITY_LINK);
+        std::iter::from_fn(move || {
+            let (identity, next) = self.identity_links.get(link as usize)?;
+            link = *next;
+            Some(identity)
+        })
     }
 
     fn retained_point(&self, identity: &ArrangementPointIdentity) -> Option<u32> {
@@ -213,6 +268,201 @@ impl ArrangementPointArena {
             ) => {}
         }
         Ok(())
+    }
+}
+
+/// A straight line of a face arrangement named by construction: a source
+/// edge, or the intersection of two support planes of distinct plane classes.
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+enum ArrangementLine {
+    SourceEdge { mesh: u32, endpoints: [u32; 2] },
+    Planes([u32; 2]),
+}
+
+/// Incidences that follow from how arrangement points were built.
+///
+/// Every construction identity places its point exactly on planes or lines:
+/// a source vertex lies on the support of every face it bounds, a crossing of
+/// a source edge with a plane on that edge and that plane, the meeting point
+/// of three planes on each of them, and the crossing of two lines on both.
+/// Construction makes these exact: interpolation and Cramer's rule solve the
+/// defining equations without approximation. Support planes are compared by
+/// plane class, so a point on one face's support lies on that of every face
+/// decided or retained coplanar with it; a class with contradictory facts
+/// gives no incidence. A point on two planes of distinct classes lies on
+/// their line, because a split line is built only from a decided
+/// non-coplanar pair.
+///
+/// These facts decide that a point lies on a line, which an exact zero
+/// otherwise needs a proof for; they never decide that it does not, and the
+/// point's position along the line is still decided by predicates. Imported
+/// or edited geometry has only source identities, so its incidences are
+/// rediscovered by predicates as before.
+struct ArrangementIncidence<'a> {
+    planes: &'a SourcePlaneClasses,
+    // `(mesh, endpoints, class)` for each source edge of a face of that class.
+    edge_classes: Vec<(u32, [u32; 2], u32)>,
+    // `(mesh, vertex, class)` for each source vertex of a face of that class.
+    vertex_classes: Vec<(u32, u32, u32)>,
+}
+
+impl<'a> ArrangementIncidence<'a> {
+    fn new(polygons: &[ConvexPolygon], planes: &'a SourcePlaneClasses) -> HypermeshResult<Self> {
+        let overflow = || HypermeshError::CapacityOverflow {
+            operation: "arrangement incidence facts",
+        };
+        let mut edge_classes = Vec::new();
+        let mut vertex_classes = Vec::new();
+        let capacity = polygons.len().checked_mul(3).ok_or_else(overflow)?;
+        edge_classes
+            .try_reserve_exact(capacity)
+            .map_err(|_| overflow())?;
+        vertex_classes
+            .try_reserve_exact(capacity)
+            .map_err(|_| overflow())?;
+        for (face, polygon) in polygons.iter().enumerate() {
+            let Some(class) = u32::try_from(face)
+                .ok()
+                .and_then(|face| planes.incidence_class(face))
+            else {
+                continue;
+            };
+            if let Some(edges) = polygon.known_edge_identities() {
+                for edge in edges.iter() {
+                    if let ConstructionEdgeIdentity::Source { mesh, endpoints } = edge {
+                        edge_classes.push((mesh, endpoints, class));
+                    }
+                }
+            }
+            if let Some(vertices) = polygon.known_vertex_identities() {
+                for vertex in vertices.iter() {
+                    if let ConstructionVertexIdentity::Source { mesh, vertex } = vertex {
+                        vertex_classes.push((mesh, vertex, class));
+                    }
+                }
+            }
+        }
+        edge_classes.sort_unstable();
+        edge_classes.dedup();
+        vertex_classes.sort_unstable();
+        vertex_classes.dedup();
+        Ok(Self {
+            planes,
+            edge_classes,
+            vertex_classes,
+        })
+    }
+
+    fn plane_class(&self, plane: ConstructionPlaneIdentity) -> Option<u32> {
+        self.planes
+            .incidence_class(crate::intersection::pairwise_support_face(plane)?)
+    }
+
+    /// The line a face constraint lies on, when construction names it.
+    fn line(&self, identity: &ConstructionEdgeIdentity) -> Option<ArrangementLine> {
+        match identity {
+            ConstructionEdgeIdentity::Source { mesh, endpoints } => {
+                Some(ArrangementLine::SourceEdge {
+                    mesh: *mesh,
+                    endpoints: *endpoints,
+                })
+            }
+            ConstructionEdgeIdentity::Split { planes } => {
+                let mut classes = [self.plane_class(planes[0])?, self.plane_class(planes[1])?];
+                classes.sort_unstable();
+                (classes[0] != classes[1]).then_some(ArrangementLine::Planes(classes))
+            }
+        }
+    }
+
+    fn edge_in_class(&self, mesh: u32, endpoints: [u32; 2], class: u32) -> bool {
+        self.edge_classes
+            .binary_search(&(mesh, endpoints, class))
+            .is_ok()
+    }
+
+    fn identity_on_plane(&self, identity: &ArrangementPointIdentity, class: u32) -> bool {
+        let edge_on_plane = |edge: &ConstructionEdgeIdentity| match edge {
+            ConstructionEdgeIdentity::Source { mesh, endpoints } => {
+                self.edge_in_class(*mesh, *endpoints, class)
+            }
+            ConstructionEdgeIdentity::Split { planes } => planes
+                .iter()
+                .any(|&plane| self.plane_class(plane) == Some(class)),
+        };
+        match identity {
+            ArrangementPointIdentity::Construction(ConstructionVertexIdentity::Source {
+                mesh,
+                vertex,
+            }) => self
+                .vertex_classes
+                .binary_search(&(*mesh, *vertex, class))
+                .is_ok(),
+            ArrangementPointIdentity::Construction(
+                ConstructionVertexIdentity::SourceEdgePlane {
+                    mesh,
+                    endpoints,
+                    plane,
+                },
+            ) => {
+                self.plane_class(*plane) == Some(class)
+                    || self.edge_in_class(*mesh, *endpoints, class)
+            }
+            ArrangementPointIdentity::Construction(ConstructionVertexIdentity::PlaneTriple {
+                planes,
+            }) => planes
+                .iter()
+                .any(|&plane| self.plane_class(plane) == Some(class)),
+            ArrangementPointIdentity::CoplanarEdges(edges) => edges.iter().any(edge_on_plane),
+        }
+    }
+
+    fn identity_on_source_edge(
+        identity: &ArrangementPointIdentity,
+        mesh: u32,
+        endpoints: [u32; 2],
+    ) -> bool {
+        match identity {
+            ArrangementPointIdentity::Construction(ConstructionVertexIdentity::Source {
+                mesh: point_mesh,
+                vertex,
+            }) => *point_mesh == mesh && endpoints.contains(vertex),
+            ArrangementPointIdentity::Construction(
+                ConstructionVertexIdentity::SourceEdgePlane {
+                    mesh: point_mesh,
+                    endpoints: point_endpoints,
+                    ..
+                },
+            ) => *point_mesh == mesh && *point_endpoints == endpoints,
+            ArrangementPointIdentity::Construction(ConstructionVertexIdentity::PlaneTriple {
+                ..
+            }) => false,
+            ArrangementPointIdentity::CoplanarEdges(edges) => {
+                edges.contains(&ConstructionEdgeIdentity::Source { mesh, endpoints })
+            }
+        }
+    }
+
+    /// Whether construction places `point` on `line`. Every point of the
+    /// face being split was decided on its support, of class `face_class`.
+    fn point_on_line(
+        &self,
+        arena: &ArrangementPointArena,
+        point: u32,
+        line: ArrangementLine,
+        face_class: Option<u32>,
+    ) -> bool {
+        match line {
+            ArrangementLine::SourceEdge { mesh, endpoints } => arena
+                .identities(point)
+                .any(|identity| Self::identity_on_source_edge(identity, mesh, endpoints)),
+            ArrangementLine::Planes(classes) => classes.iter().all(|&class| {
+                face_class == Some(class)
+                    || arena
+                        .identities(point)
+                        .any(|identity| self.identity_on_plane(identity, class))
+            }),
+        }
     }
 }
 
@@ -584,6 +834,7 @@ fn assemble_surface_cells(
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
     radially_separated_face_pair_keys: &[u64],
+    face_planes: Option<&SourcePlaneClasses>,
     source_bvh: &ExactBvhQueryHierarchy,
 ) -> HypermeshResult<SurfaceCellComplex> {
     if surface.face_offsets.len() != polygons.len().saturating_add(1) {
@@ -730,6 +981,7 @@ fn assemble_surface_cells(
                 second,
                 &contributions,
                 radially_separated_face_pair_keys,
+                face_planes,
                 &mut sets,
             )?;
         } else if !try_assemble_two_face_transverse_ring(
@@ -739,6 +991,7 @@ fn assemble_surface_cells(
             edge,
             uses,
             &contributions,
+            face_planes,
             &mut sets,
         )? {
             assemble_radial_ring(
@@ -753,6 +1006,7 @@ fn assemble_surface_cells(
                 &contributions,
                 &face_components,
                 radially_separated_face_pair_keys,
+                face_planes,
                 &mut sets,
             )?;
         }
@@ -775,6 +1029,7 @@ fn assemble_surface_cells(
         decisions,
         polygons,
         surface,
+        face_planes,
         source_bvh,
         &bounds,
         &surface.points,
@@ -1034,6 +1289,7 @@ fn assemble_two_sheet_edge(
     second: &EdgeUse,
     contributions: &[FacetContribution],
     radially_separated_face_pair_keys: &[u64],
+    face_planes: Option<&SourcePlaneClasses>,
     sets: &mut CellDisjointSets,
 ) -> HypermeshResult<()> {
     let retained_separation = sheets_have_retained_radial_separation(
@@ -1044,7 +1300,14 @@ fn assemble_two_sheet_edge(
     )?;
     if !retained_separation
         && !cancelled_bundle
-        && same_radial_ray(decisions, points, edge, first.opposite, second.opposite)?
+        && same_radial_ray(
+            decisions,
+            points,
+            edge,
+            first.opposite,
+            second.opposite,
+            sheets_share_plane_class(face_planes, contributions, first.sheet, second.sheet),
+        )?
     {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "two-facet radial edge has one geometric ray",
@@ -1318,6 +1581,7 @@ fn assemble_radial_ring(
     contributions: &[FacetContribution],
     face_components: &[u32],
     radially_separated_face_pair_keys: &[u64],
+    face_planes: Option<&SourcePlaneClasses>,
     sets: &mut CellDisjointSets,
 ) -> HypermeshResult<()> {
     radial.clear();
@@ -1357,12 +1621,22 @@ fn assemble_radial_ring(
             },
         });
     }
-    let reference = radial[0].opposite;
+    let coplanar = |left: &RadialUse, right: &RadialUse| {
+        sheets_share_plane_class(face_planes, contributions, left.sheet, right.sheet)
+    };
+    let reference = radial[0];
     for index in 1..radial.len() {
         radial[index].half = if radial[index].opposite == radial[index - 1].opposite {
             radial[index - 1].half
         } else {
-            radial_half(decisions, points, edge, reference, radial[index].opposite)?
+            radial_half(
+                decisions,
+                points,
+                edge,
+                reference.opposite,
+                radial[index].opposite,
+                coplanar(&reference, &radial[index]),
+            )?
         };
     }
     let mut failure = None;
@@ -1373,7 +1647,14 @@ fn assemble_radial_ring(
         if failure.is_some() {
             return Ordering::Equal;
         }
-        match compare_radial_rays(decisions, points, edge, left.opposite, right.opposite) {
+        match compare_radial_rays(
+            decisions,
+            points,
+            edge,
+            left.opposite,
+            right.opposite,
+            coplanar(left, right),
+        ) {
             Ok(Ordering::Equal) => left
                 .layer
                 .cmp(&right.layer)
@@ -1398,6 +1679,7 @@ fn assemble_radial_ring(
             edge,
             radial[index - 1].opposite,
             radial[index].opposite,
+            coplanar(&radial[index - 1], &radial[index]),
         )?;
         radial[index].coincident_with_previous = coincident;
         if !coincident {
@@ -1561,6 +1843,7 @@ fn try_assemble_two_face_transverse_ring(
     edge: [u32; 2],
     uses: &[EdgeUse],
     contributions: &[FacetContribution],
+    face_planes: Option<&SourcePlaneClasses>,
     sets: &mut CellDisjointSets,
 ) -> HypermeshResult<bool> {
     // A validated planar triangulation has at most two facets from one source
@@ -1620,6 +1903,7 @@ fn try_assemble_two_face_transverse_ring(
         edge,
         first.opposite,
         second.opposite,
+        sheets_share_plane_class(face_planes, contributions, first.sheet, second.sheet),
     )? {
         Classification::Positive => [second, second_opposite],
         Classification::Negative => [second_opposite, second],
@@ -1746,11 +2030,19 @@ fn radial_half(
     edge: [u32; 2],
     reference: u32,
     candidate: u32,
+    known_coplanar: bool,
 ) -> HypermeshResult<u8> {
     if reference == candidate {
         return Ok(0);
     }
-    match radial_triple_classification(decisions, points, edge, reference, candidate)? {
+    match radial_triple_classification(
+        decisions,
+        points,
+        edge,
+        reference,
+        candidate,
+        known_coplanar,
+    )? {
         Classification::Positive => Ok(0),
         Classification::Negative => Ok(1),
         Classification::On => {
@@ -1771,11 +2063,12 @@ fn compare_radial_rays(
     edge: [u32; 2],
     left: u32,
     right: u32,
+    known_coplanar: bool,
 ) -> HypermeshResult<Ordering> {
     if left == right {
         return Ok(Ordering::Equal);
     }
-    match radial_triple_classification(decisions, points, edge, left, right)? {
+    match radial_triple_classification(decisions, points, edge, left, right, known_coplanar)? {
         Classification::Positive => Ok(Ordering::Less),
         Classification::Negative => Ok(Ordering::Greater),
         Classification::On => {
@@ -1798,11 +2091,14 @@ fn same_radial_ray(
     edge: [u32; 2],
     left: u32,
     right: u32,
+    known_coplanar: bool,
 ) -> HypermeshResult<bool> {
     if left == right {
         return Ok(true);
     }
-    if radial_triple_classification(decisions, points, edge, left, right)? != Classification::On {
+    if radial_triple_classification(decisions, points, edge, left, right, known_coplanar)?
+        != Classification::On
+    {
         return Ok(false);
     }
     match radial_dot_classification(decisions, points, edge, left, right)? {
@@ -1814,13 +2110,35 @@ fn same_radial_ray(
     }
 }
 
+/// Whether two sheets were cut from source faces of one plane class, so that
+/// their facets around a shared edge lie in one plane.
+fn sheets_share_plane_class(
+    face_planes: Option<&SourcePlaneClasses>,
+    contributions: &[FacetContribution],
+    left: u32,
+    right: u32,
+) -> bool {
+    let class = |sheet: u32| {
+        let face = contributions.get(sheet as usize)?.face;
+        face_planes?.incidence_class(face)
+    };
+    class(left).is_some_and(|class_left| class(right) == Some(class_left))
+}
+
+/// The side of `right`'s apex relative to the plane through `edge` and
+/// `left`'s apex. Two facets cut from faces of one plane class lie in one
+/// plane, so `known_coplanar` gives `On` without the determinant.
 fn radial_triple_classification(
     decisions: &DecisionContext,
     points: &[Point3],
     edge: [u32; 2],
     left: u32,
     right: u32,
+    known_coplanar: bool,
 ) -> HypermeshResult<Classification> {
+    if known_coplanar {
+        return Ok(Classification::On);
+    }
     let origin = point_by_id(points, edge[0])?;
     let endpoint = point_by_id(points, edge[1])?;
     let left = point_by_id(points, left)?;
@@ -2026,6 +2344,7 @@ fn classify_surface_cells(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
+    face_planes: Option<&SourcePlaneClasses>,
     source_bvh: &ExactBvhQueryHierarchy,
     bounds: &ApproxBounds,
     points: &[Point3],
@@ -2109,6 +2428,7 @@ fn classify_surface_cells(
             decisions,
             polygons,
             surface,
+            face_planes,
             source_bvh,
             bounds,
             points,
@@ -2187,6 +2507,7 @@ fn seed_surface_cell_winding(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
+    face_planes: Option<&SourcePlaneClasses>,
     source_bvh: &ExactBvhQueryHierarchy,
     bounds: &ApproxBounds,
     points: &[Point3],
@@ -2247,6 +2568,7 @@ fn seed_surface_cell_winding(
             match try_seed_surface_cell_winding(
                 &local,
                 polygons,
+                face_planes,
                 source_bvh,
                 bounds,
                 primary_axis,
@@ -2353,6 +2675,7 @@ fn surface_facet_centroid(points: &[Point3], triangle: [u32; 3]) -> HypermeshRes
 fn try_seed_surface_cell_winding(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
+    face_planes: Option<&SourcePlaneClasses>,
     source_bvh: &ExactBvhQueryHierarchy,
     bounds: &ApproxBounds,
     primary_axis: usize,
@@ -2365,15 +2688,20 @@ fn try_seed_surface_cell_winding(
     point: &Point3,
     direction: &Vector3,
 ) -> HypermeshResult<Option<(u32, Vec<i32>)>> {
-    let frontward = match ray_facet_relation(decisions, points, seed_triangle, point, direction)? {
-        RayFacetRelation::Origin { frontward } => frontward,
-        RayFacetRelation::Degenerate => return Ok(None),
-        RayFacetRelation::Miss | RayFacetRelation::Ahead { .. } => {
-            return Err(HypermeshError::SurfaceArrangementFailed {
-                reason: "surface seed does not lie inside its source facet",
-            });
-        }
-    };
+    // The seed is the centroid of its facet, so it lies in the facet's plane
+    // and in the support of every source face the facet was cut from or
+    // decided coplanar with; its ray parameter on those is zero by
+    // construction.
+    let frontward =
+        match ray_facet_relation(decisions, points, seed_triangle, point, direction, true)? {
+            RayFacetRelation::Origin { frontward } => frontward,
+            RayFacetRelation::Degenerate => return Ok(None),
+            RayFacetRelation::Miss | RayFacetRelation::Ahead { .. } => {
+                return Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface seed does not lie inside its source facet",
+                });
+            }
+        };
     let distance = axis_ref(&bounds.max, primary_axis).clone()
         - axis_ref(point, primary_axis).clone()
         + Real::one();
@@ -2401,7 +2729,18 @@ fn try_seed_surface_cell_winding(
         // each convex source triangle at most once and applies its transition
         // once. Testing the subdivisions here would also make their artificial
         // internal edges unnecessary ray degeneracies.
-        match ray_source_polygon_relation(decisions, polygon, point, direction)? {
+        let origin_in_plane = seed_contributions.iter().any(|contribution| {
+            contribution.face as usize == face
+                || face_planes.is_some_and(|planes| {
+                    u32::try_from(face)
+                        .ok()
+                        .and_then(|face| planes.incidence_class(face))
+                        .is_some_and(|class| {
+                            planes.incidence_class(contribution.face) == Some(class)
+                        })
+                })
+        });
+        match ray_source_polygon_relation(decisions, polygon, point, direction, origin_in_plane)? {
             RayFacetRelation::Miss => {}
             RayFacetRelation::Degenerate => return Ok(None),
             RayFacetRelation::Ahead { frontward } => {
@@ -2442,9 +2781,16 @@ fn ray_facet_relation(
     triangle: [u32; 3],
     origin: &Point3,
     direction: &Vector3,
+    origin_in_plane: bool,
 ) -> HypermeshResult<RayFacetRelation> {
     let [a, b, c] = triangle.map(|vertex| point_by_id(points, vertex));
-    ray_triangle_relation(decisions, [a?, b?, c?], origin, direction)
+    ray_triangle_relation_with_origin_plane(
+        decisions,
+        [a?, b?, c?],
+        origin,
+        direction,
+        origin_in_plane,
+    )
 }
 
 fn ray_source_polygon_relation(
@@ -2452,6 +2798,7 @@ fn ray_source_polygon_relation(
     polygon: &ConvexPolygon,
     origin: &Point3,
     direction: &Vector3,
+    origin_in_plane: bool,
 ) -> HypermeshResult<RayFacetRelation> {
     let vertices =
         polygon
@@ -2471,7 +2818,13 @@ fn ray_source_polygon_relation(
             reason: "source face retained vertex cycle is incomplete",
         })
     });
-    ray_triangle_relation(decisions, [a?, b?, c?], origin, direction)
+    ray_triangle_relation_with_origin_plane(
+        decisions,
+        [a?, b?, c?],
+        origin,
+        direction,
+        origin_in_plane,
+    )
 }
 
 fn corefine_surface(
@@ -2479,6 +2832,7 @@ fn corefine_surface(
     polygons: &[ConvexPolygon],
     intersections: &PairwiseIntersectionGraph,
     source_vertex_count: usize,
+    planes: &SourcePlaneClasses,
 ) -> HypermeshResult<SurfaceCorefinement> {
     if intersections.len() != polygons.len() {
         return Err(HypermeshError::SurfaceArrangementFailed {
@@ -2491,6 +2845,17 @@ fn corefine_surface(
             operation: "surface arrangement initial points",
         })?;
     let mut arena = ArrangementPointArena::with_capacity(initial_points)?;
+    // Exact rational arithmetic decides every zero of rational geometry, and
+    // every point constructed from it is rational, so construction incidences
+    // only save work when some coordinate is symbolic.
+    let symbolic = polygons.iter().any(|polygon| {
+        polygon.known_vertices.as_ref().is_none_or(|vertices| {
+            vertices
+                .iter()
+                .any(|point| !point.has_exact_rational_coordinates())
+        })
+    });
+    arena.record_identities = symbolic;
     let mut work = Vec::new();
     work.try_reserve_exact(polygons.len())
         .map_err(|_| HypermeshError::CapacityOverflow {
@@ -2556,8 +2921,20 @@ fn corefine_surface(
     let mut constraints = Vec::new();
     #[cfg(test)]
     let mut contacts = Vec::new();
+    let incidence = if symbolic && work.iter().any(FaceWork::is_changed) {
+        Some(ArrangementIncidence::new(polygons, planes)?)
+    } else {
+        None
+    };
     for (face, (polygon, face_work)) in polygons.iter().zip(work).enumerate() {
-        let result = corefine_face(decisions, face, polygon, &face_work, &mut arena)?;
+        let result = corefine_face(
+            decisions,
+            face,
+            polygon,
+            &face_work,
+            &mut arena,
+            incidence.as_ref(),
+        )?;
         triangles.try_reserve(result.triangles.len()).map_err(|_| {
             HypermeshError::CapacityOverflow {
                 operation: "surface arrangement triangles",
@@ -2897,9 +3274,10 @@ fn boundary_line_for_segment(
                 reason: "coplanar contact face has no edge identities",
             })?;
     let mut found = None;
+    // Edge plane `i` bounds the polygon along its edge `i`, which the identity
+    // at the same index names.
     let edge_planes = polygon.edge_planes();
-    for edge in 0..edge_planes.len() {
-        let plane = &edge_planes[(edge + 1) % edge_planes.len()];
+    for (edge, plane) in edge_planes.iter().enumerate() {
         if classify_point_decision(decisions, first, plane)? == Classification::On
             && classify_point_decision(decisions, second, plane)? == Classification::On
         {
@@ -3223,6 +3601,7 @@ fn corefine_face(
     polygon: &ConvexPolygon,
     work: &FaceWork,
     arena: &mut ArrangementPointArena,
+    incidence: Option<&ArrangementIncidence<'_>>,
 ) -> HypermeshResult<FaceResult> {
     if !work.is_changed() {
         return Ok(FaceResult {
@@ -3284,6 +3663,28 @@ fn corefine_face(
         });
     }
     canonicalize_constraint_lines(&mut authored);
+    // The line each authored constraint lies on, when construction names it,
+    // and the plane class of this face, on whose support every point below is
+    // decided.
+    let face_class = incidence.and_then(|incidence| {
+        u32::try_from(face)
+            .ok()
+            .and_then(|face| incidence.planes.incidence_class(face))
+    });
+    let mut authored_lines = Vec::new();
+    if let Some(incidence) = incidence {
+        authored_lines
+            .try_reserve_exact(authored.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "face authored constraint lines",
+            })?;
+        authored_lines.extend(
+            authored
+                .iter()
+                .map(|constraint| incidence.line(&constraint.line)),
+        );
+    }
+    let authored_line = |index: usize| authored_lines.get(index).copied().flatten();
     let point_capacity = boundary
         .len()
         .checked_add(work.contacts.len())
@@ -3330,14 +3731,38 @@ fn corefine_face(
                 .ok_or(HypermeshError::SurfaceArrangementFailed {
                     reason: "face constraint references an absent point",
                 })?;
-        if classify_point_decision(decisions, materialized, support)? != Classification::On
-            || edges.iter().try_fold(false, |outside, edge| {
-                Ok::<_, HypermeshError>(
-                    outside
-                        || classify_point_decision(decisions, materialized, edge)?
-                            == Classification::Positive,
+        // A point built on this face's plane, or on one of its edges, lies in
+        // that plane exactly; the zero needs no proof.
+        let on_support = incidence.zip(face_class).is_some_and(|(incidence, class)| {
+            arena
+                .identities(point)
+                .any(|identity| incidence.identity_on_plane(identity, class))
+        });
+        let on_edge = |edge: usize| {
+            incidence.is_some()
+                && matches!(
+                    edge_identities.get(edge),
+                    Some(ConstructionEdgeIdentity::Source { mesh, endpoints })
+                        if arena.identities(point).any(|identity| {
+                            ArrangementIncidence::identity_on_source_edge(
+                                identity, mesh, endpoints,
+                            )
+                        })
                 )
-            })?
+        };
+        if (!on_support
+            && classify_point_decision(decisions, materialized, support)? != Classification::On)
+            || edges
+                .iter()
+                .enumerate()
+                .try_fold(false, |outside, (edge, plane)| {
+                    Ok::<_, HypermeshError>(
+                        outside
+                            || (!on_edge(edge)
+                                && classify_point_decision(decisions, materialized, plane)?
+                                    == Classification::Positive),
+                    )
+                })?
         {
             return Err(HypermeshError::SurfaceArrangementFailed {
                 reason: "face arrangement point lies outside its source face",
@@ -3404,6 +3829,19 @@ fn corefine_face(
                 Some(line) => projected_segment_at(&projected, line.endpoint_indices)?,
                 None => projected_segment(&projected, right.endpoints)?,
             };
+            if let Some(incidence) = incidence
+                && constraints_meet_by_construction(
+                    incidence,
+                    arena,
+                    face_class,
+                    [left.endpoints, right.endpoints],
+                    [authored_line(left_index), authored_line(right_index)],
+                )
+            {
+                // An endpoint on the other constraint's line has orientation
+                // zero, so the two cannot cross properly.
+                continue;
+            }
             let left_queries = match (retained_schedule.as_ref(), left_schedule) {
                 (Some(schedule), Some(line)) => Some(projected_line_queries_at(
                     &schedule.point_queries,
@@ -3498,28 +3936,49 @@ fn corefine_face(
             operation: "face constraint point schedule",
         }
     })?;
+    // Points on each authored line, decided or known by construction, for the
+    // triangulation: constraints on one named line share one set.
+    let mut collinear = FaceCollinearSets::default();
     for (constraint_index, constraint) in authored.iter().enumerate() {
         on_segment.clear();
         // Authored endpoints define this exact closed segment. Seed them
         // directly and reserve policy-aware incidence tests for other points
         // that may split it through crossings, contacts, or overlaps.
         on_segment.extend_from_slice(&constraint.endpoints);
+        let line = authored_line(constraint_index);
+        let set = match incidence {
+            Some(_) => Some(collinear.open(line, constraint.endpoints)?),
+            None => None,
+        };
         let segment = projected_segment(&projected, constraint.endpoints)?;
         for (projected_index, projected_point) in projected.iter().enumerate() {
             if constraint.endpoints.contains(&projected_point.id) {
                 continue;
             }
-            if planar_point_on_segment(
+            let on_line = match (incidence, line) {
+                (Some(incidence), Some(line)) => {
+                    incidence.point_on_line(arena, projected_point.id, line, face_class)
+                }
+                _ => false,
+            };
+            let location = planar_point_segment_location(
                 decisions,
                 segment,
                 &projected_point.point,
+                on_line,
                 retained_schedule
                     .as_ref()
                     .map(|schedule| &schedule.lines[constraint_index].orientation),
                 retained_schedule
                     .as_ref()
                     .map(|schedule| &schedule.point_queries[projected_index]),
-            )? {
+            )?;
+            if let Some(set) = set
+                && location != hyperlimit::PointSegmentLocation::OffLine
+            {
+                collinear.insert(set, projected_point.id)?;
+            }
+            if location.is_on_segment() {
                 on_segment.push(projected_point.id);
             }
         }
@@ -3595,9 +4054,14 @@ fn corefine_face(
         constraints.push(hypertri::Constraint::new(from, to));
     }
     let context = hypertri::TriangulationContext::new(decisions.policy());
-    let outcome =
-        hypertri::cdt::constrained_triangulation_convex_hull(&context, &points, &constraints)
-            .map_err(map_triangulation_error)?;
+    let facts = collinear.triangulation_facts(&point_ids, decisions.certainty())?;
+    let outcome = hypertri::cdt::constrained_triangulation_convex_hull_with_collinear_facts(
+        &context,
+        &points,
+        &constraints,
+        &facts,
+    )
+    .map_err(map_triangulation_error)?;
     decisions.absorb(match outcome.certainty {
         hypertri::TriangulationCertainty::Certified => MeshCertainty::Certified,
         hypertri::TriangulationCertainty::Approximate512Consumed => {
@@ -3811,34 +4275,166 @@ fn segments_properly_cross(
     Ok(opposite(left_sides[0], left_sides[1]))
 }
 
-fn planar_point_on_segment(
+/// Whether construction puts an endpoint of either constraint on the other's
+/// line, or both on one line.
+fn constraints_meet_by_construction(
+    incidence: &ArrangementIncidence<'_>,
+    arena: &ArrangementPointArena,
+    face_class: Option<u32>,
+    endpoints: [[u32; 2]; 2],
+    lines: [Option<ArrangementLine>; 2],
+) -> bool {
+    if lines[0].is_some() && lines[0] == lines[1] {
+        return true;
+    }
+    (0..2).any(|side| {
+        lines[side].is_some_and(|line| {
+            endpoints[1 - side]
+                .iter()
+                .any(|&point| incidence.point_on_line(arena, point, line, face_class))
+        })
+    })
+}
+
+/// Locate `point` relative to the closed segment `edge`. When construction
+/// already puts the point on the segment's line, only its position along the
+/// line is decided.
+fn planar_point_segment_location(
     decisions: &DecisionContext,
     edge: [&hypertri::ExactPoint; 2],
     point: &hypertri::ExactPoint,
+    on_line: bool,
     orientation: Option<&hyperlimit::Line2Orientation>,
     query: Option<&hyperlimit::Line2OrientationQuery>,
-) -> HypermeshResult<bool> {
-    let outcome = match (orientation, query) {
-        (Some(orientation), Some(query)) => {
-            hyperlimit::point_on_segment_with_orientation_and_query(
+) -> HypermeshResult<hyperlimit::PointSegmentLocation> {
+    let outcome = if on_line {
+        hyperlimit::classify_point_segment_with_known_orientation(
+            edge[0],
+            edge[1],
+            point,
+            hyperlimit::PredicateOutcome::decided(
+                hyperlimit::Sign::Zero,
+                hyperlimit::Certainty::Exact,
+                hyperlimit::Escalation::Structural,
+            ),
+            decisions.policy(),
+        )
+    } else {
+        match (orientation, query) {
+            (Some(orientation), Some(query)) => {
+                hyperlimit::classify_point_segment_with_orientation_and_query(
+                    edge[0],
+                    edge[1],
+                    point,
+                    orientation,
+                    query,
+                    decisions.policy(),
+                )
+            }
+            (Some(orientation), None) => hyperlimit::classify_point_segment_with_orientation(
                 edge[0],
                 edge[1],
                 point,
                 orientation,
-                query,
                 decisions.policy(),
-            )
+            ),
+            (None, _) => {
+                hyperlimit::classify_point_segment(edge[0], edge[1], point, decisions.policy())
+            }
         }
-        (Some(orientation), None) => hyperlimit::point_on_segment_with_orientation(
-            edge[0],
-            edge[1],
-            point,
-            orientation,
-            decisions.policy(),
-        ),
-        (None, _) => hyperlimit::point_on_segment(edge[0], edge[1], point, decisions.policy()),
     };
     decisions.decide(outcome, "surface arrangement point on segment")
+}
+
+/// Points of one face known to lie on each authored line, by decision or by
+/// construction. Constraints on one named line share a set; a constraint
+/// whose line has no name has its own.
+#[derive(Default)]
+struct FaceCollinearSets {
+    named: Vec<(ArrangementLine, usize)>,
+    sets: Vec<Vec<u32>>,
+}
+
+impl FaceCollinearSets {
+    fn open(
+        &mut self,
+        line: Option<ArrangementLine>,
+        endpoints: [u32; 2],
+    ) -> HypermeshResult<usize> {
+        let overflow = || HypermeshError::CapacityOverflow {
+            operation: "face collinear point sets",
+        };
+        let existing = line.and_then(|line| {
+            self.named
+                .iter()
+                .find(|(named, _)| *named == line)
+                .map(|&(_, set)| set)
+        });
+        let set = match existing {
+            Some(set) => set,
+            None => {
+                self.sets.try_reserve(1).map_err(|_| overflow())?;
+                self.sets.push(Vec::new());
+                let set = self.sets.len() - 1;
+                if let Some(line) = line {
+                    self.named.try_reserve(1).map_err(|_| overflow())?;
+                    self.named.push((line, set));
+                }
+                set
+            }
+        };
+        for point in endpoints {
+            self.insert(set, point)?;
+        }
+        Ok(set)
+    }
+
+    fn insert(&mut self, set: usize, point: u32) -> HypermeshResult<()> {
+        let points = &mut self.sets[set];
+        if let Err(index) = points.binary_search(&point) {
+            points
+                .try_reserve(1)
+                .map_err(|_| HypermeshError::CapacityOverflow {
+                    operation: "face collinear point sets",
+                })?;
+            points.insert(index, point);
+        }
+        Ok(())
+    }
+
+    /// The sets of three or more points as triangulation facts over the
+    /// sorted triangulation point IDs, with the certainty of every decision
+    /// the operation has consumed so far.
+    fn triangulation_facts(
+        &self,
+        point_ids: &[u32],
+        certainty: MeshCertainty,
+    ) -> HypermeshResult<hypertri::cdt::CollinearPointFacts> {
+        let mut facts = hypertri::cdt::CollinearPointFacts::new(match certainty {
+            MeshCertainty::Certified => hypertri::TriangulationCertainty::Certified,
+            MeshCertainty::Approximate512Consumed => {
+                hypertri::TriangulationCertainty::Approximate512Consumed
+            }
+        });
+        let mut indices = Vec::new();
+        for set in self.sets.iter().filter(|set| set.len() >= 3) {
+            indices.clear();
+            indices
+                .try_reserve(set.len())
+                .map_err(|_| HypermeshError::CapacityOverflow {
+                    operation: "face collinear point facts",
+                })?;
+            for point in set {
+                indices.push(point_ids.binary_search(point).map_err(|_| {
+                    HypermeshError::SurfaceArrangementFailed {
+                        reason: "collinear face point is absent from the triangulation points",
+                    }
+                })?);
+            }
+            facts.push_line(&indices).map_err(map_triangulation_error)?;
+        }
+        Ok(facts)
+    }
 }
 
 fn planar_orientation_with_line(
@@ -4036,24 +4632,28 @@ pub(crate) fn build_surface_arrangement(
     source_vertex_count: usize,
 ) -> HypermeshResult<ExactSurfaceArrangement> {
     let source_bvh = ExactBvh::build_for_query_hierarchy_decision(decisions, polygons)?;
-    let graph = crate::intersection::pairwise_intersections_by_polygon_from_bvh(
+    let mut graph = crate::intersection::pairwise_intersections_by_polygon_from_bvh(
         decisions,
         polygons,
         certified_embedded_inputs,
         &source_bvh,
     )?;
     let source_bvh = source_bvh.into_query_hierarchy(polygons)?;
-    let corefinement = corefine_surface(decisions, polygons, &graph, source_vertex_count)?;
+    // Plane classes join coplanar faces before corefinement, which takes
+    // incidences on one plane from either face's construction identities.
     let planes = SourcePlaneClasses::new(
         polygons,
-        graph.into_face_pair_facts(),
+        graph.take_face_pair_facts(),
         retained_plane_classes,
     )?;
+    let corefinement = corefine_surface(decisions, polygons, &graph, source_vertex_count, &planes)?;
+    drop(graph);
     let cells = assemble_surface_cells(
         decisions,
         polygons,
         &corefinement,
         planes.radially_separated(),
+        Some(&planes),
         &source_bvh,
     )?;
     Ok(ExactSurfaceArrangement {
@@ -4529,6 +5129,29 @@ mod tests {
         polygon
     }
 
+    #[test]
+    fn coplanar_contact_segments_name_the_edge_they_lie_on() {
+        // Edge plane `i` and edge identity `i` describe the same edge. A
+        // segment on one edge once took the identity of the edge before it,
+        // which construction incidences would then trust.
+        let decisions =
+            DecisionContext::new(&MeshContext::new(hyperlimit::PredicatePolicy::STRICT));
+        let points = [p(0, 0, 0), p(4, 0, 0), p(0, 4, 0)];
+        let polygon = triangle(points.clone(), 0, 0, [10, 11, 12]);
+        let half = |left: &Real, right: &Real| ((left + right) / Real::from(2)).unwrap();
+        for (start, end, endpoints) in [(0, 1, [10, 11]), (1, 2, [11, 12]), (2, 0, [10, 12])] {
+            let middle = Point3::new(
+                half(&points[start].x, &points[end].x),
+                half(&points[start].y, &points[end].y),
+                Real::zero(),
+            );
+            assert_eq!(
+                boundary_line_for_segment(&decisions, &polygon, &points[start], &middle).unwrap(),
+                ConstructionEdgeIdentity::Source { mesh: 0, endpoints },
+            );
+        }
+    }
+
     fn source_vertex_count(polygons: &[ConvexPolygon]) -> usize {
         polygons
             .iter()
@@ -4550,7 +5173,14 @@ mod tests {
         polygons: &[ConvexPolygon],
         graph: &PairwiseIntersectionGraph,
     ) -> HypermeshResult<SurfaceCorefinement> {
-        corefine_surface(decisions, polygons, graph, source_vertex_count(polygons))
+        let planes = SourcePlaneClasses::new(polygons, graph.clone().take_face_pair_facts(), &[])?;
+        corefine_surface(
+            decisions,
+            polygons,
+            graph,
+            source_vertex_count(polygons),
+            &planes,
+        )
     }
 
     #[test]
@@ -4954,12 +5584,14 @@ mod tests {
             let context = MeshContext::new(policy);
             let decisions = DecisionContext::new(&context);
             assert!(matches!(
-                ray_source_polygon_relation(&decisions, &source, &origin, &direction).unwrap(),
+                ray_source_polygon_relation(&decisions, &source, &origin, &direction, false)
+                    .unwrap(),
                 RayFacetRelation::Ahead { frontward: true }
             ));
             for triangle in [[0, 1, 2], [0, 2, 3]] {
                 assert!(matches!(
-                    ray_facet_relation(&decisions, &points, triangle, &origin, &direction).unwrap(),
+                    ray_facet_relation(&decisions, &points, triangle, &origin, &direction, false)
+                        .unwrap(),
                     RayFacetRelation::Degenerate
                 ));
             }
@@ -6219,7 +6851,7 @@ mod tests {
                 .into_query_hierarchy(&polygons)
                 .unwrap();
             assert_eq!(
-                assemble_surface_cells(&decisions, &polygons, &surface, &[], &source_bvh)
+                assemble_surface_cells(&decisions, &polygons, &surface, &[], None, &source_bvh)
                     .unwrap_err(),
                 HypermeshError::SurfaceArrangementFailed {
                     reason: "surface radial edge has fewer than two geometric rays",
@@ -6251,8 +6883,15 @@ mod tests {
         ];
         for malformed in malformed_pair_sets {
             assert_eq!(
-                assemble_surface_cells(&decisions, &polygons, &surface, &malformed, &source_bvh,)
-                    .unwrap_err(),
+                assemble_surface_cells(
+                    &decisions,
+                    &polygons,
+                    &surface,
+                    &malformed,
+                    None,
+                    &source_bvh,
+                )
+                .unwrap_err(),
                 HypermeshError::SurfaceArrangementFailed {
                     reason: "radially separated source-face pairs are not canonical",
                 }
@@ -6261,7 +6900,8 @@ mod tests {
 
         polygons[1].delta_w.pop();
         assert_eq!(
-            assemble_surface_cells(&decisions, &polygons, &surface, &[], &source_bvh).unwrap_err(),
+            assemble_surface_cells(&decisions, &polygons, &surface, &[], None, &source_bvh)
+                .unwrap_err(),
             HypermeshError::WindingDimensionMismatch {
                 expected: 2,
                 actual: 1,
@@ -6271,7 +6911,8 @@ mod tests {
 
         surface.triangles[0][0] = u32::MAX;
         assert_eq!(
-            assemble_surface_cells(&decisions, &polygons, &surface, &[], &source_bvh).unwrap_err(),
+            assemble_surface_cells(&decisions, &polygons, &surface, &[], None, &source_bvh)
+                .unwrap_err(),
             HypermeshError::SurfaceArrangementFailed {
                 reason: "surface facet references an absent arrangement point",
             }
@@ -6297,7 +6938,8 @@ mod tests {
             polygon.delta_w[0] = 1;
         }
         assert_eq!(
-            assemble_surface_cells(&decisions, &polygons, &surface, &[], &source_bvh).unwrap_err(),
+            assemble_surface_cells(&decisions, &polygons, &surface, &[], None, &source_bvh)
+                .unwrap_err(),
             HypermeshError::WindingOverflow
         );
     }
@@ -6587,7 +7229,7 @@ mod tests {
                     line: test_split_line(0, line),
                 });
             }
-            let result = corefine_face(&decisions, 0, &polygon, &work, &mut arena).unwrap();
+            let result = corefine_face(&decisions, 0, &polygon, &work, &mut arena, None).unwrap();
             assert_eq!(arena.points.len(), 11);
             assert_eq!(result.constraints.len(), 10);
             assert_eq!(decisions.certainty(), MeshCertainty::Certified);
@@ -6631,7 +7273,7 @@ mod tests {
                     line: test_split_line(0, LINE_COUNT + coordinate - 1),
                 });
             }
-            let result = corefine_face(&decisions, 0, &polygon, &work, &mut arena).unwrap();
+            let result = corefine_face(&decisions, 0, &polygon, &work, &mut arena, None).unwrap();
             assert_eq!(
                 arena.points.len(),
                 3 + (LINE_COUNT * LINE_COUNT + 4 * LINE_COUNT) as usize
@@ -6669,7 +7311,7 @@ mod tests {
             )
             .unwrap();
         work.contacts.push(contact);
-        let result = corefine_face(&decisions, 0, &polygon, &work, &mut arena).unwrap();
+        let result = corefine_face(&decisions, 0, &polygon, &work, &mut arena, None).unwrap();
         assert_eq!(result.contacts, [contact]);
         assert_eq!(result.triangles.len(), 3);
         assert!(
@@ -6739,14 +7381,14 @@ mod tests {
         let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
         let strict = DecisionContext::new(&strict_context);
         assert!(matches!(
-            same_radial_ray(&strict, &points, [0, 1], 2, 3),
+            same_radial_ray(&strict, &points, [0, 1], 2, 3, false),
             Err(HypermeshError::PredicateUndecided { .. })
         ));
         assert_eq!(strict.certainty(), MeshCertainty::Certified);
 
         let approximate_context = MeshContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
         let approximate = DecisionContext::new(&approximate_context);
-        assert!(same_radial_ray(&approximate, &points, [0, 1], 2, 3).unwrap());
+        assert!(same_radial_ray(&approximate, &points, [0, 1], 2, 3, false).unwrap());
         assert_eq!(
             approximate.certainty(),
             MeshCertainty::Approximate512Consumed
@@ -6857,6 +7499,7 @@ mod tests {
                                         [0, 1],
                                         &uses,
                                         &contributions,
+                                        None,
                                         &mut retained,
                                     )
                                     .unwrap()
@@ -6874,6 +7517,7 @@ mod tests {
                                     &contributions,
                                     &[],
                                     &[],
+                                    None,
                                     &mut complete,
                                 )
                                 .unwrap();
@@ -6907,6 +7551,7 @@ mod tests {
                 [0, 1],
                 &base_uses,
                 &contributions,
+                None,
                 &mut declined,
             )
             .unwrap()

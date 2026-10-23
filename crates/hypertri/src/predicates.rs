@@ -63,6 +63,22 @@ pub(crate) fn point_on_segment(
     // This is a direct boundary predicate, not triangulation topology. Route it
     // through hyperlimit's segment classifier so the exact interval and
     // degenerate-segment rules have a single owner.
+    #[cfg(feature = "cdt")]
+    if let Some(zero) = evaluator.known_zero(a, b, point) {
+        // Recorded collinearity leaves only the position along the line.
+        return evaluator
+            .decide(
+                hyperlimit::classify_point_segment_with_known_orientation(
+                    a,
+                    b,
+                    point,
+                    zero,
+                    evaluator.policy(),
+                ),
+                "point_on_segment",
+            )
+            .map(hyperlimit::PointSegmentLocation::is_on_segment);
+    }
     evaluator.decide(
         hyperlimit::point_on_segment(a, b, point, evaluator.policy()),
         "point_on_segment",
@@ -125,6 +141,32 @@ pub(crate) fn segment_intersection(
     // recovery and ear visibility. Keep the four-orientation classifier in
     // hyperlimit, where determinant and interval decisions are implemented.
     // Hypertri consumes only the decided combinatorial relation.
+    #[cfg(feature = "cdt")]
+    {
+        let known = [
+            evaluator.known_zero(a, b, c),
+            evaluator.known_zero(a, b, d),
+            evaluator.known_zero(c, d, a),
+            evaluator.known_zero(c, d, b),
+        ];
+        if known.iter().any(Option::is_some) {
+            // Recorded collinearity replaces those determinants; hyperlimit
+            // evaluates the others and classifies.
+            let unknown = hyperlimit::PredicateOutcome::unknown(
+                hyperlimit::RefinementNeed::RealRefinement,
+                hyperlimit::Escalation::Undecided,
+            );
+            let outcome = hyperlimit::classify_segment_intersection_with_known_orientations(
+                a,
+                b,
+                c,
+                d,
+                known.map(|zero| zero.unwrap_or(unknown)),
+                evaluator.policy(),
+            );
+            return evaluator.decide(outcome, "segment_intersection");
+        }
+    }
     let outcome = hyperlimit::classify_segment_intersection(a, b, c, d, evaluator.policy());
     evaluator.decide(outcome, "segment_intersection")
 }

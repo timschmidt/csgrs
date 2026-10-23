@@ -10,6 +10,77 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## 2026-10-22: take incidences from construction instead of zero proofs
+
+Status: **kept**
+
+A face arrangement proved again, by exact zeros, incidences that its points
+have by construction: each point's containment in its face's plane and on
+the edges it was built on, which points lie on each authored line, and the
+orientation of three collinear points in Hypertri's triangulation. The scalar
+layer refines a nonzero value quickly but must prove a zero, so these were
+the expensive predicates of symbolic arrangements, and for near-coincident
+rotations beyond the cyclotomic proof's domain they did not decide at all.
+Each point now keeps its construction identities, plane classes are built
+before corefinement, and the arrangement takes on-plane and on-line facts
+from them; Hypertri receives each line's points as
+`CollinearPointFacts`. The facts only decide that a point is on a plane or
+line. Rational arrangements keep no identities, since their zeros are cheap
+exact arithmetic. See [`FUTURE_WORK.md`](FUTURE_WORK.md#kept-incidences-from-construction-replace-zero-proofs)
+for the argument.
+
+Preserved evidence. One release run of `SUCCESSIVE_OPERATIONS_RAW=<file>
+cargo bench --locked --bench successive_operations` at `2aea178386` and one
+with this change, on a shared host (rustc 1.98.1, one thread): all 200 steps
+keep their outcome, manifold validation, triangle, vertex and coordinate
+counts, denominator bits and graph nodes and depth. A probe (not committed)
+digested every validated step's triangle indices, exact rational
+coordinates, and the binary64 value and graph size of each symbolic
+coordinate: the 200 digests are identical (SHA-256 of the digest list
+`f54208f9…80f5` both times). Allocation, in MB:
+
+| Chain | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| 6-gon drills (sqrt 3) | 1,265.7 | 1,150.8 | -9.1% |
+| 8-gon drills (sqrt 2) | 2,153.5 | 1,968.6 | -8.6% |
+| 16-gon drills (sin pi/8) | 3,997.7 | 3,350.1 | -16.2% |
+| 32-gon drills (sin pi/16) | 11,859.5 | 11,294.1 | -4.8% |
+| 32-gon drills tilted 10 degrees | 34,337.4 | 20,464.8 | -40.4% |
+| 30-degree cube cuts (sqrt 3) | 732.8 | 666.9 | -9.0% |
+| 45-degree cube cuts (sqrt 2) | 767.3 | 702.4 | -8.5% |
+| 10-degree cube cuts (sin pi/18) | 505.9 | 365.7 | -27.7% |
+| icosahedron unions (sqrt 5) | 3,971.6 | 1,997.5 | -49.7% |
+| revolved ring, adjacent axis cuts | 1,391.2 | 987.0 | -29.1% |
+| sampled 32x16 sphere cut | 2,200.6 | 1,951.8 | -11.3% |
+| corpus | 63,408.2 | 45,124.8 | -28.8% |
+
+The eleven rational chains allocate within 0.1 MB of before. In the full run
+four of their steps (cross bars 19, feedback 2 and 3, extruded L 1) allocate
+168 to 296 bytes more; run alone, the cross-bar, feedback and L-profile
+chains allocate exactly the same bytes and allocator calls before and after,
+so the difference is state left by the symbolic chains that run earlier.
+Peak live-heap growth per step is unchanged within 0.2 MB. Step times fell
+with allocation (icosahedron unions 7.0 s to 2.6 s, tilted drills 35.8 s to
+20.3 s in total), but they are one shared-host run each. Raw rows: SHA-256
+`b3524268…7430` (before) and `ada971c3…361c` (after), not archived.
+
+Predicate counts, from a probe built with `--features dispatch-trace` (not
+committed) over six chains: Hyperlimit `orient2d` calls fall from 23,039 to
+17,879 on the icosahedron unions, 79,296 to 67,363 on the revolved ring,
+55,622 to 47,721 on the 30-degree cuts, 112,428 to 98,634 on the 8-gon drills
+and 472,748 to 437,790 on the tilted drills; radial `orient3d` calls fall
+from 491 to 346 and 508 to 359 on the first two. The rational square drills
+make the same calls.
+
+Completion: `solid::cylinder(8, 40, 8)` minus its rotation by 0.0001 degree
+about y or z ended `PredicateUndecided` before and is now certified, as are
+the other coordinate-axis rotations of the SynapsCAD fixture
+(`tests/downstream_solids.rs`) and the hypermesh regression
+`construction_incidences_decide_a_near_coincident_rotated_prism`, which
+fails before the change at `surface arrangement point on segment`. Rotations
+about a skew axis still stop in the pairwise tests, at zeros no construction
+implies.
+
 ## 2026-10-22: bound the search for equal output coordinates
 
 Status: **kept**

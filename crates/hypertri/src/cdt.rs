@@ -8,6 +8,7 @@
 //! topology implementation and have no external triangulation dependency.
 
 use crate::cdt_constraints;
+pub use crate::collinear::CollinearPointFacts;
 use crate::context::{TriangulationContext, TriangulationOutcome};
 use crate::error::{Error, Result};
 use crate::predicate_evaluator::PredicateEvaluator;
@@ -367,7 +368,42 @@ pub fn constrained_triangulation_convex_hull(
     points: &[ExactPoint],
     constraints: &[Constraint],
 ) -> Result<TriangulationOutcome<Vec<Triangle>>> {
-    let evaluator = PredicateEvaluator::new(context);
+    constrained_triangulation_convex_hull_with_evaluator(
+        PredicateEvaluator::new(context),
+        points,
+        constraints,
+    )
+}
+
+/// [`constrained_triangulation_convex_hull`] with point sets that the caller
+/// has proved collinear.
+///
+/// Three points of one line in `collinear` have orientation zero without a
+/// determinant, which an exact zero would otherwise need a proof for; their
+/// positions along the line are still decided by exact comparisons. Every
+/// other predicate, and the postconditions, are those of
+/// [`constrained_triangulation_convex_hull`]. The facts' certainty joins the
+/// outcome's when a fact is used, and facts that consumed the approximate
+/// terminal are ignored under `STRICT`. A fact that names an absent point is
+/// invalid input.
+pub fn constrained_triangulation_convex_hull_with_collinear_facts(
+    context: &TriangulationContext,
+    points: &[ExactPoint],
+    constraints: &[Constraint],
+    collinear: &CollinearPointFacts,
+) -> Result<TriangulationOutcome<Vec<Triangle>>> {
+    constrained_triangulation_convex_hull_with_evaluator(
+        PredicateEvaluator::with_collinear_facts(context, points, collinear)?,
+        points,
+        constraints,
+    )
+}
+
+fn constrained_triangulation_convex_hull_with_evaluator(
+    evaluator: PredicateEvaluator,
+    points: &[ExactPoint],
+    constraints: &[Constraint],
+) -> Result<TriangulationOutcome<Vec<Triangle>>> {
     validate_constraints(points.len(), constraints)?;
     validate_unique_points(&evaluator, points)?;
     validate_constraint_geometry(&evaluator, points, constraints, true)?;

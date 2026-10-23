@@ -92,6 +92,13 @@
   inconclusive enclosure.
 - A `serde` feature that enables serialization of the re-exported `Point2`
   through `hyperreal/serde` and `hyperlattice/serde`.
+- `classify_point_segment_with_known_orientation` and
+  `classify_segment_intersection_with_known_orientations` take orientation
+  outcomes the caller already holds, such as a zero from a construction that
+  placed a point on a line, in place of the determinants. A zero then leaves
+  only the exact comparisons along the line. An undecided outcome, or one the
+  policy does not accept, is evaluated as before, and the result carries the
+  weakest certainty consumed.
 
 ### Changed
 

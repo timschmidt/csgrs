@@ -590,12 +590,13 @@ impl PairwiseIntersectionGraph {
         Ok((point, identity))
     }
 
-    /// Consumes the graph and retains only its source-face pair facts.
-    pub(crate) fn into_face_pair_facts(self) -> SourceFacePairFacts {
+    /// Moves the source-face pair facts out of the graph, leaving its
+    /// construction points and events for corefinement.
+    pub(crate) fn take_face_pair_facts(&mut self) -> SourceFacePairFacts {
         SourceFacePairFacts {
-            radially_separated: self.radially_separated_face_pair_keys,
-            coplanar: self.coplanar_face_pair_keys,
-            distinct_planes: self.distinct_plane_face_pair_keys,
+            radially_separated: std::mem::take(&mut self.radially_separated_face_pair_keys),
+            coplanar: std::mem::take(&mut self.coplanar_face_pair_keys),
+            distinct_planes: std::mem::take(&mut self.distinct_plane_face_pair_keys),
         }
     }
 }
@@ -1926,6 +1927,12 @@ pub(crate) fn pairwise_support_identity(
             operation: "pairwise construction support plane",
         })?,
     }))
+}
+
+/// The source face whose support plane `plane` names, when it is one of the
+/// operation-local identities from [`pairwise_support_identity`].
+pub(crate) fn pairwise_support_face(plane: ConstructionPlaneIdentity) -> Option<u32> {
+    (plane.mesh == PAIRWISE_FACE_PLANE_NAMESPACE).then_some(plane.plane)
 }
 
 fn pairwise_intersection_is_shared_input_feature(

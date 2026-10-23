@@ -158,9 +158,23 @@ pub(crate) enum RayFacetRelation {
 
 pub(crate) fn ray_triangle_relation(
     decisions: &DecisionContext,
+    triangle: [&Point3; 3],
+    origin: &Point3,
+    direction: &Vector3,
+) -> HypermeshResult<RayFacetRelation> {
+    ray_triangle_relation_with_origin_plane(decisions, triangle, origin, direction, false)
+}
+
+/// [`ray_triangle_relation`], given whether construction already places
+/// `origin` in the triangle's plane. The ray parameter of an origin in that
+/// plane is zero, which would otherwise need an exact proof; the origin's
+/// position relative to the edges is still decided.
+pub(crate) fn ray_triangle_relation_with_origin_plane(
+    decisions: &DecisionContext,
     [a, b, c]: [&Point3; 3],
     origin: &Point3,
     direction: &Vector3,
+    origin_in_plane: bool,
 ) -> HypermeshResult<RayFacetRelation> {
     let edge_ab = b - a;
     let edge_ac = c - a;
@@ -190,9 +204,12 @@ pub(crate) fn ray_triangle_relation(
     {
         return Ok(RayFacetRelation::Degenerate);
     }
+    let frontward = determinant_sign == Classification::Negative;
+    if origin_in_plane {
+        return Ok(RayFacetRelation::Origin { frontward });
+    }
     let ray_parameter = edge_ac.dot(&cross_from_a);
     let parameter_sign = classify_real(decisions, &ray_parameter)?;
-    let frontward = determinant_sign == Classification::Negative;
     if parameter_sign == Classification::On {
         Ok(RayFacetRelation::Origin { frontward })
     } else if parameter_sign == determinant_sign {

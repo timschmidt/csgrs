@@ -15,6 +15,8 @@ mod cdt_constraints;
 mod cdt_insert;
 #[cfg(feature = "cdt")]
 mod cdt_validate;
+#[cfg(feature = "cdt")]
+mod collinear;
 mod context;
 #[cfg(feature = "earcut")]
 mod earcut;

@@ -885,3 +885,77 @@ fn subdivided_face_coincident_shell_stack_has_consistent_surface_cells() {
         }
     }
 }
+
+/// A square prism `[|x| + |y| <= 8] x [0, 40]` with the triangles of csgrs's
+/// `cylinder(8, 40, 4)`, its four samples counterclockwise from `(0, -8)`.
+fn square_prism(transform: impl Fn([i32; 3]) -> Point3) -> TriangleMesh {
+    let mut positions = vec![transform([0, 0, 0]), transform([0, 0, 40])];
+    for z in [0, 40] {
+        for [x, y] in [[0, -8], [8, 0], [0, 8], [-8, 0]] {
+            positions.push(transform([x, y, z]));
+        }
+    }
+    let mut triangles = Vec::new();
+    for index in 0..4 {
+        let next = (index + 1) % 4;
+        triangles.push(Triangle::new(0, 2 + next, 2 + index));
+        triangles.push(Triangle::new(1, 6 + index, 6 + next));
+        triangles.push(Triangle::new(2 + index, 2 + next, 6 + next));
+        triangles.push(Triangle::new(2 + index, 6 + next, 6 + index));
+    }
+    TriangleMesh::new(positions, triangles)
+}
+
+#[test]
+fn construction_incidences_decide_a_near_coincident_rotated_prism() {
+    // The prism minus itself rotated by 1/10000 degree about y. A side face of
+    // the first meets the rotated top cap's two triangles along one line, and
+    // the arrangement puts three points on it: two built on those triangles'
+    // planes and one on their shared edge. The cap triangles were decided
+    // coplanar, so the points are collinear by construction, but the zero is
+    // beyond every proof the scalar layer has. Strict policy used to stop at
+    // `surface arrangement point on segment`.
+    let angle = (Real::pi() / Real::from(1_800_000)).unwrap();
+    let (sine, cosine) = (angle.clone().sin(), angle.cos());
+    let prism = square_prism(|[x, y, z]| Point3::new(r(x), r(y), r(z)));
+    let rotated = square_prism(|[x, y, z]| {
+        Point3::new(
+            &cosine * &r(x) + &sine * &r(z),
+            r(y),
+            &cosine * &r(z) - &sine * &r(x),
+        )
+    });
+    let strict = MeshContext::new(PredicatePolicy::STRICT);
+    // Six times the prism's volume, 128 * 40; the rotated prism's is equal.
+    let full = r(30720);
+    for operation in [
+        BooleanOp::Difference,
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+    ] {
+        let outcome = run(
+            &strict,
+            &[&prism, &rotated],
+            BooleanProgram::Operation(operation),
+        )
+        .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
+        assert_eq!(outcome.certainty, MeshCertainty::Certified, "{operation:?}");
+        let result = &outcome.value.results[0];
+        assert_certified_boundary(&outcome.value, result);
+        let volume = signed_six_volume(&outcome.value.vertices, result);
+        let ordering = |value: &Real| {
+            hyperlimit::compare_reals(value, &full, PredicatePolicy::STRICT)
+                .value()
+                .expect("volume comparison decides")
+        };
+        let positive = hyperlimit::classify_real_sign(&volume, PredicatePolicy::STRICT)
+            .value()
+            .expect("volume sign decides");
+        assert_eq!(positive, hyperlimit::Sign::Positive, "{operation:?}");
+        let expected = match operation {
+            BooleanOp::Union => std::cmp::Ordering::Greater,
+            _ => std::cmp::Ordering::Less,
+        };
+        assert_eq!(ordering(&volume), expected, "{operation:?}");
+    }
+}

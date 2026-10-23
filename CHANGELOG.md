@@ -180,7 +180,11 @@ migrations, including changed serialized output, are listed in
   they need only `sin^2 + cos^2 = 1`: the volume of the rotated solid, a
   rotation followed by its inverse, and a cube's union, intersection and
   difference with itself rotated by 0.0001 degree about a corner axis. These
-  ended `PredicateUndecided`. Near-coincident rotated cylinders still do
+  ended `PredicateUndecided`. Booleans of a sampled cylinder with its copy
+  rotated by 0.0001 degree about a coordinate axis also complete, because
+  Boolean arrangements now take incidences their points have by construction
+  instead of proving the zeros; rotations about a skew axis still end
+  `PredicateUndecided`
   ([hypermesh future work](crates/hypermesh/FUTURE_WORK.md#near-coincident-rotations-beyond-the-cyclotomic-domain)).
 
 ### Removed

@@ -55,6 +55,14 @@
   constrained triangles without Delaunay legalization. Identical protected
   cells with the same points and relative vertex order get identical
   triangle sets.
+- `cdt::constrained_triangulation_convex_hull_with_collinear_facts` takes
+  `cdt::CollinearPointFacts`, sets of point indices that the caller has
+  proved collinear, and uses orientation zero for any three points of one
+  set instead of evaluating the determinant; order along the line is still
+  decided exactly. The facts carry the certainty of their evidence: facts that
+  consumed the approximate terminal are ignored under `STRICT` and make an
+  `APPROXIMATE_512` outcome approximate when used. A fact naming an absent
+  point is `Error::InvalidInput`.
 - `BistellarFlipReportD::undecided_predicate` and
   `TdsGeometricViolationD::undecided_predicate` name the predicate that was
   left undecided.

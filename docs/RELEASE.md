@@ -62,7 +62,8 @@ will be fixed:
   the bounded ring recognizers decide identities in independent atoms and a
   few built-in relations, among them `sin^2 + cos^2 = 1` for each angle;
   Booleans of near-coincident rotations by such an angle, such as
-  0.0001 degree, can still need an incidence that is proved only numerically
+  0.0001 degree about a skew axis, can still meet a zero that no
+  construction implies
   ([hypermesh future work](../crates/hypermesh/FUTURE_WORK.md#near-coincident-rotations-beyond-the-cyclotomic-domain)). A sweep along a
   general sampled path has exact frames in nested square roots and does not
   compose with a later strict Boolean ([properties.md](../properties.md)
