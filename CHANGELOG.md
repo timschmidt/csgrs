@@ -126,6 +126,8 @@ migrations, including changed serialized output, are listed in
   packages instead of 146. `curve::from_image` is unchanged; programs that
   decode images enable the codecs they need in their own manifest (see
   "Cargo features" in [docs/MIGRATIONS.md](docs/MIGRATIONS.md)).
+- `wasm32` builds compile `uuid`, which only the DXF and Gerber parsers
+  need, only when `dxf-io` or `gerber-io` is enabled.
 - `bevymesh` targets Bevy 0.18 (was 0.16) through `solid::to_bevy_mesh`.
 - Raises the minimum supported Rust version (MSRV) from 1.85.1 to 1.95.0.
 

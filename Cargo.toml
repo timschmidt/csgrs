@@ -204,7 +204,8 @@ gltf = { version = "1.4.1", optional = true, default-features = false, features 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 # DXF and Gerber depend transitively on uuid; wasm32 requires an explicit
 # browser randomness provider even though csgrs does not construct UUIDs.
-uuid = { version = "1.18", features = ["js"] }
+# `dxf-io` and `gerber-io` enable it; other wasm32 builds do not compile it.
+uuid = { version = "1.18", optional = true, features = ["js"] }
 
 # Keep transitive sibling crates unified while using local path development mode.
 [patch.crates-io]
@@ -253,6 +254,7 @@ dxf-io = [
   "curve",
   "dep:chrono",
   "dep:dxf",
+  "dep:uuid",
 ]
 obj-io = [
   # OBJ format support - no external dependencies needed
@@ -275,6 +277,7 @@ gerber-io = [
   "curve",
   "dep:gerber-types",
   "dep:gerber_parser",
+  "dep:uuid",
 ]
 truetype-text = [
   "curve",
