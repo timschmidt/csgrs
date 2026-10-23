@@ -152,6 +152,24 @@ instead of 34,337 MB, and the rational chains the same bytes when run alone.
 Details are in the
 [hypermesh performance record](../crates/hypermesh/PERFORMANCE.md#2026-10-22-take-incidences-from-construction-instead-of-zero-proofs).
 
+### Exact normal forms of crossing coordinates (2026-10-23)
+
+One validated release run of the whole corpus at `6d1f6e467c` and one with
+the change that stores segment-plane crossing coordinates as their exact
+pi-Laurent normal forms (shared host, one thread; the second build also
+contains Hyperlimit's extended relation stage, which no corpus predicate
+reaches, so the two builds execute the same instructions without the
+compaction). Raw rows: SHA-256 `3dfd84b3…2420` (before) and `63c8174a…9526`
+(after), not archived. Every step keeps its outcome, validation, triangle
+and vertex counts and denominator bits. Allocation over the corpus falls
+from 45,125 MB to 42,951 MB: the 6- and 8-gon drills allocate 46-47% less
+and the 30- and 45-degree cuts 52% and 57% less, the 10-degree cuts and the
+revolved ring 2.7% less, and the icosahedron unions 0.9% more, where every
+compaction attempt declines. The 30-degree cuts keep coordinate depth 4 over
+eight steps instead of 15, and the first two 45-degree cuts publish only
+rational coordinates. Details, with instruction counts, are in the
+[hypermesh performance record](../crates/hypermesh/PERFORMANCE.md#2026-10-23-store-crossing-coordinates-as-their-exact-normal-form).
+
 Not adopted in the harness: resident-set sampling, which needs a
 platform-specific reader and would add the allocator's own retention to the
 live-heap numbers above; timing the last result's drop, which no later step
@@ -180,10 +198,13 @@ treat time as noisy.
   Rotated cube cuts overlap the previous cut, so their corners lie on creases
   between a block face and an earlier wall, whose endpoints earlier cuts
   built. Those corners are now built from the crease's two retained face
-  planes and the cutting wall, so the 30-, 45- and 10-degree chains keep depth
+  planes and the cutting wall, so the 30-, 45- and 10-degree chains kept depth
   15, 17 and 18, where interpolation along the crease reached 29, 31 and 38
-  and kept growing. Per-step cost no longer rises with the step on these
-  chains; the first cut of either 32-gon chain still allocates 9 to 10 GB.
+  and kept growing. Crossing coordinates in Q(sqrt 3) and Q(sqrt 2) are now
+  also stored as their exact normal forms, so the 30- and 45-degree chains
+  keep depth 4; the 10-degree chain's sines of pi/18 keep depth 18. Per-step
+  cost no longer rises with the step on these chains; the first cut of
+  either 32-gon chain still allocates 9 to 10 GB.
 - **Coplanar unions keep a constant per-step cost.** Unions of translated
   icosahedra merge four coplanar strips whose one side is a single straight
   edge, so their fewest triangles fan from that edge's ends. Reduction now
@@ -243,8 +264,13 @@ treat time as noisy.
   an authored line, on the plane of a coplanar face) instead of proving the
   zeros, and passes each line's points to Hypertri's triangulation as
   collinear facts. Rows are unchanged.
+- `hypermesh`: a segment-plane crossing stores each derived coordinate as its
+  exact pi-Laurent normal form when that is smaller, so coordinates in a
+  fixed quadratic field stay a few nodes deep. Values are unchanged; rows
+  and coordinate sizes change.
 
-All but the last change published rows but not sets or sizes; see "Boolean
+Every change except the incidence change published rows but not sets, and
+only the last also changes coordinate sizes; see "Boolean
 output rows" in [`MIGRATIONS.md`](MIGRATIONS.md). Earlier changes for this
 record: Boolean results keep only the vertices their set needs and retain
 their plane classes, distinct-plane facts and source support planes; a

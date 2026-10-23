@@ -10,6 +10,67 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## 2026-10-23: store crossing coordinates as their exact normal form
+
+Status: **kept**
+
+Research project M05 asked whether coordinates in a fixed algebraic field
+need a normalized representation behind `Real`. On `6d1f6e467c` the
+successive-operation chains no longer grow: the 30-, 45- and 10-degree cuts
+keep depth 15, 17 and 18 from step to step, and the radical coefficients of
+their normal forms stay near 20 bits. What remains is a constant cost.
+Every predicate expands the arithmetic history of the arrangement points it
+reads into Hyperreal's pi-Laurent normal form again, which took 42-67% of
+the step time of every symbolic chain, measured around each expansion.
+
+A point that a segment crosses a plane at now stores each derived coordinate
+as that normal form, `a + sum b_i sqrt(r_i)` possibly times powers of pi
+(`Real::compact_pi_laurent`), when it has fewer expression nodes than the
+construction. The form is exact; the value, the point's construction
+identities and every decision are unchanged. Exact rationals, a coordinate
+that an endpoint stores as the same expression, and values outside the form
+(sines of other rational turns) keep their construction. The existing
+compactor at this one construction site was enough; a separate number-field
+descriptor behind `Real` was not prototyped. Coordinates of the fields that
+would need one, such as the degree-six field of cos(pi/18), keep atoms that
+the compactor declines, and the near-coincident rotations that stayed
+undecided are rational turns of order 3,600,000, beyond any field of small
+degree (see `FUTURE_WORK.md`).
+
+User-space instructions for one process per chain (`perf stat`, release,
+`--untouched`, one run each; repetitions of this harness agree to 0.05%), and
+allocation over each chain in a validated run of
+`SUCCESSIVE_OPERATIONS_RAW=<file> cargo bench --locked --bench
+successive_operations`:
+
+| Chain | Instructions before | After | Allocated before | After |
+| --- | ---: | ---: | ---: | ---: |
+| 6-gon drills (sqrt 3) | 8.82 G | -42.1% | 1,150.8 MB | -46.2% |
+| 8-gon drills (sqrt 2) | 14.82 G | -44.0% | 1,968.6 MB | -46.7% |
+| 30-degree cube cuts | 4.82 G | -46.9% | 666.9 MB | -51.9% |
+| 45-degree cube cuts | 4.89 G | -51.8% | 702.4 MB | -56.6% |
+| 10-degree cube cuts | 2.73 G | -2.5% | 365.7 MB | -2.7% |
+| revolved ring cuts | 8.24 G | -2.4% | 987.0 MB | -2.7% |
+| 16-gon drills | 30.20 G | +0.2% | 3,350.1 MB | +0.1% |
+| sampled sphere cut | 16.18 G | +0.1% | 1,951.8 MB | +0.1% |
+| icosahedron unions | 20.42 G | +0.7% | 1,997.5 MB | +0.9% |
+
+Corpus allocation falls from 45,125 MB to 42,951 MB. The adverse rows are
+explained: in the icosahedron, 16-gon and sphere chains every compaction
+attempt declines (720, 784 and 192 attempts, counted with a temporary
+probe), because their coordinates contain square roots of irrational
+radicands or sines, and each declined attempt costs one bounded expansion.
+Every chain keeps its outcomes, closure, triangle and vertex counts and
+denominator bits. Coordinate graphs shrink: the 30-degree cuts keep depth 4
+over eight steps, the 45-degree cuts depth 4 from the third step, and their
+first two steps now publish only rational coordinates (the radicals of
+those crossings cancel). Rows change, a migration recorded under "Boolean
+output rows" in `docs/MIGRATIONS.md`.
+
+S01's cache of normal forms across predicates (Hyperreal `PERFORMANCE.md`)
+attacks the same cost. With this change in place, the part of it that a
+workspace in `DecisionContext` can reach saves only another 2-3%.
+
 ## 2026-10-23: rank retained operands' vertices first as fan apexes
 
 Status: **kept**

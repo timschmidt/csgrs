@@ -68,6 +68,15 @@ grammar belong to adapters such as csgrs.
   are interpolated as before. The construction consumes no decision under
   the operation's policy, and a division that does not decide falls back to
   interpolation.
+- A point where a segment crosses a plane stores each derived coordinate as
+  its exact normal form, a rational combination of square roots of rationals
+  possibly times powers of pi, when that has fewer expression nodes than its
+  construction. Later predicates no longer expand the construction history
+  again: rotated cube cuts in Q(sqrt 3) and Q(sqrt 2) keep coordinate depth
+  4 instead of 15 and 17, and their chains need 47-52% fewer instructions.
+  Values, construction identities and decisions are unchanged; rationals,
+  coordinates an endpoint shares and values outside the form keep their
+  expressions.
 - Polygons retriangulated by output reduction fan around their least vertex
   wherever it sees them, through Hypertri's `triangulate_simple_ring_around`:
   vertices of an operand that retains an earlier Boolean's facts first, then

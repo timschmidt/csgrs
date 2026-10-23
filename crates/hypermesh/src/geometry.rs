@@ -572,6 +572,47 @@ pub(crate) fn retain_exact_axis_plane_coordinate(point: &mut Point3, plane: &Pla
     }
 }
 
+/// Graph traversal limit when comparing a compacted coordinate with its
+/// construction; a larger graph counts as larger than any complete one.
+const COMPACT_COORDINATE_NODE_LIMIT: usize = 1 << 12;
+
+/// Stores each derived coordinate of a point constructed on the segment from
+/// `start` to `end` as its exact normal form, when that has fewer expression
+/// nodes than the construction.
+///
+/// The normal form is Hyperreal's bounded Laurent polynomial in pi whose
+/// coefficients are rational combinations of square roots of rationals
+/// ([`Real::compact_pi_laurent`]); it equals the coordinate exactly and needs
+/// no approximation. A coordinate in a fixed quadratic field, such as one of
+/// a 30-degree rotation, then stays a few nodes deep however many crossings
+/// produced it, so later predicates do not expand its arithmetic history
+/// again. Exact rationals, a coordinate that an endpoint stores as the same
+/// expression (constant along the segment, kept so that comparisons with it
+/// stay structural) and values outside that form, such as sines of other
+/// rational turns, keep their construction.
+pub(crate) fn compact_derived_coordinates(point: &mut Point3, start: &Point3, end: &Point3) {
+    for axis in 0..3 {
+        let coordinate = axis_ref(point, axis);
+        if coordinate.exact_rational_ref().is_some()
+            || coordinate == axis_ref(start, axis)
+            || coordinate == axis_ref(end, axis)
+        {
+            continue;
+        }
+        let Some(compact) = coordinate.compact_pi_laurent() else {
+            continue;
+        };
+        let smaller = compact.exact_rational_ref().is_some() || {
+            let compact = compact.representation_size(COMPACT_COORDINATE_NODE_LIMIT);
+            let original = coordinate.representation_size(COMPACT_COORDINATE_NODE_LIMIT);
+            compact.complete && (!original.complete || compact.nodes < original.nodes)
+        };
+        if smaller {
+            *axis_mut(point, axis) = compact;
+        }
+    }
+}
+
 pub(crate) fn dot_point(left: &Point3, right: &Point3) -> Real {
     Real::signed_product_sum(
         [true, true, true],
@@ -608,6 +649,40 @@ mod tests {
             .any(|[ua, vb, ub, va]| {
                 !Real::diff_of_products(&u[ua], &v[vb], &u[ub], &v[va]).definitely_zero()
             })
+    }
+
+    #[test]
+    fn derived_coordinates_take_their_smaller_exact_normal_form() {
+        let root = Real::from(3).sqrt().unwrap();
+        // (1 + sqrt 3)(2 + sqrt 3)...(6 + sqrt 3), built factor by factor:
+        // a deep graph whose value is a + b sqrt(3).
+        let deep = (1..=6).fold(Real::one(), |product, factor| {
+            product * (Real::from(factor) + &root)
+        });
+        let rational = Real::from(7);
+        // sin(pi/18) times a radical is outside the normal form.
+        let sine = Real::new(Rational::fraction(1, 18).unwrap()).sin_pi() * &deep;
+        let shared = &root * Real::from(5) + Real::from(2);
+        let start = Point3::new(Real::zero(), shared.clone(), Real::zero());
+        let end = Point3::new(Real::one(), shared.clone(), Real::one());
+        for third in [rational.clone(), sine.clone()] {
+            let mut point = Point3::new(deep.clone(), shared.clone(), third.clone());
+            compact_derived_coordinates(&mut point, &start, &end);
+            let size = |value: &Real| value.representation_size(1 << 12);
+            // 19 nodes at depth 8 become a + b sqrt(3): 6 nodes at depth 4.
+            assert_eq!((size(&deep).nodes, size(&deep).depth), (19, 8));
+            assert_eq!((size(&point.x).nodes, size(&point.x).depth), (6, 4));
+            assert_eq!(
+                hyperlimit::compare_reals(&point.x, &deep, hyperlimit::PredicatePolicy::STRICT)
+                    .value(),
+                Some(std::cmp::Ordering::Equal)
+            );
+            // A coordinate constant along the segment keeps its shared
+            // expression; a rational and a sine outside the normal form keep
+            // theirs.
+            assert!(point.y == shared);
+            assert!(point.z == third);
+        }
     }
 
     #[test]

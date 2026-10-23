@@ -9,7 +9,8 @@ use crate::bvh::ExactBvh;
 use crate::context::{DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
-    Classification, Plane, axis_ref, compare_real_decision, retain_exact_axis_plane_coordinate,
+    Classification, Plane, axis_ref, compact_derived_coordinates, compare_real_decision,
+    retain_exact_axis_plane_coordinate,
 };
 use crate::point_interner::PointInterner;
 use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon};
@@ -3160,6 +3161,7 @@ fn materialize_deferred_point(
                 )?,
             };
             retain_exact_axis_plane_coordinate(&mut point, plane);
+            compact_derived_coordinates(&mut point, start, end);
             point
         }
     };
@@ -4469,11 +4471,35 @@ mod tests {
         };
         let from_planes = materialize(&crossing(Some([&top, &wall])));
         let interpolated = materialize(&crossing(None));
-        assert_eq!(
-            Some(from_planes.clone()),
-            super::crease_plane_crossing(&positive, &negative, &top, &wall, &cutting)
+        // Materialization builds the crossing from the planes, then stores
+        // its coordinates as their exact normal forms.
+        let built = super::crease_plane_crossing(&positive, &negative, &top, &wall, &cutting)
+            .expect("proper crease crossing");
+        let mut expected = built.clone();
+        crate::geometry::compact_derived_coordinates(&mut expected, &positive, &negative);
+        assert_eq!(from_planes, expected);
+        let (numerator, denominator) =
+            super::exact_segment_plane_parameter_ratio(&cutting, &positive, &negative);
+        let raw_interpolation = super::intersect_segment_plane_from_ratio(
+            &positive,
+            &negative,
+            &numerator,
+            &denominator,
+        )
+        .unwrap();
+        assert!(point_depth(&built) < point_depth(&raw_interpolation));
+        // Both routes reach the same point, and compaction leaves it no
+        // deeper than the planes built it.
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        assert!(
+            crate::predicate::points_equal(
+                &DecisionContext::new(&context),
+                &from_planes,
+                &interpolated
+            )
+            .unwrap()
         );
-        assert!(point_depth(&from_planes) < point_depth(&interpolated));
+        assert!(point_depth(&from_planes) <= point_depth(&built));
     }
 
     /// The point a Boolean materializes where the segment from `positive` to

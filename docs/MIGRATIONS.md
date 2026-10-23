@@ -160,7 +160,12 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   as in `tool.union(&body)`. Coordinates of one axis that
   strict policy proves equal are stored as one expression, the smallest of
   them, so a coordinate's expression can differ from the one its
-  construction produced while its value stays the same. Regenerate pinned
+  construction produced while its value stays the same. A coordinate of a
+  segment-plane crossing is stored as its exact normal form, a rational
+  combination of square roots of rationals possibly times powers of pi,
+  when that has fewer expression nodes; such a value can now be stored as
+  an exact rational where its radicals cancel. Serialized `Real` expressions
+  of those coordinates change; their values do not. Regenerate pinned
   Boolean rows, counts and checksums.
 
 ## Cargo features

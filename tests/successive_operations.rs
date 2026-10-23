@@ -285,12 +285,13 @@ fn rational_rotation_cuts_grow_linearly_with_bounded_coefficients() {
 fn sqrt3_rotation_cuts_certify() {
     let records = certified_chain(&chains::degree_rotation_cuts(30, 3), None);
     // A corner where a cut crosses a crease left by the previous cut is
-    // built from the crease's two retained face planes and the cutting wall.
-    // Interpolating along the crease between earlier corners deepened the
-    // graphs to 25 and 29 here.
+    // built from the crease's two retained face planes and the cutting wall,
+    // and stored as its exact normal form a + b sqrt(3). Interpolating along
+    // the crease between earlier corners deepened the graphs to 25 and 29
+    // here; the planes alone gave depth 15, 12 and 12.
     assert_eq!(
         column(&records, |record| (record.triangles, record.size.max_depth)),
-        [(28, 15), (32, 12), (44, 12)]
+        [(28, 4), (32, 4), (44, 4)]
     );
 }
 
@@ -501,10 +502,13 @@ fn long_symbolic_cuts_and_unions() {
     // the creases' retained planes, so the coordinate graphs stop growing
     // once each cut direction has occurred: before, depth reached 29, 31 and
     // 38 after eight 30- and 45-degree cuts and three 10-degree cuts, and
-    // was still growing.
+    // was still growing. Corners in Q(sqrt 3) and Q(sqrt 2) are stored as
+    // their exact normal forms, at depth 4, and the first two 45-degree cuts
+    // leave only rational corners; with the planes alone the depths were
+    // 15, 12, 12, 15, ... and 9, 9, 17, ..., 16.
     for (degrees, steps, depths) in [
-        (30, 8, [15, 12, 12, 15, 15, 15, 15, 15]),
-        (45, 8, [9, 9, 17, 17, 17, 17, 17, 16]),
+        (30, 8, [4; 8]),
+        (45, 8, [0, 0, 4, 4, 4, 4, 4, 4]),
         (10, 8, [18; 8]),
     ] {
         let records = certified_chain(&chains::degree_rotation_cuts(degrees, steps), None);
