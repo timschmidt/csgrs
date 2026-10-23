@@ -162,9 +162,14 @@ try {
   assert.equal(exactBoundary.status, Status.Boundary);
   assert.equal(exactBoundary.certainty, Certainty.Certified);
   // A 13.1-degree angle is a binary64 value whose cyclotomic field is far
-  // beyond the proof's budget, so its unit-norm relation stays unproved. The
-  // approximate terminal must not satisfy a subsequent strict request.
-  const opaqueSquare = keep(keep(square.rotate(13.1)).rotate(-13.1));
+  // beyond the proof's budget. Its unit-circle relation is still proved, so
+  // a rotation and its inverse certify the boundary.
+  const turnedSquare = keep(square.rotate(13.1));
+  assert.equal(keep(turnedSquare.rotate(-13.1)).containsXY(1, 0.5), undefined);
+  // Undoing 13.1 and then 0.5 degrees with one rotation by their exact sum
+  // needs the angle-addition identity in that field, which stays unproved.
+  // The approximate terminal must not satisfy a subsequent strict request.
+  const opaqueSquare = keep(keep(turnedSquare.rotate(0.5)).rotate(-(13.1 + 0.5)));
   assert.throws(() => opaqueSquare.containsXY(1, 0.5), (error) =>
     error instanceof Error && error.name === "GeometryError" && error.code === "undecided");
   for (const approximate of [false, true, false]) {
@@ -410,9 +415,18 @@ try {
   assert.equal(exactSurface.status, Status.Decided);
   assert.equal(exactSurface.value, false);
   assert.equal(exactSurface.certainty, Certainty.Certified);
-  // Beyond the proof's budget (a 13.1-degree binary64 angle), keep strict
-  // uncertainty and qualified approximate evidence observable.
-  const opaqueCube = keep(keep(cube.rotate(0, 0, 13.1)).rotate(0, 0, -13.1));
+  // A 13.1-degree binary64 angle is beyond the cyclotomic proof's budget, but
+  // its unit-circle relation still certifies a rotation and its inverse.
+  const turnedCube = keep(cube.rotate(0, 0, 13.1));
+  const inverseCube = keep(turnedCube.rotate(0, 0, -13.1));
+  const inverseSurface = keep(inverseCube.containsPointWithContext(unresolvedSurfacePoint, false));
+  assert.equal(inverseSurface.status, Status.Decided);
+  assert.equal(inverseSurface.value, false);
+  assert.equal(inverseSurface.certainty, Certainty.Certified);
+  // Undoing 13.1 and then 0.5 degrees by their exact sum needs the
+  // angle-addition identity in that field. Keep strict uncertainty and
+  // qualified approximate evidence observable.
+  const opaqueCube = keep(keep(turnedCube.rotate(0, 0, 0.5)).rotate(0, 0, -(13.1 + 0.5)));
   for (const approximate of [false, true, false]) {
     const result = keep(opaqueCube.containsPointWithContext(unresolvedSurfacePoint, approximate));
     assert.equal(result.status, approximate ? Status.Decided : Status.Unknown);
