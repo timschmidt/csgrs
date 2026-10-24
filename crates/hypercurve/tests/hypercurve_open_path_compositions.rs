@@ -471,9 +471,9 @@ proptest! {
 /// signed by refining the source until an interval enclosure separates.
 /// With wide coefficients (up to 64,000 bits) those enclosures took longer
 /// than forty minutes in normalized rational arithmetic; over integer
-/// common denominators the case completes in about five minutes.
+/// common denominators the case completes in three to five minutes.
 #[test]
-#[ignore = "slow: refilleting a filleted vertex takes about five minutes"]
+#[ignore = "slow: refilleting a filleted vertex takes about three minutes"]
 fn refilleting_a_filleted_vertex_completes() {
     let seed = Seed {
         x: -7,

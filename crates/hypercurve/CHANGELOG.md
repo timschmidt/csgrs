@@ -160,7 +160,7 @@
   about a minute; it did not finish within forty minutes. With faster
   remainders in Hypersolve it now takes about 15 s.
 - Filleting a vertex that an earlier fillet left as a tangent junction now
-  completes, in about five minutes; it did not finish within forty. Signs of
+  completes, in three to five minutes; it did not finish within forty. Signs of
   wide polynomials at a selected parameter, once certified nonzero, are
   refined with interval Horner and Bernstein enclosures over integer common
   denominators instead of normalized rationals. Every enclosure decides as

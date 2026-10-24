@@ -278,9 +278,11 @@ Horner.
 | `d3d5e6ebef`, and with the H14 changes | killed at the limit | > 1,508 s |
 | integer Bernstein test only | completed | 527 s |
 | integer Bernstein and Horner enclosures | completed (twice) | 291–296 s |
+| final commits, host load 7 | completed | 163 s |
 
 Four leaves with 63,500-bit coefficients took 101–137 s each in the second
-row; the third row is the same with or without the H14 changes.
+row; the third row is the same with or without the H14 changes. The
+chamfered case took 13.3 s in the same final run.
 
 **H15: the degree-214 fillet centre factors.** The centre that reaches
 `selected_parallel_normal_parallel_intersections` in

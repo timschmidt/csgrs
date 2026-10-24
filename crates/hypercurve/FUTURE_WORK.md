@@ -21,7 +21,7 @@ The ignored composition harness (`tests/hypercurve_composed_workloads.rs` and `t
 | `mixed_family` | 123 s |
 | `mixed_cubic_arc` | 203 s |
 | `nested_xor` | 290 s |
-| `refilleting_a_filleted_vertex_completes` | 291–296 s (section 1) |
+| `refilleting_a_filleted_vertex_completes` | 163–296 s (section 1) |
 
 Only the first and last rows were remeasured on 2026-10-23. The other 14 still exceed the budget, and the hyperbola-pair stroke is a known stall. `round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes` is a separate open case: it ends in a typed blocker (section 8). All of them stay `#[ignore]`d, because they run far above the suite's per-test scale.
 
@@ -60,8 +60,8 @@ proves it nonzero, and its value is large but cancels 340–2,080 bits against
 its coefficients. The cost was the certified refinement after that
 certificate: exact rational interval Horner and Bernstein enclosures,
 normalizing a wide fraction at every operation. Both now run over integer
-common denominators, with the same decisions, and the case completes in about
-five minutes (`PERFORMANCE.md`). A modular norm before expansion would not
+common denominators, with the same decisions, and the case completes in three
+to five minutes (`PERFORMANCE.md`). A modular norm before expansion would not
 have changed it, so none was built. The lazy-leaf design above is untested on
 the multi-source leaves of `filleted_union`, `wide_weighted` and the chamfered
 strokes; capture their leaves before implementing it.
@@ -220,7 +220,7 @@ Items H09–H12 of the 2026-10-22 research queue, rechecked at `916e1e5f41`. `PE
 **Not the cost: centre promotion in the selected parallel-normal kernel (H11).** In `round_stroke_of_a_filleted_nurbs_pair_completes`, the fillet centre reaching `selected_parallel_normal_parallel_intersections` is already a `BezierParameter2` of degree 214, so its promotion there is a no-op. Of five calls, four took 0.35 s, 12.1 s, 0.36 s and 110 s, and the fifth had not finished at the 40-minute limit; the time is in selected-fiber isolation over the degree-214 field (`LocalAlgebraicField::reduce`, local subresultants and Sturm sequences). Widening the consumer to `CurveParameter2` does not change this; authoring the centre as a low-degree selected fiber does (section 2). Its selected-factor degree is 164 (H15, section 2).
 
 **Open: tangent events (H12).**
-- `refilleting_a_filleted_vertex_completes`: the second fillet signs point-incidence predicates at recursive roots through `dense_two_positive_square_root_sum_sign` (section 1). It did not finish in forty minutes; with integer-form enclosures in the certified leaf refinement it completes in about five minutes (H13).
+- `refilleting_a_filleted_vertex_completes`: the second fillet signs point-incidence predicates at recursive roots through `dense_two_positive_square_root_sum_sign` (section 1). It did not finish in forty minutes; with integer-form enclosures in the certified leaf refinement it completes in three to five minutes (H13).
 - `round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes`: fillet, round stroke, boundary reconstruction, reversal and a second fillet all complete; eroding the result then blocks with `RealSign`. At a tangent junction left by the second fillet, one offset span keeps an analytic parallel's retained tangent and the other the fillet arc's represented tangent. Their cross product is zero, but neither it nor the equality of the two offset ends is decided. The fillet certified that tangency when it was built; the rebuilt region does not keep it. The same workflow from a line/line corner completes (`round_stroke_boundary_of_a_filleted_line_corner_refillets_and_erodes`). Either the boundary keeps the tangency certificate or `curve_tangent_cross_sign` proves this zero exactly.
 
 ## 10. Box containment and CAM-derived contracts
