@@ -1072,6 +1072,63 @@ triangulated differently, while subtracting a raised cavity from the block
 gave the same set in 38 ms. The test builds that case by subtraction. All
 six enclosure tests take 2.8 s in a debug build.
 
+## 2026-10-24: shared sweep assembly
+
+Research item A03, measured against `6a0ae15dbd`, which includes the C04
+apex taper and axis fold, with rustc 1.98.1. `try_extrude`,
+`extrude_twisted`, `try_sweep` and `revolve` each emitted their end caps with
+the same loop: triangulate the profile, then place each face in the capped
+sections with their orientations. Twist and sweep also emitted their side
+walls with the same loop. One cap routine, given the list of capped sections
+and their orientations, and one wall routine, given whether the sections end
+open, closed or at an apex, now do this through a placement closure. Each
+operation keeps its own section construction, orientation flags and
+validation, and names its capped sections: two for extrusion, partial
+revolution, open sweep and twist, only the base for a twist tapered to an
+apex, none for a closed sweep or full turn. Extrusion keeps its own walls,
+whose diagonal differs at negative height, and revolution keeps its walls,
+which collapse at the axis.
+
+- Rows. 79 fixtures give identical triangle rows and coordinates before and
+  after: sweeps along straight, bent and closed paths; twists with negative
+  height, end scale and one slice; apex tapers in one and three slices at both
+  height signs; partial, negative-angle and full revolutions; full turns
+  folded across the axis, including two loops on opposite sides in three and
+  four steps; partial turns of opposite loops beyond a half turn; extrusions
+  of both signs; each over four profiles, including holes, reversed winding
+  and coordinates in thirds. The 19 tests of `tests/exact_profile_sweeps.rs`,
+  including C04's, pass unchanged.
+- Size, WASM bindings (`--no-default-features --features wasm`, `embedded`
+  profile, opt-level `z`, built as the size harness builds them): code
+  6,632,966 to 6,630,893 bytes (−2,073), file 10,759,734 to 10,756,236, after
+  `wasm-opt -Oz` 6,012,368 to 6,010,558, gzip −1,190. Source: 159 lines added
+  and 146 removed in `src/curve/native.rs`. On the earlier base `f5195c7bd7`,
+  without C04, the same factoring gave −2,119 bytes of WASM code and +16 bytes
+  of `.text` in `libcsgrs_ffi.so`, which links extrusion and revolution only.
+- Time. Release builds of the before and after code ran alternately, six
+  process runs each, every run three rounds of 40 calls per operation (18
+  round medians per side), while other validation jobs shared the host:
+  sweep along a bent path −1.3%, 90 degree twist in 8 slices +0.5%, quarter
+  revolution +1.2%, extrusion +1.9% (0.157 to 0.160 ms). On the earlier base
+  the same comparison gave +1.0%, −0.3%, −0.4% and −1.3%, and a variant whose
+  revolution code was unchanged moved revolution by +0.8%, so differences of
+  this size are host noise and no speed change is claimed.
+- Not changed: twelve strict wrappers have the same `Result` signature as a
+  `try_` form (`solid::{transform, rotate, scale, mirror, center, float,
+  bounding_box}` and `curve::{transformed, translated, rotated, scaled,
+  bounding_box}`). They are documented as equivalent and compile to the same
+  code. Deprecating one spelling needs a naming decision, because the rest of
+  the root API uses plain names with `_with_context` (`boolean`, `flatten`,
+  `slice_z`, `convex_hull`) while some fallible operations exist only as
+  `try_` (`try_extrude`, `try_sweep`).
+- Not changed: SDF and metaball sampling has twelve entry points, plain or
+  diagnostic, strict or with a context, over a callback or a retained
+  expression. Diagnostics are computed only when requested, and requesting
+  them decides further predicates (sample signs and extrema) that can fail or
+  consume the terminal, so the split states a per-call completion and
+  certainty contract. No options type was introduced. `curve::circle` is
+  documented as a sampled polygon and keeps its OpenSCAD name.
+
 ## 2026-10-22: exact line profiles in sweep, twist and revolution
 
 `curve::try_sweep`, `extrude_twisted` and `revolve` now consume exact line

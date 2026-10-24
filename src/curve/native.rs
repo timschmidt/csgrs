@@ -2422,29 +2422,22 @@ fn try_extrude_vector_with(
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
     let point = |p: &Point2| Point3::new(p.x().clone(), p.y().clone(), Real::zero());
+    let place = |p: &Point2, section: usize| {
+        Ok(if section == 0 {
+            point(p)
+        } else {
+            point(p) + &direction
+        })
+    };
     for (material, holes) in try_modeling_profiles_with(region, decisions)? {
-        let cap_faces =
-            decisions.consume_triangulation(hypercurve::triangulate_linear_contours(
-                &decisions.triangulation_context(),
-                &material,
-                &holes,
-            )?);
-        for face in cap_faces {
-            let [a, b, c] = face.map(|p| point(&p));
-            if !emit_certified_triangle(
-                &mut positions,
-                &mut triangles,
-                [a.clone(), b.clone(), c.clone()],
-                !flip,
-            ) || !emit_certified_triangle(
-                &mut positions,
-                &mut triangles,
-                [a + &direction, b + &direction, c + &direction],
-                flip,
-            ) {
-                return Err(ValidationError::InvalidArguments);
-            }
-        }
+        emit_section_caps(
+            &mut positions,
+            &mut triangles,
+            (&material, &holes),
+            &[(0, !flip), (1, flip)],
+            decisions,
+            &place,
+        )?;
         for (ring, reverse) in oriented_profile_rings(&material, &holes, decisions)? {
             for [start, end] in oriented_ring_edges(ring, reverse) {
                 let bottom_a = point(start);
@@ -2561,6 +2554,93 @@ fn emit_certified_triangle(
         hypermesh::Triangle::new(indices[0], indices[1], indices[2])
     });
     true
+}
+
+/// Places a profile point in one section of a swept solid. Each operation
+/// keeps its own frame, scale or rotation construction behind this.
+type SectionPlacement<'a> = dyn Fn(&Point2, usize) -> Result<Point3, ValidationError> + 'a;
+
+/// Emits the profile's cap triangulation in each `(section, reverse)` of
+/// `caps`, in that order for every face.
+fn emit_section_caps(
+    positions: &mut Vec<Point3>,
+    triangles: &mut Vec<hypermesh::Triangle>,
+    (material, holes): (&Contour2, &[Contour2]),
+    caps: &[(usize, bool)],
+    decisions: &GeometryDecisions,
+    place: &SectionPlacement<'_>,
+) -> Result<(), ValidationError> {
+    let cap_faces = decisions.consume_triangulation(hypercurve::triangulate_linear_contours(
+        &decisions.triangulation_context(),
+        material,
+        holes,
+    )?);
+    for [a, b, c] in &cap_faces {
+        for &(section, reverse) in caps {
+            let points = [place(a, section)?, place(b, section)?, place(c, section)?];
+            if !emit_certified_triangle(positions, triangles, points, reverse) {
+                return Err(ValidationError::InvalidArguments);
+            }
+        }
+    }
+    Ok(())
+}
+
+/// How the side walls of consecutive sections end.
+#[derive(Clone, Copy, PartialEq)]
+enum SectionWallEnd {
+    /// The last section is not joined to the first.
+    Open,
+    /// The last section is also joined to the first.
+    Closed,
+    /// The last section is one point, so the last band is triangles.
+    Apex,
+}
+
+/// Emits the side walls joining consecutive placed sections of every
+/// oriented profile edge. The quadrilateral of edge `(start, end)` between
+/// sections `i` and `i + 1` splits along the diagonal from `start` in section
+/// `i` to `end` in section `i + 1`; at an apex the last one is the triangle on
+/// that diagonal's `start` side. `reverse` flips every triangle.
+fn emit_section_walls(
+    positions: &mut Vec<Point3>,
+    triangles: &mut Vec<hypermesh::Triangle>,
+    rings: &[(&Contour2, bool)],
+    sections: usize,
+    end: SectionWallEnd,
+    reverse: bool,
+    place: &SectionPlacement<'_>,
+) -> Result<(), ValidationError> {
+    let quads = if end == SectionWallEnd::Closed {
+        sections
+    } else {
+        sections.saturating_sub(1)
+    };
+    for &(ring, reverse_ring) in rings {
+        for [start, finish] in oriented_ring_edges(ring, reverse_ring) {
+            for section in 0..quads {
+                let next = (section + 1) % sections;
+                let [a, b, c, d] = [
+                    place(start, section)?,
+                    place(finish, section)?,
+                    place(finish, next)?,
+                    place(start, next)?,
+                ];
+                let tapered = end == SectionWallEnd::Apex && section + 1 == quads;
+                if !emit_certified_triangle(
+                    positions,
+                    triangles,
+                    [a.clone(), b, c.clone()],
+                    reverse,
+                ) || (!tapered
+                    && !emit_certified_triangle(positions, triangles, [a, c, d], reverse))
+                {
+                    return Err(ValidationError::InvalidArguments);
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Segmented solid of revolution of a native filled region about the Y axis.
@@ -2751,32 +2831,19 @@ pub fn revolve(
             }
         }
         if !full {
-            let cap_faces =
-                decisions.consume_triangulation(hypercurve::triangulate_linear_contours(
-                    &decisions.triangulation_context(),
-                    material,
-                    holes,
-                )?);
             // Caps are counterclockwise in the profile plane. The start cap
             // faces away from the swept material, whose side follows the turn
             // direction and the profile's radial side.
             let reverse_start =
                 (sign == hyperlimit::Sign::Positive) == material_radial_positive;
-            for face in cap_faces {
-                for (sample, reverse) in [
-                    (&samples[0], reverse_start),
-                    (samples.last().expect("samples are nonempty"), !reverse_start),
-                ] {
-                    if !emit_certified_triangle(
-                        &mut positions,
-                        &mut triangles,
-                        face.clone().map(|point| map(&point, sample)),
-                        reverse,
-                    ) {
-                        return Err(ValidationError::InvalidArguments);
-                    }
-                }
-            }
+            emit_section_caps(
+                &mut positions,
+                &mut triangles,
+                (material, holes),
+                &[(0, reverse_start), (samples.len() - 1, !reverse_start)],
+                &decisions,
+                &|point, sample| Ok(map(point, &samples[sample])),
+            )?;
         }
     }
     let mesh = validate_closed_mesh(
@@ -3086,59 +3153,32 @@ pub fn try_sweep(
                 sweep_scalar_error(problem, "sweep slice placement", &decisions)
             })
     };
+    let place = |point: &Point2, section: usize| map(point, &frames[section]);
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
     for (material, holes) in try_modeling_profiles_with(region, &decisions)? {
-        for (ring, reverse) in oriented_profile_rings(&material, &holes, &decisions)? {
-            for [start, end] in oriented_ring_edges(ring, reverse) {
-                for slice in 0..segment_count {
-                    let next = (slice + 1) % slice_count;
-                    let [a, b, c, d] = [
-                        map(start, &frames[slice])?,
-                        map(end, &frames[slice])?,
-                        map(end, &frames[next])?,
-                        map(start, &frames[next])?,
-                    ];
-                    if !emit_certified_triangle(
-                        &mut positions,
-                        &mut triangles,
-                        [a.clone(), b, c.clone()],
-                        false,
-                    ) || !emit_certified_triangle(
-                        &mut positions,
-                        &mut triangles,
-                        [a, c, d],
-                        false,
-                    ) {
-                        return Err(ValidationError::InvalidArguments);
-                    }
-                }
-            }
-        }
+        emit_section_walls(
+            &mut positions,
+            &mut triangles,
+            &oriented_profile_rings(&material, &holes, &decisions)?,
+            slice_count,
+            if closed {
+                SectionWallEnd::Closed
+            } else {
+                SectionWallEnd::Open
+            },
+            false,
+            &place,
+        )?;
         if !closed {
-            let cap_faces =
-                decisions.consume_triangulation(hypercurve::triangulate_linear_contours(
-                    &decisions.triangulation_context(),
-                    &material,
-                    &holes,
-                )?);
-            for face in cap_faces {
-                for (frame, reverse) in [
-                    (&frames[0], true),
-                    (frames.last().expect("frames are nonempty"), false),
-                ] {
-                    let [a, b, c] = &face;
-                    let points = [map(a, frame)?, map(b, frame)?, map(c, frame)?];
-                    if !emit_certified_triangle(
-                        &mut positions,
-                        &mut triangles,
-                        points,
-                        reverse,
-                    ) {
-                        return Err(ValidationError::InvalidArguments);
-                    }
-                }
-            }
+            emit_section_caps(
+                &mut positions,
+                &mut triangles,
+                (&material, &holes),
+                &[(0, true), (slice_count - 1, false)],
+                &decisions,
+                &place,
+            )?;
         }
     }
     // Frame transport can collapse otherwise valid source geometry, so sweep
@@ -3240,63 +3280,36 @@ pub fn extrude_twisted(
         )
     };
     let reverse_sides = height_sign == hyperlimit::Sign::Negative;
+    let place = |point: &Point2, section: usize| Ok(map(point, &parameters[section]));
+    // At the apex the last band is triangles and there is no top cap.
+    let (end, caps): (_, &[_]) = if apex {
+        (SectionWallEnd::Apex, &[(0, !reverse_sides)])
+    } else {
+        (
+            SectionWallEnd::Open,
+            &[(0, !reverse_sides), (slices, reverse_sides)],
+        )
+    };
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
     for (material, holes) in try_modeling_profiles_with(input, &decisions)? {
-        for (ring, reverse) in oriented_profile_rings(&material, &holes, &decisions)? {
-            for [start, end] in oriented_ring_edges(ring, reverse) {
-                for slice in 0..slices {
-                    let [a, b, c, d] = [
-                        map(start, &parameters[slice]),
-                        map(end, &parameters[slice]),
-                        map(end, &parameters[slice + 1]),
-                        map(start, &parameters[slice + 1]),
-                    ];
-                    // At the apex the last quadrilateral is the triangle abc.
-                    let tapered = apex && slice + 1 == slices;
-                    if !emit_certified_triangle(
-                        &mut positions,
-                        &mut triangles,
-                        [a.clone(), b, c.clone()],
-                        reverse_sides,
-                    ) || (!tapered
-                        && !emit_certified_triangle(
-                            &mut positions,
-                            &mut triangles,
-                            [a, c, d],
-                            reverse_sides,
-                        ))
-                    {
-                        return Err(ValidationError::InvalidArguments);
-                    }
-                }
-            }
-        }
-        let cap_faces =
-            decisions.consume_triangulation(hypercurve::triangulate_linear_contours(
-                &decisions.triangulation_context(),
-                &material,
-                &holes,
-            )?);
-        let caps: &[_] = if apex {
-            &[(&parameters[0], !reverse_sides)]
-        } else {
-            &[
-                (&parameters[0], !reverse_sides),
-                (
-                    parameters.last().expect("parameters are nonempty"),
-                    reverse_sides,
-                ),
-            ]
-        };
-        for face in cap_faces {
-            for &(parameter, reverse) in caps {
-                let points = face.clone().map(|point| map(&point, parameter));
-                if !emit_certified_triangle(&mut positions, &mut triangles, points, reverse) {
-                    return Err(ValidationError::InvalidArguments);
-                }
-            }
-        }
+        emit_section_walls(
+            &mut positions,
+            &mut triangles,
+            &oriented_profile_rings(&material, &holes, &decisions)?,
+            parameters.len(),
+            end,
+            reverse_sides,
+            &place,
+        )?;
+        emit_section_caps(
+            &mut positions,
+            &mut triangles,
+            (&material, &holes),
+            caps,
+            &decisions,
+            &place,
+        )?;
     }
     let mesh = validate_closed_mesh(
         TriangleMesh::new(positions, triangles),
