@@ -264,6 +264,12 @@ decide both exactly.
   `Real::round_certified` and keeps source and canonical-command travel checks
   separate; `8 * 1600/3 = 12800/3` rounds to 4267 steps, `8.000625` mm.
 
+## 11. Resource experiments H16–H20 (2026-10-23)
+
+Items H16–H20 of the 2026-10-22 research queue, rechecked at `d3d5e6ebef`. `PERFORMANCE.md` records the measurements.
+
+**Done: deferred Bezier carrier preparation (H18).** The pair builders prepare a Bezier carrier's top-level curve only when a Bezier-Bezier pair that survives the broad phase, or the carrier's self context, reads it. Before, a union of a board's copper aggregate with one feature prepared every carrier of the aggregate: 99% of the 256,000–554,000 cross-operand preparations per Easyduino board were never read, almost all of them in the CAM round-trip audit. Allocation calls fall 0.7–2.7% and the peak of live bytes up to 5.6% on the six boards, and nano's CAM audit runs 6.1% fewer instructions; findings are unchanged.
+
 ## Fast paths added in this round
 
 Keep these in mind when measuring:

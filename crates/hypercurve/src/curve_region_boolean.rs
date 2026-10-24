@@ -2017,13 +2017,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
 
         // Every pair contains the chord probe, so no Bezier/Bezier context
         // consumes a prepared curve. Keep the positional table empty.
-        let curves = vec![None; carriers.len()];
+        let mut curves = vec![None; carriers.len()];
         let mut pairs = Vec::with_capacity(boundary_carriers.len());
         let mut intersection_cache = CurveIntersectionBatchCache::default();
         for second_carrier_index in 1..carriers.len() {
             if let Some(mut pair) = build_candidate_carrier_pair(
                 &carriers,
-                &curves,
+                &mut curves,
                 0,
                 second_carrier_index,
                 &self.data.policy,
@@ -4004,6 +4004,8 @@ fn prepare_carrier_curve(
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<Curve2> {
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record("hypercurve", "boolean-carrier-preparation", "prepared");
     carrier
         .geometry
         .restrict_certified(
@@ -4018,6 +4020,15 @@ fn prepare_carrier_curve(
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause))
 }
 
+/// Starts the table of pair operands for Bezier carriers. Only a
+/// Bezier-Bezier pair that survives the broad phase, or a self context, reads
+/// an operand, so most are prepared on first use by
+/// `prepared_carrier_curve`; preparing all of them here made a Boolean of a
+/// large region with a small one prepare every carrier of the large region.
+/// A carrier whose preparation can fail (selected-fiber endpoint images, or a
+/// range whose ends are not Bezier parameters) is still prepared here, before
+/// any pair and in carrier order, so preparation errors and their order are
+/// unchanged.
 fn prepare_bezier_carrier_curves(
     carriers: &[RegionCarrier],
     policy: &CurveContext,
@@ -4025,11 +4036,36 @@ fn prepare_bezier_carrier_curves(
     carriers
         .iter()
         .map(|carrier| {
-            matches!(carrier.geometry, CurveSupport2::Bezier(_))
-                .then(|| prepare_carrier_curve(carrier, policy))
-                .transpose()
+            (matches!(carrier.geometry, CurveSupport2::Bezier(_))
+                && !carrier_preparation_is_infallible(carrier))
+            .then(|| prepare_carrier_curve(carrier, policy))
+            .transpose()
         })
         .collect()
+}
+
+/// For a Bezier support without selected endpoint images and with Bezier
+/// range parameters, `restrict_certified` and `from_retained_fragment` have
+/// no failure path.
+fn carrier_preparation_is_infallible(carrier: &RegionCarrier) -> bool {
+    carrier.selected_fiber_endpoint_points.is_none()
+        && carrier.start.as_bezier_parameter().is_some()
+        && carrier.end.as_bezier_parameter().is_some()
+}
+
+/// Returns the pair operand of a carrier, preparing it on first use.
+fn prepared_carrier_curve<'a>(
+    carriers: &[RegionCarrier],
+    curves: &'a mut [Option<Curve2>],
+    index: usize,
+    policy: &CurveContext,
+) -> ExactCurveResult<&'a Curve2> {
+    if curves[index].is_none() {
+        curves[index] = Some(prepare_carrier_curve(&carriers[index], policy)?);
+    }
+    Ok(curves[index]
+        .as_ref()
+        .expect("the carrier curve was prepared above"))
 }
 
 fn carrier_scheduling_bounds(
@@ -4054,14 +4090,14 @@ fn build_unary_carrier_pairs(
     policy: &CurveContext,
 ) -> ExactCurveResult<Vec<RegionCarrierPair>> {
     let count = carriers.len();
-    let curves = prepare_bezier_carrier_curves(carriers, policy)?;
+    let mut curves = prepare_bezier_carrier_curves(carriers, policy)?;
     let mut pairs = Vec::with_capacity(count.saturating_mul(2));
     let mut intersection_cache = CurveIntersectionBatchCache::default();
     let mut visit = |first, second, _| -> ExactCurveResult<()> {
         if first < second
             && let Some(pair) = build_candidate_carrier_pair(
                 carriers,
-                &curves,
+                &mut curves,
                 first,
                 second,
                 policy,
@@ -4106,10 +4142,7 @@ fn build_unary_carrier_pairs(
                 first_carrier_index: index,
                 second_carrier_index: index,
                 context: RegionCarrierPairContext::Common(CurveIntersectionContext::new_self(
-                    &match &curves[index] {
-                        Some(curve) => curve.clone(),
-                        None => prepare_carrier_curve(carrier, policy)?,
-                    },
+                    prepared_carrier_curve(carriers, &mut curves, index, policy)?,
                     policy,
                     &mut intersection_cache,
                 )),
@@ -4140,13 +4173,13 @@ fn build_cross_operand_carrier_pairs(
 ) -> ExactCurveResult<Vec<RegionCarrierPair>> {
     let second_carrier_count = carriers.len() - first_carrier_count;
     let cartesian_pair_count = first_carrier_count.saturating_mul(second_carrier_count);
-    let curves = prepare_bezier_carrier_curves(carriers, policy)?;
+    let mut curves = prepare_bezier_carrier_curves(carriers, policy)?;
     let mut pairs = Vec::with_capacity(carriers.len().min(cartesian_pair_count));
     let mut intersection_cache = CurveIntersectionBatchCache::default();
     let mut visit = |first_index, second_index, _| -> ExactCurveResult<()> {
         if let Some(pair) = build_candidate_carrier_pair(
             carriers,
-            &curves,
+            &mut curves,
             first_index,
             first_carrier_count + second_index,
             policy,
@@ -4185,7 +4218,7 @@ fn build_cross_operand_carrier_pairs(
 
 fn build_candidate_carrier_pair(
     carriers: &[RegionCarrier],
-    curves: &[Option<Curve2>],
+    curves: &mut [Option<Curve2>],
     first_carrier_index: usize,
     second_carrier_index: usize,
     policy: &CurveContext,
@@ -4215,6 +4248,8 @@ fn build_candidate_carrier_pair(
             }
         }
         (CurveSupport2::Bezier(_), CurveSupport2::Bezier(_)) => {
+            prepared_carrier_curve(carriers, curves, first_carrier_index, policy)?;
+            prepared_carrier_curve(carriers, curves, second_carrier_index, policy)?;
             let first = curves[first_carrier_index]
                 .as_ref()
                 .expect("Bezier carrier has a top-level curve");

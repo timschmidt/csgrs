@@ -6885,14 +6885,14 @@ fn retained_aabb_candidates_match_cartesian_pairs_in_authored_order() {
                 OnceLock::from(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
         let indexed = build_cross_operand_carrier_pairs(&carriers, first_count, &policy).unwrap();
-        let curves = prepare_bezier_carrier_curves(&carriers, &policy).unwrap();
+        let mut curves = prepare_bezier_carrier_curves(&carriers, &policy).unwrap();
         let mut cache = CurveIntersectionBatchCache::default();
         let mut cartesian = Vec::new();
         for first_index in 0..first_count {
             for second_index in first_count..carriers.len() {
                 if let Some(pair) = build_candidate_carrier_pair(
                     &carriers,
-                    &curves,
+                    &mut curves,
                     first_index,
                     second_index,
                     &policy,
@@ -6920,7 +6920,7 @@ fn retained_aabb_candidates_match_cartesian_pairs_in_authored_order() {
             for second_index in first_index + 1..first_count {
                 if let Some(pair) = build_candidate_carrier_pair(
                     unary_carriers,
-                    &curves[..first_count],
+                    &mut curves[..first_count],
                     first_index,
                     second_index,
                     &policy,

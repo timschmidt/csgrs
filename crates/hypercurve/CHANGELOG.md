@@ -138,6 +138,14 @@
 - Development moved to the
   [csgrs repository](https://github.com/timschmidt/csgrs), which the
   `repository` field now names.
+- Region Booleans and regularization prepare a Bézier carrier's curve for
+  the pair kernels only when a carrier pair that survives the broad phase,
+  or the carrier's own self-intersection query, reads it. A Boolean of a
+  large region with a small one no longer prepares every carrier of the
+  large region. On the Easyduino boards this removes 99% of those
+  preparations, 0.7–2.7% of all allocations and up to 5.6% of the peak of
+  live bytes, and 6% of the instructions of nano's CAM round-trip audit;
+  results are unchanged.
 
 ### Fixed
 

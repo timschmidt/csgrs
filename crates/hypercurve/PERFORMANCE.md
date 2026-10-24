@@ -10,6 +10,93 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Resource experiments H16–H20 (2026-10-23)
+
+Items H16–H20 of the 2026-10-22 research queue, rechecked at `d3d5e6ebef`.
+Each was measured on real workloads before any change: the six Easyduino
+boards through `easyduino_full_pipeline`, the hypercurve Boolean benches and
+the release unit-test suite. Hardware performance counters are not available
+on this host, so time shares come from `eu-stack` snapshots of the running
+process (2.5–10 Hz), call counts from temporary `eprintln` traces, allocation
+counts and live bytes from a temporary counting allocator, live bytes by
+allocation site from `heaptrack`, and instruction counts from `callgrind`.
+None of the instrumentation is committed, and the raw logs were not archived
+in the evidence repository; this entry records the commands and their
+summary. The host load was 8–24 on 16 cores, so wall and user times are noisy
+evidence only. `FUTURE_WORK.md` section 11 lists what remains open.
+
+### Accepted: deferred Bezier carrier preparation (H18)
+
+The unary and cross-operand pair builders prepared a top-level `Curve2` for
+every Bezier carrier before the broad phase. Only a Bezier-Bezier pair that
+survives the broad phase, or the self context of a carrier without a certified
+injective image, reads it. A union of a board's copper aggregate with one
+small feature therefore prepared every carrier of the aggregate. Traced over
+the default pipeline (all six boards run concurrently, so the preparation
+times are inflated):
+
+| Board | Cross-operand builders | Bezier carriers prepared | Read by a surviving pair | Preparation time |
+| --- | ---: | ---: | ---: | ---: |
+| nano | 1,674 | 553,901 | 5,473 | 2.49 s |
+| uno | 5,143 | 354,507 | 3,626 | 2.23 s |
+| esp32 | 3,043 | 256,074 | 2,978 | 2.21 s |
+| esp32s3 | 3,593 | 320,626 | 4,004 | 2.56 s |
+| rp2040 | 4,474 | 401,278 | 4,901 | 2.76 s |
+| stm32f103 | 3,425 | 265,268 | 3,828 | 2.31 s |
+
+The unary builders read 93–97% of their prepared curves. On nano, 546,647 of
+the 553,901 cross-operand preparations happen in the CAM round-trip audit: 939
+Booleans whose first operand averages 582 Bezier carriers.
+
+A Bezier carrier is now prepared on first use. A carrier whose preparation can
+fail, because it has selected-fiber endpoint images or a range end that is not
+a Bezier parameter, is still prepared before any pair and in carrier order, so
+a preparation error and its order are unchanged; for every other Bezier
+carrier, `restrict_certified` and `from_retained_fragment` have no failure
+path. Prepared curves are built from the same carrier and policy as before, so
+every pair context is unchanged. With the `dispatch-trace` feature each
+preparation records `hypercurve/boolean-carrier-preparation/prepared`;
+`boolean_prepares_only_carriers_of_surviving_pairs` unions sixteen capsules
+with one capsule that meets the second of them, and requires at most the 8 cap
+carriers of surviving pairs to be prepared. The previous code prepares all 68
+Bezier carriers and fails the test.
+
+Default pipeline, baseline and candidate built from the same tree with a
+temporary counting allocator in the bench, run concurrently in pairs:
+`EASYDUINO_BOARD=<board> /usr/bin/time -v <easyduino_full_pipeline binary>`
+from `crates/hypercircuit`, built with
+`cargo bench --locked -p hypercircuit --bench easyduino_full_pipeline --features "drc interchange" --no-run`.
+
+| Board | Findings, blockers | Allocation calls | Requested bytes | Peak live bytes | Max RSS, KiB | User time |
+| --- | --- | --- | --- | --- | --- | --- |
+| nano | 268, 6 (equal) | 1,344.9 M → 1,314.6 M (−2.25%) | 92.05 → 89.60 GB (−2.66%) | 240.7 → 227.2 MiB | 303,072 → 291,252 | 116.8 → 114.6 s |
+| uno | 847, 6 (equal) | 1,135.9 M → 1,107.3 M (−2.52%) | 74.97 → 72.75 GB (−2.96%) | 212.0 → 200.7 MiB | 271,460 → 257,716 | 121.8 → 117.6 s |
+| esp32 | 911, 5 (equal) | 1,139.7 M → 1,109.4 M (−2.66%) | 74.33 → 72.03 GB (−3.09%) | 216.1 → 215.2 MiB | 277,968 → 275,404 | 101.6 → 100.5 s |
+| esp32s3 | 1,705, 5 (equal) | 1,925.9 M → 1,886.2 M (−2.06%) | 125.47 → 122.48 GB (−2.39%) | 309.9 → 308.1 MiB | 382,100 → 379,388 | 200.7 → 202.1 s |
+| rp2040 | 1,362, 6 (equal) | 1,734.3 M → 1,692.3 M (−2.42%) | 113.40 → 110.20 GB (−2.83%) | 280.5 → 273.1 MiB | 352,748 → 348,668 | 160.1 → 155.6 s |
+| stm32f103 | 1,389, 6 (equal) | 3,449.7 M → 3,425.0 M (−0.72%) | 230.98 → 229.08 GB (−0.82%) | 249.8 → 240.2 MiB | 315,140 → 303,640 | 307.1 → 300.9 s |
+
+Allocation counts repeat closely: three runs of the eager code counted
+109,466,995 to 109,467,043 calls in nano's materialization stage. That stage
+is unchanged: `callgrind` of nano's materialization stage gives 62,471,571,155
+and 62,485,692,003 instructions for two baseline runs and 62,443,345,901 for
+the candidate.
+
+Instruction counts repeat to within 0.02%, so they measure the CAM audit,
+where the saving is, without host noise. `valgrind --tool=callgrind` on nano in profile mode with no DRC
+checks (`EASYDUINO_STAGE=profile EASYDUINO_CHECK=none`), stopped after the CAM
+round-trip audit:
+
+| Scope | Baseline | Candidate |
+| --- | ---: | ---: |
+| Whole run up to the end of the CAM audit | 432,034,030,202 | 413,782,485,735 (−4.2%) |
+| `FabricationPackage::audit_cam_round_trip` | 298,134,631,503 | 279,921,520,268 (−6.1%) |
+| `PcbLayout::materialize` | 62,385,866,359 | 62,353,052,210 |
+| `build_cross_operand_carrier_pairs` | 41,751,653,836 | 23,721,422,290 (−43%) |
+
+The eager preparation itself was 19,035,837,826 instructions, 4.4% of the
+baseline run.
+
 ## Local selected-root comparison (2026-10-23)
 
 Items H09–H12 of the 2026-10-22 research queue, rechecked at `916e1e5f41`.
