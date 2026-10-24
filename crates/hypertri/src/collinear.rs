@@ -265,4 +265,38 @@ mod tests {
             Err(Error::InvalidInput { .. })
         ));
     }
+
+    #[test]
+    fn recorded_collinearity_decides_overlapping_constraints() {
+        // Constraints 4-6 and 5-7 overlap on the line `y = x / 2 + 2`, from
+        // point 5 to point 6. Point 5 lies on the line only by an identity no
+        // proof decides, so without facts the crossing check is undecided.
+        let (mut points, _) = diagonal_chain();
+        points.push(Point2::new(Real::from(14), Real::from(9)));
+        let constraints = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 6], [5, 7]]
+            .map(|[from, to]| Constraint::new(from, to))
+            .to_vec();
+        let strict = TriangulationContext::new(PredicatePolicy::STRICT);
+        let none = CollinearPointFacts::new(TriangulationCertainty::Certified);
+        assert!(matches!(
+            triangulate(&strict, &points, &constraints, &none),
+            Err(Error::PredicateUndecided { .. })
+        ));
+
+        // With the line recorded, the four orientations of the overlap test
+        // are known zeros and only the order along the line is compared, so
+        // the overlap is reported exactly: this entry point requires
+        // planarized constraints.
+        let mut line = CollinearPointFacts::new(TriangulationCertainty::Certified);
+        line.push_line(&[4, 5]).unwrap();
+        assert!(line.is_empty());
+        line.push_line(&[4, 5, 6, 7]).unwrap();
+        assert_eq!(line.certainty(), TriangulationCertainty::Certified);
+        assert!(matches!(
+            triangulate(&strict, &points, &constraints, &line),
+            Err(Error::InvalidInput {
+                reason: "overlapping constraints are not supported"
+            })
+        ));
+    }
 }
