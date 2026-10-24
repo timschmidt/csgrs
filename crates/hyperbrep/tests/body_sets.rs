@@ -30,6 +30,10 @@ fn failures_are_atomic_and_empty_does_not_admit_raw_models() {
     cases::failures_are_atomic_and_empty_does_not_admit_raw_models();
 }
 #[test]
+fn edge_and_point_contacts_keep_both_solids() {
+    cases::edge_and_point_contacts_keep_both_solids();
+}
+#[test]
 fn exact_gap_and_ambient_policy_survive_composition() {
     cases::exact_gap_and_ambient_policy_survive_composition();
 }

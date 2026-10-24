@@ -407,6 +407,45 @@ pub fn failures_are_atomic_and_empty_does_not_admit_raw_models() {
     );
 }
 
+/// Unit cubes touching along an edge or at a vertex have a regularized union
+/// whose boundary is not a manifold surface. The union keeps both exact
+/// solids, which together represent that set, rather than an empty result, a
+/// merged shell or an error; later operations consume it.
+pub fn edge_and_point_contacts_keep_both_solids() {
+    let unit = |x: i32, y: i32, z: i32| {
+        builder::cuboid(point(x, y, z), point(x + 1, y + 1, z + 1)).unwrap()
+    };
+    let center =
+        |x: i32, y: i32, z: i32| Point3::new(half(2 * x + 1), half(2 * y + 1), half(2 * z + 1));
+    let a = unit(0, 0, 0);
+    for (label, corner) in [("edge", [1, 1, 0]), ("point", [1, 1, 1])] {
+        let [x, y, z] = corner;
+        let b = unit(x, y, z);
+        for union in [
+            boolean::union(&a, &b).unwrap(),
+            boolean::union(&b, &a).unwrap(),
+        ] {
+            assert_eq!(union.len(), 2, "{label}");
+            assert_eq!(volume(&union), Real::from(2), "{label}");
+            assert!(inside(&union, &center(0, 0, 0)), "{label}");
+            assert!(inside(&union, &center(x, y, z)), "{label}");
+            assert!(!inside(&union, &center(1, 0, 0)), "{label}");
+            assert!(!inside(&union, &center(0, 1, z)), "{label}");
+            replay(&union);
+            let rest = boolean::difference(&union, &a).unwrap();
+            assert_eq!(rest.len(), 1, "{label}");
+            assert_eq!(volume(&rest), Real::one(), "{label}");
+            assert!(inside(&rest, &center(x, y, z)), "{label}");
+        }
+        assert!(boolean::intersection(&a, &b).unwrap().is_empty(), "{label}");
+        assert_eq!(
+            volume(&boolean::difference(&a, &b).unwrap()),
+            Real::one(),
+            "{label}"
+        );
+    }
+}
+
 pub fn exact_gap_and_ambient_policy_survive_composition() {
     let tiny: Real = "1e-12".parse().unwrap();
     let first = builder::cuboid(point(0, 0, 0), point(1, 1, 1)).unwrap();
