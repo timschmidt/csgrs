@@ -222,6 +222,38 @@ pub fn ordered_field_polynomial_sign_remainder<C: Clone, F: OrderedFieldPolynomi
     } else {
         modulus[degree].clone()
     };
+    let schedule =
+        if degree > 0 && polynomial.len().saturating_sub(degree) >= HORNER_REMAINDER_ELIMINATIONS {
+            horner_sign_remainder
+        } else {
+            eliminating_sign_remainder
+        };
+    schedule(
+        polynomial,
+        &modulus[..degree],
+        &positive_leading,
+        leading_sign,
+        field,
+    )
+    .map(Some)
+}
+
+/// The sign-preserving pseudo-remainder of `polynomial` by `modulus`,
+/// eliminating the dividend's leading term at each step.
+///
+/// `lower_modulus` holds the modulus coefficients below its leading one, and
+/// `positive_leading` is the absolute leading coefficient, whose sign is
+/// `leading_sign`. Each elimination multiplies every remaining coefficient by
+/// `positive_leading`.
+fn eliminating_sign_remainder<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    polynomial: &[C],
+    lower_modulus: &[C],
+    positive_leading: &C,
+    leading_sign: Ordering,
+    field: &mut F,
+) -> Result<Vec<C>, F::Error> {
+    let degree = lower_modulus.len();
+    let negative_one = Real::from(-1_i8);
     let mut remainder = polynomial.to_vec();
     while remainder.len() > degree {
         let leading = remainder.pop().expect("an elimination has a leading term");
@@ -232,16 +264,83 @@ pub fn ordered_field_polynomial_sign_remainder<C: Clone, F: OrderedFieldPolynomi
             leading
         };
         for (power, coefficient) in remainder.iter_mut().enumerate() {
-            let scaled = field.multiply(coefficient, &positive_leading)?;
+            let scaled = field.multiply(coefficient, positive_leading)?;
             *coefficient = if power >= shift {
-                let term = field.multiply(&subtract_leading, &modulus[power - shift])?;
+                let term = field.multiply(&subtract_leading, &lower_modulus[power - shift])?;
                 field.add(&scaled, &term)?
             } else {
                 scaled
             };
         }
     }
-    Ok(Some(remainder))
+    Ok(remainder)
+}
+
+/// Eliminations from which [`ordered_field_polynomial_sign_remainder`]
+/// reduces the dividend's Horner sequence instead of scaling the whole
+/// dividend. With `k` eliminations by a modulus of degree `n`, scaling the
+/// dividend costs `2kn + k(k-1)/2` field products and the Horner schedule
+/// `k(2n+1) - 1`; the difference `(k-1)(k-2)/2` is a single product at
+/// `k = 3`.
+const HORNER_REMAINDER_ELIMINATIONS: usize = 4;
+
+/// The sign-preserving pseudo-remainder of `polynomial` by `modulus`,
+/// computed along the dividend's Horner sequence.
+///
+/// `lower_modulus` holds the modulus coefficients below its leading one, and
+/// `positive_leading` is the absolute leading coefficient. Elimination by
+/// scaling the whole dividend multiplies every lower coefficient by
+/// `positive_leading` at each of its `k` steps. Here only `degree` running
+/// coefficients and one shared power `positive_leading^e` are kept: each
+/// step multiplies the running remainder by `x`, cancels its new leading
+/// term against the modulus, and adds the next dividend coefficient times
+/// the current power.
+///
+/// Both schedules are the same polynomial expression in the coefficients:
+/// in the generic coefficient ring, an integral domain, each equals the
+/// unique remainder of `positive_leading^k * polynomial` modulo the sign-
+/// adjusted modulus, so they agree after any specialization. A coefficient
+/// context whose ring operations return canonical normal forms therefore
+/// receives an identical remainder; any other context receives an equal one.
+fn horner_sign_remainder<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    polynomial: &[C],
+    lower_modulus: &[C],
+    positive_leading: &C,
+    leading_sign: Ordering,
+    field: &mut F,
+) -> Result<Vec<C>, F::Error> {
+    let degree = lower_modulus.len();
+    let negative_one = Real::from(-1_i8);
+    let reduced = polynomial.len() - degree;
+    let mut remainder = polynomial[reduced..].to_vec();
+    let mut power: Option<C> = None;
+    for coefficient in polynomial[..reduced].iter().rev() {
+        let leading = remainder
+            .last()
+            .expect("the running remainder has the modulus degree")
+            .clone();
+        let subtract_leading = if leading_sign == Ordering::Greater {
+            field.scale(&leading, &negative_one)?
+        } else {
+            leading
+        };
+        for index in (1..degree).rev() {
+            let scaled = field.multiply(&remainder[index - 1], positive_leading)?;
+            let term = field.multiply(&subtract_leading, &lower_modulus[index])?;
+            remainder[index] = field.add(&scaled, &term)?;
+        }
+        remainder[0] = field.multiply(&subtract_leading, &lower_modulus[0])?;
+        let power = match power.as_mut() {
+            Some(power) => {
+                *power = field.multiply(power, positive_leading)?;
+                power
+            }
+            None => power.insert(positive_leading.clone()),
+        };
+        let term = field.multiply(coefficient, power)?;
+        remainder[0] = field.add(&remainder[0], &term)?;
+    }
+    Ok(remainder)
 }
 
 /// Returns a greatest common divisor in the caller's exact coefficient field.
@@ -911,6 +1010,173 @@ mod tests {
                 }
             }
         }
+    }
+
+    /// Exact rationals with a small deterministic spread of signs, sizes and
+    /// denominators.
+    fn sample(index: usize, salt: usize) -> Real {
+        let numerator = ((index * 7 + salt * 13 + 3) % 23) as i64 - 11;
+        fraction(numerator, (index % 3 + 1) as i64)
+    }
+
+    fn sample_modulus(degree: usize, gauge: i64) -> Vec<Real> {
+        let mut modulus: Vec<_> = (0..degree).map(|index| sample(index, 5)).collect();
+        modulus.push(fraction(gauge * (degree as i64 + 2), 3));
+        modulus
+    }
+
+    fn exact(values: &[Real]) -> Vec<hyperreal::Rational> {
+        values
+            .iter()
+            .map(|value| {
+                value
+                    .exact_rational_normal_form()
+                    .expect("rational arithmetic stays rational")
+            })
+            .collect()
+    }
+
+    #[test]
+    fn sign_remainder_schedules_return_the_same_coefficients() {
+        // Both schedules equal positive_leading^k * polynomial modulo the
+        // sign-adjusted modulus as polynomial expressions, so exact rational
+        // coefficients, whose forms are canonical, agree coefficientwise.
+        for degree in 1..=6 {
+            for gauge in [1, -1] {
+                let modulus = sample_modulus(degree, gauge);
+                let leading_sign = if gauge > 0 {
+                    Ordering::Greater
+                } else {
+                    Ordering::Less
+                };
+                let positive_leading = &modulus[degree] * Real::from(gauge);
+                for length in degree + 1..=degree + 16 {
+                    let mut polynomial: Vec<_> =
+                        (0..length).map(|index| sample(index, length)).collect();
+                    for trailing_zeros in [0, 2] {
+                        polynomial.extend((0..trailing_zeros).map(|_| Real::zero()));
+                        let arguments = (&modulus[..degree], &positive_leading, leading_sign);
+                        let horner = horner_sign_remainder(
+                            &polynomial,
+                            arguments.0,
+                            arguments.1,
+                            arguments.2,
+                            &mut RealContext,
+                        )
+                        .unwrap();
+                        let eliminating = eliminating_sign_remainder(
+                            &polynomial,
+                            arguments.0,
+                            arguments.1,
+                            arguments.2,
+                            &mut RealContext,
+                        )
+                        .unwrap();
+                        assert_eq!(horner.len(), degree);
+                        assert_eq!(exact(&horner), exact(&eliminating));
+                        let dispatched = ordered_field_polynomial_sign_remainder(
+                            &polynomial,
+                            &modulus,
+                            &mut RealContext,
+                        )
+                        .unwrap()
+                        .unwrap();
+                        assert_eq!(exact(&dispatched), exact(&eliminating));
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn horner_sign_remainder_proves_divisibility_of_a_long_dividend() {
+        // modulus * cofactor, with a nonmonic modulus of either sign, has the
+        // zero remainder; a unit residual keeps the remainder's sign at every
+        // root of the modulus, so its constant term has the residual's sign.
+        for gauge in [1, -1] {
+            let modulus = sample_modulus(3, gauge);
+            let cofactor: Vec<_> = (0..12).map(|index| sample(index, 2)).collect();
+            let mut product = vec![Real::zero(); modulus.len() + cofactor.len() - 1];
+            for (left_power, left) in modulus.iter().enumerate() {
+                for (right_power, right) in cofactor.iter().enumerate() {
+                    product[left_power + right_power] += left * right;
+                }
+            }
+            let remainder =
+                ordered_field_polynomial_sign_remainder(&product, &modulus, &mut RealContext)
+                    .unwrap()
+                    .unwrap();
+            assert_eq!(remainder.len(), 3);
+            assert!(exact(&remainder).iter().all(|value| value.is_zero()));
+            for residual in [1_i8, -1] {
+                let mut shifted = product.clone();
+                shifted[0] += Real::from(residual);
+                let remainder =
+                    ordered_field_polynomial_sign_remainder(&shifted, &modulus, &mut RealContext)
+                        .unwrap()
+                        .unwrap();
+                assert!(remainder[1..].iter().all(|value| value.definitely_zero()));
+                assert_eq!(
+                    remainder[0].partial_cmp(&Real::zero()),
+                    Real::from(residual).partial_cmp(&Real::zero())
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn long_dividend_sign_remainder_keeps_only_the_modulus_degree_running() {
+        // The degree-192 rational dividend and degree-6 modulus of the
+        // chamfered bevel stroke's endpoint equality: k = 187 eliminations.
+        // Scaling the whole dividend at each one costs 2kn + k(k-1)/2 =
+        // 19,635 field products; the Horner schedule costs k(2n+1) - 1.
+        #[derive(Default)]
+        struct CountingContext {
+            products: usize,
+        }
+        impl OrderedFieldPolynomialContext<Real> for CountingContext {
+            type Error = ();
+            fn constant(&mut self, value: &Real) -> Result<Real, ()> {
+                Ok(value.clone())
+            }
+            fn add(&mut self, left: &Real, right: &Real) -> Result<Real, ()> {
+                Ok(left + right)
+            }
+            fn multiply(&mut self, left: &Real, right: &Real) -> Result<Real, ()> {
+                self.products += 1;
+                Ok(left * right)
+            }
+            fn scale(&mut self, value: &Real, scale: &Real) -> Result<Real, ()> {
+                Ok(value * scale)
+            }
+            fn normalize_positive_scale(&mut self, _: &mut [Real]) {}
+            fn sign(&mut self, value: &Real) -> Result<Ordering, ()> {
+                value.partial_cmp(&Real::zero()).ok_or(())
+            }
+            fn sign_if_separated(&mut self, value: &Real) -> Result<Option<Ordering>, ()> {
+                self.sign(value).map(Some)
+            }
+        }
+        let modulus = sample_modulus(6, -1);
+        let polynomial: Vec<_> = (0..=192).map(|index| sample(index, 1)).collect();
+        let mut counting = CountingContext::default();
+        let remainder =
+            ordered_field_polynomial_sign_remainder(&polynomial, &modulus, &mut counting)
+                .unwrap()
+                .unwrap();
+        assert_eq!(remainder.len(), 6);
+        assert_eq!(counting.products, 187 * 13 - 1);
+        let mut eliminating = CountingContext::default();
+        let expected = eliminating_sign_remainder(
+            &polynomial,
+            &modulus[..6],
+            &(&modulus[6] * Real::from(-1)),
+            Ordering::Less,
+            &mut eliminating,
+        )
+        .unwrap();
+        assert_eq!(eliminating.products, 2 * 187 * 6 + 187 * 186 / 2);
+        assert_eq!(exact(&remainder), exact(&expected));
     }
 
     #[test]
