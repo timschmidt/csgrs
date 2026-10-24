@@ -209,6 +209,123 @@ sign normal forms account for 21% inclusively. No hypercurve accelerator is
 large enough at board scale to justify eviction that would cost recomputation,
 so none was implemented.
 
+## Leaf signs, eliminant remainders and fillet-centre factors (2026-10-23)
+
+Items H13–H15 of the 2026-10-22 research queue, rechecked at `d3d5e6ebef`.
+`FUTURE_WORK.md` sections 1, 2 and 9 record what remains open. Each workload
+ran in release builds, one process per row, on a shared 16-core host with
+load 8–25; wall time is noisy evidence, and the before/after rows of each
+table ran under comparable load. A temporary route probe and `gdb`
+backtrace samples located each cost; neither is committed.
+
+**H14: the degree-192 equality is a remainder, not a gcd.** The 47.6 s proof
+in `chamfered_quadratic_bevel_stroke_round_trips` is reached from
+`cmp_bezier_parameter`: the bounded vanishing replay declines (its
+elimination budget is 10), and the sign fallback reduces the degree-192
+rational eliminant modulo the local root's degree-6 relation over a
+two-source, one-extension tower (two quartic sources, so absolute degree at
+most 192). The remainder is identically zero, which is the equality proof.
+No gcd or root isolation is involved, so a modular/CRT gcd with a maximality
+certificate has nothing to replace here; a modular image could only prove a
+nonzero remainder, and a modular zero proof would need height bounds for
+tower coefficients through source reduction. Two exact changes in Hypersolve
+(its `PERFORMANCE.md`) shorten the same proof. The remainder now follows the
+eliminant's Horner sequence (19,635 to 2,430 tower products), and
+source-quotient reduction no longer computes the content gcd of each wide
+product, which was 13 of 15 samples of the remaining time. Every remainder
+coefficient is unchanged.
+
+| Chamfered bevel stroke | Remainder | Whole case |
+| --- | ---: | ---: |
+| `d3d5e6ebef` | 48.4 s | 62.8 s |
+| Horner schedule only | 16.4 s | 28.3 s |
+| content gcd removed only | 4.85 s | 19.7 s |
+| both | 1.35 s | 13.4 s |
+
+Alternating runs of the final build against every change switched off at run
+time took 17.4 and 14.7 s of user time against 66.8 and 78.8 s.
+
+**H13: leaf signs.** `refilleting_a_filleted_vertex_completes` reached
+`dense_two_positive_square_root_sum_sign` as described in section 1, but the
+leaves are not where the modular-before-expansion hypothesis puts the cost.
+After affine source collapse every leaf captured with a 500 ms threshold was
+a univariate polynomial of degree 27 in one selected source (a root of a
+degree-28 polynomial with 74-bit coefficients), with coefficients of 1,400
+to 64,000 bits. The existing modular coprimality certificate already proves
+each one nonzero before any refinement (an independent exact gcd over Q has
+degree 0), and the values are not small: for five leaves evaluated at high
+precision, `|leaf(root)|` is `2^600` to `2^5610` against coefficients of
+`2^938` to `2^7685`, a relative cancellation of 340–2,080 bits. The time was the
+certified refinement that follows: 21 of 24 samples were in
+`coprime_filter_sign_by_bisection`, inside the exact interval Horner and the
+Bernstein restriction to each bracket, normalizing a rational with a wide gcd
+at every operation. Expansion of the leaf was not visible in the samples. A
+modular norm before expansion would therefore remove neither cost, and was
+not built.
+
+The interval Horner and the Bernstein test now run over integer common
+denominators. With `D` the coefficients' denominator and the bracket
+`[p/q, r/q]`, the Horner enclosure after `x^i` is `D q^(n-i)` times the
+rational one, and the coefficients of
+`sum_i (D c_i) (p + r x)^i (q + q x)^(n-i)` are positive multiples of the
+Bernstein coefficients on the bracket. Both decide exactly as before:
+`rational_bernstein_sign_regression` compares 1,152 polynomials and brackets,
+and edge cases, with the rational basis change and an exact `Real` interval
+Horner.
+
+| Refilleting a filleted vertex | Outcome | Wall |
+| --- | --- | ---: |
+| `d3d5e6ebef`, and with the H14 changes | killed at the limit | > 1,508 s |
+| integer Bernstein test only | completed | 527 s |
+| integer Bernstein and Horner enclosures | completed (twice) | 291–296 s |
+
+Four leaves with 63,500-bit coefficients took 101–137 s each in the second
+row; the third row is the same with or without the H14 changes.
+
+**H15: the degree-214 fillet centre factors.** The centre that reaches
+`selected_parallel_normal_parallel_intersections` in
+`round_stroke_of_a_filleted_nurbs_pair_completes` is a root of a square-free
+integer polynomial of degree 214 (425-bit coefficients, content 1) on
+`[63/64, 127/128]`; its coefficient field is Q, so relative and absolute
+degree agree. Over Q it factors as degrees 2, 8, 40 and 164
+(`3t^2 - 3t - 1`, a degree-8 factor with 10-bit coefficients, and factors
+with 73- and 341-bit coefficients). The factors divide it exactly and their
+product is the polynomial. Only the degree-164 factor changes sign on the
+isolating interval, so it owns the selected root. It is irreducible: its
+factorization patterns modulo 19, 29 and 31 (degrees 77+37+24+15+6+3+2,
+139+22+3 and 83+66+9+6) admit no proper factor degree in common. The
+selected value therefore has intrinsic degree 164, 23% below the published
+214. SHA-256 of the captured polynomial file:
+`e56954fbe73023ba266e011b4e2ae1bb702d6bf43c59fd9574e6b2ca6560d2f6`.
+
+Reduction to that factor was measured by substituting it, read from a file,
+in two places. Each projection of this resultant in the fillet yields ten
+roots in its domain; two belong to the degree-164 factor and eight to the
+others.
+
+| Round stroke of the filleted NURBS pair | Fillet | Calls 1–4 of the kernel | Call 5 |
+| --- | ---: | --- | --- |
+| degree 214 | 15.9 s | 0.23, 12.1, 0.33, 169 s | not finished at 40 min |
+| degree 164 at the kernel only | 20.1 s | 48.7, 128, 101 s, ... | stopped |
+| degree 164 at the resultant | 25.8 s | 1.13, 27.3, 1.33, 105 s | not finished at 40 min |
+
+Substituting at the consumer breaks the shared identity with the other roots
+of the 214 polynomial, and comparisons then build gcds and Sturm counts.
+Substituting at the source keeps it, but mixed 214/164 roots still cost more
+in three of four calls. No factorization over Q exists in the stack to make
+the reduction cheap, and it does not complete the stroke, so it was not
+adopted. In call 5 every sample was in `LocalAlgebraicField::reduce`, which
+divided in normalized rational `Real` arithmetic; it now uses the integer
+remainder of Hypersolve's quotient-ring reduction. The same deterministic
+sequence of reductions reached its 176th reduction after 119 s instead of
+1,545 s, and the samples moved to the bivariate subresultant
+pseudo-remainders of `local_sturm_sequence`. The stroke still does not
+finish within 30 minutes.
+
+The release suite passes with every change and with every change switched off
+at run time, the two runs of each test binary concurrent: 66 binaries,
+identical results, 4,093 s of user time against 4,141 s.
+
 ## Local selected-root comparison (2026-10-23)
 
 Items H09–H12 of the 2026-10-22 research queue, rechecked at `916e1e5f41`.

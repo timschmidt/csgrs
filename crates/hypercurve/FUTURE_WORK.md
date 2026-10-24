@@ -8,21 +8,22 @@ The detailed chronological log, including commit hashes, timings and samples, is
 
 The exact-only principal API, the `CurveRegion2` migration, and S1 (`SelectedScalar2` dispatch) are complete. S6 is partly done; the remaining sites are listed below.
 
-The ignored composition harness (`tests/hypercurve_composed_workloads.rs` and `tests/hypercurve_open_path_compositions.rs`) has 9 of 24 cases completing under a 300 s budget:
+The ignored composition harness (`tests/hypercurve_composed_workloads.rs` and `tests/hypercurve_open_path_compositions.rs`) has 10 of 24 cases completing under a 300 s budget:
 
 | Case | Time |
 | --- | --- |
+| `chamfered_quadratic_bevel_stroke_round_trips` | 15 s (section 9) |
 | `repeated_inward_miter` | 21 s |
 | `beveled_rational_seed` | 56 s |
-| `chamfered_quadratic_bevel_stroke_round_trips` | 61 s (section 8) |
 | `weighted_conic` | 61 s |
 | `booleans_then_double` | 76 s |
 | `bevel_then_round` | 107 s |
 | `mixed_family` | 123 s |
 | `mixed_cubic_arc` | 203 s |
 | `nested_xor` | 290 s |
+| `refilleting_a_filleted_vertex_completes` | 291–296 s (section 1) |
 
-The other 15 still exceed the budget, and the hyperbola-pair stroke is a known stall. `round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes` is a separate open case: it ends in a typed blocker (section 8). All of them stay `#[ignore]`d, because they run far above the suite's per-test scale.
+Only the first and last rows were remeasured on 2026-10-23. The other 14 still exceed the budget, and the hyperbola-pair stroke is a known stall. `round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes` is a separate open case: it ends in a typed blocker (section 8). All of them stay `#[ignore]`d, because they run far above the suite's per-test scale.
 
 Sample a stalled case with `gdb -p <pid> -batch -ex "thread apply all bt"` against the test binary. Run it directly, for example `target/release/deps/hypercurve_open_path_compositions-* <name> --ignored --exact`, rather than through `cargo test`. Take the PID from `ps`, not `pgrep -f`, which matches the calling shell.
 
@@ -51,6 +52,20 @@ The new path would plug into `RecursiveQuadraticValue::sign` after the existing 
 
 The modular step is what is missing from all of these. Implement it first, then measure.
 
+**Rechecked for `refilleting` (H13, 2026-10-23).** That case's leaves do not
+match the design's premise. After affine source collapse each leaf is a
+univariate polynomial of degree 27 in one selected source (coefficients of
+1,400 to 64,000 bits), the existing modular coprimality certificate already
+proves it nonzero, and its value is large but cancels 340–2,080 bits against
+its coefficients. The cost was the certified refinement after that
+certificate: exact rational interval Horner and Bernstein enclosures,
+normalizing a wide fraction at every operation. Both now run over integer
+common denominators, with the same decisions, and the case completes in about
+five minutes (`PERFORMANCE.md`). A modular norm before expansion would not
+have changed it, so none was built. The lazy-leaf design above is untested on
+the multi-source leaves of `filleted_union`, `wide_weighted` and the chamfered
+strokes; capture their leaves before implementing it.
+
 ## 2. Exact representation of generated geometry
 
 **Fixed.** A fillet against a line used the unit direction d/|d|, so √|d|² leaked into the fillet contact's defining polynomial as lazy `Real` DAGs. The fix (cb372d03) builds the rational norm of the offset-line incidence, R² − sd²|d|²X₀², and filters candidates to the authored factor.
@@ -62,9 +77,10 @@ The modular step is what is missing from all of these. Implement it first, then 
 
 **Degree-214 fillet centre in `round_stroke_of_a_filleted_nurbs_pair`.**
 - The fillet centre's parameter (`anchor_evidence.center_parallel`, built in `curve_fillet_centers.rs` and reconstructed through `curve_corner_chain.rs` `RetainedFilletRadialFrame2::ParallelNormal`) is a degree-214 global algebraic root of the offset-offset intersection resultant.
-- It is square-free, so the degree is probably intrinsic.
+- It is square-free but not irreducible (H15, 2026-10-23). Over Q it factors as degrees 2, 8, 40 and 164, and the selected root belongs to the degree-164 factor, which is irreducible (`PERFORMANCE.md` gives the certificate). The intrinsic degree of the centre is 164.
 - Every later kernel (`selected_parallel_normal_parallel_intersections` → selected-fiber isolation over a degree-214 field) pays for it.
-- **Direction:** keep that centre as a selected fiber over the other offset's parameter, with low-degree field arithmetic, instead of publishing a global `BezierParameter2::Algebraic`. This means changing how fillet centres are authored, not adding a local fast path.
+- Substituting the degree-164 factor, at the kernel or at the resultant, did not complete the round stroke and made three of its first four kernel calls slower; the stack has no factorization over Q to obtain the factor cheaply. The longest call now spends its time in the bivariate subresultant pseudo-remainders of `local_sturm_sequence`, after local-field reduction moved to integer arithmetic.
+- **Direction:** keep that centre as a selected fiber over the other offset's parameter, with low-degree field arithmetic, instead of publishing a global `BezierParameter2::Algebraic`. This means changing how fillet centres are authored, not adding a local fast path. A selected fiber does not lower the degree-164 intrinsic degree; it can only avoid the 50 extraneous degrees and the global arithmetic.
 
 ## 3. Selected-fiber common-root counting
 
@@ -197,14 +213,14 @@ Items H09–H12 of the 2026-10-22 research queue, rechecked at `916e1e5f41`. `PE
 
 **Open: projective-scalar against polynomial roots.** The 12 remaining comparisons of a formula root with a polynomial root (10 `JP`, 2 `PJ` in the release suite) still take the 512-step route, about 0.1 s each. The certificate declines in both directions: a formula root has no defining polynomial to sign at the other root, and the polynomial root's relation signed at the formula root does not decide in the bounded pass. Homogeneous evaluation of that relation at `n / d` over a joined field (`recursive_projective_polynomial_value` lifts only ancestor coefficients) is the likely extension; check which step declines first.
 
-**Open: equality with a high-degree eliminant root.** The remaining time of the chamfered case is one 47.6 s proof that a degree-6 local root over a two-source, one-extension tower equals a root of the degree-192 polynomial the chord/parallel system projects for its candidates (`parameter_is_in_ordered_range`). The gcd starts with a pseudo-remainder of degree 192 by degree 6 over the tower. Promoting the local root first and comparing the two native roots is no faster (62–82 s per equality; rejected). A modular gcd (H14), or a candidate filter that does not first project the system to degree 192, is the next step.
+**Done: equality with a high-degree eliminant root (H14, 2026-10-23).** The remaining time of the chamfered case was one 47.6 s proof that a degree-6 local root over a two-source, one-extension tower equals a root of the degree-192 polynomial the chord/parallel system projects for its candidates (`parameter_is_in_ordered_range`). The proof is the sign-preserving remainder of the eliminant by the local relation, which is identically zero; no gcd is computed. Hypersolve now builds that remainder along the eliminant's Horner sequence and reduces tower products without a content gcd, and the proof takes about 1.4 s; the case takes about 15 s. A modular gcd would not shorten a zero remainder. A candidate filter that does not first project the system to degree 192 remains a possible further step. Promoting the local root first and comparing the two native roots is no faster (62–82 s per equality; rejected).
 
 **Not implemented: two-sided field joins (H09).** `recursive_polynomial_sign_joined` returns `Unsupported` when a query's coefficient field has a selected source that the root's base lacks; there is no fallback inside it. The internal regression (`t^2 = 2 + sqrt 2` in the root's field; `beta = sqrt 3` in an independently built field, in both source orders) reproduces this and is kept as the ignored test `recursive_polynomial_root_signs_queries_over_an_independent_source`. A join over the union of both source tuples, factored from `recursive_merge_projective_point_fields`, decides all of its queries locally. With route tracing over the full release suite and the four open-path workflows, the only queries that reached the missing-source case came from that test, so the join was not kept. Implement it when a supported operation reaches the case.
 
-**Not the cost: centre promotion in the selected parallel-normal kernel (H11).** In `round_stroke_of_a_filleted_nurbs_pair_completes`, the fillet centre reaching `selected_parallel_normal_parallel_intersections` is already a `BezierParameter2` of degree 214, so its promotion there is a no-op. Of five calls, four took 0.35 s, 12.1 s, 0.36 s and 110 s, and the fifth had not finished at the 40-minute limit; the time is in selected-fiber isolation over the degree-214 field (`LocalAlgebraicField::reduce`, local subresultants and Sturm sequences). Widening the consumer to `CurveParameter2` does not change this; authoring the centre as a low-degree selected fiber does (section 2), after its selected-factor degree is established (H15).
+**Not the cost: centre promotion in the selected parallel-normal kernel (H11).** In `round_stroke_of_a_filleted_nurbs_pair_completes`, the fillet centre reaching `selected_parallel_normal_parallel_intersections` is already a `BezierParameter2` of degree 214, so its promotion there is a no-op. Of five calls, four took 0.35 s, 12.1 s, 0.36 s and 110 s, and the fifth had not finished at the 40-minute limit; the time is in selected-fiber isolation over the degree-214 field (`LocalAlgebraicField::reduce`, local subresultants and Sturm sequences). Widening the consumer to `CurveParameter2` does not change this; authoring the centre as a low-degree selected fiber does (section 2). Its selected-factor degree is 164 (H15, section 2).
 
 **Open: tangent events (H12).**
-- `refilleting_a_filleted_vertex_completes`: the second fillet signs point-incidence predicates at recursive roots through `dense_two_positive_square_root_sum_sign` (section 1). It did not finish in forty minutes.
+- `refilleting_a_filleted_vertex_completes`: the second fillet signs point-incidence predicates at recursive roots through `dense_two_positive_square_root_sum_sign` (section 1). It did not finish in forty minutes; with integer-form enclosures in the certified leaf refinement it completes in about five minutes (H13).
 - `round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes`: fillet, round stroke, boundary reconstruction, reversal and a second fillet all complete; eroding the result then blocks with `RealSign`. At a tangent junction left by the second fillet, one offset span keeps an analytic parallel's retained tangent and the other the fillet arc's represented tangent. Their cross product is zero, but neither it nor the equality of the two offset ends is decided. The fillet certified that tangency when it was built; the rebuilt region does not keep it. The same workflow from a line/line corner completes (`round_stroke_boundary_of_a_filleted_line_corner_refillets_and_erodes`). Either the boundary keeps the tangency certificate or `curve_tangent_cross_sign` proves this zero exactly.
 
 ## 10. Box containment and CAM-derived contracts
