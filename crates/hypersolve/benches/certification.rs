@@ -4752,6 +4752,32 @@ fn certification(c: &mut Criterion) {
             })
         },
     );
+    // A product of two reduced field elements over a quartic source: axis
+    // degree 6 by 4, with rational coefficients of about 4,000 bits, as in
+    // the recursive-tower products of a long selected-root remainder.
+    let wide_axis_reduction = DenseTensorPolynomial::try_new(
+        vec![7, 4],
+        (0..28_i64)
+            .map(|index| {
+                let numerator = Real::from(2_i8)
+                    .powi_i64(4000 + 13 * index)
+                    .expect("a positive power of two")
+                    + r(index + 1);
+                (numerator / r(3 * index + 7)).expect("a nonzero denominator")
+            })
+            .collect(),
+    )
+    .unwrap();
+    let quartic_constraint = [r(1), r(0), r(-10), r(0), r(1)];
+    c.bench_function("dense_tensor_reduce_axis_modulo/wide_7x4", |b| {
+        b.iter(|| {
+            wide_axis_reduction.reduce_axis_modulo(
+                0,
+                &quartic_constraint,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
     let selected_sum_sources = [2_i64, 3, 5, 7].map(selected_square_root);
     let selected_sum_relation = selected_sum_tensor(selected_sum_sources.len());
     let selected_sum_interval = IsolatedRootInterval {

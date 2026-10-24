@@ -27,6 +27,7 @@ use crate::algebraic::{
 use crate::curve_resultant::{BivariatePolynomial, CurveResultantParameter};
 use crate::integer_interpolation::{
     rational_polynomial_inverse_modulo, rational_polynomial_product_modulo,
+    rational_polynomial_remainder_modulo,
 };
 use crate::ordered_field_roots::{
     OrderedFieldPolynomialContext, OrderedFieldRootIsolationConfig,
@@ -4605,6 +4606,12 @@ impl LocalAlgebraicField {
         }
         if polynomial.len() < self.modulus().len() {
             return Ok(polynomial);
+        }
+        // The remainder over Q is unique. Exact rational inputs reach it by
+        // integer pseudo-division, without normalizing a fraction at every
+        // elimination; it is returned trimmed, as the field division below.
+        if let Some(remainder) = rational_polynomial_remainder_modulo(&polynomial, self.modulus()) {
+            return Ok(remainder);
         }
         polynomial_div_rem(polynomial, self.modulus(), self.policy)
             .map(|(_, remainder)| remainder)

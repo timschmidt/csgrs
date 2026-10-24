@@ -2893,6 +2893,79 @@ no-default, all-feature, all-target, benchmark, fuzz compile/lint, strict
 Clippy, warning-denied rustdoc, dispatch regeneration, both release,
 formatting, and diff gates pass.
 
+### Sign remainders along the Horner sequence (2026-10-23)
+
+`ordered_field_polynomial_sign_remainder` eliminated the dividend's leading
+term `k` times, multiplying every remaining coefficient by the positive
+leading coefficient at each step: `2kn + k(k-1)/2` field products for a
+modulus of degree `n`. From four eliminations it now follows the
+dividend's Horner sequence, keeping only `n` running coefficients and one
+shared power of the leading coefficient: `k(2n + 1) - 1` products. Both
+schedules are the same polynomial expression in the coefficients. In the
+generic coefficient ring, an integral domain, each equals the unique
+remainder of `lc^k * polynomial` modulo the sign-adjusted modulus, so they
+agree after every specialization. Exact rational and recursive-tower
+coefficients, whose ring operations return canonical normal forms, receive
+the same coefficients.
+
+The motivating replay is Hypercurve's chamfered bevel stroke: the degree-192
+rational eliminant against a degree-6 relation over a two-source,
+one-extension tower (sources of degree 4). The remainder is identically zero,
+which proves the equality of the two roots. Products fall from 19,635 to
+2,430 (`long_dividend_sign_remainder_keeps_only_the_modulus_degree_running`,
+which fails with the former schedule), and the remainder from 48.4 s to
+16.4 s in a release run on a loaded 16-core host.
+
+### Source-quotient reduction without the content gcd (2026-10-23)
+
+`rational_polynomial_remainder_modulo`, behind every quotient-ring tensor
+reduction (`CertifiedPolynomialDivisor::remainder_in_place`), converted the
+dividend to its primitive integer form. For products of wide reduced field
+elements, that gcd of the widest coefficients cost more than the
+pseudo-division by the low-degree source polynomial. In the remainder above,
+13 of 15 samples were in `Rational::gcd_wide_magnitudes` under
+`primitive_bigint_ratio`. The dividend is now only cleared of denominators;
+the exact remainder over Q, and its trimmed storage, are unchanged
+(`rational_remainder_modulo_matches_field_division_with_any_content` compares
+it with field division for dividends with integer content up to `6^300`).
+
+| Chamfered bevel stroke, release | Remainder | Whole case |
+| --- | ---: | ---: |
+| `d3d5e6ebef` | 48.4 s | 62.8 s |
+| Horner schedule | 16.4 s | 28.3 s |
+| content gcd removed | 4.85 s | 19.7 s |
+| both | 1.35 s | 13.4 s |
+
+Single runs each, at host load 8-17; wall time is noisy evidence here, so the
+ratios rather than the seconds are the result.
+
+The new Criterion row `dense_tensor_reduce_axis_modulo/wide_7x4` reduces a
+degree-6 by 4 tensor with coefficients of about 4,000 bits modulo a quartic.
+Three alternating pairs of runs, with the content gcd restored at run time
+for the first of each pair, on a loaded host:
+
+| Row | With content gcd | Without |
+| --- | ---: | ---: |
+| `wide_7x4` | 85.2, 88.9, 61.8 us | 50.2, 43.8, 50.6 us |
+| `padded_8x64x64` | 197.5, 192.2, 186.7 us | 147.2, 199.9, 154.4 us |
+| `compact_8x2x2` | 8.66, 13.80, 8.80 us | 9.02, 13.58, 7.84 us |
+| `already_reduced_2x64x64` (no division) | 128.4, 132.4, 104.8 us | 121.0, 117.6, 116.9 us |
+
+### Local-field reduction through the integer remainder (2026-10-23)
+
+`LocalAlgebraicField::reduce` divided by the selected root's defining
+polynomial in normalized rational `Real` arithmetic, although multiplication
+in the same field already used the integer `rational_polynomial_product_modulo`.
+Exact rational inputs now take `rational_polynomial_remainder_modulo`, which
+returns the same trimmed remainder; other inputs keep the field division. In
+Hypercurve's round stroke of a filleted NURBS pair, whose selected fiber lies
+over a degree-214 centre, every sample of the longest kernel call was in that
+division. A temporary counter showed the deterministic sequence of local-field
+reductions reaching its 176th reduction after 119 s instead of 1,545 s; in
+the first minute a reduction took about 55 ms instead of 780 ms. The samples
+then moved to the bivariate subresultant pseudo-remainders of
+`local_sturm_sequence`; the stroke still does not finish within 30 minutes.
+
 ## Representation, coverage, fuzz, and memory gates
 
 The dedicated representation matrix inventories all 22 optimized finite

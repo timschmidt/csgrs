@@ -21,6 +21,22 @@ result for current callers.
   pair these embeddings with `RecursiveQuadraticValue::rebased_to_equivalent_base`
   instead. Composing them directly would remove that two-step requirement.
 
+## Modular certificates for tower remainders
+
+The H14 lead (a modular/CRT gcd over a selected field, with a maximality
+certificate) was evaluated on the equality that dominated the chamfered
+bevel stroke in Hypercurve. That proof is not a gcd: it is the
+sign-preserving remainder of a degree-192 rational eliminant by a degree-6
+relation over a two-source, one-extension tower, and the remainder is
+identically zero. A modular image of a nonzero remainder proves only
+nonzero, and a modular proof of zero would need a height bound for tower
+coefficients after reduction modulo the source polynomials, which this crate
+does not compute. The remainder schedule and the source-quotient reduction
+were made cheaper instead (`PERFORMANCE.md`). A modular gcd over Q(alpha)
+remains a candidate for the degree-36/40 fibers over a degree-14 field in
+Hypercurve's `FUTURE_WORK.md` section 3, which do share a factor; it has not
+been measured on them.
+
 ## Finite-fiber topology domains
 
 `decompose_bivariate_curve` reproduces its documented blockers at

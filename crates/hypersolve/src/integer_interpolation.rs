@@ -114,6 +114,13 @@ pub(crate) fn rational_polynomial_product_modulo(
 
 /// Reduces a rational polynomial through integer pseudo-division, restoring
 /// its exact coefficient scale only after all leading powers are removed.
+///
+/// The dividend is cleared of denominators without removing its integer
+/// content. The exact remainder does not depend on that content, and
+/// computing it costs a gcd of the widest coefficients, which for products of
+/// wide reduced field elements exceeds the cost of the pseudo-division by a
+/// low-degree modulus. The remainder is returned trimmed, with `[0]` for
+/// zero, exactly as field division returns it.
 pub(crate) fn rational_polynomial_remainder_modulo(
     polynomial: &[Real],
     modulus: &[Real],
@@ -121,7 +128,7 @@ pub(crate) fn rational_polynomial_remainder_modulo(
     if polynomial.is_empty() {
         return None;
     }
-    let primitive = primitive_integer_coefficients(polynomial)?;
+    let primitive = integer_coefficients_over_common_denominator(polynomial)?;
     let modulus = primitive_integer_coefficients(modulus)?;
     if modulus.len() < 2 {
         return None;
@@ -783,6 +790,37 @@ fn is_prime(candidate: u64) -> bool {
     true
 }
 
+/// Multiplies exact rational coefficients by their least common denominator,
+/// keeping any integer content, and trims trailing zeros. The result is a
+/// positive multiple of the polynomial.
+fn integer_coefficients_over_common_denominator(polynomial: &[Real]) -> Option<Vec<BigInt>> {
+    let rationals = polynomial
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let mut common = num::BigUint::one();
+    for value in &rationals {
+        let denominator = value.denominator();
+        if !denominator.is_one() && *denominator != common {
+            common = common.lcm(denominator);
+        }
+    }
+    Some(trim_integer_polynomial(
+        rationals
+            .iter()
+            .map(|value| {
+                let magnitude = value.numerator() * (&common / value.denominator());
+                let magnitude = BigInt::from(magnitude);
+                if value.is_negative() {
+                    -magnitude
+                } else {
+                    magnitude
+                }
+            })
+            .collect(),
+    ))
+}
+
 /// Keeps the polynomial's sign while removing its positive rational scale.
 /// Hyperreal already certifies primitive integer content; only canonical
 /// degree and zero shape remain to be prepared here. Positive-leading GCD
@@ -1003,6 +1041,39 @@ mod tests {
             prop_assert_eq!(
                 rational_polynomial_product_modulo(&left, &right, &modulus),
                 Some(ordinary_product_remainder(&left, &right, &modulus)),
+            );
+        }
+
+        #[test]
+        fn rational_remainder_modulo_matches_field_division_with_any_content(
+            polynomial in prop::collection::vec((-20_i64..=20, 1_u64..=17), 1..14),
+            modulus in prop::collection::vec((-20_i64..=20, 1_u64..=17), 2..7),
+            content_exponent in 0_u32..=300,
+        ) {
+            // The remainder is unique over Q, so a dividend that shares a
+            // large integer content must reduce exactly as field division
+            // does, whether or not that content is removed first.
+            prop_assume!(modulus.last().unwrap().0 != 0);
+            let values = |coefficients: Vec<(i64, u64)>| coefficients.into_iter()
+                .map(|(numerator, denominator)| rational(numerator, denominator)).collect::<Vec<_>>();
+            let content = Real::from(Rational::from_bigint(BigInt::from(6_u8).pow(content_exponent)));
+            let polynomial: Vec<_> = values(polynomial)
+                .into_iter()
+                .map(|coefficient| coefficient * &content)
+                .collect();
+            let modulus = values(modulus);
+            // Field division returns the trimmed remainder, with `[0]` for
+            // zero; local-field reduction relies on the same storage.
+            let expected = crate::root_isolation::polynomial_div_rem(
+                polynomial.clone(),
+                &modulus,
+                crate::PredicatePolicy::STRICT,
+            )
+            .unwrap()
+            .1;
+            prop_assert_eq!(
+                rational_polynomial_remainder_modulo(&polynomial, &modulus),
+                Some(expected),
             );
         }
     }

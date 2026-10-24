@@ -112,6 +112,15 @@
 - Development moved to the
   [csgrs repository](https://github.com/timschmidt/csgrs), which the
   `repository` field now names.
+- `ordered_field_polynomial_sign_remainder` reduces a dividend at least four
+  degrees above the modulus along its Horner sequence. The remainder is the
+  same polynomial; a degree-192 dividend by a degree-6 modulus takes 2,430
+  field products instead of 19,635.
+- Quotient-ring reductions of exact rational polynomials, including tensor
+  reduction at selected source tuples and local algebraic field reduction,
+  use integer pseudo-division without first removing the dividend's integer
+  content. Results are unchanged. With the previous item, Hypercurve's
+  chamfered bevel stroke round trip takes about 15 s instead of about 60 s.
 
 ### Fixed
 
