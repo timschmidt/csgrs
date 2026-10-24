@@ -45,6 +45,37 @@ workspace variants of Hyperlimit's 2D predicates and a workspace in
 Hypertri's `PredicateEvaluator`. PERFORMANCE.md has the measurements and the
 prototype's contract.
 
+**Decision, 2026-10-24: not adopted for now.** The maintainer chose to leave
+the APIs unchanged, because the coordinate compaction already captures most
+of the cost without new public API. The design is kept here for a later
+decision, for example if workloads dominated by quadratic fields become a
+priority:
+
+- Hyperreal: a public, opaque, operation-owned workspace type, and sign and
+  normal-form entry points that take it by `&mut`.
+- Hyperlimit: workspace variants of about eight 2D predicates (orientation,
+  point-segment and segment-intersection classification, real comparison),
+  next to the existing policy-only functions.
+- Hypertri: the per-operation `PredicateEvaluator` holds a workspace and
+  routes its predicates through those variants; the triangulation entry
+  points accept or create one.
+- Hypermesh: `DecisionContext` owns one workspace per Boolean operation,
+  passes it to triangulation and to its own predicates, and drops it when
+  the operation ends.
+
+The workspace contract is the prototype's: it retains only completed
+atom-free forms from calls that met no work or depth limit; it never retains
+a decline, `Unknown` or budget-exhausted result and never refunds work; a hit
+costs one node visit, so a warm call never visits more nodes than a cold one
+and bounded success is unchanged; it is byte-bounded with deterministic
+eviction, keyed by an identity that address reuse cannot confuse, and owned
+by one operation or thread, with no global state. Expected benefit with the
+compaction in place: a further 12-16% of instructions on the 6/8-gon and
+30/45-degree chains and 5% on the 16-gon chain, against +0.4 to +1.1% on the
+icosahedron unions and a higher peak live heap (0.6 MB to 11.7 MB for one
+6-gon step with an operation-wide cache). A workspace reachable only from
+Hypermesh's own predicates saves 2-3 points and is not worth its API.
+
 ## Dropping a deep expression graph recurses
 
 `Arc<Node>` drops its operands recursively. Building

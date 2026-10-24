@@ -218,7 +218,9 @@ the same cost without any new API. Reaching the triangulation needs a
 workspace in Hypertri's per-operation `PredicateEvaluator` and workspace
 variants of about eight Hyperlimit predicates; with the compaction in place
 it would save a further 12-16% on the quadratic chains and 5% on the 16-gon
-chain. That API decision is open; the measurements above are its evidence.
+chain. On 2026-10-24 the maintainer decided not to add that API for now; the
+design and its contract are kept in [`FUTURE_WORK.md`](FUTURE_WORK.md) for a
+later decision, with the measurements above as its evidence.
 
 ## Not implemented: filter-first sign preflight (2026-10-22)
 
