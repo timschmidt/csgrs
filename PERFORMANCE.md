@@ -970,6 +970,46 @@ times slower, the same exactness cost PLY accepted. Contract tests:
 `tests/amf_projection_contracts.rs`; three of its five tests fail with the
 former writer.
 
+## 2026-10-23: folded full revolutions, tapered twists and enclosures
+
+Research project C04 made a full `curve::revolve` turn revolve the fold of a
+profile with material on both sides of the axis, and let `extrude_twisted`
+taper to an apex with both end scales zero; C05 added the constant-section
+enclosure workflow as an acceptance test. These are exactness and
+completeness changes. A temporary release-profile probe with a counting
+allocator ran each workload once, counted allocator calls and requested
+bytes in a second run, and took the median of 15 timed runs. The host was
+shared, so times are descriptive.
+
+| Workload | Before | After |
+| --- | ---: | ---: |
+| 16-gon at radius 5, full turn in 16 steps | 161,441 calls, 7,760,053 B | 161,444 calls, 7,760,245 B |
+| holed profile in thirds, quarter turn in 3 steps | 8,141 calls, 442,222 B | 8,143 calls, 442,422 B |
+| holed profile in thirds, full turn in 8 steps | 19,968 calls, 1,077,710 B | 19,970 calls, 1,077,910 B |
+| profile at negative radius, full turn in 8 steps | 8,149 calls, 442,233 B | 8,151 calls, 442,429 B |
+| twisted holed profile, two twisted workloads | unchanged | unchanged |
+| `[-1/3, 2/3] x [0, 1]`, full turn in 16 steps | `InvalidArguments` | 15,777 calls, 1,061,022 B, 1.7 ms |
+| its fold `[0, 2/3] x [0, 1]` revolved directly | | 12,353 calls, 574,421 B, 0.69 ms |
+| holed profile tapered to an apex, 3 slices | `InvalidArguments` | 212 calls, 44,398 B, 85 µs |
+
+Revolution now decides every vertex's radial sign once, before building the
+mesh, so one-sided profiles pay two or three more allocations (the sign
+vectors) and about 200 bytes; times moved within noise. Exact positions and
+triangle rows of 16 one-sided revolutions (full, quarter and negative
+quarter turns, an axis-touching triangle, a holed profile and negative
+radius) and four twisted extrusions hash identically before and after. The
+fold costs three exact region Booleans and a mirror, about 3,400
+allocations and 1 ms here, only for profiles that failed or overlapped
+before.
+
+The enclosure test exposed a Boolean cost, recorded in
+[Hypermesh future work](crates/hypermesh/FUTURE_WORK.md#coplanar-contact-between-differently-triangulated-caps):
+with round plan corners sampled to 132 vertices, uniting the base slab with
+the walls took 42.6 s in release, because their coplanar bottom caps are
+triangulated differently, while subtracting a raised cavity from the block
+gave the same set in 38 ms. The test builds that case by subtraction. All
+six enclosure tests take 2.8 s in a debug build.
+
 ## 2026-10-22: exact line profiles in sweep, twist and revolution
 
 `curve::try_sweep`, `extrude_twisted` and `revolve` now consume exact line

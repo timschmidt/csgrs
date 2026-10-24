@@ -430,6 +430,237 @@ fn revolution_profile_crossing_the_axis_is_invalid_input() {
     assert_eq!(error.kind(), ValidationErrorKind::InvalidInput, "{error:?}");
 }
 
+/// A full turn sweeps material at radius `-x` through the same circles as at
+/// `x`, so it must equal the full turn of the region's fold: the material at
+/// positive radius united with the mirror image of the material at negative
+/// radius. Each input is paired with a hand-built fold.
+#[test]
+fn full_revolution_revolves_the_fold_of_material_across_the_axis() {
+    let (zero, one) = (Real::zero(), Real::one());
+    let cases = [
+        // One loop crossing the axis: [-1/3, 2/3] x [0, 1] folds to [0, 2/3] x [0, 1].
+        (
+            vec![rectangle(&q(-1, 3), &zero, &q(2, 3), &one)],
+            Vec::new(),
+            vec![rectangle(&zero, &zero, &q(2, 3), &one)],
+            Vec::new(),
+        ),
+        // Loops on opposite sides whose mirror images overlap in [1, 2] x [1, 2].
+        (
+            vec![
+                rectangle(&int(1), &zero, &int(3), &int(2)),
+                rectangle(&int(-2), &one, &int(-1), &int(3)),
+            ],
+            Vec::new(),
+            vec![vec![
+                [int(1), zero.clone()],
+                [int(3), zero.clone()],
+                [int(3), int(2)],
+                [int(2), int(2)],
+                [int(2), int(3)],
+                [int(1), int(3)],
+            ]],
+            Vec::new(),
+        ),
+        // A loop and its exact mirror image fold to the loop alone.
+        (
+            vec![
+                rectangle(&int(1), &zero, &int(3), &int(2)),
+                rectangle(&int(-3), &zero, &int(-1), &int(2)),
+            ],
+            Vec::new(),
+            vec![rectangle(&int(1), &zero, &int(3), &int(2))],
+            Vec::new(),
+        ),
+        // A hole straddling the axis folds to a notch touching the axis, which
+        // revolves to an enclosed cavity.
+        (
+            vec![rectangle(&int(-3), &zero, &int(3), &int(4))],
+            vec![rectangle(&int(-1), &one, &one, &int(2))],
+            vec![vec![
+                [zero.clone(), zero.clone()],
+                [int(3), zero.clone()],
+                [int(3), int(4)],
+                [zero.clone(), int(4)],
+                [zero.clone(), int(2)],
+                [one.clone(), int(2)],
+                [one.clone(), one.clone()],
+                [zero.clone(), one.clone()],
+            ]],
+            Vec::new(),
+        ),
+    ];
+    for (materials, holes, folded_materials, folded_holes) in &cases {
+        for reversed in [false, true] {
+            let input = region(materials, holes, reversed);
+            let folded = region(folded_materials, folded_holes, false);
+            for segments in [3, 4] {
+                let (mesh, volume) = exact_solid(
+                    curve::revolve(&input, int(360), segments, &GeometryContext::STRICT),
+                    "axis-crossing full revolution",
+                );
+                let (expected, expected_volume) = exact_solid(
+                    curve::revolve(&folded, int(360), segments, &GeometryContext::STRICT),
+                    "folded full revolution",
+                );
+                assert!(
+                    strictly_equal(&volume, &expected_volume),
+                    "full revolution volume differs from its fold"
+                );
+                assert_eq!(mesh.triangles.len(), expected.triangles.len());
+                assert!(
+                    expected
+                        .positions
+                        .iter()
+                        .all(|point| contains_point(&mesh, point)),
+                    "full revolution vertices differ from its fold"
+                );
+            }
+        }
+    }
+}
+
+/// A partial turn of loops on opposite sides of the axis sweeps them through
+/// opposite angular ranges. Beyond a half turn those ranges overlap and the
+/// separately revolved bodies are not normalized: the mesh is closed, and its
+/// volume is the sum of both bodies rather than the volume of their union.
+#[test]
+fn partial_revolution_beyond_a_half_turn_keeps_opposite_bodies_separate() {
+    let (zero, one) = (Real::zero(), Real::one());
+    let right = rectangle(&int(1), &zero, &int(3), &int(2));
+    let left = rectangle(&int(-2), &one, &int(-1), &int(3));
+    let (_, both) = exact_solid(
+        curve::revolve(
+            &region(&[right.clone(), left.clone()], &[], false),
+            int(270),
+            4,
+            &GeometryContext::STRICT,
+        ),
+        "opposite loops",
+    );
+    let (_, right) = exact_solid(
+        curve::revolve(
+            &region(&[right], &[], false),
+            int(270),
+            4,
+            &GeometryContext::STRICT,
+        ),
+        "right loop",
+    );
+    let (_, left) = exact_solid(
+        curve::revolve(
+            &region(&[left], &[], false),
+            int(270),
+            4,
+            &GeometryContext::STRICT,
+        ),
+        "left loop",
+    );
+    assert!(strictly_equal(&both, &(right + left)));
+}
+
+/// Both end scales zero taper an extrusion to a pyramid over the profile, with
+/// the hole's pyramid meeting it only at the apex. With zero twist every wall
+/// is planar, so six times the volume is `2 * area * height` exactly for any
+/// slice count and either height sign.
+#[test]
+fn zero_end_scale_tapers_to_an_apex() {
+    let zero_scale = [Real::zero(), Real::zero()];
+    for reversed in [false, true] {
+        let (profile, area, vertices) = holed_profile(reversed);
+        for height in [q(5, 3), q(-5, 3)] {
+            let expected = int(2) * area.clone() * height.clone().abs();
+            for slices in [1, 3] {
+                for context in &CONTEXTS {
+                    let (mesh, volume) = exact_solid(
+                        curve::extrude_twisted(
+                            &profile,
+                            height.clone(),
+                            Real::zero(),
+                            zero_scale.clone(),
+                            slices,
+                            context,
+                        ),
+                        "taper",
+                    );
+                    assert!(strictly_equal(&volume, &expected), "taper volume");
+                    let apex = Point3::new(Real::zero(), Real::zero(), height.clone());
+                    assert!(contains_point(&mesh, &apex), "taper lost its apex");
+                    for [x, y] in &vertices {
+                        assert!(contains_point(
+                            &mesh,
+                            &Point3::new(x.clone(), y.clone(), Real::zero())
+                        ));
+                    }
+                }
+            }
+        }
+        // A twisted taper keeps the same apex.
+        let (mesh, _) = exact_solid(
+            curve::extrude_twisted(
+                &profile,
+                q(5, 3),
+                int(90),
+                zero_scale.clone(),
+                3,
+                &GeometryContext::STRICT,
+            ),
+            "twisted taper",
+        );
+        assert!(contains_point(
+            &mesh,
+            &Point3::new(Real::zero(), Real::zero(), q(5, 3))
+        ));
+    }
+}
+
+/// A zero height is invalid input named as in ordinary extrusion, and an end
+/// scale that would collapse the top to a segment or reflect it is rejected
+/// with the parameter named.
+#[test]
+fn twisted_extrusion_names_its_invalid_parameters() {
+    let (profile, _, _) = holed_profile(false);
+    for input in [profile, curve::empty()] {
+        let error = curve::extrude_twisted(
+            &input,
+            Real::zero(),
+            Real::zero(),
+            [Real::one(), Real::one()],
+            1,
+            &GeometryContext::STRICT,
+        )
+        .unwrap_err();
+        assert_eq!(
+            error,
+            ValidationError::ZeroParameter {
+                name: "twisted-extrusion height"
+            }
+        );
+        for end_scale in [
+            [Real::zero(), Real::one()],
+            [Real::one(), Real::zero()],
+            [-Real::one(), Real::one()],
+            [-Real::one(), -Real::one()],
+        ] {
+            let error = curve::extrude_twisted(
+                &input,
+                Real::one(),
+                Real::zero(),
+                end_scale,
+                1,
+                &GeometryContext::STRICT,
+            )
+            .unwrap_err();
+            assert_eq!(
+                error,
+                ValidationError::NonPositiveParameter {
+                    name: "twisted-extrusion end scale"
+                }
+            );
+        }
+    }
+}
+
 #[test]
 fn nonzero_twist_keeps_the_exact_start_cap() {
     let (region, _, vertices) = holed_profile(false);
@@ -524,6 +755,13 @@ fn sampled_nonlinear_profiles_remain_qualified() {
             &curve::try_translated(&curved, int(1), Real::zero()).expect("translation"),
             int(90),
             4,
+            &GeometryContext::STRICT,
+        ),
+        // A full turn across the axis folds the sampled line profile.
+        curve::revolve(
+            &curve::try_translated(&curved, int(-1), Real::zero()).expect("translation"),
+            int(360),
+            8,
             &GeometryContext::STRICT,
         ),
     ] {

@@ -57,6 +57,14 @@ remain an open migration target.
   whose transport axis lacked a structural nonzero certificate, such as
   non-planar sampled paths, now succeed. Previously supported paths keep
   their exact rows.
+- **Twisted extrusion parameters.** `curve::extrude_twisted` reported a zero
+  height and every invalid end scale as `ValidationError::InvalidArguments`.
+  A zero height now reports `ZeroParameter { name: "twisted-extrusion
+  height" }`, and an end scale with one zero or a negative component
+  `NonPositiveParameter { name: "twisted-extrusion end scale" }`. Both
+  scales zero now succeed, tapering to an apex. `ValidationError::kind()`
+  is `InvalidInput` for all three variants, so WASM `extrudeTwisted` keeps
+  its `invalid_input` code; its message now names the parameter.
 - **WASM curve meshes.** `CurveRegionJs.sweep`, `revolve` and
   `extrudeTwisted` throw a `GeometryError` with a `code`, as `extrude`
   does, instead of a bare message string for native failures.
@@ -117,6 +125,20 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   loop orientation in any of these operations, extrusion included, reports
   `PredicateUndecided` for `"profile side-ring signed area"`; extrusion
   reported `"extrusion side-ring signed area"`.
+- **Full revolutions across the axis.** A full turn of `curve::revolve`
+  whose line profile has vertices on both sides of the axis revolves the
+  profile's fold, the material at nonnegative radius united with the mirror
+  image of the material at nonpositive radius. Loops on opposite sides
+  were revolved separately before. Where their mirror images overlap, the
+  result was a closed mesh with winding number two there, or a `Geometry`
+  error when the copies coincided; it is now one embedded polyhedron with
+  the union's volume. Where they do not overlap, the represented set is the
+  same, but the vertices at negative radius are now placed as their mirror
+  images: for an odd segment count the polyhedron differs (its slices are
+  no longer offset by half a turn), and for an even count the positions are
+  equal in value but rows, exported coordinates and checksums can change.
+  Profiles on one side of the axis, and every partial turn, keep their
+  rows.
 - **Imported face triangulation.** OBJ, DXF and VRML import project each
   planar polygon face onto two coordinates before triangulating it. The
   dropped coordinate is still the largest normal component whenever strict

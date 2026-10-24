@@ -2573,10 +2573,22 @@ fn emit_certified_triangle(
 /// [`SAMPLED_PROFILE_CHORD_ERROR`]. The result is the polyhedron through these
 /// slices, not the analytic solid of revolution.
 ///
-/// Each profile loop must lie on one side of the axis, which it may touch; a
-/// vertex on the axis is one position shared by every slice. A loop crossing
-/// the axis, a zero angle or one beyond a full turn returns
-/// [`ValidationError::InvalidArguments`].
+/// A vertex on the axis is one position shared by every slice. A full turn
+/// takes a point at radius `-x` around the same circle as the point at `x`.
+/// When the line profile has vertices on both sides of the axis, a full turn
+/// therefore revolves its fold: the material at nonnegative radius united, by
+/// exact region operations, with the mirror image of the material at
+/// nonpositive radius. A profile crossing the axis is admitted, and opposite
+/// loops whose mirror images overlap are revolved once rather than as
+/// overlapping copies.
+///
+/// For a partial turn each profile loop must lie on one side of the axis,
+/// which it may touch. Loops on opposite sides are revolved separately
+/// through the opposite angular ranges; beyond a half turn those ranges
+/// overlap, and where the loops' mirror images also overlap the result is a
+/// closed mesh with winding number two there, not an embedded solid. A loop
+/// crossing the axis in a partial turn, a zero angle or one beyond a full
+/// turn returns [`ValidationError::InvalidArguments`].
 pub fn revolve(
     region: &CurveRegion2,
     angle_degrees: Real,
@@ -2636,14 +2648,27 @@ pub fn revolve(
             point.x().clone() * sample.0.clone(),
         )
     };
+    let mut profiles = try_modeling_profiles_with(region, &decisions)?;
+    let mut radii = profile_radial_signs(&profiles, &decisions)?;
+    let has_radial_sign = |radii: &[Vec<Vec<hyperreal::RealSign>>], sign| {
+        radii.iter().flatten().flatten().any(|radial| *radial == sign)
+    };
+    if full
+        && has_radial_sign(&radii, hyperreal::RealSign::Negative)
+        && has_radial_sign(&radii, hyperreal::RealSign::Positive)
+    {
+        profiles = fold_across_revolution_axis(profiles, &decisions)?;
+        radii = profile_radial_signs(&profiles, &decisions)?;
+    }
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
-    for (material, holes) in try_modeling_profiles_with(region, &decisions)? {
+    for ((material, holes), ring_radii) in profiles.iter().zip(&radii) {
         // The material loop comes first; its holes lie on the same side.
         let mut material_radial_positive = true;
-        for (index, (ring, reverse_ring)) in
-            oriented_profile_rings(&material, &holes, &decisions)?
+        for (index, ((ring, reverse_ring), radial)) in
+            oriented_profile_rings(material, holes, &decisions)?
                 .into_iter()
+                .zip(ring_radii)
                 .enumerate()
         {
             let vertices = ring
@@ -2651,14 +2676,9 @@ pub fn revolve(
                 .iter()
                 .map(Segment2::start)
                 .collect::<Vec<_>>();
-            let mut on_axis = Vec::with_capacity(vertices.len());
-            let (mut negative, mut positive) = (false, false);
-            for vertex in &vertices {
-                let radial = decisions.sign(vertex.x(), "revolution profile radius sign")?;
-                negative |= radial == hyperreal::RealSign::Negative;
-                positive |= radial == hyperreal::RealSign::Positive;
-                on_axis.push(radial == hyperreal::RealSign::Zero);
-            }
+            let on_axis = |index: usize| radial[index] == hyperreal::RealSign::Zero;
+            let negative = radial.contains(&hyperreal::RealSign::Negative);
+            let positive = radial.contains(&hyperreal::RealSign::Positive);
             if negative && positive {
                 return Err(ValidationError::InvalidArguments);
             }
@@ -2670,9 +2690,9 @@ pub fn revolve(
             let reverse = (sign == hyperlimit::Sign::Positive) != positive;
             let rows = vertices
                 .iter()
-                .zip(&on_axis)
-                .map(|(vertex, &on_axis)| {
-                    if on_axis {
+                .enumerate()
+                .map(|(index, vertex)| {
+                    if on_axis(index) {
                         let index = positions.len();
                         positions.push(Point3::new(
                             Real::zero(),
@@ -2712,7 +2732,7 @@ pub fn revolve(
                     // collapsed fan triangle while retaining its nondegenerate
                     // neighbor.
                     for (axis_endpoint, indices) in
-                        [(on_axis[end], [a, b, c]), (on_axis[start], [a, c, d])]
+                        [(on_axis(end), [a, b, c]), (on_axis(start), [a, c, d])]
                     {
                         if axis_endpoint
                             || indices[0] == indices[1]
@@ -2734,8 +2754,8 @@ pub fn revolve(
             let cap_faces =
                 decisions.consume_triangulation(hypercurve::triangulate_linear_contours(
                     &decisions.triangulation_context(),
-                    &material,
-                    &holes,
+                    material,
+                    holes,
                 )?);
             // Caps are counterclockwise in the profile plane. The start cap
             // faces away from the swept material, whose side follows the turn
@@ -2765,6 +2785,86 @@ pub fn revolve(
         &decisions,
     )?;
     Ok(decisions.finish_mesh(mesh))
+}
+
+/// Radial sign of every ring vertex, by profile and by ring in the order of
+/// [`oriented_profile_rings`]: material first, then holes.
+fn profile_radial_signs(
+    profiles: &[(Contour2, Vec<Contour2>)],
+    decisions: &GeometryDecisions,
+) -> Result<Vec<Vec<Vec<hyperreal::RealSign>>>, ValidationError> {
+    profiles
+        .iter()
+        .map(|(material, holes)| {
+            std::iter::once(material)
+                .chain(holes)
+                .map(|ring| {
+                    ring.segments()
+                        .iter()
+                        .map(|segment| {
+                            decisions
+                                .sign(segment.start().x(), "revolution profile radius sign")
+                        })
+                        .collect()
+                })
+                .collect()
+        })
+        .collect()
+}
+
+/// The material a full turn sweeps: the part of the line `profiles` at
+/// nonnegative radius united with the mirror image of their part at
+/// nonpositive radius.
+///
+/// A full turn takes a point at radius `-x` around the same circle as the
+/// point at radius `x`, so the profiles and their fold have the same solid of
+/// revolution. Both halves are cut by boxes outside the profiles' bounds, and
+/// the cuts, the mirror and the union are exact line-region operations under
+/// the selected policy. Folding the line profiles, rather than a curved
+/// source, makes every cut point a rational expression in their coordinates,
+/// never a root on a curve.
+fn fold_across_revolution_axis(
+    profiles: Vec<(Contour2, Vec<Contour2>)>,
+    decisions: &GeometryDecisions,
+) -> Result<Vec<(Contour2, Vec<Contour2>)>, ValidationError> {
+    let (materials, holes): (Vec<_>, Vec<_>) = profiles.into_iter().unzip();
+    let region = decisions.exact_curve(|| {
+        CurveRegion2::try_from_native_contours(
+            materials,
+            holes.into_iter().flatten().collect(),
+        )
+    })?;
+    let Some(bounds) = decisions.exact_curve(|| region.bounds())? else {
+        return Ok(Vec::new());
+    };
+    let low = bounds.min_y().clone() - Real::one();
+    let high = bounds.max_y().clone() + Real::one();
+    let half = |from: Real, to: Real| -> Result<CurveRegion2, ValidationError> {
+        let ring = Contour2::from_real_ring(&[
+            [from.clone(), low.clone()],
+            [to.clone(), low.clone()],
+            [to, high.clone()],
+            [from, high.clone()],
+        ])?;
+        Ok(CurveRegion2::try_from_native_material_contours(vec![ring])?)
+    };
+    let folded = decisions.exact_curve(|| -> Result<CurveRegion2, ValidationError> {
+        let positive = half(Real::zero(), bounds.max_x().clone() + Real::one())?;
+        let negative = half(bounds.min_x().clone() - Real::one(), Real::zero())?;
+        let positive = region.boolean_region(&positive, BooleanOp::Intersection)?;
+        let mirrored = region
+            .boolean_region(&negative, BooleanOp::Intersection)?
+            .transform_affine(
+                &-Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+            )?;
+        Ok(positive.boolean_region(&mirrored, BooleanOp::Union)?)
+    })?;
+    try_modeling_profiles_with(&folded, decisions)
 }
 
 /// Names the sweep construction step whose scalar arithmetic failed.
@@ -3060,6 +3160,14 @@ pub fn try_sweep(
 /// ordinary [`try_extrude`] prism; other profiles are sampled at
 /// [`SAMPLED_PROFILE_CHORD_ERROR`].
 ///
+/// The height must be nonzero; a zero height returns
+/// [`ValidationError::ZeroParameter`], like a zero extrusion height in
+/// [`try_extrude`]. Both end scales must be positive, or both zero, which
+/// tapers the profile to the apex `(0, 0, height)`: the last band of side
+/// triangles meets there and there is no top cap. One zero or a negative scale
+/// would collapse or reflect the top section and returns
+/// [`ValidationError::NonPositiveParameter`].
+///
 /// Each side quadrilateral between consecutive sections is split along a
 /// fixed diagonal, and the result is validated as a closed manifold, not as an
 /// embedded solid. Side walls of a thin profile can cross: the strip
@@ -3085,17 +3193,27 @@ pub fn extrude_twisted(
         "twisted-extrusion height sign",
     )?;
     if height_sign == hyperlimit::Sign::Zero {
-        return Err(ValidationError::InvalidArguments);
+        return Err(ValidationError::ZeroParameter {
+            name: "twisted-extrusion height",
+        });
     }
-    for scale in &end_scale {
-        if decisions.decide(
+    let mut scale_signs = [hyperlimit::Sign::Zero; 2];
+    for (sign, scale) in scale_signs.iter_mut().zip(&end_scale) {
+        *sign = decisions.decide(
             hyperlimit::classify_real_sign(scale, decisions.predicate_policy()),
             "twisted-extrusion scale sign",
-        )? != hyperlimit::Sign::Positive
-        {
-            return Err(ValidationError::InvalidArguments);
-        }
+        )?;
     }
+    // Both end scales zero taper every section to the apex on the axis.
+    let apex = match scale_signs {
+        [hyperlimit::Sign::Positive, hyperlimit::Sign::Positive] => false,
+        [hyperlimit::Sign::Zero, hyperlimit::Sign::Zero] => true,
+        _ => {
+            return Err(ValidationError::NonPositiveParameter {
+                name: "twisted-extrusion end scale",
+            });
+        },
+    };
     let parameters = (0..=slices)
         .map(|index| {
             let fraction = (Real::from(index as u64) / Real::from(slices as u64)).ok()?;
@@ -3134,17 +3252,21 @@ pub fn extrude_twisted(
                         map(end, &parameters[slice + 1]),
                         map(start, &parameters[slice + 1]),
                     ];
+                    // At the apex the last quadrilateral is the triangle abc.
+                    let tapered = apex && slice + 1 == slices;
                     if !emit_certified_triangle(
                         &mut positions,
                         &mut triangles,
                         [a.clone(), b, c.clone()],
                         reverse_sides,
-                    ) || !emit_certified_triangle(
-                        &mut positions,
-                        &mut triangles,
-                        [a, c, d],
-                        reverse_sides,
-                    ) {
+                    ) || (!tapered
+                        && !emit_certified_triangle(
+                            &mut positions,
+                            &mut triangles,
+                            [a, c, d],
+                            reverse_sides,
+                        ))
+                    {
                         return Err(ValidationError::InvalidArguments);
                     }
                 }
@@ -3156,14 +3278,19 @@ pub fn extrude_twisted(
                 &material,
                 &holes,
             )?);
-        for face in cap_faces {
-            for (parameter, reverse) in [
+        let caps: &[_] = if apex {
+            &[(&parameters[0], !reverse_sides)]
+        } else {
+            &[
                 (&parameters[0], !reverse_sides),
                 (
                     parameters.last().expect("parameters are nonempty"),
                     reverse_sides,
                 ),
-            ] {
+            ]
+        };
+        for face in cap_faces {
+            for &(parameter, reverse) in caps {
                 let points = face.clone().map(|point| map(&point, parameter));
                 if !emit_certified_triangle(&mut positions, &mut triangles, points, reverse) {
                     return Err(ValidationError::InvalidArguments);
@@ -3471,6 +3598,10 @@ pub fn rotated(
 }
 
 /// Scales a filled native region independently along the planar axes.
+///
+/// A zero factor is a singular transform, not a zero-size feature: it returns
+/// a typed invalid-input error, for empty input too, rather than an empty
+/// region.
 pub fn try_scaled(
     input: &CurveRegion2,
     x: Real,

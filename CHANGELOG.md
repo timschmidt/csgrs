@@ -79,6 +79,10 @@ migrations, including changed serialized output, are listed in
   variants of SDF and metaball sampling.
 - Hilbert-curve infill clipped to a filled region: `curve::hilbert_paths`
   keeps trim records, and `hilbert_strings` returns plain curve strings.
+- `curve::extrude_twisted` with both end scales zero tapers the profile to
+  the apex `(0, 0, height)`, as OpenSCAD's `linear_extrude(scale = 0)` does,
+  instead of returning `InvalidArguments`. A holed profile gives a pyramid
+  whose hole's pyramid meets it only at the apex.
 - `csgrs::adapter` provides primitive-scalar wrappers (`ScalarMesh<A>` and
   `ScalarCurve<A>` over `RawReal`, `F32`, `F64` and `I128`) that convert only
   at ingress and egress.
@@ -128,6 +132,11 @@ migrations, including changed serialized output, are listed in
   "Cargo features" in [docs/MIGRATIONS.md](docs/MIGRATIONS.md)).
 - `wasm32` builds compile `uuid`, which only the DXF and Gerber parsers
   need, only when `dxf-io` or `gerber-io` is enabled.
+- `curve::extrude_twisted` names its invalid parameters: a zero height
+  returns `ValidationError::ZeroParameter`, as a zero height does in
+  `try_extrude`, and an end scale with one zero or a negative component
+  returns `NonPositiveParameter`. Both returned `InvalidArguments`; the
+  error kind is still `InvalidInput`.
 - `bevymesh` targets Bevy 0.18 (was 0.16) through `solid::to_bevy_mesh`.
 - Raises the minimum supported Rust version (MSRV) from 1.85.1 to 1.95.0.
 
@@ -174,6 +183,19 @@ migrations, including changed serialized output, are listed in
   profile at negative radius, which failed, now completes. Profiles with arc
   or curve boundaries are still sampled, at the chord error now published as
   `curve::SAMPLED_PROFILE_CHORD_ERROR`, and their results still say so.
+- A full turn of `curve::revolve` whose profile has material on both sides
+  of the axis revolves the profile's fold: the material at nonnegative
+  radius united, exactly, with the mirror image of the material at
+  nonpositive radius, which a full turn sweeps through the same circles.
+  Opposite loops were revolved separately, so where their mirror images
+  overlapped the result was a closed mesh that counted the overlap twice:
+  `[1, 3] x [0, 2]` with its mirror image `[-3, -1] x [0, 2]` in three
+  segments had twice the volume of one loop, and in four segments, where the
+  copies coincide, failed with a `Geometry` error. A loop crossing the axis,
+  or a hole straddling it, returned `InvalidArguments` and now revolves. A
+  partial turn still requires each loop to lie on one side of the axis;
+  beyond a half turn, opposite loops whose mirror images overlap still give
+  a closed mesh with winding number two in the overlap, as now documented.
 - Importing a planar polygon face no longer requires deciding which normal
   component is largest. Any component the policy proves nonzero gives the
   projection used to triangulate it. A VRML face turned about an axis in its

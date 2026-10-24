@@ -122,6 +122,45 @@ fn concave_faces_keep_authored_winding_and_lofts_compose_in_all_orders() {
     }
 }
 
+/// Loft sides join vertex `i` of one section to vertex `i` of the next and
+/// split each quadrilateral along the diagonal from vertex `i` to vertex
+/// `i + 1` of the next section, so a twisted pair of sections gives that fixed
+/// triangulated band rather than a ruled or bilinear surface. Unequal vertex
+/// counts are a typed error, not an inferred correspondence.
+#[test]
+fn loft_sides_use_the_documented_diagonal_and_reject_unequal_counts() {
+    let bottom = section(&[(0, 0), (2, 0), (2, 2), (0, 2)], 0);
+    // The bottom square turned by a quarter turn about its center, scaled by
+    // sqrt(2) and lifted.
+    let top = section(&[(1, -1), (3, 1), (1, 3), (-1, 1)], 2);
+    for travel_reversed in [false, true] {
+        let sections = if travel_reversed {
+            [top.clone(), bottom.clone()]
+        } else {
+            [bottom.clone(), top.clone()]
+        };
+        let mesh = solid::loft(&sections).unwrap();
+        valid(&mesh, &GeometryContext::STRICT);
+        let edges = mesh
+            .triangles
+            .iter()
+            .flat_map(|triangle| {
+                let [a, b, c] = triangle.indices();
+                [[a, b], [b, c], [c, a]].map(|[u, v]| [u.min(v), u.max(v)])
+            })
+            .collect::<std::collections::BTreeSet<_>>();
+        for i in 0..4 {
+            let next = (i + 1) % 4;
+            assert!(edges.contains(&[i, 4 + next]), "diagonal {i}");
+            assert!(!edges.contains(&[next, 4 + i]), "other diagonal {i}");
+        }
+    }
+    assert_eq!(
+        solid::loft(&[bottom, top[..3].to_vec()]).unwrap_err(),
+        ValidationError::MismatchedVertexCount { left: 4, right: 3 }
+    );
+}
+
 #[test]
 fn concave_loft_orientation_survives_axis_projection_and_negative_travel() {
     for travel in [-2, 2] {

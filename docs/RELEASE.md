@@ -73,6 +73,11 @@ will be fixed:
   walls that cross: the strip `[1, 1 + 2^-20] x [0, 2]` with a 90 degree
   twist in three slices and end scale `(1/2, 2/3)` gives a closed mesh with
   negative signed volume.
+- **Opposite revolution loops.** A partial `curve::revolve` turn revolves
+  loops on opposite sides of the axis separately, through opposite angular
+  ranges. Beyond a half turn, where their mirror images overlap, the result
+  is a closed mesh with winding number two there, not an embedded solid. A
+  full turn revolves the profile's fold instead and is embedded.
 - **Hull rows.** A second strict hull of the same mesh object in one process
   can triangulate coplanar hull faces differently (same set, certified),
   depending on facts cached by the first hull

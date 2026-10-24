@@ -2498,9 +2498,23 @@ pub fn minkowski_hull_with_context(
 
 /// Lofts corresponding simple planar point loops into closed PWN geometry.
 ///
-/// Supply each loop without repeating its first vertex. Consecutive pointwise
-/// equal sections are coalesced. Cap winding follows the complete boundary;
-/// invalid or undecided section/mesh predicates return typed errors.
+/// Supply each loop without repeating its first vertex. Every section has the
+/// same vertex count, and vertex `i` of one section corresponds to vertex `i`
+/// of the next: no correspondence is inferred, sections have no holes, and a
+/// different count returns [`ValidationError::MismatchedVertexCount`]. The
+/// side surface between sections `k` and `k + 1` is the band of quadrilaterals
+/// on vertices `i` and `i + 1`, each split along the diagonal from vertex `i`
+/// of section `k` to vertex `i + 1` of section `k + 1`. It is not a bilinear or
+/// ruled surface, and the result is validated as closed PWN geometry, not as
+/// an embedded solid.
+///
+/// Fewer than two sections returns [`ValidationError::FieldLessThan`].
+/// Consecutive pointwise equal sections are coalesced. Fewer than three
+/// vertices, fewer than two distinct sections, equal adjacent vertices, or a
+/// first-section normal perpendicular to the travel from the first vertex of
+/// the first section to that of the last returns
+/// [`ValidationError::InvalidArguments`]. Cap winding follows the complete
+/// boundary; invalid or undecided section/mesh predicates return typed errors.
 pub fn loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError> {
     loft_with_context(sections, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }

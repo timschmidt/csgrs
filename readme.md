@@ -351,6 +351,16 @@ profile bounded by lines. A profile with arc or curve boundaries is sampled
 at `curve::SAMPLED_PROFILE_CHORD_ERROR` first, and the mesh's construction
 evidence records the sampling.
 
+A zero extrusion height is invalid input (`ZeroParameter`), not an empty
+solid, for `try_extrude`, `try_extrude_vector` and `extrude_twisted`. Both
+`extrude_twisted` end scales zero taper the profile to the apex
+`(0, 0, height)`; one zero or a negative scale is rejected. A full turn of
+`revolve` revolves the fold of a profile with material on both sides of the
+axis, the positive material united with the mirror image of the negative
+material, so a profile may cross the axis. A partial turn requires each loop
+to lie on one side of the axis, and opposite loops beyond a half turn are not
+normalized against each other (see the `revolve` documentation).
+
 ### Solid construction
 
 Functions in `csgrs::solid` return `TriangleMesh`:
@@ -389,7 +399,11 @@ Polyhedron construction can represent open surfaces; validate the complete
 mesh before using it as a solid. Unused positions remain structural data.
 
 Loft sections are corresponding simple planar loops without a repeated closing
-point. Consecutive sections proved pointwise equal are coalesced. A completed
+point. They have equal vertex counts (`MismatchedVertexCount` otherwise) and no
+holes, and no correspondence is inferred. Each side quadrilateral is split
+along the diagonal from vertex `i` of one section to vertex `i + 1` of the
+next, so the side surface is that triangulation, not a bilinear or ruled
+surface. Consecutive sections proved pointwise equal are coalesced. A completed
 loft passes native closed-PWN validation before it is returned. This establishes
 a consumable winding boundary, without promising an embedded surface or fidelity
 to an unspecified continuous sweep. Context forms retain every consumed
