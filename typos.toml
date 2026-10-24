@@ -28,3 +28,6 @@ LOD = "LOD"
 
 # TrueType glyph location table tag
 loca = "loca"
+
+# ELF relocation section prefix (`.rela.dyn`), read by the size harness
+rela = "rela"

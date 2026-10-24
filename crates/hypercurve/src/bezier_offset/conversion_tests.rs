@@ -5798,9 +5798,7 @@ fn mapped_parallel_bracket_cache_does_not_launder_a_terminal() {
         panic!("the analytic overlap must retain its parallel map");
     };
     let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let sine = Real::e().sin();
-    let cosine = Real::e().cos();
-    let zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let zero = crate::test_support::terminally_unresolved_zero();
     // The source quarter's endpoint is (0, 2); its inward unit parallel
     // is (0, 1), the selected semicircle's exact angular midpoint.
     // The expression is exactly one but needs a terminal to decide so.
