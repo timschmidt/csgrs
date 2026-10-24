@@ -420,3 +420,46 @@ with degree 24, 4,096 terms and 4,194,304 work charges decided it, which is
 too much work for a stage that every undecided predicate pays. The same
 angles written as decimal literals are rational turns of order 3,600 and
 decide through the cyclotomic proof.
+
+## Coplanar contact between differently triangulated caps
+
+Found by `tests/enclosure_workflows.rs` (repository root, research project
+C05, 2026-10-23). An enclosure with round plan corners is a base slab
+`try_extrude(outer, 1)` united with walls `try_extrude(outer - inner, 5)`.
+The rounded outer region is sampled by extrusion to 132 binary64 vertices,
+so the base's bottom cap (a triangulated rounded rectangle) and the walls'
+bottom cap (a triangulated annulus) are coplanar, overlap, and are
+triangulated differently. In one release run of a temporary probe on a
+shared host:
+
+| Operation (524 and 544 triangles in, 540 out) | Time |
+| --- | ---: |
+| base union walls, both from z = 0 | 42.6 s |
+| base union walls raised to z = 1 (contact at the slab top) | 37.5 s |
+| xor of that result with the same set built below | 12.8 s |
+| block `try_extrude(outer, 5)` minus the cavity raised to z = 1 | 38 ms |
+| one window cut through the result | 2.6 ms |
+
+Subtraction builds the same set (the xor is empty) without a coplanar
+contact. Thirty stack samples of the first union were all in
+`surface_arrangement::corefine_face`; 25 were in Hypertri's
+`insert_constraints_topology`, 21 of them in `edge_proper_crossing_sides`,
+evaluating exact `orient2d` on wide rationals. The same union with rational
+corner points `((1 - t^2)/(1 + t^2), 2t/(1 + t^2))`, `t = k/n`, grows with
+the number of cap vertices and with their coordinate size:
+
+| Chords per corner | Base triangles | Union |
+| ---: | ---: | ---: |
+| 1 | 28 | 6.1 ms |
+| 4 | 76 | 25 ms |
+| 8 | 140 | 77 ms |
+| 16 | 268 | 0.33-0.38 s |
+| 32 | 524 | 2.56 s |
+
+Each doubling past 8 costs 4-7 times as much, and binary64 sample points of
+the same count are about 17 times slower than these small rationals. Every
+result was certified, so this is a cost, not a completeness, limit. The
+root enclosure test builds its rounded case by subtraction and records why.
+The operation-local plane-class region view noted above (overlay each class's
+boundaries once, then triangulate the selected output) is the candidate fix;
+it was not attempted here.
