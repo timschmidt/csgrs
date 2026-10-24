@@ -270,6 +270,16 @@ Items H16–H20 of the 2026-10-22 research queue, rechecked at `d3d5e6ebef`. `PE
 
 **Done: deferred Bezier carrier preparation (H18).** The pair builders prepare a Bezier carrier's top-level curve only when a Bezier-Bezier pair that survives the broad phase, or the carrier's self context, reads it. Before, a union of a board's copper aggregate with one feature prepared every carrier of the aggregate: 99% of the 256,000–554,000 cross-operand preparations per Easyduino board were never read, almost all of them in the CAM round-trip audit. Allocation calls fall 0.7–2.7% and the peak of live bytes up to 5.6% on the six boards, and nano's CAM audit runs 6.1% fewer instructions; findings are unchanged.
 
+**Not changed: the degree-elevation cache (H16).** A kept source retains every intermediate degree: 1.2–1.9 MB at degree 64, against 42–207 KB for the target alone. The direct formula gives the same exact controls and is 2–17 times faster for one cold request of degree 32 or 64, but 1.7–8.4 times slower when degrees are requested in turn, and no real path elevates beyond degree 5. Revisit with bounded checkpoints if a caller requests high degrees.
+
+**Not changed: shared Boolean selection views (H17).** No board makes a nontrivial `boolean_regions` call, and the fragment walk, cloning and graph construction that views would share are at most 2 of the 39–52 samples of the per-operation stage in the all-four bench. The output-dependent costs of that stage are open leads that also apply to single Booleans:
+- the coalescing pass asks every kept arc fragment for an exact line image (`retained_line_fragment_endpoints`, `fit_exact_line_image_with_policy`): half of the stage for two circles. A fragment of a certified circular conic carrier is never a line;
+- `retained_loops_have_pairwise_disjoint_bounds` (34% of the stage on nano) and line-run merging (55%).
+
+**Not applicable: span-pair bounds (H19).** Region carriers are single spans, so region Booleans never form a span Cartesian product. Direct intersection of multi-span curves does, and already rejects certified-disjoint span pairs before building candidates: two 64-span cubic B-splines with 66 contacts intersect in 69 ms with 3.6 MB peak transient.
+
+**Open: retained scalar caches (H20).** After the nano board's materialization and report projection (87.6 MiB live), hypercurve structures are about 12% of the live heap by allocation site; exact rationals are 30%, rational derived forms retained by `hyperreal` 17% and `Computable` evaluation cells 9%, and 21% is allocated inside pi-Laurent sign normal forms. The pipeline peak is set by transient work (201–308 MiB against 108–170 MiB live at the end). A retention policy for those scalar caches belongs in `hyperreal`; the per-call memo variants rejected under "Closed normal-form memo sharing" in `PERFORMANCE.md` do not answer it, because this is a question of what outlives the call. Region query caches (exact signed area, boundary path views, classification indexes) add 27–240% to a queried region in the probe, but recomputing them repeats the same exact work, so no eviction was implemented.
+
 ## Fast paths added in this round
 
 Keep these in mind when measuring:

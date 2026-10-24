@@ -97,6 +97,118 @@ round-trip audit:
 The eager preparation itself was 19,035,837,826 instructions, 4.4% of the
 baseline run.
 
+### Rejected: direct homogeneous degree elevation (H16)
+
+`RationalBezier2::elevated_to_degree` still stores every intermediate degree
+in the source's elevation cache. The direct formula
+`H'_i = Σ_j C(n, j) C(D − n, i − j) / C(D, i) H_j`, implemented in a temporary
+probe with exact integer binomials, gives exactly equal homogeneous controls
+(STRICT comparison of every coordinate) for rational and for algebraic
+controls. Bytes retained by a
+kept source after one request, against one directly built target (counting
+allocator, requested bytes):
+
+| Source degree n | Target D | Slots kept | Retained by source | Direct target | Cold iterative | Cold direct |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2 | 8 | 39 | 23,208 B | 9,928 B | 114 µs | 43 µs |
+| 2 | 16 | 147 | 72,136 B | 16,856 B | 215 µs | 89 µs |
+| 2 | 32 | 555 | 299,352 B | 20,520 B | 1.03 ms | 0.17 ms |
+| 2 | 64 | 2,139 | 1,237,192 B | 43,752 B | 3.87 ms | 0.38 ms |
+| 3 | 64 | 2,135 | 1,253,000 B | 44,520 B | 2.96 ms | 0.50 ms |
+| 6 | 16 | 125 | 57,488 B | 13,368 B | 129 µs | 132 µs |
+| 6 | 64 | 2,117 | 1,270,088 B | 41,680 B | 2.47 ms | 0.87 ms |
+| 6 (algebraic) | 64 | 2,117 | 1,874,736 B | 206,992 B | 7.9 ms | 3.9 ms |
+
+A repeated request is a cache hit (0.5–2.6 µs). Requesting every degree from
+n+1 to 64 in turn costs 2.4–2.9 ms with the cache (6.8–21 ms for algebraic
+controls) and 9.6–22.7 ms by direct computation per request (25.6–66.1 ms):
+1.7 to 8.4 times slower. Times are single cold samples. No real path elevates
+far: the six boards make no `elevated_to_degree` call, and in the release
+unit-test suite the production callers are degree alignment in
+`same_projective_control_net_degree_aligned` (1→2, 2→3, 2→4, 2→5), line-image
+alignment before rational intersection (2→5) and NURBS span elevation (2→3,
+2→4); the highest production target is 5, and 69% of the 1,711 calls hit the
+cache. The quadratic retention is real only for explicit high-degree requests,
+and target-only storage would regress sequential promotions, so the cache is
+unchanged.
+
+### Rejected: shared Boolean selection views (H17)
+
+None of the six boards makes a nontrivial `boolean_regions` call; their
+Booleans are single operations. Hyperbrep's axial-shell validation is the only
+caller outside tests, and its call is nontrivial only when several caps lie at
+one height. On the batch bench in all-four mode, per-operation output
+construction is 47.7% of the samples for `circles`, 39.4% for
+`elevated-circles`, 31.6% for `analytic-curved-cap`, 11.5% for `capsules`,
+8.4% for `mobius-cubic-overlap` and about 1% for `aligned-conic-overlap`. The
+part the lead proposed to share, walking, cloning and reversing split
+fragments and building the selected graph, is at most 2 of the 39–52 samples
+of that stage for `circles` and `elevated-circles`. The rest depends on the
+selected output: for `circles`, half is the coalescing pass testing each kept
+arc fragment for an exact line image and 40% is certification of tangent
+successors; on nano, loop-role certification
+(`retained_loops_have_pairwise_disjoint_bounds`, 34%) and line merging (55%)
+dominate the per-operation stage, which is 17.3% of the run. Sharing views
+would not remove either.
+
+### Not applicable: bounded span-pair preparation (H19)
+
+Region carriers are single Bezier spans, so every `prepare_rational_pairs`
+call made by a region Boolean prepares one span pair: 16–218 calls per board,
+23 in the one-cell pathological Boolean, 1,638 in the release unit tests, all
+1×1. Each span pair first rejects certified-disjoint bounds before building
+candidates. The Cartesian product is reached only by direct intersection of
+multi-span curves. A probe of uniform cubic B-splines: a 4-span steep spline
+across a 4-, 16- or 64-span zigzag (16–256 span pairs, one contact) takes
+2.3–4.6 ms; two mirrored zigzags of 4, 16 and 64 spans (16, 256 and 4,096 span
+pairs; 6, 18 and 66 contacts) take 35, 45 and 69 ms, with 1.1, 1.7 and 3.6 MB
+peak transient and 0.7, 1.0 and 1.4 MB retained by the result and the curves'
+caches. No measured workload makes this material.
+
+### Audit: retained authority and accelerators (H20)
+
+Requested bytes in a temporary probe (release build; the second run of each
+case, after process-lifetime tables are warm). "Queries" are `signed_area`,
+`filled_area`, `loop_roles`, five `classify_point` and `boundary_paths` on
+each of the four results.
+
+| Operands | Authored | All-four results | Results after operand drop | STRICT queries add | APPROXIMATE_512 after STRICT | Contact points after results drop | After all drops |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| two capsules | 10,088 | +20,272 | 21,272 | +31,768 | 0 | 752 | 0 |
+| two circles | 10,408 | +29,288 | 31,144 | +74,264 | 0 | 896 | 456 |
+| capsule, round-joined route | 76,944 | +176,976 | 259,400 | +246,384 | 0 | 80,832 | 26,952 |
+| two clipped cubic regions | 29,256 | +81,211 | 103,259 | +27,472 | 0 | 27,800 | 6,880 |
+
+Cloning the four results costs 32 bytes, and regularizing a normalized region
+none. Results share carrier allocations with their operands, and contact
+points keep their sources, as endpoint authority should. The query caches add
+27% to 240% of a result's bytes; the exact signed area is the largest of them
+(2.5, 47.8, 231.1 and 49.7 KB on first use in the process), then the boundary path views
+(9–49 KB) and classification (10–24 KB). A strict proof serves a later
+approximate query without new entries. After eight successive unions of
+capsules and circles the final value holds 5.4 KB (11.9 KB after the queries);
+keeping the history holds 102 KB, and the final value alone is 11.7 KB once
+the history is dropped. Dropping everything returns to within 208 bytes; first
+runs leave bounded process-lifetime state (small-rational tables, thread-local
+constant approximations, the 32-entry weak exponential cache). No cycle was
+found.
+
+On nano (profile stages, counting allocator) the live heap is 80.0 MiB after
+materialization, 87.6 MiB after the report projection and 111.2 MiB after the
+DRC checks; dropping the DRC handoff frees 5.8 MiB. Over the default pipeline
+the peak (201–308 MiB on the six boards, candidate build) is far above the
+final live heap with the report (108–170 MiB), so transient work, not retained
+state, sets the peak. Of the 87.6 MiB live after the report projection,
+`heaptrack` attributes by innermost project frame 30% to `Rational`
+construction (the exact scalars), 17% to rational derived forms retained by
+`hyperreal` (`retain_linear`, `retain_negation_entry` and inverses), 9% to
+`Computable` evaluation cells and about 12% to hypercurve structures
+(arrangement traversal output, `Curve2` objects, retained fragments, native
+span promotion, circular conic provenance). Allocations made inside pi-Laurent
+sign normal forms account for 21% inclusively. No hypercurve accelerator is
+large enough at board scale to justify eviction that would cost recomputation,
+so none was implemented.
+
 ## Local selected-root comparison (2026-10-23)
 
 Items H09–H12 of the 2026-10-22 research queue, rechecked at `916e1e5f41`.
