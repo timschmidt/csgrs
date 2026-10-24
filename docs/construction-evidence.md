@@ -28,7 +28,11 @@ This is a bounded qualification summary, not a replayable proof or a complete
 boundary-to-source mapping. Full curve lineage and persistent proof replay remain
 open under `properties.md` P15/P19. Bare curve-to-mesh conversions expose missing
 history; finite sampled-profile conversions additionally expose sampling and
-projection. Mesh evidence cannot reconstruct a discarded curve receipt.
+projection. Mesh evidence cannot reconstruct a discarded curve receipt. A
+caller that composes curve operations keeps the receipt of the whole chain
+with `GeometryOutcome::and_then`, which combines each dependent operation's
+certainty with the certainty it consumed; `map` cannot see the decisions made
+inside its closure.
 
 ## Source and mutation boundaries
 

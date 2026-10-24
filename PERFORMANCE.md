@@ -947,6 +947,68 @@ or 12.345 degrees that ended `PredicateUndecided` now decide
   several cosines pay. Wall times of the same probes varied up to 4x between
   repeated runs of one binary on the shared host, so no time claim is made.
 
+## 2026-10-23: operation receipts
+
+Research item A01, rechecked at `f5195c7bd7` with rustc 1.98.1. Sizes are
+the WASM bindings (`--no-default-features --features wasm`), built as the
+size harness builds them at the `embedded` profile with opt-level `z`.
+
+**Receipt composition (A01).** No path was found in which a later strict
+operation reports a certified claim that depends on an earlier approximate
+decision, or in which composing or mapping an outcome drops a consumed
+terminal. The fixture is the unit cube, or square, united with its copy
+translated by `1 + z`, where `z` is an exact zero (angle addition) that strict
+predicates cannot decide: the strict Boolean ends `PredicateUndecided`
+(`Blocked` for regions), and under `APPROXIMATE_512` it succeeds and reports
+the terminal.
+
+- Meshes. Six strict Booleans of the approximate union (union, difference
+  and intersection with an enclosing and with an overlapping cube) report
+  `Certified` and give the same rows as the same Booleans of a copy rebuilt
+  from its buffers without retained facts, so none used an approximate fact
+  as proof. Their outputs keep `approximate_512_consumed` in their
+  construction evidence; the rebuilt copy's do not. Under `APPROXIMATE_512`,
+  a difference with the approximate union reports the terminal, because it
+  reuses that union's embedded-complex fact (M03), and the same difference
+  with the rebuilt copy does not. A strict transform keeps the evidence, and
+  flattening then extruding reports missing history, never certified history.
+- Regions. Strict translation and containment of the approximate region
+  report `Certified`, as they do on a strict rebuild of its boundary paths.
+  Under `APPROXIMATE_512` the same queries report the terminal, because they
+  reuse the region's approximate normalization, and on the rebuild they do
+  not. `Provisional::certified` is `None` for the approximate construction.
+- Composition. Regions and query values carry no inherited qualification
+  (see `docs/construction-evidence.md`), so the receipt of a chain of curve
+  operations is the caller's to keep. New `GeometryCertainty::combine` and
+  `GeometryOutcome::and_then` combine a dependent operation's receipt with the
+  one it consumed; `map` and `try_map` now state that they cannot see their
+  closure's decisions. Code, data and name sections of the WASM bindings are
+  byte-for-byte the same size before and after (6,615,547, 272,688 and
+  3,507,955 bytes).
+- Tests: `tests/receipt_composition.rs` (four) and a unit test in
+  `src/context.rs`. The mesh and region cases pass on the baseline; they fail
+  if Hypermesh and the root stop inheriting Boolean construction evidence, or
+  if Hypercurve stops reporting the reuse of an approximate normalization, and
+  the `and_then` cases fail if `and_then` keeps only the later receipt.
+- Not adopted: one shared receipt type in place of `GeometryCertainty`,
+  `MeshCertainty`, `TriangulationCertainty` and `CurveCertainty` and their
+  outcome structs. They are one-byte enums with equal discriminants, and the
+  conversions between them are six one-to-one matches outside tests, so a
+  shared type would remove about 30 lines of conversion and three near-equal
+  definitions, no measurable code, and would rename public types in five
+  crates and their WASM bindings.
+- Left open, with no wrong certified claim: Hypercircuit's
+  `BoardBoundaryGeometry` queries take an explicit `PredicatePolicy` and
+  return a `Classification` without a receipt. `classify_point` under
+  `APPROXIMATE_512`, for a point on the board edge up to `z`, returns
+  `Decided(Boundary)`, and only an enclosing `hypercurve::evaluate_under`
+  records that the terminal was consumed. In-repository callers pass `STRICT`,
+  and materialization marks an approximate retry as approximate. Other
+  explicit-policy APIs that return plain values, such as Hyperpath's
+  `PcbRect::new` and Hypersolve's `square_free_part`, have the same shape and
+  were not probed. Hypercurve's handling of approximately closed loops is in
+  its `FUTURE_WORK.md`, section 12.
+
 ## 2026-10-23: exact AMF decimal spelling
 
 `io::amf` now spells each binary64 coordinate and color component exactly, with

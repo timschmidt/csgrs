@@ -53,11 +53,26 @@ pub enum GeometryCertainty {
     Approximate512Consumed,
 }
 
+impl GeometryCertainty {
+    /// The certainty of a claim that depends on both receipts: approximate if
+    /// either consumed the terminal.
+    pub const fn combine(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Certified, Self::Certified) => Self::Certified,
+            _ => Self::Approximate512Consumed,
+        }
+    }
+}
+
 /// Completed CSG value paired with operation-local predicate certainty.
 ///
+/// The receipt covers the decisions of the operation that produced `value`.
 /// For meshes, inherited construction qualifications are separately queryable
 /// through [`hypermesh::TriangleMesh::construction_evidence`]. A certified local
 /// receipt does not clear an earlier approximate construction or missing history.
+/// Curve regions and query values carry no inherited qualification, so a
+/// caller that needs the certainty of a whole chain keeps it with
+/// [`Self::and_then`] or [`GeometryCertainty::combine`].
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct GeometryOutcome<T> {
     /// Completed value.
@@ -72,16 +87,37 @@ impl<T> GeometryOutcome<T> {
     }
 
     /// Transform the value without changing aggregate certainty.
+    ///
+    /// The closure's own predicate decisions are not recorded. Use
+    /// [`Self::and_then`] for an operation that returns its own outcome.
     pub fn map<U>(self, map: impl FnOnce(T) -> U) -> GeometryOutcome<U> {
         GeometryOutcome::new(map(self.value), self.certainty)
     }
 
     /// Fallibly transform the value without changing aggregate certainty.
+    ///
+    /// As with [`Self::map`], the closure's own decisions are not recorded.
     pub fn try_map<U, E>(
         self,
         map: impl FnOnce(T) -> Result<U, E>,
     ) -> Result<GeometryOutcome<U>, E> {
         map(self.value).map(|value| GeometryOutcome::new(value, self.certainty))
+    }
+
+    /// Run a dependent operation on the value and combine both receipts.
+    ///
+    /// The result is approximate if either this outcome or the dependent
+    /// operation consumed the terminal; a certified later step cannot certify
+    /// an earlier approximate one. A failed dependent operation returns its
+    /// error.
+    pub fn and_then<U, E>(
+        self,
+        operation: impl FnOnce(T) -> Result<GeometryOutcome<U>, E>,
+    ) -> Result<GeometryOutcome<U>, E> {
+        let certainty = self.certainty;
+        operation(self.value).map(|outcome| {
+            GeometryOutcome::new(outcome.value, certainty.combine(outcome.certainty))
+        })
     }
 
     /// Consume the outcome and return its value.
@@ -251,6 +287,34 @@ mod tests {
     fn contexts_and_certainty_remain_one_byte() {
         assert_eq!(core::mem::size_of::<GeometryContext>(), 1);
         assert_eq!(core::mem::size_of::<GeometryCertainty>(), 1);
+    }
+
+    #[test]
+    fn dependent_receipts_combine_to_the_weakest_certainty() {
+        use GeometryCertainty::{Approximate512Consumed as Approximate, Certified};
+        for (first, second, combined) in [
+            (Certified, Certified, Certified),
+            (Certified, Approximate, Approximate),
+            (Approximate, Certified, Approximate),
+            (Approximate, Approximate, Approximate),
+        ] {
+            assert_eq!(first.combine(second), combined);
+            let chained = GeometryOutcome::new(1, first)
+                .and_then(|value| Ok::<_, ()>(GeometryOutcome::new(value + 1, second)))
+                .unwrap();
+            assert_eq!(chained, GeometryOutcome::new(2, combined));
+            assert_eq!(
+                GeometryOutcome::new(1, first)
+                    .map(|value| value + 1)
+                    .certainty,
+                first
+            );
+        }
+        assert_eq!(
+            GeometryOutcome::new(1, Approximate)
+                .and_then(|_| Err::<GeometryOutcome<i32>, _>("failed")),
+            Err("failed")
+        );
     }
 
     #[test]

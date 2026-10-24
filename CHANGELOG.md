@@ -68,6 +68,10 @@ migrations, including changed serialized output, are listed in
   `GeometryContext` (`STRICT` or `APPROXIMATE_512`) and return a
   `GeometryOutcome<T>` with a `GeometryCertainty` receipt (`Certified` or
   `Approximate512Consumed`). The convenience entry points use `STRICT`.
+  `GeometryOutcome::and_then` runs a dependent operation and combines both
+  receipts, so a chain of curve operations, whose regions carry no inherited
+  evidence, keeps its weakest certainty; `GeometryCertainty::combine`
+  combines two receipts.
 - glTF/GLB import and export (`gltf-io`), VRML 2.0 import (`vrml-io`) and
   Gerber RS-274X import and export (`gerber-io`), all enabled by default.
   OBJ import can attach face metadata (`io::obj::from_obj_attributed`).

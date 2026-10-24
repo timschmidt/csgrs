@@ -296,6 +296,16 @@ Items H16–H20 of the 2026-10-22 research queue, rechecked at `d3d5e6ebef`. `PE
 
 **Open: retained scalar caches (H20).** After the nano board's materialization and report projection (87.6 MiB live), hypercurve structures are about 12% of the live heap by allocation site; exact rationals are 30%, rational derived forms retained by `hyperreal` 17% and `Computable` evaluation cells 9%, and 21% is allocated inside pi-Laurent sign normal forms. The pipeline peak is set by transient work (201–308 MiB against 108–170 MiB live at the end). A retention policy for those scalar caches belongs in `hyperreal`; the per-call memo variants rejected under "Closed normal-form memo sharing" in `PERFORMANCE.md` do not answer it, because this is a question of what outlives the call. Region query caches (exact signed area, boundary path views, classification indexes) add 27–240% to a queried region in the probe, but recomputing them repeats the same exact work, so no eviction was implemented.
 
+## 12. Consumers of approximately closed loops (2026-10-23)
+
+Found while checking receipt composition (item A01; the root `PERFORMANCE.md` has the record). The fixture is a unit square path whose last vertex is the first one translated by `(z, 0)`, where `z = sin(e + 1) - sin(e) cos(1) - cos(e) sin(1)` is an exact zero that strict predicates cannot decide. Strict `try_from_boundary_paths` returns `Blocked(RealSign)`; inside `provisional` it succeeds and consumes the terminal. Its consumers then behave as follows. No wrong certified answer was found.
+
+- **Strict replay is reported as invalid input.** Strict `boolean_region`, `transform_affine` and point classification of the region return `Invalid { cause: Topology("algebraic chord was replayed under a different predicate policy") }`. The region is valid under the policy that built it; the strict policy only cannot reuse its approximate fragment, which is a blocker. Reporting it as one would keep invalid input distinct and let callers that retry blocked work under `APPROXIMATE_512` (Hypercircuit's materialization does) retry it. Ten `validate_policy`-style sites in `bezier_region.rs` and `bezier_offset` use this message.
+- **Approximate translation and line-profile extraction fail.** Under `APPROXIMATE_512`, translating the region and extruding it through the root (`curve::try_translated_with_context`, `curve::try_extrude`) return `Invalid { cause: AmbiguousCurveStringConnection }`, although `classify_point` and `boolean_region` under the same policy consume it. Line-string connection compares the endpoints exactly instead of reusing the region's closure decision.
+- **Finite projection reports `Certified` under both policies.** It projects the retained loop as built; the closure decision belongs to the construction, as the root's operation-local receipts document.
+
+A region produced by an approximate union of two squares that touch up to `z` has none of these problems, since its loop closure is structural; all three are specific to a closure that the terminal decided.
+
 ## Fast paths added in this round
 
 Keep these in mind when measuring:
