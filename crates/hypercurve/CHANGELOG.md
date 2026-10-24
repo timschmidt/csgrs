@@ -157,7 +157,14 @@
   undecided, are now ordered. A local root also keeps the native algebraic
   roots it has been proved equal to. Rebuilding the bevel stroke of a
   chamfered quadratic path from its exported boundary now completes in
-  about a minute; it did not finish within forty minutes.
+  about a minute; it did not finish within forty minutes. With faster
+  remainders in Hypersolve it now takes about 15 s.
+- Filleting a vertex that an earlier fillet left as a tangent junction now
+  completes, in about five minutes; it did not finish within forty. Signs of
+  wide polynomials at a selected parameter, once certified nonzero, are
+  refined with interval Horner and Bernstein enclosures over integer common
+  denominators instead of normalized rationals. Every enclosure decides as
+  before.
 - Region construction and Booleans no longer fail with a `RealSign` blocker
   when two contacts lie on one circle and one supporting line but carry
   independent square roots. The line meets the circle in at most two points,

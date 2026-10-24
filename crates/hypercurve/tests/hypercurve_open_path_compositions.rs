@@ -466,9 +466,14 @@ proptest! {
 /// Filleting the same vertex twice. The first fillet makes the vertex a
 /// tangent junction between the trimmed rational cubic and the fillet arc;
 /// the second request locates candidate contacts on the radius-offset
-/// support through point-incidence signs that do not complete.
+/// support through point-incidence signs. Their two-radical leaves are
+/// univariate in one selected source, certified nonzero modulo a prime, and
+/// signed by refining the source until an interval enclosure separates.
+/// With wide coefficients (up to 64,000 bits) those enclosures took longer
+/// than forty minutes in normalized rational arithmetic; over integer
+/// common denominators the case completes in about five minutes.
 #[test]
-#[ignore = "open: fillet of a tangent junction left by an earlier fillet"]
+#[ignore = "slow: refilleting a filleted vertex takes about five minutes"]
 fn refilleting_a_filleted_vertex_completes() {
     let seed = Seed {
         x: -7,
@@ -968,10 +973,11 @@ fn round_stroke_of_a_filleted_heavy_nurbs_path_completes() {
 /// was once compared by refining both recursive projective parameters, and
 /// did not finish within forty minutes. Equal local polynomial roots are now
 /// ordered by one defining sign, and a range endpoint keeps its proof of
-/// equality with the degree-192 eliminant root that the system projects;
-/// that one proof is most of the remaining time.
+/// equality with the degree-192 eliminant root that the system projects.
+/// That proof is a remainder of the eliminant by the local root's degree-6
+/// tower relation, computed along the eliminant's Horner sequence.
 #[test]
-#[ignore = "slow: the chamfered quadratic bevel stroke round trip takes about a minute"]
+#[ignore = "slow: the chamfered quadratic bevel stroke round trip takes about fifteen seconds"]
 fn chamfered_quadratic_bevel_stroke_round_trips() {
     let seed = Seed {
         x: 2,

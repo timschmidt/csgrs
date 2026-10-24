@@ -3027,10 +3027,7 @@ fn coprime_filter_sign_by_bisection(
         if let Some(sign) = rational_horner_interval_strict_sign(coefficients, lower, upper) {
             return Ok(Some(sign));
         }
-        univariate_unit_interval_strict_bernstein_sign(
-            &polynomial_restrict_to_interval(coefficients, lower, upper),
-            policy,
-        )
+        interval_strict_bernstein_sign(coefficients, lower, upper, policy)
     };
     let mut completed = 0_usize;
     let mut target = 8_usize;
@@ -3379,9 +3376,151 @@ pub(crate) fn strict_coefficients_sign_on_parameter_interval(
     {
         return Ok(Some(sign));
     }
-    let restricted =
-        polynomial_restrict_to_interval(coefficients, interval.start(), interval.end());
-    univariate_unit_interval_strict_bernstein_sign(&restricted, policy)
+    interval_strict_bernstein_sign(coefficients, interval.start(), interval.end(), policy)
+}
+
+/// The strict sign of a polynomial on `[lower, upper]` from its Bernstein
+/// coefficients there: every coefficient strictly positive or every one
+/// strictly negative. `None` when a coefficient is zero or the signs mix.
+fn interval_strict_bernstein_sign(
+    coefficients: &[Real],
+    lower: &Real,
+    upper: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Option<RealSign>> {
+    if let Some(decision) = rational_interval_strict_bernstein_sign(coefficients, lower, upper) {
+        return Ok(decision);
+    }
+    univariate_unit_interval_strict_bernstein_sign(
+        &polynomial_restrict_to_interval(coefficients, lower, upper),
+        policy,
+    )
+}
+
+/// [`interval_strict_bernstein_sign`] for exact rational coefficients and
+/// endpoints, in integer arithmetic.
+///
+/// Write `f(x) = sum c_i x^i` of nominal degree `n`, `D` for the common
+/// denominator of the `c_i`, and `lower = p/q`, `upper = r/q` over a common
+/// positive denominator. With `g(t) = f(lower + (upper - lower) t)`, the
+/// Bernstein coefficients `b_k` of `g` on `[0, 1]` satisfy
+/// `(1 + x)^n g(x / (1 + x)) = sum_k b_k binom(n, k) x^k`, and
+/// `D q^n (1 + x)^n g(x / (1 + x)) = sum_i (D c_i) (p + r x)^i (q + q x)^(n - i)`,
+/// an integer polynomial evaluated by homogeneous Horner. Its coefficients are
+/// positive multiples of the `b_k`, so they decide exactly as the Bernstein
+/// coefficients do, without normalizing a rational at every step of the basis
+/// change. `None` when an input is not an exact rational.
+fn rational_interval_strict_bernstein_sign(
+    coefficients: &[Real],
+    lower: &Real,
+    upper: &Real,
+) -> Option<Option<RealSign>> {
+    use num::{BigInt, One, Zero};
+    let form = IntegerBracketPolynomial::new(coefficients, lower, upper)?;
+    let degree = form.coefficients.len() - 1;
+    // powers[m] holds (q + q x)^m.
+    let mut powers: Vec<Vec<BigInt>> = vec![vec![BigInt::one()]];
+    for _ in 0..degree {
+        let previous = powers.last().expect("the zeroth power is present");
+        let mut next = vec![BigInt::zero(); previous.len() + 1];
+        for (power, value) in previous.iter().enumerate() {
+            let scaled = value * &form.scale;
+            next[power] += &scaled;
+            next[power + 1] += scaled;
+        }
+        powers.push(next);
+    }
+    let (leading, rest) = form
+        .coefficients
+        .split_last()
+        .expect("a nominal polynomial has a leading coefficient");
+    let mut value = vec![leading.clone()];
+    for (index, coefficient) in rest.iter().enumerate().rev() {
+        let mut next = vec![BigInt::zero(); value.len() + 1];
+        for (power, entry) in value.iter().enumerate() {
+            next[power] += entry * &form.start;
+            next[power + 1] += entry * &form.end;
+        }
+        if !coefficient.is_zero() {
+            for (power, entry) in powers[degree - index].iter().enumerate() {
+                next[power] += coefficient * entry;
+            }
+        }
+        value = next;
+    }
+    Some(strict_common_sign(&value))
+}
+
+/// An exact rational polynomial and bracket over common denominators:
+/// `coefficients[i] = D c_i`, `lower = start / scale` and
+/// `upper = end / scale`, with `D` and `scale` positive integers. Positive
+/// scalings preserve every enclosure sign, so the integer forms decide as
+/// the rational ones do without normalizing a fraction at each operation.
+struct IntegerBracketPolynomial {
+    coefficients: Vec<num::BigInt>,
+    start: num::BigInt,
+    end: num::BigInt,
+    scale: num::BigInt,
+}
+
+impl IntegerBracketPolynomial {
+    fn new(coefficients: &[Real], lower: &Real, upper: &Real) -> Option<Self> {
+        use num::{BigInt, BigUint, Integer, One};
+        let rationals = coefficients
+            .iter()
+            .map(Real::exact_rational_ref)
+            .collect::<Option<Vec<_>>>()?;
+        if rationals.is_empty() {
+            return None;
+        }
+        let (lower, upper) = (lower.exact_rational_ref()?, upper.exact_rational_ref()?);
+        let integer = |value: &HyperRational, scale: &BigUint| {
+            let magnitude = BigInt::from(value.numerator() * (scale / value.denominator()));
+            if value.is_negative() {
+                -magnitude
+            } else {
+                magnitude
+            }
+        };
+        let mut common = BigUint::one();
+        for value in &rationals {
+            if !value.denominator().is_one() {
+                common = common.lcm(value.denominator());
+            }
+        }
+        let scale = lower.denominator().lcm(upper.denominator());
+        Some(Self {
+            coefficients: rationals
+                .iter()
+                .map(|value| integer(value, &common))
+                .collect(),
+            start: integer(lower, &scale),
+            end: integer(upper, &scale),
+            scale: BigInt::from(scale),
+        })
+    }
+}
+
+/// The sign shared by every entry, or `None` when an entry is zero or the
+/// signs differ.
+fn strict_common_sign(values: &[num::BigInt]) -> Option<RealSign> {
+    use num::Signed;
+    let mut strict_sign = None;
+    for entry in values {
+        let sign = if entry.is_positive() {
+            RealSign::Positive
+        } else if entry.is_negative() {
+            RealSign::Negative
+        } else {
+            return None;
+        };
+        match strict_sign {
+            Some(previous) if previous != sign => return None,
+            Some(_) => {}
+            None => strict_sign = Some(sign),
+        }
+    }
+    strict_sign
 }
 
 /// A strict sign of a rational polynomial over a rational interval from an
@@ -3389,40 +3528,33 @@ pub(crate) fn strict_coefficients_sign_on_parameter_interval(
 /// needs no basis change, so it settles comfortably separated values without
 /// restricting wide coefficients to the interval. `None` when the enclosure
 /// meets zero or an input is not an exact rational.
+///
+/// In the integer form of [`IntegerBracketPolynomial`], the running
+/// enclosure after the coefficient of `x^i` is `D q^(n - i)` times the
+/// rational one: each step multiplies by `[p, r] = q [lower, upper]` and adds
+/// `(D c_i) q^(n - i)`, so both decide alike.
 fn rational_horner_interval_strict_sign(
     coefficients: &[Real],
     lower: &Real,
     upper: &Real,
 ) -> Option<RealSign> {
-    let lower = lower.exact_rational_ref()?;
-    let upper = upper.exact_rational_ref()?;
-    let (leading, rest) = coefficients.split_last()?;
-    let leading = leading.exact_rational_ref()?;
+    let form = IntegerBracketPolynomial::new(coefficients, lower, upper)?;
+    let (leading, rest) = form.coefficients.split_last()?;
     let (mut low, mut high) = (leading.clone(), leading.clone());
+    let mut power = num::BigInt::from(1_u8);
     for coefficient in rest.iter().rev() {
-        let coefficient = coefficient.exact_rational_ref()?;
-        let products = [&low * lower, &low * upper, &high * lower, &high * upper];
-        let mut minimum = products[0].clone();
-        let mut maximum = products[0].clone();
-        for product in &products[1..] {
-            if *product < minimum {
-                minimum = product.clone();
-            }
-            if *product > maximum {
-                maximum = product.clone();
-            }
-        }
-        low = minimum + coefficient;
-        high = maximum + coefficient;
+        power *= &form.scale;
+        let products = [
+            &low * &form.start,
+            &low * &form.end,
+            &high * &form.start,
+            &high * &form.end,
+        ];
+        let term = coefficient * &power;
+        low = products.iter().min().expect("four products") + &term;
+        high = products.iter().max().expect("four products") + &term;
     }
-    let zero = HyperRational::zero();
-    if low > zero {
-        Some(RealSign::Positive)
-    } else if high < zero {
-        Some(RealSign::Negative)
-    } else {
-        None
-    }
+    strict_common_sign(&[low, high])
 }
 
 /// Encloses a polynomial value over one retained parameter interval with
@@ -8358,5 +8490,152 @@ mod finite_interval_import_regression {
                 ));
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod rational_bernstein_sign_regression {
+    use super::*;
+
+    fn fraction(numerator: i64, denominator: i64) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).unwrap()
+    }
+
+    /// The Bernstein decision through the exact rational basis change.
+    fn reference(coefficients: &[Real], lower: &Real, upper: &Real) -> Option<RealSign> {
+        univariate_unit_interval_strict_bernstein_sign(
+            &polynomial_restrict_to_interval(coefficients, lower, upper),
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+    }
+
+    /// Interval Horner in exact `Real` arithmetic.
+    fn horner_reference(coefficients: &[Real], lower: &Real, upper: &Real) -> Option<RealSign> {
+        let (leading, rest) = coefficients.split_last()?;
+        let (mut low, mut high) = (leading.clone(), leading.clone());
+        let strict = |left: &Real, right: &Real| {
+            compare_reals(left, right, &CurveContext::STRICT).expect("exact rationals")
+        };
+        for coefficient in rest.iter().rev() {
+            let products = [&low * lower, &low * upper, &high * lower, &high * upper];
+            let mut minimum = products[0].clone();
+            let mut maximum = products[0].clone();
+            for product in &products[1..] {
+                if strict(product, &minimum) == Ordering::Less {
+                    minimum = product.clone();
+                }
+                if strict(product, &maximum) == Ordering::Greater {
+                    maximum = product.clone();
+                }
+            }
+            low = minimum + coefficient;
+            high = maximum + coefficient;
+        }
+        if strict(&low, &Real::zero()) == Ordering::Greater {
+            Some(RealSign::Positive)
+        } else if strict(&high, &Real::zero()) == Ordering::Less {
+            Some(RealSign::Negative)
+        } else {
+            None
+        }
+    }
+
+    #[test]
+    fn integer_bernstein_sign_decides_as_the_rational_basis_change() {
+        // Small rational polynomials, including zero and vanishing leading
+        // coefficients, on wide, narrow, negative and root-containing
+        // brackets with unrelated denominators.
+        let brackets = [
+            (fraction(-3, 2), fraction(5, 3)),
+            (fraction(0, 1), fraction(1, 1)),
+            (fraction(1, 3), fraction(1, 2)),
+            (fraction(-7, 5), fraction(-1, 7)),
+            (fraction(63, 64), fraction(127, 128)),
+            (
+                fraction(1_000_001, 1_000_000),
+                fraction(1_000_003, 1_000_000),
+            ),
+        ];
+        let mut decided = [0_usize; 2];
+        let mut horner_decided = [0_usize; 2];
+        for degree in 0..=7_i64 {
+            for salt in 0..24_i64 {
+                let coefficients: Vec<_> = (0..=degree)
+                    .map(|index| {
+                        let numerator = ((index * 7 + salt * 5 + 3) % 13) - 6;
+                        if (index + salt) % 5 == 0 {
+                            Real::zero()
+                        } else {
+                            fraction(numerator, (index + salt) % 4 + 1)
+                        }
+                    })
+                    .collect();
+                for (lower, upper) in &brackets {
+                    let expected = reference(&coefficients, lower, upper);
+                    let actual =
+                        rational_interval_strict_bernstein_sign(&coefficients, lower, upper)
+                            .expect("rational inputs take the integer route");
+                    assert_eq!(actual, expected, "{coefficients:?} on [{lower}, {upper}]");
+                    decided[usize::from(actual.is_some())] += 1;
+                    let horner = rational_horner_interval_strict_sign(&coefficients, lower, upper);
+                    assert_eq!(
+                        horner,
+                        horner_reference(&coefficients, lower, upper),
+                        "Horner {coefficients:?} on [{lower}, {upper}]"
+                    );
+                    horner_decided[usize::from(horner.is_some())] += 1;
+                }
+            }
+        }
+        // Both outcomes are exercised.
+        assert!(decided[0] > 0 && decided[1] > 0, "{decided:?}");
+        assert!(
+            horner_decided[0] > 0 && horner_decided[1] > 0,
+            "{horner_decided:?}"
+        );
+        // (x - 1/3)^2 + 2^-200 is positive near 1/3, but only a narrow bracket
+        // separates it; the zero polynomial never has a strict sign.
+        let tiny = Real::from(2_i8).powi_i64(-200).unwrap();
+        let near_square = [&fraction(1, 9) + &tiny, fraction(-2, 3), Real::one()];
+        for (lower, upper) in [
+            (fraction(0, 1), fraction(1, 1)),
+            (fraction(1, 3) - &tiny, fraction(1, 3) + &tiny),
+        ] {
+            assert_eq!(
+                rational_interval_strict_bernstein_sign(&near_square, &lower, &upper),
+                Some(reference(&near_square, &lower, &upper)),
+            );
+        }
+        assert_eq!(
+            rational_interval_strict_bernstein_sign(&near_square, &fraction(1, 3), &fraction(1, 3)),
+            Some(Some(RealSign::Positive)),
+        );
+        assert_eq!(
+            rational_interval_strict_bernstein_sign(
+                &[Real::zero(), Real::zero()],
+                &fraction(0, 1),
+                &fraction(1, 1)
+            ),
+            Some(None),
+        );
+        // Nonrational inputs decline to the exact basis change.
+        let root = Real::from(2_i8).sqrt().unwrap();
+        assert_eq!(
+            rational_interval_strict_bernstein_sign(
+                &[root.clone(), Real::one()],
+                &fraction(0, 1),
+                &fraction(1, 1)
+            ),
+            None,
+        );
+        assert_eq!(
+            rational_interval_strict_bernstein_sign(
+                &[Real::one(), Real::one()],
+                &fraction(0, 1),
+                &root
+            ),
+            None,
+        );
     }
 }
