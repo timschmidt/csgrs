@@ -33,9 +33,17 @@ nonzero, and a modular proof of zero would need a height bound for tower
 coefficients after reduction modulo the source polynomials, which this crate
 does not compute. The remainder schedule and the source-quotient reduction
 were made cheaper instead (`PERFORMANCE.md`). A modular gcd over Q(alpha)
-remains a candidate for the degree-36/40 fibers over a degree-14 field in
-Hypercurve's `FUTURE_WORK.md` section 3, which do share a factor; it has not
-been measured on them.
+was also proposed for Hypercurve's remaining common-fiber stalls. The R16
+captures on 2026-10-25 separate two cases: the degree-36/40 rational pair has
+a verified degree-36 GCD that already finishes in about 26 diagnostic ms,
+followed by an unfinished Sturm sequence. The other pair has degrees 4/40
+over `Q(sqrt(89))`, a degree-10 carrier and selected rational degree 20;
+its verified GCD has degree 4, and general coefficient arithmetic dominates.
+The existing quotient-reduction API suffices for the first zero identity,
+but both tested consumer variants remain unadopted. See
+[Hypercurve's captured evidence](../hypercurve/FUTURE_WORK.md#3-selected-fiber-common-root-counting).
+No modular/CRT implementation is justified by assuming these are the same
+rational-field workload.
 
 ## Finite-fiber topology domains
 

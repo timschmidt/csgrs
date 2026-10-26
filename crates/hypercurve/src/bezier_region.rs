@@ -1219,6 +1219,36 @@ impl CurveRegionBoundaryLoop2 {
         &self.fragments
     }
 
+    /// Replay the proof that cyclic neighbours share one endpoint before a
+    /// sampling adapter chooses one representation for that endpoint.
+    pub(crate) fn replay_connectivity(&self, policy: &CurveContext) -> ExactCurveResult<()> {
+        if crate::curve::replay_path_certificate(self.connectivity_policy, policy) {
+            return Ok(());
+        }
+        for (left, right) in self
+            .fragments
+            .iter()
+            .zip(self.fragments.iter().cycle().skip(1))
+        {
+            match curve_fragment_endpoints_equal(left, false, right, true, policy) {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => {
+                    return Err(ExactCurveError::invalid_unattributed(
+                        CurveOperation2::Evaluation,
+                        CurveError::DisconnectedCurvePath,
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked_unattributed(
+                        CurveOperation2::Evaluation,
+                        reason,
+                    ));
+                }
+            }
+        }
+        Ok(())
+    }
+
     pub(crate) fn without_arrangement_sources(mut self) -> Self {
         self.arrangement_sources = None;
         self
@@ -1414,14 +1444,7 @@ fn validate_retained_fragment_provenance(
                 ))),
             }
         }
-        BezierSplitFragment2::AlgebraicChord(chord) => {
-            if chord.policy() != *policy && chord.policy() != policy.strict_counterpart() {
-                return Err(CurveError::Topology(
-                    "algebraic chord was replayed under a different predicate policy".into(),
-                ));
-            }
-            Ok(())
-        }
+        BezierSplitFragment2::AlgebraicChord(chord) => chord.validate_policy(policy),
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => fragment.validate_policy(policy),
         BezierSplitFragment2::SelectedFiber(fragment) => {
             match fragment
@@ -2749,9 +2772,13 @@ impl CurveRegion2 {
         let transformed = transformed
             .with_certified_filled_side_is_left(sides)
             .map_err(affine_region_error)?;
-        if let Classification::Decided(region) = transformed
-            .certified_line_image_region(policy)
-            .map_err(affine_region_error)?
+        // This accelerator has a strictly closed native contour contract.
+        // A qualified transform keeps its retained boundary evidence instead
+        // of requiring a stricter native view or certifying that view's cache.
+        if policy.retained_object_policy() == policy.strict_counterpart()
+            && let Classification::Decided(region) = transformed
+                .certified_line_image_region(policy)
+                .map_err(affine_region_error)?
         {
             transformed.data.line_image_region.certify(Some(region));
         }
@@ -6715,7 +6742,7 @@ fn retained_line_fragment_endpoints(
 }
 
 /// Reuses exact scalar witnesses while retaining selected endpoint authority.
-fn retained_native_line_point(
+pub(crate) fn retained_native_line_point(
     point: &CurvePoint2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Point2>> {

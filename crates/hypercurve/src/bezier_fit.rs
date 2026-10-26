@@ -118,7 +118,10 @@ pub enum BezierPointFitRelation {
 pub enum BezierLineImageFitRelation {
     /// Every control point is certified on the endpoint line segment.
     Fit(CertifiedBezierLineImage2),
-    /// At least one control point is certified off the endpoint line segment.
+    /// No nondegenerate endpoint-segment fit was established.
+    ///
+    /// This includes coincident endpoints, so it does not certify a nonlinear
+    /// image: a collapsed image may still admit an exact point fit.
     NotLine,
 }
 
@@ -818,3 +821,6 @@ fn point_on_line_interval(
     }
     envelope.contains_point_with_policy(point, policy)
 }
+
+#[cfg(test)]
+mod tests;

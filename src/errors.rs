@@ -166,9 +166,9 @@ impl ValidationErrorKind {
 
 const fn curve_error_kind(source: &CurveError) -> ValidationErrorKind {
     match source {
-        CurveError::AmbiguousBulge | CurveError::AmbiguousCurveStringConnection => {
-            ValidationErrorKind::Undecided
-        },
+        CurveError::IncompatiblePredicatePolicy
+        | CurveError::AmbiguousBulge
+        | CurveError::AmbiguousCurveStringConnection => ValidationErrorKind::Undecided,
         CurveError::UnsupportedNurbsInterpolationDivision { .. } => {
             ValidationErrorKind::Unsupported
         },

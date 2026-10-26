@@ -417,6 +417,249 @@ fn partial_revolution_at_negative_radius_is_outward_oriented() {
     }
 }
 
+/// A disjoint positive-radius component cannot change the negative component's
+/// angular lattice. For three slices the negative outer triangle reaches x=-2,
+/// while the reflected positive triangle reaches only x=-1. Thus (-3/2,1/2,0)
+/// is an independent interior witness for the authored negative meridian.
+#[test]
+fn full_revolution_preserves_each_disjoint_components_authored_meridian() {
+    let negative = rectangle(&int(-2), &int(0), &int(-1), &int(1));
+    let positive = rectangle(&int(1), &int(2), &int(2), &int(3));
+    for segments in [3, 5, 6] {
+        for reversed in [false, true] {
+            let (alone, _) = exact_solid(
+                curve::revolve(
+                    &region(std::slice::from_ref(&negative), &[], reversed),
+                    int(360),
+                    segments,
+                    &GeometryContext::STRICT,
+                ),
+                "negative component alone",
+            );
+            let (combined, _) = exact_solid(
+                curve::revolve(
+                    &region(&[negative.clone(), positive.clone()], &[], reversed),
+                    int(360),
+                    segments,
+                    &GeometryContext::STRICT,
+                ),
+                "disjoint signed components",
+            );
+            let witness = Point3::new(q(-3, 2), q(1, 2), Real::zero());
+            for mesh in [&alone, &combined] {
+                let contained = mesh.contains_point(&STRICT_MESH, &witness).unwrap();
+                assert_eq!(contained.certainty, MeshCertainty::Certified);
+                assert!(contained.value, "lost negative meridian at N={segments}");
+            }
+            assert!(
+                alone
+                    .positions
+                    .iter()
+                    .all(|point| contains_point(&combined, point)),
+                "unrelated component changed the angular lattice at N={segments}"
+            );
+        }
+    }
+}
+
+#[test]
+fn full_revolution_canonicalizes_integer_turn_coverage() {
+    let profile = region(&[rectangle(&int(-2), &int(0), &int(-1), &int(1))], &[], false);
+    for segments in [3, 5, 6] {
+        for direction in [-1, 1] {
+            let (once, _) = exact_solid(
+                curve::revolve(
+                    &profile,
+                    int(direction * 360),
+                    segments,
+                    &GeometryContext::STRICT,
+                ),
+                "one turn",
+            );
+            for turns in [2, 3] {
+                let (repeated, _) = exact_solid(
+                    curve::revolve(
+                        &profile,
+                        int(direction * turns * 360),
+                        segments,
+                        &GeometryContext::STRICT,
+                    ),
+                    "repeated full coverage",
+                );
+                assert_eq!(repeated.positions, once.positions);
+                assert_eq!(repeated.triangles, once.triangles);
+            }
+        }
+    }
+}
+
+#[test]
+fn revolution_keeps_explicit_start_and_rejects_oversized_partial_turns() {
+    let profile = region(&[rectangle(&int(-2), &int(0), &int(-1), &int(1))], &[], false);
+    let start = int(37);
+    let theta = (start.clone() * Real::pi() / int(180)).unwrap();
+    let vertex = Point3::new(
+        int(-2) * theta.clone().cos(),
+        Real::zero(),
+        int(-2) * theta.sin(),
+    );
+    for segments in [3, 5, 6] {
+        for angle in [-90, 90, -360, 360, -720, 720, 1080] {
+            let (mesh, _) = exact_solid(
+                curve::revolve_from(
+                    &profile,
+                    start.clone(),
+                    int(angle),
+                    segments,
+                    &GeometryContext::STRICT,
+                ),
+                "explicit start",
+            );
+            assert!(
+                contains_point(&mesh, &vertex),
+                "lost start=37 at sweep={angle}, N={segments}"
+            );
+        }
+    }
+    for direction in [-1, 1] {
+        // Retain the old partial-sweep domain, including arbitrarily close to
+        // a complete turn. Oversized noninteger sweeps are neither saturated
+        // nor reduced modulo one turn.
+        let delta = power_of_two(-20);
+        exact_solid(
+            curve::revolve(
+                &profile,
+                int(direction) * (int(360) - delta.clone()),
+                3,
+                &GeometryContext::STRICT,
+            ),
+            "just below a full turn",
+        );
+        for angle in [int(450), int(360) + delta] {
+            let error =
+                curve::revolve(&profile, int(direction) * angle, 3, &GeometryContext::STRICT)
+                    .unwrap_err();
+            assert_eq!(error, ValidationError::InvalidArguments);
+        }
+    }
+}
+
+#[test]
+fn signed_revolution_composes_after_operand_drop_and_repeated_cuts() {
+    for segments in [3, 5, 6] {
+        let negative = rectangle(&int(-2), &int(0), &int(-1), &int(1));
+        let positive = rectangle(&int(1), &int(2), &int(2), &int(3));
+        let build = |rings: &[Vec<[Real; 2]>]| {
+            exact_solid(
+                curve::revolve(
+                    &region(rings, &[], false),
+                    int(360),
+                    segments,
+                    &GeometryContext::STRICT,
+                ),
+                "composition source",
+            )
+            .0
+        };
+        let tool = build(std::slice::from_ref(&positive));
+        let negative_volume = six_volume(&build(std::slice::from_ref(&negative)));
+        // Reversing the order of disconnected input components must preserve
+        // both geometric sets, independently of source and context lifetimes.
+        let mut body = build(&[positive, negative]);
+        let whole_volume = negative_volume.clone() + six_volume(&tool);
+        for generation in 1..=8 {
+            let (remaining, volume) = exact_solid(
+                solid::boolean_with_context(
+                    &body,
+                    &tool,
+                    BooleanOp::Difference,
+                    &GeometryContext::STRICT,
+                )
+                .map_err(ValidationError::from),
+                "remove positive component",
+            );
+            assert!(
+                strictly_equal(&volume, &negative_volume),
+                "generation {generation}"
+            );
+            assert!(
+                remaining
+                    .contains_point(
+                        &STRICT_MESH,
+                        &Point3::new(q(-3, 2), q(1, 2), Real::zero())
+                    )
+                    .unwrap()
+                    .value
+            );
+            let (restored, volume) = exact_solid(
+                solid::boolean_with_context(
+                    &remaining,
+                    &tool,
+                    BooleanOp::Union,
+                    &GeometryContext::STRICT,
+                )
+                .map_err(ValidationError::from),
+                "restore positive component",
+            );
+            assert!(
+                strictly_equal(&volume, &whole_volume),
+                "generation {generation}"
+            );
+            body = restored;
+        }
+        let empty = solid::boolean_with_context(
+            &body,
+            &body,
+            BooleanOp::Difference,
+            &GeometryContext::STRICT,
+        )
+        .unwrap();
+        assert_eq!(empty.certainty, GeometryCertainty::Certified);
+        assert!(empty.value.positions.is_empty() && empty.value.triangles.is_empty());
+        let recovered = solid::boolean_with_context(
+            &empty.value,
+            &body,
+            BooleanOp::Union,
+            &GeometryContext::STRICT,
+        )
+        .unwrap();
+        assert!(strictly_equal(&six_volume(&recovered.value), &whole_volume));
+    }
+}
+
+#[test]
+fn revolution_winding_oracle_detects_unregularized_overlapping_components() {
+    let right = rectangle(&int(1), &int(0), &int(3), &int(2));
+    let left = rectangle(&int(-3), &int(0), &int(-1), &int(2));
+    for segments in [3, 5, 6] {
+        let pieces = [right.clone(), left.clone()].map(|ring| {
+            exact_solid(
+                curve::revolve(
+                    &region(&[ring], &[], false),
+                    int(360),
+                    segments,
+                    &GeometryContext::STRICT,
+                ),
+                "mutation piece",
+            )
+            .0
+        });
+        let unregularized = solid::merge(&pieces).unwrap();
+        let witness = Point3::new(q(1, 7), q(3, 2), q(11, 7));
+        assert_eq!(vertical_prism_winding(&unregularized, &witness), Some(2));
+        let (united, _) = exact_solid(
+            curve::revolve(
+                &region(&[right.clone(), left.clone()], &[], false),
+                int(360),
+                segments,
+                &GeometryContext::STRICT,
+            ),
+            "regularized opposite components",
+        );
+        assert_eq!(vertical_prism_winding(&united, &witness), Some(1));
+    }
+}
+
 #[test]
 fn revolution_profile_crossing_the_axis_is_invalid_input() {
     let points = rectangle(&q(-1, 3), &Real::zero(), &q(1, 3), &Real::one());
@@ -430,12 +673,204 @@ fn revolution_profile_crossing_the_axis_is_invalid_input() {
     assert_eq!(error.kind(), ValidationErrorKind::InvalidInput, "{error:?}");
 }
 
-/// A full turn sweeps material at radius `-x` through the same circles as at
-/// `x`, so it must equal the full turn of the region's fold: the material at
-/// positive radius united with the mirror image of the material at negative
-/// radius. Each input is paired with a hand-built fold.
+/// Oriented +Y ray crossing count for the horizontal caps of these prisms.
+/// Vertical walls have zero projected area. Skip rays on a cap triangulation
+/// edge; a closed manifold or a nonzero-winding containment test alone would
+/// not detect two overlapping outward shells with winding two.
+fn vertical_prism_winding(mesh: &TriangleMesh, point: &Point3) -> Option<i32> {
+    let cross = |a: &Point3, b: &Point3, c: &Point3| {
+        (b.x.clone() - a.x.clone()) * (c.z.clone() - a.z.clone())
+            - (b.z.clone() - a.z.clone()) * (c.x.clone() - a.x.clone())
+    };
+    let sign = |value: Real| {
+        hyperlimit::classify_real_sign(&value, PredicatePolicy::STRICT)
+            .value()
+            .unwrap()
+    };
+    let mut winding = 0;
+    for triangle in mesh.triangles.iter() {
+        let [a, b, c] = triangle.indices().map(|i| &mesh.positions[i]);
+        let orientation = sign(cross(a, b, c));
+        if orientation == hyperlimit::Sign::Zero {
+            continue;
+        }
+        assert!(strictly_equal(&a.y, &b.y) && strictly_equal(&a.y, &c.y));
+        if hyperlimit::compare_reals(&a.y, &point.y, PredicatePolicy::STRICT).value()
+            != Some(Ordering::Greater)
+        {
+            continue;
+        }
+        let sides = [
+            sign(cross(a, b, point)),
+            sign(cross(b, c, point)),
+            sign(cross(c, a, point)),
+        ];
+        if sides
+            .iter()
+            .any(|side| *side != orientation && *side != hyperlimit::Sign::Zero)
+        {
+            continue;
+        }
+        if sides.contains(&hyperlimit::Sign::Zero) {
+            return None;
+        }
+        winding += if orientation == hyperlimit::Sign::Negative {
+            1
+        } else {
+            -1
+        };
+    }
+    Some(winding)
+}
+
+/// Independent prism half-space oracle for rectangular radial profiles. Each
+/// signed side has its own polygon phase; remove that side's holes before
+/// uniting the two swept sets. Query points on any support plane are omitted
+/// here; authored meridian and axis-contact tests cover boundary behavior.
+fn check_rectangular_revolution_membership(
+    mesh: &TriangleMesh,
+    materials: &[Vec<[Real; 2]>],
+    holes: &[Vec<[Real; 2]>],
+    segments: usize,
+) {
+    type Prism = ([Real; 2], Vec<[Real; 2]>, Vec<[Real; 2]>);
+    let prepare = |rectangles: &[Vec<[Real; 2]>], negative: bool| -> Vec<Prism> {
+        rectangles
+            .iter()
+            .filter_map(|rectangle| {
+                assert_eq!(rectangle.len(), 4);
+                let (mut low, high) = if negative {
+                    (-rectangle[2][0].clone(), -rectangle[0][0].clone())
+                } else {
+                    (rectangle[0][0].clone(), rectangle[2][0].clone())
+                };
+                if hyperlimit::classify_real_sign(&high, PredicatePolicy::STRICT).value()
+                    != Some(hyperlimit::Sign::Positive)
+                {
+                    return None;
+                }
+                if hyperlimit::classify_real_sign(&low, PredicatePolicy::STRICT).value()
+                    != Some(hyperlimit::Sign::Positive)
+                {
+                    low = Real::zero();
+                }
+                let polygon = |radius: Real| {
+                    if radius == Real::zero() {
+                        return Vec::new();
+                    }
+                    let signed = if negative { -radius } else { radius };
+                    (0..segments)
+                        .map(|i| {
+                            let theta = (Real::tau() * Real::from(i as u64)
+                                / Real::from(segments as u64))
+                            .unwrap();
+                            [
+                                signed.clone() * theta.clone().cos(),
+                                signed.clone() * theta.sin(),
+                            ]
+                        })
+                        .collect()
+                };
+                Some((
+                    [rectangle[0][1].clone(), rectangle[2][1].clone()],
+                    polygon(high),
+                    polygon(low),
+                ))
+            })
+            .collect()
+    };
+    let sides =
+        [false, true].map(|negative| (prepare(materials, negative), prepare(holes, negative)));
+    let polygon_contains = |polygon: &[[Real; 2]], x: &Real, z: &Real| -> Option<bool> {
+        if polygon.is_empty() {
+            return Some(false);
+        }
+        let mut inside = true;
+        for i in 0..polygon.len() {
+            let a = &polygon[i];
+            let b = &polygon[(i + 1) % polygon.len()];
+            let cross = (b[0].clone() - a[0].clone()) * (z.clone() - a[1].clone())
+                - (b[1].clone() - a[1].clone()) * (x.clone() - a[0].clone());
+            match hyperlimit::classify_real_sign(&cross, PredicatePolicy::STRICT)
+                .value()
+                .unwrap()
+            {
+                hyperlimit::Sign::Zero => return None,
+                hyperlimit::Sign::Negative => inside = false,
+                hyperlimit::Sign::Positive => {},
+            }
+        }
+        Some(inside)
+    };
+    let mut checked = 0;
+    let mut interior = 0;
+    let mut winding_checks = 0;
+    for twice_y in [-1, 1, 3, 5, 7, 9] {
+        for nx in [-23, -17, -11, -5, 1, 7, 13, 19] {
+            for nz in [-19, -13, -7, -1, 5, 11, 17, 23] {
+                let (x, y, z) = (q(nx, 7), q(twice_y, 2), q(nz, 7));
+                let in_prism = |prism: &Prism| -> Option<bool> {
+                    if hyperlimit::compare_reals(&y, &prism.0[0], PredicatePolicy::STRICT)
+                        .value()
+                        != Some(Ordering::Greater)
+                        || hyperlimit::compare_reals(&y, &prism.0[1], PredicatePolicy::STRICT)
+                            .value()
+                            != Some(Ordering::Less)
+                    {
+                        return Some(false);
+                    }
+                    Some(
+                        polygon_contains(&prism.1, &x, &z)?
+                            && !polygon_contains(&prism.2, &x, &z)?,
+                    )
+                };
+                let in_any = |prisms: &[Prism]| -> Option<bool> {
+                    let mut any = false;
+                    for prism in prisms {
+                        any |= in_prism(prism)?;
+                    }
+                    Some(any)
+                };
+                let expected = sides.iter().try_fold(false, |inside, (materials, holes)| {
+                    Some(inside | (in_any(materials)? && !in_any(holes)?))
+                });
+                if let Some(expected) = expected {
+                    let point = Point3::new(x, y, z);
+                    let actual = mesh.contains_point(&STRICT_MESH, &point).unwrap();
+                    assert_eq!(actual.certainty, MeshCertainty::Certified);
+                    assert_eq!(
+                        actual.value, expected,
+                        "N={segments}, query=({nx}/7,{twice_y}/2,{nz}/7)"
+                    );
+                    checked += 1;
+                    interior += usize::from(expected);
+                    if [1, 7].contains(&nx)
+                        && [5, 11].contains(&nz)
+                        && let Some(winding) = vertical_prism_winding(mesh, &point)
+                    {
+                        assert_eq!(
+                            winding,
+                            i32::from(expected),
+                            "overlapping or inward material at N={segments}"
+                        );
+                        winding_checks += 1;
+                    }
+                }
+            }
+        }
+    }
+    assert!(
+        checked > 250 && interior > 0 && winding_checks > 10,
+        "oracle must exercise material and exterior"
+    );
+}
+
+/// Even lattices have the same sampled set as the analytic radial fold. Odd
+/// lattices retain both phases instead (the R01 semantic migration). In both
+/// cases independently check material membership, including overlapping pieces
+/// and the previous winding-two regression, rather than just summed volume.
 #[test]
-fn full_revolution_revolves_the_fold_of_material_across_the_axis() {
+fn full_revolution_regularizes_signed_material_without_phase_loss() {
     let (zero, one) = (Real::zero(), Real::one());
     let cases = [
         // One loop crossing the axis: [-1/3, 2/3] x [0, 1] folds to [0, 2/3] x [0, 1].
@@ -494,11 +929,15 @@ fn full_revolution_revolves_the_fold_of_material_across_the_axis() {
         for reversed in [false, true] {
             let input = region(materials, holes, reversed);
             let folded = region(folded_materials, folded_holes, false);
-            for segments in [3, 4] {
+            for segments in [3, 4, 5, 6] {
                 let (mesh, volume) = exact_solid(
                     curve::revolve(&input, int(360), segments, &GeometryContext::STRICT),
                     "axis-crossing full revolution",
                 );
+                check_rectangular_revolution_membership(&mesh, materials, holes, segments);
+                if !segments.is_multiple_of(2) {
+                    continue;
+                }
                 let (expected, expected_volume) = exact_solid(
                     curve::revolve(&folded, int(360), segments, &GeometryContext::STRICT),
                     "folded full revolution",

@@ -186,6 +186,15 @@ impl Real {
     /// beyond the cyclotomic order limit, such as a rotation by 1/10000 degree
     /// about a skew axis or a compound Euler rotation, need this degree or work.
     ///
+    /// If this attempt's initial expansion declines, a final recovery can
+    /// prove a sum of products zero by removing common polynomial factors.
+    /// It retains at most 12 factors per product, checks their domains
+    /// including inverse nonzero obligations, and expands only the residual.
+    /// Each expanded factor and residual keeps the degree and term limits
+    /// above; an unexpanded product can have greater total degree. Recovery
+    /// shares the remaining node and work budgets with the failed expansion
+    /// and observes the same cancellation signal. No work is refunded.
+    ///
     /// It performs no approximation, and `None` means only that recognition
     /// declined; nothing is retained as negative evidence. A completed proof is
     /// retained as the node's exact sign. A decline can cost four times the

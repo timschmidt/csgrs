@@ -1727,6 +1727,10 @@ impl Computable {
 
     /// Multiply this number by some other number.
     pub fn multiply(self, other: Computable) -> Computable {
+        if let Some(result) = self.shared_reciprocal_product(&other) {
+            crate::trace_dispatch!("computable", "multiply", "shared-reciprocal-product");
+            return result;
+        }
         if let Some(result) = self.shared_square_quotient(&other) {
             crate::trace_dispatch!("computable", "multiply", "shared-square-quotient");
             return result;

@@ -193,7 +193,10 @@ impl Node {
 impl Binary64Interval {
     /// `Some(true)` proves and `Some(false)` refutes a condition on a value
     /// enclosed by this interval; `None` leaves it to the exact routes.
-    fn decide_imported_domain_condition(&self, condition: &ImportedDomainCondition) -> Option<bool> {
+    fn decide_imported_domain_condition(
+        &self,
+        condition: &ImportedDomainCondition,
+    ) -> Option<bool> {
         let (lower, upper) = (self.lower, self.upper);
         let (endpoint, inclusive, above) = match condition {
             ImportedDomainCondition::NonZero => {
@@ -304,31 +307,34 @@ impl Computable {
             }
             // Stores x for ln(1+x).
             Approximation::PrescaledLn(x) => (x, [Some(Above(-one(), false)), None]),
-            Approximation::PrescaledAsin(x) | Approximation::AsinDeferred(x) => (
-                x,
-                [Some(Above(-one(), true)), Some(Below(one(), true))],
-            ),
+            Approximation::PrescaledAsin(x) | Approximation::AsinDeferred(x) => {
+                (x, [Some(Above(-one(), true)), Some(Below(one(), true))])
+            }
             Approximation::AcosPositive(x) => (
                 x,
-                [Some(Above(Rational::zero(), true)), Some(Below(one(), true))],
+                [
+                    Some(Above(Rational::zero(), true)),
+                    Some(Below(one(), true)),
+                ],
             ),
             Approximation::AcoshNearOne(x) | Approximation::AcoshDirect(x) => {
                 (x, [Some(Above(one(), true)), None])
             }
-            Approximation::PrescaledAtanh(x) | Approximation::AtanhDirect(x) => (
-                x,
-                [Some(Above(-one(), false)), Some(Below(one(), false))],
-            ),
+            Approximation::PrescaledAtanh(x) | Approximation::AtanhDirect(x) => {
+                (x, [Some(Above(-one(), false)), Some(Below(one(), false))])
+            }
             Approximation::NormalQuantile(data) => (
                 &data.p,
-                [Some(Above(Rational::zero(), false)), Some(Below(one(), false))],
+                [
+                    Some(Above(Rational::zero(), false)),
+                    Some(Below(one(), false)),
+                ],
             ),
             // The removable small-angle kernels evaluate their analytic
             // continuations only on the constructor-certified |x| <= 3/4.
-            Approximation::SincSmall(x) | Approximation::CoscSmall(x) => (
-                x,
-                [Some(Above(-small(), true)), Some(Below(small(), true))],
-            ),
+            Approximation::SincSmall(x) | Approximation::CoscSmall(x) => {
+                (x, [Some(Above(-small(), true)), Some(Below(small(), true))])
+            }
             _ => return Ok(()),
         };
         // A defined exact identity of the node itself proves its domain without
@@ -358,15 +364,104 @@ impl Computable {
         }
     }
 
+    // Native rational cotangents may retain sin(q + a*pi) as the
+    // denominator after range reduction. For rational q != 0 and rational a,
+    // neither sine nor cosine vanishes: otherwise q would be a nonzero
+    // rational multiple of pi. Replay that proof from the graph, only after
+    // ordinary nonzero admission declines. No sign or wire flag is trusted.
+    // The post-order import walk has already proved every child domain.
+    fn imported_affine_pi_trig_nonzero(&self) -> bool {
+        // This proof needs only the stored rational/linear-pi shape. Do not
+        // expand coefficients: even a single binary shift can denote a very
+        // large rational. Sign and finite binary shifts preserve nonzeroness.
+        fn unwrapped<'a>(
+            mut value: &'a Computable,
+            remaining: &mut usize,
+        ) -> Option<&'a Approximation> {
+            loop {
+                *remaining = remaining.checked_sub(1)?;
+                if should_stop(&value.signal) {
+                    return None;
+                }
+                match &value.internal.approximation {
+                    Approximation::Negate(child) | Approximation::Offset(child, _) => {
+                        value = child;
+                    }
+                    approximation => return Some(approximation),
+                }
+            }
+        }
+
+        fn rational_leaf(value: &Computable, remaining: &mut usize) -> Option<bool> {
+            match unwrapped(value, remaining)? {
+                Approximation::One => Some(true),
+                Approximation::Int(value) => Some(!value.is_zero()),
+                Approximation::Ratio(value) => Some(!value.is_zero()),
+                _ => None,
+            }
+        }
+
+        fn pi_multiple(value: &Computable, remaining: &mut usize) -> bool {
+            match unwrapped(value, remaining) {
+                Some(Approximation::Constant(SharedConstant::Pi | SharedConstant::Tau)) => true,
+                Some(Approximation::Multiply(left, right)) => {
+                    (rational_leaf(left, remaining).is_some() && pi_multiple(right, remaining))
+                        || (rational_leaf(right, remaining).is_some()
+                            && pi_multiple(left, remaining))
+                }
+                _ => false,
+            }
+        }
+
+        let mut image = self;
+        for _ in 0..48 {
+            if should_stop(&image.signal) {
+                return false;
+            }
+            match &image.internal.approximation {
+                Approximation::Negate(child) | Approximation::Offset(child, _) => {
+                    image = child;
+                }
+                Approximation::PrescaledSin(argument) | Approximation::PrescaledCos(argument) => {
+                    let remaining = &mut 48;
+                    return match unwrapped(argument, remaining) {
+                        Some(Approximation::One) => true,
+                        Some(Approximation::Int(value)) => !value.is_zero(),
+                        Some(Approximation::Ratio(value)) => !value.is_zero(),
+                        Some(Approximation::Add(left, right)) => {
+                            (rational_leaf(left, remaining) == Some(true)
+                                && pi_multiple(right, remaining))
+                                || (rational_leaf(right, remaining) == Some(true)
+                                    && pi_multiple(left, remaining))
+                        }
+                        _ => false,
+                    };
+                }
+                _ => return false,
+            }
+        }
+        false
+    }
+
     /// `Some(true)` proves the condition and `Some(false)` refutes it.
     fn imported_domain_condition(&self, condition: ImportedDomainCondition) -> Option<bool> {
         // Native Real partial operations certify operand signs at this floor.
         let floor = crate::Real::PARTIAL_CMP_MIN_PRECISION;
         let (endpoint, inclusive, above) = match condition {
             ImportedDomainCondition::NonZero => {
-                return self.sign_until(floor).map(|sign| sign != RealSign::Zero);
+                return self
+                    .sign_until(floor)
+                    .map(|sign| sign != RealSign::Zero)
+                    .or_else(|| self.imported_affine_pi_trig_nonzero().then_some(true));
             }
             ImportedDomainCondition::TrigNonZero(cosine) => {
+                // Keep tiny shifted arguments symbolic. On [-1,1], cosine
+                // is positive and sine vanishes exactly at zero. This also
+                // avoids expanding a potentially enormous rational scale in
+                // the general Laurent proof below.
+                if let Some(sign) = self.small_trig_argument_sign() {
+                    return Some(cosine || sign != Sign::NoSign);
+                }
                 // Bounded refinement cannot prove a transcendental zero, so
                 // read the exact pi-Laurent normal form first. Since pi is
                 // transcendental, an algebraic x has cos(x) != 0 and has

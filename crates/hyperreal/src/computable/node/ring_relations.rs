@@ -128,7 +128,19 @@ impl Computable {
         recognition.rational_squares = Some(Vec::new());
         recognition.extended_degree = true;
         recognition.operations_left = RingRecognition::EXTENDED_OPERATIONS;
-        let quotient = recognition.expand_quotient(self, RingRecognition::MAX_DEPTH)?;
+        let quotient = recognition
+            .expand_quotient(self, RingRecognition::MAX_DEPTH)
+            .or_else(|| {
+                // Preserve every original success and recovery. Only after
+                // they decline may a root sum cancel common factors without
+                // expanding their full product. Reuse the same completed
+                // projections, inverse witnesses and remaining work budget.
+                if let Approximation::Add(a, b) = &self.internal.approximation {
+                    recognition.recover_factored_zero::<true>(a, b, RingRecognition::MAX_DEPTH - 1)
+                } else {
+                    None
+                }
+            })?;
         let rational = recognition.project_quotient(&quotient)?;
         if should_stop(&self.signal) {
             return None;

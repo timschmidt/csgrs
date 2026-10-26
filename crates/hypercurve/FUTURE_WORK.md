@@ -50,7 +50,10 @@ The new path would plug into `RecursiveQuadraticValue::sign` after the existing 
 - **Dyadic shortening of wide rational brackets** before the Bernstein basis change: no gain.
 - **A mean-value enclosure** (exact midpoint plus a Horner bound on P′) in the coprime bisection: slower. Exact interval Horner over endpoints of about 2,000 bits inflates intermediates.
 
-The modular step is what is missing from all of these. Implement it first, then measure.
+This was the original hypothesis, not a prerequisite for further work. H13
+below disproved it for the captured refilleting leaves. A different residual
+stall must first supply its actual coefficients, selected sources and cost
+trace (R16 of the 25 October handoff) before another modular experiment.
 
 **Rechecked for `refilleting` (H13, 2026-10-23).** That case's leaves do not
 match the design's premise. After affine source collapse each leaf is a
@@ -84,13 +87,47 @@ strokes; capture their leaves before implementing it.
 
 ## 3. Selected-fiber common-root counting
 
-**Where it stalls.** `filleted_boolean_miter_erosion` and `stroke_fillet_stroke` stall in `count_bivariate_fiber_system_roots`. The stuck query counts common roots of fiber polynomials of degree 36 and 40, with coefficients up to 389 bits, over a degree-14 retained field. The existing modular coprimality certificate does not decide it, so the two probably share a factor.
+**Reproduced and captured (R16, 2026-10-25).** The two original STRICT workflows
+reach different selected fields. Their uninstrumented baselines both exceed
+external 300-second / 8-GiB containment; that is neither typed exhaustion nor
+proof that the mathematical operation cannot complete.
+
+- `filleted_boolean_miter_erosion_completes` supplies degree-36 incidence and
+  degree-40 predicate polynomials over an irreducible degree-14 rational base.
+  Independent exact division proves that the predicate is the incidence times
+  a quartic. Divisibility and coprime cofactors establish the maximal GCD of
+  degree 36. The diagnostic GCD finishes in about 26 ms; its following Sturm
+  sequence remains unfinished at the external limit. Faster GCD construction
+  does not address this captured stall.
+- `stroke_fillet_stroke_of_a_cubic_arc_path_completes` supplies degrees 4 and
+  40 over a degree-10 carrier with coefficients in `Q(sqrt(89))`. Its selected
+  root has irreducible rational degree 20. An independent positive-embedding
+  proof and exact division establish a maximal degree-4 GCD, with the
+  predicate again a multiple of incidence. The general coefficient-field GCD
+  takes about 192 seconds in the diagnostic run. These polynomial facts do
+  not establish geometric contact or replace the callers' unsquared guards.
+
+The existing rational-function reduction API already proves the first identity.
+A private consumer tried that complete-quotient zero proof before common-root
+counting. Both its broad and rational-only variants complete the first original
+workflow, but neither completes the second within 300 seconds. The broad pass
+spends about 200 diagnostic seconds before returning to the original count.
+The rational-only variant preserves exact predicate outcomes but fails the
+protected timing gate with eight simultaneous adverse intervals in the
+controlled same-checkout comparison. Neither
+runtime change is retained; the [cost record](PERFORMANCE.md#selected-fiber-quotient-rejection-r16-2026-10-25)
+preserves their gains, regressions and limits. Eight independent predicate
+tests accompany the captured evidence.
 
 **Measured negative.** Sending large fibers to the reducing Euclidean chain, instead of `rational_local_subresultant_rows`, only moved the cost into `normalize_local_polynomial` field divisions.
 
-**Ideas:**
-- A modular-plus-CRT gcd over Q(α) (gcd modulo primes at α-images, then rational reconstruction verified by exact division). This is the standard cure for coefficient swell.
-- A square-free, Descartes or Bernstein count of the gcd's roots in the interval, instead of a full Sturm chain.
+Further work needs the actual coefficient field, selected-root identity and
+cost, followed by unchanged whole-workflow and protected-control gates. A
+modular/CRT strategy has not been measured on the recovered nonrational case.
+Avoiding repeated zero/root-count proofs, or a cheaper certified count of the
+GCD's roots, remain experiments. Multi-source `filleted_union`/`wide_weighted`
+leaves, complete Pell-denominator outcomes and internal work/memory/cancellation
+bounds remain open.
 
 ## 4. S6 remaining sites (`promote_curve_region_bezier_parameter`)
 
@@ -176,11 +213,13 @@ other intersections, its self-intersections and point location still report
 typed `Unsupported` blockers.
 
 **Open, in dependency order:**
-- **Split cost.** Splitting a branch at `n` cuts isolates each cut fiber twice,
-  once per adjacent piece, although the contact already holds the point. The
-  vertical quintic topology costs about three times the section alone.
-  Computing each cut point once in the branch split, or passing the contact
-  points to it, would remove those isolations. This is a cost, not a defect.
+- **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
+  each cut once and sharing its selected point between adjacent pieces. The
+  measured quintic split improved, but the section control regressed. The
+  candidate was removed under the handoff's literal latency gate; its exact
+  rows and measurements remain in [the experiment record](PERFORMANCE.md#shared-polynomial-cut-points-r05).
+  Passing the original intersection contact's authority into subdivision
+  remains a distinct experiment.
 - **Line components.** When the line is a component of the zero set, the
   substituted polynomial vanishes identically and the pair reports
   `Unsupported`, for every branch of that zero set. Admitting it needs overlap
@@ -202,8 +241,10 @@ typed `Unsupported` blockers.
   `Blocked(Construction, ImplicitPolynomial, Unsupported)`; a test records
   this. Source-span and boundary ownership, pair incidence, point location,
   local sectors and BRep consumers must all retain the graph, selector and
-  domain. The chart-qualified views and shared incidence of H01–H04 come
-  first.
+  domain. Compare the chart-qualified views and shared incidence of H01–H04
+  with narrow family services; they are exploratory alternatives, not required
+  predecessors. The 25 October handoff stages actual pair/component capability
+  in R05–R07 and explicitly permits advanced API prototypes.
 
 ## 9. Selected-root comparison, fillet centres and tangent events (2026-10-23)
 
@@ -211,11 +252,24 @@ Items H09–H12 of the 2026-10-22 research queue, rechecked at `916e1e5f41`. `PE
 
 **Done: overlapping local polynomial roots (H10).** `cmp_by_refinement` orders two recursive roots whose isolators still overlap after 32 bisection steps by one sign of either defining polynomial at the other root (`order_against_polynomial_root`). Before, the 64 such comparisons in the release suite all ran 512 more bisection steps and then promoted both roots to global parameters, and a pair 2^-603 apart stayed undecided. A recursive root also keeps native algebraic roots it has been proved equal to. Together these let `chamfered_quadratic_bevel_stroke_round_trips` complete in about a minute; it did not finish in forty.
 
-**Open: projective-scalar against polynomial roots.** The 12 remaining comparisons of a formula root with a polynomial root (10 `JP`, 2 `PJ` in the release suite) still take the 512-step route, about 0.1 s each. The certificate declines in both directions: a formula root has no defining polynomial to sign at the other root, and the polynomial root's relation signed at the formula root does not decide in the bounded pass. Homogeneous evaluation of that relation at `n / d` over a joined field (`recursive_projective_polynomial_value` lifts only ancestor coefficients) is the likely extension; check which step declines first.
+**Equivalent-field replay milestone (R15, 2026-10-25).** Reproduction located all
+12 mixed formula/polynomial fallbacks in the selected-field chord-overlap test.
+Their coefficient fields have equivalent selected sources but distinct
+allocations, so ancestor lifting declines. After that decline, the formula path
+now uses the existing equivalent-base/tower embeddings and homogeneous
+evaluation with its certified positive denominator. The twelve comparisons
+decide locally. Independent tests also order the roots of `f` and `f - 2^-600`,
+which the previous full comparison leaves undecided. Different sources and
+unproved source permutations retain the old fallback; no source union was added.
+The [cost record](PERFORMANCE.md#equivalent-field-root-comparisons-r15-2026-10-25)
+reports the targeted improvement and adverse controls. Shared singleton
+certificate factoring, general field joins, cold archive continuation and total
+work/memory/cancellation guarantees remain open. Combined primary validation
+is recorded in the research ledger.
 
 **Done: equality with a high-degree eliminant root (H14, 2026-10-23).** The remaining time of the chamfered case was one 47.6 s proof that a degree-6 local root over a two-source, one-extension tower equals a root of the degree-192 polynomial the chord/parallel system projects for its candidates (`parameter_is_in_ordered_range`). The proof is the sign-preserving remainder of the eliminant by the local relation, which is identically zero; no gcd is computed. Hypersolve now builds that remainder along the eliminant's Horner sequence and reduces tower products without a content gcd, and the proof takes about 1.4 s; the case takes about 15 s. A modular gcd would not shorten a zero remainder. A candidate filter that does not first project the system to degree 192 remains a possible further step. Promoting the local root first and comparing the two native roots is no faster (62–82 s per equality; rejected).
 
-**Not implemented: two-sided field joins (H09).** `recursive_polynomial_sign_joined` returns `Unsupported` when a query's coefficient field has a selected source that the root's base lacks; there is no fallback inside it. The internal regression (`t^2 = 2 + sqrt 2` in the root's field; `beta = sqrt 3` in an independently built field, in both source orders) reproduces this and is kept as the ignored test `recursive_polynomial_root_signs_queries_over_an_independent_source`. A join over the union of both source tuples, factored from `recursive_merge_projective_point_fields`, decides all of its queries locally. With route tracing over the full release suite and the four open-path workflows, the only queries that reached the missing-source case came from that test, so the join was not kept. Implement it when a supported operation reaches the case.
+**Not implemented: two-sided field joins (H09).** `recursive_polynomial_sign_joined` returns `Unsupported` when a query's coefficient field has a selected source that the root's base lacks; there is no fallback inside it. The internal regression (`t^2 = 2 + sqrt 2` in the root's field; `beta = sqrt 3` in an independently built field, in both source orders) reproduces this and is kept as the ignored test `recursive_polynomial_root_signs_queries_over_an_independent_source`. A join over the union of both source tuples, factored from `recursive_merge_projective_point_fields`, decides all of its queries locally. With route tracing over the full release suite and the four open-path workflows, the only queries that reached the missing-source case came from that test, so the join was not kept. Production integration remains route-gated. The 25 October experimental charter separately authorizes a distinct advanced design on selected/mapped CAD/CAM fixtures without requiring an existing production caller; the tested variant's negative result remains a control.
 
 **Not the cost: centre promotion in the selected parallel-normal kernel (H11).** In `round_stroke_of_a_filleted_nurbs_pair_completes`, the fillet centre reaching `selected_parallel_normal_parallel_intersections` is already a `BezierParameter2` of degree 214, so its promotion there is a no-op. Of five calls, four took 0.35 s, 12.1 s, 0.36 s and 110 s, and the fifth had not finished at the 40-minute limit; the time is in selected-fiber isolation over the degree-214 field (`LocalAlgebraicField::reduce`, local subresultants and Sturm sequences). Widening the consumer to `CurveParameter2` does not change this; authoring the centre as a low-degree selected fiber does (section 2). Its selected-factor degree is 164 (H15, section 2).
 
@@ -232,18 +286,21 @@ witness point when it does not (`PERFORMANCE.md`, 2026-10-23). The cached
 candidates of lines, arcs, polynomial quadratic and cubic Béziers, rational
 quadratics and spline spans of those kinds.
 
+The R23 implementation extends the query to nonmonotone rational spans, including
+degree-four and NURBS inputs, and retained rational/source-range trims within
+the unit source chart. Quotient-derivative roots are filtered by exact active-
+range membership before their coordinates are compared. The denominator proof
+belongs to the active range, so a source pole outside a valid trim is harmless.
+Native, selected, transformed and periodic fixtures include exact tangency,
+`2^-200` clearance, source-parameter replay, source drop and budget retry.
+The owner and Alumina consumer gates pass. This is a completion improvement;
+existing-query costs and remaining blockers are recorded in `PERFORMANCE.md`.
+
 **Open:**
-- **General rational spans.** A rational span of degree three or more, or a
-  polynomial spline span of degree four or more, contributes only when its
-  coordinate is certified monotone; otherwise a crossing enclosure reports
-  `Unsupported`. `RationalBezier2::axis_monotonicity_classified` already
-  isolates the quotient-derivative roots. Deciding the coordinate at each
-  isolated root against the bound would complete these spans, including
-  rational cubic NURBS.
-- **Retained, source-range and implicit-polynomial carriers** contribute only
-  their endpoints. A source-range carrier could reuse the derivative roots
-  that `retained_algebraic_source_extrema_bounds` certifies inside its
-  parameter range.
+- **Broader derivative domains.** Retained extensions outside the unit source
+  chart and analytic-parallel or implicit-polynomial interior extrema need their
+  own complete candidate enumeration. Symbolic root-isolation/ordering blockers
+  retain their typed meaning; no new internal total-work or heap bound is claimed.
 - **Witness parameter.** The witness is a point. An arc's native fragment
   parameter is not its curve chart, so a curve parameter is not published.
 
@@ -292,19 +349,63 @@ Items H16–H20 of the 2026-10-22 research queue, rechecked at `d3d5e6ebef`. `PE
 - the coalescing pass asks every kept arc fragment for an exact line image (`retained_line_fragment_endpoints`, `fit_exact_line_image_with_policy`): half of the stage for two circles. A fragment of a certified circular conic carrier is never a line;
 - `retained_loops_have_pairwise_disjoint_bounds` (34% of the stage on nano) and line-run merging (55%).
 
+R11 (2026-10-25) tested retaining certified roles through strict, indexed
+directed-image coalescing. Repeated queries improved with identical exact rows
+and construction allocations, but control latency nonregression remained
+unproved. The candidate was removed; see
+[the inconclusive experiment](PERFORMANCE.md#retained-loop-roles-through-line-coalescing-r11).
+Line-fit reuse between coalescing and all-line compaction, and the remaining
+cold role proof, are separate open experiments.
+
 **Not applicable: span-pair bounds (H19).** Region carriers are single spans, so region Booleans never form a span Cartesian product. Direct intersection of multi-span curves does, and already rejects certified-disjoint span pairs before building candidates: two 64-span cubic B-splines with 66 contacts intersect in 69 ms with 3.6 MB peak transient.
 
-**Open: retained scalar caches (H20).** After the nano board's materialization and report projection (87.6 MiB live), hypercurve structures are about 12% of the live heap by allocation site; exact rationals are 30%, rational derived forms retained by `hyperreal` 17% and `Computable` evaluation cells 9%, and 21% is allocated inside pi-Laurent sign normal forms. The pipeline peak is set by transient work (201–308 MiB against 108–170 MiB live at the end). A retention policy for those scalar caches belongs in `hyperreal`; the per-call memo variants rejected under "Closed normal-form memo sharing" in `PERFORMANCE.md` do not answer it, because this is a question of what outlives the call. Region query caches (exact signed area, boundary path views, classification indexes) add 27–240% to a queried region in the probe, but recomputing them repeats the same exact work, so no eviction was implemented.
+**Open: retained scalar caches (H20/R17).** The earlier H20 report projection
+held 87.6 MiB. Its allocation-site attribution put Hypercurve structures at
+about 12%, exact rationals at 30%, Hyperreal rational derived forms at 17% and
+`Computable` evaluation cells at 9%. The inclusive π-Laurent category (21%)
+overlaps those origins. Its pipeline peaks were mostly transient work
+(201–308 MiB against 108–170 MiB live at the end).
+
+R17 reproduces current ownership with a complete archived trace and a separate
+cache census. A smaller rational-cache layout lowers Nano memory but fails its
+protected native latency gate, so only regression tests are retained. Full
+pipeline post-drop samples do not establish a byte bound. See
+[Hyperreal's owner-specific evidence](../hyperreal/PERFORMANCE.md#retained-scalar-ownership-and-rejected-layout-r17-2026-10-25).
+
+Any scalar retention change belongs in Hyperreal. The rejected per-call memo
+variants under "Closed normal-form memo sharing" in `PERFORMANCE.md` do not
+answer what outlives a call. In H20's small-region probe, query caches for exact
+signed area, boundary path views and classification indexes added 27–240% to a
+queried region; recomputing them repeats the same exact work, so no eviction was
+implemented.
 
 ## 12. Consumers of approximately closed loops (2026-10-23)
 
 Found while checking receipt composition (item A01; the root `PERFORMANCE.md` has the record). The fixture is a unit square path whose last vertex is the first one translated by `(z, 0)`, where `z = sin(e + 1) - sin(e) cos(1) - cos(e) sin(1)` is an exact zero that strict predicates cannot decide. Strict `try_from_boundary_paths` returns `Blocked(RealSign)`; inside `provisional` it succeeds and consumes the terminal. Its consumers then behave as follows. No wrong certified answer was found.
 
-- **Strict replay is reported as invalid input.** Strict `boolean_region`, `transform_affine` and point classification of the region return `Invalid { cause: Topology("algebraic chord was replayed under a different predicate policy") }`. The region is valid under the policy that built it; the strict policy only cannot reuse its approximate fragment, which is a blocker. Reporting it as one would keep invalid input distinct and let callers that retry blocked work under `APPROXIMATE_512` (Hypercircuit's materialization does) retry it. Ten `validate_policy`-style sites in `bezier_region.rs` and `bezier_offset` use this message.
-- **Approximate translation and line-profile extraction fail.** Under `APPROXIMATE_512`, translating the region and extruding it through the root (`curve::try_translated_with_context`, `curve::try_extrude`) return `Invalid { cause: AmbiguousCurveStringConnection }`, although `classify_point` and `boolean_region` under the same policy consume it. Line-string connection compares the endpoints exactly instead of reusing the region's closure decision.
+- **Replay diagnosis corrected in the R08 milestone.** Retained chord and
+  selected-fiber validators share a private admissibility check and return
+  `IncompatiblePredicatePolicy`. Principal classification, Boolean and affine
+  operations on this fixture report `Blocked(Predicate)` under strict replay.
+  This changes the failure category, not the accepted policy pairs. Other
+  representation-specific replay guards remain to be audited.
+- **Affine continuation restored; native line-profile extraction remains open.**
+  A transform that consumed terminal evidence now keeps its authoritative
+  boundary without forcing an optional strictly closed native contour cache.
+  Translation, reflection and scaling continue under the original policy,
+  with qualified receipts and strict replay still blocked. Extrusion continues
+  to fail at native line-string connection. An isolated prototype replayed the
+  closure and bypassed that check, but native contour/string views have no
+  retained closure-policy field; that broader change was not adopted. The
+  remaining design must bind qualification to the source without promoting
+  closure to structural equality.
 - **Finite projection reports `Certified` under both policies.** It projects the retained loop as built; the closure decision belongs to the construction, as the root's operation-local receipts document.
 
-A region produced by an approximate union of two squares that touch up to `z` has none of these problems, since its loop closure is structural; all three are specific to a closure that the terminal decided.
+A region produced by an approximate union of two squares that touch up to `z`
+has structural loop closure and remains a separate control. Hypercircuit now
+offers outcome methods for its five explicit-policy board queries; the original
+methods remain compatibility paths without a receipt. Cold archive/rebuild and
+native qualified-contour consumption remain open R08 acceptance work.
 
 ## Fast paths added in this round
 
@@ -372,3 +473,28 @@ its bounds, as OpenSCAD's `center = true` does, uses the envelope's midpoint,
 which for an asymmetric cut is not the set's. Tight bounds need the cut
 endpoints' exact coordinates; refining the parameter interval only narrows
 the envelope.
+
+## Guarded circular line fits (R28, 2026-10-25)
+
+The private positive-radius/finite-connected/nonconstant circle shortcut is
+rejected under the literal latency gate. Thirty balanced native pairs preserve
+all 5,760 outcome rows and improve warm circle queries, but five simultaneous
+protected intervals regress on ordinary point/line cases. Allocation reductions
+and instrumented Nano dispatch counts do not override this veto. See
+[`PERFORMANCE.md`](PERFORMANCE.md#guarded-circular-line-fit-rejection-r28-2026-10-25)
+for timing boundaries, adverse controls and all evidence limitations.
+
+The experiment also confirms that `NotLine` is not a nonlinear-image proof:
+coincident endpoints return it even for a constant point. Its description is
+corrected, and seven independent regression tests preserve circle restrictions,
+collapsed point fitting, retracing, singular/mixed-weight chart declines,
+similarities, tiny native arcs and policy qualification. No runtime shortcut is
+retained. General similarity currently drops circular provenance and therefore
+uses the generic path; the tests do not claim shortcut coverage there.
+
+Reopen optimization only with a changed premise, such as producer-owned proof
+or a dispatch shape that protects ordinary fit costs. The next candidate must
+repeat protected direct-query checks and then complete full circle/board
+geometry, provenance, receipt, continuation and resource gates. The current
+single-board diagnostic run skips the all-board golden comparison and reports
+six release blockers. Broader H17 selection APIs remain a separate experiment.

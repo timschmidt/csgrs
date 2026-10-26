@@ -124,11 +124,31 @@ mod ring_jacobi_relations_tests {
         );
         for log in [
             raw(Approximation::PrescaledLnRational(Rational::from(-2))),
-            raw(Approximation::PrescaledLn(fresh_angle())),
+            raw(Approximation::PrescaledLn(raw(Approximation::PrescaledSin(
+                Computable::e_constant(),
+            )))),
         ] {
             let dn = angle.clone().jacobi_component(log, 2);
             assert!(recognition.native_square_relation(&dn, 64).is_none());
         }
+        // Retain the original sin(1/3) case. Its sign now has a bounded
+        // exact proof: 0 < 1/3 < 1 < pi/2, so 1+sin(1/3)>1. Replaying that
+        // domain must admit the logarithm and its Jacobi square relation.
+        let residual = fresh_angle();
+        let log = raw(Approximation::PrescaledLn(residual.clone()));
+        let complement = log.retained_log_argument(&mut 64).unwrap();
+        assert!(Computable::internal_structural_eq(
+            &complement,
+            &residual.clone().add(q(1)),
+        ));
+        assert_eq!(residual.immediate_sign(), Some(RealSign::Positive));
+        let dn = angle.clone().jacobi_component(log.clone(), 2);
+        assert!(recognition.native_square_relation(&dn, 64).is_some());
+        let sn = angle.clone().jacobi_component(log, 0);
+        // h=exp(log)=1+residual and dn²=1-(1-h)sn².
+        let identity = add(add(sq(dn), q(-1)), neg(mul(residual.clone(), sq(sn))));
+        assert_eq!(identity.bounded_native_relation_rational(), Some(Rational::zero()));
+        assert!(residual.cached().is_none());
         let root = raw(Approximation::Sqrt(q(2)));
         assert_eq!(root.sign_until(-32), Some(RealSign::Positive));
         let identity = mul(root.clone(), raw(Approximation::Inverse(root)));

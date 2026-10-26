@@ -202,6 +202,25 @@ try {
   // Sweep consumes its path points, so they are not registered in `owned`.
   const sweepPath = (points) => points.map((xyz) => new Point3Js(...xyz));
   const ring = keep(CurveRegionJs.circle(0.08, 12));
+  // R01: an unrelated component cannot change a signed authored meridian.
+  const negativeMeridian = keep(square.translate(-2, 0));
+  const positiveMeridian = keep(square.translate(1, 2));
+  const signedProfiles = keep(negativeMeridian.union(positiveMeridian, false).intoRegion());
+  const meridianWitness = keep(new Point3Js(-1.5, 0.5, 0));
+  for (const approximate of [false, true, false]) {
+    for (const segments of [3, 5, 6]) {
+      for (const angle of [-720, 360, 1080]) {
+        const result = signedProfiles.revolve(angle, segments, approximate);
+        assert.equal(result.certainty, Certainty.Certified);
+        const mesh = keep(result.intoMesh());
+        const member = keep(mesh.containsPointWithContext(meridianWitness, false));
+        assert.equal(member.certainty, Certainty.Certified);
+        assert.equal(member.value, true);
+      }
+    }
+    assert.throws(() => signedProfiles.revolve(450, 3, approximate), (error) =>
+      error instanceof Error && error.name === "GeometryError" && error.code === "invalid_input");
+  }
   for (const approximate of [false, true]) {
     for (const [operation, code] of [
       [() => square.revolve(360, 1, approximate), "invalid_input"],

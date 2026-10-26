@@ -15,7 +15,7 @@ use std::{
 use hypercurve::{
     Aabb2 as CurveAabb2, CircularArc2, Classification, CubicBezier2, Curve2, CurveGeometry2,
     CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule, LineSeg2,
-    OffsetCornerStyle2, Point2 as CurvePoint2, RegionPointLocation, UncertaintyReason,
+    OffsetCornerStyle2, Point2 as CurvePoint2, Provisional, RegionPointLocation, UncertaintyReason,
 };
 use hyperlattice::Point2;
 use hyperlimit::PredicatePolicy;
@@ -384,6 +384,11 @@ impl std::error::Error for BoardBoundaryGeometryError {}
 /// exact line/arc/Bezier topology and predicates. Geometry materialization,
 /// placement, routing, stitching, and DRC handoffs should all derive from this
 /// carrier instead of reconstructing polygon-only interpretations.
+///
+/// The `*_outcome` queries retain the certainty of the complete operation,
+/// including nested Hypercurve calls. Selecting an approximate policy does not
+/// itself qualify a result. These receipts describe the current query; they do
+/// not certify the provenance of an earlier board construction.
 #[derive(Clone)]
 pub struct BoardBoundaryGeometry {
     region: CurveRegion2,
@@ -420,7 +425,19 @@ impl BoardBoundaryGeometry {
         )
     }
 
+    /// Classifies a board-space point and retains the query's certainty receipt.
+    pub fn classify_point_outcome(
+        &self,
+        point: &Point2,
+        policy: PredicatePolicy,
+    ) -> Provisional<Result<Classification<RegionPointLocation>, BoardBoundaryGeometryError>> {
+        hypercurve::evaluate_under(policy, || self.classify_point(point, policy))
+    }
+
     /// Classifies a board-space point against the exact filled substrate.
+    ///
+    /// This compatibility method omits the certainty receipt. Use
+    /// [`Self::classify_point_outcome`] to retain it.
     pub fn classify_point(
         &self,
         point: &Point2,
@@ -440,10 +457,21 @@ impl BoardBoundaryGeometry {
         }
     }
 
+    /// Contracts the substrate and retains the complete operation's certainty.
+    pub fn inset_outcome(
+        &self,
+        clearance: Real,
+        policy: PredicatePolicy,
+    ) -> Provisional<Result<Classification<Self>, BoardBoundaryGeometryError>> {
+        hypercurve::evaluate_under(policy, || self.inset(clearance, policy))
+    }
+
     /// Contracts the filled substrate by an exact non-negative clearance.
     ///
     /// Polynomial/rational offsets that Hypercurve cannot represent remain an
     /// explicit uncertainty classification.
+    /// This compatibility method omits the certainty receipt. Use
+    /// [`Self::inset_outcome`] to retain it.
     pub fn inset(
         &self,
         clearance: Real,
@@ -491,7 +519,20 @@ impl BoardBoundaryGeometry {
         }))
     }
 
+    /// Classifies a clearance disc and retains the complete query's certainty.
+    pub fn contains_disc_outcome(
+        &self,
+        point: &Point2,
+        clearance: Real,
+        policy: PredicatePolicy,
+    ) -> Provisional<Result<Classification<bool>, BoardBoundaryGeometryError>> {
+        hypercurve::evaluate_under(policy, || self.contains_disc(point, clearance, policy))
+    }
+
     /// Convenience classification for a closed-clearance disc centered at `point`.
+    ///
+    /// This compatibility method omits the certainty receipt. Use
+    /// [`Self::contains_disc_outcome`] to retain it.
     pub fn contains_disc(
         &self,
         point: &Point2,
@@ -562,8 +603,24 @@ impl BoardBoundaryGeometry {
         Ok(Some(Classification::Decided(true)))
     }
 
+    /// Classifies a clearance segment and retains the complete query's certainty.
+    pub fn contains_segment_outcome(
+        &self,
+        start: &Point2,
+        end: &Point2,
+        clearance: Real,
+        policy: PredicatePolicy,
+    ) -> Provisional<Result<Classification<bool>, BoardBoundaryGeometryError>> {
+        hypercurve::evaluate_under(policy, || {
+            self.contains_segment(start, end, clearance, policy)
+        })
+    }
+
     /// Certifies that a straight centerline and its closed clearance radius
     /// remain inside the substrate.
+    ///
+    /// This compatibility method omits the certainty receipt. Use
+    /// [`Self::contains_segment_outcome`] to retain it.
     pub fn contains_segment(
         &self,
         start: &Point2,
@@ -710,8 +767,21 @@ impl BoardBoundaryGeometry {
         Ok(Some(Classification::Decided(true)))
     }
 
+    /// Classifies a closed rectangle and retains the complete query's certainty.
+    pub fn contains_axis_aligned_box_outcome(
+        &self,
+        min: &Point2,
+        max: &Point2,
+        policy: PredicatePolicy,
+    ) -> Provisional<Result<Classification<bool>, BoardBoundaryGeometryError>> {
+        hypercurve::evaluate_under(policy, || self.contains_axis_aligned_box(min, max, policy))
+    }
+
     /// Certifies that an axis-aligned closed rectangle lies strictly inside the
     /// substrate and neither crosses nor encloses a cutout.
+    ///
+    /// This compatibility method omits the certainty receipt. Use
+    /// [`Self::contains_axis_aligned_box_outcome`] to retain it.
     pub fn contains_axis_aligned_box(
         &self,
         min: &Point2,

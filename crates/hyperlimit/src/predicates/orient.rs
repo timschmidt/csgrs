@@ -81,15 +81,15 @@ pub(crate) fn orient2d_real_coordinates(
     let aby = sub(b[1], a[1]);
     let acx = sub(c[0], a[0]);
     let acy = sub(c[1], a[1]);
-    let left = mul(&abx, &acy);
-    let right = mul(&aby, &acx);
-    let det = sub(&left, &right);
+    // Keep factor identity available to the scalar cancellation certificate.
+    let det = Real::diff_of_products(&abx, &acy, &aby, &acx);
 
     resolve_real_sign(
         &det,
         policy,
         || {
-            let _ = (&abx, &aby, &acx, &acy);
+            let left = mul(&abx, &acy);
+            let right = mul(&aby, &acx);
             signed_term_filter(&[(&left, Sign::Positive), (&right, Sign::Negative)])
         },
         || super::exact::orient2d_coordinates(a, b, c),

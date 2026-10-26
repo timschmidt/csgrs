@@ -412,14 +412,17 @@ and difference of both rotations complete as certified closed manifolds
 (`tests/downstream_solids.rs`). Each takes about 2 s in release, against
 about 0.2 s to fail before.
 
-**Still undecided.** A unit cube rotated about z by the binary64 angles
-13.1, 17.3, -13.1 and -17.3 degrees, unioned with the cube, stops at
-`Real sign classification`. Its zeros involve four atoms, the sines and
-cosines of two binary64 rational turns, at degree up to about 24; a probe
-with degree 24, 4,096 terms and 4,194,304 work charges decided it, which is
-too much work for a stage that every undecided predicate pays. The same
-angles written as decimal literals are rational turns of order 3,600 and
-decide through the cyclotomic proof.
+**Scoped completion (R18, 2026-10-25).** The original binary64 sequence
+13.1, 17.3, -13.1 and -17.3 degrees about z now completes its strict cube
+union. Captured predicates expose common-factor cancellations and a smaller
+unit-circle residual. Hyperreal proves these only after the existing extended
+expansion declines, using its remaining work and node budgets. Expanded
+polynomials retain the degree-12 limit; no four-million-charge stage is added.
+The independent cube half-space/volume oracle, distinct decimal control,
+three angle families on each axis under both policies, and empty-result
+continuation are in `tests/compound_rotations.rs` at the repository root.
+General compound rotations and operation-wide resource bounds remain open.
+See the [exact-completion and cost record](../hyperreal/PERFORMANCE.md#factored-compound-rotation-completion-r18-2026-10-25).
 
 ## Coplanar contact between differently triangulated caps
 

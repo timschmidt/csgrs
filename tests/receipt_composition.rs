@@ -165,6 +165,72 @@ mod curve_receipts {
     use csgrs::curve;
     use hypercurve::{BooleanOp as RegionOp, CurveRegion2, ExactCurveError, FillRule};
 
+    #[test]
+    fn qualified_closure_translation_preserves_receipts_and_retryable_failure() {
+        use csgrs::errors::{ValidationError, ValidationErrorKind};
+        use hypercurve::{CurvePath2, LineSeg2, Point2};
+
+        let z = (Real::e() + Real::one()).sin()
+            - Real::e().sin() * Real::one().cos()
+            - Real::e().cos() * Real::one().sin();
+        let points = [
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+            Point2::from_values(1, 1),
+            Point2::from_values(0, 1),
+            Point2::new(z, Real::zero()),
+        ];
+        let path = CurvePath2::try_new(
+            points
+                .windows(2)
+                .map(|pair| {
+                    LineSeg2::try_new(pair[0].clone(), pair[1].clone())
+                        .unwrap()
+                        .into()
+                })
+                .collect(),
+        )
+        .unwrap();
+        let region = hypercurve::provisional(|| {
+            CurveRegion2::try_from_boundary_paths(&[path], FillRule::NonZero)
+        })
+        .into_unverified()
+        .unwrap();
+        let strict = curve::try_translated_with_context(
+            &region,
+            3.into(),
+            4.into(),
+            &GeometryContext::STRICT,
+        )
+        .unwrap_err();
+        assert!(matches!(
+            strict,
+            ValidationError::ExactCurve(ExactCurveError::Blocked(_))
+        ));
+        assert_eq!(strict.kind(), ValidationErrorKind::Undecided);
+        let moved = curve::try_translated_with_context(
+            &region,
+            3.into(),
+            4.into(),
+            &GeometryContext::APPROXIMATE_512,
+        )
+        .unwrap();
+        drop(region);
+        assert_eq!(moved.certainty, GeometryCertainty::Approximate512Consumed);
+        let located = moved
+            .and_then(|region| {
+                curve::contains_xy_with_context(
+                    &region,
+                    Real::from(3) + half(),
+                    Real::from(4) + half(),
+                    &GeometryContext::APPROXIMATE_512,
+                )
+            })
+            .unwrap();
+        assert_eq!(located.value, Some(true));
+        assert_eq!(located.certainty, GeometryCertainty::Approximate512Consumed);
+    }
+
     /// The union of the unit square with its copy translated by `1 + zero`,
     /// and a strict rebuild of its boundary without retained facts.
     fn approximate_region() -> (CurveRegion2, CurveRegion2) {

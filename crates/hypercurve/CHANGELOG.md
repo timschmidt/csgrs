@@ -2,8 +2,43 @@
 
 ## [0.4.0] - Unreleased
 
+- Add independent selected-fiber predicate tests for source identity, repeated
+  roots, degree drops, tiny nonzero residues, nonrational coefficients and
+  certainty-preserving bounded retries.
+
+- Clarify that `BezierLineImageFitRelation::NotLine` includes collapsed images
+  and does not certify nonlinearity. Independent circle, point, retracing,
+  singular-chart and policy-receipt tests preserve the existing fit behavior.
+
+- Retained formula roots compare locally with polynomial roots over independently
+  rebuilt equivalent selected-source fields and radical towers. Exact nearby
+  roots can be ordered without global projection; unsupported field combinations
+  retain the existing typed fallback.
+
+- Exact box containment admits nonmonotone rational Bézier/NURBS spans and
+  selected rational trims within their unit source charts. It proves the
+  denominator on the active range and compares stationary selected points
+  without forcing Cartesian reconstruction. Conservative `bounds()` is unchanged.
+
+- Finite sampling refines retained Bézier parameter intervals in source
+  coordinates before selecting their midpoints, avoiding displacement from
+  coarse root isolators. Sampling remains an explicit fidelity boundary.
+
+- Affine transforms of terminal-qualified loops retain their boundary evidence
+  without requiring a strictly closed native contour accelerator. Translation,
+  reflection and nonsingular scaling preserve the consumed-policy receipt.
+
+- `CurveRegionProfile2::sample_to_linear_contours` retains native line members,
+  shared native endpoints and classified hole ownership while sampling curved
+  interiors. It is an explicit sampled modeling boundary; finite export APIs
+  continue to project every coordinate to `f64`.
+
 ### Breaking
 
+- `CurveError` gains `IncompatiblePredicatePolicy`; exhaustive matches must
+  handle it. Retained chord and selected-fiber replay validators use this cause
+  instead of a generic topology string. Principal operations report it as
+  `ExactCurveError::Blocked(Predicate)`, preserving operation/family context.
 - Policy-taking operations, such as `Contour2::{winding_number,
   classify_point, intersect_contour}`, `LineSeg2::classify_point`,
   `Aabb2::from_*` and the Bézier flattening, length and moment methods, no

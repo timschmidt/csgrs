@@ -85,7 +85,7 @@ impl<'a> RingRecognition<'a> {
     fn recover_quotient(&mut self, value: &'a Computable, depth: usize) -> Option<RingQuotient> {
         self.recover_reduced_quotient(value).or_else(|| {
             if let Approximation::Add(a, b) = &value.internal.approximation {
-                self.recover_factored_zero(a, b, depth - 1)
+                self.recover_factored_zero::<false>(a, b, depth - 1)
             } else {
                 None
             }

@@ -50,6 +50,16 @@ fn assert_cause(error: AdapterError, native: ValidationError, kind: ValidationEr
     );
 }
 
+#[test]
+fn retained_policy_mismatch_remains_retryable_at_the_adapter_boundary() {
+    let native = ValidationError::from(hypercurve::CurveError::IncompatiblePredicatePolicy);
+    assert_cause(
+        AdapterError::Construction(native.clone()),
+        native,
+        ValidationErrorKind::Undecided,
+    );
+}
+
 fn boolean_failures<A: ScalarAdapter>() {
     let square = curve::square(Real::from(2)).unwrap();
     let shifted = curve::translated(&square, unresolved_zero(), Real::zero()).unwrap();

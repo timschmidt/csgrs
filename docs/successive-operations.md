@@ -27,6 +27,10 @@ cargo test --release --test successive_operations -- --ignored   # long chains, 
 cargo bench --bench successive_operations            # table below, with allocation
 cargo bench --bench successive_operations -- --untouched [<chain>]   # no validation between steps
 SUCCESSIVE_OPERATIONS_RAW=rows.tsv cargo bench --bench successive_operations   # also exact raw rows
+# Attributed, crash-surviving research records (Python 3.11+, native Unix):
+python3 scripts/successive-operations.py build --output /tmp/successive-build
+python3 scripts/successive-operations.py run --binary /tmp/successive-build/successive_operations --output /tmp/successive-run --timeout 300 -- '4-gon drills'
+python3 scripts/test-successive-evidence.py --binary /tmp/successive-build/successive_operations --output /tmp/successive-check
 ```
 
 The harness times `chain.step`, the closed-manifold validation after it, and
@@ -43,9 +47,41 @@ or resident memory. `--untouched` feeds each result to the next step without
 validating it or measuring its sizes, so no later step can reuse what
 validation cached; the corpus test checks that this changes no result
 (`validation_between_steps_does_not_change_results`). The raw rows give
-every number in bytes and nanoseconds, after header lines with the revision,
-whether tracked files were modified, the `rustc` on `PATH` at run time, the
-profile, target and arguments.
+every number in bytes and nanoseconds. Each complete row is written and synced
+after its operation, validation, inspection and predecessor drop, before the
+next step starts. Journal IO is outside those measured intervals. Raw output
+paths must be new; existing evidence is never overwritten.
+
+The research driver embeds a build record in the executable: source revision,
+content hashes of tracked and new build inputs, the dirty patch and lock digest,
+Cargo command, and the actual compiler invocation and `rustc -Vv`. The build
+directory retains the patch, new input files, file manifest and Cargo artifact
+records, and verifies that source inputs stayed unchanged during compilation.
+`--features`, `--default-features`, `--profile` and `--target` select the build;
+defaults are release with only `curve,stl-io,obj-io`. Each attributed build
+recompiles the benchmark to embed its own record. Reuse its copied executable
+for repeated measurements. Compiler wrappers are replaced for this benchmark;
+nested workspace wrappers are unsupported. Direct Cargo builds still work,
+but their raw header explicitly says `unattributed`.
+
+The run directory retains the actual executable's SHA-256, embedded build
+record, arguments, host/CPU affinity, timeout, stdout/stderr and raw rows. It
+does not query the current checkout or the runtime compiler to identify the
+build. `run.json` starts as `incomplete`; normal completion, a signal and a
+timeout are distinct. A missing completion marker is never a completed run.
+Killing the driver itself can leave that initial incomplete state. The
+interruption tests cover process termination, not storage-device failure.
+Completed harness execution is distinct from certified geometry completion:
+the manifest counts every outcome category, including typed failures.
+
+The 25 October R25 check reproduced both old failures (a moved executable
+reported an unrelated revision; SIGKILL after completed steps lost the raw
+file). Copied-binary, replaced runtime-tool, validated/untouched and forced
+termination checks now pass. The 16-step rational drill control retains its
+geometry/receipt/representation columns and operation allocation totals. This
+does not retroactively establish build identity for historical raw records.
+The [R25 admission](research-program.md#r02-experiments-and-r25-harness-milestone)
+links the retained build/run evidence and its digest.
 
 ## Measurements
 

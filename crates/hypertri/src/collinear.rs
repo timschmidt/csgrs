@@ -188,6 +188,60 @@ mod tests {
         crate::test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
     }
 
+    #[test]
+    fn collinearity_lookup_requires_the_original_point_buffer_and_admissible_policy() {
+        // The exact integer determinant is 1*4 - 2*2 = 0. The copied
+        // coordinates denote the same points but have no source membership.
+        let source = vec![
+            Point2::new(Real::from(0), Real::from(0)),
+            Point2::new(Real::from(1), Real::from(2)),
+            Point2::new(Real::from(2), Real::from(4)),
+        ];
+        let copied = source.clone();
+        for certainty in [
+            TriangulationCertainty::Certified,
+            TriangulationCertainty::Approximate512Consumed,
+        ] {
+            let mut facts = CollinearPointFacts::new(certainty);
+            facts.push_line(&[0, 1, 2]).unwrap();
+            let index = CollinearIndex::new(&source, &facts).unwrap();
+            for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+                let outcome = index.known_zero(&source[0], &source[1], &source[2], policy);
+                let expected = match certainty {
+                    TriangulationCertainty::Certified => Some(Certainty::Exact),
+                    TriangulationCertainty::Approximate512Consumed
+                        if policy == PredicatePolicy::APPROXIMATE_512 =>
+                    {
+                        Some(Certainty::Approximate)
+                    }
+                    _ => None,
+                };
+                match (outcome, expected) {
+                    (
+                        Some(PredicateOutcome::Decided {
+                            value: Sign::Zero,
+                            certainty,
+                            ..
+                        }),
+                        Some(expected),
+                    ) => {
+                        assert_eq!(certainty, expected);
+                    }
+                    (None, None) => {}
+                    other => panic!("unexpected source-bound fact: {other:?}"),
+                }
+                for [a, b, c] in [
+                    [&copied[0], &copied[1], &copied[2]],
+                    [&copied[0], &source[1], &source[2]],
+                    [&source[0], &copied[1], &source[2]],
+                    [&source[0], &source[1], &copied[2]],
+                ] {
+                    assert!(index.known_zero(a, b, c, policy).is_none());
+                }
+            }
+        }
+    }
+
     /// A square crossed by a constrained chain on the line `y = x / 2 + 2`,
     /// whose middle point is on it only by an identity no proof decides. No
     /// other three points are collinear.

@@ -1058,6 +1058,58 @@ impl Computable {
         }
     }
 
+    /// Prove both |x| <= 1 and its sign without expanding binary shifts.
+    /// On this interval sine and tangent preserve sign, cosine is positive,
+    /// and cotangent preserves the sign of every nonzero argument.
+    fn small_trig_argument_sign(&self) -> Option<Sign> {
+        let mut remaining = 32_usize;
+        let mut node = self;
+        let mut shift = 0_i64;
+        let mut negative = false;
+        loop {
+            if remaining == 0 || should_stop(&node.signal) {
+                return None;
+            }
+            match &node.internal.approximation {
+                Approximation::Negate(child) => {
+                    remaining -= 1;
+                    negative = !negative;
+                    node = child;
+                }
+                Approximation::Offset(child, offset) => {
+                    remaining -= 1;
+                    shift = shift.checked_add(i64::from(*offset))?;
+                    node = child;
+                }
+                _ => break,
+            }
+        }
+        let interval = node.binary64_filter_interval(&mut remaining)?;
+        let magnitude = interval.lower.abs().max(interval.upper.abs());
+        // All finite binary64 magnitudes are below 2^1024. Below 2^-1074,
+        // only an exactly zero enclosure can pass this conservative test.
+        let limit = if shift < -1_023 {
+            f64::INFINITY
+        } else if shift > 1_074 {
+            0.0
+        } else {
+            Binary64Interval::power_of_two(-shift as i32)
+        };
+        if magnitude > limit {
+            return None;
+        }
+        let sign = if interval.lower > 0.0 {
+            Sign::Plus
+        } else if interval.upper < 0.0 {
+            Sign::Minus
+        } else if magnitude == 0.0 {
+            Sign::NoSign
+        } else {
+            return None;
+        };
+        Some(if negative { negate_sign(sign) } else { sign })
+    }
+
     fn exact_sign(&self) -> Option<Sign> {
         // `exact_sign` is stronger than "current approximation sign": it means
         // the expression shape or a separated cached approximation proves the
@@ -1150,7 +1202,21 @@ impl Computable {
                 // Recover the witness from the graph after lazy reconstruction
                 // or import; serialized class tags and cache hints are not proof.
                 Approximation::PrescaledSin(argument) | Approximation::PrescaledTan(argument) => {
-                    Some(argument.reduced_pi_multiple_sign())
+                    Some(
+                        argument
+                            .reduced_pi_multiple_sign()
+                            .or_else(|| argument.small_trig_argument_sign()),
+                    )
+                }
+                Approximation::PrescaledCos(argument) => {
+                    Some(argument.small_trig_argument_sign().map(|_| Sign::Plus))
+                }
+                Approximation::PrescaledCot(argument) => {
+                    Some(
+                        argument
+                            .small_trig_argument_sign()
+                            .filter(|sign| *sign != Sign::NoSign),
+                    )
                 }
                 Approximation::PrescaledCosRational(_)
                 | Approximation::SincSmall(_)

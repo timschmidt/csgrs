@@ -350,12 +350,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     }
 
     pub(super) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if !policy.accepts_retained_policy(self.data.authority.data.policy) {
-            return Err(CurveError::Topology(
-                "a selected-fiber scalar crossed predicate policies".into(),
-            ));
-        }
-        Ok(())
+        policy.validate_retained_policy(self.data.authority.data.policy)
     }
 
     pub(crate) fn root(&self) -> &IsolatedRootInterval {

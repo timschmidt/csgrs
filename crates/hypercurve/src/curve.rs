@@ -3131,7 +3131,10 @@ impl CurvePath2 {
     }
 }
 
-fn replay_path_certificate(retained: Option<CurveContext>, policy: &CurveContext) -> bool {
+pub(crate) fn replay_path_certificate(
+    retained: Option<CurveContext>,
+    policy: &CurveContext,
+) -> bool {
     let Some(retained) = retained.filter(|retained| policy.accepts_retained_policy(*retained))
     else {
         return false;

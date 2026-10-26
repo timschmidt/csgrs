@@ -1228,3 +1228,97 @@ tri-mesh. Both layers also
 retain an ignored rotated-copy intersection as the explicit memory-ceiling
 test; it is not run routinely because the earlier CSGRS workload reached about
 116 GiB RSS.
+
+## Signed revolution research R01 (2026-10-25)
+
+This is an exactness/composition change, with an intentional odd-lattice
+geometry migration, rather than a speed optimization. The baseline is
+`3cca6a894858c8b98497a3cfe81cff5e17e1a7f2`; the production patch, commands,
+build/binary hashes, exact outputs and raw samples are in the
+[local evidence record](docs/evidence-archive.md#local-follow-on-records).
+`tests/exact_profile_sweeps.rs` independently checks polygon half-space
+membership and winding, including a mutation with overlapping winding-two
+shells. The admission and remaining scope are in the
+[research ledger](docs/research-program.md#r01-mesh-milestone-and-r25-evidence-recovery).
+
+The standalone release probe uses Rust 1.98.1, `curve,hyperreal/serde`, one CPU
+affinity on a shared host, 18 cases and three alternating pairs of fresh
+processes. Each process completes five operations: the first cold, then four
+warm after validation/materialization/drop. All 540 results certify. Timing
+includes allocation-counter overhead; operation, validation, exact JSON output
+and destruction are recorded separately. These are focused measurements.
+
+All 12 one-sided/even-lattice controls retain byte-identical exact output rows,
+sizes and checksums, and identical requested-allocation totals. No material
+runtime improvement is established for those unchanged contracts. The six odd
+mixed-sign cases intentionally change output rows and cost much more than the
+old, phase-changing planar fold. Warm medians below report that migration's
+cost, not a comparison of two implementations of the same sampled set:
+
+| Fixture | N | Baseline → new time | Requested allocation | Peak live growth |
+| --- | ---: | ---: | ---: | ---: |
+| Disjoint opposite components | 3 | 0.57 → 2.32 ms | 0.61 → 1.12 MB | 49 → 111 KB |
+| Disjoint opposite components | 5 | 1.18 → 27.50 ms | 1.14 → 21.97 MB | 82 → 555 KB |
+| Overlapping opposite components | 3 | 0.57 → 13.42 ms | 0.62 → 3.93 MB | 52 → 253 KB |
+| Overlapping opposite components | 5 | 1.09 → 267.96 ms | 1.07 → 258.26 MB | 63 → 1,071 KB |
+| Axis-crossing rectangle | 3 | 0.45 → 3.43 ms | 0.55 → 1.21 MB | 49 → 98 KB |
+| Axis-crossing rectangle | 5 | 0.62 → 82.11 ms | 0.65 → 69.07 MB | 53 → 399 KB |
+
+MB/KB here are decimal. Requested traffic is not retained memory or RSS.
+Cold/warm allocation calls, result-live and retained-after-drop bytes, all
+unchanged controls and unfavorable samples remain in `paired-summary.json`
+and the raw TSVs. The linked probe's `.text` grows from 11,438,591 to 12,516,527
+bytes because the new path reaches the mesh Boolean; this is not deployed
+WASM/native application size attribution. Production source grows by 93 lines.
+There is no new hard resource or cancellation bound: each measured process
+has a 60-second external limit. Further cost work must preserve the corrected
+sampled set, orientation, certainty and continued Boolean consumption.
+
+## Mixed modeling profiles R04 (2026-10-25)
+
+Admission of the original change was reopened after the unchanged downstream
+profile suite exposed two regressions outside this probe. The figures below
+describe the original 45 cases, not acceptance of the combined implementation.
+The repaired retained stack passes all 39 final affected checks. The separate
+triangulation comparison preserves exact rows and allocation fields while
+disclosing adverse cold timings; this is an exactness/completion admission.
+The repair, isolated build checks and broader validation are tracked in the
+[research ledger](docs/research-program.md#r04-mixed-profile-admission).
+
+R04 retains exact line members and native endpoints beside sampled curves.
+This is an exactness and completion change. The baseline includes the R01
+revolution change; both builds use Rust 1.98.1, release,
+`curve,hyperreal/serde`, and the same allocation-instrumented probe. Nine
+profiles across five operations run in three alternating process pairs,
+with five samples per process (1,350 results). The first sample is cold;
+four more reuse the source. Construction precedes timing; validation,
+exact-coordinate serialization and destruction follow it. Host affinity and
+all samples are retained in the [evidence archive](docs/evidence-archive.md#local-follow-on-records).
+
+All 45 candidate cases complete with certified local decisions and the
+expected exact native vertex. The baseline completes 15 correctly, rounds
+the required vertex in 15, and rejects 15 after projection collapses a
+component or hole. Independent rectangle measures and the thin-wall
+cut/restore oracle are in `tests/mixed_modeling_profiles.rs`; the probe's
+vertex check alone is not a set-equality proof.
+
+All 15 unchanged controls (two line profiles and a circle, each through five
+operations) retain identical exact geometry rows. All ten line controls also
+retain allocation calls and requested bytes, for both cold and warm samples.
+The changed mixed geometry can cost more, especially with algebraic coordinates:
+
+| Fixture and operation | Warm median, old → new | Requested allocation, old → new |
+| --- | ---: | ---: |
+| Mixed third-width extrusion | 3.61 → 3.54 ms | 1.67 → 1.62 MB |
+| Mixed sqrt(2)-width extrusion | 3.55 → 4.72 ms | 1.68 → 3.13 MB |
+| Mixed sqrt(2)-width revolution, N=4 | 1.61 → 3.81 ms | 2.07 → 4.80 MB |
+| Native third endpoints and tiny line, extrusion | 1.28 → 1.48 ms | 0.80 → 0.87 MB |
+| Tiny hole in circular material, extrusion | invalid input → 10.16 ms | failure → 3.12 MB |
+
+The old successful mixed outputs in this table lose exact vertices; these
+times do not compare equal completed contracts. MB is decimal. Requested
+allocation is traffic, not retained memory; the largest measured candidate
+operation peak is 741,328 bytes above its starting live allocation. No speed
+improvement or new work/memory/cancellation bound is claimed. Processes have
+an external 120-second limit. The matched probe's `.text` changes from
+12,782,847 to 12,780,767 bytes; this is not application or WASM size attribution.

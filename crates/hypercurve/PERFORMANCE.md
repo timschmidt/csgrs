@@ -10,6 +10,134 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Equivalent-field root comparisons (R15, 2026-10-25)
+
+The candidate extends exact completion: formula roots can sign a polynomial
+over an independently allocated equivalent selected-source base and radical
+tower. The existing evaluator runs first; only its `Unsupported` result enters
+equivalent-field replay. Homogeneous evaluation uses the formula's proved
+positive denominator. No source union, new radical, cache or global limit is
+introduced. Other typed outcomes and the complete fallback remain available.
+
+Fourteen independent formula/polynomial cases and eight equivalent-tower cases
+pass without global projection. On the current primary counterfactual, the
+`f` versus `f - 2^-600` cases remain undecided under both policies. Gates also
+cover selected conjugates, negative scaling, reciprocal charts, invalid
+denominators, foreign/reordered sources, 36 repeated-root cases, source drop,
+cache saturation/poison, changed charts, budget retry and a qualified approximate
+terminal that must not enter the exact equality cache. The private owner passes
+2,608 tests (35 existing ignores), 24 downstream tests, Clippy, docs, formatting
+and default-feature WASM compilation. The final combined primary run passes
+all 2,618 Hypercurve tests (35 ignores), 24 downstream tests and all eight
+recorded checks; its compiled sources are unchanged across validation.
+
+The final native campaign has 30 balanced randomized process pairs across
+seven public trim fixtures, two directions, two policies and two lifetime
+lanes. Eight samples per process yield 26,880 Certified query/validation
+samples and 1,680 equal full artifact pairs. Exact endpoint/source-parameter
+and contact replay precede encoding; all per-sample checksums and sizes match.
+The artifact is a declared comparison record, not a general carrier archive.
+
+Cold is the first sample; warm is the median of the next seven. The retained
+lane excludes input construction, while the workflow lane includes construction
+and input destruction. Both include query, exact validation, encoding and
+result destruction; the first sample includes artifact-file export. Process
+startup, stdout and an extra source-drop replay are outside the timer. Sources,
+locks, compiler flags, CPU affinity, randomized order and raw samples are kept.
+Native executables use the system allocator. Allocation instrumentation runs
+separately. The frozen measurement base predates R23, so these figures do not
+establish native performance of the final combined stack.
+
+All sixteen targeted bottom/top-overlap metrics under approximate policy have
+paired geometric candidate/baseline ratios 0.0392–0.0462; the largest simultaneous
+95% upper bound is 0.0507. Their receipts remain Certified. For example, the
+forward bottom-overlap retained cold median is 311.83 to 13.03 ms. However,
+none of the other 96 protected metrics establishes the literal upper-bound
+nonregression criterion. Sixteen have adverse marginal 95% intervals. The warm
+forward STRICT top-overlap complete workflow is adverse even with Bonferroni
+simultaneous 95% intervals across all 112 protected metrics: ratio 1.0272
+[1.0136, 1.0411], medians 8.904 to 9.141 ms. Intervals use paired log ratios
+and Student's t. **Performance-only admission fails.** The retention
+basis is the independently reproduced exact-completion gain, with these costs
+disclosed; no general speedup or latency nonregression is claimed.
+
+Five separate allocation pairs give 4,480 Certified samples and 280 equal
+artifact pairs. Eight overlap/policy/direction/lifetime cells reduce traffic;
+the other 48 resource sequences match. Forward approximate bottom-overlap first
+query requests 476,366,157 to 14,548,485 bytes in 8,209,939 to 264,598 calls;
+query peak live deltas fall from 157,960 to 130,664 bytes. Validation traffic
+also falls. Net live growth after whole-input destruction is zero in the last
+five samples of both variants, which is not a heap bound. Native probe `.text`
+grows 2,096 bytes and the file 12,712 bytes; neither is a deployed WASM claim.
+
+Evidence belongs to local archive record `2026-10-25-research-r15`. Shared
+singleton-certificate factoring, cancellation, cold archive replay, broader
+P06 work and release packaging remain open.
+
+## Rational box containment completion (R23, 2026-10-25)
+
+Kept for exact completion, with adverse costs disclosed. General rational
+Bézier/NURBS spans and selected rational trims now use all quotient-derivative
+roots in their active unit source chart. A denominator proof belongs to that
+active range; each stationary parameter must be inside it before becoming an
+exact retained point. Selected coordinates are compared without mandatory
+Cartesian reconstruction. Conservative `bounds()` keeps its existing contract.
+
+Independent fixtures cover rational and irrational peaks, degree four,
+repeated roots, constant coordinates, signed weights, NURBS knots, selected
+trims, reversal, similarity transforms, periodic seams, exact tangency and
+`2^-200` clearance. A finite trim beside a source pole completes; an active
+pole cannot become a containment success. Witness definitions and source
+parameters replay after source drop. A denied refinement budget retries under
+a larger budget. Definition replay is not a cold serialization/import test.
+
+The final private source passes 2,610 Hypercurve tests (35 ignored), 24 affected
+CSGRS tests, all-feature/all-target Clippy with warnings denied, docs and format
+checks. In pinned Alumina interface `2c49c81a` / firmware `bdee397d` copies, the
+same twenty travel-envelope cases improve from six completed / fourteen
+unresolved to twelve admitted / eight correct escapes. Three existing travel
+and rounded-command checks pass in both. This does not expand motion scheduling
+or establish a published release. Final primary checks are recorded in the
+[research ledger](../../docs/research-program.md).
+
+The final native probe uses 30 alternating process pairs, 14 fixtures × two
+directions × two policies and 20 queries per process: 67,200 outcomes. Baseline
+has 16,800 successful queries and 16,800 blockers; candidate has 28,800 successes
+and 4,800 existing typed blockers. All 1,080 old full artifact pairs match;
+21,600 old per-sample receipt/checksum/size pairs also match. New success is not
+timed against a baseline error as a speedup.
+
+Selected adverse controls, forward STRICT, cold after input construction:
+
+| Query | Baseline / candidate median | Paired ratio, bootstrap 95% interval |
+| --- | --- | --- |
+| Cubic hull | 39.08 / 45.46 µs | 1.143 [1.048, 1.263] |
+| Cubic tangency | 61.82 / 68.38 µs | 1.159 [1.092, 1.236] |
+| Cubic escape | 61.93 / 73.72 µs | 1.219 [1.119, 1.326] |
+| Monotone rational, warm | 155 / 260 ns | 1.637 [1.391, 1.908] |
+| Unsupported analytic carrier, warm | 305 / 365 ns | 1.105 [1.020, 1.199] |
+
+Nineteen old query cells have adverse unadjusted intervals. No latency
+nonregression or speedup is claimed. Polynomial stationary candidates add eight
+requested bytes without extra allocation calls. Other old allocation sequences
+match. The second candidate removes an initial 2,120-byte / eleven-allocation
+duplicate endpoint cost; both candidate histories remain in the evidence.
+Native probe `.text` grows 8,160 bytes and the file 9,584 bytes; these are not
+deployment or WASM measurements.
+
+New forward STRICT queries range from 89.03 µs cold / 19.37 µs warm for a
+selected tangent trim to 1.330 ms / 0.761 ms for a trim beside a pole. That
+latter query requests 960,724 cold / 848,056 warm bytes. Validation/serialization
+and result drop are measured separately. Inputs and artifact/source destruction
+are excluded. Retained-after-result-drop deltas plateau over twenty samples
+with the source alive; this is not a heap bound. External process limits do not
+establish an internal total-work or cancellation guarantee.
+
+Raw sources, locks, binaries' digests, commands, adverse rows and corrections
+belong to evidence record `2026-10-25-research-r23`. Outside-unit derivative
+domains, analytic/implicit interior extrema, published source-location witnesses,
+cold archive continuation and release packaging remain open.
+
 ## Resource experiments H16–H20 (2026-10-23)
 
 Items H16–H20 of the 2026-10-22 research queue, rechecked at `d3d5e6ebef`.
@@ -10668,3 +10796,327 @@ The [admission record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e
 Three alternating pairs preserve all 33 preceding consumer groups in 24 processes, with original assertions, iterations and outcomes. Time ratios range 0.979430–1.065905; 0 exceed the 10% review marker and 5 increase allocation calls or requested bytes. Seven new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
 [All cost rows](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/costs.md) and the [resource review](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-parallel-pcurve-replay/resource-review.json) retain timing, allocation, RSS, executable size and 25 exact archive observations. The previous selected-profile unequal-hole rejection cost and all earlier adverse obligations remain open. These finite samples do not bound arbitrary composition, retained heap, coefficient growth, total work or cancellation. Spatial parallel-cap extrusion and broader release gates remain open.
+
+
+### Retained loop roles through line coalescing (R11)
+
+**Admission withdrawn.** The P00–P29 handoff requires literal latency
+nonregression. This experiment does not establish it on the unchanged controls,
+so the production change has been removed. The measurements below describe
+the archived candidate, not the retained stack.
+
+Tested for strict, one-to-one directed loop images on 2026-10-25. The measured
+baseline proves two mixed line/arc components disjoint, merges their forward
+line runs, discards the role proof, then repeats it on every role query.
+The rewrite now validates unchanged loop indices, replays the source policy
+dependency, and shares its role Arc only when source and rewrite are strict.
+Geometry-dependent caches are rebuilt; no new global cache is introduced.
+Qualified dependencies are not upgraded. The existing adjacency, collinearity,
+forward-direction and cyclic-seam predicates are unchanged.
+
+Thirty alternating process pairs for eight cases (mixed and linear regions
+with 1, 2, 8 and 32 components), five samples per process, produce 2,400
+certified results. Exact geometry/role/area JSON, serialized sizes and
+checksums match byte for byte. Boolean construction allocation bytes, calls
+and peak live growth match for every paired sample. Warm median costs for ten
+successive role queries are:
+
+| Mixed components | Baseline time | Retained proof time | Allocated bytes, before → after |
+| --- | ---: | ---: | ---: |
+| 2 | 47.49 µs | 0.57 µs | 65,780 → 20 |
+| 8 | 160.08 µs | 0.56 µs | 230,000 → 80 |
+| 32 | 686.56 µs | 0.60 µs | 886,880 → 320 |
+
+Cold query savings are similar. Single-loop and line-only queries already
+retain their roles. Boolean construction timing is noisy: the median paired
+ratios span 0.989–1.031, with no general Boolean speed claim. All samples,
+including the slower controls, remain in the archive. The first prototype's
+extra boundary-vector allocation was removed; its adverse results are kept.
+For 8/32 mixed components the result retains an additional 24/48 bytes of
+role authority. All paired post-drop live-byte deltas match. Native probe
+`.text` grows from 11,101,567 to 11,114,159 bytes; file size grows by 7,448
+bytes. These are probe sizes, not production/WASM size attribution.
+
+Diagnostic builds record the same 14 line-image requests, 12 merge attempts,
+2 forward merges and 4 native materializations in the two-component fixture.
+Construction proves the roles once in both versions; each subsequent query
+proves them once before the change and zero times after it. Line-fit reuse
+between normalization passes remains open.
+
+Six public regressions cover source drop, independently derived areas and
+point locations, holes and restoration, touching components, backtracking,
+cyclic seams, reversal, swapped operands and selected arc endpoints. Three
+unit guards exercise rejected correspondence, retained provenance and
+strict/approximate/strict dependencies. Final local/downstream checks include
+298 Rust tests, an additional seeded Boolean rerun, C/C++/Python consumers,
+JS/TS WASM, BRep profiles and PCB materialization, Clippy and docs. Fourteen
+pre-existing ignored continuation gates remain open. No new total-work,
+heap-byte or cancellation guarantee is claimed; probe timeouts are external.
+
+Evidence: `docs/evidence/2026-10-25-research-r11` in the local evidence archive,
+with its digest in [`evidence-archive.tsv`](../../docs/evidence-archive.tsv).
+The source, compiler, hardware, feature, timing, allocation and completion
+records are retained. This is a focused shared-host probe, not a PCB campaign
+or a release/distribution acceptance claim.
+
+
+### Shared polynomial cut points (R05)
+
+**Admission withdrawn.** The section control has an adverse latency interval.
+This fails the P00–P29 handoff's literal nonregression rule, so the production
+change has been removed. The measurements below describe the archived candidate.
+
+The first R05 experiment retains one selected point per cut in a polynomial
+branch split. Adjacent pieces share that point, the source topology, slab/root
+selector, parameter chart and image maps. Both the public one-cut split and
+the internal multi-cut path use the same producer. There is no new global
+cache, public API or admitted intersection family. The original contact in
+`intersection_topology` still owns a separately constructed point; passing
+that contact into subdivision is additional work.
+
+The baseline genuinely recomputes each shared interior fiber: the quintic
+`y^5 + 5y + 5 - x` needs one isolation for a vertical section and three for
+section plus splitting. Its adjacent split endpoints have distinct storage.
+The retained split evaluates each cut once. Exact polynomial residuals,
+selected source parameters, replay, reversal, domain guards and downstream
+sections establish meaning independently of the cost probe's byte comparisons.
+
+Thirty alternating process pairs, ten cases and twenty samples per process
+produce 12,000 certified completions. All exact JSON rows, sizes and checksums
+match, including retained point definitions and map/selector authority.
+The native release probes use identical dependency locks checked against the
+workspace lock. Construction, definition serialization and drop are outside
+the operation timer. Sample zero is cold; samples 10–19 form the steady-warm
+summary on this shared, unpinned Ryzen 7 5800X3D host:
+
+| Operation | Warm median, before → after | Requested bytes, before → after |
+| --- | ---: | ---: |
+| Quintic split at x=0 | 95.61 → 54.75 µs | 76,352 → 39,528 |
+| Vertical intersection topology | 185.24 → 141.97 µs | 140,624 → 103,560 |
+| Split at selected x=√(1/2) | 152.94 → 87.15 µs | 105,258 → 53,981 |
+| Reversed branch split | 96.20 → 50.61 µs | 76,352 → 39,528 |
+| Translated branch split | 97.18 → 56.63 µs | 77,120 → 39,912 |
+| Rational image split | 104.86 → 59.56 µs | 81,760 → 42,664 |
+
+The rational image is `(x/(2+x), y/(2+x))`, with `x` in `[-1,1]`, so its
+denominator is strictly positive. Warm paired median time ratios are
+0.528–0.557 for splits and 0.767 for topology. The unchanged section control
+is 1.016 (paired bootstrap 95% interval 1.004–1.028); the native line's first
+cold call is 1.171. These adverse observations and all repetitions are
+retained. Restriction, section, line and quadratic controls have identical
+allocation bytes, calls, peaks and retained deltas in every paired sample.
+This is a focused cost result, not a general kernel speed claim.
+
+The initial five-sample run showed 852 more live bytes on the selected-cut
+case during warming. The extended run demonstrates the same cumulative
+retained scalar-cache growth in both versions and zero additional post-drop
+growth for every sample 10–19. Warm result storage is smaller by 2,560–3,152
+bytes on the changed cases; peak live growth is also lower. The allocation
+counter includes the one-cut path's new temporary vector. The linked native
+probe's `.text` grows by 3,728 bytes and its file by 776 bytes. Production
+and WASM size attribution remain separate.
+
+Strict replay of an approximate-policy similarity remains an existing typed
+blocker, reproduced identically in both versions. Sharing a cut does not
+upgrade that policy dependency. The three new unit guards cover that boundary,
+strict replay after source drop, duplicate/endpoint cuts, map and selector
+identity, invalid cuts and zero-budget failure followed by recovery. No new
+heap-byte, total-work or cancellation guarantee is claimed.
+
+Final affected checks pass: 214 Rust tests across subdivision, polynomial
+continuation, selected-point/curve consumers, BRep sections/archives and root
+modeling; root and Hypercurve all-target/all-feature Clippy with warnings
+denied; Hypercurve docs and wasm32 check; formatting and repository budget.
+There is no new polynomial binding API or release acceptance claim.
+
+Evidence: `docs/evidence/2026-10-25-research-r05` in the local evidence archive,
+with its digest in [`evidence-archive.tsv`](../../docs/evidence-archive.tsv).
+The original five-sample run, expanded run, adverse controls, commands,
+compiler/build identities and exact outputs are retained. Selected/algebraic
+line queries, mapped intersections, branch pairs and common components remain
+open R05 milestones.
+
+### Guarded circular line-fit rejection (R28, 2026-10-25)
+
+**Optimization rejected.** A private shortcut proves a finite, connected,
+nonconstant image on a positive-radius circle before returning `NotLine`.
+Same-sign nonzero Bernstein weights establish finiteness; distinct endpoints
+establish nonconstancy. Unknown evidence takes the original fit path. The
+proposal changes neither mixed-weight admission nor point fitting. The seven
+independent acceptance tests pass on baseline and candidate, including collapsed
+and retraced images, selected restrictions, negative gauges, tiny circles,
+similarities, singular charts and strict → qualified → strict receipts.
+
+The native cost comparison uses the frozen retained stack including R23 and
+R15, identical dependency locks and normalized build paths, Rust 1.98.1 release
+probes with the System allocator, and no tracing. Thirty balanced randomized
+process pairs (seed 20261025), pinned to CPU 0 of a Ryzen 7 5800X3D under the
+reported powersave governor, follow a separate five-pair variance pilot.
+No task-owned builds or heavy jobs run concurrently. Shared-host interference
+is not ruled out. Each process contributes its first query and the median of
+seven batches of 8,192 queries; inner iterations are not independent samples.
+Each timed query includes the public fit, certainty and exact-result checks,
+checksum update and result destruction. Input construction, JSON encoding and
+process startup are excluded. Construction may already warm facts, so the first
+query is not a globally cold-cache claim.
+
+All 5,760 paired outcome rows match. The 82,576,800 Certified queries comprise
+68,814,000 successful `Fit`/`NotLine` queries and 13,762,800 preserved typed
+`Unsupported` outcomes. The twelve fixtures under both policies cover native
+and general circles, selected circle output, points, lines, noncircular conics
+and mixed-sign charts. Paired log-ratio Student intervals protect all 48
+fixture/policy/phase metrics with Bonferroni simultaneous 95% coverage. The
+eight warm circle targets have ratios 0.2512–0.3250, with maximum simultaneous
+upper bound 0.3601, meeting the predeclared target below 0.8. Nevertheless,
+33 protected upper bounds exceed one: all 32 noncircle controls and the first
+STRICT selected-native-circle query. Ten marginal intervals and these five
+simultaneous intervals are adverse:
+
+| Protected control | Phase | Median ns, baseline → candidate | Paired ratio | Simultaneous 95% interval |
+| --- | --- | ---: | ---: | --- |
+| General point, STRICT | First | 17,518.5 → 24,859 | 1.3408 | [1.1240, 1.5993] |
+| General point, APPROXIMATE_512 | First | 18,073.5 → 24,478 | 1.2905 | [1.1319, 1.4713] |
+| Native line, STRICT | Warm | 631.02 → 673.21 | 1.1018 | [1.0284, 1.1804] |
+| Native line, APPROXIMATE_512 | First | 70,190.5 → 79,454.5 | 1.2084 | [1.0290, 1.4191] |
+| General line, APPROXIMATE_512 | Warm | 687.17 → 714.90 | 1.0441 | [1.0077, 1.0818] |
+
+Five separate allocation pairs preserve 107,760 Certified outcomes / 960 paired
+rows. Every eight-sample allocation sequence repeats across the five pairs. Only the eight
+circle/policy cells change: native query traffic falls 224 → 0 bytes, general
+selected-circle traffic 272 → 0, and general elevated-circle traffic 1,744 → 0
+on first use and 320 → 0 when warm. The elevated circle's 1,424 retained bytes
+also disappear. The other sixteen cells have identical allocation sequences.
+Native `.text` grows 23,472 bytes and file size 25,112 bytes; maximum process RSS
+is 9,400 → 9,440 KiB. These are probe costs, not deployed/WASM size claims or
+internal heap bounds. Allocation instrumentation is absent from native timing.
+
+Separate diagnostic traces reproduce 202 circular fits per two-circle case
+and 1,745,095 fits in the original Nano pipeline. Candidate fit-outcome count
+maps match; Nano uses the shortcut 39,076 times and each kind of reference
+vector falls 6,086 → 723. Both Nano runs complete with 268 DRC findings and
+six release blockers. Per-fit stderr instrumentation invalidates native timing
+inference. These count checks are not full exact geometry/provenance artifacts;
+the original single-board filter also skips the all-board golden comparison.
+
+The protected direct-query regression is the predeclared early veto. Full
+workflow timing and exact-artifact admission are therefore not claimed, and
+the optimization remains private. Only the independent tests and the `NotLine`
+documentation correction are retained in production source. A future candidate
+needs a changed producer/dispatch premise that protects ordinary fits, followed
+by both direct-query and complete circle/board workflow gates.
+
+Evidence: `docs/evidence/2026-10-25-research-r28` in the local evidence archive,
+with its digest in [`evidence-archive.tsv`](../../docs/evidence-archive.tsv).
+It retains all raw pairs, every adverse/inconclusive row, build/source hashes,
+the functional and variance pilots, the predeclared design, allocation-review
+correction, diagnostic traces and retained-change validation. The trace logs
+are losslessly compressed with original-content digests.
+
+### Selected-fiber quotient rejection (R16, 2026-10-25)
+
+**Both runtime variants rejected; eight independent tests retained.** The
+original STRICT `filleted_boolean_miter_erosion_completes` and
+`stroke_fillet_stroke_of_a_cubic_arc_path_completes` both exceed external
+300-second / 8-GiB containment on the retained stack. Exact input capture
+separates their causes:
+
+| Captured predicate | Independently checked field and factor | Diagnostic cost |
+| --- | --- | --- |
+| Filleted Boolean erosion | Irreducible rational base degree 14; incidence degree 36 divides predicate degree 40; maximal GCD degree 36 | GCD 26.17 ms, then Sturm construction unfinished at timeout |
+| Cubic/arc stroke composition | Degree-10 carrier over `Q(sqrt(89))`; selected rational degree 20; incidence degree 4 divides predicate degree 40; maximal GCD degree 4 | General coefficient GCD 192.22 s; subsequent count 0.112 s |
+
+The independent checkers use exact rational arithmetic, root isolation,
+irreducibility, exact division and coprime cofactors. The second additionally
+proves the positive quadratic embedding. These are polynomial identities;
+they do not prove geometric contact or replace unsquared caller guards.
+The second diagnostic GCD counts 287.82 billion allocated bytes, including
+positive realloc growth. Nested instrumentation, capture work and allocation
+overhead make these diagnostic observations unsuitable for native speed claims.
+
+The existing rational-function reduction API can prove the first quotient
+zero. A private consumer tries it once after the bounded predicate gate and
+accepts only an Exact, nonempty literal-zero numerator with authored unit
+denominator. The broad version completes the first original workflow in
+78.89 s but spends about 200 diagnostic seconds reducing the second case
+before re-entering common-root counting. Its rational-only revision first
+requires literal rational coefficients and completes the first workflow in
+76.39 s. Neither completes the second within 300 seconds. The baseline
+timeouts are censored observations, not speed ratios or an independent proof
+of mathematical-domain extension. These candidates therefore face the
+performance-only admission gate.
+
+The controlled native experiment builds both frozen binaries sequentially
+in the same checkout and target; only `fiber_sign.rs` differs. It uses the
+retained R23/R15 stack, Rust 1.98.1, identical locks/features, the System
+allocator and no tracing. Thirty balanced randomized process pairs follow
+a separate five-pair variance pilot, pinned to CPU 0 of the Ryzen 7 5800X3D
+under the recorded powersave governor (seed 20261025). No task-owned heavy
+jobs run concurrently; shared-host interference is not ruled out. Each
+process contributes its first query and the median of seven warm batches.
+Batches are frozen by baseline calibration, from 4 to 65,536 queries.
+Timing includes the private predicate, receipt/sign checks, checksum and
+result destruction; construction, JSON and startup are excluded. The first
+query is not a claim of globally cold caches.
+
+All 85,110,240 queries have the expected Certified signs, and all 5,760
+paired outcome rows match. Twelve fixtures under both policies include zero
+quotients, positive/negative residues, branch selection, repeated incidence,
+reducible bases, degree drops, residues `±2^-120`, nonrational coefficients,
+constant/exact-incidence controls and a changed selected base. Student
+intervals on paired log ratios protect all 48 fixture/policy/phase metrics
+with Bonferroni simultaneous 95% coverage. The target zero's STRICT first
+and warm ratios are 0.7774 [0.7098, 0.8514] and 0.2123 [0.1938, 0.2324];
+APPROXIMATE_512 gives 0.8187 [0.7370, 0.9096] and 0.1989 [0.1944, 0.2036].
+Nevertheless, 43 protected upper bounds exceed one. Fifteen marginal
+intervals and these eight simultaneous intervals are adverse:
+
+| Protected control | Policy / phase | Paired ratio | Simultaneous 95% interval |
+| --- | --- | ---: | --- |
+| Selected branch sign | STRICT / warm | 1.1124 | [1.0870, 1.1384] |
+| Selected branch sign | APPROXIMATE_512 / warm | 1.1207 | [1.0408, 1.2068] |
+| Repeated incidence | STRICT / warm | 1.0773 | [1.0004, 1.1602] |
+| Reducible selected base | STRICT / warm | 1.0651 | [1.0047, 1.1292] |
+| Reducible selected base | APPROXIMATE_512 / warm | 1.0397 | [1.0009, 1.0800] |
+| Changed selected base | STRICT / warm | 1.1909 | [1.1758, 1.2062] |
+| Changed selected base | APPROXIMATE_512 / first | 1.1076 | [1.0169, 1.2063] |
+| Changed selected base | APPROXIMATE_512 / warm | 1.1747 | [1.0614, 1.3002] |
+
+This fails the literal nonregression gate. The linked probe grows 71,296 file
+bytes while `.text` shrinks 208 bytes; maximum process RSS is 12,696 → 12,624
+KiB. Allocation campaigns, deployed/WASM size and whole-workflow performance
+admission stop at this early veto. No new memory or cancellation bound is
+claimed. The earlier 30-pair comparison used differing absolute build paths;
+its eleven adverse intervals remain in the archive but are excluded from
+controlled source-change attribution. The repaired comparison preserves the
+same fixtures, batches, seed, estimator, sample count and threshold.
+
+Two capture/replay corrections are part of the evidence. Ordinary tree
+serialization produced 5.87 GB and then hit the disk quota while writing the
+next scalar. Complete shared graph exports instead retain every exact value;
+an independent decoder reduces them to `a + b sqrt(89)`. A streaming replay
+reproduces all 5,874,413,454 original bytes and the second 476,352,512-byte
+partial prefix with matching SHA-256. The archive retains losslessly compressed
+graphs, the generator and digests instead of redundant expanded copies.
+Separately, compact coefficient replays initially aborted while asserting or
+printing full `Real` vectors. Bounded-output reruns return Exact reduction in
+about 180 s, with one nonliteral numerator and literal unit denominator.
+The aborts cannot be attributed to arithmetic alone. This shape audit does
+not independently verify the exported native expression, and a literal-zero
+consumer cannot use that nonliteral export.
+
+The retained runtime is unchanged. All eight final targeted checks pass:
+eight new predicate tests, 46 selected-fiber/parameter integration tests,
+24 downstream modeling/receipt/error tests, formatting, Hypercurve/CSGRS
+all-target/all-feature Clippy with warnings denied, Hypersolve/Hypercurve/CSGRS
+documentation with warnings denied, repository budget and diff checks.
+The existing Pell-denominator test also passes, but permits either exact
+completion or honest `Predicate` uncertainty; it does not establish completion.
+The second original workflow, multi-source leaves, complete Pell outcomes
+and internal work/heap/cancellation bounds remain open. No full pre-push or
+release validation is claimed.
+
+Evidence: `docs/evidence/2026-10-25-research-r16` in the local evidence archive,
+with its digest in [`evidence-archive.tsv`](../../docs/evidence-archive.tsv).
+It preserves exact captures, independent proofs, all failed attempts and
+corrections, private prototypes, native pairs, source/build identities and
+retained-change validation.

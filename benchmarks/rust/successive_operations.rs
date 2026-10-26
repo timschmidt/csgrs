@@ -26,7 +26,10 @@
 //! cached; the default validates between steps, as the corpus test does.
 //! Setting `SUCCESSIVE_OPERATIONS_RAW=<path>` also writes every row in exact
 //! units (bytes, nanoseconds) to that file as tab-separated values, after
-//! header lines that record the revision, toolchain, profile and arguments.
+//! header lines with the build identity and run arguments. Each completed
+//! record is synced before the next step. Use `scripts/successive-operations.py`
+//! to embed source/compiler identity and record the actual binary's hash and
+//! interruption status; a direct Cargo build is explicitly unattributed.
 
 #[allow(dead_code)]
 #[path = "../../tests/support/successive_operations.rs"]
@@ -34,7 +37,7 @@ mod chains;
 
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::RefCell;
-use std::fmt::Write as _;
+use std::io::Write as _;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -159,39 +162,16 @@ fn corpus() -> Vec<Chain> {
     ]
 }
 
-/// First line of a command's output, or why it is unavailable.
-fn command_line(program: &str, arguments: &[&str]) -> String {
-    match std::process::Command::new(program).args(arguments).output() {
-        Ok(output) if output.status.success() => String::from_utf8_lossy(&output.stdout)
-            .lines()
-            .next()
-            .unwrap_or_default()
-            .to_owned(),
-        Ok(output) => format!("unavailable ({})", output.status),
-        Err(error) => format!("unavailable ({error})"),
-    }
-}
+const BUILD_INFO: &str = match option_env!("CSGRS_SUCCESSIVE_BUILD_INFO") {
+    Some(info) => info,
+    None => {
+        r#"{"schema":1,"status":"unattributed","hint":"build with scripts/successive-operations.py"}"#
+    },
+};
 
 fn raw_header(arguments: &[String]) -> String {
-    let dirty = command_line("git", &["status", "--porcelain", "--untracked-files=no"]);
     format!(
-        "# successive_operations raw rows\n# revision\t{}{}\n# rustc on PATH at run time\t{}\n# package\tcsgrs {}\n# profile\t{}\n# target\t{}-{}\n# arguments\t{}\n",
-        command_line("git", &["rev-parse", "HEAD"]),
-        if dirty.is_empty() {
-            ""
-        } else {
-            " (modified tracked files)"
-        },
-        command_line("rustc", &["-V"]),
-        env!("CARGO_PKG_VERSION"),
-        if cfg!(debug_assertions) {
-            "debug assertions"
-        } else {
-            "release"
-        },
-        std::env::consts::ARCH,
-        std::env::consts::OS,
-        arguments.join(" "),
+        "# successive_operations raw rows\n# build\t{BUILD_INFO}\n# arguments\t{arguments:?}\n",
     )
 }
 
@@ -233,6 +213,10 @@ fn main() {
     // Cargo passes `--bench`; `--untouched` selects the mode, and any other
     // argument filters chain names.
     let arguments: Vec<String> = std::env::args().skip(1).collect();
+    if arguments == ["--build-info"] {
+        println!("{BUILD_INFO}");
+        return;
+    }
     let between = if arguments.iter().any(|argument| argument == "--untouched") {
         Between::Untouched
     } else {
@@ -240,9 +224,19 @@ fn main() {
     };
     let filter = arguments.iter().find(|argument| !argument.starts_with("--"));
     let raw_path = std::env::var_os("SUCCESSIVE_OPERATIONS_RAW");
-    let mut raw = raw_path
-        .as_ref()
-        .map(|_| raw_header(&arguments) + RAW_COLUMNS);
+    let mut raw = raw_path.as_ref().map(|path| {
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(path)
+            .unwrap_or_else(|error| {
+                panic!("cannot create {}: {error}", path.to_string_lossy())
+            });
+        file.write_all((raw_header(&arguments) + RAW_COLUMNS).as_bytes())
+            .and_then(|()| file.sync_data())
+            .expect("persist the run header before constructing geometry");
+        file
+    });
     let mut header = chains::TABLE_HEADER.lines();
     println!(
         "{} MB allocated | MB peak growth | MB live at start | allocator calls |",
@@ -258,28 +252,41 @@ fn main() {
         }
         let allocations = Rc::new(RefCell::new(Vec::new()));
         let chain = measured(chain, Rc::clone(&allocations));
-        let records = chains::run_with(&chain, between, |_, _| {});
-        let allocations = allocations.borrow();
-        for ((row, record), allocation) in chains::table_rows(chain.name, &records)
-            .into_iter()
-            .zip(&records)
-            .zip(allocations.iter())
-        {
-            println!(
-                "{row} {:.1} | {:.1} | {:.1} | {} |",
-                allocation.allocated as f64 / 1e6,
-                allocation.peak_growth as f64 / 1e6,
-                allocation.live_at_start as f64 / 1e6,
-                allocation.calls,
-            );
-            if let Some(raw) = raw.as_mut() {
-                let _ = write!(raw, "{}", raw_row(chain.name, record, allocation));
-            }
-        }
+        chains::run_with_observer(
+            &chain,
+            between,
+            |_, _| {},
+            |record| {
+                let allocation = allocations.borrow()[record.step - 1];
+                if let Some(raw) = raw.as_mut() {
+                    raw.write_all(raw_row(chain.name, record, &allocation).as_bytes())
+                        .expect("write the completed step");
+                    if let chains::Outcome::Failed(_, detail) = &record.outcome {
+                        writeln!(
+                            raw,
+                            "# failure\t{:?}\t{}\t{detail:?}",
+                            chain.name, record.step
+                        )
+                        .expect("write the typed failure diagnostic");
+                    }
+                    raw.sync_data().expect("persist the completed step");
+                }
+                let row = chains::table_rows(chain.name, std::slice::from_ref(record))
+                    .pop()
+                    .expect("one table row per completed record");
+                println!(
+                    "{row} {:.1} | {:.1} | {:.1} | {} |",
+                    allocation.allocated as f64 / 1e6,
+                    allocation.peak_growth as f64 / 1e6,
+                    allocation.live_at_start as f64 / 1e6,
+                    allocation.calls,
+                );
+            },
+        );
     }
-    if let (Some(path), Some(raw)) = (raw_path, raw) {
-        std::fs::write(&path, raw).unwrap_or_else(|error| {
-            panic!("cannot write {}: {error}", path.to_string_lossy())
-        });
+    if let Some(raw) = raw.as_mut() {
+        raw.write_all(b"# completed\n")
+            .and_then(|()| raw.sync_data())
+            .expect("persist successful harness completion");
     }
 }

@@ -80,3 +80,163 @@ evidence by repository path and digest. Raw material is committed to the
 evidence repository, and its record digest is added to `evidence-archive.tsv`.
 `scripts/check-repository-budget.sh` rejects archived roots and oversized files
 in this repository.
+
+## Local follow-on records
+
+The latest local follow-on commit is
+`55d28790bdcf32b6454d34a2bfd5ed826f187d72`, adding
+`docs/evidence/2026-10-25-research-r19` (16,755 files, 76,625,900 bytes), with
+SHA-256 `e916615b99a96c59a6cc5f9d764271d17efcbe894a2fce762a5d7d2ee7fe0ea0`.
+It records cold exact-domain continuation, 303 newly exact public consumer
+cells, unchanged cold BRep archive replay, failed prototypes, resource limits,
+all 20 passing final checks, and the measured adverse construction costs.
+Performance-only admission fails. All seventeen research records verify at
+this commit; historical paths and published `main` remain unchanged.
+
+Its parent is
+`e9b57b21802b18371d062a1a38303cbc8176acc5`, adding
+`docs/evidence/2026-10-25-research-r18` (4,832 files, 42,607,582 bytes), with
+SHA-256 `9d56eef5f86d80aef6059d8bf2dea42f5fcadeeec301885f11e6acdfb9f6f0f1`.
+It records the scoped compound-rotation completion, independent predicate and
+cube proofs, failed candidates, native and allocation comparisons, and all
+20 passing final checks. The protected latency gate fails; unfavorable costs
+remain in the record. Large text artifacts are losslessly compressed with
+verified reassembly, and compiled binaries are excluded with digests. All
+sixteen local research records verify at this commit; historical paths and
+published `main` remain unchanged.
+
+Its parent is
+`6b9323f1aed17c0397d973cdb80b73541fb3a1d2`, adding
+`docs/evidence/2026-10-25-research-r17` (3,915 files, 395,841,565 bytes), with
+SHA-256 `d84deab1807baf7215662ae22f0aa517dbf449fcb139c9391fa3b90c0e00874f`.
+It records the complete Nano allocation trace, ownership decoder and controls,
+evaluation-cell census, rejected lazy-slot layout, native timing pairs and
+passing retained-test validation. The original compressed trace is split into
+32 MiB parts with verified reassembly; regenerable partial folded reports and
+compiled binaries are excluded with digests. A compact exact multiset preserves
+the independent Heaptrack weight comparison. All fifteen local research records
+verify at this commit; historical paths and published `main` remain unchanged.
+
+Its parent is
+`cd833ffd7f8e04d75913cbd063c9009b5bd0662a`, adding
+`docs/evidence/2026-10-25-research-r16` (11,064 files, 93,931,201 bytes), with
+SHA-256 `b86159f76af7def0a1676370a48de2f73cae34ca1ffc79e666fca2f654f54565`.
+It records exact selected-fiber captures, independent factor/embedding proofs,
+both rejected quotient consumers, the controlled timing comparison, original
+failed attempts and corrections, and retained test/documentation validation.
+Shared graph exports are losslessly compressed; byte-exact replay verifies
+the redundant expanded exports omitted from the archive. The fourteen earlier local research records verify at that commit.
+
+Earlier commit `bdded6ef9d6761918276852e96c64c4b2a986e91` added
+`docs/evidence/2026-10-25-research-r28` (4,248 files, 22,826,945 bytes), with
+SHA-256 `65c784d87d3d6fea819f48c12de1d6100e1dc11a2489884426a90de31fe1e477`.
+It retains the rejected circular line-fit shortcut, native/allocation pairs,
+independent oracles, passing retained-change checks and diagnostic circle/Nano
+traces. The two large Nano logs are losslessly compressed with verified digests.
+
+The 25 October research record is committed locally as
+`2f08663201ff859be36eeeabf5745d5916d2a555`, branch
+`research-2026-10-25`, in the sibling `csgrs-evidence.git` repository. It adds
+`docs/evidence/2026-10-25-research` (586 files, 2,269,593 bytes) without changing
+any historical path. Its SHA-256 in `evidence-archive.tsv` is
+`7e9cd5280eefa5160ee60801ff2cb4efd7d1a2ae90d300db0f7a74c42d800643`.
+The branch has not been pushed; the published historical archive above remains
+at `b20000e377626a41b6ff8e6f87aee2b20ebd7865`.
+
+This record contains the R01 mesh evaluation, the R02 production reproduction,
+and recovered original H13–H15 material with new independent verification.
+
+The same local branch now also contains commit
+`1a77f07e8f166bb2455b5f3f5117e5c51a3219eb`, which adds
+`docs/evidence/2026-10-25-research-r02-r25` (97 files, 1,187,293 bytes).
+Its SHA-256 is
+`3715724b34398e9443db0d38aed749c3f2eba130b210c5db5e924b531d17cb6e`.
+It retains the rejected R02 variants, the R03 timeout, R04 mixed-profile
+reproductions, and R25 build/run records and interruption checks.
+
+Commit `a1c1182802aae8bd43ca825da95e67f262cd7a71` adds
+`docs/evidence/2026-10-25-research-r04` (838 files, 16,892,204 bytes), with
+SHA-256 `349cfa2256f7d156d1efd0629b1a3d4ef959b05734e8198a7e82c3aba5a67cb9`.
+It retains the R04 implementation, eight baseline failures, final acceptance
+and binding checks, and all paired exact rows and allocation measurements.
+Commit `14d94946da060d8cb215cb161f37efbe6c9bb314` adds
+`docs/evidence/2026-10-25-research-r11` (1,690 files, 16,013,219 bytes), with
+SHA-256 `e558e4a5395098e82ae0a2796cc58013ace58676d33466b1eb902ad358fc8b2c`.
+It retains the R11 baseline, both prototypes, 2,400 paired results, proof
+traces, exact rows and local/binding/BRep/PCB acceptance checks.
+
+Commit `c916f48bf254ab943d3a68268213af5d824924df` adds
+`docs/evidence/2026-10-25-research-r05` (2,486 files, 8,861,617 bytes), with
+SHA-256 `2bcd10864cf3bf00756c2199df8ebe7006226b29800556e7e77d3356e036e32b`.
+It retains the R05 shared-cut baseline and implementation, the initial and
+extended paired measurements, exact definitions and all affected acceptance
+checks, including existing policy blockers and adverse controls.
+
+Commit `5e749b3e83710a56eece75e6242cea7302107c1e` adds
+`docs/evidence/2026-10-25-research-r08` (135 files, 2,815,808 bytes), with
+SHA-256 `4df916c2722e2078566cf11d8f2d700e5036a05ffb10e95e69f613f48267bcd9`.
+It retains the R08 typed policy failures, qualified affine continuation,
+five board query outcomes, rejected native bypass, and local/downstream checks,
+including the full seeded Hypercurve suite (2,607 passed, 35 existing ignored).
+
+Commit `e72d70d97cd87a590d17a0d6604b7d016be5be41` adds
+`docs/evidence/2026-10-25-research-r13` (38 files, 897,550 bytes), with
+SHA-256 `2ed9e47b8d6d725d80826b67196711a3aee70a36013de1101e879d323658dc7f`.
+It retains R13's original exploratory trace and the dedicated-build evaluation:
+186 passing tests, 133 successor reconstruction sites, no single unmatched
+pair before or after tangent construction, and no production change retained.
+
+Commit `8e48e5ce1c98476c61bfa406304dc3ce7158b324` adds
+`docs/evidence/2026-10-25-research-r12` (4,507 files, 46,627,949 bytes), with
+SHA-256 `db661d469da8d93c2a870847904ef4f1e397ef511045775afa5f7efb0a64e304`.
+It retains R12's rejected tangent-sharing experiment, independent oracles,
+19,200 completed isolated comparisons, adverse controls, native/WASM attribution,
+Callgrind traces and the passing 39-command frozen combined validation. The
+production candidate was removed under the literal latency gate. R05 and R11
+admission claims are likewise superseded by the reconciliation in
+[research-program.md](research-program.md#hypercurve-work-package-coverage-and-admission-reconciliation).
+Their original archive records remain unchanged.
+
+All eight commits only add their own records; historical paths and published
+`main` are unchanged. None has been pushed. Verify the expanded manifest using:
+
+```sh
+python3 scripts/evidence_archive.py verify ../csgrs-evidence.git \
+  8e48e5ce1c98476c61bfa406304dc3ce7158b324
+```
+
+Commit `5f5b31ac82d32f32ec004a901080de54b8693d9a` adds
+`docs/evidence/2026-10-25-research-r14` (96 files, 5,893,560 bytes), with
+SHA-256 `d2a04ded4c46f0eaea3959153e7d85dbceae00903ad3095951d2dbf56e2ba393`.
+It retains both unadopted R14 preparation variants, independent rational oracles,
+phase diagnostics and the unchanged full refilleting completions. The local
+research branch remains unpublished.
+
+Commit `c0fd193305812e52a76a076b8bfce89ceb208e62` adds
+`docs/evidence/2026-10-25-research-r04-followup` (4,544 files, 23,148,395 bytes), with
+SHA-256 `ef789e5a1b616bf86510bd17dda8f2c5fa522a44fe665a6015371550f074ee85`.
+It retains the R04 sampling/predicate/triangulation repairs, clean source
+counterfactuals, 38,400 exact triangulation results and adverse timings,
+withdrawal of R05/R11/R12 production candidates, and the complete passing
+39-command validation of the final retained stack. The local research branch
+remains unpublished.
+
+Commit `ec280dbccf7ecb7e77c2f021efa1ea16963e7c18` adds
+`docs/evidence/2026-10-25-research-r23` (20,898 files, 73,997,727 bytes), with
+SHA-256 `9e409ecec0e53d725d217d5f0f17c029a898a4dfcac16922d19e9ecc493209d9`.
+It retains both R23 candidates, independent extrema/source-range oracles,
+two 67,200-outcome cost comparisons with adverse controls, pinned Alumina
+consumer evidence, full private owner/downstream checks and final primary
+validation. The local research branch remains unpublished; earlier records
+and published `main` are unchanged.
+
+Commit `d65d6245382cde6ef23b695608c2df7c9f9fef7b` adds
+`docs/evidence/2026-10-25-research-r15` (19,191 files, 60,600,432 bytes), with
+SHA-256 `1384647865ae24a1ae53535fcca46ee43a23f0a3e30237db1055414fc7296600`.
+It retains the R15 current-primary counterfactual, independent comparison and
+cache/resource/receipt gates, 26,880 native and 4,480 allocation samples,
+adverse controls, source/build attribution and all eight final combined-primary
+checks. The equivalent-field replay is kept for scoped exact completion;
+performance-only admission fails. Its measured cost base predates R23, as the
+record states. The local research branch remains unpublished; historical paths
+and published `main` are unchanged.

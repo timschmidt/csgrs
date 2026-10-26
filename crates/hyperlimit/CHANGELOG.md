@@ -2,6 +2,10 @@
 
 ## [0.5.0] - Unreleased
 
+- Generic 2D orientations and triangle normals reuse the scalar product
+  cancellation primitive. Repeated symbolic endpoints and vertical extrusion
+  faces retain their exact zero determinants before expression expansion.
+
 ### Breaking
 
 - Predicates and batch functions now take an explicit `PredicatePolicy` as

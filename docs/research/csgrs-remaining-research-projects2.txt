@@ -1,0 +1,1500 @@
+CSGRS POST CAMPAIGN RESEARCH AND IMPLEMENTATION HANDOFF
+Consolidated remaining and new projects
+25 October 2026
+Maintainer decision update: 25 October 2026; historical evidence and dispositions retained.
+
+Repository: https://github.com/timschmidt/csgrs
+Reviewed HEAD: 3cca6a894858c8b98497a3cfe81cff5e17e1a7f2
+Campaign scope: 43 commits and 102 changed files since 1a279a3, plus the earlier
+source reviews and the 22 October consolidated 44-project handoff.
+
+EXECUTIVE ASSESSMENT
+
+The campaign closed or narrowed most original leads. Its ledger records 14
+accepted, 12 accepted in part, 7 deferred, 6 rejected, 3 not applicable and
+2 rejected with a different replacement accepted. These are 44 dispositions,
+not 44 independently delivered features. The right next campaign is smaller:
+finish exact continuation and address measured costs at their actual owners.
+In parallel, retain and test promising advanced API alternatives under the
+experimental charter below, rather than repeat unchanged rejected variants.
+
+Important accepted work includes cold Real-domain validation, bounded optional
+mesh coordinate sharing, approximate embedded-complex qualification, retained
+mesh incidence, compact exact intersection coordinates, local selected-root
+comparison, integer polynomial refinement and remainder kernels, rational-line
+polynomial sections, exact line-profile modeling, monotone fixed-plane sweeps,
+box containment, shared cap/wall assembly, dependency pruning and size harnesses.
+The campaign's negative results are valuable constraints. In particular, the
+failed modular GCD and modular radical proposals targeted costs that turned out
+to be exact zero remainders and rational refinement, respectively.
+
+The main remaining risks are repeated exact closure: local fillet-center
+creation, tangency after reconstruction, polynomial-family continuation,
+terminal-qualified consumers, mixed exact/sampled profiles and revolutions.
+New source analysis also identifies an odd-segment full-turn revolution contract gap:
+adding a disjoint component can change an existing component's sampled geometry.
+Both phase conventions are documented/tested; resolving their composition needs an
+independent production regression and an explicit semantic migration decision.
+
+Priorities: exactness > completeness and operation success > performance > low
+memory > binary size > source size. Hypercurve has special priority. A private
+helper with a proved narrow contract is a useful baseline, not a permanent API
+constraint. Compare advanced alternatives for semantic reach, proof reuse and
+composition as well as implementation cost; fewer source lines alone are insufficient.
+
+MAINTAINER DECISIONS AND EXPERIMENTAL API CHARTER
+
+These decisions supersede conflicting future-work gates below; they do not
+rewrite the campaign's measured results or its 44 historical dispositions.
+The library remains experimental, near-green-field computational geometry
+research. Significant API changes are expected and the best API is not yet
+known. The aim is to get the most from the least. Record potential API
+improvements and test advanced implementations, not just superficial wrappers.
+No current caller, a public API break, or lack of a stability commitment is by
+itself grounds to discard a promising design. Existing callers remain useful
+controls, not the only legitimate source of future requirements. Most from
+least means capability, invariants and proof reuse per concept, not simply
+the smallest number of public types. No justification to adopt yet does not
+mean do not investigate.
+
+An exploratory entry must name an advanced capability or simplification,
+a concrete implementation hypothesis, a discriminating fixture family and a
+decision gate. A designed future CAD/CAM workload may supply that gate; label
+it as exploratory rather than pretend it is observed production demand.
+Compare against the simplest adequate baseline, preserving exactness, domain,
+source authority, policy, ownership and continuation. Record negative results
+for the tested variant/workload without declaring the abstract design space
+closed. Do not mechanically rerun rejected code under a new name. Adoption
+needs demonstrated semantic/compositional value or measured cost reduction,
+with tradeoffs reported in the unchanged priority order. Source/API migrations
+are expected research outcomes and should be explicit, not automatic vetoes.
+
+- Geometry versus parameterization: distinguish geometric-equivalence
+  operations from parameter-preserving operations explicitly. Reparameterizing
+  or resegmenting may be valid when exact oriented geometry, topology and
+  required source correspondence are preserved. Preserve traversal where
+  meaningful; retain or prove correspondence when a consumer depends on
+  parameters. Authored segment IDs are not silently universal invariants,
+  and geometric equality does not establish parameter equivalence.
+- Approximate ancestry: allowed operations may proceed under explicit policy
+  with qualifications preserved. A later operation may certify its result on
+  the represented geometry; it must not erase approximate construction or
+  source ancestry. Keep this independent from current-operation certainty.
+- Revolutions: meshes should preserve authored meridians and ease OpenSCAD
+  compatibility; for the same authored profile/start, canonicalize repeated
+  full-turn sweep coverage without discarding the meridian, and support integer
+  full-turn multiples. This does not equate odd-N meshes from positive and
+  negative radial profiles. BRep must keep geometric and parametric information
+  while using canonical geometric support identity for equivalent full revolutions. R01 separates this target from verified
+  reference-version behavior; reference saturation of >360 is not evidence of
+  a parameter-preserving multi-turn API. Oversized noninteger sweeps need a
+  separate decision rather than automatic adoption of reference quirks.
+- Archive/API stability: long-term format compatibility and standardization
+  are deferred until the API and structure stabilize. Current cold decode,
+  exact-domain validation, proof/trust boundaries and same-version continuation
+  remain correctness obligations. Record the producing schema/version and
+  intentional migrations; do not promise permanent schemas or backward
+  compatibility across experimental revisions.
+- Targets: web, desktop, workstation and supercomputer; browser WASM is likely
+  the tightest constraint. CAD/CAM workflows matter most. Push exact geometric
+  computation toward competitiveness with f64 plus degeneracy handling, using
+  semantically matched workloads and honest failure/robustness accounting.
+  This does not change exactness > completeness and operation success >
+  performance > low memory > binary size > source size, or Hypercurve priority.
+  The prior embedded-z decision remains in force for that profile; the current
+  target matrix is the web/desktop/workstation/supercomputer set above.
+- Accepted starting workflow gates: (1) arc/line fillet -> rebuild -> reverse
+  -> refillet -> erosion; (2) NURBS fillet -> round stroke; (3) mixed
+  curved/linear enclosure modeling with tiny exact features and repeated cuts.
+  These are end-to-end acceptance gates, not claims they already pass or a
+  substitute for the boundary/adverse controls in R02/R03/R04/R25.
+- ABC Models Archive: the maintainer is arranging a separate exhaustive corpus
+  effort, overseen and reported by another agent that will file stack bugs.
+  Do not take over or contact that effort. When its reports are available,
+  R25 should integrate minimized, provenance-rich regressions and link them
+  to the originating model/report; corpus ownership remains separate.
+- S01 remains explicitly NOT ADOPTED FOR NOW. This general permission to
+  explore APIs is not a reversal of that specific maintainer decision.
+
+REVIEW BOUNDARY AND EVIDENCE LABELS
+
+This was a source-only review. No Rust/Cargo builds, repository test runs or
+independent benchmark replications were performed. Numbers below are attributed
+to the repository campaign, not newly measured results. Small exact arithmetic
+checks of a source-derived construction are not an execution of the Rust API.
+No general performance gain is asserted for any new project.
+
+[Remaining] means a current documented blocker or limitation. [Measured cost]
+means repository evidence identifies the cost; proposed remedies remain unproved.
+[New hypothesis] means a concrete source-grounded experiment without an accepted
+runtime result. [Source-derived candidate] needs a production reproduction.
+
+Use this file as the R01-R30 queue plus the bounded exploratory API register.
+Recheck the target HEAD, AGENTS.md, properties.md and docs/admission.md before
+implementation. Close superseded
+items rather than force a planned change. Each project is a bounded experiment;
+negative results with fixtures and measurements are valid deliverables. The old
+44 IDs are preserved in the disposition appendix and every new project records
+its ancestry. URLs are pinned to the reviewed HEAD unless explicitly historical.
+
+RECOMMENDED FIRST TASKS
+
+1. R01: reproduce and resolve the odd-segment full-turn revolution contract.
+2. R02: preserve the existing fillet tangency proof through rebuild and erosion.
+3. R03: author the difficult fillet center locally; do not just widen consumers.
+4. R04: preserve exact line members in mixed nonlinear profile modeling.
+5. R05: extend polynomial queries one selected/mapped family at a time.
+6. R08: make terminal-qualified loops consumable with honest typed receipts.
+7. R11: carry loop-role certificates through exact line coalescing, a narrow
+   Hypercurve cost-reduction experiment before a larger arrangement abstraction.
+8. R25: make final-HEAD evidence and independent completion oracles durable;
+   run this alongside the first seven, not after conclusions are published.
+
+MATHEMATICAL AND RESOURCE CONTRACTS
+
+- Fixed-field linear constructions need not enlarge the field, but coefficient
+  heights, DAG size and exact predicate costs can still grow without bound.
+- Preserve selected roots, source relations, chart/domain, branch, denominator,
+  orientation and multiplicity authority. A local presentation does not reduce
+  a genuinely large absolute algebraic degree. The hard fillet center's selected
+  factor is degree 164, not an assumed degree 214 and not a small-degree value.
+- Structural equality can prove equality; structural inequality cannot prove
+  inequality. Shared support membership alone does not select an intersection.
+  A common factor with overlapping brackets does not prove the same selected root.
+- General computable-real equality is not universally decidable. Unsupported,
+  undecided, invalid, exhausted/cancelled, empty and unbounded remain distinct.
+- Preserve exact successful routes and fallbacks. A fitted curve, tessellation or
+  display is not an exact substitute for its analytic or algebraic source.
+- Optional optimization may decline; hard enclosing resource exhaustion may not
+  be hidden by resetting/refunding work or starting an uncharged fallback.
+  Preserve each API's documented cancellation and cached-proof precedence.
+- Keep inherited construction fidelity separate from certainty consumed by the
+  current operation. Exact arithmetic on rounded geometry does not certify the
+  original source. A strict later call cannot erase approximate ancestry.
+- Keep open incidence, regularized filled sets and manifold conversion separate.
+  Record intentional row/schema/API migrations without assuming permanent
+  experimental-format compatibility; do not infer equal sets from equal volume,
+  triangle counts or successful rendering alone.
+
+PRIORITIZED PROJECTS
+
+R01 Make segmented revolution independent of unrelated profile components
+Priority: P0 exactness. Evidence: Source-derived contract inconsistency; production regression unrun.
+Objective: Preserve authored signed meridians in mesh revolution while canonicalizing full-turn
+sweep coverage consistently, including integer multiples, negative radial profiles and odd segment
+counts. Separate BRep canonical geometric support identity from retained parametric information.
+Current evidence: C04 added an analytic absolute-radius fold only when the full profile has both
+radial signs. For three angular segments, N=[-2,-1] x [0,1] alone has x bounds [-2,1]. Adding the
+vertically disjoint P=[1,2] x [2,3] triggers folding, and N then has x bounds [-1,2]. The exact
+source-lattice model also changes membership of (-3/2,1/2,0). A five-segment example behaves
+similarly. Negative-only tests preserve authored slice vertices, while mixed-sign tests compare to a
+hand-folded profile. Both conventions and one-sided compatibility were intentional and documented;
+their composition is inconsistent under a component-local sampled-set contract. This is not a Rust
+runtime reproduction or an undisclosed wrong-value allegation.
+Maintainer direction: Keep the authored meridian/phase for meshes; canonicalize repeated full-turn
+sweep coverage, not that phase. Preserve authored profile, start, sign, turn count and parameter map
+where relevant. For BRep, equivalent full revolutions should share canonical geometric support
+identity while retaining their parametric information and distinct topological uses. Geometrically
+equal analytic support does not imply identical finite odd-segment meshes. Integer multiples are
+in scope; oversized noninteger sweeps remain an explicit semantic decision gate.
+Verified reference facts (source inspection only, no OpenSCAD execution): Current upstream
+a3bf46a2b6d6597eb947567515f382fe07fd042d (2026-10-24) maps signed radius directly to
+(r cos(theta), r sin(theta), y), retaining the negative-radius pi phase. It rejects global mixed
+radial signs across outlines rather than folding them. Angle zero is empty. Finite angle >360 or
+<=-360 saturates to +360, including 720, -720 and nonmultiples such as 450 and -1000; this is not
+modulo reduction or preservation of authored turns. With explicit finite angle, omitted start
+defaults to 0; with angle omitted, omitted start defaults to 180. Explicit start is honored for a
+full turn. Stable 2021.01 (41f58fe57c03457a3a8b4dc541ef5654ec3e8c78) instead uses phase 180 for
+full turns, has no start parameter, and uses phase 0 for partial turns. PR 5553 records a deliberate
+phase change. Thus compatibility fixtures must pin reference version and call syntax. These are
+reference observations, not a decision to copy every reference quirk into CSGRS.
+Implementation experiment: Add a public-API regression comparing the negative component alone and as
+a disjoint union. Preserve its authored phase; test phase-aware regularized solid union for mixed
+radial components or explicitly specify another CSGRS extension. OpenSCAD rejects that mixed-sign
+domain, so do not label a broader CSGRS rule reference-compatible behavior. Define canonical full-
+turn coverage independently of authored meridian and parameter metadata; do not let an unrelated
+component select the discretization convention. Compare BRep support identity separately from
+parameter/topological-use records. Record any intended migration of existing rows. Choose and
+document the noninteger oversized-angle rule only after comparing the desired CAD/CAM semantics.
+Mathematical guardrails: For even N, a pi shift permutes the angular lattice; for odd N it does not.
+Analytic circles and finite regular polygons are not interchangeable. Full-turn folding is
+analytically valid but need not preserve the same sampled set.
+Acceptance: Exact membership and bounds for N=3,5 and even controls (including N=6); angles
++/-90, +/-360, +/-720 and 1080; explicit start 37 versus omitted start/angle; signed radial
+reflection, mixed/one-sided profiles and axis contact. Include 450 and values immediately either
+side of the 360/-360 policy boundaries; their CSGRS expected results depend on the explicit
+noninteger-sweep decision, not a guessed modulo rule. Cover holes, overlapping/disjoint heights,
+operand/component order and repeated revolution-to-Boolean continuation. Check orientation, closure
+and winding, not merely volume. For BRep, test equal geometric support with retained authored
+start/sign/turn count and parameter correspondence; do not require equal odd-N mesh sets solely
+because support is equal. Pin OpenSCAD version and exact call syntax in compatibility fixtures.
+Retain the previous overcount regression separately.
+Old ID mapping: C04; new discretization invariant beyond the accepted analytic fold.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/curve/native.rs#L2708-L2741
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/curve/native.rs#L2921
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/tests/exact_profile_sweeps.rs#L493-L519
+Reference behavior sources (inspected, not executed):
+https://github.com/openscad/openscad/blob/a3bf46a2b6d6597eb947567515f382fe07fd042d/src/core/RotateExtrudeNode.cc#L49-L73
+https://github.com/openscad/openscad/blob/a3bf46a2b6d6597eb947567515f382fe07fd042d/src/geometry/rotate_extrude.cc#L80-L130
+https://github.com/openscad/openscad/blob/a3bf46a2b6d6597eb947567515f382fe07fd042d/tests/data/scad/3D/features/rotate_extrude-angle.scad
+https://github.com/openscad/openscad/blob/41f58fe57c03457a3a8b4dc541ef5654ec3e8c78/src/GeometryEvaluator.cc
+https://github.com/openscad/openscad/pull/5553
+
+
+R02 Keep fillet tangency authority through rebuilt boundaries
+Priority: P1 exact closure. Evidence: Remaining.
+Objective: Make fillet -> round stroke -> boundary rebuild -> reverse -> refillet -> erode complete
+on the existing arc/line corner.
+Current evidence: The line/line workflow passes. The arc/line workflow reaches erosion, then blocks
+on a zero tangent cross product and equality of offset endpoints: the fillet proved tangency, but
+the rebuilt region discarded it. Refilleting itself now completes after H13 integer-form refinement;
+do not call that earlier stall unresolved.
+Implementation experiment: Retain a compact source-bound tangent/contact certificate on the relevant
+boundary junction and transport it through extraction, restriction, reversal and reconstruction.
+Alternatively discharge this precise zero in the shared tangent predicate. Keep construction
+authority separate from optional memoization; no trusted tangent flag. A related H04 continuation
+loses the circle/shared-line proof when route and cut-zone are transformed separately into different
+support allocations: preserve certified source-plus-transform lineage or prove map equality, not
+coordinate hashes/global interning.
+Mathematical guardrails: A tangent certificate must name both actual incident neighbors and source
+charts, selected contact, parameter domains, nonzero tangent/speed and relevant sheet/orientation;
+reject or revalidate it when adjacency changes. Reversal changes tangent direction; coincident
+support and higher-order contact need distinct handling. Proved tangency does not enumerate all
+residual intersections.
+Acceptance: Unignore the named arc-corner workflow; include rebuilt independent objects, reverse
+twice, rational rotation/reflection, radius r and r +/- 2^-k, same/two-sheet controls,
+source/context drop, separately equal transforms, replacement-neighbor negatives, cold archive and
+later strict operation. Check no duplicated winding or tolerance slivers.
+Old ID mapping: H12 and C05; H11 related but not a prerequisite for this isolated case.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L222-L224
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/tests/hypercurve_open_path_compositions.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_region_boolean/regularization.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L152-L170
+
+
+R03 Author selected fillet centers without global eliminant flattening
+Priority: P1 exact closure. Evidence: Remaining and measured cost.
+Objective: Complete the difficult filleted NURBS round stroke by preserving a local selected-fiber
+center from construction onward.
+Current evidence: The center already arrives at selected_parallel_normal_parallel_intersections as
+degree-214 BezierParameter2; widening that consumer is a no-op. Factorization found degrees
+2,8,40,164, with only the irreducible degree-164 factor selecting the isolator. Substituting the
+smaller factor did not complete the stroke. Repository traces locate cost in selected-fiber
+isolation over the large field, including a call beyond forty minutes.
+Implementation experiment: Build the fillet center as a selected solution over retained source
+parameters, using the existing CurveParameter2 and point authorities. Keep center coordinates
+correlated; let circle authoring and subsequent parallel/contact equations query the local relation.
+Stage one existing failing fixture before broad field-service refactoring.
+Mathematical guardrails: Retain unsquared tangency, positive normal/speed, nonzero denominators,
+corner/trim side and selected sheet. Small relative fiber degree can still have absolute degree 164.
+Avoid claiming factor reduction or a presentation change removes intrinsic complexity.
+Acceptance: round_stroke_of_a_filleted_nurbs_pair_completes plus boundary rebuild, reverse, second
+fillet/offset and archive/recut. Report relative/absolute degree, coefficient bits, promotions, root
+isolation, peak and retained bytes separately. Existing simple/rational paths must retain completion
+and cost controls.
+Old ID mapping: H11, H15 and the dependent 3D blend part of C05; do not reopen rejected factor-only
+or consumer-only approaches.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_fillet_centers.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_offset/cusp_semicircle/parallel_kernel.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L69-L84
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L218-L224
+
+
+R04 Preserve exact members of mixed nonlinear modeling profiles
+Priority: P1 exactness and closure. Evidence: Remaining source-proven all-or-nothing path; proposed
+remedy unmeasured.
+Objective: Prevent an unrelated curved loop from forcing authored exact straight geometry through
+finite projection in sweep, twist and revolution.
+Current evidence: C01 fixed the all-linear path, including a 2^-80 sliver, but
+try_modeling_profiles_with collects an Option for the whole region: one curved boundary or hole
+sends every profile through binary64 projection at 1e-3. A production regression for the resulting
+mixed exactness loss remains to be run. Exact cos/sin output made one 32-gon full revolution 50-65%
+slower; that is the cost of the changed represented coordinates, not evidence to restore binary64
+loss.
+Implementation experiment: Start with CurveRegionProfile2 ownership and choose exact versus sampled
+per already-classified profile, without re-inferring winding from samples; then build a mixed source
+profile with an exact rational/algebraic line loop and a disjoint curved loop. Cover try_extrude and
+try_triangulate as well as try_sweep/extrude_twisted/revolve. Preserve exact line endpoints and
+curve endpoints per component/span while explicitly sampling only nonlinear interiors; share the
+existing cap/wall assembly. If topology forces a unified approximation, expose that contract rather
+than silently converting every member.
+Mathematical guardrails: Do not epsilon-deduplicate exact endpoints or lose narrow holes. A mixed
+output may be construction-qualified as sampled overall while still retaining exact members.
+Connectivity and shared endpoints must use one certified authority; independent sampling must not
+crack seams.
+Acceptance: Compare the straight component alone and with a distant curved component at 1/3,
+sqrt(2), 2^-80 widths and large translations; holes, reversed winding, twist zero, scale one, sweep
+and segmented revolution; inspect exact native coordinates and later Boolean success. Document
+approximation options and inherited fidelity.
+Old ID mapping: C01 and A03; new mixed-family continuation rather than repeating the accepted all-linear fix.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/curve/native.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/tests/exact_profile_sweeps.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/finite_projection.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/linear_profile.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/curve/native.rs#L2284-L2346
+
+
+R05 Extend polynomial queries by selected and mapped source families
+Priority: P1 exact closure. Evidence: Remaining.
+Objective: Extend polynomial branches beyond the now-supported arbitrary rational line, without
+flattening their retained source authority.
+Current evidence: H05 and H06 milestone 1 are done: branch-native section points, original-chart
+splits and rational line substitution work, including tangent zero cross signs. Selected/algebraic
+lines, mapped branches and branch pairs remain unsupported; a line contained in the zero set remains
+a typed blocker.
+Implementation experiment: A small separable first experiment is one retained cut-point table for
+branch splitting: adjacent pieces currently repeat point_at/interior fiber isolation at shared cuts;
+campaign topology was about 267-290 us versus 89 us for a section. Preserve contact authority, not
+just coordinates, and measure this separately. Then admit selected axis sections/algebraic line
+coefficients reached by an actual downstream use; then pull line queries through retained
+affine/rational maps with denominator guards. Finally add branch-pair events and common-component
+handling. Reuse the selected scalar/root services; request a two-sided field join only when the
+concrete route actually reaches H09's missing-source case. Separately, the
+exploratory API register permits a designed advanced-family experiment for H09;
+current production reachability is not a prerequisite for that research.
+Mathematical guardrails: Preserve branch filtering after elimination, finite line parameter replay,
+poles/excluded points and endpoint membership. Source-x monotonicity is not image-x monotonicity.
+Identically zero substituted polynomial is a common component, not empty. Retain even tangencies and
+residual contacts.
+Acceptance: Genuine quintic y^5+5y+5-x; tangent y=0 to y=x^2; selected line, independent fields,
+mapped/retraced images and excluded poles; section -> split both operands -> reverse/transform ->
+reintersect, with cold source/context drop. Keep current rational-line success and typed blockers.
+Old ID mapping: H06 remaining milestones; H05 closed; H09 production integration is
+route-triggered, with separate advanced exploration retained in the API register.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/polynomial_curve.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/polynomial_point.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_intersection.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/tests/polynomial_curves.rs
+
+
+R06 Publish component and multiplicity authority for polynomial topology
+Priority: P1 exact domain extension. Evidence: Remaining with API decision.
+Objective: Admit repeated, vertical and boundary polynomial components without erasing their
+topology semantics, then selected coefficient fields/bounds.
+Current evidence: H07 found square-free reduction mathematically exact but not API-neutral:
+hyperbrep uses RepeatedComponent to recognize tangential plane sections. Rootless x-content already
+works. F^2 and (2y-1)^2 F return RepeatedComponent; (2x-1)F returns VerticalComponent; (y-1)F
+returns BoundaryComponent.
+Implementation experiment: Design the minimum per-branch multiplicity record and vertical-component
+carrier with current consumers. Stage rational content/square-free decomposition and component
+reconstruction before algebraic coefficients and bounds. Treat this as an explicit experimental
+API/semantic migration, not a silent validator relaxation or a stability-based veto.
+Mathematical guardrails: Set geometry, algebraic multiplicity, isolated points and singular
+half-branch adjacency differ. Preserve boundary inclusion and leading-coefficient degeneracy. A
+computable Real coefficient is not automatically an effective ordered algebraic field.
+Acceptance: F, F^2, g(x)F, whole-boundary factors, nodes/cusps/isolated points, tangential BRep
+sections and selected rectangle bounds. Exact decomposition/recomposition and root-count oracles;
+documented typed exclusions until each family is admitted.
+Old ID mapping: H07; prerequisite for portions of H08 and broader H06.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypersolve/src/bivariate_topology.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/polynomial_curve.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L169-L207
+
+
+R07 Carry polynomial boundaries through filled arrangements and BRep trims
+Priority: P1 staged exact closure. Evidence: Remaining dependent project.
+Objective: Use one existing region/BRep model for admitted polynomial boundaries rather than a
+separate polynomial-only API.
+Current evidence: H08 remains unsupported at CurveRegion2 construction and loop orientation. It is
+not solved by CurveSupport2 already containing Polynomial, and the campaign found no separable
+beneficial broad rewrite before line/image/pair and component capability exists.
+Implementation experiment: After R05/R06 define a narrow admitted family, carry its source span,
+correlated endpoints and selected branch through boundary storage, split charts, pair events, point
+location, sectors and BRep partition/stitching. A first monotone regular graph family is a
+milestone, not a permanent restriction.
+Mathematical guardrails: Do not require closed-form area integration to establish valid filled
+topology. Unsupported measure/export is distinct from invalid geometry. Do not lower polynomial cuts
+through dummy Bezier carriers or infer filled side from approximate coordinates.
+Acceptance: Polynomial restriction -> reversal -> admitted transform -> filled Boolean -> BRep split
+-> native archive -> recut; holes, common components, tangent/singular events and empty feedback.
+Verify exact membership and branch identity, not only loop counts.
+Old ID mapping: H08; depends on admitted portions of H06/H07. Exploratory H01-H03 APIs
+are alternatives to compare, not mandatory prerequisites or prohibited designs.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_support.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_region_boolean.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L169-L207
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperbrep/src/construction.rs
+
+
+R08 Finish terminal-qualified consumers and explicit-policy receipts
+Priority: P1 completeness and API semantics. Evidence: Remaining.
+Objective: Let valid approximately closed loops propagate honestly through allowed consumers, and
+distinguish policy blockers from invalid input.
+Current evidence: A01 added combine/and_then and found no general certainty-composition defect. A
+specific loop closed using an undecidable exact-zero terminal returns Invalid on strict replay;
+approximate translation and line-profile extrusion fail AmbiguousCurveStringConnection although
+same-policy Boolean/classification work. Finite projection's operation-local Certified is not itself
+a wrong answer. Hypercircuit explicit-policy query receipts remain open.
+Implementation experiment: Centralize the small private replay/closure decision contract across
+validate_policy-style sites; return a typed policy blocker when exact replay is unavailable. Reuse
+the original qualified closure decision for allowed line-string consumers and compose certainty when
+consumed. BoardBoundaryGeometry under_policy currently discards evaluate_under receipts via
+into_unverified; in-repository callers use STRICT or mark materialization retry. Add a narrow
+outcome-bearing path for classify/inset/disc/segment/box queries, retaining documented compatibility
+adapters as a baseline. The separate exploratory register tests whether a better certainty/policy
+API can remove duplication without conflating meanings; it is not blocked by public API churn.
+Mathematical guardrails: Inherited source fidelity remains separate from current operation
+certainty; a reusable certificate must identify the source and policy. Do not upgrade an approximate
+closure to structural equality or make Provisional::certified() succeed for approximate regions.
+Acceptance: Use z=sin(e+1)-sin(e)cos(1)-cos(e)sin(1) closure fixture: strict/approximate/strict,
+translate/extrude/classify/Boolean/materialize, rebuild and cold archive; callers may retry blocked
+work but not malformed input. Test map versus and_then and retention after source drop.
+Old ID mapping: A01 and M03; the tested enum conflation remains rejected, while a
+semantically explicit advanced certainty design remains open in the exploratory register.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L299-L307
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_region.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/context.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/tests/receipt_composition.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercircuit/src/layout.rs#L337-L484
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercircuit/src/layout.rs#L3702-L3706
+
+
+R09 Overlay coplanar class boundaries before repeated triangulation
+Priority: P1 measured performance bottleneck. Evidence: Measured cost; implementation unproved.
+Objective: Reduce repeated constraint recovery on differently triangulated coplanar enclosure caps,
+while keeping TriangleMesh as the public representation.
+Current evidence: C05 reports 37.5-42.6 s for related wall/base unions versus 38 ms for cavity
+subtraction; 25/30 samples were in Hypertri constraint recovery and 21 in exact orientation on wide
+rationals. M06 ranking fixed much swapped-operand fan bias but leaves a measured 4,926 MB versus
+2,755 MB eight-union allocation difference. Neither evidence implies a plane overlay is
+automatically faster.
+Implementation experiment: Capture the cap-overlap fixture and current traces, then prototype an
+operation-local plane-class boundary overlay that resolves winding/ownership once and triangulates
+the selected class once. Preserve current fallback for classes that cannot be certified or are not
+cheaper. Compare against the retained-vertex-age alternative on the same suite rather than implement
+both blindly.
+Mathematical guardrails: Only certified coplanarity licenses grouping. Preserve signed multiplicity,
+holes, disconnected sets, contacts and nonmanifold fans. Equal volume is not set equality. Do not
+pad output vertices solely to make a fan heuristic look better.
+Acceptance: All four Booleans; thin 2^-80 walls, differently triangulated caps, opposite
+orientations, near-but-not-coplanar symbolic planes, operand swaps, alternating-end strips,
+retained/rebuilt/edited inputs and repeated cuts. Independent enclosure membership/volume oracles,
+all 200 successive-operation outcomes, whole-operation cost, live/peak heap and row migrations.
+Old ID mapping: M06 and C05; new stronger real-workload justification for the earlier conditional
+plane-class view.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypermesh/FUTURE_WORK.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypermesh/src/surface_arrangement.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypermesh/src/surface_reduction.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/tests/enclosure_workflows.rs
+
+
+R10 Select stack-safe teardown using a construction-time depth hint
+Priority: P1 lifecycle correctness. Evidence: Remaining documented defect; replacement design unmeasured.
+Objective: Avoid recursive destruction abort on valid deep expression graphs without repeating the
+rejected ordinary-drop tax.
+Current evidence: F03 reproduced an 80,000-term sum abort on a 2 MiB stack. Five iterative/depth/TLS
+variants fixed it but regressed ordinary drops; the best added 13-14% instructions and 16-30% drop
+time. The remaining owning-crate design uses five free fact-word bits, 11-15, for a saturating
+construction-depth hint.
+Implementation experiment: Store a conservative saturating depth at Node construction. Use a cheap
+hint test to select iterative release only for dangerous unique subgraphs, preserving shared owners.
+Update the cache-encoding proof/model with the layout change; measure the new per-operand
+constructor cost as well as destruction.
+Mathematical guardrails: The hint must not underestimate destructive recursion through any child
+kind. Concurrent final ownership and shared DAGs differ from trees. Iterative scratch, allocation
+failure and panic behavior must be explicit; do not leak cycles or retain an unbounded global queue.
+Acceptance: Child-process 2 MiB/80k chain, wide and shared DAGs, retained roots, eight concurrent
+last owners, aborted graphs and scratch failure; live bytes return to baseline.
+Constructor-plus-drop and drop-only controls, ordinary scalar and mesh workloads, node layout and
+binary delta. Reject a fix that simply moves a material regression to every constructor.
+Old ID mapping: F03 surviving alternative, not another retry of the rejected TLS implementations.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/FUTURE_WORK.md#L79
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/src/computable/node/representation.rs
+
+
+R11 Transport loop roles through exact line-boundary coalescing
+Priority: P1 Hypercurve performance and proof ownership. Evidence: New hypothesis with source-proven
+redundant evidence loss.
+Objective: Keep a proved multi-loop material/hole role across an image-preserving boundary rewrite
+instead of recertifying it.
+Current evidence: Boolean output establishes disjoint material-loop roles, then coalesces lines. A
+changed result creates new region data; regularized-filled-left initialization seeds roles only for
+a single loop, so the multi-loop proof is discarded. Later all-line compaction can extract and merge
+lines again. Campaign samples attribute 34% of nano output-stage time to loop-role certification and
+55% to merging; the stage itself was 17.3% of that run. Those are not predicted savings.
+Implementation experiment: Give the private rewrite result an exact loop-index correspondence and
+directed-image equivalence proof; lawfully move the role authority and its policy dependency into
+the result. Reuse proven line images between the two normalization steps. Only after measuring
+remaining cold role cost, reuse existing loop envelopes or certified pair scheduling instead of
+adding another global cache/tree.
+Mathematical guardrails: Certify adjacency, collinearity and forward direction; endpoint equality
+alone cannot remove a backtracking excursion. Preserve cyclic connectivity and fill semantics.
+Restrict the first transport to strict equivalence; terminal-dependent rewrites must retain consumed
+policy or decline. Loop removal/reordering needs a new correspondence.
+Acceptance: Multi-component mixed line/arc Boolean with a successful merge retains its roles;
+instrument no repeated proof. Holes, point touches, cyclic seams, zero area/backtracking, reversals,
+selected endpoints, declined fits and approximate merges. Compare exact classifications and later
+Booleans; count role/fit/merge calls, native materializations, allocations and retained bytes.
+Old ID mapping: H17 output-dependent cost lead; genuinely different from rejected shared all-four
+selection views.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_region_boolean.rs#L3511-L3926
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_region.rs#L2837-L2863
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_region/point_location.rs#L2496-L2571
+
+
+R12 Share a private lazy tangent cross and direction result
+Priority: P2 Hypercurve simplification and performance. Evidence: New source-derived repeated-call hypothesis.
+Objective: Compute a pair-specific joint cross/dot relation once when the kernel inherently supplies
+both, without making every cross query pay for dot.
+Current evidence: exact_offset_spans_form_reversal calls cross, then opposition on Zero. Opposition
+calls cross again before its pair dispatch. For RetainedParallel/RepresentedDirection the cross
+kernel already computes cross and dot but discards dot, so the same combined relation can be
+evaluated three times. Production frequency and saving are unmeasured.
+Implementation experiment: Introduce a private lazy relation result whose cross certificate and
+optional direction/dot evidence are reusable within the caller. Share family dispatch only where
+semantics match. Start offset reversal/joins, then measure successor consumers. Keep cheap
+cross-only routes and carrier-specific exact fallbacks; no global cache or universal tangent trait.
+Mathematical guardrails: Cross sign changes under operand swap; dot does not. Reversal/reflection
+transport has separate signs. A decided cross with undecided dot must remain usable. Zero tangent
+vectors and coincident first-order directions may require higher-order jets; first-order equality is
+not full sector order.
+Acceptance: Kernel counters show one joint computation on the known repeated route; all ordered
+tangent families, swap/reverse/reflect, same/opposite/zero directions, decided-cross/unknown-dot and
+approximate terminal cases. Exact outcomes, error order and receipts unchanged; whole workflows plus
+cold controls, allocations and matched native/WASM size. R02 still needs its missing authority.
+Old ID mapping: New; supports H12 and H17 consumers without repeating their rejected variants;
+the separate advanced API register remains open.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_region/offset_joins.rs#L170-L194
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_region/offset_joins.rs#L2737-L2821
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_region/offset_joins.rs#L3294-L3360
+
+
+R13 Reuse the forced successor bijection before tangent construction
+Priority: P2 Hypercurve completion and performance. Evidence: New guarded theorem-reuse hypothesis.
+Objective: Avoid constructing expensive or unavailable endpoint tangents when valid topology already
+forces the last successor.
+Current evidence: Unary regularization accepts unique valid claims and completes the sole unmatched
+incoming/outgoing pair. Binary Boolean successor construction instead falls to tangent
+reconstruction if any incoming remains unresolved, and that stage constructs every outgoing tangent.
+Selected/retained tangent construction can invoke singularity or source analysis.
+Implementation experiment: Factor a small private unique-claim/complement helper and use it in both
+owners before tangent fallback, optionally again after new claims. Keep operation-specific contact,
+selection and filled-side certificates outside the helper. Trace actual one-unmatched-pair frequency
+before retaining a new abstraction.
+Mathematical guardrails: The successor map must already be a bijection on a certified selected
+oriented boundary with equal incident cardinalities. All accepted claims must be valid, distinct and
+in the active outgoing set. Equal counts alone prove nothing; reject collisions, open chains,
+unresolved incidence and stale deleted-edge IDs.
+Acceptance: Forced-complement/collision mutations, all four Booleans, high-valence touches, split
+crossings, swaps/reversal, stationary endpoints and one-fragment self-contact. A forced branch
+should not require an unused zero/unmaterializable tangent. Count constructions/fallbacks, prove
+topology parity and measure whole workflows; reject if no production benefit.
+Old ID mapping: H17 output stage and existing unary theorem; new binary consumer rather than shared
+selection views.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_region_boolean.rs#L5703-L5760
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_region_boolean.rs#L6012-L6154
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_region/offset_spans.rs#L51-L175
+
+
+R14 Prepare rational integer polynomials once per refinement proof
+Priority: P2 Hypercurve and Hypersolve performance. Evidence: New hypothesis enabled by accepted H13/H14.
+Objective: Reuse exact positive-common-denominator preparation across Horner, Bernstein and repeated
+bracket refinement.
+Current evidence: IntegerBracketPolynomial::new clears coefficient denominators in both enclosure
+routes; coprime_filter_sign_by_bisection can repeat both at each refinement target.
+Defining-polynomial midpoint signs still use Real::eval_poly, and Bernstein retains an O(n^2) table
+of powers. Refilleting is now successful but still took 163-296 s in campaign runs.
+Implementation experiment: Create a private prepared fixed-coefficient polynomial and per-bracket
+workspace; share rational bracket conversion and powers between enclosure methods. Add integer
+homogeneous point Horner for rational defining-polynomial midpoint signs; keep generic Real
+fallback. Measure incremental power generation separately if table memory matters. Start one proof
+call, not persistent cross-operation caching.
+Mathematical guardrails: Positive scaling preserves sign, arbitrary scaling does not. Remainder
+modulus normalization and sign-only preparation are different contracts; do not reintroduce H14's
+removed dividend-content gcd. Preserve midpoint-root behavior and exact enclosure containment on
+negative or cross-zero brackets.
+Acceptance: Existing 1,152-polynomial differential oracle; captured degree-27 leaves with about
+63,500-bit coefficients and about 2,000-bit brackets; constants/zero/leading zeros, unrelated
+denominators, singleton intervals and nonrational fallback. Same decisions/resource behavior,
+normalization/allocation counts, whole refilleting workflow and small cold controls.
+Old ID mapping: H13/H14 follow-on, not the rejected modular leaf or modular GCD hypotheses.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_parameter.rs#L3010-L3057
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_parameter.rs#L3360-L3559
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_parameter.rs#L8497-L8640
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypersolve/src/integer_interpolation.rs#L115-L192
+
+
+R15 Finish local root comparisons and share singleton selection certificates
+Priority: P2 selected-root completeness and simplification. Evidence: Remaining measured route plus
+new helper hypothesis.
+Objective: Avoid the remaining formula-root/polynomial-root promotion path and deduplicate only its
+common selection theorem.
+Current evidence: H10 solved polynomial/polynomial overlaps; twelve recorded formula/polynomial
+comparisons still take the 512-step fallback at about 0.1 s each. order_against_polynomial_root,
+coefficient_root_order and order_by_simple_root_sign repeat related isolator/end-sign logic with
+different evaluation owners.
+Implementation experiment: Trace the actual declining premise, then evaluate the defining relation
+homogeneously at n/d in the needed existing field. Factor a private singleton-root certificate for
+interval membership and endpoint sign implication, leaving carrier evaluation lazy. Activate the
+rejected H09 source-union join for this production path only if it reaches the missing-source
+case; the exploratory register independently permits an advanced designed-workload test.
+Mathematical guardrails: A unique root in the isolator plus opposite strict endpoint signs suffices
+for the sign-order theorem; do not infer simplicity merely from sign change. Overlapping
+brackets/common factors alone are insufficient. Handle denominator sign, conjugates, repeated/even
+roots and direction reversal explicitly.
+Acceptance: f and 7f, f and f-2^-600, reciprocal/projective charts, independent authorities,
+selected conjugates and repeated roots; no intended-path global promotion and correct decline.
+Extend the four-entry exact-equality cache tests to cap saturation, changed charts, forced
+approximate terminal, cancellation/retry and poison-read-as-empty. No cache defect is alleged.
+Old ID mapping: H10 residual and new shared theorem; H09 production integration remains
+route-gated, not a prohibition on the separate advanced API experiment.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L208-L220
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_offset/recursive_field.rs#L3775-L3890
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_offset/recursive_field.rs#L4400-L4820
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_offset.rs#L2812-L2849
+
+
+R16 Capture the actual remaining algebraic stall before choosing a solver
+Priority: P2 diagnostic gate for exact closure. Evidence: Remaining historical workloads; algorithm
+premise unverified.
+Objective: Turn remaining multi-source/common-fiber stalls into durable exact fixtures before
+selecting another modular or elimination strategy.
+Current evidence: filleted_boolean_miter_erosion/stroke_fillet_stroke record degree-36/40 fibers
+over degree-14 fields in common-root counting. Owning documents differ between saying a factor is
+probable and established. Other filleted_union/wide_weighted multi-source leaf costs remain
+uncaptured. H13/H14 disproved the old hypotheses for the examined refillet/chamfer workloads, not
+every possible future input.
+Implementation experiment: Capture coefficients, field/source relations, selected brackets,
+unsquared guards, route traces and exclusive time/allocations. Prove the claimed common factor or
+identify the real bottleneck. Only then compare a bounded modular/CRT GCD if the captured
+common-factor premise and cost justify it; keep negative results. A candidate filter avoiding a
+degree-192 projection belongs to the separately documented chamfered route and is only worth
+reopening if a new trace shows that projection now dominates after the accepted remainder fix. Tiny
+represented Pell denominators are a separate demand-triggered fixture within this capture effort.
+Mathematical guardrails: Modular coprimality proves nonzero, not sign/zero. Reconstructed GCD needs
+exact divisibility and maximality; unselected conjugate/common factors are not selected contacts.
+Reject bad primes and retain exact branch/root census. No unlimited refinement disguised as a
+completeness guarantee.
+Acceptance: Independent fixture replay and exact verification; original whole workflow completion,
+or a clearly bounded measured improvement; bad primes, zero/nonzero denominators, multiple roots,
+budget denial/retry and unchanged easy controls. Stop without an algorithm change if traces do not
+support its premise.
+Old ID mapping: H13/H14 only for different captured residuals; H15 evidence retained; not unchanged
+rejected experiments.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L28-L101
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L216
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypersolve/FUTURE_WORK.md#L25-L36
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypersolve/tests/represented_roots.rs#L1317-L1349
+
+
+R17 Reduce retained scalar accelerators at their actual owner
+Priority: P2 memory after completion and speed. Evidence: Measured ownership lead; retention remedy unproved.
+Objective: Reduce duplicated long-lived scalar derived forms only where recomputation and continued
+exact success remain acceptable.
+Current evidence: H20 attributes nano's 87.6 MiB post-report live heap to exact rationals 30%,
+retained rational derived forms 17%, Computable cells 9% and Hypercurve structures about 12%; 21% is
+an inclusive pi-Laurent allocation category, not additive. Pipeline peaks are mostly transient.
+Full-drop probes found no cycle and returned within 208 B. The raw instrumentation was not archived.
+Implementation experiment: Reproduce ownership/lifetime attribution first. Inspect retain_linear,
+retained negation and inverses for duplicate arithmetic or bounded admission; prefer ownership/dedup
+changes before eviction. Separate indispensable selected/source authority from recomputable
+acceleration and fixed-domain declines from resource exhaustion. This is Hyperreal-owned, not a
+Hypercurve cache purge or S01 workspace project.
+Mathematical guardrails: Warm Unknown-to-Certified strengthening is allowed by P4. Require
+consistent definite facts and preservation of held authority, not identical cold/warm failures.
+Address reuse, clone/concurrency and cache coefficient bytes matter; entry counts alone are not a
+memory bound.
+Acceptance: Cold/warm/disabled/evicted, low-high-low precision, strict/approximate/strict, source
+drop, mutation/reimport, parallel queries, cancellation/retry; no contradictory fact or lost
+certificate. Requested allocation, live/peak/RSS where available, tail latency and re-query cost.
+Stop if transient work dominates and retention is cheaper.
+Old ID mapping: H20 owner-specific continuation; S01 explicitly remains not adopted.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L283-L297
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/src/computable/node/representation.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/FUTURE_WORK.md
+
+
+R18 Prove hard compound rotation relations without a global limit increase
+Priority: P2 bounded completeness. Evidence: Remaining demonstrated recognizer frontier.
+Objective: Complete the specific binary64 compound-rotation family with cheaper selective exact
+reduction, not a general expensive fallback.
+Current evidence: M04/M05 already solve ordinary skew-axis and compound-Euler near-coincident
+cylinders. The remaining cube sequence uses binary64 13.1,17.3,-13.1,-17.3 degrees; exact decimal
+literals are different inputs. A degree-24/4,096-term/4,194,304-charge prototype decides; lower
+degree-16/256-term/262,144-charge limits decline. Raising ordinary limits already regressed
+icosahedron instructions.
+Implementation experiment: Capture current minimal predicate graphs. Try relation-aware
+factoring/cancellation before expansion or one late exact attempt with a demonstrated structural
+family and explicit decline reason. Retain degree-12/32,768-charge default behavior; do not add a
+universal four-million-charge stage or assume a huge-degree fixed-field descriptor is useful.
+Mathematical guardrails: Quotient domain/nonzero proofs and exact source semantics must survive
+rewrites. A degree/work/term decline is not a negative mathematical fact. Actual work cannot be
+refunded, and an extra attempt can consume a hard budget needed by a fallback.
+Acceptance: Original binary64 workflow with independent half-space oracle, decimal controls, round
+trips, arbitrary rotations and deliberate unresolved transcendental zeros, at-limit and cancelled
+attempts, all corpus and terminal-heavy suites. Report newly completed cases and adverse rows, not a
+general speedup.
+Old ID mapping: M05 residual; no restart of the original fixed-field descriptor or S01 public workspace.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/src/real/arithmetic/facts.rs#L172-L205
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/src/computable/node/ring_relations.rs#L109-L151
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperlimit/src/resolve.rs#L18-L158
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypermesh/FUTURE_WORK.md
+
+
+R19 Audit cold proof continuation and real resource bounds at import boundaries
+Priority: P2 preventive exactness and resource contract. Evidence: New targeted coverage; no
+reproduced current import defect.
+Objective: Check that native checked values retain their promised exact continuation after cold
+import, and state which entry points are actually bounded.
+Current evidence: F02 now validates partial-node domains operands first, including hidden invalid
+children. Native rational cot knows a nonzero rational cannot be a multiple of pi, while imported
+inverse denominators use a bounded sign path; near-pi rationals are unexecuted candidates, not a
+defect finding. The -2048 precision floor is not a cumulative work/heap bound. Mesh sharing caps
+attempt counts, not the cost of each scalar proof; Hypermesh has no operation cancellation.
+Implementation experiment: Enumerate constructor-emitted partial-node forms and add cold
+JSON/CBOR/Value/archive continuation tests, starting cot(q) immediately either side of pi and
+positive controls such as quantile(Phi(1000)). If a discrepancy is reproduced, share a small
+checkable domain theorem rather than trust wire flags or weaken validation. Record per-entry-point
+node/bit/work/byte/cancellation contracts and externally contained adversarial cases; implement a
+cumulative hook only for a measured affected path.
+Mathematical guardrails: Invalid domains remain ParseError and unproved domains UnknownCertificate.
+Never simplify away an undefined child. Imported facts must bind to exact values/buffers and
+retained certainty; caller-certified Hypertri collinearity facts are intentionally trusted
+mathematical assertions, not self-validating evidence.
+Acceptance: Zero/cancellation wrappers, positive/negative scale, inverse/root/trig poles, aborted
+values, strict sign/division/orientation after reload; malformed inputs still rejected.
+Child-process time/heap/stack containment and clean retry/drop. Include fact
+identity/mutation/strict-after-approx negatives without inventing a universal certificate API.
+Old ID mapping: F02 follow-on, M01/M04 acceptance and F03 lifecycle boundary; not another
+domain-validation rewrite.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/src/computable/node/representation.rs#L253-L426
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/src/real/arithmetic/representation.rs#L83-L147
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/src/real/arithmetic/elementary_functions.rs#L2778-L2840
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypertri/src/collinear.rs
+
+
+R20 Separate partial swept boundaries from regularized revolution solids
+Priority: P1 domain semantics after R01. Evidence: Remaining documented behavior requiring API or
+migration decision.
+Objective: Offer a clear regularized material result for opposite-side/axis-crossing partial
+revolutions while preserving or deliberately migrating the existing swept-boundary contract.
+Current evidence: C04 full turns fold analytically. Partial turns beyond 180 degrees retain
+overlapping material with winding two, and crossing-axis loops are rejected. Current tests
+intentionally assert summed piece volume, not set union. This is documented behavior, not a newly
+discovered silent overcount. R01 phase semantics must be settled first.
+Implementation experiment: Split exact line profiles at the axis with material/hole ownership and
+angular phase, construct the pieces and perform a certified 3D regularized union. Decide whether
+this belongs in the existing operation via migration or a named solid-result path. Do not generalize
+the stage to twist/sweep self-intersections without separately defining their set semantics.
+Mathematical guardrails: Closed/manifold does not imply embedded winding-one material. A fold of
+analytic radius does not preserve every finite angular lattice. Preserve negative angles, thin walls
+and holes touching the axis; no tolerance welding or imposed even-segment restriction.
+Acceptance: Angles 179/180/181/270/359/360 and negatives; N=3/4/5/6; disjoint/touching/overlapping
+pieces, exact membership and winding 0/1 for the new contract, independent piece-union oracle,
+export and downstream subtraction. Same-side legacy rows unchanged unless explicitly migrated.
+Old ID mapping: C04 remaining partial revolution; C05 related solid workflows.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/curve/native.rs#L2646-L2671
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/tests/exact_profile_sweeps.rs#L523-L560
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/curve/native.rs#L3194-L3215
+
+
+R21 Canonicalize straight sweep images with isolated stationary parameters
+Priority: P2 narrow domain extension. Evidence: New bounded hypothesis.
+Objective: Admit straight fixed-frame paths that describe an ordinary prism but fail the regular
+parameter certificate.
+Current evidence: C02 correctly requires D=N'W-NW'>0 on the closed domain, after the affine case.
+Tests reject t^2 and a shifted cubic with an interior stationary derivative even though progress is
+strictly increasing. Simply relaxing the test to D>=0 would admit singular surface charts and
+multiple inverse contacts.
+Implementation experiment: Recognize a certified straight image, exact endpoint coverage and
+strictly increasing progress, including isolated stationary parameters. Construct the existing
+regular prism representation and retain/reconstruct authored parameter correspondence where
+promised. Leave genuinely lateral stationary paths unsupported until their normal/chart contracts
+are designed.
+Mathematical guardrails: Image canonicalization is not proof that the old parameterized surface is
+regular. Exclude backtracking, poles and zero weights; preserve orientation and source
+correspondence. Do not relabel a missing regularity proof as monotonicity failure without a
+documented error decision.
+Acceptance: t/t^2/t^3 and shifted cubic yield the same solid; degree elevation,
+reverse/sections/Boolean/archive; truly backtracking and lateral stationary negative controls. Audit
+exact Sturm work, which the owning report says is not currently charged to WorkBudget; no
+bounded-runtime claim.
+Old ID mapping: C02 new continuation beyond the accepted D>0 domain.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperbrep/src/topology/helpers.rs#L189-L364
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperbrep/tests/monotone_sweeps.rs#L328-L430
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperbrep/src/construction.rs#L2766-L2882
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperbrep/PERFORMANCE.md#L33-L63
+
+
+R22 Extend one affine-image BRep family through all required consumers
+Priority: P2 exact representation closure. Evidence: Remaining demand-selected family extension.
+Objective: Carry a concrete non-similarity image of an analytic shell without forcing it back into
+an inappropriate native primitive type or a mesh.
+Current evidence: C03 shared-pcurve reflection is fixed by source-plus-pivot keys. Polynomial
+carriers and cylinder-prism conversion already support useful affine cases. Non-prism
+cones/spheres/tori and other analytic shells remain outside that route. Existing AffineMap2
+wrappers do not themselves supply this missing capability; improved map/classification APIs
+remain eligible for separate advanced implementation tests.
+Implementation experiment: Choose a real nonuniformly scaled cone or sheared revolved enclosure,
+then compare an exact rational image with an internal affine-image carrier/inverse pullback. Port
+the required classification/section/trim consumers for that one family; retain typed unsupported
+optional queries rather than gate valid geometry on measure/export.
+Mathematical guardrails: Preserve determinant sign, chart/pcurve correspondence, periodic trim range
+and branch identity. Singular transforms are distinct from invertible nonsimilarities. Shared source
+identity does not mean the same realized chart.
+Acceptance: Transformed primitive -> Boolean -> native archive -> replay/recut; T(A op B)=T(A) op
+T(B) within the admitted domain, inverse/reflection, far periodic trims, normals/bounds/point
+sections and honest STEP capability. Compare source/binary growth to duplicated per-family branches.
+Old ID mapping: C03 remaining affine families; A02's existing wrappers are not missing
+features, while better AffineMap2/RegionPointLocation designs remain exploratory.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperbrep/src/topology/transform.rs#L157-L233
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperbrep/src/topology/transform/affine_prisms.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperbrep/src/geometry/transform.rs#L1-L119
+
+
+R23 Complete box containment with selected extrema on retained spans
+Priority: P1/P2 exact query completion. Evidence: Remaining concrete consumers.
+Objective: Make containment completion less representation-dependent for rational cubic/NURBS and
+retained source ranges.
+Current evidence: C07 added exact image containment with escaping witness, but general rational
+spans currently contribute only when coordinate monotonicity is certified;
+retained/source-range/implicit carriers mostly supply endpoints then block if the hull crosses.
+Existing quotient-derivative root and retained source-extrema owners can supply the missing
+candidates.
+Implementation experiment: First compare each already-selected derivative root's coordinate with the
+relevant box side without mandatory global point promotion. Then reuse source-range extrema and
+publish a chart-qualified witness where support exists. Keep implicit polynomial families dependent
+on R05-R07.
+Mathematical guardrails: A control hull is a conservative enclosure, not the curve image. Never
+reinstate hull subdivision as an exact tangent-bound decision method. A definite escaping member can
+decide a path despite another member being blocked, while actual invalidity remains invalid.
+Acceptance: Rational cubic interior extrema, exact tangency, 2^-200 clearance,
+native/split/reversed/transformed/retained representations of one image, cold queries and source
+drop. Distinguish invariant answers when decided from equal successful domains. Use Alumina
+travel-envelope consumers and independent extrema witnesses.
+Old ID mapping: C07 remaining admitted-family expansion.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L226-L256
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_box_containment.rs#L261-L343
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_box_containment.rs#L440-L491
+
+
+R24 Retain per-curve fidelity and source correspondence after extraction
+Priority: P2 provenance and consumer simplicity. Evidence: Remaining composability gap.
+Objective: Preserve which output curves are exact and which are verified approximations through path
+extraction and editing.
+Current evidence: CertifiedCurvePathParallel2 retains aggregate exact/approximate counts;
+path()/into_path() then split/copy loses per-output classification. Existing lineage retains source
+parameter identity but does not supply the missing fidelity record. Alumina uses its own
+conservative span policy.
+Implementation experiment: Add one narrow bound artifact or sidecar with output/source identity,
+source index/range, approximation category and actual certified metric. Transport through
+split/reverse/copy and only proved transform rules; invalidate on mutation. Drive any public range
+accessor from the required correspondence contract and compare it with the exploratory H01
+restricted-support design; do not require a broad rewrite before this narrow repair.
+Mathematical guardrails: Set-distance and same-parameter error differ: (t^3,0) and its chord have
+the same image but differ by 3/8 at t=1/2. Machine rounding is a separate artifact; source geometry
+must not be rewritten from commands. Sampling fidelity is not current operation certainty.
+Acceptance: Mixed exact/approximate spans, extraction followed by split/reverse/copy/affine
+transform, metric scaling/shear guards, explicit unverified extraction and mutation. Preserve
+independent source and canonical-command travel checks and moving-join classification.
+Old ID mapping: C07 and C06 continuation; no existing metric-conflation defect alleged.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md#L258-L280
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/docs/construction-evidence.md#L1-L34
+
+
+R25 Close campaign evidence and independent completeness acceptance gaps
+Priority: P1 cross-cutting acceptance foundation. Evidence: Source-proven evidence/test gaps.
+Objective: Make measurements attributable and crash-surviving, and ensure downstream success checks
+cannot miss an entire output component.
+Current evidence: F01 raw metadata asks git/rustc at run time, not the binary's build, and raw TSV
+is buffered until chain/main completion. A moved stale binary can be misattributed and a late abort
+can lose completed rows. Campaign documents explicitly say some raw logs/probes were not archived.
+T01 emitted-triangle boundary checks admit they cannot detect a wholly missing component; two
+important exact workload tests are ignored by default. Some purported exact scalar checks are
+certified 1e-30 enclosures, not algebraic equalities.
+Implementation experiment: Milestone A: bind source/dirty patch, actual binary hash/build ID, build
+rustc -Vv, target/profile/features/flags, lock digests and inputs to a manifest; journal each
+completed row outside timed work and mark interruption. Archive extant original records; label
+reruns as new evidence. Milestone B: add independent exact half-space cell/decomposition or complete
+component-witness oracles, mutation tests deleting a whole lobe/component/sliver, and a targeted
+release acceptance command/job for the named ignored cylinder and planter tests after checking
+existing CI coverage. Milestone C: exercise the three maintainer-approved workflow gates above
+with explicit pass/blocker/failure records. When the separately owned ABC corpus supplies bugs,
+retain archive/model identifier and source hash, acquisition/version and license provenance,
+import options/units, exact failing stack revision, operation sequence, seed, observed/expected
+result, oracle, and a minimized reproducer whose failure still matches the original. Link the
+upstream report and deduplicate without discarding distinct domain/continuation failures. This is
+regression intake, not authorization to run, manage or contact the ABC corpus effort.
+Mathematical guardrails: No fabricated historical raw rows; summaries and existing tests remain
+useful evidence even when raw data is absent. A boundary-only check, positive volume or certified
+manifold is not completeness. Derive separation margins for expanded probe families rather than
+reuse an arbitrary normal-scaled 2^-60 displacement.
+Acceptance: Moved-binary/new-checkout and forced-termination tests preserve correct build identity
+and completed rows. Component-deletion mutations fail, retained output matches an independent
+oracle, and ignored gates actually execute. Each accepted workflow has an end-to-end outcome
+and any received ABC regression retains provenance and a validated minimization. Archive exact
+H15 coefficients/factors/modular
+certificates and H13/H14 leaf/route inputs, not only hashes. Maintain
+construction/validation/materialization/reuse/drop boundaries.
+Old ID mapping: F01, T01 and evidence portions of H13-H20/B02; accepted harness/corpus retained, not
+restarted.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/benchmarks/rust/successive_operations.rs
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/docs/admission.md#6-gate-optimization-on-reproducible-evidence
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/docs/evidence-archive.tsv
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/tests/downstream_solids.rs#L187-L247
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/tests/downstream_solids.rs#L580-L690
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/tests/support/downstream_workloads.rs#L131-L151
+
+
+R26 Attribute final HEAD symbols before choosing binary refactors
+Priority: P2 binary after semantic and speed gates. Evidence: Remaining measurement gap plus
+conditional experiments.
+Objective: Identify actual linked symbol families and retention edges, then test one narrowly
+measured duplication rather than infer causes from crate percentages.
+Current evidence: B02's 63.4% Hypercurve share in composed .text describes cc0d350d04, not final
+HEAD. measure.sh attribute runs only crate-level cargo bloat, a heuristic attribution. Cold policy
+helpers already have cold/inline-never attributes but closure-specific FnMut types may instantiate
+repeated bodies; line-only authored profiles also traverse general region admission. Neither source
+observation proves a material linked-size cause.
+Implementation experiment: Run the locked native/WASM/FFI matrix at the final target and archive
+per-symbol/monomorph family sizes and call/retention maps, including a curve-only linear-extrusion
+rung. If material duplicate cold same-T/E policy bodies survive, compare borrowed dyn FnMut only at
+the miss boundary or a shared non-generic state core; keep hot hits static. If general linear
+admission is the retention edge, isolate a proved exact private path without bypassing
+nesting/self-contact validation.
+Mathematical guardrails: No box allocation, blanket erased engine, new profile facade or
+feature-pruned curve families. Preserve strict-first retry, terminal observation on cache hits,
+budget-exhaustion noncaching, error order and policy distinctions. rlib/source shrinkage is not
+deployed-size evidence.
+Acceptance: Prioritize browser WASM alongside matched native desktop/workstation and relevant
+large-workload scaling controls; primitive/composed/raster, FFI shared/static with and without GC,
+post-bindgen/wasm-opt minimal/default WASM. Same behavior and cold/warm performance; reject material
+slowdown for bytes. Retain the established embedded-z control and flash decision, not an automatic
+switch to s; do not substitute that profile for the stated deployment target matrix.
+Old ID mapping: B02 follow-on and B01/A03 conditional boundaries; no repeated feature/profile experiment.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/benchmarks/size-harness/measure.sh
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/benchmarks/size-harness/README.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/PERFORMANCE.md#artifact-size-and-dependency-attribution
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/policy.rs#L855-L1010
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_region.rs#L2220-L2340
+
+
+R27 Place each exact section vertex once while streaming wall rows
+Priority: P2 modeling performance and duplication. Evidence: New source-derived arithmetic-reuse hypothesis.
+Objective: Avoid reconstructing the same transformed exact vertex for adjacent wall edges and bands.
+Current evidence: A03 already shares cap/wall emitters with a private dynamic placement boundary and
+saved about 2 KB of WASM code. emit_section_walls still places four vertices per edge-band quad;
+adjacent edges/bands repeat matrix products or twist arithmetic. Revolution already precomputes rows
+and shares axis points.
+Implementation experiment: Use stable contour-vertex/section indices and one or two prepared section
+rows, cloning exact coordinates into the current emission order. Start walls only; cap reuse
+requires an actual triangulator source-index map, not an assumption that every cap vertex came from
+the input.
+Mathematical guardrails: Stream O(profile vertices) storage instead of retaining every section.
+Preserve apex, open/closed ends, holes, orientation and exact sharing; no semantic coordinate
+interning or approximate equality. Hoisting work can change first-error order and must be checked.
+Acceptance: Rational/algebraic many-slice sweep/twist, thin enclosures,
+apex/closed/open/reversed/hole cases; byte-identical rows when expression form is preserved, exact
+migration otherwise. Compare allocations, peak live heap, instructions, receipts and linked
+native/WASM size. No speedup claimed until measured.
+Old ID mapping: A03 and C01 new follow-on, not reimplementation of accepted cap/wall factoring.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/curve/native.rs#L2599-L2643
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/curve/native.rs#L3140-L3185
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/curve/native.rs#L3255-L3318
+
+
+R28 Use certified nonconstant circular images to reject line fitting
+Priority: P2 narrow Hypercurve output-stage cost. Evidence: Measured line-fit cost; new guarded shortcut.
+Objective: Avoid generic exact line-fit preparation when an active curve image is proved nonlinear.
+Current evidence: H17 reports line-image tests as half the two-circle output stage. Retained
+circular/conic authority already exists, but the test
+injectivity_certificates_own_their_domain_and_circle_chart keeps circular provenance even on a
+collapsed [1/2,1/2] restriction. A circle tag alone is therefore not a safe NotLine shortcut.
+Implementation experiment: Add the smallest private tri-state image capability or a certified
+negative fit result: exact segment image, nonlinear image, unknown. First use valid positive-radius
+circle plus nonconstant connected finite active range; existing injectivity and strictly nonempty
+range can suffice. This narrow experiment does not require a global line-fit cache or new public
+support abstraction; compare advanced support APIs separately under the exploratory register.
+Mathematical guardrails: A line meets a nondegenerate circle in at most two points; a nonconstant
+connected image contains more, proving nonlinearity. Collapsed, periodic/retraced, singular/pole or
+unproved active images need their own proof or fallback. Collinearity alone does not prove
+one-segment coverage.
+Acceptance: Native/elevated/restricted/transformed circles, selected endpoints, finite
+negative-weight cases, collapsed points, retraced lines/circles, reversal and poles. Fit result,
+terminal/error semantics and exact continuation unchanged. Count avoided weight/control vectors,
+materializations and whole-board/circle cost; retain point-fit behavior on collapsed provenance.
+Old ID mapping: H17 measured output cost; different from rejected shared selection views and H01 abstraction.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_fit.rs#L521-L587
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_support.rs#L873-L900
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/bezier_region.rs#L6522-L6757
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/src/curve_region_boolean.rs#L3637-L3784
+
+
+R29 Factor only measured duplicated SDF setup and finalization
+Priority: P3 binary/source with performance veto. Evidence: New symbol-gated hypothesis.
+Objective: Reduce repeated heavy sampling bodies without adding per-sample dispatch or changing
+diagnostic API contracts.
+Current evidence: sample_indexed is a large generic closure body covering grid setup, field
+evaluation, diagnostics/preview, Surface Nets and publication. SDF expressions/callbacks, metaballs
+and TPMS instantiate different closures, but retained duplicate code and its size are unmeasured.
+Current composed/raster harnesses do not cover this family.
+Implementation experiment: Add real SDF/metaball/several-TPMS consumers with diagnostics on/off to
+R26. If heavy repeated bodies survive, keep static field evaluation in the grid loop and factor
+private non-generic setup/final meshing/publication. Compare an erased cold boundary only if useful,
+not a blanket hot-loop trait object.
+Mathematical guardrails: Plain/diagnostic APIs intentionally decide different additional predicates
+and may differ in completion/certainty. Preserve coordinate/sample order, first field error, exact
+diagnostics, finite projection and preview status; no extra grid copy or hidden allocation.
+Acceptance: Identical mesh/triangle rows and receipt/diagnostic outputs, all option modes, failing
+sample index and early-return order. TPMS hot loop is an adverse performance control; matched
+native/WASM symbol and byte measurements. Reject a byte-only win that materially slows ordinary
+work.
+Old ID mapping: A03/B02 new measured-core candidate; the tested diagnostic-contract conflation
+stays rejected, not every possible future API that preserves those distinctions.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/implicit/sdf.rs#L135-L316
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/implicit/tpms.rs#L49-L68
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/src/implicit/metaballs.rs#L86-L104
+
+
+R30 Make degenerate hull tie selection independent of cache warmth
+Priority: P2 determinism contract. Evidence: Remaining documented reproducer, not a new set error.
+Objective: Satisfy fixed-input row determinism on cospherical/coplanar hull cases without changing
+the exact hull set.
+Current evidence: Hypermesh documents different rows on a second same-process hull of a 32x16 sphere
+when the first starts with cold coordinate projections. Fresh processes and preprojected inputs
+agree; eye-selection ties were traced to discovery order. This is a P27 row-stability issue, not
+geometric inexactness.
+Implementation experiment: Try deterministic input-index tie-breaking independent of cache
+scheduling, retaining exact comparison and existing set admission. Record the degenerate-row
+migration rather than promise all serialized rows remain unchanged.
+Mathematical guardrails: Fixed-input determinism differs from identical triangle ordering after
+arbitrary input permutation. Approximation cache state may accelerate predicates but may not choose
+different tie semantics. Do not replace exact coordinates with rational stereographic samples unless
+a separate geometric migration is authorized.
+Acceptance: Fresh/repeated/warmed/cloned/rebuilt hulls, fixed and permuted
+cospherical/coplanar/symbolic inputs, independent exact convex-set oracle, Boolean/hull continuation
+and documented row hashes. Measure tie cost and ordinary hull controls.
+Old ID mapping: M02/T01 acceptance lineage; existing owning-crate residual not an original standalone ID.
+Pinned sources:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypermesh/FUTURE_WORK.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/tests/sampled_sphere_strict.rs
+
+
+PARKED OR REJECTED VARIANTS AND BOUNDED EXPLORATION
+
+The following preserve historical evidence, not blanket bans on abstract API
+design spaces. They are not instructions to repeat unchanged campaign variants.
+The advanced exploratory register below is authorized research direction; its
+items are not extra R projects or reversals of the 44 historical dispositions.
+
+- H01/H03 broad support/relation abstractions: current public probes found no
+  missing restriction, reversal, singleton overlap or mixed contact behavior.
+  That closes the defect premise, not advanced restricted-support/relation API
+  research. H02 may use a named designed future pair family; absence of a
+  current production caller is not a veto. See the exploratory register.
+- H09 source-union coefficient-field join: synthetic gap reproduced, but only
+  its own added test reached it. The tested integration had no production
+  beneficiary; keep that result and the ignored regression. A distinct advanced
+  source-join design may be tested on future selected/mapped-family workloads
+  before production demand, as specified in the exploratory register.
+- H13 modular leaf-before-expansion and H14 modular GCD: rejected for the
+  captured refillet/chamfer cases. Existing nonzero proofs already worked;
+  refinement and exact zero remainder were the actual costs. R16 requires a
+  different captured premise before reconsidering either algorithm.
+- H15 factor-only reduction and consumer-only center widening: degree 164 is
+  intrinsic for the captured center and substitution did not complete the
+  stroke. R03 is local authoring and correlated continuation, not smaller
+  global factors advertised as a cure.
+- H16 direct elevation/checkpoint caches: high-degree one-shot gains were real
+  in the campaign, but sequential degrees regressed and real callers reached
+  at most degree 5. Preserve that rejection of the tested policy; the register
+  permits an adaptive advanced policy with sequential/low-degree controls,
+  including designed future high-degree workloads.
+- H17 shared all-four selection views: the tested shared stage was too small
+  to justify that implementation. The register tests a different demand-driven
+  proof/selection design, not another unchanged all-four view. R11-R13/R28
+  remain concrete output-cost projects. H19 region span-pair pruning remains
+  unnecessary for single-span regions; direct multi-span queries already prune.
+- S01 cross-predicate normal-form workspace: maintainer explicitly chose NOT
+  ADOPTED FOR NOW on 2026-10-24. Coordinate compaction captures most cost
+  without roughly eight new Hyperlimit predicate variants and Hypertri API
+  routing. Keep the design record; no renewed implementation without a new
+  maintainer decision and post-compaction workload justification.
+- S02 merely running the existing filter earlier: rejected, with 135 ms of
+  attempts saving 10 ms in the measured Hypercurve sample and no root-chain
+  enclosures. A distinct future experiment must first add certified radical,
+  sqrt/nth-root or trigonometric enclosure domains and show post-M05 hit rates,
+  outward rounding, cancellation and exact-zero tax. Do not label it a win now.
+- The seven older per-call Laurent memo variants remain rejected; do not
+  rename them as a new cache proposal. R17 concerns what outlives a call.
+- A01 certainty conflation and A03 blanket sampler/diagnostic unification:
+  tested proposals supplied no demonstrated benefit or lost distinct contracts.
+  Advanced semantic-preserving certainty designs, AffineMap2/RegionPointLocation
+  APIs and wrapper naming remain exploratory, with gates below. Existing A02
+  wrappers are evidence for the baseline, not evidence the best API is known.
+  Naming changes are not asserted speed/binary wins. circle remains the
+  documented sampled-polygon/OpenSCAD operation unless explicitly migrated;
+  a naming experiment must not silently change represented geometry.
+- B01 dropping the WASM feature bundle: measured +511 deployed bytes and lost
+  implied APIs. Image codec and uuid pruning are already done; sibling default
+  features are already empty. Hypermesh itself requests triangulation features,
+  so deleting a redundant root request need not remove linked code.
+- B02 switch embedded z to s: measured tradeoff already decided. Keep z for
+  microcontroller flash as the maintainer requested on 2026-10-23; this is a
+  preserved profile decision alongside the current deployment target matrix. Also retain
+  the rejected generic Rational multiply/divide sharing evidence (roughly
+  3-7% scalar slowdown); add/sub already use shared non-inlined cores.
+- F03 always-iterative/TLS destruction: do not retry the five unchanged
+  variants. R10 is the distinct construction-depth design.
+- C07 hull subdivision: rejected as an exact containment refinement; it can
+  fail to decide tangent bounds. Selected derivative extrema are R23.
+- C06 STEP preflight diagnostics: optional P3 consumer request only. Existing
+  encoding rejects nonterminating/nonrational/off-grid values without partial
+  output. If requested, share encoder checks and enumerate entity/unit causes;
+  preflight succeeds iff unchanged actual encoding succeeds. It broadens
+  diagnostics, not exact export capability.
+- Existing S7 cusp-chart consolidation: lower-priority structural work, not
+  new research. Common selected-fiber chart/selector methods may be shared
+  behind a private enum, but rational-incidence and two-normal/speed-radical
+  payloads differ materially. Revisit only with a concrete maintenance or
+  measured binary benefit after R26; preserve extra incidence authority.
+- M06 true per-vertex age, retained per-triangle bounds, a shared projection-axis
+  chooser, and finer embedded-complex certainty are demand-gated alternatives.
+  First demonstrate a useful residual cost or blocked continuation. Age cannot
+  solve alternating-end fan growth; missing incidence is not OFF; existing
+  whole-operation certainty is conservative, not a found soundness bug.
+- General 3D edge fillets, shelling, broader loft correspondence and moving-axis
+  sweep families remain longer-horizon design work. They need explicit set,
+  frame, contact and singularity semantics plus end-to-end downstream tests.
+  C05's constant-section enclosure success is not general shelling. R02/R03
+  are necessary concrete closure work, not a promise that they alone solve 3D.
+
+DISPOSITION OF ALL 44 ORIGINAL PROJECTS
+
+Statuses below reproduce the campaign ledger, with remaining work mapped to
+this queue. Accepted in part never means the unaccepted remainder was merged.
+
+F01  Accepted. Separated step/validation/drop, untouched mode, live/requested
+     allocation and raw rows landed (2aea178386). R25 closes build-attribution,
+     crash durability and claim-linked archival gaps; no unchanged RSS/A-B rerun.
+F02  Accepted. Operand-first imported-domain validation landed (3c1ab5ad7d).
+     R19 is native-to-cold proof coverage/resource contracts, not a known defect.
+F03  Rejected implementation. Deep-drop abort remains; five variants were
+     slower on ordinary values (69d5210175). R10 is the surviving depth-hint design.
+M01  Accepted. Fixed bounded sharing and rational allocation avoidance
+     (9952d7a7c6). Keep regression; R19 distinguishes count bounds from total work.
+M02  Accepted. Targeted broad-phase, retained/rebuilt, apex, fallback, support
+     and equal-endpoint regressions (987e441c6c). Extend only relevant gates;
+     R30 is separately documented hull determinism, not an M02 defect claim.
+M03  Accepted. Approximate embedded-complex certificate qualification fixed
+     (74f8c951ea). Keep strict-after-approx tests; R08 does not reopen this repair.
+M04  Accepted. All construction identities and one-sided ON facts reach mesh
+     predicates/Hypertri (c70769dbb8). No new confirmed trust defect; R19 hardens
+     boundaries and R18 covers only the distinct remaining scalar frontier.
+M05  Accepted in part. Late exact relation and compact exact crossing forms
+     (955af21659,381732223f). R18 targets binary64 compound relations. Generic
+     field descriptor not built; do not restart it from superseded depth claims.
+M06  Accepted in part. Retained-operand ranking fixes much operand-order fan
+     bias (030bcf8962). R09 tests plane-class overlay on stronger cap evidence;
+     true age/bounds alternatives remain conditional.
+H01  Not applicable. Broad family replay probe found no defect (327288e1a1).
+     Historical defect premise closed; advanced restricted-support API recorded below.
+H02  Deferred. No measured first pair family (327288e1a1). R05-R07 consumers
+     and designed future-family experiments may test an advanced pair API.
+H03  Not applicable. Singleton overlap and overlap-plus-contact already work
+     (327288e1a1). Preserve tests; advanced compositional relation API remains open.
+H04  Accepted. Shared-circle/shared-line signed branch proof fixes Easyduino
+     (d6373655ef). R02 includes separate-transform lineage continuation without
+     inventing global support interning.
+H05  Accepted. Native polynomial section points/source-chart splits
+     (9b96cfcba2). R05 includes cut-point reuse and broader admitted families.
+H06  Accepted in part. Arbitrary rational-line queries (4d95675657). R05 takes
+     selected/mapped/pair and common-component continuation in explicit stages.
+H07  Deferred. Multiplicity/vertical-component API required (8b571c16f2).
+     R06 preserves tangential BRep semantics before extending admission.
+H08  Deferred. Filled polynomial regions/trims depend on real capabilities
+     (4d95675657). R07; broad H01-H04 abstractions are not prerequisites by fiat.
+H09  Rejected. Two-sided join had no production hit (1001b93a63). Preserve that
+     tested result and ignored synthetic regression; the advanced API register
+     explores a distinct design without a current-production-caller prerequisite.
+H10  Accepted. Local root sign ordering and exact equality cache
+     (2429241e66). R15 covers remaining formula/polynomial route and shared
+     singleton-root theorem, not reimplementation of completed equality.
+H11  Deferred. Consumer already receives global center (1001b93a63). R03 is
+     local authoring; parameter widening alone was shown insufficient.
+H12  Deferred. Earlier refillet stall solved by H13 replacement, but rebuilt
+     arc-corner erosion still blocks (1001b93a63). R02; R12 deduplicates a
+     different tangent cost and cannot alone restore missing authority.
+H13  Rejected; replacement accepted. Integer-form refinement landed
+     (670ea140e0), not modular-before-expansion. R14 preparation reuse; R16
+     different captured multi-source cases only.
+H14  Rejected; replacement accepted. Horner/content-free zero remainders
+     (5b2b53f042,281ee3690f), not modular GCD. R14/R16 as qualified above.
+H15  Rejected factor substitution. Selected irreducible degree 164 established
+     (a4a608bd19). Investigation complete; R03 uses the conclusion, R25 archives
+     its independently replayable certificate inputs.
+H16  Rejected. Direct high-degree elevation lacks a real beneficiary and
+     regresses sequential requests (681213db25). The tested policy stays rejected;
+     the register proposes a distinct adaptive policy and future-workload controls.
+H17  Rejected selection views. Shared part too small (681213db25). R11-R13/R28
+     address observed output-dependent proof/fit work. A separate advanced demand-
+     driven design is exploratory, not a reversal or repetition of the old result.
+H18  Accepted. Infallible carrier preparation becomes first-use lazy
+     (3fbb0867dc). Keep fallible eager/error-order boundary; targeted hardening
+     belongs in the common acceptance matrix below, not a second lazy rewrite.
+H19  Not applicable for regions. Single-span carriers/direct sparse pruning
+     already solve the stated issue (681213db25). No active duplicate project.
+H20  Deferred after audit. No cycles found; scalar retained caches are the
+     relevant owner (681213db25). R17; region authority cannot be blindly evicted.
+C01  Accepted. Exact all-linear modeling (12262e54e6). R04 mixed-profile
+     exactness and R27 repeated placement are distinct follow-ons.
+C02  Accepted. Non-affine regular fixed-plane sweep/projection fixes
+     (4e4c0c70ab,32e925ff42). R21 handles removable straight-image stationary
+     parameterization, not blanket D>=0 admission.
+C03  Accepted in part. Shared-pcurve pivot reflection fixed (68c7c38442).
+     R22 selects a further affine-image family with full continuation.
+C04  Accepted in part. Zero conventions, apex taper and full radial fold
+     (4f89616d66,01d997c3ab). R01 audits documented sampled-phase composition;
+     R20 separates partial swept boundaries from regularized material. Loft
+     side split/frame/contact semantics documented; broader families parked.
+C05  Accepted in part. Exact enclosure/restoration/recut corpus
+     (59667cd53d). R09 cap cost; R02/R03 repeated blend prerequisites. General
+     3D fillet/shelling remains future design, not completed enclosure work.
+C06  Accepted in part. STEP exactness allegation did not reproduce; AMF
+     decimal formatting fixed (4e016a2ba5,f229f472d8). R24 fidelity continuation;
+     entity-indexed STEP preflight remains optional diagnostics only.
+C07  Accepted in part. Exact box-containment witness (e342c62168). R23 family
+     completion and R24 per-curve fidelity. Set-distance/machine-projection
+     conflation allegations did not reproduce and stay closed.
+S01  Deferred; explicitly NOT ADOPTED FOR NOW (42aec58702, maintainer
+     2026-10-24). Preserve design record; not an active unchanged task.
+S02  Rejected. Existing-filter preflight misses root graphs and costs more
+     on measured Hypercurve calls (220e84e817). New enclosure domains require
+     independent evidence before any renewed scheduler work.
+A01  Accepted in part. combine/and_then and receipts tests (6a0ae15dbd).
+     R08 terminal-closed consumers and Hypercircuit query outcomes. Four-enum
+     unification rejected; no general false-certification defect found. A semantic-
+     preserving advanced certainty design remains open in the API register.
+A02  Accepted in part. Import projection can choose any certified nonzero
+     normal component (61da737db3). Affine/classifier wrappers already exist;
+     broader shared projection helper remains reproduction-gated as a defect/cost
+     claim. Advanced map/classification API exploration is not caller-gated.
+A03  Accepted in part. Shared cap/wall emitters (2e35417d96). R27 placement
+     reuse and R29 measured SDF core factoring. Wrapper naming/diagnostic API
+     changes remain exploratory API decisions, not asserted optimization wins.
+B01  Accepted in part. image codecs removed and wasm32 uuid feature gating
+     (064e1974ab,f2f479b660). Build/dependency benefit, essentially no linked
+     artifact gain. Rejected WASM feature pruning stays closed; R26 measures
+     real reachability before considering new package boundaries.
+B02  Accepted. Root/native/FFI/WASM harness (da84f70aef). R26 final-HEAD
+     symbol attribution, R25 artifact provenance. Embedded z decision respected.
+T01  Accepted. Eight downstream families and scalar identity fix
+     (b8b231f23a,759a1f674d). R25 strengthens completeness oracles and actual
+     execution tiers. Later M04/M05 supersede the ledger's generic cylinder
+     incidence-blocker wording; only the specific R18 frontier stays open.
+
+The complete authoritative ledger and owning evidence at the reviewed HEAD:
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/docs/research-program.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/PERFORMANCE.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/PERFORMANCE.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypercurve/FUTURE_WORK.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypersolve/PERFORMANCE.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypersolve/FUTURE_WORK.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/PERFORMANCE.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperreal/FUTURE_WORK.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypermesh/PERFORMANCE.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hypermesh/FUTURE_WORK.md
+https://github.com/timschmidt/csgrs/blob/3cca6a894858c8b98497a3cfe81cff5e17e1a7f2/crates/hyperbrep/PERFORMANCE.md
+
+ADVANCED EXPLORATORY API REGISTER
+
+These are bounded research alternatives, not extra project IDs or promises of
+adoption. Serious implementation prototypes may use synthetic or anticipated
+CAD/CAM geometry without a current production caller. Keep the campaign's
+negative controls and distinguish rejected variants from the larger design
+space. Each experiment must expose exactness/domain, policy/cancellation,
+ownership and continuation consequences; evaluate cost in the existing
+priority order. No proposal here reopens S01 without a new maintainer decision.
+
+H01 Restricted support and chart view
+Hypothesis: A source-bound restriction/map view can carry selected branch,
+parameter interval, orientation and correlated endpoints once, so advanced
+mapped/polynomial consumers reuse authority rather than rebuild family proofs.
+Prototype native/retained/restricted representations through split, reverse,
+map and recut. Gate: same admitted geometry and required correspondence with
+fewer independent proof obligations or broader exact continuation, measured
+against narrow per-family services; no generic view accepted merely for fewer lines.
+
+H02 Advanced pair capability API
+Hypothesis: An explicit capability-driven pair-event kernel can add selected-
+coefficient and mapped polynomial families without a Cartesian explosion of
+family dispatch or loss of common-component authority. Implement one demanding
+anticipated pair family, not a placeholder universal trait. Gate: complete
+contacts/components and both-operand split/reintersect, independent oracle,
+honest typed unsupported cases, and an evidenced extensibility/cost comparison.
+
+H03 Compositional relation and contact algebra
+Hypothesis: A relation result retaining overlap intervals, isolated contacts,
+multiplicity and chart correspondence can compose through restrictions and
+noninjective maps without dropping residual events. Test overlap-plus-tangency,
+retracing, multiple roots and endpoint contacts beyond the already passing
+singleton cases. Gate: complete event replay and no false equivalence or erased
+contact, with a demonstrable reduction in duplicated semantic rules.
+
+H09 Local source-union and selected-field joins
+Hypothesis: A demand-driven joined-source authority can support independent
+selected/mapped inputs while delaying unnecessary global coordinate promotion;
+retain algebraic dependencies rather than treating correlated sources as free.
+Prototype future branch-pair/fillet fixtures plus the retained synthetic gap.
+Gate: exact selected solution and denominator/branch checks, source-drop replay,
+relative/absolute degree and memory/time accounting; reject only this variant
+if no capability/value emerges, not all possible joins for lack of current hits.
+
+H16 Adaptive elevation and preparation API
+Hypothesis: A demand-aware preparation plan can choose sequential elevation for
+nearby degrees and direct/checkpoint work for sparse high-degree requests,
+sharing only certified reusable data. Test sequential degrees, sparse jumps,
+low-degree controls and anticipated high-order CAD/CAM spans with cold/warm/drop
+states. Gate: semantic parity and a useful capability or cost envelope without
+concealing the prior sequential regression or unbounded retained memory.
+
+H17 Demand-driven arrangement and selection view
+Hypothesis: A proof-bearing arrangement view can evaluate only requested output
+selections and reuse output-relevant certification across later requests, rather
+than share the already-small all-four stage. Prototype repeated/subset selections
+with retained source lineage and downstream reconstruction. Gate: complete exact
+outputs, honest policy/receipt reuse and worthwhile avoided work versus both the
+old all-four design and R11-R13/R28's narrow baselines; count retention and teardown.
+
+AffineMap2 and RegionPointLocation
+Hypothesis: A coherent map/classification API can preserve chart, orientation,
+location witness and policy across affine pullback, instead of adding synonyms
+for existing wrappers. Prototype nonuniform scale/shear/reflection, inverse and
+composition on an advanced admitted family; classify then split/Boolean/recut.
+Gate: exact composition and boundary semantics, explicit singular-map exclusions,
+fewer repeated consumer contracts or broader success, and an explicit API migration.
+
+Certainty unification without semantic conflation
+Hypothesis: A common result/provenance algebra with independent construction-
+fidelity, operation-certainty and policy axes can simplify composition while
+retaining each domain's meanings. Prototype map/and_then, explicit-policy queries
+and strict/approximate/strict continuation. Gate: no certification upgrade or
+ancestry loss; preserve invalid/unsupported/undecided/exhausted distinctions,
+error/cancellation precedence and receipts. Compare a shared semantic model with
+both adapters and current enums; one flattened enum is not the research goal.
+
+Wrapper naming and minimal usable operation surface
+Hypothesis: A consistent fallibility/policy vocabulary can make advanced chains
+expressible with fewer conceptual exceptions without hiding errors or mandatory
+approximation. Prototype representative fillet/Boolean/mesh/BRep chains through
+an actually usable alternate surface, not only a name list. Gate: callers can
+identify geometry, defaults, fallibility and receipts from the API; exact domain,
+diagnostics, cancellation and construction fidelity stay explicit. Public breaks
+are allowed with migration examples. Do not count renaming as a runtime win or
+silently redefine sampled circle geometry. Distinct diagnostic contracts need not
+collapse merely to minimize wrapper/type count.
+
+COMMON ACCEPTANCE MATRIX AND COMPLETION REPORT
+
+Use applicable rows, not an undifferentiated requirement to test all geometry.
+Every selected project must state its admitted domain and exact stopping gate.
+
+- Expected success/blocker/empty/error and complete components/holes first;
+  performance only after semantics. Independent algebraic, cell-membership or
+  half-space oracle where feasible, not a second wrapper around the same new
+  kernel. Delete-component/sliver and false-certificate mutations must fail.
+  The three accepted CAD/CAM workflow gates above anchor end-to-end success;
+  keep separately owned ABC corpus intake in R25 rather than assuming coverage.
+- Construct -> split/restrict -> reverse/admitted transform -> Boolean ->
+  offset/fillet/BRep consumer -> native archive -> recut; generations 1,2,4,8
+  when meaningful. Context/operand drop before result queries. Retained and
+  independently rebuilt authorities, swapped operands and source order.
+- Tangent/proper/coincident/near-distinct contacts, holes, disconnected sets,
+  empty feedback, endpoints, multiple roots, retracing, poles and denominator
+  boundaries; closure and orientation plus selected sheet/chart/domain.
+- Strict/approximate/strict; cold/warm/evicted/disabled caches; pre-set and
+  mid-query cancellation, nested hard budgets and retry with more resources.
+  P4 allows warm Unknown -> Certified. Match definite facts and do not weaken
+  held proof; do not require identical failure history when knowledge improves.
+- H18-specific guard: multiple fallible carriers, including certified-disjoint
+  ones, retain identical first error/order; selected endpoint failures, unary
+  noninjective self contexts and no cross pairs; replay after preparation-table
+  drop. Lazy infallibility must remain true as constructors evolve.
+- Preserve selected-profile unequal-holes expected-rejection resource rows as
+  adverse controls, not solved wins. Also retain timeout/undecided/cancelled
+  samples rather than aggregate successful cases only. Historical anchor:
+https://github.com/timschmidt/csgrs/blob/7c726d4c9e5a1a5fefeb9d21a20898f654ae9525/crates/hypercurve/PERFORMANCE.md#L9961-L9970
+- Separate step, validation, materialization, next-operation reuse, teardown
+  and end-to-end cost. Report allocator calls/requested bytes, peak live and
+  retained-after-drop separately, shared allocations once. RSS is not allocated
+  traffic. Track degree, coefficient bits, promotions, source axes, unique DAG
+  nodes/depth and proof attempts where they explain the change.
+- Preserve deterministic rows only where promised. Exact normal forms, canonical
+  polygon phases or tie rules may require explicit migration. Source size,
+  linked code/data, debug symbols, stripping and compressed deployment size
+  are distinct; compare identical toolchain/target/features/profile settings.
+  Archive tests protect current-version semantics and trust, not a permanent
+  schema or cross-version compatibility promise during experimentation.
+- Deliver: applicability at exact HEAD; admitted mathematical contract and
+  exclusions; implementation or negative result; preserved routes; test and
+  continuation results; budget/certainty/ownership contract; raw evidence and
+  artifact hashes; performance/memory/binary/source deltas; migration; remaining
+  blocker. Do not advertise a hypothesis as a measured improvement.
+
+VERIFICATION AND EVIDENCE GAPS TO KEEP VISIBLE
+
+1. This review did not run Cargo, Rust tests or benchmarks and did not perform
+   an independent whole-repository correctness audit. It inspected current
+   source/commit changes and reconciled owning evidence. No new confirmed
+   wrong-result bug was established. The odd-N branch/phase result was checked
+   with exact lattice arithmetic, not the production Rust API.
+2. Existing tests and recorded scoped improvements are real evidence, but some
+   Oct22-24 probes/raw rows were explicitly not archived. The current evidence
+   index lacks those claim-linked campaign records. The evidence repository
+   was not exhaustively searched after a connector tree-read failure; absence
+   from the index is not proof no file exists anywhere. R25 closes this gap.
+3. B02 tables are a cc0d350d04 snapshot, not final-HEAD per-symbol attribution.
+   Do not use 63.4% as a current measured share or claim generics caused it.
+4. H15's irreducibility conclusion rests on recorded factorization evidence.
+   This review checked the subset-sum implication of the listed modular degree
+   patterns, not the full polynomial product/factorization. Archive actual
+   coefficients and certificates for independent replay, not only a digest.
+5. F02's ledger headline says allocations unchanged and decode +2.5-12%, while
+   the owning table contains exceptions: asin(1/pi) +257% time and 7 -> 49
+   allocations, tan(sqrt2) +56% and 13 -> 27. This was known in the prior review;
+   use the owning per-case table, not a new-defect claim or universal headline.
+6. Near-coincident cylinders generally are not still broken: later M04/M05
+   close the documented ordinary skew/compound cases. R18 is a different exact
+   binary64-input frontier. Update stale T01/FUTURE_WORK wording accordingly.
+7. Hypercurve FUTURE_WORK retains older directions saying the modular step
+   must come first and broad H01-H04 views precede polynomial arrangements.
+   The campaign narrowed or rejected those premises for the tested work. The
+   maintainer now explicitly retains advanced API exploration without imposing
+   those abstractions as prerequisites. Reconcile documentation when an
+   implementation task is authorized; this update made no repo edits.
+8. No new candidate's speed, peak-memory or binary benefit has been measured
+   here. Positive runtime gains cited above belong only to their named campaign
+   workloads. A smaller source file, flatter DAG or fewer triangles alone is
+   not proof of lower cost or effective repeated-operation closure.
+
+END OF HANDOFF

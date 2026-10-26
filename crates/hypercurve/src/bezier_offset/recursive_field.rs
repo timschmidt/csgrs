@@ -3470,12 +3470,7 @@ impl BezierRecursiveProjectiveParameter2 {
     }
 
     pub(super) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if !policy.accepts_retained_policy(self.data.policy) {
-            return Err(CurveError::Topology(
-                "a recursive projective parameter crossed predicate policies".into(),
-            ));
-        }
-        Ok(())
+        policy.validate_retained_policy(self.data.policy)
     }
 
     pub(super) fn with_line_identity(
@@ -3779,7 +3774,48 @@ impl BezierRecursiveProjectiveParameter2 {
     ) -> CurveResult<Classification<RealSign>> {
         self.validate_policy(policy)?;
         let Some(authority) = self.polynomial_authority() else {
-            return self.recursive_polynomial_sign(coefficients, policy);
+            let local = self.recursive_polynomial_sign(coefficients, policy)?;
+            if !matches!(
+                local,
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            ) {
+                return Ok(local);
+            }
+            let (Some(scalar), Some(first)) = (self.projective_scalar(), coefficients.first())
+            else {
+                return Ok(local);
+            };
+            let coefficient_field = first.field();
+            if coefficients
+                .iter()
+                .any(|coefficient| !coefficient_field.same_field(&coefficient.field()))
+            {
+                return Ok(local);
+            }
+            let field = scalar.denominator.field();
+            let Some((target_base, embeddings)) =
+                coefficient_field.extension_embeddings_to_equivalent_tower(&field)
+            else {
+                return Ok(local);
+            };
+            let Some(query) = coefficients
+                .iter()
+                .map(|coefficient| {
+                    coefficient
+                        .rebased_to_equivalent_base(target_base.clone(), &embeddings)
+                        .and_then(|coefficient| field.lift(&coefficient))
+                })
+                .collect::<Option<Vec<_>>>()
+            else {
+                return Ok(local);
+            };
+            // Equivalent base/tower replay keeps the selected sources and
+            // positive radical sheets. The formula's positive denominator
+            // makes homogeneous evaluation preserve the polynomial's sign.
+            let Some(value) = recursive_projective_polynomial_value(&query, scalar) else {
+                return Ok(local);
+            };
+            return value.sign(policy);
         };
         let Some(first) = coefficients.first() else {
             return Ok(Classification::Decided(RealSign::Zero));

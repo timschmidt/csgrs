@@ -12,11 +12,30 @@ int main(void) {
   typedef csgrs_status_t (*operation)(const csgrs_curve_region_t *, const csgrs_curve_region_t *, csgrs_curve_region_t **);
   const operation operations[] = {csgrs_curve_region_f64_union, csgrs_curve_region_f64_difference,
     csgrs_curve_region_f64_intersection, csgrs_curve_region_f64_xor};
+  // The original two-rotation identity is now certified. Preserve all four
+  // set expectations before exercising an independently unresolved identity.
   for (size_t i = 0; i < sizeof(operations) / sizeof(operations[0]); ++i) {
     csgrs_curve_region_t *output = NULL;
-    assert(operations[i](square, restored, &output) == CSGRS_STATUS_PREDICATE_UNDECIDED);
+    csgrs_aabb3_f64_t bounds;
+    assert(operations[i](square, restored, &output) == CSGRS_STATUS_OK);
+    const csgrs_status_t status = csgrs_curve_region_f64_bounding_box(output, &bounds);
+    if (i == 1 || i == 3) {
+      assert(status == CSGRS_STATUS_NO_BOUNDS);
+    } else {
+      assert(status == CSGRS_STATUS_OK);
+      assert(bounds.mins.x == 0 && bounds.mins.y == 0 && bounds.maxs.x == 2 && bounds.maxs.y == 2);
+    }
+    csgrs_curve_region_free(output);
+  }
+  csgrs_curve_region_t *turned = NULL, *composed = NULL, *opaque = NULL;
+  assert(csgrs_curve_region_f64_rotate(square, 0, 0, 13.1, &turned) == CSGRS_STATUS_OK);
+  assert(csgrs_curve_region_f64_rotate(turned, 0, 0, 0.5, &composed) == CSGRS_STATUS_OK);
+  assert(csgrs_curve_region_f64_rotate(composed, 0, 0, -(13.1 + 0.5), &opaque) == CSGRS_STATUS_OK);
+  for (size_t i = 0; i < sizeof(operations) / sizeof(operations[0]); ++i) {
+    csgrs_curve_region_t *output = NULL;
+    assert(operations[i](square, opaque, &output) == CSGRS_STATUS_PREDICATE_UNDECIDED);
     assert(output == NULL);
-    assert(strstr(csgrs_last_error_message(), "blocked by Ordering") != NULL);
+    assert(strstr(csgrs_last_error_message(), "blocked by Predicate") != NULL);
   }
   csgrs_triangle_mesh_t *mesh = NULL;
   assert(csgrs_curve_region_f64_revolve(square, 360, 1, &mesh) == CSGRS_STATUS_VALIDATION_FAILED);
@@ -44,6 +63,9 @@ int main(void) {
   csgrs_curve_region_free(empty);
   csgrs_curve_region_free(scaled);
   csgrs_curve_region_free(large);
+  csgrs_curve_region_free(opaque);
+  csgrs_curve_region_free(composed);
+  csgrs_curve_region_free(turned);
   csgrs_curve_region_free(restored);
   csgrs_curve_region_free(rotated);
   csgrs_curve_region_free(square);

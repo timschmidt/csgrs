@@ -6768,12 +6768,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
     }
 
     pub(super) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if !policy.accepts_retained_policy(self.data.policy) {
-            return Err(CurveError::Topology(
-                "a selected-fiber parallel map crossed predicate policies".into(),
-            ));
-        }
-        Ok(())
+        policy.validate_retained_policy(self.data.policy)
     }
 
     /// Signs one linear combination of the selected-circle tangent crossed
@@ -7478,12 +7473,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
     }
 
     pub(super) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if !policy.accepts_retained_policy(self.data.policy) {
-            return Err(CurveError::Topology(
-                "a selected-fiber rational map crossed predicate policies".into(),
-            ));
-        }
-        Ok(())
+        policy.validate_retained_policy(self.data.policy)
     }
 
     /// Signs one exact linear combination of the selected-circle tangent

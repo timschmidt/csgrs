@@ -4578,10 +4578,13 @@ fn check_selected_fiber_rational_overlap(exact_center: bool) {
                     for replay_policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
                         let replay = overlap.cusp_parameter_for_other(&parameter, &replay_policy);
                         if consume_terminal && replay_policy == CurveContext::STRICT {
-                            assert!(matches!(replay, Err(CurveError::Topology(_))));
+                            assert!(matches!(
+                                replay,
+                                Err(CurveError::IncompatiblePredicatePolicy)
+                            ));
                             assert!(matches!(
                                 overlap.point_evidence_for_other(&parameter, &replay_policy),
-                                Err(CurveError::Topology(_)),
+                                Err(CurveError::IncompatiblePredicatePolicy),
                             ));
                             continue;
                         }
@@ -4790,7 +4793,10 @@ fn selected_fiber_rational_component_publishes_its_isolated_endpoint() {
                                 &replay_policy,
                             );
                             if consume_terminal && replay_policy == CurveContext::STRICT {
-                                assert!(matches!(order, Err(CurveError::Topology(_))));
+                                assert!(matches!(
+                                    order,
+                                    Err(CurveError::IncompatiblePredicatePolicy)
+                                ));
                             } else {
                                 assert_eq!(
                                     order.unwrap(),
@@ -48363,7 +48369,10 @@ fn selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact()
                             &replay_policy,
                         );
                         if consume_terminal && replay_policy == CurveContext::STRICT {
-                            assert!(matches!(replay, Err(CurveError::Topology(_))));
+                            assert!(matches!(
+                                replay,
+                                Err(CurveError::IncompatiblePredicatePolicy)
+                            ));
                             continue;
                         }
                         assert_eq!(
@@ -58520,4 +58529,800 @@ fn sibling_normal_offsets_of_one_chord_keep_their_separation() {
         near.support_collinearity(&near, &policy).unwrap(),
         Classification::Decided(true)
     );
+}
+
+/// Independent formula and polynomial authorities name sqrt(2+sqrt(2)),
+/// its reciprocal, negative image, shifted relation and selected conjugate.
+/// Equivalent rebuilt fields must retain the relation without projection.
+#[test]
+fn recursive_formula_roots_compare_in_equivalent_rebuilt_fields() {
+    use std::cmp::Ordering;
+    let half = (Real::one() / Real::from(2)).unwrap();
+    let tiny = Real::from(2).powi_i64(-600).unwrap();
+    let mut missing = Vec::new();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for name in [
+            "same",
+            "scaled_positive",
+            "scaled_negative",
+            "nearby",
+            "reciprocal",
+            "negative",
+            "conjugate",
+        ] {
+            let source = selected_square_root_source((Real::one() / Real::from(2)).unwrap());
+            // alpha=2sqrt(1/2)=sqrt(2), z=sqrt(2+alpha), so 1<z<2.
+            let base = selected_source_field(vec![source.clone()]);
+            let radicand = base
+                .constant(Real::from(2))
+                .unwrap()
+                .add(&doubled_source_value(&base, &source))
+                .unwrap();
+            let field = base.extension(radicand).unwrap();
+            let generator = field
+                .element(
+                    base.constant(Real::zero()).unwrap(),
+                    base.constant(Real::one()).unwrap(),
+                )
+                .unwrap();
+            let (numerator, denominator, bounds) = match name {
+                "reciprocal" => (
+                    field.constant(Real::one()).unwrap(),
+                    generator,
+                    (half.clone(), Real::one()),
+                ),
+                "negative" => (
+                    generator.scale(&-Real::one()).unwrap(),
+                    field.constant(Real::one()).unwrap(),
+                    (Real::from(-2), -Real::one()),
+                ),
+                _ => (
+                    generator,
+                    field.constant(Real::one()).unwrap(),
+                    (Real::one(), Real::from(2)),
+                ),
+            };
+            let Classification::Decided(formula) =
+                BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
+                    RecursiveQuadraticProjectiveScalar {
+                        numerator,
+                        denominator,
+                    },
+                    Some(bounds),
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("positive finite formula denominator")
+            };
+            let rebuilt = selected_source_field(vec![source.clone()]);
+            let mut relation = shifted_square_relation(&rebuilt, &source);
+            let (bounds, signs, expected) = match name {
+                "scaled_positive" => {
+                    relation = relation
+                        .into_iter()
+                        .map(|v| v.scale(&Real::from(7)).unwrap())
+                        .collect();
+                    (
+                        (Real::one(), Real::from(2)),
+                        [RealSign::Negative, RealSign::Positive],
+                        Ordering::Equal,
+                    )
+                }
+                "scaled_negative" => {
+                    relation = relation
+                        .into_iter()
+                        .map(|v| v.scale(&Real::from(-7)).unwrap())
+                        .collect();
+                    (
+                        (Real::one(), Real::from(2)),
+                        [RealSign::Positive, RealSign::Negative],
+                        Ordering::Equal,
+                    )
+                }
+                "nearby" => {
+                    // Increasing the positive square root's radicand moves it right.
+                    relation[0] = relation[0]
+                        .subtract(&rebuilt.constant(tiny.clone()).unwrap())
+                        .unwrap();
+                    (
+                        (Real::one(), Real::from(2)),
+                        [RealSign::Negative, RealSign::Positive],
+                        Ordering::Less,
+                    )
+                }
+                "reciprocal" => {
+                    relation = vec![
+                        rebuilt.constant(-Real::one()).unwrap(),
+                        rebuilt.constant(Real::zero()).unwrap(),
+                        rebuilt
+                            .constant(Real::from(2))
+                            .unwrap()
+                            .add(&doubled_source_value(&rebuilt, &source))
+                            .unwrap(),
+                    ];
+                    (
+                        (half.clone(), Real::one()),
+                        [RealSign::Negative, RealSign::Positive],
+                        Ordering::Equal,
+                    )
+                }
+                "negative" => (
+                    (Real::from(-2), -Real::one()),
+                    [RealSign::Positive, RealSign::Negative],
+                    Ordering::Equal,
+                ),
+                "conjugate" => {
+                    // sqrt(2-alpha) lies in (1/2,1), strictly below z.
+                    relation[0] = rebuilt
+                        .constant(Real::from(-2))
+                        .unwrap()
+                        .add(&doubled_source_value(&rebuilt, &source))
+                        .unwrap();
+                    (
+                        (half.clone(), Real::one()),
+                        [RealSign::Negative, RealSign::Positive],
+                        Ordering::Greater,
+                    )
+                }
+                _ => (
+                    (Real::one(), Real::from(2)),
+                    [RealSign::Negative, RealSign::Positive],
+                    Ordering::Equal,
+                ),
+            };
+            let root = local_polynomial_root(&rebuilt, relation, bounds, signs, &policy);
+            drop(base);
+            drop(field);
+            drop(rebuilt);
+            drop(source);
+            let outcome = crate::evaluate_under(policy.predicate_policy(), || {
+                let local = policy
+                    .bounded_exact_predicate_pass(|| {
+                        formula.order_against_polynomial_root(&root, &policy)
+                    })
+                    .unwrap();
+                let complete = formula.cmp_by_refinement(&root, &policy).unwrap();
+                let reverse = root.cmp_by_refinement(&formula, &policy).unwrap();
+                (local, complete, reverse)
+            });
+            assert_eq!(outcome.certainty(), crate::CurveCertainty::Certified);
+            let (local, complete, reverse) = outcome.certified().unwrap();
+            let projected = formula.data.projection.parameter.get().is_some()
+                || root.data.projection.parameter.get().is_some();
+            eprintln!(
+                "R15_ORACLE {name} {policy:?} local={local:?} complete={complete:?} reverse={reverse:?} projected={projected}"
+            );
+            if local != Some(expected)
+                || complete != Classification::Decided(expected)
+                || reverse != Classification::Decided(expected.reverse())
+                || projected
+            {
+                missing.push(format!(
+                    "{name}/{policy:?}: {local:?}, {complete:?}, {reverse:?}, projected={projected}"
+                ));
+            }
+        }
+    }
+    assert!(
+        missing.is_empty(),
+        "missing local exact comparisons: {missing:#?}"
+    );
+}
+
+#[test]
+fn recursive_formula_rebasing_keeps_foreign_sources_and_denominators_typed() {
+    let source = selected_square_root_source((Real::one() / Real::from(2)).unwrap());
+    let foreign_source = selected_square_root_source((Real::from(3) / Real::from(4)).unwrap());
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let field = selected_source_field(vec![source.clone()]);
+        for denominator in [Real::zero(), -Real::one()] {
+            assert!(matches!(
+                BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
+                    RecursiveQuadraticProjectiveScalar {
+                        numerator: field.constant(Real::one()).unwrap(),
+                        denominator: field.constant(denominator).unwrap(),
+                    },
+                    Some((Real::zero(), Real::one())),
+                    &policy,
+                ),
+                Err(CurveError::Topology(_))
+            ));
+        }
+        let Classification::Decided(formula) =
+            BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
+                RecursiveQuadraticProjectiveScalar {
+                    numerator: field.retained_root_value(&source).unwrap(),
+                    denominator: field.constant(Real::one()).unwrap(),
+                },
+                Some((Real::zero(), Real::one())),
+                &policy,
+            )
+            .unwrap()
+        else {
+            panic!("finite selected scalar")
+        };
+        let foreign = selected_source_field(vec![foreign_source.clone()]);
+        let query = vec![
+            foreign.retained_root_value(&foreign_source).unwrap(),
+            foreign.constant(Real::one()).unwrap(),
+        ];
+        assert_eq!(
+            formula
+                .recursive_polynomial_sign_joined(&query, &policy)
+                .unwrap(),
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        );
+        assert!(formula.data.projection.parameter.get().is_none());
+    }
+}
+
+/// The larger unit root of 8x^4-8x^2+1, retained over alpha=sqrt(1/2).
+fn recursive_comparison_quartic_root(policy: &CurveContext) -> BezierRecursiveProjectiveParameter2 {
+    let source = selected_square_root_source((Real::one() / Real::from(2)).unwrap());
+    let field = selected_source_field(vec![source.clone()]);
+    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let relation = shifted_square_relation(&field, &source)
+        .into_iter()
+        .enumerate()
+        .map(|(power, coefficient)| {
+            if power == 2 {
+                coefficient
+            } else {
+                coefficient.scale(&quarter).unwrap()
+            }
+        })
+        .collect();
+    local_polynomial_root(
+        &field,
+        relation,
+        ((Real::one() / Real::from(2)).unwrap(), Real::one()),
+        [RealSign::Negative, RealSign::Positive],
+        policy,
+    )
+}
+
+fn independently_selected_quartic_root(lower: Real) -> BezierAlgebraicParameter2 {
+    BezierAlgebraicParameter2::try_isolate(
+        BezierParameterPolynomial::try_new_power_basis(
+            [1, 0, -8, 0, 8].into_iter().map(Real::from).collect(),
+        )
+        .unwrap(),
+        BezierParameterInterval::try_new(lower, Real::one()).unwrap(),
+    )
+    .unwrap()
+}
+
+#[test]
+fn recursive_native_equality_cache_saturates_and_separates_changed_charts() {
+    use std::cmp::Ordering;
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let root = recursive_comparison_quartic_root(&policy);
+        // Six different singleton brackets select the same larger quartic
+        // root. The cache's identity relation must distinguish these entries.
+        let natives: Vec<_> = (24..30)
+            .map(|numerator| {
+                independently_selected_quartic_root(
+                    (Real::from(numerator) / Real::from(32)).unwrap(),
+                )
+            })
+            .collect();
+        for (index, native) in natives.iter().enumerate() {
+            assert!(
+                natives[..index]
+                    .iter()
+                    .all(|earlier| !earlier.shares_root_identity(native))
+            );
+            let outcome = crate::evaluate_under(policy.predicate_policy(), || {
+                root.cmp_bezier_parameter(&BezierParameter2::Algebraic(native.clone()), &policy)
+            });
+            assert_eq!(outcome.certainty(), crate::CurveCertainty::Certified);
+            assert_eq!(
+                outcome.certified().unwrap().unwrap(),
+                Classification::Decided(Ordering::Equal)
+            );
+            assert_eq!(
+                root.data.projection.equal_natives.lock().unwrap().len(),
+                (index + 1).min(RECURSIVE_EQUAL_NATIVE_LIMIT)
+            );
+            assert_eq!(
+                root.data.projection.proved_equal_to(native),
+                index < RECURSIVE_EQUAL_NATIVE_LIMIT
+            );
+        }
+        for (numerator, denominator, expected) in [
+            (
+                [Real::one(), Real::zero()],
+                [Real::zero(), Real::one()],
+                Ordering::Greater,
+            ),
+            (
+                [Real::zero(), -Real::one()],
+                [Real::one(), Real::zero()],
+                Ordering::Less,
+            ),
+        ] {
+            let Classification::Decided(mapped) = root
+                .projective_image_unbounded(&numerator, &denominator, &policy)
+                .unwrap()
+            else {
+                panic!("a nonzero root admits reciprocal and negative charts")
+            };
+            assert!(!Arc::ptr_eq(&root.data.projection, &mapped.data.projection));
+            assert!(
+                mapped
+                    .data
+                    .projection
+                    .equal_natives
+                    .lock()
+                    .unwrap()
+                    .is_empty()
+            );
+            let outcome = crate::evaluate_under(policy.predicate_policy(), || {
+                mapped
+                    .cmp_bezier_parameter(&BezierParameter2::Algebraic(natives[0].clone()), &policy)
+            });
+            assert_eq!(outcome.certainty(), crate::CurveCertainty::Certified);
+            assert_eq!(
+                outcome.certified().unwrap().unwrap(),
+                Classification::Decided(expected)
+            );
+            assert!(
+                mapped
+                    .data
+                    .projection
+                    .equal_natives
+                    .lock()
+                    .unwrap()
+                    .is_empty()
+            );
+        }
+        assert_eq!(
+            root.data.projection.equal_natives.lock().unwrap().len(),
+            RECURSIVE_EQUAL_NATIVE_LIMIT
+        );
+        let poisoned = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _guard = root.data.projection.equal_natives.lock().unwrap();
+            panic!("exercise poisoned equality cache");
+        }));
+        assert!(poisoned.is_err());
+        assert!(root.data.projection.equal_natives.is_poisoned());
+        assert!(!root.data.projection.proved_equal_to(&natives[0]));
+        // Lookup and attempted retention both treat poison as an empty cache.
+        let replay = crate::evaluate_under(policy.predicate_policy(), || {
+            root.cmp_bezier_parameter(&BezierParameter2::Algebraic(natives[0].clone()), &policy)
+        });
+        assert_eq!(replay.certainty(), crate::CurveCertainty::Certified);
+        assert_eq!(
+            replay.certified().unwrap().unwrap(),
+            Classification::Decided(Ordering::Equal)
+        );
+        assert!(!root.data.projection.proved_equal_to(&natives[0]));
+    }
+}
+
+#[test]
+fn recursive_native_comparison_exhaustion_retries_without_caching_failure() {
+    use crate::{WorkBudget, WorkKind, evaluate_with_budget};
+    use std::cmp::Ordering;
+    let root = recursive_comparison_quartic_root(&CurveContext::STRICT);
+    let native = BezierParameter2::Algebraic(independently_selected_quartic_root(
+        (Real::from(3) / Real::from(4)).unwrap(),
+    ));
+    for policy in [
+        CurveContext::STRICT,
+        CurveContext::APPROXIMATE_512,
+        CurveContext::STRICT,
+    ] {
+        // A fresh root makes the failure and subsequent reuse independent of
+        // the previous policy's already-certified equality entry.
+        let fresh = recursive_comparison_quartic_root(&CurveContext::STRICT);
+        for limit in [0, 1] {
+            let denied = evaluate_with_budget(
+                policy.predicate_policy(),
+                WorkBudget {
+                    refinements: limit,
+                    promotions: 0,
+                },
+                || fresh.cmp_bezier_parameter(&native, &policy),
+            );
+            let failure = denied.result.unwrap_err();
+            assert_eq!(failure.kind, WorkKind::RootRefinement);
+            assert_eq!(failure.limit, limit);
+            assert_eq!(failure.used, limit);
+            assert!(
+                fresh
+                    .data
+                    .projection
+                    .equal_natives
+                    .lock()
+                    .unwrap()
+                    .is_empty()
+            );
+            assert!(fresh.data.projection.parameter.get().is_none());
+        }
+        let retry = evaluate_with_budget(
+            policy.predicate_policy(),
+            WorkBudget {
+                refinements: 512,
+                promotions: 32,
+            },
+            || fresh.cmp_bezier_parameter(&native, &policy),
+        );
+        assert!(retry.usage.refinements > 1);
+        let replay = retry.result.unwrap();
+        assert_eq!(replay.certainty(), crate::CurveCertainty::Certified);
+        assert_eq!(
+            replay.certified().unwrap().unwrap(),
+            Classification::Decided(Ordering::Equal)
+        );
+        assert_eq!(fresh.data.projection.equal_natives.lock().unwrap().len(), 1);
+        let warm = evaluate_with_budget(policy.predicate_policy(), WorkBudget::ZERO, || {
+            fresh.cmp_bezier_parameter(&native, &policy)
+        });
+        assert_eq!(warm.usage, crate::WorkUsage::default());
+        assert_eq!(
+            warm.result.unwrap().certified().unwrap().unwrap(),
+            Classification::Decided(Ordering::Equal)
+        );
+        assert_eq!(
+            root.cmp_by_refinement(&fresh, &policy).unwrap(),
+            Classification::Decided(Ordering::Equal)
+        );
+    }
+}
+
+#[test]
+fn recursive_native_comparison_preserves_odd_and_even_multiplicity() {
+    use std::cmp::Ordering;
+    let half = (Real::one() / Real::from(2)).unwrap();
+    let small = Real::from(2).powi_i64(-200).unwrap();
+    for multiplicity in [1, 2, 3] {
+        let mut coefficients = vec![Real::one()];
+        for _ in 0..multiplicity {
+            let mut product = vec![Real::zero(); coefficients.len() + 2];
+            for (power, coefficient) in coefficients.iter().enumerate() {
+                product[power] = &product[power] - coefficient;
+                product[power + 2] = &product[power + 2] + coefficient * Real::from(2);
+            }
+            coefficients = product;
+        }
+        for gauge in [Real::one(), Real::from(-7)] {
+            let native = BezierAlgebraicParameter2::try_isolate(
+                BezierParameterPolynomial::try_new_power_basis(
+                    coefficients
+                        .iter()
+                        .map(|coefficient| coefficient * &gauge)
+                        .collect(),
+                )
+                .unwrap(),
+                BezierParameterInterval::try_new(half.clone(), Real::one()).unwrap(),
+            )
+            .unwrap();
+            assert_eq!(native.polynomial().degree(), 2 * multiplicity);
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                for (shift, expected) in [
+                    (-small.clone(), Ordering::Less),
+                    (Real::zero(), Ordering::Equal),
+                    (small.clone(), Ordering::Greater),
+                ] {
+                    let base = selected_source_field(vec![]);
+                    let field = base
+                        .extension(base.constant(half.clone()).unwrap())
+                        .unwrap();
+                    let generator = field
+                        .element(
+                            base.constant(Real::zero()).unwrap(),
+                            base.constant(Real::one()).unwrap(),
+                        )
+                        .unwrap();
+                    let scalar = RecursiveQuadraticProjectiveScalar {
+                        numerator: generator.add(&field.constant(shift).unwrap()).unwrap(),
+                        denominator: field.constant(Real::one()).unwrap(),
+                    };
+                    let Classification::Decided(formula) =
+                        BezierRecursiveProjectiveParameter2::new(scalar, &policy).unwrap()
+                    else {
+                        panic!("a positive square root has finite bounds")
+                    };
+                    let outcome = crate::evaluate_under(policy.predicate_policy(), || {
+                        formula.cmp_bezier_parameter(
+                            &BezierParameter2::Algebraic(native.clone()),
+                            &policy,
+                        )
+                    });
+                    assert_eq!(outcome.certainty(), crate::CurveCertainty::Certified);
+                    assert_eq!(
+                        outcome.certified().unwrap().unwrap(),
+                        Classification::Decided(expected),
+                        "multiplicity={multiplicity}, gauge={gauge:?}, policy={policy:?}"
+                    );
+                    assert_eq!(
+                        formula.data.projection.proved_equal_to(&native),
+                        expected == Ordering::Equal
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn recursive_native_approximate_terminal_never_caches_exact_equality() {
+    let zero = crate::test_support::terminally_unresolved_zero();
+    let half = (Real::one() / Real::from(2)).unwrap();
+    let base = selected_source_field(vec![]);
+    let field = base
+        .extension(base.constant(half.clone()).unwrap())
+        .unwrap();
+    let generator = field
+        .element(
+            base.constant(Real::zero()).unwrap(),
+            base.constant(Real::one()).unwrap(),
+        )
+        .unwrap();
+    let Classification::Decided(formula) = BezierRecursiveProjectiveParameter2::new(
+        RecursiveQuadraticProjectiveScalar {
+            numerator: generator.add(&field.constant(zero).unwrap()).unwrap(),
+            denominator: field.constant(Real::one()).unwrap(),
+        },
+        &CurveContext::STRICT,
+    )
+    .unwrap() else {
+        panic!("the angle-addition zero preserves finite bounds")
+    };
+    let native = BezierAlgebraicParameter2::try_isolate(
+        BezierParameterPolynomial::try_new_power_basis(vec![
+            -Real::one(),
+            Real::zero(),
+            Real::from(2),
+        ])
+        .unwrap(),
+        BezierParameterInterval::try_new(half, Real::one()).unwrap(),
+    )
+    .unwrap();
+    let mut exact_projection = None;
+    for policy in [
+        CurveContext::STRICT,
+        CurveContext::APPROXIMATE_512,
+        CurveContext::STRICT,
+    ] {
+        let outcome = crate::evaluate_under(policy.predicate_policy(), || {
+            formula.cmp_bezier_parameter(&BezierParameter2::Algebraic(native.clone()), &policy)
+        });
+        eprintln!(
+            "R15_TERMINAL {policy:?} certainty={:?} value={:?}",
+            outcome.certainty(),
+            outcome.as_unverified()
+        );
+        if policy == CurveContext::STRICT {
+            assert_eq!(outcome.certainty(), crate::CurveCertainty::Certified);
+            assert!(matches!(
+                outcome.into_unverified().unwrap(),
+                Classification::Uncertain(_)
+            ));
+        } else {
+            assert_eq!(
+                outcome.certainty(),
+                crate::CurveCertainty::Approximate512Consumed
+            );
+            assert_eq!(
+                outcome.into_unverified().unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
+        }
+        assert!(
+            formula
+                .data
+                .projection
+                .equal_natives
+                .lock()
+                .unwrap()
+                .is_empty()
+        );
+        // A strict projection can retain an exact scalar expression without
+        // deciding its equality. Approximate comparison must not alter it.
+        let projection = formula.data.projection.parameter.get().cloned();
+        if let Some(earlier) = &exact_projection {
+            assert_eq!(&projection, earlier);
+        } else {
+            exact_projection = Some(projection);
+        }
+        assert!(!formula.data.projection.proved_equal_to(&native));
+    }
+}
+
+/// Replaying positive radicals must work through complete equivalent towers,
+/// while a different radicand remains a different coefficient authority.
+#[test]
+fn recursive_formula_comparisons_replay_equivalent_extension_towers() {
+    use std::cmp::Ordering;
+    let alpha = selected_square_root_source((Real::one() / Real::from(2)).unwrap());
+    let tower = |depth: usize, conjugate: bool| {
+        let mut field = selected_source_field(vec![alpha.clone()]);
+        let alpha_value = doubled_source_value(&field, &alpha);
+        let mut radicand = if conjugate {
+            field
+                .constant(Real::from(2))
+                .unwrap()
+                .subtract(&alpha_value)
+                .unwrap()
+        } else {
+            field
+                .constant(Real::from(2))
+                .unwrap()
+                .add(&alpha_value)
+                .unwrap()
+        };
+        let mut generator = field.constant(Real::zero()).unwrap();
+        for level in 0..depth {
+            let parent = field.clone();
+            field = field.extension(radicand).unwrap();
+            generator = field
+                .element(
+                    parent.constant(Real::zero()).unwrap(),
+                    parent.constant(Real::one()).unwrap(),
+                )
+                .unwrap();
+            radicand = field
+                .constant(Real::from(3 + level as i32))
+                .unwrap()
+                .add(&generator)
+                .unwrap();
+        }
+        (field, generator)
+    };
+    let mut missing = Vec::new();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for depth in [1, 2] {
+            for gauge in [Real::one(), Real::from(-7)] {
+                let (field, generator) = tower(depth, false);
+                let bounds = (Real::from(depth as i32), Real::from(depth as i32 + 1));
+                let Classification::Decided(formula) =
+                    BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
+                        RecursiveQuadraticProjectiveScalar {
+                            numerator: generator,
+                            denominator: field.constant(Real::one()).unwrap(),
+                        },
+                        Some(bounds.clone()),
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("positive finite formula")
+                };
+                let (rebuilt, value) = tower(depth, false);
+                assert!(!field.same_field(&rebuilt));
+                let relation = vec![
+                    value.scale(&-&gauge).unwrap(),
+                    rebuilt.constant(gauge.clone()).unwrap(),
+                ];
+                let signs = if gauge == Real::one() {
+                    [RealSign::Negative, RealSign::Positive]
+                } else {
+                    [RealSign::Positive, RealSign::Negative]
+                };
+                let root = local_polynomial_root(&rebuilt, relation, bounds, signs, &policy);
+                let outcome = crate::evaluate_under(policy.predicate_policy(), || {
+                    (
+                        formula
+                            .order_against_polynomial_root(&root, &policy)
+                            .unwrap(),
+                        formula.cmp_by_refinement(&root, &policy).unwrap(),
+                        root.cmp_by_refinement(&formula, &policy).unwrap(),
+                    )
+                });
+                assert_eq!(outcome.certainty(), crate::CurveCertainty::Certified);
+                let actual = outcome.certified().unwrap();
+                let projected = formula.data.projection.parameter.get().is_some()
+                    || root.data.projection.parameter.get().is_some();
+                eprintln!(
+                    "R15_TOWER depth={depth} gauge={gauge:?} policy={policy:?} actual={actual:?} projected={projected}"
+                );
+                if actual
+                    != (
+                        Some(Ordering::Equal),
+                        Classification::Decided(Ordering::Equal),
+                        Classification::Decided(Ordering::Equal),
+                    )
+                    || projected
+                {
+                    missing.push(format!("depth={depth}, gauge={gauge:?}, policy={policy:?}, actual={actual:?}, projected={projected}"));
+                }
+                let (foreign, other_generator) = tower(depth, true);
+                assert_eq!(
+                    formula
+                        .recursive_polynomial_sign_joined(
+                            &[
+                                other_generator.scale(&-Real::one()).unwrap(),
+                                foreign.constant(Real::one()).unwrap()
+                            ],
+                            &policy
+                        )
+                        .unwrap(),
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                );
+            }
+        }
+    }
+    assert!(
+        missing.is_empty(),
+        "equivalent tower comparisons: {missing:#?}"
+    );
+}
+
+#[test]
+fn recursive_formula_source_order_preserves_value_and_typed_local_decline() {
+    use std::cmp::Ordering;
+    let alpha = selected_square_root_source((Real::one() / Real::from(2)).unwrap());
+    let beta = selected_square_root_source((Real::from(3) / Real::from(4)).unwrap());
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reverse in [false, true] {
+            let sources = if reverse {
+                vec![beta.clone(), alpha.clone()]
+            } else {
+                vec![alpha.clone(), beta.clone()]
+            };
+            let base = selected_source_field(sources);
+            let numerator = base
+                .retained_root_value(&alpha)
+                .unwrap()
+                .add(&base.retained_root_value(&beta).unwrap())
+                .unwrap();
+            let Classification::Decided(formula) =
+                BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
+                    RecursiveQuadraticProjectiveScalar {
+                        numerator,
+                        denominator: base.constant(Real::one()).unwrap(),
+                    },
+                    Some((Real::one(), Real::from(2))),
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("finite sum of selected roots")
+            };
+            let rebuilt = selected_source_field(vec![alpha.clone(), beta.clone()]);
+            let value = rebuilt
+                .retained_root_value(&alpha)
+                .unwrap()
+                .add(&rebuilt.retained_root_value(&beta).unwrap())
+                .unwrap();
+            let relation = vec![
+                value.scale(&-Real::one()).unwrap(),
+                rebuilt.constant(Real::one()).unwrap(),
+            ];
+            if reverse {
+                // This candidate accepts identical ordered bases only. It
+                // must decline an unproved permutation, then keep fallback.
+                assert_eq!(
+                    formula
+                        .recursive_polynomial_sign_joined(&relation, &policy)
+                        .unwrap(),
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                );
+            }
+            let root = local_polynomial_root(
+                &rebuilt,
+                relation,
+                (Real::one(), Real::from(2)),
+                [RealSign::Negative, RealSign::Positive],
+                &policy,
+            );
+            let outcome = crate::evaluate_under(policy.predicate_policy(), || {
+                (
+                    formula.cmp_by_refinement(&root, &policy).unwrap(),
+                    root.cmp_by_refinement(&formula, &policy).unwrap(),
+                )
+            });
+            assert_eq!(outcome.certainty(), crate::CurveCertainty::Certified);
+            assert_eq!(
+                outcome.certified().unwrap(),
+                (
+                    Classification::Decided(Ordering::Equal),
+                    Classification::Decided(Ordering::Equal)
+                )
+            );
+        }
+    }
 }

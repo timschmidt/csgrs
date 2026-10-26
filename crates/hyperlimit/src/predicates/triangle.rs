@@ -1118,10 +1118,12 @@ fn triangle3_normal(a: &Point3, b: &Point3, c: &Point3) -> Triangle3Normal {
     let acy = sub_ref(&c.y, &a.y);
     let acz = sub_ref(&c.z, &a.z);
 
+    // Vertical/extruded faces can have equal projected edges. The scalar
+    // primitive proves their cancelling products before expression expansion.
     Triangle3Normal {
-        x: sub_ref(&mul_ref(&aby, &acz), &mul_ref(&abz, &acy)),
-        y: sub_ref(&mul_ref(&abz, &acx), &mul_ref(&abx, &acz)),
-        z: sub_ref(&mul_ref(&abx, &acy), &mul_ref(&aby, &acx)),
+        x: Real::diff_of_products(&aby, &acz, &abz, &acy),
+        y: Real::diff_of_products(&abz, &acx, &abx, &acz),
+        z: Real::diff_of_products(&abx, &acy, &aby, &acx),
     }
 }
 

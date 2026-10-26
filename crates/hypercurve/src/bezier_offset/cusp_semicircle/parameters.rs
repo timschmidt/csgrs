@@ -1481,12 +1481,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<()> {
-        if !policy.accepts_retained_policy(self.data.policy) {
-            return Err(CurveError::Topology(
-                "cusp/chord parameter map was replayed under a different predicate policy".into(),
-            ));
-        }
-        Ok(())
+        policy.validate_retained_policy(self.data.policy)
     }
 
     pub(in crate::bezier_offset) fn radical_sign(
@@ -5266,12 +5261,8 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<()> {
-        if let Some(evidence_policy) = self.evidence_policy()
-            && !policy.accepts_retained_policy(evidence_policy)
-        {
-            return Err(CurveError::Topology(
-                "algebraic cusp cut was replayed under a different predicate policy".into(),
-            ));
+        if let Some(evidence_policy) = self.evidence_policy() {
+            policy.validate_retained_policy(evidence_policy)?;
         }
         if let Self::Mapped(data) = self
             && let BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {

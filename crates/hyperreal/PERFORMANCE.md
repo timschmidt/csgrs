@@ -41,6 +41,297 @@ cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates
 cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates --features dispatch-trace -- --write-dispatch-trace-md
 ```
 
+## Cold domain continuation and resource audit (R19, 2026-10-25)
+
+Retained for scoped exact completion under P1–P6, P8–P11, P18–P20 and
+P26–P27 after all 20 final primary/downstream checks pass on 2,354 unchanged
+source/manifests. Performance-only admission fails. Evidence record
+`2026-10-25-research-r19` retains the failed prototypes and adverse costs;
+see the [archive ledger](../../docs/evidence-archive.md#local-follow-on-records).
+No release or complete pre-push claim is made.
+
+Native rational cotangents immediately around pi already retain a nonzero
+denominator proof. Cold imports could lose it at the -2048 refinement floor.
+Import now replays the theorem that, for rational `q != 0` and rational `a`,
+neither `sin(q + a*pi)` nor `cos(q + a*pi)` vanishes. Recognition inspects
+bounded structure without expanding binary shifts or trusting wire flags.
+Postorder admission still checks every child before a parent can cancel it.
+Refuted domains remain `ParseError`; unproved domains remain
+`UnknownCertificate`.
+
+Contained public probes exposed failures in two intermediate candidates: a
+Laurent replay requested roughly 2 EiB for an extreme shift, and structural
+import admission alone left later strict consumers panicking. The final
+candidate adds a bounded outward-interval proof for trig arguments in [-1,1]
+and constructs exact one for shared, retained-nonzero reciprocal products only
+after auditing all removed cancellation handles. The optional audit declines
+after 32 visits or on incompatible handles. These are local proof limits, not
+cumulative arithmetic, heap, stack or cancellation budgets.
+
+Two fresh-process matrices execute 1,106 processes across exact pi brackets
+from 32 through 8,192 bits and `i32::MIN` shifted trig/reciprocal graphs. JSON,
+CBOR and Value imports feed STRICT sign, checked reciprocal identity and
+orientation consumers: 303 previously failing cells become Exact, with no
+observed old exact-success loss. An 82,012-byte baseline-native cuboid archive
+also reloads with eight independently checked exact corners, exact volume and
+unchanged bytes. Invalid/unproved children, zero/cancellation wrappers, scales,
+poles and abort/reset remain acceptance cases. Private full suites pass:
+Hyperreal 1,396, Hyperlimit 376, Hypertri 214, Hypermesh 295 (seven existing
+ignores), and Hyperbrep 669, plus affected strict Clippy, docs and formatting.
+The Hypertri addition tests source-buffer identity and policy admission;
+caller collinearity assertions remain trusted mathematical preconditions.
+
+Final main validation repeats those full suites and adds Hypercurve (2,633,
+35 existing ignores), CSGRS (679, seven existing ignores), Hypercircuit (354),
+the original full cylinder matrix, three long successive-operation tests and
+full planter. All pass, together with default/all-feature owner and downstream
+Clippy, all-feature docs, four-owner WASM release builds, formatting, repository
+budget and diff checks. There are 49 default ignores; five hard controls are
+explicitly executed. All measured candidate repository inputs match the final
+source. Packaged-consumer and complete pre-push matrices remain separate.
+
+Matched frozen native binaries differ in four runtime files. Baseline-only
+calibration precedes five pilot and 30 final balanced pairs for import and
+construction controls; two complete modeling workflows have eight pairs.
+Scalar verification and exact workflow artifact extraction are outside timing;
+workflow timers include construction, operations and required validation.
+Final runs verify 15,656,040
+imports, 13,763,040 constructions and 64 workflows with 32 identical exact
+artifact pairs. The 118 protected latency metrics share a Bonferroni 95%
+family: 101 upper bounds exceed one, nine metrics are marginally adverse and
+three are simultaneously adverse. The 18-Add-node reciprocal decline costs
+70.22 -> 200.59 ns in warm medians (paired ratio 2.8556, simultaneous interval
+2.6977–3.0228); its warm maximum is adverse too. The shared negative reciprocal
+costs 69.18 -> 84.87 ns (ratio 1.2309, interval 1.0914–1.3881). All four workflow
+upper bounds exceed one, with no adverse workflow interval. No general speedup
+or timing equivalence is established.
+
+Five separate counting-System pairs give identical samples for every protected
+allocation counter: 48 of 304 byte/call/live/peak rows decrease, all on the
+32-bit pi-bracket imports, and none increases. Retained live/peak measurements
+describe complete batches, not an individual-operation heap bound. Native
+import/construction/workflow executable files grow 5,176/5,056/5,192 bytes;
+runtime source grows 8,831 bytes and 210 lines. New shared reciprocal products
+may serialize an exact-one expression; this intentional representation change
+is described in [MIGRATIONS](../../docs/MIGRATIONS.md#shared-reciprocal-expression-artifacts).
+Imported input wires and the protected unchanged-construction JSON artifacts
+are preserved. General import resource bounds, huge-shift fallback kernels,
+recursive teardown and packaged-consumer validation remain open.
+
+## Factored compound rotation completion (R18, 2026-10-25)
+
+The retention basis is exact completion under P1–P6, P8–P11 and P17–P20,
+with costs disclosed. On the current research stack, the original independently
+imported binary64 angles `13.1, 17.3, -13.1, -17.3` reproduce a strict cube-union
+failure. Decimal literals are different exact inputs and already complete.
+Two captured declining predicates have independent rational-polynomial zero
+proofs: opposite products with common factors, then a factored residual reduced
+by the existing equal/complementary-angle unit-circle identities.
+
+Only after the original extended expansion declines, the candidate reuses its
+completed projections and remaining budget. It retains at most 12 admitted
+factors per product and requires a common polynomial factor. If distributing
+summands hides a common sum, one fallback preserves those factors. Every factor
+and inverse obligation is checked before cancellation. `C * 0 = 0` requires
+no nonzero assumption about `C`. A nonzero or unproved residual declines.
+Expanded factors and residuals still obey degree 12, 64 terms and 4096-bit
+coefficient guards; the 512-node, depth-64, 32-atom and 32,768-charge limits
+remain shared, with cancellation and no refunds. Unexpanded products may have
+greater total degree. These guards are not operation-wide time or heap bounds.
+
+The broader intermediate variant reduced individual factors without requiring
+a common factor. It violated the existing degree-14 decline test and was
+removed before timing. That test is unchanged. Five added scalar tests cover
+7/12/13-factor boundaries, invalid and unproved inverses, positive/negative
+perturbations, distinct trigonometric arguments, exact remaining-work limits,
+exhaustion, cancellation and fresh retry. The clean candidate passes 1,381
+Hyperreal and 376 Hyperlimit tests, both owner Clippy configurations, five
+default downstream-solid tests, the full cylinder rotation matrix and all 20
+successive-operation tests, including the six-icosahedron chain.
+
+Both original rotation inputs and 18 fresh axis/family/policy combinations
+complete Certified. An independent oracle requires a closed outward cube
+boundary on its six half-space planes and exact unit volume. Subtraction
+produces canonical empty geometry, consumed by a subsequent strict union.
+No intermediate coordinate/sign queries prewarm the original union. The
+retained public tests also strengthen both original cases with empty-union
+continuation.
+
+All 20 final primary/downstream checks pass on unchanged source: formatting;
+owner default and six-crate all-feature/all-target Clippy with warnings denied;
+all-feature documentation; full release suites for Hyperreal (1,381),
+Hyperlimit (376), Hypertri (213), Hypermesh (295, seven existing ignores),
+Hypercurve (2,633, 35 existing ignores), CSGRS (679, seven existing ignores),
+Hyperbrep (669) and Hypercircuit (354); downstream Clippy and docs;
+the explicitly requested ignored cylinder matrix, three long successive tests
+and full planter; four-owner WASM release builds; repository budget and diff
+checks. The source inventory contains 2,352 unchanged inputs. This is affected
+change validation, not the complete pre-push matrix or a release claim.
+
+Native System-allocator binaries use the same private checkout, target,
+toolchain, dependency lock and harness; only three runtime files differ.
+No dispatch tracing or task-owned heavy work overlaps timing. Baseline-only
+calibration fixes batches before five pilot and 30 final balanced randomized
+pairs. Eight cases, both policies, first queries of fresh roots and warmed
+queries yield 64 median/maximum-of-seven-batch metrics. Construction, output
+storage allocation, verification and drop are outside the scalar timer.
+All 227,028,480 timed results are checked; 13,440 outcome rows form 6,720
+equal result/receipt/checksum pairs. Shared built-in constants may already be
+warm in the fresh-root phase.
+
+Paired log-ratio Student t intervals use marginal 95% and Bonferroni simultaneous
+95% across those 64 metrics. Every simultaneous upper bound exceeds 1:
+**performance-only admission fails**. Two degree-14 controls are marginally
+adverse: strict warm median ratio 1.0481, marginal [1.0033, 1.0949], simultaneous
+[0.9674, 1.1355]; approximate cold maximum ratio 1.0815, marginal
+[1.0076, 1.1608], simultaneous [0.9499, 1.2313]. Inconclusive simultaneous
+intervals are not nonregression evidence. No general speedup is claimed.
+
+Five separate allocation pairs check 17,920 results. Every paired batch has
+equal live and peak growth. Only the degree-14 control changes requested
+traffic: +2,096 bytes and +68 calls per query under both policies/phases.
+Requested bytes include full new realloc requests; batch-normalized peaks are
+not individual-query peaks. The native scalar probe file grows 8,888 bytes,
+including 7,264 bytes of `.text`.
+
+Eight additional native pairs compare the complete decimal rotation workflow
+and six icosahedron unions, each twice per process. All 64 workflows complete;
+32 canonical exact artifact pairs preserve coordinate order, triangle indices,
+certainty and per-step topology/size receipts. Each coordinate's compact exact
+quadratic tower is reloaded and proved equal under strict policy outside timing.
+The initial single-quadratic artifact checker failed on the normalized
+icosahedron's nested radicals; the corrected checker and failed attempt remain
+recorded. Both compared builds enable the same serialization feature.
+
+The four workflow ratios (first/second fresh instances) are 1.0006/0.9954 for
+decimal rotations and 1.0063/0.9733 for icosahedron unions. Their separate
+four-metric simultaneous upper bounds are 1.1017, 1.0434, 1.0418 and 1.0739;
+none proves nonregression. Workflow timing includes construction, operations,
+validation and ordinary intermediate drops, excluding final artifact extraction
+and final-result destruction. Shared state, including the first artifact
+check, may warm the second workflow. This is scoped cost disclosure.
+
+Raw commands, sources, failed variants, captures, proof scripts, samples and
+final validation belong to evidence record `2026-10-25-research-r18`.
+General rotations, cold large-graph archive continuation, operation-wide
+resource bounds, release packaging and the wider research program remain open.
+
+## Retained scalar ownership and rejected layout (R17, 2026-10-25)
+
+**Decision:** retain three regression tests and the ownership evidence. Reject
+the private lazy-slot layout; no runtime representation or cache policy changes.
+The owner is Hyperreal's rational derived storage and `Computable` evaluation
+cache, under P1–P6, P8–P9, P17–P20 and P35–P39. Memory savings cannot override
+the protected latency gate.
+
+The original Nano fixture and release options are unchanged. A complete replay
+of 373,035,877 Heaptrack records finds 91,877,230 end-live bytes in 1,122,504
+blocks at the held report. Exclusive allocation origins include:
+
+| Allocation origin | Bytes | Share |
+| --- | ---: | ---: |
+| Rational arithmetic/value storage | 33,140,104 | 36.1% |
+| Hypercurve | 18,024,416 | 19.6% |
+| Rational derived records | 15,567,376 | 16.9% |
+| Other Hyperreal scalar work | 12,848,168 | 14.0% |
+| `Computable` evaluation cache | 8,490,024 | 9.2% |
+
+The inclusive π-Laurent weight is 19,076,936 bytes (20.8%) and overlaps those
+rows. These are allocation origins, not a complete semantic ownership graph.
+Rust's pre-exit report snapshot is 91,887,290 bytes; it excludes C allocations
+and precedes exit cleanup, unlike the Heaptrack end-live total. The original
+376,934,246-byte trace has SHA-256
+`171b2ab758a9917d929fce3414930e5d78a2d1d5697dfee1172ce4dd965574be`.
+
+The initial folded-report analyses exhausted storage or output budgets. Their
+partial reports do not establish ownership. The replacement decoder consumes the complete trace under external resource
+limits, passes held/freed-allocation and malformed-input controls, and matches all 61,335 positive live weights from the official
+Heaptrack report. The failed attempts and replay provenance remain recorded.
+
+A separate cache-state census finds 116,924 cells of 72 bytes: 115,931 contain
+only an approximation and 993 also contain a quadratic tower. Their 8,418,528
+bytes exactly match the cell-allocation origin. No decline-only cell occurs in
+the sampled Nano stages. Both repeated runs leave 1,811 approximation-only
+cells after local roots drop; this does not bound other retained storage.
+Without the census, three full profile repetitions leave 7,026,833,
+7,486,201 and 7,604,585 bytes. No plateau, leak classification or heap bound
+follows. H20's earlier 208-byte result concerned a different, small-region probe.
+
+The private layout moves only the fourth/fifth rational slots into a lazy
+allocation. The main record measures 120 bytes instead of 176; entry capacity,
+write order, exact results, square-reduction storage and weak keys are preserved.
+The three new tests first pass on unchanged production code. The candidate then
+passes 1,376 Hyperreal tests including serialization/domain continuation, 376
+Hyperlimit tests, formatting and all-feature/all-target Hyperreal Clippy with
+warnings denied. The tests add independent `BigRational` expectations, source
+drop with retained outputs and concurrent late publication.
+
+The identical diagnostic benchmark is built sequentially in one private
+checkout/target. Both versions complete two profile passes and a full Nano
+release. Printed layer statistics, DRC findings, CAM/assembly issue counts and
+release blockers match; full release reports 268 findings and six blockers.
+These statistics are not an independent full-geometry oracle or the all-board
+golden snapshot, which the single-board filter bypasses.
+
+| Diagnostic measure | Baseline | Candidate |
+| --- | ---: | ---: |
+| First profile report live payload | 91,887,842 B | 87,005,858 B |
+| Two-pass profile peak payload | 239,391,612 B | 228,065,324 B |
+| Full-release peak payload | 238,265,322 B | 227,423,138 B |
+| Full-release requested bytes | 90,485,554,875 B | 88,843,530,931 B |
+| Full-release allocation calls | 1,227,927,849 | 1,228,045,484 |
+| Full-release post-drop payload | 6,981,505 B | 6,413,473 B |
+
+Requested bytes sum successful sizes, including the full new realloc size;
+live/peak values count Rust payload, excluding allocator overhead. Peaks are
+cumulative. Diagnostic RSS falls from 287,508 to 274,468 KiB on full release,
+but these instrumented runs are not a native latency comparison. Some earlier
+baseline diagnostics overlapped other diagnostic work, as recorded.
+
+For native timing, frozen System-allocator binaries share checkout, target,
+flags, harness and acceptance tests; only four rational implementation files
+differ. No diagnostic allocator or dispatch tracing is present. All task-owned
+heavy work finishes before collection. Five pilot pairs precede thirty balanced,
+seeded final pairs. Sixteen cases cover primary/secondary/tertiary linear slots,
+primary and later unary slots, square reduction, products and wide rationals.
+Each protects the median and maximum of seven cold construction/retention
+batches and seven warm-query batches: 64 metrics. Batch maxima are tail proxies,
+not individual-query percentiles.
+
+The final run executes 892,631,040 timed probe queries and validates 6,720
+output rows (3,360 pairs) against independent `BigRational` and Python `Fraction`
+expectations. Exact conversions/assertions run outside the timed loops; this is
+not a count of individually checked timed results. Geometric paired ratios use
+two-sided Student intervals on log ratios, with simultaneous 95% coverage via
+Bonferroni over all 64 metrics. The predeclared requirement is every simultaneous
+upper ratio bound at most 1, with no slowdown margin or additional sampling.
+
+All 64 upper bounds exceed 1. Three marginal intervals are adverse; only the
+last row is simultaneously adverse:
+
+| Protected query | Candidate / baseline | Simultaneous interval |
+| --- | ---: | ---: |
+| Primary product, warm batch maximum | 1.085016 | [0.968168, 1.215967] |
+| Wide late inverse, cold median | 1.055413 | [0.974423, 1.143133] |
+| Wide late negation, warm median | 1.046227 | [1.032709, 1.059922] |
+
+The native probe is 10,064 bytes smaller (`.text`: −4,672 bytes). Those savings
+and lower Nano payload cannot override the latency veto. No full native Nano,
+WASM or deployed-size admission campaign follows that veto. Only the three
+tests are copied to primary; all prototype runtime files are restored.
+
+All eight final primary checks pass: formatting; all-feature/all-target
+Hyperreal and Hyperlimit Clippy with warnings denied; their docs with warnings
+denied; 1,376 Hyperreal tests, 376 Hyperlimit tests and 24 downstream tests;
+repository budget and whitespace checks. The recorded Rust source/manifests
+remain unchanged throughout validation. This is not a full pre-push or release
+validation claim. Raw commands, source manifests, controls, failed diagnostics,
+complete trace, census, native samples and the rejection are retained as `docs/evidence/2026-10-25-research-r17` in the
+[evidence archive](../../docs/evidence-archive.md), with record SHA-256
+`d84deab1807baf7215662ae22f0aa517dbf449fcb139c9391fa3b90c0e00874f` at local commit
+`6b9323f1aed17c0397d973cdb80b73541fb3a1d2`. Broader retention, complete geometry/golden
+comparisons and internal work/byte/cancellation bounds remain open.
+
 ## Imported operand-domain proofs (2026-10-22)
 
 `Real` import now proves the domain of every partial operation in a computable
@@ -125,7 +416,9 @@ leaves every ordinary attempt as it was and adds
 32,768 charges, which Hyperlimit tries only after the radical towers decline.
 Both cylinder rotations then complete all three Booleans as certified closed
 manifolds, about 2 s each in release against 0.2 s to fail before. The
-binary64 compound rotation stays undecided.
+binary64 compound rotation stayed undecided at that checkpoint. The later
+[R18 factoring recovery](#factored-compound-rotation-completion-r18-2026-10-25)
+completes that specific workflow without raising those expansion limits.
 
 User-space instructions with and without the stage, in one build (`perf stat`,
 release test binaries, four test threads):

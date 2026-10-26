@@ -3466,12 +3466,7 @@ impl BezierAlgebraicChord2 {
     }
 
     pub(crate) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if !policy.accepts_retained_policy(self.data.policy) {
-            return Err(CurveError::Topology(
-                "algebraic chord was replayed under a different predicate policy".into(),
-            ));
-        }
-        Ok(())
+        policy.validate_retained_policy(self.data.policy)
     }
 
     /// Retains construction-time transversality for a newly authored bevel.

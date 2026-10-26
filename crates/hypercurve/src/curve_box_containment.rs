@@ -11,10 +11,10 @@
 //! The queries here decide the image itself. The cached enclosure stays the
 //! fast path: a side of the box that contains the enclosure needs no further
 //! work. Each remaining side is decided from the exact extremum candidates of
-//! its coordinate: span endpoints, the derivative roots of polynomial and
-//! conic Bezier spans, cardinal points inside a circular arc's sweep, and only
-//! the endpoints of a general rational span whose coordinate is certified
-//! monotone. A coordinate of a differentiable span attains its extrema at
+//! its coordinate: span endpoints, derivative roots of polynomial and rational
+//! Bezier spans, and cardinal points inside a circular arc's sweep. Retained
+//! rational spans filter derivative roots through their active source range
+//! and prove that range has no denominator pole. A differentiable coordinate attains its extrema at
 //! these points, and every candidate is an exact point of the curve, so a
 //! candidate outside the box is a witness and no candidate outside proves
 //! containment. Neither answer depends on how the image is split.
@@ -108,11 +108,14 @@ impl CurvePath2 {
     /// split or traversed.
     ///
     /// Exact candidates exist for lines, circular arcs, polynomial quadratic
-    /// and cubic Beziers, rational quadratic Beziers, and spline spans of
-    /// those kinds. A general rational span contributes only when its
-    /// coordinate is certified monotone, and retained, source-range and
-    /// implicit-polynomial carriers contribute only their endpoints, compared
-    /// through their retained evidence. When such a curve's enclosure crosses
+    /// and cubic Beziers, and rational Beziers and NURBS spans whose quotient
+    /// derivative roots can be isolated under the selected policy and budget.
+    /// Retained rational/source-range spans admit only roots certified in their
+    /// active interval within the unit source chart; the denominator must be
+    /// nonzero throughout that interval. Selected coordinates are compared
+    /// through retained evidence, without mandatory Cartesian reconstruction.
+    /// Analytic parallels and implicit-polynomial carriers contribute only
+    /// their endpoints. When such a curve's enclosure crosses
     /// the box and no candidate escapes, the query reports a typed blocker. A
     /// definite escape on any curve takes precedence over a blocker on
     /// another; the witness is the first escape in path order. Invalid curve
@@ -314,7 +317,6 @@ fn curve_box_escape(
             }
         }
         None => {
-            // Only the endpoints of these carriers are exact candidates.
             let mut escape = None;
             for endpoint in [curve.start(), curve.end()] {
                 escape = search.test_endpoint(endpoint, &open).map_err(|cause| {
@@ -325,7 +327,35 @@ fn curve_box_escape(
                 }
             }
             if escape.is_none() {
-                search.undecide(UncertaintyReason::Unsupported);
+                if let Some(spans) =
+                    curve.restricted_source_spans(policy, CurveOperation2::Classification)?
+                {
+                    for span in spans {
+                        escape = retained_fragment_escape(&span.fragment, true, &open, &mut search)
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(
+                                    CurveOperation2::Classification,
+                                    curve.family(),
+                                    cause,
+                                )
+                            })?;
+                        if escape.is_some() {
+                            break;
+                        }
+                    }
+                } else if let Some(fragment) = curve.retained_fragment() {
+                    // The top-level endpoints were already tested above.
+                    escape = retained_fragment_escape(fragment, false, &open, &mut search)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(
+                                CurveOperation2::Classification,
+                                curve.family(),
+                                cause,
+                            )
+                        })?;
+                } else {
+                    search.undecide(UncertaintyReason::Unsupported);
+                }
             }
             escape
         }
@@ -412,16 +442,83 @@ fn fragments_escape(
             if !axis_open.contains(&true) {
                 continue;
             }
-            match span_axis_extrema(span, axis, search.policy)? {
+            match span_axis_extrema(span, axis, None, search.policy)? {
                 Classification::Decided(points) => {
-                    for point in &points {
-                        if let Some(escape) = search.test(point, &axis_open) {
+                    for point in points {
+                        if let Some(escape) = search.test_endpoint(point, &axis_open)? {
                             return Ok(Some(escape));
                         }
                     }
                 }
                 Classification::Uncertain(reason) => search.undecide(reason),
             }
+        }
+    }
+    Ok(None)
+}
+
+/// Retained boundaries keep their source chart. Only a stationary parameter
+/// certified inside that chart's active range can be an interior witness.
+fn retained_fragment_escape(
+    fragment: &crate::BezierSplitFragment2,
+    test_endpoints: bool,
+    open: &OpenSides,
+    search: &mut EscapeSearch<'_>,
+) -> crate::CurveResult<Option<CurveBoxEscape2>> {
+    if test_endpoints {
+        let curve = Curve2::from_retained_fragment(fragment.clone());
+        for endpoint in [curve.start(), curve.end()] {
+            if let Some(escape) = search.test_endpoint(endpoint, open)? {
+                return Ok(Some(escape));
+            }
+        }
+    }
+    let (span, range) = match fragment {
+        crate::BezierSplitFragment2::Materialized { curve, .. } => (curve.clone(), None),
+        crate::BezierSplitFragment2::RetainedBezier {
+            source_curve,
+            start,
+            end,
+            ..
+        } => (
+            source_curve.clone(),
+            Some(crate::CurveParameterRange2::new_validated(
+                start.clone().into(),
+                end.clone().into(),
+            )),
+        ),
+        crate::BezierSplitFragment2::SelectedFiber(fragment) => {
+            let Some(source) = fragment.rational_curve() else {
+                search.undecide(UncertaintyReason::Unsupported);
+                return Ok(None);
+            };
+            (
+                BezierSubcurve2::Rational(source.clone()),
+                Some(fragment.range().clone()),
+            )
+        }
+        _ => {
+            search.undecide(UncertaintyReason::Unsupported);
+            return Ok(None);
+        }
+    };
+    for axis in [Axis2::X, Axis2::Y] {
+        let mut axis_open = *open;
+        for (side, &(side_axis, _)) in SIDES.iter().enumerate() {
+            axis_open[side] &= side_axis == axis;
+        }
+        if !axis_open.contains(&true) {
+            continue;
+        }
+        match span_axis_extrema(&span, axis, range.as_ref(), search.policy)? {
+            Classification::Decided(points) => {
+                for point in points {
+                    if let Some(escape) = search.test_endpoint(point, &axis_open)? {
+                        return Ok(Some(escape));
+                    }
+                }
+            }
+            Classification::Uncertain(reason) => search.undecide(reason),
         }
     }
     Ok(None)
@@ -441,8 +538,25 @@ fn span_bounds(span: &BezierSubcurve2) -> Classification<Aabb2> {
 fn span_axis_extrema(
     span: &BezierSubcurve2,
     axis: Axis2,
+    range: Option<&crate::CurveParameterRange2>,
     policy: &CurveContext,
-) -> crate::CurveResult<Classification<Vec<Point2>>> {
+) -> crate::CurveResult<Classification<Vec<CurvePoint2>>> {
+    if let Some(range) = range {
+        // These derivative enumerators cover the authored unit chart.
+        // An extension beyond it needs its own complete root interval.
+        match crate::bezier_split::CurveParameterDomain2::new(
+            &crate::CurveParameterRange2::unit(),
+            None,
+        )
+        .contains_finite_range(range, policy)?
+        {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
     let roots = match span {
         BezierSubcurve2::Quadratic(curve) => {
             curve.axis_monotone_parameters_with_policy(axis, policy)
@@ -452,15 +566,51 @@ fn span_axis_extrema(
             curve.axis_monotone_parameters_with_policy(axis, policy)
         }
         BezierSubcurve2::Rational(curve) => {
-            // Roots of a general quotient derivative are not materialized as
-            // exact parameters. A certified monotone coordinate needs none.
-            return Ok(match curve.axis_monotonicity_classified(axis, policy)? {
-                Classification::Decided(true) => Classification::Decided(Vec::new()),
-                Classification::Decided(false) => {
-                    Classification::Uncertain(UncertaintyReason::Unsupported)
+            let unit = crate::CurveParameterRange2::unit();
+            let parameters = match curve.axis_extremum_parameters_classified(
+                axis,
+                range.unwrap_or(&unit),
+                policy,
+            )? {
+                Classification::Decided(parameters) => parameters,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            if parameters.is_empty() {
+                return Ok(Classification::Decided(Vec::new()));
+            }
+            // The owner proved the denominator on the active range. Only
+            // candidates certified in that range may become deferred images.
+            let mut points = Vec::with_capacity(parameters.len());
+            for parameter in parameters {
+                match extremum_in_range(&parameter, range, policy)? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 }
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            });
+                match parameter {
+                    crate::BezierParameter2::Exact(parameter) => {
+                        match curve.point_at_classified(&parameter, policy) {
+                            Classification::Decided(point) => points.push(point.into()),
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                    crate::BezierParameter2::Algebraic(parameter) => {
+                        points.push(
+                            crate::RationalBezierAlgebraicPointImage2::from_parametric_source(
+                                curve.clone(),
+                                parameter,
+                                policy,
+                            )
+                            .into(),
+                        );
+                    }
+                }
+            }
+            return Ok(Classification::Decided(points));
         }
     };
     let roots = match roots {
@@ -469,12 +619,38 @@ fn span_axis_extrema(
     };
     let mut points = Vec::with_capacity(roots.len());
     for root in roots {
+        match extremum_in_range(&crate::BezierParameter2::Exact(root.clone()), range, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => continue,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
         match span_point_at(span, root, policy) {
-            Classification::Decided(point) => points.push(point),
+            Classification::Decided(point) => points.push(point.into()),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
     }
     Ok(Classification::Decided(points))
+}
+
+fn extremum_in_range(
+    parameter: &crate::BezierParameter2,
+    range: Option<&crate::CurveParameterRange2>,
+    policy: &CurveContext,
+) -> crate::CurveResult<Classification<bool>> {
+    let Some(range) = range else {
+        return Ok(Classification::Decided(true));
+    };
+    let parameter = crate::CurveParameter2::from(parameter.clone());
+    for (first, second) in [(range.start(), &parameter), (&parameter, range.end())] {
+        match first.cmp_by_refinement(second, policy)? {
+            Classification::Decided(Ordering::Greater) => {
+                return Ok(Classification::Decided(false));
+            }
+            Classification::Decided(_) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+    Ok(Classification::Decided(true))
 }
 
 fn span_point_at(

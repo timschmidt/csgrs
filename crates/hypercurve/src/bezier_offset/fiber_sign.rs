@@ -3466,3 +3466,6 @@ pub(super) fn algebraic_cusp_independent_radical_sum_sign(
         Classification::Uncertain(reason) => Classification::Uncertain(reason),
     })
 }
+
+#[cfg(test)]
+mod tests;

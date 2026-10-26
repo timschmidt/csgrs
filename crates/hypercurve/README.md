@@ -318,6 +318,10 @@ exact signatures.
   Bézier spans; `box_containment` decides whether the curve itself lies in a
   closed box, from that enclosure and the exact coordinate extrema, and
   returns an exact curve point outside the box when it does not.
+  Rational spans and retained rational trims use quotient-derivative roots on
+  a certified pole-free active range within the unit source chart, including
+  NURBS span charts. Root isolation or comparison may still return a typed
+  blocker; the witness remains a point rather than a published curve location.
   `try_line` joins two general exact points, which may be selected algebraic
   intersection or corner locations, without rounding either endpoint.
   `point_locations` reports every exact parameter visit of a represented

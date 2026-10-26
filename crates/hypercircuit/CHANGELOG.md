@@ -22,6 +22,9 @@
 
 ### Added
 
+- `BoardBoundaryGeometry` adds outcome methods for point classification, inset,
+  disc, segment and axis-aligned box queries. They retain the complete query's
+  Hypercurve certainty receipt; existing methods keep their signatures.
 - Exact dense MNA solving: `LinearMnaSystem::solve_exact` eliminates with
   certified pivots and replays its own candidate, and
   `Circuit::linear_mna_from_devices` lowers device instances. `CircuitError`

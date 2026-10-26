@@ -24,6 +24,70 @@ mod shared_square_quotient_tests {
     }
 
     #[test]
+    fn shared_reciprocal_product_uses_only_the_same_retained_nonzero_value() {
+        for value in [Computable::ln2(), Computable::ln2().negate()] {
+            let inverse = raw(Approximation::Inverse(value.clone()));
+            let before = value.cached();
+            for (left, right) in [(value.clone(), inverse.clone()), (inverse, value.clone())] {
+                assert_eq!(left.multiply(right).exact_rational(), Some(Rational::one()));
+                assert_eq!(value.cached(), before);
+            }
+        }
+        for value in [
+            Computable::zero(),
+            raw(Approximation::Add(Computable::pi(), Computable::one())),
+        ] {
+            let inverse = raw(Approximation::Inverse(value.clone()));
+            assert!(value.shared_reciprocal_product(&inverse).is_none());
+            assert!(value.cached().is_none());
+        }
+        let value = Computable::ln2();
+        let distinct = raw(Approximation::Constant(SharedConstant::Ln2));
+        let inverse = raw(Approximation::Inverse(distinct));
+        assert!(value.shared_reciprocal_product(&inverse).is_none());
+    }
+
+    #[test]
+    fn shared_reciprocal_product_preserves_descendant_controls_or_declines() {
+        for conflict in [false, true] {
+            let signal = Arc::new(AtomicBool::new(true));
+            let alternate = Arc::new(AtomicBool::new(false));
+            let mut child = Computable::ln2();
+            child.abort(signal.clone());
+            let mut value = raw(Approximation::Add(child, Computable::one()));
+            value
+                .internal
+                .facts
+                .replace_exact_sign(ExactSignCache::Valid(Sign::Plus));
+            if conflict {
+                value.abort(alternate);
+            }
+            let inverse = raw(Approximation::Inverse(value.clone()));
+            let result = value.shared_reciprocal_product(&inverse);
+            if conflict {
+                assert!(result.is_none());
+            } else {
+                let result = result.unwrap();
+                assert_eq!(result.exact_rational(), Some(Rational::one()));
+                assert!(Arc::ptr_eq(result.signal.as_ref().unwrap(), &signal));
+                assert!(should_stop(&result.signal));
+                signal.store(false, AtomicOrdering::Relaxed);
+                assert!(!should_stop(&result.signal));
+            }
+        }
+        let mut deep = Computable::ln2();
+        for _ in 0..32 {
+            deep = raw(Approximation::Negate(deep));
+        }
+        deep.internal
+            .facts
+            .replace_exact_sign(ExactSignCache::Valid(Sign::Plus));
+        let inverse = raw(Approximation::Inverse(deep.clone()));
+        assert!(deep.shared_reciprocal_product(&inverse).is_none());
+        assert!(deep.cached().is_none());
+    }
+
+    #[test]
     fn both_shared_product_shapes_and_orders_keep_the_entire_value_without_refinement() {
         for value in [Computable::ln2(), Computable::ln2().negate()] {
             assert!(matches!(

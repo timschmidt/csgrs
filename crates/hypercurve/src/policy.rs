@@ -603,6 +603,17 @@ impl CurveContext {
     pub(crate) const fn accepts_retained_policy(&self, retained: Self) -> bool {
         retained.0 == self.0 || retained.0 == self.strict_counterpart().0
     }
+
+    /// Validates replay admissibility without treating a policy mismatch as
+    /// malformed geometry. The consumer still owns certainty observation for
+    /// the retained decisions it actually uses.
+    pub(crate) const fn validate_retained_policy(&self, retained: Self) -> crate::CurveResult<()> {
+        if self.accepts_retained_policy(retained) {
+            Ok(())
+        } else {
+            Err(crate::CurveError::IncompatiblePredicatePolicy)
+        }
+    }
 }
 
 /// One retained result from a bounded, policy-aware operation cache.

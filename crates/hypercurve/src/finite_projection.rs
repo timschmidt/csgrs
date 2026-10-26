@@ -18,7 +18,7 @@ use crate::{
     BezierParallel2, BezierParallelSource2, BezierParameter2, BezierSplitFragment2,
     BezierSubcurve2, CircularArc2, Classification, Contour2, Curve2, CurveContext, CurveError,
     CurveOutcome, CurveParameter2, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionLoopRole, CurveResult, CurveString2, Point2, Segment2,
+    CurveRegionLoopRole, CurveRegionProfile2, CurveResult, CurveString2, Point2, Segment2,
 };
 use hyperreal::{Real, RealSign};
 
@@ -169,6 +169,138 @@ impl FiniteRegionProfile2 {
             .then_some(area)
             .ok_or(CurveError::NonFiniteProjectionPoint)
     }
+}
+
+impl CurveRegionProfile2<'_> {
+    /// Sample curved interiors while retaining exact line members and native
+    /// endpoints, with this profile's already classified material/hole ownership.
+    ///
+    /// Unlike finite export, coordinates that already inhabit [`Point2`] do not
+    /// pass through `f64`. Each certified join uses one endpoint representation.
+    /// Nonlinear interiors and endpoints without native coordinates use the
+    /// existing finite projection. This is a sampled modeling boundary, not an
+    /// exact representation of the source curves or a topology/error certificate.
+    /// Consumers must retain the sampling and coordinate-projection qualification.
+    pub fn sample_to_linear_contours(
+        &self,
+        options: &FiniteProjectionOptions,
+    ) -> crate::ExactCurveResult<(Contour2, Vec<Contour2>)> {
+        crate::policy::resolve_certified_operation(&crate::policy::principal_context(), |policy| {
+            let material = sample_modeling_loop(self.material(), options, policy)?;
+            let holes = self
+                .holes()
+                .iter()
+                .map(|boundary| sample_modeling_loop(boundary, options, policy))
+                .collect::<crate::ExactCurveResult<Vec<_>>>()?;
+            Ok((material, holes))
+        })
+        .map(CurveOutcome::into_value)
+    }
+}
+
+fn sample_modeling_loop(
+    boundary: &CurveRegionBoundaryLoop2,
+    options: &FiniteProjectionOptions,
+    policy: &CurveContext,
+) -> crate::ExactCurveResult<Contour2> {
+    use crate::bezier_region::{
+        curve_fragment_endpoint_point, retained_line_fragment_segment, retained_native_line_point,
+    };
+    use crate::{CurveOperation2, ExactCurveError, UncertaintyReason};
+
+    let invalid = |cause| ExactCurveError::invalid_unattributed(CurveOperation2::Evaluation, cause);
+    boundary.replay_connectivity(policy)?;
+    let fragments = boundary.fragments();
+    let mut lines = Vec::with_capacity(fragments.len());
+    let mut samples = Vec::with_capacity(fragments.len());
+    for fragment in fragments {
+        let line = match retained_line_fragment_segment(fragment, policy).map_err(invalid)? {
+            Classification::Decided(line) => Some(line),
+            Classification::Uncertain(UncertaintyReason::Unsupported) => None,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked_unattributed(
+                    CurveOperation2::Evaluation,
+                    reason,
+                ));
+            }
+        };
+        let mut points = Vec::new();
+        if line.is_none() {
+            append_curve_fragment_samples(&mut points, fragment, options, policy)
+                .map_err(invalid)?;
+        }
+        lines.push(line);
+        samples.push(points);
+    }
+    let native_endpoint = |index: usize, start| -> crate::ExactCurveResult<Option<Point2>> {
+        if let Some(line) = &lines[index] {
+            return Ok(Some(if start { line.start() } else { line.end() }.clone()));
+        }
+        let point =
+            curve_fragment_endpoint_point(&fragments[index], start, policy).map_err(invalid)?;
+        let Classification::Decided(Some(point)) = point else {
+            return Ok(None);
+        };
+        Ok(
+            match retained_native_line_point(&point, policy).map_err(invalid)? {
+                Classification::Decided(point) => Some(point),
+                Classification::Uncertain(_) => None,
+            },
+        )
+    };
+    let finite_to_native = |[x, y]: [f64; 2]| -> crate::ExactCurveResult<Point2> {
+        Ok(Point2::new(
+            Real::try_from(x).map_err(|cause| invalid(cause.into()))?,
+            Real::try_from(y).map_err(|cause| invalid(cause.into()))?,
+        ))
+    };
+    // A joint is shared by both incident spans. Prefer a native point on either
+    // side, including a line whose curved neighbour has a selected endpoint.
+    let mut joints = Vec::with_capacity(fragments.len());
+    for index in 0..fragments.len() {
+        let previous = (index + fragments.len() - 1) % fragments.len();
+        let point = if let Some(line) = &lines[index] {
+            line.start().clone()
+        } else if let Some(line) = &lines[previous] {
+            line.end().clone()
+        } else if let Some(point) = native_endpoint(index, true)? {
+            point
+        } else if let Some(point) = native_endpoint(previous, false)? {
+            point
+        } else {
+            let point = samples[index]
+                .first()
+                .or_else(|| samples[previous].last())
+                .ok_or_else(|| invalid(CurveError::NonFiniteProjectionPoint))?;
+            finite_to_native(*point)?
+        };
+        joints.push(point);
+    }
+    let mut segments = Vec::new();
+    for index in 0..fragments.len() {
+        let mut previous = joints[index].clone();
+        // The first and last finite samples are endpoint projections. Replace
+        // them with the shared authority, never epsilon-deduplicate it.
+        let interior = samples[index]
+            .iter()
+            .skip(1)
+            .take(samples[index].len().saturating_sub(2));
+        for next in interior
+            .map(|point| finite_to_native(*point))
+            .chain(std::iter::once(Ok(
+                joints[(index + 1) % joints.len()].clone()
+            )))
+        {
+            let next = next?;
+            if previous != next {
+                segments.push(Segment2::Line(
+                    crate::LineSeg2::try_new(previous, next.clone()).map_err(invalid)?,
+                ));
+            }
+            previous = next;
+        }
+    }
+    Contour2::try_new(segments).map_err(invalid)
 }
 
 /// Returns the finite signed shoelace area of projected ring vertices.
@@ -916,8 +1048,8 @@ fn append_curve_fragment_samples(
             source_curve: source,
             ..
         } => {
-            let start = finite_parameter_representative(start, policy)?;
-            let end = finite_parameter_representative(end, policy)?;
+            let start = finite_sample_parameter_representative(start, source, options, policy)?;
+            let end = finite_sample_parameter_representative(end, source, options, policy)?;
             let subcurve = match source.subcurve_between_exact(&start, &end, policy)? {
                 Classification::Decided(curve) => curve,
                 Classification::Uncertain(reason) => {
@@ -1529,6 +1661,62 @@ fn finite_parameter_representative(
     Ok(((&interval.start().clone() + interval.end()) / Real::from(2_u8))?)
 }
 
+// The isolator midpoint is not yet an endpoint approximation: the source
+// image of that interval can be arbitrarily wide. Refine that image before
+// the midpoint becomes a finite sampling parameter. As elsewhere in this
+// adapter, the floating control enclosure is a projection quality check,
+// not a certified source-fidelity bound.
+fn finite_sample_parameter_representative(
+    parameter: &BezierParameter2,
+    source: &BezierSubcurve2,
+    options: &FiniteProjectionOptions,
+    policy: &CurveContext,
+) -> CurveResult<Real> {
+    if let Some(exact) = parameter.scalar() {
+        return Ok(exact.clone());
+    }
+    for steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let refined = parameter.clone().refined_isolating_interval(steps, policy);
+        if let Some(exact) = refined.scalar() {
+            return Ok(exact.clone());
+        }
+        let Classification::Decided(interval) = refined.known_interval_with_policy(policy)? else {
+            continue;
+        };
+        let Classification::Decided(subcurve) =
+            source.subcurve_between_exact(interval.start(), interval.end(), policy)?
+        else {
+            continue;
+        };
+        if !subcurve_has_common_weight_sign(&subcurve, policy) {
+            continue;
+        }
+        let Some(controls) = finite_subcurve_controls(&subcurve)? else {
+            continue;
+        };
+        let mut minimum = controls[0];
+        let mut maximum = controls[0];
+        for point in &controls[1..] {
+            for axis in 0..2 {
+                minimum[axis] = minimum[axis].min(point[axis]);
+                maximum[axis] = maximum[axis].max(point[axis]);
+            }
+        }
+        let scale = minimum
+            .into_iter()
+            .chain(maximum)
+            .fold(1.0_f64, |scale, x| scale.max(x.abs()));
+        let allowed = (options.chord_error * 0.125).max(f64::EPSILON * scale * 8.0);
+        if (0..2).all(|axis| maximum[axis] - minimum[axis] <= allowed) {
+            return Ok(((interval.start() + interval.end()) / Real::from(2_u8))?);
+        }
+    }
+    Err(CurveError::Topology(
+        "finite projection could not resolve a retained parameter within its chord-error budget"
+            .into(),
+    ))
+}
+
 fn append_bezier_subcurve_samples(
     points: &mut Vec<[f64; 2]>,
     curve: &BezierSubcurve2,
@@ -1927,5 +2115,89 @@ mod tests {
                     if conic.retained_circular_conic().is_some()
             )
         }));
+    }
+
+    #[test]
+    fn modeling_samples_keep_native_cubic_endpoints() {
+        let third = (Real::one() / Real::from(3)).unwrap();
+        let a = Point2::new(third.clone(), Real::zero());
+        let b = Point2::new(&third + Real::from(4), Real::zero());
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(a.clone(), b.clone()).unwrap()),
+            Curve2::from(CubicBezier2::new(
+                b.clone(),
+                point(4, 3),
+                point(0, 3),
+                a.clone(),
+            )),
+        ])
+        .unwrap();
+        let region =
+            CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd).unwrap();
+        let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();
+        let profile = region.boundary_profiles().unwrap().remove(0);
+        assert!(profile.linear_contours().unwrap().is_none());
+        let (material, holes) = profile.sample_to_linear_contours(&options).unwrap();
+        assert!(holes.is_empty());
+        for endpoint in [a, b] {
+            assert!(
+                material
+                    .segments()
+                    .iter()
+                    .any(|segment| segment.start() == &endpoint)
+            );
+        }
+        assert!(material.segments().len() > 3);
+        // Finite export remains an intentional all-coordinate boundary.
+        let finite = region.project_to_finite_profiles_exact(&options).unwrap();
+        assert!(
+            finite[0]
+                .material()
+                .points()
+                .iter()
+                .all(|[x, _]| Real::try_from(*x).unwrap() != third)
+        );
+    }
+
+    #[test]
+    fn modeling_samples_cannot_upgrade_qualified_endpoint_connectivity() {
+        let (start_x, end_x) = terminally_equal_x_pair();
+        let path = CurvePath2::try_new(vec![Curve2::from(CubicBezier2::new(
+            Point2::new(start_x, Real::zero()),
+            point(2, 0),
+            point(2, 1),
+            Point2::new(end_x, Real::zero()),
+        ))])
+        .unwrap();
+        let qualified =
+            crate::policy::resolve_certified_operation(&CurveContext::APPROXIMATE_512, |attempt| {
+                CurveRegion2::try_from_boundary_paths_raw(std::slice::from_ref(&path), attempt)
+            })
+            .unwrap();
+        assert_eq!(
+            qualified.certainty,
+            crate::CurveCertainty::Approximate512Consumed
+        );
+        let region = qualified.value;
+        let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();
+        let sample = |policy: &CurveContext| {
+            sample_modeling_loop(&region.boundary_loops()[0], &options, policy)
+        };
+        assert!(matches!(
+            sample(&CurveContext::STRICT),
+            Err(crate::ExactCurveError::Blocked(_))
+        ));
+        let sampled =
+            crate::policy::resolve_certified_operation(&CurveContext::APPROXIMATE_512, sample)
+                .unwrap();
+        assert_eq!(
+            sampled.certainty,
+            crate::CurveCertainty::Approximate512Consumed
+        );
+        assert!(sampled.value.segments().len() > 3);
+        assert!(matches!(
+            sample(&CurveContext::STRICT),
+            Err(crate::ExactCurveError::Blocked(_))
+        ));
     }
 }

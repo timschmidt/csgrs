@@ -2216,6 +2216,50 @@ impl RationalBezier2 {
         .map(|classification| classification.map(|monotone| *monotone))
     }
 
+    /// Stationary candidates in the unit source chart, with a denominator
+    /// proof on the active range. The caller must filter candidates to that
+    /// range before evaluating them. Constant coordinates need no candidates.
+    pub(crate) fn axis_extremum_parameters_classified(
+        &self,
+        axis: Axis2,
+        range: &crate::CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        if range == &crate::CurveParameterRange2::unit() {
+            // This cached certificate already proves the whole unit domain
+            // finite. A repeated monotone query needs no second domain proof.
+            match self.axis_monotonicity_classified(axis, policy)? {
+                Classification::Decided(true) => return Ok(Classification::Decided(Vec::new())),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        match self.denominator_sign(range) {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        let Some(coefficients) = self.axis_derivative_numerator_bernstein(axis) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        if coefficients
+            .iter()
+            .all(|coefficient| real_sign(coefficient, policy) == Some(RealSign::Zero))
+        {
+            return Ok(Classification::Decided(Vec::new()));
+        }
+        let polynomial = match BezierParameterPolynomial::try_new_bernstein_basis_with_policy(
+            coefficients.to_vec(),
+            policy,
+        )? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        polynomial.isolate_unit_interval_roots_with_policy(policy)
+    }
+
     fn compute_axis_is_monotone(
         &self,
         axis: Axis2,

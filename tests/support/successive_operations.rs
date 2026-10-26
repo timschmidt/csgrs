@@ -128,7 +128,19 @@ pub fn run(chain: &Chain, check: impl FnMut(usize, &TriangleMesh)) -> Vec<StepRe
 pub fn run_with(
     chain: &Chain,
     between: Between,
+    check: impl FnMut(usize, &TriangleMesh),
+) -> Vec<StepRecord> {
+    run_with_observer(chain, between, check, |_| {})
+}
+
+/// Reports each complete record before starting the next step, including a
+/// typed failure. The observer runs after operation, validation and drop
+/// timing, so evidence can be durably written without charging IO to geometry.
+pub fn run_with_observer(
+    chain: &Chain,
+    between: Between,
     mut check: impl FnMut(usize, &TriangleMesh),
+    mut completed: impl FnMut(&StepRecord),
 ) -> Vec<StepRecord> {
     let mut current = (chain.initial)();
     let mut records = Vec::new();
@@ -170,10 +182,11 @@ pub fn run_with(
                 let replaced = Instant::now();
                 drop(std::mem::replace(&mut current, outcome.value));
                 record.drop = replaced.elapsed();
+                completed(&record);
                 records.push(record);
             },
             Err(error) => {
-                records.push(StepRecord {
+                let record = StepRecord {
                     step,
                     outcome: Outcome::Failed(error.kind(), error.to_string()),
                     closed_manifold: None,
@@ -183,7 +196,9 @@ pub fn run_with(
                     elapsed,
                     validation: None,
                     drop: Duration::ZERO,
-                });
+                };
+                completed(&record);
+                records.push(record);
                 break;
             },
         }

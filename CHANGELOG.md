@@ -6,6 +6,21 @@ Changes since 0.20.1; versions 0.21 and 0.22 were not published. Caller-facing
 migrations, including changed serialized output, are listed in
 [docs/MIGRATIONS.md](docs/MIGRATIONS.md).
 
+- A unit cube rotated successively by the independently imported binary64
+  angles 13.1, 17.3, -13.1 and -17.3 degrees about one axis can now complete
+  a certified union with the original cube and subtract back to empty.
+- Mixed-sign full revolutions preserve each authored meridian for odd segment
+  counts while regularizing overlapping material. Integer full-turn multiples
+  share one coverage lattice; `curve::revolve_from` accepts an explicit start.
+- Triangulation, extrusion, sweep, twist and revolution retain exact line
+  members and native curve endpoints in mixed profiles. Curved interiors
+  remain explicitly sampled; narrow exact members no longer collapse merely
+  because another boundary is curved.
+- Transforms of terminal-qualified closed curves preserve their operation
+  receipt. A strict replay blocked by retained policy now reports an undecided
+  predicate instead of invalid geometry. Native line-profile extrusion of these
+  qualified loops remains an open consumer.
+
 ### Breaking
 
 - The BSP-tree polygon model is replaced by the Hyper geometry stack. The

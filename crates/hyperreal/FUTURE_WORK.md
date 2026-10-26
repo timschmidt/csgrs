@@ -1,5 +1,63 @@
 # Future work
 
+## Import resource contracts after R19
+
+The scoped R19 change passes final repository validation. Bounded domain replay,
+small-angle sign proofs and shared reciprocal construction restore the scoped
+cold continuation cases; they do not supply a cumulative work or heap budget.
+Scalar imports still have no caller node/bit/work/byte/cancellation contract.
+Generic Laurent coefficient expansion and reciprocal/trig approximation can
+still encounter enormous shifts or panic outside the repaired proof paths;
+recursive graph teardown remains separately open below. BRep archive limits
+bound input syntax and records, not scalar reconstruction arithmetic or heap.
+Hypermesh sharing caps attempts, not each proof's cost, and has no operation
+cancellation hook. A cumulative hook needs a measured owning path and typed
+exhaustion, cleanup and retry tests. The suggested `quantile(Phi(1000))` control
+already exhausted natively on this revision, before serialization; it does not
+establish an import defect. See the [R19 evidence and costs](PERFORMANCE.md#cold-domain-continuation-and-resource-audit-r19-2026-10-25).
+
+## Rotation relations after R18
+
+The original binary64 four-angle cube union now has a bounded exact proof.
+The final relation attempt can cancel common admitted factors before expanding
+the remaining polynomial, then use its existing unit-circle identities.
+Expanded degree/term limits and the shared work budget are unchanged; broader
+compound rotations remain outside this completion claim. Five scalar controls
+cover factor bounds, inverse obligations, nonzero residuals, exhaustion and
+cancellation. Public tests check the independent cube oracle and continued
+empty operations.
+
+This is a completeness extension with disclosed costs. All 64 simultaneous
+scalar latency upper bounds exceed 1, and the unresolved degree-14 control
+requests 2,096 extra bytes per query. No speedup or latency nonregression is
+claimed. See the [R18 record](PERFORMANCE.md#factored-compound-rotation-completion-r18-2026-10-25).
+General recognition, cumulative operation work/heap bounds and cold large-graph
+archive continuation remain open; S01 and a huge-degree field descriptor are
+not adopted.
+
+## Retained scalar memory after the R17 audit
+
+The October 25 Nano reproduction attributes 16.9% of held-report allocations
+to rational derived records and 9.2% to `Computable` evaluation caches. All
+116,924 evaluation cells contain an approximation; 993 also contain a quadratic
+tower. There are no decline-only cells in the sampled stages, so moving only
+decline flags cannot reduce this workload's held cells.
+
+A private layout allocating the fourth/fifth rational cache slots lazily keeps
+the same exact entries and weak ownership. It reduces held report payload by
+5.3% and full-release peak payload by 4.6%, but a protected wide-rational warm
+negation query regresses, and none of the 64 simultaneous intervals proves
+latency nonregression. The layout is not retained. See the
+[measurements and validation](PERFORMANCE.md#retained-scalar-ownership-and-rejected-layout-r17-2026-10-25).
+
+Full Nano post-drop payload grows across the three measured repetitions;
+neither these samples nor the earlier small-region probe establish a byte
+bound or plateau. Future retention changes need a new measured premise,
+source/precision/policy/lifetime preservation and admitted re-query costs.
+Internal work, retained-byte and cancellation contracts remain open. This is
+not a proposal to evict source authority, restart the rejected per-call Laurent
+memo or adopt S01.
+
 ## Structural sign facts expand every fresh predicate
 
 `Computable::structural_facts` calls `exact_sign`, which falls back to

@@ -115,28 +115,35 @@ pub enum ExactCurveError {
 }
 
 impl ExactCurveError {
-    /// Wraps a low-level curve error with operation context.
-    pub(crate) const fn invalid(
+    /// Wraps a low-level curve failure, preserving policy replay as a blocker.
+    pub(crate) fn invalid(
         operation: CurveOperation2,
         family: CurveFamily2,
         cause: CurveError,
     ) -> Self {
-        Self::Invalid {
-            operation,
-            family: Some(family),
-            cause,
+        match cause {
+            CurveError::IncompatiblePredicatePolicy => {
+                Self::blocked(operation, family, UncertaintyReason::Predicate)
+            }
+            cause => Self::Invalid {
+                operation,
+                family: Some(family),
+                cause,
+            },
         }
     }
 
-    /// Wraps an invalid region- or path-level state with operation context.
-    pub(crate) const fn invalid_unattributed(
-        operation: CurveOperation2,
-        cause: CurveError,
-    ) -> Self {
-        Self::Invalid {
-            operation,
-            family: None,
-            cause,
+    /// Wraps a region/path failure, preserving policy replay as a blocker.
+    pub(crate) fn invalid_unattributed(operation: CurveOperation2, cause: CurveError) -> Self {
+        match cause {
+            CurveError::IncompatiblePredicatePolicy => {
+                Self::blocked_unattributed(operation, UncertaintyReason::Predicate)
+            }
+            cause => Self::Invalid {
+                operation,
+                family: None,
+                cause,
+            },
         }
     }
 
@@ -302,6 +309,9 @@ impl std::error::Error for ExactCurveError {
 /// Errors returned by curve constructors and early topology scaffolding.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CurveError {
+    /// Retained evidence is valid under its construction policy, but the
+    /// requested predicate policy cannot replay it. This is not invalid input.
+    IncompatiblePredicatePolicy,
     /// A line segment has equal endpoints.
     ZeroLengthLine,
     /// Two parallel or coincident supporting lines do not define one point.
@@ -416,6 +426,12 @@ pub enum CurveError {
 impl fmt::Display for CurveError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::IncompatiblePredicatePolicy => {
+                write!(
+                    f,
+                    "retained evidence cannot be replayed under the requested predicate policy"
+                )
+            }
             Self::ZeroLengthLine => write!(f, "line segment has zero length"),
             Self::ParallelLineSupports => write!(f, "line supports are parallel or coincident"),
             Self::ZeroRadiusArc => write!(f, "circular arc has zero radius"),

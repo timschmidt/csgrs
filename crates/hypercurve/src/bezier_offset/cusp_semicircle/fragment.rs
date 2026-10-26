@@ -4,12 +4,7 @@ use super::*;
 
 impl BezierAlgebraicCuspSemicircleFragment2 {
     pub(crate) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if !policy.accepts_retained_policy(self.data.policy) {
-            return Err(CurveError::Topology(
-                "algebraic cusp fragment was replayed under a different predicate policy".into(),
-            ));
-        }
-        Ok(())
+        policy.validate_retained_policy(self.data.policy)
     }
 
     pub(crate) fn full(semicircle: BezierAlgebraicCuspSemicircle2, policy: &CurveContext) -> Self {

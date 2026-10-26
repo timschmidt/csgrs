@@ -9,7 +9,7 @@ use std::cmp::Ordering;
 use hypercurve::{
     Aabb2, Axis2, BezierFlatteningOptions, BoxBoundary2, CircularArc2, Classification,
     CubicBezier2, Curve2, CurveBoxContainment2, CurveBoxEscape2, CurveCertainty, CurveGeometry2,
-    CurveParameter2, CurvePath2, ExactCurveError, LineSeg2, Point2, PredicatePolicy,
+    CurveParameter2, CurvePath2, CurvePoint2, ExactCurveError, LineSeg2, Point2, PredicatePolicy,
     RationalBezier2, Real, UncertaintyReason, evaluate_under,
 };
 
@@ -317,7 +317,7 @@ fn circular_arcs_use_cardinal_extrema() {
 }
 
 #[test]
-fn unsupported_extrema_stay_typed_and_a_definite_escape_wins() {
+fn rational_extrema_complete_and_preserve_first_escape_order() {
     // y(t) = 18t(1 - t) / D(t) with weights 1, 2, 2, 1 peaks at 18/7 < 3.
     let rational = Curve2::from(
         RationalBezier2::try_new(
@@ -328,16 +328,15 @@ fn unsupported_extrema_stay_typed_and_a_definite_escape_wins() {
     );
     let alone = CurvePath2::try_new(vec![rational.clone()]).unwrap();
     assert_contained(&alone, &below(Real::from(3)));
-    for bound in [ratio(14, 5), Real::from(2)] {
-        for policy in POLICIES {
-            let error =
-                certified(policy, || alone.box_containment(&below(bound.clone()))).unwrap_err();
-            let ExactCurveError::Blocked(blocker) = error else {
-                panic!("an unsupported extremum is a blocker, not invalid input");
-            };
-            assert_eq!(blocker.reason(), UncertaintyReason::Unsupported);
-        }
-    }
+    assert_contained(&alone, &below(ratio(14, 5)));
+    let peak = Point2::new(ratio(3, 2), ratio(18, 7));
+    assert_escapes_at(
+        &alone,
+        &below(Real::from(2)),
+        Axis2::Y,
+        BoxBoundary2::Maximum,
+        &peak,
+    );
 
     let path = CurvePath2::try_new(vec![
         rational,
@@ -350,7 +349,6 @@ fn unsupported_extrema_stay_typed_and_a_definite_escape_wins() {
         )),
     ])
     .unwrap();
-    let peak = Point2::new(Real::from(6), ratio(9, 4));
     let index = assert_escapes_at(
         &path,
         &below(Real::from(2)),
@@ -358,11 +356,48 @@ fn unsupported_extrema_stay_typed_and_a_definite_escape_wins() {
         BoxBoundary2::Maximum,
         &peak,
     );
-    assert_eq!(index, 2);
-    assert!(matches!(
-        path.box_containment(&below(ratio(14, 5))),
-        Err(ExactCurveError::Blocked(_))
-    ));
+    assert_eq!(index, 0);
+    assert_contained(&path, &below(ratio(14, 5)));
+}
+
+#[test]
+fn unsupported_extrema_stay_typed_and_a_definite_escape_wins() {
+    // This procedural zero-distance parallel has the same cubic image but
+    // remains an analytic carrier. Its interior extrema are a separate route.
+    let source = CubicBezier2::new(point(0, 0), point(1, 3), point(2, 3), point(3, 0));
+    let curve = Curve2::try_analytic_parallel(
+        source.parallel_left(Real::zero()).unwrap(),
+        hypercurve::BezierParameterRange2::try_new(
+            hypercurve::BezierParameter2::Exact(Real::zero()),
+            hypercurve::BezierParameter2::Exact(Real::one()),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    for policy in POLICIES {
+        let error = certified(policy, || curve.box_containment(&below(Real::from(2)))).unwrap_err();
+        let ExactCurveError::Blocked(blocker) = error else {
+            panic!("unsupported remains a blocker");
+        };
+        assert_eq!(blocker.reason(), UncertaintyReason::Unsupported);
+    }
+    let path = CurvePath2::try_new(vec![
+        curve.clone(),
+        LineSeg2::try_new(point(3, 0), point(4, 0)).unwrap().into(),
+        CubicBezier2::new(point(4, 0), point(5, 3), point(7, 3), point(8, 0)).into(),
+    ])
+    .unwrap();
+    assert_eq!(
+        assert_escapes_at(
+            &path,
+            &below(Real::from(2)),
+            Axis2::Y,
+            BoxBoundary2::Maximum,
+            &Point2::new(6.into(), ratio(9, 4))
+        ),
+        2
+    );
+    assert_contained(&path, &below(ratio(14, 5)));
 }
 
 #[test]
@@ -439,5 +474,107 @@ fn flattening_bounds_set_distance_not_same_parameter_distance() {
     assert_eq!(
         compare(&same_parameter, polyline.certificate().max_error()),
         Ordering::Greater
+    );
+}
+
+#[test]
+fn rational_cubic_containment_matches_its_exact_peak() {
+    let source = Curve2::from(
+        RationalBezier2::try_new(
+            [(0, 0), (1, 3), (2, 3), (3, 0)]
+                .map(|(x, y)| Point2::new(x.into(), y.into()))
+                .to_vec(),
+            [1, 2, 2, 1].map(Real::from).to_vec(),
+        )
+        .unwrap(),
+    );
+    let peak = Point2::new(ratio(3, 2), ratio(18, 7));
+    assert!(
+        source
+            .point_at(&CurveParameter2::from(ratio(1, 2)))
+            .unwrap()
+            .coincides_with(&CurvePoint2::from(peak.clone()))
+            .unwrap()
+    );
+    let (left_half, right_half) = source.split_at(ratio(1, 2).into()).unwrap();
+    let (left_third, right_third) = source.split_at(ratio(1, 3).into()).unwrap();
+    let original = CurvePath2::try_new(vec![source.clone()]).unwrap();
+    let reversed = original.reversed().unwrap();
+    let paths = [
+        ("native", original),
+        ("reversed", reversed),
+        (
+            "halves",
+            CurvePath2::try_new(vec![left_half, right_half]).unwrap(),
+        ),
+        (
+            "thirds",
+            CurvePath2::try_new(vec![left_third, right_third]).unwrap(),
+        ),
+    ];
+    drop(source);
+    let tiny = Real::from(2).powi_i64(-200).unwrap();
+    let bounds = [
+        ("loose", ratio(14, 5), true),
+        ("tangent", ratio(18, 7), true),
+        ("above", ratio(18, 7) + &tiny, true),
+        ("below", ratio(18, 7) - &tiny, false),
+        ("outside", Real::from(2), false),
+    ];
+    let mut correct = 0;
+    let mut total = 0;
+    for (path_name, path) in paths {
+        for (bound_name, max_y, contained) in &bounds {
+            let envelope = Aabb2::new_unchecked(
+                Point2::new((-10).into(), (-10).into()),
+                Point2::new(10.into(), max_y.clone()),
+            );
+            for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+                total += 1;
+                let outcome = evaluate_under(policy, || path.box_containment(&envelope));
+                assert_eq!(outcome.certainty(), CurveCertainty::Certified);
+                match outcome.into_unverified() {
+                    Ok(CurveBoxContainment2::Contained) => {
+                        assert!(*contained, "false containment at {path_name}/{bound_name}");
+                        correct += 1;
+                        println!("R23 {path_name} {bound_name} {policy:?} Contained");
+                    }
+                    Ok(CurveBoxContainment2::Escapes(witness)) => {
+                        assert!(!*contained, "false escape at {path_name}/{bound_name}");
+                        assert_eq!(
+                            (witness.axis(), witness.boundary()),
+                            (Axis2::Y, BoxBoundary2::Maximum)
+                        );
+                        // A split endpoint may be the first escaping member.
+                        // The contract does not require the global maximum.
+                        let independent_candidates =
+                            [peak.clone(), Point2::new(ratio(17, 15), ratio(12, 5))];
+                        assert!(independent_candidates.iter().any(|expected| {
+                            witness
+                                .point()
+                                .coincides_with(&CurvePoint2::from(expected.clone()))
+                                .unwrap()
+                        }));
+                        assert_eq!(
+                            witness
+                                .point()
+                                .compare_coordinate(
+                                    &CurvePoint2::from(Point2::new(Real::zero(), max_y.clone())),
+                                    Axis2::Y,
+                                )
+                                .unwrap(),
+                            std::cmp::Ordering::Greater
+                        );
+                        correct += 1;
+                        println!("R23 {path_name} {bound_name} {policy:?} Escapes exact member");
+                    }
+                    Err(error) => println!("R23 {path_name} {bound_name} {policy:?} {error:?}"),
+                }
+            }
+        }
+    }
+    assert_eq!(
+        correct, total,
+        "every form must decide its exact image; correct={correct}, total={total}"
     );
 }

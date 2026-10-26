@@ -25,3 +25,6 @@ include!("arithmetic/format_parse.rs");
 include!("arithmetic/ops.rs");
 include!("arithmetic/comparison.rs");
 include!("arithmetic/tests.rs");
+
+#[cfg(test)]
+mod retention_tests;

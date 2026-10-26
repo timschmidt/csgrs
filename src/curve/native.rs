@@ -10,9 +10,9 @@ use crate::solid;
 use crate::{GeometryContext, GeometryOutcome};
 use hypercurve::{
     BooleanOp, Contour2, CubicBezier2, Curve2, CurveGeometry2, CurvePath2,
-    CurvePathRegionTrim2, CurveRegion2, CurveString2, FinitePolyline2,
-    FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, Point2, PolynomialSplineCurve2,
-    QuadraticBezier2, RationalBezier2, RegionPointLocation, Segment2,
+    CurvePathRegionTrim2, CurveRegion2, CurveString2, FiniteProjectionOptions,
+    FiniteRegionProfile2, LineSeg2, Point2, PolynomialSplineCurve2, QuadraticBezier2,
+    RationalBezier2, RegionPointLocation, Segment2,
 };
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::TriangleMesh;
@@ -2247,9 +2247,9 @@ pub fn hilbert_paths_with_context(
 
 /// Triangulates a filled region as a flat native triangle surface.
 ///
-/// Certified linear profiles retain exact coordinates and hole ownership.
-/// Other representations retain the existing finite sampled-profile path;
-/// its predicate certainty does not certify fidelity to the source curves.
+/// Exact line members and native curve endpoints retain their coordinates and
+/// classified hole ownership, including in mixed profiles. Nonlinear interiors
+/// are sampled; predicate certainty does not certify fidelity to the source curves.
 pub fn try_triangulate(
     input: &CurveRegion2,
     context: &GeometryContext,
@@ -2281,65 +2281,39 @@ fn try_triangulate_with(
     validate_surface_mesh(TriangleMesh::new(positions, triangles), decisions)
 }
 
-/// Chord-error budget at which modeling operations sample a profile that has
-/// no exact line boundary.
+/// Chord-error request used to sample nonlinear interiors for modeling.
 ///
 /// [`try_triangulate`], [`try_extrude`], [`try_extrude_vector`], [`try_sweep`],
 /// [`extrude_twisted`] and [`revolve`] consume an exact line profile's own
-/// coordinates. Only a boundary with an arc or curve segment passes through
-/// [`try_finite_profiles`] at this budget, and their result then records
-/// sampling and coordinate projection in its construction evidence. To sample
-/// at another budget, project the region with
-/// [`CurveRegion2::project_to_finite_profiles_exact`] and pass the resulting
-/// line profile, which these operations then consume without further loss.
+/// coordinates, even beside curved components or holes. Curved boundaries use
+/// [`hypercurve::CurveRegionProfile2::sample_to_linear_contours`], retaining
+/// native endpoints and line spans while sampling nonlinear interiors. The
+/// result records sampling and coordinate projection in its construction
+/// evidence; this is not a certified topology or source-fidelity error bound.
+/// [`try_finite_profiles`] remains the explicit all-coordinate `f64` export.
 pub const SAMPLED_PROFILE_CHORD_ERROR: f64 = 1.0e-3;
 
-/// Prefer the authoritative exact linear boundary before any finite projection.
-/// Other representations are sampled at [`SAMPLED_PROFILE_CHORD_ERROR`]; that
-/// finite projection remains a fidelity boundary, not proof of the source curve.
+/// Choose exact or sampled boundaries per already classified profile, retaining
+/// native members inside a sampled profile. Sampling remains a fidelity boundary.
 fn try_modeling_profiles_with(
     input: &CurveRegion2,
     decisions: &GeometryDecisions,
 ) -> Result<Vec<(Contour2, Vec<Contour2>)>, ValidationError> {
-    let exact = decisions.exact_curve(|| {
-        input
-            .boundary_profiles()?
-            .iter()
-            .map(|profile| profile.linear_contours())
-            .collect::<hypercurve::ExactCurveResult<Option<Vec<_>>>>()
-    })?;
-    if let Some(profiles) = exact {
-        return Ok(profiles);
-    }
-    decisions.record_construction(
-        hypermesh::ConstructionEvidence::UNTRACKED
-            .with_sampling()
-            .with_coordinate_projection(),
-    );
-    let quantized_contour = |ring: &FinitePolyline2| -> Result<Contour2, ValidationError> {
-        let coordinates = ring
-            .points()
-            .iter()
-            .map(|[x, y]| Ok([Real::try_from(*x)?, Real::try_from(*y)?]))
-            .collect::<Result<Vec<_>, hyperreal::Problem>>()?;
-        Contour2::from_real_ring(&coordinates).map_err(|cause| {
-            ValidationError::ExactCurve(hypercurve::ExactCurveError::Invalid {
-                operation: hypercurve::CurveOperation2::NativeTopology,
-                family: Some(hypercurve::CurveFamily2::Line),
-                cause,
-            })
-        })
-    };
-    try_finite_profiles_with(input, decisions)?
+    let options = FiniteProjectionOptions::try_new(SAMPLED_PROFILE_CHORD_ERROR)
+        .expect("positive finite projection tolerance");
+    decisions
+        .exact_curve(|| input.boundary_profiles())?
         .iter()
         .map(|profile| {
-            let material = quantized_contour(profile.material())?;
-            let holes = profile
-                .holes()
-                .iter()
-                .map(quantized_contour)
-                .collect::<Result<Vec<_>, _>>()?;
-            Ok((material, holes))
+            if let Some(exact) = decisions.exact_curve(|| profile.linear_contours())? {
+                return Ok(exact);
+            }
+            decisions.record_construction(
+                hypermesh::ConstructionEvidence::UNTRACKED
+                    .with_sampling()
+                    .with_coordinate_projection(),
+            );
+            Ok(decisions.exact_curve(|| profile.sample_to_linear_contours(&options))?)
         })
         .collect()
 }
@@ -2375,9 +2349,9 @@ fn try_finite_profiles_with(
 
 /// Linear extrusion that reports invalid or uncertain geometry.
 ///
-/// Certified linear profiles keep their exact boundary coordinates. Other
-/// representations use the existing finite sampled-profile path, with no
-/// claim that predicate certainty certifies source-curve fidelity.
+/// Exact line members and native curve endpoints keep their coordinates in
+/// mixed profiles. Nonlinear interiors are sampled with explicit construction
+/// evidence, with no claim that predicate certainty certifies source fidelity.
 pub fn try_extrude(
     region: &CurveRegion2,
     height: Real,
@@ -2654,21 +2628,25 @@ fn emit_section_walls(
 /// slices, not the analytic solid of revolution.
 ///
 /// A vertex on the axis is one position shared by every slice. A full turn
-/// takes a point at radius `-x` around the same circle as the point at `x`.
-/// When the line profile has vertices on both sides of the axis, a full turn
-/// therefore revolves its fold: the material at nonnegative radius united, by
-/// exact region operations, with the mirror image of the material at
-/// nonpositive radius. A profile crossing the axis is admitted, and opposite
-/// loops whose mirror images overlap are revolved once rather than as
-/// overlapping copies.
+/// preserves each signed radius's authored meridian. Material on both sides
+/// of the axis is split there and its swept polyhedra are united exactly,
+/// so overlapping pieces have winding one. With an even segment count a half
+/// turn permutes the angular lattice; the equivalent planar radial fold is
+/// used instead. With an odd count the negative-radius lattice has a distinct
+/// phase, which is retained even when unrelated positive material is added.
 ///
 /// For a partial turn each profile loop must lie on one side of the axis,
 /// which it may touch. Loops on opposite sides are revolved separately
 /// through the opposite angular ranges; beyond a half turn those ranges
 /// overlap, and where the loops' mirror images also overlap the result is a
 /// closed mesh with winding number two there, not an embedded solid. A loop
-/// crossing the axis in a partial turn, a zero angle or one beyond a full
-/// turn returns [`ValidationError::InvalidArguments`].
+/// crossing the axis in a partial turn or a zero angle returns
+/// [`ValidationError::InvalidArguments`]. Exact integer multiples of a full
+/// turn cover the same sampled set once, with `segments` slices and the
+/// authored turn direction. Oversized noninteger sweeps (such as 450 degrees)
+/// remain invalid: neither saturation nor modulo reduction is implicit. If
+/// integrality cannot be proved, the result is a typed undecided predicate.
+/// Use [`revolve_from`] to choose the authored starting angle explicitly.
 pub fn revolve(
     region: &CurveRegion2,
     angle_degrees: Real,
@@ -2697,6 +2675,19 @@ pub fn revolve(
     let full = match (magnitude_order, sign) {
         (Ordering::Less, hyperlimit::Sign::Positive | hyperlimit::Sign::Negative) => false,
         (Ordering::Equal, hyperlimit::Sign::Positive | hyperlimit::Sign::Negative) => true,
+        (Ordering::Greater, hyperlimit::Sign::Positive | hyperlimit::Sign::Negative) => {
+            let turns = (angle_degrees.clone() / Real::from(360_u16))?;
+            match turns.exact_rational() {
+                Some(turns) if turns.is_integer() => true,
+                Some(_) => return Err(ValidationError::InvalidArguments),
+                None => {
+                    return Err(ValidationError::PredicateUndecided {
+                        predicate: "revolution full-turn count",
+                        policy: decisions.predicate_policy(),
+                    });
+                },
+            }
+        },
         _ => return Err(ValidationError::InvalidArguments),
     };
     if full && segments < 3 {
@@ -2712,6 +2703,15 @@ pub fn revolve(
             .checked_add(1)
             .ok_or(ValidationError::InvalidArguments)?
     };
+    let angle_degrees = if magnitude_order == Ordering::Greater {
+        Real::from(if sign == hyperlimit::Sign::Positive {
+            360
+        } else {
+            -360
+        })
+    } else {
+        angle_degrees
+    };
     let samples = (0..sample_count)
         .map(|index| {
             let fraction = (Real::from(index as u64) / Real::from(segments as u64)).ok()?;
@@ -2721,13 +2721,6 @@ pub fn revolve(
         })
         .collect::<Option<Vec<_>>>()
         .ok_or(ValidationError::InvalidArguments)?;
-    let map = |point: &Point2, sample: &(Real, Real)| {
-        Point3::new(
-            point.x().clone() * sample.1.clone(),
-            point.y().clone(),
-            point.x().clone() * sample.0.clone(),
-        )
-    };
     let mut profiles = try_modeling_profiles_with(region, &decisions)?;
     let mut radii = profile_radial_signs(&profiles, &decisions)?;
     let has_radial_sign = |radii: &[Vec<Vec<hyperreal::RealSign>>], sign| {
@@ -2737,16 +2730,84 @@ pub fn revolve(
         && has_radial_sign(&radii, hyperreal::RealSign::Negative)
         && has_radial_sign(&radii, hyperreal::RealSign::Positive)
     {
+        if !segments.is_multiple_of(2) {
+            let halves = split_at_revolution_axis(profiles, &decisions)?;
+            let mut meshes = Vec::with_capacity(2);
+            for half in &halves {
+                let profiles = try_modeling_profiles_with(half, &decisions)?;
+                let radii = profile_radial_signs(&profiles, &decisions)?;
+                meshes.push(revolve_profiles(
+                    &profiles, &radii, &samples, full, sign, &decisions,
+                )?);
+            }
+            let united = decisions.consume_geometry(solid::boolean_with_context(
+                &meshes[0],
+                &meshes[1],
+                hypermesh::BooleanOp::Union,
+                context,
+            )?);
+            let mesh = validate_closed_mesh(united, region.is_empty(), &decisions)?;
+            return Ok(decisions.finish_mesh(mesh));
+        }
         profiles = fold_across_revolution_axis(profiles, &decisions)?;
         radii = profile_radial_signs(&profiles, &decisions)?;
     }
+    let mesh = revolve_profiles(&profiles, &radii, &samples, full, sign, &decisions)?;
+    Ok(decisions.finish_mesh(mesh))
+}
+
+/// Segmented revolution with an explicit authored meridian in degrees.
+///
+/// The placement is `(x cos(start + t), y, x sin(start + t))`; full-turn
+/// coverage is canonicalized by [`revolve`] without discarding `start_degrees`.
+/// Rotating the completed mesh transports its exact geometry and construction
+/// qualifications, and combines both operations' certainty receipts. This API
+/// returns a segmented mesh, not a parameterized multi-turn surface.
+pub fn revolve_from(
+    region: &CurveRegion2,
+    start_degrees: Real,
+    angle_degrees: Real,
+    segments: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let swept = revolve(region, angle_degrees, segments, context)?;
+    if start_degrees == Real::zero() {
+        return Ok(swept);
+    }
+    let radians = (-start_degrees * Real::pi() / Real::from(180_u16))?;
+    swept.and_then(|mesh| {
+        solid::try_transform_with_context(&mesh, &Matrix4::rotation_y(radians), context)
+    })
+}
+
+/// Emits already classified, one-sided linear profiles on the authored lattice.
+fn revolve_profiles(
+    profiles: &[(Contour2, Vec<Contour2>)],
+    radii: &[Vec<Vec<hyperreal::RealSign>>],
+    samples: &[(Real, Real)],
+    full: bool,
+    sign: hyperlimit::Sign,
+    decisions: &GeometryDecisions,
+) -> Result<TriangleMesh, ValidationError> {
+    let segments = if full {
+        samples.len()
+    } else {
+        samples.len() - 1
+    };
+    let map = |point: &Point2, sample: &(Real, Real)| {
+        Point3::new(
+            point.x().clone() * sample.1.clone(),
+            point.y().clone(),
+            point.x().clone() * sample.0.clone(),
+        )
+    };
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
-    for ((material, holes), ring_radii) in profiles.iter().zip(&radii) {
+    for ((material, holes), ring_radii) in profiles.iter().zip(radii) {
         // The material loop comes first; its holes lie on the same side.
         let mut material_radial_positive = true;
         for (index, ((ring, reverse_ring), radial)) in
-            oriented_profile_rings(material, holes, &decisions)?
+            oriented_profile_rings(material, holes, decisions)?
                 .into_iter()
                 .zip(ring_radii)
                 .enumerate()
@@ -2841,17 +2902,16 @@ pub fn revolve(
                 &mut triangles,
                 (material, holes),
                 &[(0, reverse_start), (samples.len() - 1, !reverse_start)],
-                &decisions,
+                decisions,
                 &|point, sample| Ok(map(point, &samples[sample])),
             )?;
         }
     }
-    let mesh = validate_closed_mesh(
+    validate_closed_mesh(
         TriangleMesh::new(positions, triangles),
-        region.is_empty(),
-        &decisions,
-    )?;
-    Ok(decisions.finish_mesh(mesh))
+        profiles.is_empty(),
+        decisions,
+    )
 }
 
 /// Radial sign of every ring vertex, by profile and by ring in the order of
@@ -2883,17 +2943,34 @@ fn profile_radial_signs(
 /// nonnegative radius united with the mirror image of their part at
 /// nonpositive radius.
 ///
-/// A full turn takes a point at radius `-x` around the same circle as the
-/// point at radius `x`, so the profiles and their fold have the same solid of
-/// revolution. Both halves are cut by boxes outside the profiles' bounds, and
-/// the cuts, the mirror and the union are exact line-region operations under
-/// the selected policy. Folding the line profiles, rather than a curved
-/// source, makes every cut point a rational expression in their coordinates,
-/// never a root on a curve.
+/// This preserves the sampled solid only for an even angular lattice, where
+/// changing radial sign permutes its vertices by half a turn.
 fn fold_across_revolution_axis(
     profiles: Vec<(Contour2, Vec<Contour2>)>,
     decisions: &GeometryDecisions,
 ) -> Result<Vec<(Contour2, Vec<Contour2>)>, ValidationError> {
+    let [positive, negative] = split_at_revolution_axis(profiles, decisions)?;
+    let folded = decisions.exact_curve(|| -> Result<CurveRegion2, ValidationError> {
+        let mirrored = negative.transform_affine(
+            &-Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+            &Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+        )?;
+        Ok(positive.boolean_region(&mirrored, BooleanOp::Union)?)
+    })?;
+    try_modeling_profiles_with(&folded, decisions)
+}
+
+/// Cuts sampled or exact linear profiles at the axis without changing their
+/// signed radial coordinates. Every new point is a rational expression in the
+/// input line coordinates, rather than a newly sampled point on a curve.
+fn split_at_revolution_axis(
+    profiles: Vec<(Contour2, Vec<Contour2>)>,
+    decisions: &GeometryDecisions,
+) -> Result<[CurveRegion2; 2], ValidationError> {
     let (materials, holes): (Vec<_>, Vec<_>) = profiles.into_iter().unzip();
     let region = decisions.exact_curve(|| {
         CurveRegion2::try_from_native_contours(
@@ -2902,7 +2979,7 @@ fn fold_across_revolution_axis(
         )
     })?;
     let Some(bounds) = decisions.exact_curve(|| region.bounds())? else {
-        return Ok(Vec::new());
+        return Ok([empty(), empty()]);
     };
     let low = bounds.min_y().clone() - Real::one();
     let high = bounds.max_y().clone() + Real::one();
@@ -2915,23 +2992,13 @@ fn fold_across_revolution_axis(
         ])?;
         Ok(CurveRegion2::try_from_native_material_contours(vec![ring])?)
     };
-    let folded = decisions.exact_curve(|| -> Result<CurveRegion2, ValidationError> {
+    decisions.exact_curve(|| -> Result<[CurveRegion2; 2], ValidationError> {
         let positive = half(Real::zero(), bounds.max_x().clone() + Real::one())?;
         let negative = half(bounds.min_x().clone() - Real::one(), Real::zero())?;
         let positive = region.boolean_region(&positive, BooleanOp::Intersection)?;
-        let mirrored = region
-            .boolean_region(&negative, BooleanOp::Intersection)?
-            .transform_affine(
-                &-Real::one(),
-                &Real::zero(),
-                &Real::zero(),
-                &Real::one(),
-                &Real::zero(),
-                &Real::zero(),
-            )?;
-        Ok(positive.boolean_region(&mirrored, BooleanOp::Union)?)
-    })?;
-    try_modeling_profiles_with(&folded, decisions)
+        let negative = region.boolean_region(&negative, BooleanOp::Intersection)?;
+        Ok([positive, negative])
+    })
 }
 
 /// Names the sweep construction step whose scalar arithmetic failed.

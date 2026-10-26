@@ -32,6 +32,14 @@ remain an open migration target.
 
 ## Error types
 
+- **Retained curve policy.** `hypercurve::CurveError` gains
+  `IncompatiblePredicatePolicy`; exhaustive matches must handle it. Retained
+  chord and selected-fiber replay validators now distinguish policy mismatch
+  from malformed topology. Principal operations expose it as
+  `ExactCurveError::Blocked` with reason `Predicate`; CSGRS classifies both
+  that blocker and the low-level cause as `ValidationErrorKind::Undecided`.
+  Callers may retry under an explicitly permitted policy. Truly malformed
+  loops remain invalid.
 - **Scalar adapter Booleans.** `ScalarMesh::{union, difference, intersection,
   xor}` and their context variants report
   `AdapterError::Construction(ValidationError::Mesh(...))` instead of the
@@ -125,20 +133,43 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   loop orientation in any of these operations, extrusion included, reports
   `PredicateUndecided` for `"profile side-ring signed area"`; extrusion
   reported `"extrusion side-ring signed area"`.
-- **Full revolutions across the axis.** A full turn of `curve::revolve`
-  whose line profile has vertices on both sides of the axis revolves the
-  profile's fold, the material at nonnegative radius united with the mirror
-  image of the material at nonpositive radius. Loops on opposite sides
-  were revolved separately before. Where their mirror images overlap, the
-  result was a closed mesh with winding number two there, or a `Geometry`
-  error when the copies coincided; it is now one embedded polyhedron with
-  the union's volume. Where they do not overlap, the represented set is the
-  same, but the vertices at negative radius are now placed as their mirror
-  images: for an odd segment count the polyhedron differs (its slices are
-  no longer offset by half a turn), and for an even count the positions are
-  equal in value but rows, exported coordinates and checksums can change.
-  Profiles on one side of the axis, and every partial turn, keep their
-  rows.
+- **Mixed modeling profiles.** A curved sibling or hole no longer quantizes
+  all line geometry. Triangulation, extrusion, sweep, twisted extrusion and
+  revolution select exact or sampled boundaries per classified profile.
+  Within sampled profiles, native line spans and representable curve endpoints
+  stay exact, with one coordinate authority at each certified join. Nonlinear
+  interiors and endpoints without native coordinates still use the existing
+  finite sampler at a `1e-3` chord-error request. Sampling is not an analytic
+  fidelity or topology certificate; the whole mesh continues to report
+  `source_sampled()` and `coordinates_projected()`. Formerly rounded native
+  coordinates, mesh rows, serialized sizes and checksums can change. The
+  explicit `try_finite_profiles` export still quantizes every coordinate.
+- **Algebraic Bézier samples.** Finite export and sampled modeling now refine
+  retained parameter intervals until their source control enclosure meets the
+  projection quality request. Coarse isolator midpoints no longer substitute
+  for cut endpoints. Sample coordinates, counts, sizes and checksums can
+  change; this remains a sampled representation without a new certified
+  topology or source-fidelity bound.
+- **Full revolutions across the axis.** The earlier radial-fold change
+  replaced overlapping opposite-side bodies with their union, fixing winding
+  two. R01 preserves that regularization while correcting the odd-segment
+  phase: both signed halves now keep the placement
+  `(x cos(t), y, x sin(t))` and their polyhedra are united by Hypermesh.
+  Adding a distant positive component no longer rotates a negative component
+  by half a turn. Mixed-sign full turns with odd segment counts intentionally
+  change geometry, triangle rows, output sizes and checksums from the folded
+  version. Even lattices still use the equivalent planar fold. One-sided
+  profiles and partial sweeps retain their previous placement.
+- **Revolution coverage and start.** Exact integer multiples of 360 degrees
+  now cover one full turn with the requested number of segments and the
+  authored direction; 720 and 1080 no longer fail. Oversized noninteger
+  sweeps such as 450 remain invalid, preserving the previous domain instead
+  of silently saturating or applying modulo reduction. An unproved integral
+  turn count reports `PredicateUndecided`. `curve::revolve_from` selects an
+  explicit starting meridian (degrees); `revolve` continues to start at zero.
+  Mesh coverage does not represent the traversal multiplicity of a
+  parameterized multi-turn surface. These are CSGRS semantics, without a
+  claim of matching every OpenSCAD version or call default.
 - **Imported face triangulation.** OBJ, DXF and VRML import project each
   planar polygon face onto two coordinates before triangulating it. The
   dropped coordinate is still the largest normal component whenever strict
@@ -190,6 +221,20 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   of those coordinates change; their values do not. Regenerate pinned
   Boolean rows, counts and checksums.
 
+## Shared reciprocal expression artifacts
+
+The R19 exact-completion change may construct an exact `One` computable
+expression for `x * inverse(x)` when both operands share the same
+retained nonzero value and a bounded audit can preserve every cancellation
+handle. The exact mathematical value and certainty are unchanged, but serialized
+expressions of newly constructed products can differ. This is intentional
+representation migration accompanying an exact-completion fix. Regenerate
+fixtures that pin those newly constructed expression bytes.
+The wire schema is unchanged; cold import preserves the input expression, and
+invalid or unproved children are still checked before cancellation. Distinct
+nodes, conflicting handles and oversized audit graphs keep the existing path.
+See the [R19 evidence and cost disclosure](../crates/hyperreal/PERFORMANCE.md#cold-domain-continuation-and-resource-audit-r19-2026-10-25).
+
 ## Cargo features
 
 - **No dependency-named features.** Optional dependencies no longer create
@@ -210,3 +255,13 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   and `image::load_from_memory` report an unsupported format at run time
   rather than failing to compile. DXF thumbnail reading under `dxf-io` is
   unaffected: the `dxf` crate requests the BMP codec it uses itself.
+
+## Successive-operation research records (2026-10-25)
+
+`SUCCESSIVE_OPERATIONS_RAW` now requires a new path and syncs each completed
+row before the next step. The 18 TSV columns are unchanged; metadata comments
+now contain an embedded build record and a final completion marker. Direct
+Cargo builds identify themselves as unattributed. Use
+[`scripts/successive-operations.py`](../scripts/successive-operations.py) for
+source/compiler attribution, actual executable hashes and interruption status.
+Historical timing records retain their original, weaker attribution.

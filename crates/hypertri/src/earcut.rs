@@ -149,6 +149,7 @@ fn clip_ring_around_apex(
                 &ring,
                 &convex,
                 cursor,
+                winding,
                 &mut diagnostics,
             )? {
                 clipped = Some(cursor);
@@ -724,13 +725,20 @@ fn find_visible_bridge(
     hole: &[usize],
     holes: &[Vec<usize>],
 ) -> Result<Bridge> {
-    let hole_positions = positions_by_xy(evaluator, vertices, hole)?;
+    let hole_positions = prioritize_positions_by_xy(evaluator, vertices, hole)?;
+    // A failed visibility proof does not prove this candidate invisible. Try
+    // the remaining witnesses, retaining uncertainty if none can be proved.
+    let mut undecided = None;
 
     for hole_pos in hole_positions {
-        let boundary_positions =
-            positions_by_distance_then_xy(evaluator, vertices, boundary, hole[hole_pos])?;
+        let boundary_positions = prioritize_positions_by_distance_then_xy(
+            evaluator,
+            vertices,
+            boundary,
+            hole[hole_pos],
+        )?;
         for &boundary_pos in &boundary_positions {
-            if bridge_is_visible(
+            match bridge_is_visible(
                 evaluator,
                 vertices,
                 boundary,
@@ -738,18 +746,25 @@ fn find_visible_bridge(
                 holes,
                 boundary_pos,
                 hole_pos,
-            )? {
-                return Ok(Bridge {
-                    boundary_pos,
-                    hole_pos,
-                });
+            ) {
+                Ok(true) => {
+                    return Ok(Bridge {
+                        boundary_pos,
+                        hole_pos,
+                    });
+                }
+                Ok(false) => {}
+                Err(error @ Error::PredicateUndecided { .. }) => {
+                    undecided.get_or_insert(error);
+                }
+                Err(error) => return Err(error),
             }
         }
     }
 
-    Err(Error::InvalidInput {
+    Err(undecided.unwrap_or(Error::InvalidInput {
         reason: "hole cannot be connected by a visible bridge",
-    })
+    }))
 }
 
 fn bridge_is_visible(
@@ -851,25 +866,26 @@ fn splice_hole(
     merged
 }
 
-fn positions_by_xy(
+fn prioritize_positions_by_xy(
     evaluator: &PredicateEvaluator,
     vertices: &[Point2],
     ring: &[usize],
 ) -> Result<Vec<usize>> {
-    // Structural-dispatch note: this insertion sort is intentionally simple for
-    // the first exact port. If polygon preprocessing retains axis-aligned
-    // bounding boxes and exact dyadic/integer coordinate tags, hole-bridge
-    // candidate ordering can switch to bucketed or radix-like keys while still
-    // using exact comparisons to break ties.
+    // This is only a deterministic search priority, not a topology witness.
+    // An unresolved comparison leaves the candidate available without claiming
+    // an ordering or equality. Every chosen bridge still passes all visibility
+    // predicates, and fully decided comparisons preserve the previous order.
     let mut positions = Vec::with_capacity(ring.len());
     for position in 0..ring.len() {
         let mut insert_at = positions.len();
         for (candidate_at, &candidate) in positions.iter().enumerate() {
-            if compare_ring_positions(evaluator, vertices, ring, position, candidate)?
-                == Ordering::Less
-            {
-                insert_at = candidate_at;
-                break;
+            match compare_ring_positions(evaluator, vertices, ring, position, candidate) {
+                Ok(Ordering::Less) => {
+                    insert_at = candidate_at;
+                    break;
+                }
+                Ok(_) | Err(Error::PredicateUndecided { .. }) => {}
+                Err(error) => return Err(error),
             }
         }
         positions.insert(insert_at, position);
@@ -878,7 +894,9 @@ fn positions_by_xy(
     Ok(positions)
 }
 
-fn positions_by_distance_then_xy(
+// As with the hole priorities, unknown distances do not remove candidates or
+// establish a geometric relation. Visibility remains mandatory.
+fn prioritize_positions_by_distance_then_xy(
     evaluator: &PredicateEvaluator,
     vertices: &[Point2],
     ring: &[usize],
@@ -888,11 +906,13 @@ fn positions_by_distance_then_xy(
     for position in 0..ring.len() {
         let mut insert_at = positions.len();
         for (candidate_at, &candidate) in positions.iter().enumerate() {
-            if compare_distance_then_xy(evaluator, vertices, from, ring, position, candidate)?
-                == Ordering::Less
-            {
-                insert_at = candidate_at;
-                break;
+            match compare_distance_then_xy(evaluator, vertices, from, ring, position, candidate) {
+                Ok(Ordering::Less) => {
+                    insert_at = candidate_at;
+                    break;
+                }
+                Ok(_) | Err(Error::PredicateUndecided { .. }) => {}
+                Err(error) => return Err(error),
             }
         }
         positions.insert(insert_at, position);
@@ -970,11 +990,20 @@ fn filter_ring(
 
             let duplicate = points_equal(evaluator, &vertices[curr], &vertices[next])?
                 || points_equal(evaluator, &vertices[prev], &vertices[curr])?;
-            let collinear =
-                predicates::orient2(evaluator, &vertices[prev], &vertices[curr], &vertices[next])?
-                    == Sign::Zero;
+            // Collinearity only permits an optional simplification here.
+            // If it is unresolved, keep the vertex for certified ear search.
+            let certified_collinear = match predicates::orient2(
+                evaluator,
+                &vertices[prev],
+                &vertices[curr],
+                &vertices[next],
+            ) {
+                Ok(sign) => sign == Sign::Zero,
+                Err(Error::PredicateUndecided { .. }) => false,
+                Err(error) => return Err(error),
+            };
 
-            if duplicate || (collinear && ring.len() > 3) {
+            if duplicate || (certified_collinear && ring.len() > 3) {
                 ring.remove(i);
                 changed = true;
             } else {
@@ -1018,6 +1047,7 @@ fn clip_ring_with_splits(
     let mut triangles = Vec::with_capacity((ring.len().saturating_sub(2)) * 3);
     let mut cursor = 0;
     let mut misses = 0;
+    let mut undecided = None;
     let mut guard = ring.len() * ring.len() * 4 + 1;
     let mut prepared_convex =
         prepare_local_convexity(evaluator, vertices, &ring, winding, diagnostics)?;
@@ -1049,14 +1079,26 @@ fn clip_ring_with_splits(
         }
         guard -= 1;
 
-        if is_ear(
+        // Only a proved ear may be clipped. An unresolved candidate stays in
+        // the ring while we try the other ears, and remains a typed failure if
+        // a complete pass cannot make progress.
+        let ear = match is_ear(
             evaluator,
             vertices,
             &ring,
             &prepared_convex,
             cursor,
+            winding,
             diagnostics,
-        )? {
+        ) {
+            Ok(value) => value,
+            Err(error @ Error::PredicateUndecided { .. }) => {
+                undecided.get_or_insert(error);
+                false
+            }
+            Err(error) => return Err(error),
+        };
+        if ear {
             let len = ring.len();
             let prev = ring[(cursor + len - 1) % len];
             let curr = ring[cursor];
@@ -1078,6 +1120,8 @@ fn clip_ring_with_splits(
                 diagnostics,
             )?;
             misses = 0;
+            // Changed neighbors may make a previously unresolved ear provable.
+            undecided = None;
             continue;
         }
 
@@ -1085,6 +1129,9 @@ fn clip_ring_with_splits(
         misses += 1;
 
         if misses > ring.len() {
+            if let Some(error) = undecided.take() {
+                return Err(error);
+            }
             let previous_len = ring.len();
             ring = filter_ring(evaluator, vertices, ring)?;
             if ring.len() < 3 {
@@ -1383,8 +1430,9 @@ fn is_ear(
     evaluator: &PredicateEvaluator,
     vertices: &[Point2],
     ring: &[usize],
-    prepared_convex: &[bool],
+    prepared_convex: &[LocalConvexity],
     cursor: usize,
+    winding: Sign,
     diagnostics: &mut EarcutDiagnostics,
 ) -> Result<bool> {
     diagnostics.ear_tests += 1;
@@ -1402,8 +1450,18 @@ fn is_ear(
     // candidate triangle AABB. Both are certified facts rather than
     // floating-point heuristics.
     debug_assert_eq!(ring.len(), prepared_convex.len());
-    if !prepared_convex[cursor] {
-        return Ok(false);
+    match prepared_convex[cursor] {
+        LocalConvexity::Convex => {}
+        LocalConvexity::NonConvex => return Ok(false),
+        LocalConvexity::Unresolved => {
+            // Preparation did not establish this turn. Demand its proof only
+            // when this vertex is an ear candidate; warming may now help.
+            if predicates::orient2(evaluator, &vertices[prev], &vertices[curr], &vertices[next])?
+                != winding
+            {
+                return Ok(false);
+            }
+        }
     }
 
     for (candidate_cursor, &candidate) in ring.iter().enumerate() {
@@ -1413,7 +1471,7 @@ fn is_ear(
 
         diagnostics.containment_candidates += 1;
         diagnostics.containment_prepared_reflex_lookups += 1;
-        if prepared_convex[candidate_cursor] {
+        if matches!(prepared_convex[candidate_cursor], LocalConvexity::Convex) {
             diagnostics.containment_convex_rejects += 1;
             continue;
         }
@@ -1443,16 +1501,25 @@ fn is_ear(
     Ok(true)
 }
 
+// An unresolved local turn has no convexity certificate. It cannot authorize
+// clipping or the convex-vertex containment shortcut, but another ear may work.
+#[derive(Clone, Copy, Debug)]
+enum LocalConvexity {
+    Convex,
+    NonConvex,
+    Unresolved,
+}
+
 fn prepare_local_convexity(
     evaluator: &PredicateEvaluator,
     vertices: &[Point2],
     ring: &[usize],
     winding: Sign,
     diagnostics: &mut EarcutDiagnostics,
-) -> Result<Vec<bool>> {
+) -> Result<Vec<LocalConvexity>> {
     diagnostics.prepared_reflex_rebuilds += 1;
     (0..ring.len())
-        .map(|cursor| local_vertex_is_strictly_convex(evaluator, vertices, ring, cursor, winding))
+        .map(|cursor| local_vertex_convexity(evaluator, vertices, ring, cursor, winding))
         .collect()
 }
 
@@ -1460,7 +1527,7 @@ fn update_prepared_convexity_after_clip(
     evaluator: &PredicateEvaluator,
     vertices: &[Point2],
     ring: &[usize],
-    prepared_convex: &mut [bool],
+    prepared_convex: &mut [LocalConvexity],
     cursor: usize,
     winding: Sign,
     diagnostics: &mut EarcutDiagnostics,
@@ -1470,38 +1537,38 @@ fn update_prepared_convexity_after_clip(
     }
     let next = cursor % ring.len();
     let prev = (next + ring.len() - 1) % ring.len();
-    prepared_convex[prev] =
-        local_vertex_is_strictly_convex(evaluator, vertices, ring, prev, winding)?;
+    prepared_convex[prev] = local_vertex_convexity(evaluator, vertices, ring, prev, winding)?;
     diagnostics.prepared_reflex_updates += 1;
     if next != prev {
-        prepared_convex[next] =
-            local_vertex_is_strictly_convex(evaluator, vertices, ring, next, winding)?;
+        prepared_convex[next] = local_vertex_convexity(evaluator, vertices, ring, next, winding)?;
         diagnostics.prepared_reflex_updates += 1;
     }
     Ok(())
 }
 
-fn local_vertex_is_strictly_convex(
+fn local_vertex_convexity(
     evaluator: &PredicateEvaluator,
     vertices: &[Point2],
     ring: &[usize],
     cursor: usize,
     winding: Sign,
-) -> Result<bool> {
-    // Standard ear-clipping implementations only need to test reflex vertices
-    // for containment in a candidate ear. Hypertri prepares that local
-    // convex/reflex bit once per active ring state, then updates only the two
-    // vertices whose neighborhoods changed after clipping. Collinear vertices
-    // remain non-convex here so degeneracies still flow to AABB and containment
-    // predicates.
+) -> Result<LocalConvexity> {
+    // Prepare once per active ring, then update only changed neighborhoods.
+    // Only a decided convex turn can bypass containment in an ear candidate;
+    // collinear and unresolved turns still require containment predicates.
     let len = ring.len();
     let prev = ring[(cursor + len - 1) % len];
     let curr = ring[cursor];
     let next = ring[(cursor + 1) % len];
-    Ok(
-        predicates::orient2(evaluator, &vertices[prev], &vertices[curr], &vertices[next])?
-            == winding,
-    )
+    match predicates::orient2(evaluator, &vertices[prev], &vertices[curr], &vertices[next]) {
+        Ok(sign) => Ok(if sign == winding {
+            LocalConvexity::Convex
+        } else {
+            LocalConvexity::NonConvex
+        }),
+        Err(Error::PredicateUndecided { .. }) => Ok(LocalConvexity::Unresolved),
+        Err(error) => Err(error),
+    }
 }
 
 fn point_may_be_in_triangle_bbox(a: &Point2, b: &Point2, c: &Point2, point: &Point2) -> bool {
@@ -1663,6 +1730,88 @@ mod tests {
 
         assert_eq!(triangles.len(), 24);
         assert!(triangles.iter().all(|&index| index < vertices.len()));
+    }
+
+    #[test]
+    fn unresolved_bridge_priority_preserves_exact_triangulation() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero =
+            crate::test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
+        let hole = [
+            Point2::new(zero.clone(), Real::zero()),
+            exact_point(0, 2),
+            exact_point(2, 0),
+        ];
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        assert!(matches!(
+            hyperlimit::compare_point2_lexicographic(
+                &hole[0],
+                &hole[1],
+                context.predicate_policy()
+            ),
+            hyperlimit::PredicateOutcome::Unknown { .. }
+        ));
+        for shift in 0..3 {
+            for reversed in [false, true] {
+                let mut vertices = vec![
+                    exact_point(-10, -10),
+                    exact_point(10, -10),
+                    exact_point(0, 12),
+                ];
+                let mut ring = (0..3)
+                    .map(|i| hole[(i + shift) % 3].clone())
+                    .collect::<Vec<_>>();
+                if reversed {
+                    ring.reverse();
+                }
+                vertices.extend(ring);
+                for _ in 0..2 {
+                    let outcome = triangulate(&context, &vertices, &[3]).unwrap();
+                    assert_eq!(outcome.certainty, crate::TriangulationCertainty::Certified);
+                    let rings = rings_from_hole_indices(&vertices, &[3]).unwrap();
+                    assert!(
+                        triangles_match_input_boundary(
+                            &PredicateEvaluator::new(&context),
+                            &vertices,
+                            &rings,
+                            &outcome.value
+                        )
+                        .unwrap()
+                    );
+                    let twice_area =
+                        outcome
+                            .value
+                            .as_chunks::<3>()
+                            .0
+                            .iter()
+                            .fold(Real::zero(), |area, tri| {
+                                let [a, b, c] = [tri[0], tri[1], tri[2]].map(|i| &vertices[i]);
+                                assert_eq!(
+                                    hyperlimit::orient2(a, b, c, context.predicate_policy())
+                                        .value(),
+                                    Some(hyperlimit::Sign::Positive)
+                                );
+                                area + Real::diff_of_products(
+                                    &(&b.x - &a.x),
+                                    &(&c.y - &a.y),
+                                    &(&b.y - &a.y),
+                                    &(&c.x - &a.x),
+                                )
+                            });
+                    // Outer twice-area is 440; the hole's is 4 - 2*zero.
+                    assert_eq!(
+                        hyperlimit::compare_reals(
+                            &twice_area,
+                            &(Real::from(436) + Real::from(2) * &zero),
+                            context.predicate_policy()
+                        )
+                        .value(),
+                        Some(Ordering::Equal)
+                    );
+                }
+            }
+        }
     }
 
     #[test]

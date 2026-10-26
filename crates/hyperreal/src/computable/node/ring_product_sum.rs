@@ -27,7 +27,7 @@ impl<'a> RingRecognition<'a> {
         Some(())
     }
 
-    fn collect_product_factors(
+    fn collect_product_factors<const EXTENDED_RECOVERY: bool>(
         &mut self,
         value: &'a Computable,
         depth: usize,
@@ -50,23 +50,23 @@ impl<'a> RingRecognition<'a> {
             self.nodes_left = self.nodes_left.checked_sub(1)?;
             return match form {
                 Approximation::Multiply(a, b) => {
-                    self.collect_product_factors(a, depth - 1, product)?;
-                    self.collect_product_factors(b, depth - 1, product)
+                    self.collect_product_factors::<EXTENDED_RECOVERY>(a, depth - 1, product)?;
+                    self.collect_product_factors::<EXTENDED_RECOVERY>(b, depth - 1, product)
                 }
                 Approximation::Square(child) => {
-                    self.collect_product_factors(child, depth - 1, product)?;
-                    self.collect_product_factors(child, depth - 1, product)
+                    self.collect_product_factors::<EXTENDED_RECOVERY>(child, depth - 1, product)?;
+                    self.collect_product_factors::<EXTENDED_RECOVERY>(child, depth - 1, product)
                 }
                 Approximation::Negate(child) => {
                     self.scale_product(product, &Rational::from(-1))?;
-                    self.collect_product_factors(child, depth - 1, product)
+                    self.collect_product_factors::<EXTENDED_RECOVERY>(child, depth - 1, product)
                 }
                 Approximation::Offset(child, shift) => {
                     if u64::from(shift.unsigned_abs()) >= Self::MAX_COEFFICIENT_BITS {
                         return None;
                     }
                     self.scale_product(product, &Computable::power_of_two_rational(*shift))?;
-                    self.collect_product_factors(child, depth - 1, product)
+                    self.collect_product_factors::<EXTENDED_RECOVERY>(child, depth - 1, product)
                 }
                 _ => unreachable!("only product wrappers are peeled"),
             };
@@ -92,11 +92,19 @@ impl<'a> RingRecognition<'a> {
             degree = degree.max(term.len());
         }
         product.degree += degree;
-        if product.degree > self.degree_limit() {
+        if EXTENDED_RECOVERY {
+            // Used only by the final retry, after the original extended
+            // expansion and recoveries declined. Bound retained factors,
+            // allowing common factors to cancel before their degrees add.
+            // Every factor and any expanded residual keep the usual limits.
+            if product.factors.len() == Self::EXTENDED_DEGREE {
+                return None;
+            }
+        } else if product.degree > self.degree_limit() {
             return None;
         }
-        // Every retained nonconstant factor has degree at least one, so
-        // each product retains at most degree_limit() bounded polynomials.
+        // Both modes retain at most twelve bounded factor polynomials; the
+        // ordinary mode also bounds their total degree as before.
         product.factors.push(polynomial);
         Some(())
     }
@@ -109,7 +117,7 @@ impl<'a> RingRecognition<'a> {
         Some(result)
     }
 
-    fn collect_sum_products(
+    fn collect_sum_products<const EXTENDED_RECOVERY: bool>(
         &mut self,
         value: &'a Computable,
         depth: usize,
@@ -149,26 +157,51 @@ impl<'a> RingRecognition<'a> {
             self.nodes_left = self.nodes_left.checked_sub(1)?;
             match form {
                 Approximation::Add(a, b) => {
-                    self.collect_sum_products(a, depth - 1, product.scale.clone(), products)?;
-                    return self.collect_sum_products(b, depth - 1, product.scale, products);
+                    self.collect_sum_products::<EXTENDED_RECOVERY>(
+                        a,
+                        depth - 1,
+                        product.scale.clone(),
+                        products,
+                    )?;
+                    return self.collect_sum_products::<EXTENDED_RECOVERY>(
+                        b,
+                        depth - 1,
+                        product.scale,
+                        products,
+                    );
                 }
                 Approximation::Negate(child) => {
                     self.scale_product(&mut product, &Rational::from(-1))?;
-                    return self.collect_sum_products(child, depth - 1, product.scale, products);
+                    return self.collect_sum_products::<EXTENDED_RECOVERY>(
+                        child,
+                        depth - 1,
+                        product.scale,
+                        products,
+                    );
                 }
                 Approximation::Offset(child, shift) => {
                     if u64::from(shift.unsigned_abs()) >= Self::MAX_COEFFICIENT_BITS {
                         return None;
                     }
                     self.scale_product(&mut product, &Computable::power_of_two_rational(*shift))?;
-                    return self.collect_sum_products(child, depth - 1, product.scale, products);
+                    return self.collect_sum_products::<EXTENDED_RECOVERY>(
+                        child,
+                        depth - 1,
+                        product.scale,
+                        products,
+                    );
                 }
                 _ => {
                     let (coefficient, child) = coefficient?;
                     let coefficient = self.expand_quotient(coefficient, depth - 1)?;
                     let scale = self.project_quotient(&coefficient)?;
                     self.scale_product(&mut product, &scale)?;
-                    return self.collect_sum_products(child, depth - 1, product.scale, products);
+                    return self.collect_sum_products::<EXTENDED_RECOVERY>(
+                        child,
+                        depth - 1,
+                        product.scale,
+                        products,
+                    );
                 }
             }
         }
@@ -177,21 +210,53 @@ impl<'a> RingRecognition<'a> {
         }
         // Only addition and rational scaling are distributed. Products of
         // sums retain their factors; this never builds a Cartesian product.
-        self.collect_product_factors(value, depth, &mut product)?;
+        self.collect_product_factors::<EXTENDED_RECOVERY>(value, depth, &mut product)?;
         products.push(product);
         Some(())
     }
 
-    fn recover_factored_zero(
+    fn recover_factored_zero<const EXTENDED_RECOVERY: bool>(
         &mut self,
         a: &'a Computable,
         b: &'a Computable,
         depth: usize,
     ) -> Option<RingQuotient> {
-        let mut products = Vec::new();
-        // Do not omit a common factor's domain merely because it will cancel.
-        self.collect_sum_products(a, depth, Rational::one(), &mut products)?;
-        self.collect_sum_products(b, depth, Rational::one(), &mut products)?;
+        let distributed = (|| {
+            let mut products = Vec::new();
+            // Do not omit a common factor's domain merely because it will cancel.
+            self.collect_sum_products::<EXTENDED_RECOVERY>(
+                a,
+                depth,
+                Rational::one(),
+                &mut products,
+            )?;
+            self.collect_sum_products::<EXTENDED_RECOVERY>(
+                b,
+                depth,
+                Rational::one(),
+                &mut products,
+            )?;
+            self.cancel_product_sum::<EXTENDED_RECOVERY>(products)
+        })();
+        distributed.or_else(|| {
+            if !EXTENDED_RECOVERY {
+                return None;
+            }
+            // Distribution can hide a shared sum in C*U-C. Try preserving
+            // each summand's Add factors, using the same remaining budget.
+            // Both strategies require a common admitted polynomial factor.
+            let mut left = RingProduct::new();
+            self.collect_product_factors::<true>(a, depth, &mut left)?;
+            let mut right = RingProduct::new();
+            self.collect_product_factors::<true>(b, depth, &mut right)?;
+            self.cancel_product_sum::<true>(vec![left, right])
+        })
+    }
+
+    fn cancel_product_sum<const EXTENDED_RECOVERY: bool>(
+        &mut self,
+        mut products: Vec<RingProduct>,
+    ) -> Option<RingQuotient> {
         let (first, others) = products.split_first_mut()?;
         let mut common = false;
         let mut index = 0;
@@ -229,8 +294,14 @@ impl<'a> RingRecognition<'a> {
             let term = self.expand_product_residual(product)?;
             residual = self.add(residual, term)?;
         }
-        // C * 0 = 0 needs no nonzero assumption about C. A nonzero residual
-        // supplies no proof of the original large product and is declined.
+        // The final retry may prove the smaller residual zero using the
+        // already registered unit-circle identities. It uses only the work
+        // remaining from expansion and factoring, with no new arithmetic cap.
+        if EXTENDED_RECOVERY && !residual.terms.is_empty() {
+            residual = self.reduce_unit_circle_pairs(residual)?;
+        }
+        // C * 0 = 0 needs no nonzero assumption about C. A residual not proved
+        // zero supplies no proof of the original large product and is declined.
         residual
             .terms
             .is_empty()

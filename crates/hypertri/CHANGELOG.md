@@ -2,6 +2,18 @@
 
 ## [0.5.0] - Unreleased
 
+- Collinearity acceptance tests reject references from an independently
+  allocated equal point buffer, including mixed references, and preserve
+  strict/qualified policy distinctions. Caller assertions remain trusted;
+  this adds no universal certificate API or runtime change.
+
+- Earcut bridge priorities retain candidates whose coordinate or distance
+  ordering is undecided. Bridge and ear searches try remaining candidates
+  when an optional proof is unresolved, and unresolved collinearity leaves
+  vertices intact. Only decided convexity can bypass containment; every
+  selected bridge and ear still requires its geometric predicates under the
+  caller's context. Exhausting the candidates retains a typed undecided error.
+
 ### Breaking
 
 - Every triangulation and validation entry point now takes a

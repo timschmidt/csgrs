@@ -21,6 +21,56 @@ use chains::{BoxSet, Chain, Outcome, StepRecord, q, r};
 use csgrs::{GeometryCertainty, Real, solid, solid::SolidExt};
 use hyperreal::{CertifiedRealSign, Rational, RealSign};
 
+#[test]
+fn completed_records_are_observable_before_the_next_step_or_failure() {
+    use std::{cell::RefCell, rc::Rc};
+
+    let events = Rc::new(RefCell::new(Vec::new()));
+    let step_events = Rc::clone(&events);
+    let chain = Chain {
+        name: "journal order",
+        steps: 3,
+        initial: Box::new(|| solid::cube(r(2)).unwrap()),
+        step: Box::new(move |step, body| {
+            step_events.borrow_mut().push(("step", step));
+            if step == 2 {
+                return Err(csgrs::errors::ValidationError::InvalidArguments);
+            }
+            Ok(csgrs::GeometryOutcome {
+                value: body.clone(),
+                certainty: GeometryCertainty::Certified,
+            })
+        }),
+    };
+    let records = chains::run_with_observer(
+        &chain,
+        chains::Between::Validate,
+        |step, _| events.borrow_mut().push(("validation", step)),
+        |record| {
+            if record.step == 1 {
+                assert_eq!(record.outcome, Outcome::Certified);
+                assert_eq!(record.closed_manifold, Some(true));
+                assert!(record.validation.is_some());
+            } else {
+                assert!(matches!(record.outcome, Outcome::Failed(_, _)));
+                assert!(record.validation.is_none());
+            }
+            events.borrow_mut().push(("record", record.step));
+        },
+    );
+    assert_eq!(records.len(), 2);
+    assert_eq!(
+        *events.borrow(),
+        [
+            ("step", 1),
+            ("validation", 1),
+            ("record", 1),
+            ("step", 2),
+            ("record", 2),
+        ]
+    );
+}
+
 fn report(name: &str, records: &[StepRecord]) {
     for row in chains::table_rows(name, records) {
         println!("{row}");

@@ -30,6 +30,18 @@
 
 ### Added
 
+- Cold-domain continuation regressions cover rational cotangents around pi,
+  extreme shifted trig arguments, malformed hidden children, exact downstream
+  consumers and abort/reset. Bounded structural proofs restore the scoped
+  cases without changing imported wires. Shared checked reciprocal products
+  may now retain an exact-one expression. The R19 admission records adverse
+  construction costs; no general speedup is claimed.
+
+- Rational cache regression tests cover all initial cache kinds, concurrent
+  unary publication, independent wide-integer arithmetic and continued exact
+  use after source operands are dropped. The R17 lazy-slot layout experiment
+  was rejected by its protected latency gate; runtime storage is unchanged.
+
 - Elementary and numerically stable `Real` functions: `cbrt`, `root_n`,
   `powi_i64`, `pow_rational`, `exp2`, `exp10`, `expm1`, `ln_1p`/`log1p`,
   `ln_1m`/`log1m`, `softplus`, `sigmoid`, `logit`, `logaddexp`, `logsubexp`,
@@ -134,6 +146,11 @@
 
 ### Fixed
 
+- The final extended relation attempt can prove common-factor cancellations
+  after expansion declines, including the zeros that blocked the binary64
+  four-angle cube rotation union. Every factor's inverse obligations remain
+  checked; expanded polynomial limits and the shared work budget are unchanged.
+  The R18 admission records adverse and inconclusive costs, not a speedup.
 - `Real` import accepted a computable payload whose partial operation had an
   operand outside its domain whenever bounded rational admission could not
   refute it, such as `sqrt(-pi)`, `asin(pi)`, `1/(sqrt(2)*sqrt(2) - 2)` or

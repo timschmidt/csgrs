@@ -301,6 +301,16 @@ Available with `layout`:
   separation features, `DesignForTestIntent`, test access, boundary scan,
   programming, and power-domain requirements.
 
+`BoardBoundaryGeometry` provides `classify_point_outcome`, `inset_outcome`,
+`contains_disc_outcome`, `contains_segment_outcome`, and
+`contains_axis_aligned_box_outcome`. Each accepts a `PredicatePolicy` and returns
+a Hypercurve `Provisional<Result<Classification<_>, _>>`. Inspect its certainty
+before using an approximate result; `certified()` succeeds only when the query
+consumed no terminal decision. A certified receipt may still contain an
+uncertain classification or an error. Receipts describe the current query,
+separately from the provenance of the board. The original methods remain
+compatibility paths that omit the receipt.
+
 `RoutingProblemReport::from_layout` lowers placed-pad terminals, path rules,
 keepouts, fixed copper, and aliases into Hyperpath. `RoutingSolution` imports
 accepted Hyperpath paths back into semantic route/via identities.
