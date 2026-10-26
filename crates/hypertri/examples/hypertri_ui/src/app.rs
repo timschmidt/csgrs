@@ -4,13 +4,10 @@
 
 use egui::{CentralPanel, Color32, RichText, ScrollArea, SidePanel, Stroke, TopBottomPanel};
 use egui_plot::{Line, Plot, PlotPoint, PlotPoints, PlotUi, Points, Text};
-use hypertri::{
-    Constraint, PredicatePolicy, QualityPolicy, Triangle, TriangulationContext,
-};
+use hypertri::{Constraint, PredicatePolicy, QualityPolicy, Triangle, TriangulationContext};
 use serde::{Deserialize, Serialize};
 
-const APPROX: TriangulationContext =
-    TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
+const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 pub struct MainApp {
     active: Scene,
@@ -483,11 +480,7 @@ impl ConstraintScene {
             self.input.points.push(point);
         }
         let input = &self.input;
-        match hypertri::f64::constrained_delaunay(
-            &APPROX,
-            &input.points,
-            &input.constraints,
-        ) {
+        match hypertri::f64::constrained_delaunay(&APPROX, &input.points, &input.constraints) {
             Ok(outcome) => {
                 let triangulation = outcome.value;
                 let points = approx_points(triangulation.points());
@@ -974,7 +967,7 @@ fn draw_index_triangles(
     indices: &[usize],
     color: Color32,
 ) {
-    for (index, tri) in indices.chunks_exact(3).enumerate() {
+    for (index, tri) in indices.as_chunks::<3>().0.iter().enumerate() {
         let triangle = [tri[0], tri[1], tri[2]];
         draw_triangle(plot_ui, format!("{name} {index}"), points, triangle, color);
     }
