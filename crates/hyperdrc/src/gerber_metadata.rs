@@ -1705,7 +1705,7 @@ fn capture_pin_attribute(command: &str, line: usize, report: &mut GerberMetadata
 
     let value = fields.join(",");
     let refdes = fields.first().map_or("", |field| field.trim());
-    if !(fields.len() == 2 && !refdes.is_empty()) {
+    if fields.len() != 2 || refdes.is_empty() {
         report.issues.push(GerberMetadataIssue {
             line,
             kind: GerberMetadataIssueKind::InvalidObjectAttributeValue {

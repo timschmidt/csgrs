@@ -12,7 +12,11 @@ use std::io::Cursor;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn check(condition: bool, message: &str) -> Result<()> {
-    if condition { Ok(()) } else { Err(message.into()) }
+    if condition {
+        Ok(())
+    } else {
+        Err(message.into())
+    }
 }
 
 /// Six times the signed volume, in exact arithmetic. Boolean results may
@@ -34,7 +38,9 @@ fn exactly(value: &Real, expected: i64) -> bool {
 /// The vertices of each binary STL facet, as written.
 fn stl_facets(bytes: &[u8]) -> Vec<[[f32; 3]; 3]> {
     bytes[84..]
-        .chunks_exact(50)
+        .as_chunks::<50>()
+        .0
+        .iter()
         .map(|facet| {
             let value = |index: usize| {
                 let at = 12 + 4 * index;
@@ -81,7 +87,10 @@ fn main() -> Result<()> {
     // volume 12^3 - 4*4*12 - (4*4*12 - 4*4*4).
     check(closed(&part, &context)?, "result is not a closed manifold")?;
     let expected = 6 * (1728 - 192 - (192 - 64));
-    check(exactly(&six_volume(&part), expected), "result volume is not exact")?;
+    check(
+        exactly(&six_volume(&part), expected),
+        "result volume is not exact",
+    )?;
 
     // Export and reimport through each triangle format.
     let binary = stl::to_stl_binary(&part, "part")?;
@@ -94,13 +103,15 @@ fn main() -> Result<()> {
     let from_stl = stl::from_stl(&binary)?;
     let facets = stl_facets(&binary);
     check(
-        from_stl.triangles.len() == part.triangles.len() && facets.len() == part.triangles.len(),
+        from_stl.triangles.len() == part.triangles.len()
+            && facets.len() == part.triangles.len(),
         "STL reimport changed the triangle count",
     )?;
     for (triangle, facet) in from_stl.triangles.iter().zip(&facets) {
         for (index, stored) in triangle.indices().into_iter().zip(facet) {
             let point = &from_stl.positions[index];
-            for (coordinate, stored) in [&point.x, &point.y, &point.z].into_iter().zip(stored) {
+            for (coordinate, stored) in [&point.x, &point.y, &point.z].into_iter().zip(stored)
+            {
                 check(
                     coordinate.exact_rational() == Real::try_from(*stored)?.exact_rational(),
                     "STL reimport does not reproduce the stored f32 coordinates",
@@ -155,10 +166,14 @@ fn main() -> Result<()> {
         "PLY vertex rows are not position and normal",
     )?;
     for row in &rows[vertex_count..] {
-        let fields: Vec<usize> =
-            row.split_whitespace().map(str::parse).collect::<std::result::Result<_, _>>()?;
+        let fields: Vec<usize> = row
+            .split_whitespace()
+            .map(str::parse)
+            .collect::<std::result::Result<_, _>>()?;
         check(
-            fields.len() == 4 && fields[0] == 3 && fields[1..].iter().all(|&index| index < vertex_count),
+            fields.len() == 4
+                && fields[0] == 3
+                && fields[1..].iter().all(|&index| index < vertex_count),
             "PLY face rows are not triangles over declared vertices",
         )?;
     }

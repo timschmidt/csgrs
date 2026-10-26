@@ -408,7 +408,7 @@ fn run_kicad_cli_command(
 ) -> Result<ConversionStepLog> {
     let step = run_conversion_command(command, operation, &request.kicad_cli_bin, wait_context)?;
 
-    if !step_success(&step) && !(operation == "DRC report" && step.status.ends_with("5")) {
+    if !(step_success(&step) || operation == "DRC report" && step.status.ends_with("5")) {
         return Err(anyhow!(
             "KiCad CLI {operation} failed for {} with status {}",
             request.input_dir.display(),

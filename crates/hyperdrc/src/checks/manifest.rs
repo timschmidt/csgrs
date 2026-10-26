@@ -1220,7 +1220,7 @@ fn project_name_tag(path: &str) -> Option<String> {
         .filter(|token| !token.is_empty())
         .find_map(|token| {
             let normalized = token.to_ascii_lowercase();
-            (!is_manifest_noise_token(&normalized) && !normalize_date_token(&normalized).is_some())
+            (!is_manifest_noise_token(&normalized) && normalize_date_token(&normalized).is_none())
                 .then_some(normalized)
         })
 }
