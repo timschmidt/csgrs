@@ -9,9 +9,11 @@ This repository keeps a digest for each archived record in
 | | |
 | --- | --- |
 | Evidence repository | <https://github.com/timschmidt/csgrs-evidence> |
-| Archived commit | `b20000e377626a41b6ff8e6f87aee2b20ebd7865` |
+| Historical archive commit | `b20000e377626a41b6ff8e6f87aee2b20ebd7865` |
 | Extracted from | CSGRS `7e3c36c1248823a8bb36b2b161068660cea2ebf3`, a pre-rewrite commit ID (see [history rewrite](#history-rewrite)) |
-| Records | 309 records, 552,370 files, 13.96 GB |
+| Historical records | 309 records, 552,370 files, 13.96 GB |
+| Research branch | [`research-2026-10-25`](https://github.com/timschmidt/csgrs-evidence/tree/research-2026-10-25) |
+| Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 
 The archived commit keeps the original paths and the history of every archived
 root. A link such as `docs/evidence/<record>/README.md` in older commits,
@@ -55,7 +57,7 @@ file type and relative path of every file in the record:
 ```sh
 git clone --bare https://github.com/timschmidt/csgrs-evidence.git
 python3 scripts/evidence_archive.py verify csgrs-evidence.git \
-  b20000e377626a41b6ff8e6f87aee2b20ebd7865
+  cd8bf060aa577231f84fffd7cf21e15127c028b0
 ```
 
 ## Excluded third-party archives
@@ -83,7 +85,29 @@ in this repository.
 
 ## Local follow-on records
 
-The latest local follow-on commit is
+The published [`research-2026-10-25` branch](https://github.com/timschmidt/csgrs-evidence/tree/research-2026-10-25)
+ends at `cd8bf060aa577231f84fffd7cf21e15127c028b0`, adding
+`docs/evidence/2026-10-26-research-closeout` (12,763 files, 187,318,255 bytes), with
+SHA-256 `ef84e4aed934ad5014ed36b27a41951d58b2200ab82a5cee3e7ac39e2ba005ad`.
+All eighteen research and closeout records verify; the earlier records and
+historical `main` are unchanged.
+
+The closeout record covers all 129 locally executable workflow steps and 196
+strict Clippy checks, including the 256 Hypertri feature combinations,
+stable/MSRV packaging and real external consumers, coverage, directed and
+sanitizer campaigns, and release WASM demos. Its validation admission identifies
+final code `5e7a430c6b93d6889a6b83ee88873b89d6caf5c1` and the unchanged compiled
+inputs at earlier checkpoints. Four GitHub-hosted configuration, upload and
+deployment actions were inspected but cannot run locally. Local packaging does
+not establish registry publication or hosted docs.rs/deployment success.
+
+R19 remains the final research experiment. The pre-push benchmark executions
+are validation under concurrent load, not new performance-admission evidence.
+The closure plans and agent instructions are committed requirements; they do
+not establish implementation completeness. Earlier paragraphs below describe
+the original local checkpoints; all are included in the published branch.
+
+The preceding local follow-on commit was
 `55d28790bdcf32b6454d34a2bfd5ed826f187d72`, adding
 `docs/evidence/2026-10-25-research-r19` (16,755 files, 76,625,900 bytes), with
 SHA-256 `e916615b99a96c59a6cc5f9d764271d17efcbe894a2fce762a5d7d2ee7fe0ea0`.
@@ -140,8 +164,8 @@ The 25 October research record is committed locally as
 `docs/evidence/2026-10-25-research` (586 files, 2,269,593 bytes) without changing
 any historical path. Its SHA-256 in `evidence-archive.tsv` is
 `7e9cd5280eefa5160ee60801ff2cb4efd7d1a2ae90d300db0f7a74c42d800643`.
-The branch has not been pushed; the published historical archive above remains
-at `b20000e377626a41b6ff8e6f87aee2b20ebd7865`.
+At this checkpoint the branch had not been pushed; the published historical
+archive above remained at `b20000e377626a41b6ff8e6f87aee2b20ebd7865`.
 
 This record contains the R01 mesh evaluation, the R02 production reproduction,
 and recovered original H13–H15 material with new independent verification.
@@ -198,19 +222,20 @@ admission claims are likewise superseded by the reconciliation in
 Their original archive records remain unchanged.
 
 All eight commits only add their own records; historical paths and published
-`main` are unchanged. None has been pushed. Verify the expanded manifest using:
+`main` are unchanged. They were unpublished at this checkpoint. Verify the
+current expanded manifest using:
 
 ```sh
 python3 scripts/evidence_archive.py verify ../csgrs-evidence.git \
-  8e48e5ce1c98476c61bfa406304dc3ce7158b324
+  cd8bf060aa577231f84fffd7cf21e15127c028b0
 ```
 
 Commit `5f5b31ac82d32f32ec004a901080de54b8693d9a` adds
 `docs/evidence/2026-10-25-research-r14` (96 files, 5,893,560 bytes), with
 SHA-256 `d2a04ded4c46f0eaea3959153e7d85dbceae00903ad3095951d2dbf56e2ba393`.
 It retains both unadopted R14 preparation variants, independent rational oracles,
-phase diagnostics and the unchanged full refilleting completions. The local
-research branch remains unpublished.
+phase diagnostics and the unchanged full refilleting completions. The branch
+was unpublished at this checkpoint.
 
 Commit `c0fd193305812e52a76a076b8bfce89ceb208e62` adds
 `docs/evidence/2026-10-25-research-r04-followup` (4,544 files, 23,148,395 bytes), with
@@ -218,8 +243,8 @@ SHA-256 `ef789e5a1b616bf86510bd17dda8f2c5fa522a44fe665a6015371550f074ee85`.
 It retains the R04 sampling/predicate/triangulation repairs, clean source
 counterfactuals, 38,400 exact triangulation results and adverse timings,
 withdrawal of R05/R11/R12 production candidates, and the complete passing
-39-command validation of the final retained stack. The local research branch
-remains unpublished.
+39-command validation of the final retained stack. The branch was unpublished
+at this checkpoint.
 
 Commit `ec280dbccf7ecb7e77c2f021efa1ea16963e7c18` adds
 `docs/evidence/2026-10-25-research-r23` (20,898 files, 73,997,727 bytes), with
@@ -227,7 +252,7 @@ SHA-256 `9e409ecec0e53d725d217d5f0f17c029a898a4dfcac16922d19e9ecc493209d9`.
 It retains both R23 candidates, independent extrema/source-range oracles,
 two 67,200-outcome cost comparisons with adverse controls, pinned Alumina
 consumer evidence, full private owner/downstream checks and final primary
-validation. The local research branch remains unpublished; earlier records
+validation. The branch was unpublished at this checkpoint; earlier records
 and published `main` are unchanged.
 
 Commit `d65d6245382cde6ef23b695608c2df7c9f9fef7b` adds
@@ -238,5 +263,5 @@ cache/resource/receipt gates, 26,880 native and 4,480 allocation samples,
 adverse controls, source/build attribution and all eight final combined-primary
 checks. The equivalent-field replay is kept for scoped exact completion;
 performance-only admission fails. Its measured cost base predates R23, as the
-record states. The local research branch remains unpublished; historical paths
+record states. The branch was unpublished at this checkpoint; historical paths
 and published `main` are unchanged.

@@ -7,7 +7,13 @@ measurement campaign or admission. The exact curve and BRep closure plans and
 agent instructions are retained as requirements, not completed implementations.
 The milestone narratives below describe their original validation checkpoints;
 publication status is maintained in the [evidence index](evidence-archive.md).
-The separate repository-wide pre-push checks are part of closing out this run.
+The repository-wide closeout passed all 129 locally executable workflow steps
+and 196 strict Clippy checks, with final-source attribution recorded in the
+[evidence index](evidence-archive.md#local-follow-on-records). This includes
+stable/MSRV package consumers, coverage, sanitizer campaigns and WASM demos.
+Four hosted configuration/upload/deployment actions were inspected and remain
+outside local execution. Registry publication, broad operation closure and the
+remaining research packages are still open.
 
 This ledger records the evaluation of every project in the consolidated
 research handoff of 22 October 2026 (`docs/research/csgrs-remaining-research-projects.txt`
