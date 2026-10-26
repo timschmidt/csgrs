@@ -53,6 +53,207 @@ impl<'a> CurveRegionBooleanContext<'a> {
         Ok((cross != RealSign::Zero || dot != RealSign::Zero).then_some((parameter, cross)))
     }
 
+    /// Exact endpoint images supplied by adjacent affine-line carriers of a
+    /// certified loop, paired with this carrier's original trim parameters.
+    fn authored_neighbor_endpoint_images(
+        &self,
+        carrier_index: usize,
+    ) -> Vec<(CurveParameter2, crate::Point2)> {
+        let carrier = &self.data.carriers[carrier_index];
+        let mut result = Vec::new();
+        for (neighbor_index, neighbor) in self.data.carriers.iter().enumerate() {
+            let Some((at_start, neighbor_at_start)) =
+                self.authored_carrier_shared_endpoints(carrier_index, neighbor_index)
+            else {
+                continue;
+            };
+            let CurveSupport2::Bezier(BezierSubcurve2::Quadratic(curve)) = &neighbor.geometry
+            else {
+                continue;
+            };
+            if curve.retained_exact_line_image().is_none() {
+                continue;
+            }
+            let neighbor_parameter = if neighbor_at_start {
+                carrier_traversal_start(neighbor)
+            } else {
+                carrier_traversal_end(neighbor)
+            };
+            let Some(endpoint) = exact_carrier_point(
+                neighbor,
+                neighbor_parameter,
+                &self.data.policy.strict_counterpart(),
+            ) else {
+                continue;
+            };
+            let parameter = if at_start {
+                carrier_traversal_start(carrier)
+            } else {
+                carrier_traversal_end(carrier)
+            };
+            result.push((parameter.clone(), endpoint));
+        }
+        result
+    }
+
+    /// The certified loop equates adjacent traversal endpoints. Recover the
+    /// original parameter from a represented neighbor instead of inverting
+    /// a newly materialized point at the same vertex.
+    fn authored_neighbor_parameter_at_point(
+        &self,
+        carrier_index: usize,
+        point: &crate::Point2,
+    ) -> Option<CurveParameter2> {
+        let mut result = None;
+        for (parameter, endpoint) in self.authored_neighbor_endpoint_images(carrier_index) {
+            if endpoint != *point {
+                continue;
+            }
+            if result
+                .as_ref()
+                .is_some_and(|previous| previous != &parameter)
+            {
+                return None;
+            }
+            result = Some(parameter);
+        }
+        result
+    }
+
+    pub(super) fn affine_parallel_native_pair_result(
+        &self,
+        pair: &RegionCarrierPair,
+        parallel: &BezierParallel2,
+        parallel_index: usize,
+        curve: &BezierSubcurve2,
+        parallel_is_first: bool,
+        range: &CurveParameterRange2,
+    ) -> ExactCurveResult<Option<RegionPairResult>> {
+        // Declining a specialization must not discard reached shared limits.
+        let decline = || {
+            if hypersolve::work_budget::exhaustion().is_some() {
+                Err(self.blocked_pair(pair, UncertaintyReason::BudgetExhausted))
+            } else {
+                Ok(None)
+            }
+        };
+        let crate::BezierParallelSource2::Rational(source) = parallel.source() else {
+            return decline();
+        };
+        let Some(source) = source.retained_exact_line_image() else {
+            return decline();
+        };
+        let strict = self.data.policy.strict_counterpart();
+        let Classification::Decided(_) =
+            crate::bezier_region::materialized_native_subcurve_segment(curve, &strict)
+                .map_err(|cause| self.invalid(parallel_index, cause))?
+        else {
+            return decline();
+        };
+        if CurveParameterDomain2::new(&CurveParameterRange2::unit(), None)
+            .contains_finite_range(range, &strict)
+            .map_err(|cause| self.invalid(parallel_index, cause))?
+            != Classification::Decided(true)
+        {
+            return decline();
+        }
+        let Some((start, end)) = range.scalar_endpoints() else {
+            return decline();
+        };
+        if crate::classify::compare_reals(start, end, &strict) != Some(Ordering::Less) {
+            return decline();
+        }
+        let line = source
+            .offset_left(parallel.distance().clone())
+            .map_err(|cause| self.invalid(parallel_index, cause))?;
+        let endpoints = self.authored_neighbor_endpoint_images(parallel_index);
+        let endpoint = |parameter: &CurveParameter2, scalar: &Real| {
+            endpoints
+                .iter()
+                .find(|(known, _)| known == parameter)
+                .map_or_else(|| line.point_at(scalar.clone()), |(_, point)| point.clone())
+        };
+        // The original line is injective and start < end is certified above.
+        // Restriction preserves its support direction and offset provenance.
+        let line = line
+            .fragment_between_with_certified_direction(
+                endpoint(range.start(), start),
+                endpoint(range.end(), end),
+                false,
+            )
+            .map_err(|cause| self.invalid(parallel_index, cause))?;
+        let line_curve = Curve2::from(line);
+        let other_curve = Curve2::from(curve.clone());
+        let (first, second) = if parallel_is_first {
+            (&line_curve, &other_curve)
+        } else {
+            (&other_curve, &line_curve)
+        };
+        let native = match CurveIntersectionContext::try_new(first, second, &strict) {
+            Ok(context) => context,
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() != UncertaintyReason::BudgetExhausted =>
+            {
+                return decline();
+            }
+            Err(error) => return Err(error),
+        };
+        let native = match native.result_view() {
+            Ok(result) => result,
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() != UncertaintyReason::BudgetExhausted =>
+            {
+                return decline();
+            }
+            Err(error) => return Err(error),
+        };
+        if !native.is_complete()
+            || !native.overlaps().is_empty()
+            || !native.parameter_components().is_empty()
+        {
+            return decline();
+        }
+        let mut contacts = Vec::new();
+        for contact in native.contacts() {
+            let local = if parallel_is_first {
+                contact.first().local_parameter()
+            } else {
+                contact.second().local_parameter()
+            };
+            let mapped = if local.scalar() == Some(&Real::zero()) {
+                range.start().clone()
+            } else if local.scalar() == Some(&Real::one()) {
+                range.end().clone()
+            } else {
+                let Some(local) = local.as_bezier_parameter() else {
+                    return decline();
+                };
+                let Classification::Decided(mapped) = local
+                    .affine_image_unbounded(&(end - start), start, &strict)
+                    .map_err(|cause| self.invalid(parallel_index, cause))?
+                else {
+                    return decline();
+                };
+                CurveParameter2::from(mapped)
+            };
+            let mut evidence = RegionPairContactEvidence::from_intersection(contact);
+            if parallel_is_first {
+                evidence.first_parameter = mapped;
+            } else {
+                evidence.second_parameter = mapped;
+            }
+            contacts.push(evidence);
+        }
+        if hypersolve::work_budget::exhaustion().is_some() {
+            return Err(self.blocked_pair(pair, UncertaintyReason::BudgetExhausted));
+        }
+        Ok(Some(RegionPairResult {
+            contacts,
+            overlaps: Vec::new(),
+            blockers: Vec::new(),
+        }))
+    }
+
     pub(super) fn parallel_line_pair_result(
         &self,
         pair: &RegionCarrierPair,
@@ -81,6 +282,120 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        let strict = self.data.policy.strict_counterpart();
+        let native_line = matches!(curve, BezierSubcurve2::Quadratic(curve) if curve.retained_exact_line_image().is_some());
+        let component = match (native_line, regular_range) {
+            (true, Some(range)) => parallel
+                .retained_circular_component_on_range(range, &strict)
+                .map_err(|cause| self.invalid(parallel_index, cause))?,
+            _ => None,
+        };
+        if hypersolve::work_budget::exhaustion().is_some() {
+            return Err(self.blocked_pair(pair, UncertaintyReason::BudgetExhausted));
+        }
+        if native_line
+            && let Some(range) = regular_range
+            && let Some((component, _)) = component
+        {
+            let line_curve = crate::Curve2::from(line.clone());
+            let component_curve = crate::Curve2::from(component);
+            let (first, second) = if parallel_is_first {
+                (&component_curve, &line_curve)
+            } else {
+                (&line_curve, &component_curve)
+            };
+            let native = (|| -> ExactCurveResult<Option<RegionPairResult>> {
+                let context = CurveIntersectionContext::try_new(first, second, &strict)?;
+                let result = context.result_view()?;
+                if result.is_complete()
+                    && result.overlaps().is_empty()
+                    && result.parameter_components().is_empty()
+                {
+                    let domain = CurveParameterDomain2::new(range, None);
+                    let mut contacts = Vec::new();
+                    let mut complete = true;
+                    let shared_line_parameter = self
+                        .authored_carrier_shared_endpoints(
+                            pair.first_carrier_index,
+                            pair.second_carrier_index,
+                        )
+                        .map(|(first_start, second_start)| {
+                            let (line_index, at_start) = if parallel_is_first {
+                                (pair.second_carrier_index, second_start)
+                            } else {
+                                (pair.first_carrier_index, first_start)
+                            };
+                            let carrier = &self.data.carriers[line_index];
+                            if at_start {
+                                carrier_traversal_start(carrier)
+                            } else {
+                                carrier_traversal_end(carrier)
+                            }
+                        });
+                    for contact in result.contacts() {
+                        let line_parameter = if parallel_is_first {
+                            contact.second().local_parameter()
+                        } else {
+                            contact.first().local_parameter()
+                        };
+                        if shared_line_parameter
+                            .is_some_and(|parameter| parameter == line_parameter)
+                        {
+                            continue;
+                        }
+                        let mut evidence = RegionPairContactEvidence::from_intersection(contact);
+                        if let Some(parameter) = contact.point().coordinates().and_then(|point| {
+                            self.authored_neighbor_parameter_at_point(parallel_index, point)
+                        }) {
+                            if parallel_is_first {
+                                evidence.first_parameter = parameter;
+                            } else {
+                                evidence.second_parameter = parameter;
+                            }
+                        }
+                        let parameter = if parallel_is_first {
+                            evidence.first_parameter()
+                        } else {
+                            evidence.second_parameter()
+                        };
+                        match domain
+                            .contains_finite_parameter(parameter, &strict)
+                            .map_err(|cause| self.invalid(0, cause))?
+                        {
+                            Classification::Decided(true) => contacts.push(evidence),
+                            Classification::Decided(false) => {}
+                            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                                return Err(
+                                    self.blocked_pair(pair, UncertaintyReason::BudgetExhausted)
+                                );
+                            }
+                            Classification::Uncertain(_) => {
+                                complete = false;
+                                break;
+                            }
+                        }
+                    }
+                    if complete {
+                        return Ok(Some(RegionPairResult {
+                            contacts,
+                            overlaps: Vec::new(),
+                            blockers: Vec::new(),
+                        }));
+                    }
+                }
+                Ok(None)
+            })();
+            if hypersolve::work_budget::exhaustion().is_some() {
+                return Err(self.blocked_pair(pair, UncertaintyReason::BudgetExhausted));
+            }
+            match native {
+                Ok(Some(result)) => return Ok(Classification::Decided(Some(result))),
+                Ok(None) => {}
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() != UncertaintyReason::BudgetExhausted => {}
+                Err(error) => return Err(error),
+            }
+        }
         let certified_tangent_contacts = match curve {
             BezierSubcurve2::Quadratic(curve) => curve
                 .retained_parallel_line_tangent_contacts()
@@ -2829,6 +3144,16 @@ CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
                     parallel_carrier.start.clone(),
                     parallel_carrier.end.clone(),
                 );
+                if let Some(result) = self.affine_parallel_native_pair_result(
+                    pair,
+                    parallel,
+                    parallel_index,
+                    curve,
+                    *parallel_is_first,
+                    &regular_range,
+                )? {
+                    return Ok(result);
+                }
                 // Circle incidence proves source regularity on this range.
                 // Retained endpoint storage is not a singularity certificate:
                 // ordinary selected cuts use the same conic inverse, while

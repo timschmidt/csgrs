@@ -3,19 +3,13 @@
 use super::*;
 
 impl BezierParallel2 {
-    /// An exactly quadratic circle chart has no stationary parameter on its
-    /// pole-free unit domain. Its existing concentric parallel construction
-    /// preserves that parameter, so the shared circle relation and inverse
-    /// can decide incidence without squaring the homogeneous speed expression.
-    /// Declined recognition, extension domains, and coincident supports retain
-    /// the general incidence authority.
-    pub(super) fn retained_circular_source_incidence(
+    /// Retains the original parameter on a certified quadratic circle chart.
+    /// Extension, retracing, pole, and collapse cases keep the general path.
+    pub(crate) fn retained_circular_component_on_range(
         &self,
-        center: &Point2,
-        radius_squared: &Real,
         range: &CurveParameterRange2,
         policy: &CurveContext,
-    ) -> CurveResult<Option<Vec<BezierParallelCircleIncidence2>>> {
+    ) -> CurveResult<Option<(RationalBezier2, crate::CircularArc2)>> {
         let Some(source) = self.rational_source() else {
             return Ok(None);
         };
@@ -39,6 +33,27 @@ impl BezierParallel2 {
         };
         let Classification::Decided(Some(arc)) =
             crate::arc_bezier::rational_bezier_circular_arc(&component, &strict)?
+        else {
+            return Ok(None);
+        };
+        Ok(Some((component, arc)))
+    }
+
+    /// An exactly quadratic circle chart has no stationary parameter on its
+    /// pole-free unit domain. Its existing concentric parallel construction
+    /// preserves that parameter, so the shared circle relation and inverse
+    /// can decide incidence without squaring the homogeneous speed expression.
+    /// Declined recognition, extension domains, and coincident supports retain
+    /// the general incidence authority.
+    pub(super) fn retained_circular_source_incidence(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Vec<BezierParallelCircleIncidence2>>> {
+        let strict = policy.strict_counterpart();
+        let Some((component, arc)) = self.retained_circular_component_on_range(range, &strict)?
         else {
             return Ok(None);
         };
@@ -1468,6 +1483,16 @@ impl BezierParallel2 {
                 self.source().to_rational_bezier()?,
             ))),
             Some(RealSign::Positive | RealSign::Negative) => {
+                // A pole-free quadratic circular chart has a regular normal
+                // throughout its unit domain. Injectivity alone would also
+                // admit higher-degree charts with stationary parameters.
+                if let Some((curve, _)) = self.retained_circular_component_on_range(
+                    &CurveParameterRange2::unit(),
+                    &policy.strict_counterpart(),
+                )? {
+                    return Ok(Classification::Decided(Some(curve)));
+                }
+
                 if let Some(cached) = self.data.certified_ph_offset.get() {
                     return Ok(Classification::Decided(
                         cached.as_deref().map(|offset| offset.curve().clone()),

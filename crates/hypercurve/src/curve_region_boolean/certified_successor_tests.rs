@@ -7414,3 +7414,382 @@ fn certified_branch_order_matches_exact_vector_order() {
         }
     }
 }
+
+#[test]
+fn native_affine_parallel_pairs_retain_selected_trim_parameters() {
+    let policy = CurveContext::STRICT;
+    let half = (Real::one() / Real::from(2)).unwrap();
+    let a = (Real::one() / Real::from(3).sqrt().unwrap()).unwrap();
+    let b = (Real::from(3) / Real::from(4)).unwrap();
+    let epsilon = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+    let p = Point2::new(Real::from(2) * &a - Real::one(), half.clone());
+    let q = Point2::new(half.clone(), half.clone());
+    let source = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+        QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(-1, 0), Point2::from_values(1, 0)).unwrap(),
+        ),
+    ))
+    .unwrap();
+    assert!(source.retained_exact_line_image().is_some());
+    let parallel = source.parallel_left(half.clone()).unwrap();
+    let range = CurveParameterRange2::new_validated(a.clone().into(), b.clone().into());
+    let materialized = |curve| BezierSplitFragment2::Materialized {
+        start: BezierParameter2::Exact(Real::zero()),
+        end: BezierParameter2::Exact(Real::one()),
+        curve,
+    };
+    let line = |start, end| {
+        materialized(BezierSubcurve2::Quadratic(
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(start, end).unwrap()),
+        ))
+    };
+    let region = |fragments: Vec<BezierSplitFragment2>, reversed| {
+        let fragments = if reversed {
+            fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| fragment.reversed().unwrap())
+                .collect()
+        } else {
+            fragments
+        };
+        CurveRegion2::new(vec![
+            CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap(),
+        ])
+        .unwrap()
+        .with_certified_loop_roles(vec![CurveRegionLoopRole::Material])
+        .unwrap()
+        .with_certified_filled_side_is_left(vec![!reversed])
+        .unwrap()
+    };
+    for reversed in [false, true] {
+        let apex = q.translated(Real::zero(), Real::one());
+        let source_region = region(
+            vec![
+                BezierSplitFragment2::AnalyticParallel(
+                    BezierParallelFragment2::from_certified_range(
+                        parallel.clone(),
+                        BezierParameterRange2::new_validated(
+                            BezierParameter2::Exact(a.clone()),
+                            BezierParameter2::Exact(b.clone()),
+                        ),
+                        false,
+                    ),
+                ),
+                line(q.clone(), apex.clone()),
+                line(apex, p.clone()),
+            ],
+            reversed,
+        );
+        for circle in [false, true] {
+            for gap in [Real::zero(), epsilon.clone()] {
+                let (other, start, end, apex) = if circle {
+                    // The horizontal parallel is tangent at its original selected
+                    // trim. Raising the circle by epsilon separates the supports.
+                    let start = p.translated(Real::zero(), gap.clone());
+                    let center = start.translated(Real::zero(), half.clone());
+                    let end = center.translated(half.clone(), Real::zero());
+                    let arc = crate::CircularArc2::try_from_center(
+                        start.clone(),
+                        end.clone(),
+                        center.clone(),
+                        false,
+                    )
+                    .unwrap();
+                    let curve = arc.rational_bezier_decomposition().unwrap().spans()[0]
+                        .curve()
+                        .clone();
+                    (
+                        BezierSubcurve2::RationalQuadratic(curve),
+                        start,
+                        end,
+                        center,
+                    )
+                } else {
+                    // A vertical finite line crosses at the same selected trim.
+                    // Moving it left by epsilon puts its support crossing outside
+                    // the consumed affine interval.
+                    let middle = p.translated(-gap.clone(), Real::zero());
+                    let start = middle.translated(Real::zero(), -half.clone());
+                    let end = middle.translated(Real::zero(), half.clone());
+                    let apex = middle.translated(-Real::one(), Real::zero());
+                    (
+                        BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                            LineSeg2::try_new(start.clone(), end.clone()).unwrap(),
+                        )),
+                        start,
+                        end,
+                        apex,
+                    )
+                };
+                let target_region = region(
+                    vec![
+                        materialized(other.clone()),
+                        line(end, apex.clone()),
+                        line(apex, start),
+                    ],
+                    false,
+                );
+                for parallel_is_first in [false, true] {
+                    let (first, second) = if parallel_is_first {
+                        (&source_region, &target_region)
+                    } else {
+                        (&target_region, &source_region)
+                    };
+                    let context =
+                        CurveRegionBooleanContext::try_new(first, second, &policy).unwrap();
+                    let parallel_index = context
+                        .data
+                        .carriers
+                        .iter()
+                        .position(|carrier| matches!(carrier.geometry, CurveSupport2::Parallel(_)))
+                        .unwrap();
+                    let other_operand = if parallel_is_first {
+                        CurveRegionBooleanOperand2::Second
+                    } else {
+                        CurveRegionBooleanOperand2::First
+                    };
+                    let other_index = context
+                        .data
+                        .carriers
+                        .iter()
+                        .position(|carrier| {
+                            carrier.operand == other_operand && carrier.fragment_index == 0
+                        })
+                        .unwrap();
+                    let (first_index, second_index) = if parallel_is_first {
+                        (parallel_index, other_index)
+                    } else {
+                        (other_index, parallel_index)
+                    };
+                    let pair = RegionCarrierPair {
+                        first_carrier_index: first_index,
+                        second_carrier_index: second_index,
+                        context: RegionCarrierPairContext::ParallelRational { parallel_is_first },
+                    };
+                    let result = context
+                        .affine_parallel_native_pair_result(
+                            &pair,
+                            &parallel,
+                            parallel_index,
+                            &other,
+                            parallel_is_first,
+                            &range,
+                        )
+                        .unwrap()
+                        .expect("the exact affine/native pair must complete");
+                    assert!(result.blockers.is_empty() && result.overlaps.is_empty());
+                    if gap != Real::zero() {
+                        assert!(result.contacts.is_empty());
+                        continue;
+                    }
+                    let [contact] = result.contacts.as_slice() else {
+                        panic!("exactly one finite contact");
+                    };
+                    let (line_parameter, other_parameter) = if parallel_is_first {
+                        (&contact.first_parameter, &contact.second_parameter)
+                    } else {
+                        (&contact.second_parameter, &contact.first_parameter)
+                    };
+                    assert_eq!(
+                        line_parameter,
+                        range.start(),
+                        "retain the original selected trim, not an inverse-derived expression"
+                    );
+                    let expected_other_parameter = if circle { Real::zero() } else { half.clone() };
+                    assert_eq!(other_parameter.scalar(), Some(&expected_other_parameter));
+                    assert_eq!(
+                        contact
+                            .point
+                            .as_ref()
+                            .unwrap()
+                            .same_point(&p.clone().into(), &policy),
+                        Classification::Decided(true)
+                    );
+                    assert_eq!(contact.certified_transverse, !circle);
+                    assert_eq!(
+                        contact.tangent_cross_sign,
+                        Some(if circle {
+                            RealSign::Zero
+                        } else if parallel_is_first {
+                            RealSign::Positive
+                        } else {
+                            RealSign::Negative
+                        })
+                    );
+                    let excluded = CurveParameterRange2::new_validated(
+                        (&a + &epsilon).into(),
+                        b.clone().into(),
+                    );
+                    let excluded = context
+                        .affine_parallel_native_pair_result(
+                            &pair,
+                            &parallel,
+                            parallel_index,
+                            &other,
+                            parallel_is_first,
+                            &excluded,
+                        )
+                        .unwrap()
+                        .expect("the shortened finite range must decide");
+                    assert!(
+                        excluded.contacts.is_empty()
+                            && excluded.overlaps.is_empty()
+                            && excluded.blockers.is_empty()
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn native_circular_parallel_pair_retries_an_exhausted_trim() {
+    let policy = CurveContext::STRICT;
+    let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+    let origin = Point2::from_values(0, 0);
+    let arc = crate::CircularArc2::try_from_center(
+        Point2::from_values(1, 0),
+        Point2::from_values(0, 1),
+        origin.clone(),
+        false,
+    )
+    .unwrap();
+    let (implicit, circle) = crate::arc_bezier::circular_conic_provenance(&arc);
+    let source = RationalBezier2::try_new(
+        vec![
+            arc.start().clone(),
+            Point2::from_values(1, 1),
+            arc.end().clone(),
+        ],
+        vec![Real::one(), Real::one(), Real::from(2)],
+    )
+    .unwrap()
+    .with_implicit_quadratic_conic(implicit, Some(circle));
+    let parallel = source.parallel_left(q(1, 2)).unwrap();
+    let line_curve = |start, end| {
+        BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(start, end).unwrap(),
+        ))
+    };
+    let materialized = |curve| BezierSplitFragment2::Materialized {
+        start: BezierParameter2::Exact(Real::zero()),
+        end: BezierParameter2::Exact(Real::one()),
+        curve,
+    };
+    let region = |fragments, filled_side_is_left| {
+        CurveRegion2::new(vec![
+            CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap(),
+        ])
+        .unwrap()
+        .with_certified_loop_roles(vec![CurveRegionLoopRole::Material])
+        .unwrap()
+        .with_certified_filled_side_is_left(vec![filled_side_is_left])
+        .unwrap()
+    };
+    let source_region = region(
+        vec![
+            BezierSplitFragment2::AnalyticParallel(BezierParallelFragment2::from_certified_range(
+                parallel.clone(),
+                BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                false,
+            )),
+            materialized(line_curve(
+                Point2::new(Real::zero(), q(1, 2)),
+                origin.clone(),
+            )),
+            materialized(line_curve(origin, Point2::new(q(1, 2), Real::zero()))),
+        ],
+        true,
+    );
+    let parameter = BezierParameter2::Algebraic(
+        BezierAlgebraicParameter2::try_isolate(
+            crate::BezierParameterPolynomial::try_new_power_basis(vec![
+                Real::from(-1),
+                Real::zero(),
+                Real::from(2),
+            ])
+            .unwrap(),
+            crate::BezierParameterInterval::try_new(q(2, 3), q(3, 4)).unwrap(),
+        )
+        .unwrap(),
+    );
+    let range = CurveParameterRange2::new_validated(parameter.into(), Real::one().into());
+    let t = q(353_553, 500_000);
+    let square = &t * &t;
+    assert_eq!(
+        real_sign(&(square.clone() - q(1, 2)), &policy),
+        Some(RealSign::Negative)
+    );
+    let point = Point2::new(
+        ((Real::one() - &square) / (Real::from(2) * (Real::one() + &square))).unwrap(),
+        (&t / (Real::one() + &square)).unwrap(),
+    );
+    let start = point.translated(point.y().clone(), -point.x());
+    let end = point.translated(-point.y(), point.x().clone());
+    let apex = point.translated(Real::from(2) * point.x(), Real::from(2) * point.y());
+    let tangent = line_curve(start.clone(), end.clone());
+    let target_region = region(
+        vec![
+            materialized(tangent.clone()),
+            materialized(line_curve(end, apex.clone())),
+            materialized(line_curve(apex, start)),
+        ],
+        false,
+    );
+    let context =
+        CurveRegionBooleanContext::try_new(&source_region, &target_region, &policy).unwrap();
+    let parallel_index = context
+        .data
+        .carriers
+        .iter()
+        .position(|carrier| matches!(carrier.geometry, CurveSupport2::Parallel(_)))
+        .unwrap();
+    let line_index = context
+        .data
+        .carriers
+        .iter()
+        .position(|carrier| {
+            carrier.operand == CurveRegionBooleanOperand2::Second && carrier.fragment_index == 0
+        })
+        .unwrap();
+    let pair = RegionCarrierPair {
+        first_carrier_index: parallel_index,
+        second_carrier_index: line_index,
+        context: RegionCarrierPairContext::ParallelRational {
+            parallel_is_first: true,
+        },
+    };
+    let query = || {
+        context.parallel_line_pair_result(
+            &pair,
+            &parallel,
+            parallel_index,
+            &tangent,
+            true,
+            Some(&range),
+        )
+    };
+    let denied =
+        crate::evaluate_with_budget(policy.predicate_policy(), crate::WorkBudget::ZERO, || {
+            let result = query();
+            assert!(matches!(result, Err(ExactCurveError::Blocked(blocker))
+            if blocker.reason() == UncertaintyReason::BudgetExhausted));
+            result
+        });
+    assert!(denied.result.is_err());
+    let retry = crate::evaluate_with_budget(
+        policy.predicate_policy(),
+        crate::WorkBudget {
+            refinements: 4096,
+            promotions: 128,
+        },
+        query,
+    );
+    let Classification::Decided(Some(result)) = retry.result.unwrap().certified().unwrap().unwrap()
+    else {
+        panic!("the native tangent pair must complete after retry");
+    };
+    // The tangent lies strictly before sqrt(1/2), outside the selected arc.
+    assert!(result.contacts.is_empty() && result.overlaps.is_empty() && result.blockers.is_empty());
+}

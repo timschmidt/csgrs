@@ -1313,15 +1313,9 @@ fn round_stroke_boundary_of_a_filleted_line_corner_refillets_and_erodes() {
     fillet_stroke_rebuild_reverse_refillet_erode(&corner_seed(0)).unwrap();
 }
 
-/// The same workflow from an arc/line corner. The second fillet meets one
-/// of its neighbours tangentially. Eroding the result offsets both at that
-/// vertex: one span keeps an analytic parallel's retained tangent, the other
-/// the fillet arc's represented tangent. Neither their cross product, which
-/// is zero, nor the equality of the two offset ends is decided, so the join
-/// blocks the offset with `RealSign`. The fillet certified that tangency
-/// when it was constructed; the rebuilt region does not retain it.
+/// The arc/line counterpart preserves generated contacts and signed support
+/// relations through round stroke, reconstruction, reversal, refillet and erosion.
 #[test]
-#[ignore = "open: erosion cannot decide the tangent junction a second fillet leaves on a stroke boundary"]
 fn round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes() {
     fillet_stroke_rebuild_reverse_refillet_erode(&corner_seed(1)).unwrap();
 }

@@ -85,6 +85,19 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-native-pair-evidence-2026-10-26` branch
+ends at `b98f70fa0673c4fd165bd118a68d8ee1d9313097`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-native-pairs` (31 files,
+2,029,711 bytes), SHA-256
+`9c2aee95e8caaf702d91d45e2eed32cf5c6359baf543dcb4dcfa47a179479b54`.
+It records native line/circle parallel pair consumption against `515e7647a9`:
+2,660 Hypercurve tests and 43 downstream tests pass, with strict MSRV Clippy
+and formatting. The unchanged arc-corner composition completes in a fresh
+process in 13.64 s and is promoted to an ordinary test. The stationary-normal
+counterexample, blocked baseline and source-equivalence proof are retained.
+This record is local and unpushed; its full repository pre-push qualification
+remains pending. The separate frozen `904e5408e1` run does not cover it.
+
 The separate local `hypercurve-line-fragment-evidence-2026-10-26` branch
 ends at `baf93f7321f69b0870da921b738f6549294fd8fb`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-line-fragments` (44 files,

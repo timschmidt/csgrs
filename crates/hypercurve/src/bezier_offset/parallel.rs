@@ -7210,11 +7210,11 @@ impl BezierParallel2 {
                     arc.center().x() * arc.center().x() + arc.center().y() * arc.center().y()
                         - &radius_squared,
                 ]),
-                Some(Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
-                    center: arc.center().clone(),
-                    radius_squared,
-                    tangent_contacts: None,
-                })),
+                Some(
+                    crate::arc_bezier::circular_conic_provenance(&arc)
+                        .1
+                        .concentric_image(&radius_scale),
+                ),
             )
         } else {
             curve

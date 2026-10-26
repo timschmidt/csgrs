@@ -8,7 +8,7 @@ The detailed chronological log, including commit hashes, timings and samples, is
 
 The exact-only principal API, the `CurveRegion2` migration, and S1 (`SelectedScalar2` dispatch) are complete. S6 is partly done; the remaining sites are listed below.
 
-The ignored composition harness (`tests/hypercurve_composed_workloads.rs` and `tests/hypercurve_open_path_compositions.rs`) has 10 of 24 cases completing under a 300 s budget:
+The historical ignored composition harness (`tests/hypercurve_composed_workloads.rs` and `tests/hypercurve_open_path_compositions.rs`) records 10 of 24 cases completing under a 300 s budget:
 
 | Case | Time |
 | --- | --- |
@@ -23,7 +23,7 @@ The ignored composition harness (`tests/hypercurve_composed_workloads.rs` and `t
 | `nested_xor` | 290 s |
 | `refilleting_a_filleted_vertex_completes` | 163–296 s (section 1) |
 
-Only the first and last rows were remeasured on 2026-10-23. The other 14 still exceed the budget, and the hyperbola-pair stroke is a known stall. `round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes` is a separate open case: it ends in a typed blocker (section 8). All of them stay `#[ignore]`d, because they run far above the suite's per-test scale.
+Only the first and last rows were remeasured on 2026-10-23. The other 14 were recorded beyond that budget; this historical table has not been fully rerun. The hyperbola-pair stroke remains a recorded stall. The separate `round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes` now completes in 13.64 s and runs as an ordinary test; the M1 native-parallel-pair record below gives its scope and evidence.
 
 Sample a stalled case with `gdb -p <pid> -batch -ex "thread apply all bt"` against the test binary. Run it directly, for example `target/release/deps/hypercurve_open_path_compositions-* <name> --ignored --exact`, rather than through `cargo test`. Take the PID from `ps`, not `pgrep -f`, which matches the calling shell.
 
@@ -521,11 +521,63 @@ increment is pending. Baselines, source patches and checks are retained in
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | F: selected native line fragments | Shared support and signed offset proofs | Reversal and affine split directions | Endpoint tangencies and distinct parallels | Native contour materialization | Existing corpus | Exact signed distance composition | — | Trimmed/equal boundary endpoints retain proof | — |
 
+**Native parallel pairs, M1 increment (2026-10-26).** At `515e7647a9`, the
+unchanged arc-corner workflow still blocks during erosion with
+`Offset/QuadraticBezier` against `RationalBezier/RealSign`. The region pair
+owner now consumes retained native affine lines and regular quadratic circular
+charts without discarding their support, signed offset or selected parameter
+relations. Adjacent certified loop endpoints retain their original parameters;
+independent exact contacts are mapped back into the selected source range.
+Concentric circular components preserve their circle evidence. Native disjoint
+circle supports can prove an empty pair, while tangency and coincidence retain
+the complete intersection path. Existing general algorithms remain available.
+
+P12, P15 and P17–P20 govern this extension. Its domain is certified native
+line sources and retained quadratic rational circle charts on admitted unit
+subranges, with algebraic endpoints, signed normal offsets and both traversal
+directions. A circular recognition alone does not prove normal regularity:
+an injective degree-six chart with a stationary parameter at one half exposed
+an incorrect early shortcut. The regression preserves that excluded parameter;
+the new whole-domain shortcut requires the existing quadratic-chart and range
+proofs. Zero-distance behavior and general higher-degree paths remain intact.
+
+Four focused witnesses check original algebraic trim parameters, operand
+exchange and reversal, tangent and coincident circles, negative offsets and
+normal reversal, exact `1/10^12` separation, the stationary chart, and a reached
+zero refinement budget followed by a successful larger-budget retry. Optional
+native paths preserve invalid and exhausted outcomes when falling back.
+
+The original `round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes`
+now completes, with its geometry and assertions unchanged. It fillets, builds
+a round stroke, reconstructs and reverses the boundary, checks an empty XOR,
+refillets, checks added/removed material, erodes by `1/16`, and checks a further
+empty difference. It is an ordinary test; only its ignore annotation and stale
+blocker explanation were removed. A separate fresh-process run completes in
+13.64 s. This is qualification under concurrent load, not a speedup comparison.
+
+Final checks pass: all 2,660 Hypercurve release all-features tests (72 suites,
+34 remaining ignored), all 43 downstream adapter/profile/sweep/mixed tests,
+MSRV Clippy with `--all-targets --all-features -- -D warnings`, formatting,
+typos and repository-budget checks. Source fingerprints establish that the
+isolated commit has exactly the source and test bytes of the combined checkout
+that ran these checks. Full repository pre-push qualification for this increment
+remains pending; the frozen `904e5408e1` run does not cover it. Evidence is
+`docs/evidence/2026-10-26-hypercurve-closure-native-pairs`, including the original
+blocked baseline, rejected stationary shortcut, final checks and source patches;
+its digest is in `docs/evidence-archive.tsv`.
+
+| Scoped witness | Representation | Evaluation/differentials | Incidence/order | Region admission | Booleans | Further offset | Corner edits | Reconstruction | Exact replay |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| P: native parallel pairs | Retained affine lines and quadratic circle charts | Normal-side and stationary-domain guards | Original selected parameters and directed contacts | Arc-corner result admitted | XOR and difference identities | Completed erosion and subsequent consumption | Completed refillet | Rebuilt/reversed stroke boundary | — |
+
+This completes the named arc-corner witness. M1, general algebraic closure,
+generated native save/reload and total work/memory/cancellation bounds remain
+open. Counted refinement exhaustion is not a bound on all computation.
+
 **Still open.**
-- The original ignored arc-corner refillet/erosion composition now reports
-  `Offset/QuadraticBezier` against `RationalBezier/RealSign` during offset-band
-  regularization. Its full fixture remains unchanged. M1 and the broader
-  closure plan remain open.
+- The completed arc-corner witness does not establish M1 or general closure.
+  Broader mixed-family compositions, transformed generated chains and native
+  exact replay still need their own acceptance witnesses and algorithms.
 - The earlier record listed six cases on this board, four with nonparallel `A` and `B` crossing on the arc. They do not occur on the current board. If such a case recurs: `A` and `B` meet in one point `Q` in their own field. The contacts are equal exactly when `Q` lies on the circle, an exact zero test of `|Q - C|² - r²`, and the branch sign above then selects `Q` on each line.
 - The earlier options remain for such cases: line-conic contacts on a circular conic in tower-representable form, from the circle's exact center and radius as `line_circle_relation_at_endpoints` does for native arcs; `quadratic_tower` beyond one outer radical; or a zero-separation bound, which `algebraic_separation_bound_bits` does not give past 256 nodes or at `Inverse` nodes without an exact child sign.
 

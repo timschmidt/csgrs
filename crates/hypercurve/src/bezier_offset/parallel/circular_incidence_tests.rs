@@ -28,6 +28,148 @@ fn circular_source(center: &Point2, weight: i32) -> RationalBezier2 {
 }
 
 #[test]
+fn circular_component_does_not_fill_a_stationary_normal_parameter() {
+    let policy = CurveContext::STRICT;
+    let arc = crate::CircularArc2::try_from_center(
+        Point2::from_values(1, 0),
+        Point2::from_values(0, 1),
+        Point2::from_values(0, 0),
+        false,
+    )
+    .unwrap();
+    let (implicit, circle) = crate::arc_bezier::circular_conic_provenance(&arc);
+    // C(s)=((1-s²)/(1+s²),2s/(1+s²)), s=4t³-6t²+3t.
+    // This chart is injective, but ds/dt=3(2t-1)² vanishes at t=1/2.
+    let bernstein = |coefficients: &[i32]| {
+        crate::bezier_parameter::power_to_bernstein_coefficients(
+            &coefficients
+                .iter()
+                .copied()
+                .map(Real::from)
+                .collect::<Vec<_>>(),
+            6,
+        )
+        .unwrap()
+    };
+    let xs = bernstein(&[1, 0, -9, 36, -60, 48, -16]);
+    let ys = bernstein(&[0, 6, -12, 8]);
+    let weights = bernstein(&[1, 0, 9, -36, 60, -48, 16]);
+    let controls = xs
+        .iter()
+        .zip(&ys)
+        .zip(&weights)
+        .map(|((x, y), weight)| Point2::new((x / weight).unwrap(), (y / weight).unwrap()))
+        .collect();
+    let source = RationalBezier2::try_new(controls, weights)
+        .unwrap()
+        .with_implicit_quadratic_conic(implicit, Some(circle));
+    for source in [source.clone(), source.reversed()] {
+        assert_eq!(source.degree(), 6);
+        let parallel = source.parallel_left(q(1, 4)).unwrap();
+        assert!(matches!(
+            parallel.point_at_with_policy(&q(1, 2), &policy),
+            Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+        ));
+        assert!(matches!(
+            parallel.exact_rational_parallel_component(&policy).unwrap(),
+            Classification::Decided(None)
+        ));
+    }
+}
+
+#[test]
+fn circular_native_components_preserve_normal_side_and_contacts() {
+    let policy = CurveContext::STRICT;
+    let epsilon = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+    for center in [
+        Point2::from_values(0, 0),
+        Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap()),
+    ] {
+        let source = circular_source(&center, 1);
+        for reversed in [false, true] {
+            let source = if reversed {
+                source.reversed()
+            } else {
+                source.clone()
+            };
+            for distance in [q(-1, 4), q(1, 4), q(3, 2)] {
+                let scale = Real::one() - &distance;
+                let signed_distance = if reversed {
+                    -&distance
+                } else {
+                    distance.clone()
+                };
+                let parallel = source.parallel_left(signed_distance.clone()).unwrap();
+                let Classification::Decided(Some(component)) =
+                    parallel.exact_rational_parallel_component(&policy).unwrap()
+                else {
+                    panic!("a regular quadratic circular chart has an exact component");
+                };
+                for parameter in [Real::zero(), q(1, 3), Real::one()] {
+                    let point = source.point_at(&parameter).unwrap();
+                    let (x, y) = point.delta_from(&center);
+                    let expected = center.translated(x * &scale, y * &scale);
+                    assert_eq!(
+                        CurvePoint2::from(component.point_at(&parameter).unwrap())
+                            .same_point(&expected.into(), &policy),
+                        Classification::Decided(true)
+                    );
+                }
+                let other = source.parallel_left(&signed_distance + &epsilon).unwrap();
+                for (first, second) in [(&parallel, &other), (&other, &parallel)] {
+                    let Classification::Decided(Some(result)) = first
+                        .rational_unit_parallel_pair_intersections(second, None, &policy)
+                        .unwrap()
+                    else {
+                        panic!("distinct concentric circular images must decide");
+                    };
+                    assert!(result.is_empty());
+                }
+                let Classification::Decided(Some(coincident)) = parallel
+                    .rational_unit_parallel_pair_intersections(&parallel, None, &policy)
+                    .unwrap()
+                else {
+                    panic!("coincident images must preserve their correspondence");
+                };
+                assert!(coincident.is_complete() && !coincident.overlaps().is_empty());
+            }
+        }
+        let first = source.parallel_left(q(1, 4)).unwrap();
+        for gap in [Real::zero(), epsilon.clone()] {
+            let other_center = center.translated(q(3, 2) + &gap, Real::zero());
+            let other = circular_source(&Point2::from_values(0, 0), 1)
+                .transformed_affine([
+                    &-Real::one(),
+                    &Real::zero(),
+                    &Real::zero(),
+                    &Real::one(),
+                    other_center.x(),
+                    other_center.y(),
+                ])
+                .parallel_left(q(-1, 4))
+                .unwrap();
+            for (first, second) in [(&first, &other), (&other, &first)] {
+                let Classification::Decided(Some(result)) = first
+                    .rational_unit_parallel_pair_intersections(second, None, &policy)
+                    .unwrap()
+                else {
+                    panic!("tangent and disjoint finite circle pairs must decide");
+                };
+                assert!(result.is_complete() && result.overlaps().is_empty());
+                if gap != Real::zero() {
+                    assert!(result.contacts().is_empty());
+                } else {
+                    assert_eq!(result.contacts().len(), 1);
+                    let contact = &result.contacts()[0];
+                    assert_eq!(contact.first_parameter().scalar(), Some(&Real::zero()));
+                    assert_eq!(contact.second_parameter().scalar(), Some(&Real::zero()));
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn circular_parallel_incidence_keeps_points_order_and_normal_sheet() {
     let policy = CurveContext::STRICT;
     for center in [
