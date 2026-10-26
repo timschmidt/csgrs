@@ -63,7 +63,31 @@ fn original_cparti_pad_overlap_has_an_exact_area() {
         .boolean_region(&right, BooleanOp::Intersection)
         .unwrap();
     assert_eq!(overlap.boundary_loops().len(), 1);
-    assert!(overlap.boundary_loops()[0].has_algebraic_fragments());
+    // Retained circle evidence can make the public result native. Exercise
+    // the same complete boundary in retained charts as well, so that this
+    // original-scale case continues to cover retained integration and replay.
+    let retained = CurveRegionBoundaryLoop2::new(
+        overlap.boundary_loops()[0]
+            .fragments()
+            .iter()
+            .map(|fragment| match fragment {
+                BezierSplitFragment2::Materialized { curve, .. } => {
+                    BezierSplitFragment2::RetainedBezier {
+                        reversed: false,
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        source_curve: curve.clone(),
+                        start_image: None,
+                        end_image: None,
+                    }
+                }
+                _ => fragment.clone(),
+            })
+            .collect(),
+        &CurveContext::STRICT,
+    )
+    .unwrap();
+    assert!(retained.has_algebraic_fragments());
     let area = overlap
         .filled_area()
         .unwrap()
@@ -76,15 +100,39 @@ fn original_cparti_pad_overlap_has_an_exact_area() {
         compare_reals(&area, &(source(0.3) * source(0.15)), &CurveContext::STRICT),
         Some(std::cmp::Ordering::Less)
     );
-    let Classification::Decided(contour) = retained_native_loop_to_contour(
-        &overlap.boundary_loops()[0],
-        FillRule::NonZero,
-        &CurveContext::STRICT,
-    )
-    .unwrap() else {
-        panic!("the same retained arcs must admit a native contour");
-    };
-    assert!(contour.signed_area().unwrap().is_some());
+    for boundary in [&overlap.boundary_loops()[0], &retained] {
+        let Classification::Decided(Some(boundary_area)) =
+            boundary.signed_area_raw(&CurveContext::STRICT).unwrap()
+        else {
+            panic!("both native and retained boundaries have an exact area");
+        };
+        assert_eq!(
+            real_sign(&boundary_area.abs(), &CurveContext::STRICT),
+            Some(RealSign::Positive)
+        );
+        assert_eq!(
+            compare_reals(
+                &boundary_area.abs(),
+                &(source(0.3) * source(0.15)),
+                &CurveContext::STRICT,
+            ),
+            Some(std::cmp::Ordering::Less)
+        );
+        let Classification::Decided(contour) =
+            retained_native_loop_to_contour(boundary, FillRule::NonZero, &CurveContext::STRICT)
+                .unwrap()
+        else {
+            panic!("the same retained arcs must admit a native contour");
+        };
+        assert!(contour.signed_area().unwrap().is_some());
+        let replay = CurveRegion2::try_from_native_material_contours(vec![contour]).unwrap();
+        assert!(
+            replay
+                .boolean_region(&overlap, BooleanOp::Xor)
+                .unwrap()
+                .is_empty()
+        );
+    }
     assert_eq!(overlap.clone().filled_area().unwrap(), Some(area));
 }
 

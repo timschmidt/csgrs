@@ -85,8 +85,16 @@ in this repository.
 
 ## Local follow-on records
 
-The local `hypercurve-closure-2026-10-26` branch now ends at
-`770d49fd53a2bfec1943af54b417b2dface7a596`, adding
+The local closure branch ends at `b70ae9defe0d86009bd8f5d16d28a0fa8ecab574`,
+adding `docs/evidence/2026-10-26-hypercurve-closure-native-area` (9 files,
+202,715 bytes), with SHA-256
+`b73c39dff6499757d7d9e00ed4b8e275209b4bfe2f1de1c86d108912692cee3e`.
+It records the storage-dependent CPArti assertion and extends its unchanged
+geometry/area fixture through both native and retained views and following
+Booleans. Focused checks pass; full-suite and pre-push validation remain in
+progress. Production code is unchanged by this qualification extension.
+
+Its parent, `770d49fd53a2bfec1943af54b417b2dface7a596`, adds
 `docs/evidence/2026-10-26-hypercurve-closure-m1-circle` (12 files, 310,497 bytes),
 with SHA-256
 `52609b6ca3dc51023d2ecbec117bd91a9f249147851d81bb762d1cfcd7a39b38`.

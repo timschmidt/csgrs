@@ -252,6 +252,15 @@ all-feature release suite is running separately; this is not pre-push
 validation or a performance claim. The evidence record is
 `docs/evidence/2026-10-26-hypercurve-closure-m1-circle`.
 
+The subsequent full unit run found one storage-dependent assertion in the
+original CPArti area fixture: preserved circles now permit native output. The
+unchanged original geometry still has exact area. Its qualification now also
+constructs an explicit retained boundary, checks the original area bounds for
+both views, and requires each reconstructed contour's next XOR to be empty.
+All four retained-circular tests, strict Hypercurve Clippy and formatting pass;
+the complete suite is rerunning. Production code is unchanged by this test
+extension. Evidence: `docs/evidence/2026-10-26-hypercurve-closure-native-area`.
+
 **Still open.**
 - The original ignored arc-corner refillet/erosion composition still reports
   `Offset/Line/RealSign` on this follow-up, as on the starting revision. Its full
