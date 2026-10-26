@@ -1,0 +1,195 @@
+Hypercurve exact curve closure and development plan
+Technical assessment and staged implementation program
+Findings and recommendation
+An exhaustive generative classification is possible once the operation semantics and input domain are fixed. For finite rational seed curves, regularized Booleans, constant Euclidean offsets, constant-radius circular fillets, and straight chord-setback chamfers need only rational source spans and their signed normal parallels, with exact trims and topology. Lines and circles are already rational curves. Repeated offsets reduce locally to one offset of the original support after singularities and orientation changes are resolved.
+For arbitrary algebraic seed curves, a selected real algebraic arc is a sufficient general geometric carrier. Its polynomial equation must be accompanied by a real branch selector, exact domain, endpoints, orientation, and incidence evidence. At region level the mathematically closed class is semialgebraic sets. Neither a finite catalog of familiar curve names nor NURBS alone covers every result.
+Hypercurve already has the principal carriers for the rational-source closure, including procedural analytic parallels and selected algebraic endpoints. It also has an initial implicit-polynomial branch carrier. Complete operational closure is still unfinished: some generated compositions block or are prohibitively expensive, polynomial branches cannot enter filled arrangements, resource controls have incomplete coverage, and the exact SVG writer does not encode selected curve carriers. [R1–R10]
+The recommended program has two tracks. Track 1 completes the existing rational and parallel model, preserving the current native specializations. Track 2 extends the existing polynomial machinery through the H06, H07, and H08 backlog into arbitrary algebraic regions. The second track should not delay useful improvements to the first.
+Source revision: 3cca6a894858c8b98497a3cfe81cff5e17e1a7f2, dated October 24, 2026. The package manifest declares Hypercurve 0.4.0; the README contains an older 0.3.1 statement. Source and checked-in tests establish the capability assessment. Historical timings remain the repository's recorded measurements. [R11]
+1 Scope of an exact closure guarantee
+The proposed complete domain uses finite, bounded regions whose boundaries have finitely many compact arcs. Defining coordinates, weights, knots, radii, offsets, and setbacks are rational or real algebraic. Curves are split into finite regular pieces where required; poles, singularities, seams, and boundary events remain explicit. A broader symbolic Real input is still useful, but its predicates may legitimately remain undecided.
+Booleans mean regularized union, intersection, difference, and XOR. Regularization takes the closure of the interior, so an isolated line or point does not become filled two-dimensional material. Offset semantics must distinguish Euclidean disk dilation or erosion from the chosen miter and bevel boundary conventions. Fillets mean circular arcs of a specified radius, with an exact selection rule when more than one solution exists. Hypercurve's chamfer setbacks are Euclidean chord distances from the original vertex, not distances measured along the curve. [R12–R14]
+Similarities preserve this rational-source closure. A nonuniform affine transform inserted between offsets generally prevents reduction to a single offset of the original rational support. Arbitrary implicit curves, such interleaved affine maps, variable-radius or curvature-continuous blends, transcendental curves, and true arc-length setbacks require explicit extensions. An arc-length setback can produce transcendental endpoint coordinates even when the support remains a circle.
+A representation theorem and an executable guarantee are different. For an effective algebraic input domain, complete decision procedures exist in principle. They can be expensive. For arbitrary computable real expressions, exact zero testing is not generally decidable. The API must therefore declare both its mathematical domain and its resource contract. [M4, M6]
+2 Exhaustive result rules
+2.1 Rules for every operation
+Operation	New one-dimensional supports	Additional exact information
+Regularized Boolean	None beyond operand supports	New intersection parameters, retained intervals, reversal, overlap ownership, and loop topology
+Constant offset	Normal parallels; circles for round point or corner features; lines for bevel or bounded-miter connectors	Normal sheet, singular partitions, active domains, material-side selection, and regularization
+Circular fillet	Circle	Exact center and radius, both contact locations, sweep, tangency, candidate selection, and parent trims or extensions
+Straight chamfer	Line	Exact endpoints selected by setback equations, parent trims or extensions, and connectivity
+Finite composition	Reapplication of these rules	Shared source identities and algebraic dependencies survive every operation
+
+For Booleans, the output boundary is contained in the union of the operand boundaries. Intersections add points and trimming limits; they do not invent a new smooth supporting curve. A quadratic or cubic cut at an algebraic parameter remains a quadratic or cubic arc, although its controls may no longer be rational and materializing them may be undesirable. Retaining the original source and exact parameter interval preserves its meaning compactly.
+This is exhaustive at the generative level. Types alone cannot determine the actual result: two circular regions can be disjoint, nested, crossing, coincident, or tangent. Their output may be empty, unchanged, or made of several circular arcs. Coordinates, distances, fill rules, and solution constraints determine which pieces survive.
+2.2 Result families from each seed family
+Seed support	Offset support	Specialization and degeneracy
+Line	Line	Domain collapse and zero-length pieces require topology handling
+Circle	Concentric circle on a chosen side	A radius collapse gives a point before region regularization
+Polynomial quadratic or parabola	Generally degree-six algebraic support	A parabola offset is rational after suitable reparameterization; degenerate quadratics may be lines
+Noncircular ellipse	Generally degree-eight nonrational algebraic support	The circle specialization has simpler offsets
+Hyperbola	Generally degree-eight nonrational algebraic support	Degenerate conics reduce to simpler supports
+Polynomial cubic	Generally degree-ten algebraic support	Special cases can have rational offsets
+Arbitrary rational Bezier	Algebraic support of degree depending on the source	Rationality depends on speed structure and possible reparameterization
+Polynomial B-spline or NURBS	The corresponding offset for each rational span	Knots, poles, and continuity breaks add partition and join work
+Existing analytic parallel	Another parallel of the original support on each regular partition	Offset distance composes with a sign determined by normal orientation
+Arbitrary implicit algebraic branch	Another algebraic branch	It need not belong to the rational-seed offset subclasses
+
+The degree-six, degree-eight, and degree-ten statements describe generic two-sided implicit supports; a chosen offset side need not have its own separate polynomial. Components can factor or degenerate. They are not fixed bounds on parameter-root degree or on coordinate-field complexity. [M1, M2]
+For a regular rational seed, the offset can be represented using one positive square-root extension of its rational parameter. In nonspecial irreducible cases the normalized support is rational, elliptic, or hyperelliptic, depending on the reduced speed polynomial. These genus labels describe mathematical families, not recommended enum variants. Arbitrary implicit inputs admit a broader algebraic class. [M3]
+2.3 Features that must remain explicit
+Coincident supports and partial overlaps need interval correspondences, not a list of isolated roots. Cusps, stationary source parameters, and singular crossings need one-sided branch information. Rational denominators must be proved nonzero over each admitted range. Offset self-intersections must be resolved before publishing material boundaries. Empty regions, holes, disconnected islands, vanished loops, and zero-dimensional remnants need distinct treatment. These are domain and topology requirements, rather than additional smooth curve families. [M5]
+3 Minimum functional representations
+3.1 A compact basis for rational seeds
+Represent a rational span by R(t) = (X(t)/W(t), Y(t)/W(t)) with exact polynomial coefficients and a finite selected parameter domain. Define U = X'W - XW' and V = Y'W - YW'. On a regular finite range, a signed left offset is exactly the following selected algebraic construction:
+z^2 = U(t)^2 + V(t)^2,  z > 0
+x = X(t)/W(t) - d V(t)/z
+y = Y(t)/W(t) + d U(t)/z
+This lifted representation preserves the square-root sheet without requiring a large implicit polynomial in x and y. It assumes W is nonzero and the source velocity is nonzero; singular source endpoints require a certified limit or separate branch treatment. Cancel shared polynomial factors before classifying denominator zeros as geometric poles. At d = 0 the source itself should be retained without needlessly demanding a unit normal.
+The practical basis is therefore rational spans plus exact normal-parallel spans, with general exact points, domains, traversal, and topology. Lines and circles can be rational specializations, while retaining dedicated implementations for speed. A circle has several finite rational charts, so a whole circle should not be forced through one finite chart.
+There is no unique smallest enum. One can call every object an algebraic arc, or regard a rational source as an offset with d = 0. The meaningful minimum is functional: exact source evaluation, branch and domain selection, selected point construction, incidence, ordering, subdivision, and regularized topology.
+3.2 Why a finite NURBS basis is insufficient
+A rational source R has offset R + d J R' / sqrt(R' dot R'), where J rotates a vector left by a quarter turn. The speed square root is usually not rational. A noncircular ellipse has a generic irreducible degree-eight offset, with genus one after normalization. It cannot be represented exactly by any finite collection of nonconstant rational NURBS arcs, regardless of their degree or knot count. [M1–M3]
+Pythagorean-hodograph structure provides a useful rational-offset specialization. It does not make the class universal, and it is not the only situation where the geometric offset can be rationally reparameterized: the parabola is a relevant exception. Polynomial or rational fitting remains an explicit approximation path. [M2, M7]
+3.3 Repeated offsets do not require endlessly nested supports
+For a source parameterized by arc length s, choose left normal N and curvature k so that dT/ds = k N. Then dN/ds = -k T, and the derivative of the offset is (1 - d k) T. On a connected regular interval let epsilon = sign(1 - d k). A further left offset e satisfies:
+Offset_e(Offset_d(C)) = Offset_(d + epsilon e)(C)
+The interval must be split at zero derivative scale and traversal changes must be included. This identity follows directly from the parallel normal directions. Hypercurve already performs the corresponding signed-distance composition. It is a local support identity; dilation followed by erosion need not recover the original region after features have disappeared. [M5, R4]
+For a fixed seed collection and the named operations, smooth supports are trims of the original supports or their parallels, and of newly constructed lines and circles. Support degrees need not grow with every operation. Selected intersection coordinates and fillet centers can nevertheless have growing algebraic degree. A line with an algebraic intercept is still geometrically linear; eliminating that coefficient into a rational polynomial introduces conjugate supports and extra selector work.
+3.4 A sufficient general algebraic basis
+When arbitrary implicit seed curves are included, use selected real algebraic arcs of arbitrary degree. Required data include a defining polynomial or compact algebraic system, a real branch selector, chart and domain, exact endpoints, traversal, and singular-event incidence. A bare equation is insufficient because it may describe both offset sides, extraneous resultant components, conjugate branches, or several branches at a singular point.
+Semialgebraic region closure follows from polynomial constraints and quantifier elimination. For a closed bounded region A and a disk of nonnegative radius r, dilation is the set of x for which there exists y in A with (x-y) dot (x-y) <= r^2. Erosion is expressible by requiring every point in the radius-r disk about x to belong to A. Booleans and topological regularization are also definable. Tarski–Seidenberg therefore gives a closed mathematical class under the stated algebraic contract. This is an existence and decision argument, not a recommendation to run full quantifier elimination for every edit. [M4]
+For a regular implicit source F(u,v)=0, an offset point satisfies:
+F(u,v) = 0
+(x-u) F_v(u,v) - (y-v) F_u(u,v) = 0
+(x-u)^2 + (y-v)^2 = d^2
+Retain nonzero-gradient, source-domain, and signed-side conditions. Singular germs require separate treatment. Elimination may produce a useful candidate support, but only exact replay and branch filtering establish the requested curve. A selected source fiber can remain the authoritative representation when elimination would expand it excessively. [M1]
+4 Current Hypercurve support
+4.1 Public and internal carriers
+CurveFamily2 has ten variants: Line, CircularArc, QuadraticBezier, CubicBezier, RationalQuadraticBezier, RationalBezier, PolynomialBSpline, Nurbs, AnalyticParallel, and ImplicitPolynomial. CurveGeometry2 contains the first eight authored families. Restricted and source-range carriers retain generated definitions; a separate polynomial carrier owns implicit branches. Consequently, geometry() == None does not imply approximate geometry. [R1]
+The region-fragment vocabulary contains Materialized, RetainedBezier, AnalyticParallel, AlgebraicChord, AlgebraicCuspSemicircle, and SelectedFiber. These are representation and evidence variants. An algebraic chord remains a line, and a generated selected circle remains a circular arc. [R2]
+4.2 Capability assessment
+Capability	Current assessment	Evidence
+Authored rational families	Present, with exact native and retained ranges	R1, R2
+Exact procedural offsets	Present; general offsets need not be fitted	R3
+Repeated-offset normalization	Present after singular partition and orientation checks	R4
+Mixed region Booleans and corner edits	Implemented broadly; some compositions remain blocked or expensive	R5, R6, R12, R13
+General polynomial branches	Present as curve collections and selected graph branches	R7
+Implicit derivatives	Regular-chart jets and smooth vertical-event tangent directions are present	R8
+Polynomial filled regions	Unsupported, including a simple parabola-branch boundary fixture	R9
+Complete polynomial topology domain	Repeated, vertical, boundary-component, and coefficient restrictions remain	R10
+Exact generated archive replay	Exact SVG metadata rejects selected carriers	R15
+Complete resource bounds	Refinement and promotion budgets exist; coverage is incomplete	R16
+
+The implicit branch tests intentionally reject an irrational-coordinate line, a translated branch against a line, a branch pair, and a simple closed path made of two parabola branches and a vertical line. The last path fails both loop orientation and CurveRegion2 admission. This directly rules out complete algebraic-family closure at the pinned revision. [R9]
+The checked-in composition harness includes every authored family and reuses prior outputs, including exact boundary reconstruction. Its normal random gate is a small deterministic sample, while heavier cases remain ignored. The repository records ten of twenty-four heavy cases within 300 seconds and fourteen beyond that budget, with only two timing rows recently remeasured. Those figures demonstrate remaining qualification work; they are not a new benchmark run. [R6, R17]
+The plan must use current code rather than copy stale statements. Public source_restriction() already exists for retained authored ranges, and analytic_parallel() supplies a procedural view. Regular implicit derivatives are implemented even though the README still describes a broader derivative gap. Neither fact establishes total support across every generated carrier. [R8, R18, R19]
+5 Track 1 Complete the existing rational source closure
+M0 Publish the domain and capability contract
+Owners: Hypercurve public API and documentation, with the shared admission record. Map the work to properties P12 through P20. Preserve CurveRegion2 as the sole filled-region carrier. [R14, R20]
+Create an executable capability matrix that separates represented, evaluated, intersected, classified, admitted to regions, offset again, corner-edited again, and exactly replayed. Include native and generated instances separately until tests establish their equivalence. State the scalar domain, join semantics, setback metric, solution selection, degeneracy rules, and resource outcomes.
+Establish the baseline from the pinned tests and existing research ledger. Classify each open row as missing representation, missing predicate, lost evidence, incomplete topology, or resource exhaustion. Refresh stale documentation. Do not treat Unsupported as a successful answer for an operation newly advertised as complete.
+Acceptance: every promised matrix entry has a named success fixture and explicit preconditions; every remaining gap has a typed outcome and an owning layer. Include canonical empty inputs, holes, disconnected components, and algebraic endpoints. This is a bounded qualification matrix, supported by the closure argument, rather than an assertion that finite testing exhausts all inputs.
+M1 Preserve construction evidence through later operations
+Owners: existing point definitions, retained fragments, corner-chain reconstruction, region boundary paths, and tangent predicates. Likely files include curve_point/definition.rs, curve_corner_chain.rs, bezier_split.rs, and region reconstruction modules.
+Carry or rederive the exact relations that construction already established: point-on-support, shared contact identity, tangent parallelism and orientation, overlap correspondence, and parameter-chart mapping. These relations must survive split, reverse, boundary export, reconstruction, and similarity. Use source identities plus validated transform relations; pointer identity alone is insufficient after independent reconstruction.
+Start with the recorded arc-corner workflow that successfully fillets, strokes, rebuilds, reverses, and refillets, but blocks during erosion after losing a tangency relation. This broader workflow is a useful witness of the evidence problem; also keep focused cases using only the user's named operations. Extend the existing shared-circle/shared-line contact fix where independently transformed supports lose their allocation identity. [R6]
+Acceptance: the relevant exact tangency and endpoint-equality regressions succeed under STRICT before and after reconstruction. Perturbed nonzero cases remain distinct. A changed source or image map requires invalidation or explicitly certified proof transport. Avoid a general support canonicalizer unless a concrete failing consumer requires it.
+M2 Keep selected algebraic constructions compact
+Owners: Hypersolve arithmetic and selected fields, then Hypercurve fillet-center authoring and its consumers. Existing entry points include curve_fillet_centers.rs, selected-fiber kernels, recursive field code, and algebraic parameter comparisons.
+Preserve local selected fibers when constructing centers and contacts. Do not first promote a compact geometric solution to a global eliminant and then attempt to recover the original dependency. The recorded NURBS fillet center has a degree-214 eliminant and a selected irreducible factor of degree 164. A local fiber does not lower that intrinsic degree; it can avoid irrelevant conjugates and repeated large global arithmetic. [R6]
+Profile each hard algebraic workload before selecting a method. For demonstrated common-factor fiber systems, investigate modular or CRT GCD with exact verification. For radical sign leaves, capture the expression structure before implementing lazy DAG and modular nonzero filtering. Retain already-completed root-ordering and zero-remainder optimizations. Add independent-field joins when an admitted operation reaches the missing-field case.
+Acceptance: named stalled workflows complete or return a controlled resource outcome, with exact independent relation checks. Record local field structure, eliminant degree, coefficient bits, allocation, and time. An optimization is accepted only if it preserves exact geometry and prior supported success cases; a faster blocker is not completion.
+M3 Complete intersections and composed operations over generated carriers
+Owners: Curve2 pair kernels, region arrangement, offset spans and joins, fillet centers, and chamfer cuts. The basic support matrix is rational/rational, rational/parallel, and parallel/parallel, with selected lines and circles exercised through every row.
+Resolve common components separately from isolated intersections. Filter candidates against source ranges, denominators, positive square-root sheets, and exact incidence. Preserve correspondence for partial and reversed overlaps. Handle endpoint tangencies, higher contact order, stationary parameters, opposite-sheet roots introduced by squaring, and cusp partitions.
+Retain the existing normalization of repeated parallels. Reuse native line and circle specializations whenever the complete oriented image is proved, without guessing from a support fit. Ensure corner solutions retain both source contact parameters and the constructed arc or line definition. Continuous fillet families require an additional exact constraint, and no-solution cases remain different from failed predicates. [R3, R4, R12, R13]
+Acceptance: every output in the declared rational/parallel matrix can be passed to all four Boolean operations, another offset, an applicable fillet or chamfer, and boundary reconstruction. Test chains as well as pairs. Required fixtures include a noncircular ellipse offset, a polynomial cubic with cusps in its offset, algebraic-endpoint chamfers, selected circular joins, and repeated erosion through a topology change.
+M4 Bound complete operation cost
+Owners: Hypersolve and Hypercurve resource accounting, with Hyperreal responsible for scalar work and retention. This work proceeds alongside M1 through M3. The existing WorkBudget counters measure selected refinements and promotions; they do not bound all arithmetic, coefficient growth, memory, or elapsed time. [R16]
+Add separately defined limits for arithmetic work, coefficient bit growth, projected-system size, arrangement complexity, temporary allocation, retained memory, and cooperative cancellation. Specify accounting across nested calls and any worker threads. Charge before expensive materialization whenever possible, and retain resumable or retryable state only under a clear ownership contract.
+Acceptance: small-budget compositions terminate with typed exhaustion and no falsely complete region. Cancellation releases temporary state. A later larger-budget retry is not poisoned by an earlier budget blocker. Report both completed workload cost and peak memory; existing exact proofs may remain reusable with zero new refinement work.
+M5 Provide exact replay for generated geometry
+Owners: Hypercurve native definitions and archive adapters. The existing exact SVG extension writes authored geometry tags but rejects selected carriers. Introduce or extend a versioned native representation for shared sources, exact parameter domains, selected roots and fibers, normal sheet, traversal, and generated circle or chord definitions. [R15]
+Serialize the defining relations and selectors required for independent replay. Do not serialize live caches as authority or trust a stored Certified flag. Shared records should be referenced once to avoid expanding a construction DAG into a duplicated tree. Keep current geometry, construction history, and certainty provenance distinct. Extend source_restriction(), analytic_parallel(), and CurvePoint2::definition() only where a concrete exact carrier lacks an inspectable definition. [R18, R19]
+Acceptance: construct, Boolean, offset, corner edit, archive, fresh-process replay, then another Boolean or offset produces the same certified regularized set. Test corrupted selectors, changed polynomials, incorrect domain bounds, and broken source references. Keep sampled SVG drawing commands separate from native exact metadata.
+M6 Qualify the completed track through public consumers
+Owners: Hypercurve, CSGRS adapters, bindings, demo or editor, and affected downstream kernels. Preserve the repository's requirement to reproduce findings at the revision being changed and validate the earliest owning layer. [R20]
+Move minimized successful composition fixtures into an ordinary integration tier and retain full-size expensive workflows in a scheduled stress tier. Preserve original cases so minimization does not erase scale failures. Run exact native replay separately from lossy display and interchange projections. Check that empty, invalid, unsupported, undecided, exhausted, and unbounded outcomes remain distinguishable across bindings.
+Acceptance: publish a revision-pinned report containing inputs, policies, operations, exact expected results, actual outcomes, and resource measurements. Compare against analytic or independently derived algebraic relations and an independent kernel where semantics and supported domains genuinely match. Agreement between two wrappers around the same implementation is insufficient.
+6 Track 2 Complete arbitrary algebraic regions
+This track extends the existing ImplicitPolynomial carrier. It is required if all public curve families are in scope. Build on the H06, H07, and H08 research items; several earlier general abstractions were deferred because they had no demonstrated failing consumer. Preserve that evidence-based discipline. [R21]
+A1 Complete the polynomial topology domain
+Owner: Hypersolve, principally bivariate topology and algebraic coefficient arithmetic. Rational coefficients and rational rectangular bounds are the present admitted base. Add real-algebraic coefficient fields and selected bounds as explicit milestones, rather than assuming a Real field guarantees all necessary decisions. [R10]
+Handle vertical components, components coincident with the domain boundary, repeated factors, and isolated points. Separate reduced set geometry from multiplicity metadata. Naively discarding repeated factors can change downstream interpretation of a tangential BRep section. Publish the new multiplicity contract before admitting these inputs. Keep a vertical chart or vertical component carrier and its exact adjacency to graph branches.
+Extend regular differential support with chart changes and one-sided branch limits at singular events. The existing implementation already computes regular implicit jets and smooth vertical-event tangent directions. New work concerns singular chart limits, local branch orientation, and sector order, potentially using certified local expansions when ordinary derivatives do not distinguish branches. [R8]
+Acceptance: topology fixtures for F, F squared, a vertical factor times F, a horizontal boundary factor times F, nodal and cuspidal curves, isolated real points, and algebraic coefficients. Validate component multiplicities, adjacency, and branch identity independently of the projection axis.
+A2 Complete algebraic incidence and pair kernels
+Owner: Hypercurve polynomial sections and Curve2 intersections, supported by Hypersolve. Extend H06 from rational authored lines to algebraic-coordinate lines, selected abscissas, mapped branches, and branch pairs. Pull queries back through retained maps while preserving the original source chart; source-x monotonicity does not automatically imply world-x monotonicity.
+Implement polynomial/rational, polynomial/parallel, and polynomial/polynomial contacts with selected fibers and exact candidate replay. Handle a line contained in the polynomial zero set as overlap plus any contacts with other branches. Deal explicitly with common components, repeated contacts, and singular branch sectors. Use elimination to generate candidates, not to replace domain and identity checks.
+Acceptance: the currently blocked irrational-line, translated-branch, and branch-pair fixtures become strict successes in both operand orders; returned pieces re-enter the same query after split, reversal, and replay. Contact multiplicity and crossing or touching status match independently defined examples. [R9]
+A3 Admit algebraic boundaries to CurveRegion2
+Owner: Hypercurve arrangement and region construction. Carry polynomial branch selectors, exact source domains, local sectors, and boundary ownership into the existing region pipeline. Implement point location and winding across all admitted branches. Orient simple loops from certified topology rather than requiring a closed-form area integral.
+Start with the existing simple parabola-branch boundary that currently rejects region construction. Then add irreducible nonrational algebraic boundaries, mixed authored and implicit curves, holes, self-contacts, and disconnected components. A branch may be representable without having an elementary length or area formula; do not make such a formula a prerequisite for topological operations.
+Acceptance: each admitted algebraic region survives all four Booleans, boundary extraction and reconstruction, empty-set identities, reversal, and exact replay. The simple previously blocked fixture is a minimum gate, not the complete domain claim. [R7, R9]
+A4 Add offset and corner closure over algebraic branches
+Owner: Hypercurve offset and corner construction with Hypersolve selected systems. Introduce a source-preserving normal-offset definition for implicit branches or lower the offset incidence system into the general algebraic carrier. Retain gradient regularity, chosen side, source domain, and singular limiting germs. Preserve compact systems where full implicitization would cause excessive coefficient or degree growth.
+Construct fillet centers from exact signed offsets of both incident branches, validate their contacts, and keep the new circular arc. Chamfer contacts solve the existing chord-distance equations and retain the resulting exact line. Feed every candidate boundary through the same arrangement and material regularization. Extend replay and resource accounting to these newly admitted carriers before declaring support complete.
+Acceptance: an implicit nonrational region completes Boolean, offset, fillet or chamfer, exact replay, and another Boolean or offset. Include normal reversals, critical radii, disappearing loops, several finite fillet solutions, and a continuous fillet family that requires a constraint. No general NURBS conversion is required.
+7 Acceptance corpus and release gates
+7.1 Required fixture families
+Fixture	Mathematical oracle or invariant	Next operation
+Algebraic trim of a quadratic or cubic	Exact source identity and parameter-domain inclusion	Boolean then offset
+Noncircular ellipse offset	Exact normal-distance and incidence equations	Cut, fillet or chamfer, then reoffset
+Parabola offset	Known rational reparameterization versus procedural definition	Boolean and replay
+PH curve offset	Exact rational specialization equals retained parallel	Repeat offset with both orientations
+Offset cusp and normal reversal	Signed derivative scale and one-sided limits	Subdivide then reoffset
+Generated selected circle and chord	Exact radius, tangency, and endpoint incidence	Boolean then corner edit
+Coincident and partially overlapping curves	Exact overlap correspondence	Split, reverse, and rebuild
+Holes and disappearing components	Regularized membership and empty-set identities	Further union or difference
+Polynomial graph and vertical component	Complete branch adjacency and multiplicity	Region admission
+Implicit singular curve	Exact local sectors and branch selection	Boolean then offset
+Exact archive replay	Defining relation and selected root validation	Fresh-process operation
+Tiny budget and cancellation	Typed exhaustion with no complete partial output	Retry with larger budget
+
+Use deterministic rational and algebraic coefficients, high-degree selected points, nearly coincident but distinct features, exact tangencies, and repeated operations. Run both operand orders and reverse traversal. Compare represented sets separately from serialized bytes. Area alone is not a topology oracle, and sample-only membership checks cannot certify a curve or a filled set.
+7.2 Definition of completion
+Semantic closure means each operation returns the intended exact regularized set. Representation and operational closure mean every declared output has an exact carrier that the next declared operation can consume within its preconditions. Evidentiary closure means roots, fibers, source parameters, contact relations, and certainty remain valid through reuse and replay. Computational closure means resource exhaustion is controlled and distinguishable from unsupported mathematics. These correspond to the project's P17, P18, P19, and P20 requirements respectively. [R14]
+A finite test suite cannot prove success on every possible input. The release claim should combine the mathematical domain and closure rules, complete algorithmic handling for that domain, implementation review, and a published qualification corpus. Bounded calls may exhaust resources; they must not silently approximate, misclassify, or publish partial topology as complete.
+Estimate calendar work after two technical spikes: retaining a hard fillet center in a local selected fiber, and admitting the blocked polynomial-boundary region through complete pair and topology support. These expose the main arithmetic and integration risks. Milestones are acceptance gates, not commitments to unmeasured dates.
+7.3 Recommended implementation order
+Begin M0 and M4 together. Fix evidence loss in M1, then the measured construction and kernel gaps in M2 and M3. Build M5 replay on the stabilized retained definitions and qualify Track 1 through M6. In parallel, develop A1 and the independent portions of A2; A3 requires their branch and incidence contracts, and A4 requires algebraic region admission. Carry resource and replay requirements through every stage.
+Keep native line, circle, rational Bezier, and spline implementations as useful specializations. Complete the existing procedural representation for rational inputs before forcing them into general implicit polynomials. Use arbitrary algebraic branches as the broader capability envelope, with one authoritative CurveRegion2 arrangement and explicit adapters at display boundaries.
+8 Sources
+Repository references below are pinned to the audited commit. Mathematical references describe the supporting theory; the proposed milestones and acceptance criteria are development recommendations.
+Pinned repository sources
+[R1] Public families and carrier representations. crates/hypercurve/src/curve.rs
+[R2] Selected and retained region fragments. crates/hypercurve/src/bezier_split.rs
+[R3] Procedural Bezier offset sources and representation. crates/hypercurve/src/bezier_offset.rs
+[R4] Repeated offset partition and signed-distance composition. crates/hypercurve/src/bezier_region/offset_spans.rs
+[R5] Regularized region Boolean APIs. crates/hypercurve/src/curve_region_boolean.rs
+[R6] Recorded remaining composition and arithmetic work. crates/hypercurve/FUTURE_WORK.md
+[R7] Polynomial curve collection and selected branch contract. crates/hypercurve/src/polynomial_curve.rs
+[R8] Regular implicit derivatives and smooth-event tangents. crates/hypercurve/src/polynomial_curve_differential.rs
+[R9] Tests for currently unsupported polynomial queries and regions. crates/hypercurve/tests/support/polynomial_sections.rs
+[R10] Polynomial topology domain and explicit blockers. crates/hypersolve/src/bivariate_topology.rs
+[R11] Hypercurve package manifest. crates/hypercurve/Cargo.toml
+[R12] Euclidean chord-setback chamfer semantics. crates/hypercurve/src/curve.rs
+[R13] Circular fillet semantics and selected contacts. crates/hypercurve/src/curve.rs
+[R14] Semantic representational evidentiary and computational closure. properties.md
+[R15] Exact SVG writer rejects selected curve carriers. crates/hypercurve/src/svg/exact.rs
+[R16] Shared work budget and coverage limits. crates/hypersolve/src/work_budget.rs
+[R17] Stateful composition regression harness. crates/hypercurve/tests/hypercurve_composed_workloads.rs
+[R18] Public retained authored source restriction. crates/hypercurve/src/curve_subdivision.rs
+[R19] Borrowed analytic parallel definition. crates/hypercurve/src/curve_parallel.rs
+[R20] Normative stack admission requirements. docs/admission.md
+[R21] Existing H01 through H20 research decisions. docs/research-program.md
+Mathematical references
+[M1] Juana Sendra. Brief Atlas of Offset Curves. 2010. Definitions and ellipse example.
+[M2] Patrikalakis, Maekawa and Cho. Shape Interrogation for Computer Aided Design and Manufacturing. Section 11.2.4.
+[M3] Masato Fukushima. Hyperellipticity of Offsets to Rational Plane Curves. Osaka dissertation, 2009. Theorem 13 and conic classification.
+[M4] Saugata Basu. Algorithms in Real Algebraic Geometry A Survey. Section 2.1, Tarski Seidenberg and effective quantifier elimination.
+[M5] Patrikalakis, Maekawa and Cho. Shape Interrogation. Section 11.2.2, offset singularities and normal reversals.
+[M6] Chee Yap. Theory of Real Computation according to EGC. 2007. Exact sign decisions and the zero problem.
+[M7] Rida T Farouki. Introduction to Pythagorean hodograph curves. Rational-offset specializations.
+[M8] CGAL. Arr_algebraic_segment_traits_2. An implementation precedent for arbitrary-degree algebraic supports and selected monotone arcs; its coefficient restrictions are distinct from this plan.
