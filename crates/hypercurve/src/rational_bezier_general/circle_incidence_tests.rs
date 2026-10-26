@@ -138,6 +138,129 @@ fn similarity_preserves_retained_circle_and_selected_chart() {
 }
 
 #[test]
+fn native_arc_reconstruction_preserves_circle_tangent_contacts() {
+    use crate::rational_bezier::{
+        RationalQuadraticCircleTangentContact2 as Contact, RationalQuadraticParallelCircleContact2,
+    };
+    let policy = CurveContext::STRICT;
+    let center = Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
+    let point = center.translated(Real::one(), Real::zero());
+    let line = LineSeg2::try_new(
+        center.translated(Real::one(), -Real::one()),
+        center.translated(Real::one(), Real::one()),
+    )
+    .unwrap();
+    let parallel = crate::QuadraticBezier2::from_line_segment(line.clone())
+        .parallel_left(Real::zero())
+        .unwrap();
+    let source = circle_source(&center, -3);
+    let mut circle = source.retained_circular_conic().unwrap().as_ref().clone();
+    circle.tangent_contacts = Some(Arc::from([
+        Contact::Line {
+            line,
+            point: point.clone(),
+        },
+        Contact::Parallel(RationalQuadraticParallelCircleContact2 {
+            parallel,
+            parameter: q(1, 2),
+            point: point.clone(),
+            eliminant_root_multiplicity: 2,
+        }),
+    ]));
+    let circle = Arc::new(circle);
+    let source = RationalBezier2::try_new(
+        vec![
+            point.clone(),
+            center.translated(Real::one(), Real::one()),
+            center.translated(Real::zero(), Real::one()),
+        ],
+        vec![Real::from(-3), Real::from(-3), Real::from(-6)],
+    )
+    .unwrap()
+    .with_implicit_quadratic_conic(circle.implicit_coefficients(), Some(Arc::clone(&circle)));
+    assert_eq!(source.retained_circular_conic(), Some(&circle));
+    let Classification::Decided(Some(native)) =
+        crate::arc_bezier::rational_bezier_circular_arc(&source, &policy).unwrap()
+    else {
+        panic!("the retained circle has one native arc");
+    };
+    let (_, promoted_circle) = crate::arc_bezier::circular_conic_provenance(&native);
+    assert_eq!(
+        promoted_circle, circle,
+        "native promotion keeps both contact proofs"
+    );
+    let Classification::Decided(Some(quadratic)) = source
+        .materialized_quadratic_representative(&policy)
+        .unwrap()
+    else {
+        panic!("the rational quadratic has a native representative");
+    };
+    let Classification::Decided(Some(quadratic_arc)) =
+        crate::arc_bezier::rational_quadratic_circular_arc(&quadratic, &policy).unwrap()
+    else {
+        panic!("the quadratic retains its circle");
+    };
+    let elevated = source.elevated_to_degree(5).unwrap();
+    let Classification::Decided(Some(elevated_arc)) =
+        crate::arc_bezier::rational_bezier_circular_arc(&elevated, &policy).unwrap()
+    else {
+        panic!("degree elevation retains the selected circular chart");
+    };
+    let midpoint = q(1, 2).sqrt().unwrap();
+    let (first, second) = native
+        .split_at_retained_sweep_point(&q(1, 2), center.translated(midpoint.clone(), midpoint))
+        .unwrap();
+    for (arc, contains_contact) in [
+        (native.clone(), true),
+        (native.reversed(), true),
+        (quadratic_arc, true),
+        (elevated_arc, true),
+        (first, true),
+        (second, false),
+    ] {
+        let (_, support) = crate::arc_bezier::circular_conic_provenance(&arc);
+        assert_eq!(support, circle);
+        assert_eq!(arc.contains_point(&point).unwrap(), contains_contact);
+        for span in arc.rational_bezier_decomposition().unwrap().spans() {
+            assert_eq!(span.curve().retained_circular_conic(), Some(&circle));
+        }
+        let selected = crate::Curve2::from(arc.clone())
+            .subcurve(q(1, 4).into(), q(3, 4).into())
+            .unwrap();
+        let Some(crate::CurveGeometry2::CircularArc(selected)) = selected.geometry() else {
+            panic!("a native scalar restriction stays circular");
+        };
+        assert_eq!(selected.retained_circular_conic(), Some(&circle));
+        assert!(!selected.contains_point(&point).unwrap());
+        for entries in [[3, -4, 4, 3, 7, -2], [3, 4, 4, -3, 1, 5]] {
+            let [a, b, c, d, x, y] = entries.map(Real::from);
+            let transform = crate::Similarity2::try_from_real_affine(a, b, c, d, x, y).unwrap();
+            let image = arc.transform_similarity(&transform).unwrap();
+            assert_eq!(
+                image.is_clockwise(),
+                arc.is_clockwise() ^ transform.reverses_orientation()
+            );
+            let expected = circle.transform_similarity(&transform).unwrap();
+            let (_, image_circle) = crate::arc_bezier::circular_conic_provenance(&image);
+            assert_eq!(image_circle.as_ref(), &expected);
+            assert_eq!(
+                is_zero(
+                    &(image.radius_squared() - &expected.radius_squared),
+                    &policy
+                ),
+                Some(true)
+            );
+            assert_eq!(
+                image
+                    .contains_point(&transform.transform_point(&point))
+                    .unwrap(),
+                contains_contact
+            );
+        }
+    }
+}
+
+#[test]
 fn similarity_transports_circle_tangent_relations_and_invalidates_affine_metric() {
     use crate::rational_bezier::{
         RationalQuadraticCircle2, RationalQuadraticCircleTangentContact2 as Contact,

@@ -1353,14 +1353,17 @@ impl Curve2 {
                 } else {
                     CircularArc2::new_unchecked_with_radius
                 };
-                CurveGeometry2::CircularArc(constructor(
-                    sub_start,
-                    sub_end,
-                    curve.center().clone(),
-                    curve.radius_squared(),
-                    curve.is_clockwise(),
-                    None,
-                ))
+                CurveGeometry2::CircularArc(
+                    constructor(
+                        sub_start,
+                        sub_end,
+                        curve.center().clone(),
+                        curve.radius_squared(),
+                        curve.is_clockwise(),
+                        None,
+                    )
+                    .with_retained_circular_conic(curve.retained_circular_conic().cloned()),
+                )
             }
             Some(CurveGeometry2::QuadraticBezier(curve)) => CurveGeometry2::QuadraticBezier(
                 curve

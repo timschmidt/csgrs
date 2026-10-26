@@ -278,6 +278,23 @@ impl CircularArc2 {
     /// clockwise state is toggled exactly when the transform reverses
     /// orientation.
     pub fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
+        if let Some(circle) = self.retained_circular_conic() {
+            let circle = std::sync::Arc::new(circle.transform_similarity(transform)?);
+            let constructor = if self.endpoints_on_stored_circle_are_certified() {
+                Self::new_with_certified_radius
+            } else {
+                Self::new_unchecked_with_radius
+            };
+            return Ok(constructor(
+                transform.transform_point(self.start()),
+                transform.transform_point(self.end()),
+                circle.center.clone(),
+                circle.radius_squared.clone(),
+                self.is_clockwise() ^ transform.reverses_orientation(),
+                None,
+            )
+            .with_retained_circular_conic(Some(circle)));
+        }
         Self::try_from_center(
             transform.transform_point(self.start()),
             transform.transform_point(self.end()),

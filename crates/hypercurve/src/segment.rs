@@ -524,6 +524,7 @@ pub(crate) struct CircularArcRetainedFacts2 {
     endpoints_on_stored_circle: bool,
     clockwise: bool,
     source_bulge: Option<Real>,
+    circular_conic: Option<Arc<crate::rational_bezier::RationalQuadraticCircle2>>,
     structural_facts: OnceLock<Box<crate::CircularArc2Facts>>,
     pub(crate) sweep_kind: crate::policy::PolicyEvaluationCache<crate::arc_bezier::ArcSweepKind>,
     pub(crate) bezier_decomposition:
@@ -553,6 +554,7 @@ impl CircularArcRetainedFacts2 {
             endpoints_on_stored_circle,
             clockwise,
             source_bulge,
+            circular_conic: None,
             structural_facts: OnceLock::new(),
             sweep_kind: crate::policy::PolicyEvaluationCache::new(),
             bezier_decomposition: crate::policy::PolicyEvaluationCache::new(),
@@ -602,6 +604,28 @@ impl PartialEq for CircularArc2 {
 impl CircularArc2 {
     fn data(&self) -> &CircularArcRetainedFacts2 {
         &self.retained_facts
+    }
+
+    pub(crate) fn retained_circular_conic(
+        &self,
+    ) -> Option<&Arc<crate::rational_bezier::RationalQuadraticCircle2>> {
+        self.data().circular_conic.as_ref()
+    }
+
+    /// Attaches an already proved supporting circle to a freshly constructed
+    /// arc. The caller owns equality of the center and radius; endpoint and
+    /// sweep certification remain separate. Restrictions and reversal retain
+    /// the support's contacts even when a contact lies outside the new sweep.
+    pub(crate) fn with_retained_circular_conic(
+        mut self,
+        circle: Option<Arc<crate::rational_bezier::RationalQuadraticCircle2>>,
+    ) -> Self {
+        if circle.is_some() {
+            Arc::get_mut(&mut self.retained_facts)
+                .expect("new arc retained facts are uniquely owned")
+                .circular_conic = circle;
+        }
+        self
     }
 
     fn from_geometry(
@@ -1610,7 +1634,8 @@ impl CircularArc2 {
             self.radius_squared(),
             self.is_clockwise(),
             None,
-        );
+        )
+        .with_retained_circular_conic(self.retained_circular_conic().cloned());
         let _ =
             fragment
                 .retained_facts
@@ -1729,6 +1754,7 @@ impl CircularArc2 {
             !self.is_clockwise(),
             self.bulge().map(|bulge| -bulge.clone()),
         )
+        .with_retained_circular_conic(self.retained_circular_conic().cloned())
     }
 }
 

@@ -361,10 +361,12 @@ fn full_circle_quarter_points(arc: &CircularArc2) -> Vec<Point2> {
 pub(crate) fn circular_conic_provenance(
     arc: &CircularArc2,
 ) -> (Arc<[Real; 6]>, Arc<RationalQuadraticCircle2>) {
-    let circle = Arc::new(RationalQuadraticCircle2 {
-        center: arc.center().clone(),
-        radius_squared: arc.radius_squared_ref().clone(),
-        tangent_contacts: None,
+    let circle = arc.retained_circular_conic().cloned().unwrap_or_else(|| {
+        Arc::new(RationalQuadraticCircle2 {
+            center: arc.center().clone(),
+            radius_squared: arc.radius_squared_ref().clone(),
+            tangent_contacts: None,
+        })
     });
     (circle.implicit_coefficients(), circle)
 }
@@ -442,7 +444,8 @@ pub(crate) fn rational_bezier_circular_arc(
                 circle.radius_squared.clone(),
                 clockwise,
                 None,
-            ),
+            )
+            .with_retained_circular_conic(Some(Arc::clone(circle))),
         )));
     }
     let controls = match curve.quadratic_homogeneous_controls(policy)? {
@@ -499,7 +502,8 @@ fn homogeneous_quadratic_circular_arc(
                 circle.radius_squared.clone(),
                 clockwise,
                 None,
-            ),
+            )
+            .with_retained_circular_conic(Some(Arc::clone(circle))),
         )));
     }
 

@@ -85,8 +85,18 @@ in this repository.
 
 ## Local follow-on records
 
-The local closure branch ends at `b70ae9defe0d86009bd8f5d16d28a0fa8ecab574`,
-adding `docs/evidence/2026-10-26-hypercurve-closure-native-area` (9 files,
+The local closure branch ends at `895722357d6acde2b82fbeee40b5e5856adb75c4`,
+adding `docs/evidence/2026-10-26-hypercurve-closure-native-circle` (10 files,
+80,015 bytes), with SHA-256
+`1e1bf512fe517ae7a60e3440ebe0115d4690c7bb03cbe600accad3c49829c68f`.
+It records the corrected native-promotion failure, retained circular contact
+transport, seven passing circle tests, Clippy and formatting. The original
+arc-corner erosion remains blocked; full-suite and downstream qualification
+continue separately. The two discarded attempts using an incorrectly
+initialized test certificate are explicitly separated from the valid baseline.
+
+Its parent, `b70ae9defe0d86009bd8f5d16d28a0fa8ecab574`, adds
+`docs/evidence/2026-10-26-hypercurve-closure-native-area` (9 files,
 202,715 bytes), with SHA-256
 `b73c39dff6499757d7d9e00ed4b8e275209b4bfe2f1de1c86d108912692cee3e`.
 It records the storage-dependent CPArti assertion and extends its unchanged

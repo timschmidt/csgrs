@@ -261,6 +261,24 @@ All four retained-circular tests, strict Hypercurve Clippy and formatting pass;
 the complete suite is rerunning. Production code is unchanged by this test
 extension. Evidence: `docs/evidence/2026-10-26-hypercurve-closure-native-area`.
 
+**Native circle reconstruction, M1 increment (2026-10-26).** Native arcs now
+retain the existing shared circular support certificate through promotion,
+restriction, corner reconstruction, reversal and rational decomposition.
+Similarities use the circle owner's proof transport. The owning layer is
+Hypercurve's native circular support and reconstruction machinery; the affected
+contracts are P12 and P17–P19.
+
+The new acceptance witness fails on `74fd8fc89c` after asserting that its input
+has both contact proofs: native promotion discards them. The repaired path
+preserves line and parallel contacts for an algebraic center, negative weights,
+quadratic and degree-elevated charts, restricted contact membership, both
+traversals, rotation and reflection. All seven circle-incidence tests, strict
+all-target/all-feature Clippy and formatting pass. The complete release suite
+and 43 downstream adapter/profile/sweep/mixed-model tests are running separately.
+The original arc-corner erosion witness still reports `Offset/Line/RealSign`.
+This increment establishes neither completed closure nor a performance gain.
+Evidence: `docs/evidence/2026-10-26-hypercurve-closure-native-circle`.
+
 **Still open.**
 - The original ignored arc-corner refillet/erosion composition still reports
   `Offset/Line/RealSign` on this follow-up, as on the starting revision. Its full

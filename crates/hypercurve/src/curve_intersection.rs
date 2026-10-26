@@ -1657,6 +1657,7 @@ fn build_native_coincident_arc_evidence(
                 first_arc.is_clockwise(),
                 None,
             )
+            .with_retained_circular_conic(first_arc.retained_circular_conic().cloned())
         };
         for (second_span_index, second_fragment) in second_fragments.iter().enumerate() {
             let (second_start, second_end) = second_fragment.native_curve().endpoints();
@@ -1671,6 +1672,7 @@ fn build_native_coincident_arc_evidence(
                     second_arc.is_clockwise(),
                     None,
                 )
+                .with_retained_circular_conic(second_arc.retained_circular_conic().cloned())
             };
             let relation = first_span
                 .intersect_arc_with_policy(&second_span, policy)
@@ -1946,7 +1948,8 @@ fn arc_span_indices_for_point(
             arc.radius_squared(),
             arc.is_clockwise(),
             None,
-        );
+        )
+        .with_retained_circular_conic(arc.retained_circular_conic().cloned());
         match span.contains_sweep_point_with_policy(point, policy) {
             Classification::Decided(true) => indices.push(span_index),
             Classification::Decided(false) => {}

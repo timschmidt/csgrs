@@ -702,7 +702,8 @@ impl<'a> CurveCornerChain2<'a> {
                 support.radius_squared(),
                 support.is_clockwise(),
                 None,
-            );
+            )
+            .with_retained_circular_conic(support.retained_circular_conic().cloned());
             return Self::materialized_corner_arc_fragments(&arc, operation, policy);
         }
         let circle = CircularArc2::new_with_certified_radius(
@@ -712,7 +713,8 @@ impl<'a> CurveCornerChain2<'a> {
             support.radius_squared(),
             support.is_clockwise(),
             None,
-        );
+        )
+        .with_retained_circular_conic(support.retained_circular_conic().cloned());
         let decomposition = retained_corner_decision(
             circle
                 .rational_bezier_decomposition_raw(policy)
@@ -3180,6 +3182,9 @@ impl<'a> CurveCornerChain2<'a> {
                 deferred.source.support().radius_squared(),
                 deferred.source.support().is_clockwise(),
                 None,
+            )
+            .with_retained_circular_conic(
+                deferred.source.support().retained_circular_conic().cloned(),
             );
             let replacement = Some(Self::materialized_corner_arc_fragments(
                 &retained_arc,

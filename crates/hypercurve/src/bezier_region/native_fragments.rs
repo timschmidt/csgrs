@@ -164,14 +164,17 @@ pub(crate) fn retained_native_fragment_segment(
             };
             Ok(Classification::Decided(match source {
                 Segment2::Line(_) => Segment2::Line(LineSeg2::try_new(start_point, end_point)?),
-                Segment2::Arc(arc) => Segment2::Arc(CircularArc2::new_with_certified_radius(
-                    start_point,
-                    end_point,
-                    arc.center().clone(),
-                    arc.radius_squared_ref().clone(),
-                    arc.is_clockwise() ^ *reversed,
-                    None,
-                )),
+                Segment2::Arc(arc) => Segment2::Arc(
+                    CircularArc2::new_with_certified_radius(
+                        start_point,
+                        end_point,
+                        arc.center().clone(),
+                        arc.radius_squared_ref().clone(),
+                        arc.is_clockwise() ^ *reversed,
+                        None,
+                    )
+                    .with_retained_circular_conic(arc.retained_circular_conic().cloned()),
+                ),
             }))
         }
         BezierSplitFragment2::AlgebraicChord(chord) => {

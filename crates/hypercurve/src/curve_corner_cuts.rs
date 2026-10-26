@@ -1269,6 +1269,7 @@ pub(super) fn arc_extension_contains_corner(
             None,
         )
     };
+    let extended = extended.with_retained_circular_conic(arc.retained_circular_conic().cloned());
     let retained_corner = if previous { arc.end() } else { arc.start() };
     match extended.contains_sweep_point_with_policy(retained_corner, policy) {
         Classification::Decided(contains) => Ok(contains),
@@ -1695,6 +1696,8 @@ pub(super) fn materialize_corner_cut(
                         None,
                     )
                 };
+                let trimmed =
+                    trimmed.with_retained_circular_conic(arc.retained_circular_conic().cloned());
                 Ok(Curve2::from_geometry_with_lineage(
                     CurveGeometry2::CircularArc(trimmed),
                     lineage,
@@ -1752,6 +1755,7 @@ pub(super) fn materialize_corner_cut(
                         arc.is_clockwise(),
                         None,
                     )
+                    .with_retained_circular_conic(arc.retained_circular_conic().cloned())
                 } else {
                     CircularArc2::new_with_certified_radius(
                         point.clone(),
@@ -1761,6 +1765,7 @@ pub(super) fn materialize_corner_cut(
                         arc.is_clockwise(),
                         None,
                     )
+                    .with_retained_circular_conic(arc.retained_circular_conic().cloned())
                 }))
             } else if let Some(arc) = retained_rational_arc_support(curve, operation, policy)? {
                 Ok(Curve2::from(if previous {
@@ -1772,6 +1777,7 @@ pub(super) fn materialize_corner_cut(
                         arc.is_clockwise(),
                         None,
                     )
+                    .with_retained_circular_conic(arc.retained_circular_conic().cloned())
                 } else {
                     CircularArc2::new_with_certified_radius(
                         point.clone(),
@@ -1781,6 +1787,7 @@ pub(super) fn materialize_corner_cut(
                         arc.is_clockwise(),
                         None,
                     )
+                    .with_retained_circular_conic(arc.retained_circular_conic().cloned())
                 }))
             } else if let Some(parameter) = cut.exact_parameter() {
                 let domain = curve.native_parameter_domain()?;
