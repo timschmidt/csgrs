@@ -83,17 +83,33 @@ evidence repository, and its record digest is added to `evidence-archive.tsv`.
 `scripts/check-repository-budget.sh` rejects archived roots and oversized files
 in this repository.
 
-## Local follow-on records
+## Follow-on records
 
-The local closure branch ends at `895722357d6acde2b82fbeee40b5e5856adb75c4`,
-adding `docs/evidence/2026-10-26-hypercurve-closure-native-circle` (10 files,
+The `hypercurve-closure-2026-10-26` branch ends at
+`6c50c8ac3f0cc4cb04a9f024a0677bd039d6eefb`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-validation` (12,153 files,
+58,233,737 bytes), with SHA-256
+`78c71e823c48c8f104fde6290654f66fa54452b8e50043be7380cb534b9fc137`.
+It qualifies code `4b5bcdde506703e65f593a8006fde6e808e800a5`: all 129 locally
+executable workflow steps and all 196 strict Clippy configurations completed,
+with per-command source and dependency attribution. The full Hypercurve suite
+passes 2,639 tests (35 existing ignored), and 43 downstream checks pass.
+Four hosted configuration/upload/deployment actions were inspected but excluded;
+local package checks do not establish registry publication or hosted deployment.
+Failed sandbox/offline attempts and
+cancelled duplicates remain separate from their successful replacements.
+The sanitizer report's older nightly-alias metadata is corrected by the
+archived Cargo invocation and executable compiler evidence. These executions
+establish no performance improvement or complete curve-closure claim.
+
+Its parent, `895722357d6acde2b82fbeee40b5e5856adb75c4`, adds `docs/evidence/2026-10-26-hypercurve-closure-native-circle` (10 files,
 80,015 bytes), with SHA-256
 `1e1bf512fe517ae7a60e3440ebe0115d4690c7bb03cbe600accad3c49829c68f`.
 It records the corrected native-promotion failure, retained circular contact
 transport, seven passing circle tests, Clippy and formatting. The original
 arc-corner erosion remains blocked; full-suite and downstream qualification
-continue separately. The two discarded attempts using an incorrectly
-initialized test certificate are explicitly separated from the valid baseline.
+is completed in the validation record above. The two discarded attempts using
+an incorrectly initialized test certificate are explicitly separated from the valid baseline.
 
 Its parent, `b70ae9defe0d86009bd8f5d16d28a0fa8ecab574`, adds
 `docs/evidence/2026-10-26-hypercurve-closure-native-area` (9 files,
@@ -101,8 +117,8 @@ Its parent, `b70ae9defe0d86009bd8f5d16d28a0fa8ecab574`, adds
 `b73c39dff6499757d7d9e00ed4b8e275209b4bfe2f1de1c86d108912692cee3e`.
 It records the storage-dependent CPArti assertion and extends its unchanged
 geometry/area fixture through both native and retained views and following
-Booleans. Focused checks pass; full-suite and pre-push validation remain in
-progress. Production code is unchanged by this qualification extension.
+Booleans. Focused checks pass; full-suite and pre-push validation are recorded
+above. Production code is unchanged by this qualification extension.
 
 Its parent, `770d49fd53a2bfec1943af54b417b2dface7a596`, adds
 `docs/evidence/2026-10-26-hypercurve-closure-m1-circle` (12 files, 310,497 bytes),
@@ -114,13 +130,13 @@ The complete release suite was still running at this checkpoint. This local
 record does not claim pre-push validation, performance improvement, or completed
 closure; its parent is the retained-line record below.
 
-The local `hypercurve-closure-2026-10-26` branch adds commit
+The `hypercurve-closure-2026-10-26` branch adds commit
 `8399bc8af813a5624f1db2152d40f7b7e1cb7e1c` for
 `docs/evidence/2026-10-26-hypercurve-closure-m1` (10 files, 32,446 bytes), with
 SHA-256 `0d07f14b2b32e5dea5b3488090871802157e57b40a6dbde74990a5642363d9a6`.
 It records the retained-line transform repair, passing focused and downstream
-checks, and the still-failing follow-on XOR. This is an unpublished incremental
-record, not a full closure or pre-push validation claim. It adds only its own
+checks, and the then-failing follow-on XOR. This incremental
+record makes no full closure or pre-push validation claim. It adds only its own
 record; its parent is the research closeout below.
 
 The published [`research-2026-10-25` branch](https://github.com/timschmidt/csgrs-evidence/tree/research-2026-10-25)

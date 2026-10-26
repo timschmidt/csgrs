@@ -247,9 +247,9 @@ failed on `e002496280`. Independent circle parametrization and exact radius,
 tangency and parameter relations now pass, alongside near-distinct, repeated
 visit and pole controls. Final local checks passed: formatting, strict
 all-target/all-feature Hypercurve Clippy, six circle-incidence tests, all ten
-PCB tests, and 43 adapter/profile/sweep/mixed-modeling tests. The full
-all-feature release suite is running separately; this is not pre-push
-validation or a performance claim. The evidence record is
+PCB tests, and 43 adapter/profile/sweep/mixed-modeling tests. The final
+full-suite and pre-push qualification is recorded below; no performance
+improvement is claimed. The evidence record is
 `docs/evidence/2026-10-26-hypercurve-closure-m1-circle`.
 
 The subsequent full unit run found one storage-dependent assertion in the
@@ -258,8 +258,8 @@ unchanged original geometry still has exact area. Its qualification now also
 constructs an explicit retained boundary, checks the original area bounds for
 both views, and requires each reconstructed contour's next XOR to be empty.
 All four retained-circular tests, strict Hypercurve Clippy and formatting pass;
-the complete suite is rerunning. Production code is unchanged by this test
-extension. Evidence: `docs/evidence/2026-10-26-hypercurve-closure-native-area`.
+the complete suite subsequently passed. Production code is unchanged by this
+test extension. Evidence: `docs/evidence/2026-10-26-hypercurve-closure-native-area`.
 
 **Native circle reconstruction, M1 increment (2026-10-26).** Native arcs now
 retain the existing shared circular support certificate through promotion,
@@ -274,10 +274,52 @@ preserves line and parallel contacts for an algebraic center, negative weights,
 quadratic and degree-elevated charts, restricted contact membership, both
 traversals, rotation and reflection. All seven circle-incidence tests, strict
 all-target/all-feature Clippy and formatting pass. The complete release suite
-and 43 downstream adapter/profile/sweep/mixed-model tests are running separately.
+passes 2,639 tests (35 existing ignored), and all 43 downstream
+adapter/profile/sweep/mixed-model tests pass.
 The original arc-corner erosion witness still reports `Offset/Line/RealSign`.
 This increment establishes neither completed closure nor a performance gain.
 Evidence: `docs/evidence/2026-10-26-hypercurve-closure-native-circle`.
+
+**Pre-push qualification (2026-10-26).** Code `4b5bcdde50` completes all 129
+locally executable workflow steps and all 196 required strict Clippy
+configurations, including feature combinations, stable/MSRV packaged consumers,
+coverage, full sanitizer campaigns, examples, fuzz-target checks and release
+WASM demos. Per-command records verify unchanged source and dependency inputs;
+failed sandbox/offline attempts and cancelled duplicates are retained separately
+from completed replacements. Four hosted configuration/upload/deployment
+actions were inspected and excluded from local execution. No CI configuration
+changed. The concurrent benchmark runs establish no performance improvement.
+Evidence: `docs/evidence/2026-10-26-hypercurve-closure-validation`.
+This qualifies the committed increments; the remaining closure gaps stay open.
+
+**Scoped capability matrix at `4b5bcdde50`.** Each cell describes only the
+named witness below. A dash means this increment does not qualify that role,
+not that the target contract excludes it. The target remains the complete
+algebraic domain in `AGENTS.md`; arbitrary-degree closure, total resource
+accounting and fresh-process replay are not established by these rows.
+
+| Witness | Representation | Evaluation/differentials | Incidence/order | Region admission | Booleans | Further offset | Corner edits | Reconstruction | Exact replay |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| L: algebraically trimmed lines under independent affine maps | Support retained | — | Exact shared support; distinct controls | — | — | — | — | — | — |
+| C: rational circle charts under similarities | Circle and selected domain retained | Independent point oracle | Exact inverse parameters; poles and repeated visits retained | — | — | — | — | — | — |
+| N: native circle contact transport | Shared circle certificate | — | Line/parallel contact membership | — | — | — | — | Restrict, reverse, decompose | — |
+| P: independently mapped PCB cut | Mixed retained supports | — | Circle/line contacts | Certified | Difference, union, XOR | — | — | Next XOR empty | — |
+| A: original CPArti overlap | Native and retained views | Exact area bounds | — | Certified | Intersection, next XOR | — | — | Next XOR empty | — |
+| O: original arc-corner composition | Generated mixed boundary | — | Earlier contacts complete | Certified before erosion | Rebuild XOR and fillet set differences | Blocked: Offset/Line/RealSign | Both fillets complete | Reversal and rebuild complete | — |
+
+Witnesses: L is `support_line_identity_survives_independent_maps_and_reversal`
+and `transforming_a_straight_fragment_keeps_its_exact_line_support`
+in `src/bezier.rs`; C is
+`similarity_preserves_retained_circle_and_selected_chart` and
+`circle_incidence_preserves_subranges_reversal_elevation_and_certainty`;
+N is `native_arc_reconstruction_preserves_circle_tangent_contacts` in
+`src/rational_bezier_general/circle_incidence_tests.rs`. P is
+`concurrent_circle_contacts_survive_independent_maps_after_cutting` in
+`tests/hypercurve_pcb_boolean_regressions.rs`;
+A is `original_cparti_pad_overlap_has_an_exact_area`; O is
+`round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes`.
+O remains ignored and was executed explicitly to reproduce its blocker;
+its partial stages are not counted as completed erosion.
 
 **Still open.**
 - The original ignored arc-corner refillet/erosion composition still reports
