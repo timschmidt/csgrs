@@ -43,8 +43,10 @@ struct PolynomialCurveSource2 {
 /// event fiber; interior points retain the branch's ordered fiber root.
 /// Regular derivatives and smooth-event tangent directions retain that joint
 /// source. Source branches and their retained rational similarities intersect
-/// authored lines with rational endpoints, including selected restrictions,
-/// through [`Curve2::intersect_curve`] and [`Curve2::intersection_topology`].
+/// authored native lines, including exact algebraic coordinates and selected
+/// restrictions, through [`Curve2::intersect_curve`] and
+/// [`Curve2::intersection_topology`]. Scalar and selected-field decisions must
+/// succeed exactly; unresolved predicates retain their typed blockers.
 /// A common line component keeps its overlap correspondence; other selected
 /// branches keep their finite contacts with that component. Other
 /// intersections, singular limits, rational Bézier promotion, and filled
@@ -120,6 +122,24 @@ fn decided<T>(value: Classification<T>) -> ExactCurveResult<T> {
         Classification::Decided(value) => Ok(value),
         Classification::Uncertain(reason) => Err(blocked(reason)),
     }
+}
+
+/// A substituted constant can vanish through an algebraic relation that is
+/// not a structural zero. Certify a nonzero coefficient or every zero before
+/// distinguishing a finite section from a common supporting component.
+fn polynomial_is_zero(coefficients: &[Real], policy: &CurveContext) -> ExactCurveResult<bool> {
+    let zero = CurveParameter2::from(Real::zero());
+    for coefficient in coefficients.iter().rev() {
+        let order = decided(
+            CurveParameter2::from(coefficient.clone())
+                .cmp_by_refinement(&zero, &policy.strict_counterpart())
+                .map_err(invalid)?,
+        )?;
+        if order != Ordering::Equal {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn parameter(root: &AlgebraicRootRepresentation) -> ExactCurveResult<BezierParameter2> {
@@ -337,7 +357,7 @@ impl PolynomialCurveBranch2 {
     /// Uses the source section authority after a rational similarity pullback.
     /// Source abscissas remain the branch parameters; returned points and
     /// tangent signs belong to the current image. Nonlinear rational images
-    /// and algebraic coefficient fields retain their existing capability gap.
+    /// and algebraic transform coefficients retain their existing capability gap.
     pub(crate) fn line_sections(
         &self,
         line: &crate::LineSeg2,
@@ -386,7 +406,7 @@ impl PolynomialCurveBranch2 {
         Ok(Some(sections))
     }
 
-    /// Every point of this source-plane branch on the rational `line`.
+    /// Every point of this source-plane branch on the exact native `line`.
     ///
     /// A vertical line `x = c` meets the graph at most once. Otherwise the
     /// candidate abscissas are all real roots of `F(x, y0 + (x - x0) dy/dx)`
@@ -420,7 +440,14 @@ impl PolynomialCurveBranch2 {
         debug_assert!(self.is_source_image());
         let (dx, dy) = line.delta();
         let (x0, y0) = (line.start().x(), line.start().y());
-        let vertical = dx.definitely_zero();
+        let compare_zero = |value: &Real| {
+            decided(
+                CurveParameter2::from(value.clone())
+                    .cmp_by_refinement(&Real::zero().into(), &policy.strict_counterpart())
+                    .map_err(invalid)?,
+            )
+        };
+        let vertical = compare_zero(&dx)? == Ordering::Equal;
         let mut residual_equation = None;
         let candidates = if vertical {
             Vec::new()
@@ -432,7 +459,7 @@ impl PolynomialCurveBranch2 {
                 &slope,
                 &offset,
             );
-            if substituted.iter().all(Real::definitely_zero) {
+            if polynomial_is_zero(&substituted, policy)? {
                 if self.selects_line_component(&slope, &offset, policy)? {
                     return Ok(PolynomialLineSections2::SharedLine([
                         x0.clone(),
@@ -457,13 +484,12 @@ impl PolynomialCurveBranch2 {
             }
             self.line_abscissas(substituted)?
         };
-        let dy_sign = if dy
-            .exact_rational_ref()
-            .is_some_and(|value| value.is_positive())
-        {
-            RealSign::Positive
-        } else {
-            RealSign::Negative
+        let dy_sign = || {
+            compare_zero(&dy).map(|order| match order {
+                Ordering::Less => RealSign::Negative,
+                Ordering::Equal => RealSign::Zero,
+                Ordering::Greater => RealSign::Positive,
+            })
         };
         // Sign queries are built on first use; an interior vertical section
         // needs none of them.
@@ -540,7 +566,7 @@ impl PolynomialCurveBranch2 {
                 return Ok(Some(PolynomialLineSection2 {
                     parameter,
                     point,
-                    cross: Some(dy_sign),
+                    cross: Some(dy_sign()?),
                 }));
             }
             let forms = forms();
@@ -557,7 +583,7 @@ impl PolynomialCurveBranch2 {
                     return Err(invalid(CurveError::InvalidBezierAlgebraicParameter));
                 }
                 (Classification::Decided(RealSign::Zero) | Classification::Uncertain(_), _) => None,
-                (Classification::Decided(_), None) => Some(dy_sign),
+                (Classification::Decided(_), None) => Some(dy_sign()?),
                 (Classification::Decided(fy_sign), Some([_, tangent])) => {
                     match sign(&point, tangent)? {
                         Classification::Decided(sign) if fy_sign == RealSign::Negative => {
@@ -623,7 +649,7 @@ impl PolynomialCurveBranch2 {
     fn line_abscissas(&self, substituted: Vec<Real>) -> ExactCurveResult<Vec<CurveParameter2>> {
         use hypersolve::bivariate_arithmetic::polynomial_trim_structural_zeros;
         let substituted = polynomial_trim_structural_zeros(substituted);
-        if substituted.iter().all(Real::definitely_zero) {
+        if polynomial_is_zero(&substituted, &CurveContext::STRICT)? {
             // The line is a component of the zero set.
             return Err(blocked(UncertaintyReason::Unsupported));
         }

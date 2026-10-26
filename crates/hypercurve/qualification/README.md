@@ -62,6 +62,15 @@ trim correspondences, orientation, singleton contacts, transverse and tangent
 contacts, and disjoint irrational branches. Their point-definition replay is
 in memory; native generated archive replay remains unqualified.
 
+The algebraic-coordinate line witnesses retain the original irrational
+vertical and sloped frontier inputs as positive assertions. Native line
+coordinates include cubic, seventh-root and mixed quadratic expressions.
+Substituted coefficients require certified zero decisions: a quartic's line
+component must not become an empty result because its zero expression is not
+structurally obvious. These witnesses cover native `LineSeg2` inputs; selected
+chord carriers, broader transform coefficients and general branch pairs still
+need separate qualification. They do not establish universal algebraic closure.
+
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.
 Missing tests, ignored tests, zero-test passes, failing builds or tests, changed

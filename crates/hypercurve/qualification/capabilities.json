@@ -1059,6 +1059,314 @@
       "timeout_seconds": 300
     },
     {
+      "id": "implicit_algebraic_abscissa",
+      "target": "polynomial_algebraic_lines",
+      "test": "algebraic_abscissa_keeps_the_original_quintic_fiber",
+      "owner": "Hypercurve native-line admission, certified polynomial coefficient decisions and selected source sections",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The graph y^5+5y+5-x evaluated at sqrt(2)/2, cbrt(2)/2, seventh_root(2)/2 and (sqrt(2)+sqrt(3))/4.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Native LineSeg2 coordinates retain exact Real expressions and selected source parameters. Scalar and field decisions must complete exactly; these named cases do not establish the complete algebraic domain. In-memory point-definition replay is distinct from native archive replay.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Selected points retain the source polynomial relation and the exact abscissa, including in-memory point-definition reconstruction."
+        }
+      ],
+      "oracle": "Exact evaluation of the original polynomial, exact coordinate equality and replay equality. This pre-existing evaluation control already passed before extending line admission.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_vertical",
+      "target": "polynomial_algebraic_lines",
+      "test": "original_irrational_vertical_line_splits_and_requeries",
+      "owner": "Hypercurve native-line admission, certified polynomial coefficient decisions and selected source sections",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The same four abscissas against vertical native lines with rational or irrational ordinates, both native directions, branch reversals and operand orders; the original frontier input is retained.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Native LineSeg2 coordinates retain exact Real expressions and selected source parameters. Scalar and field decisions must complete exactly; these named cases do not establish the complete algebraic domain. In-memory point-definition replay is distinct from native archive replay.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Each section has exactly one transverse contact with the independently expected cross sign and exact abscissa."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Both source parameters evaluate to the retained correlated contact."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Both operands split into two pieces; the returned endpoint pieces re-enter the query without another split."
+        }
+      ],
+      "oracle": "F_y=5y^4+5>0, exact defining F and abscissas, vertical direction signs and topology counts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_sloped_empty",
+      "target": "polynomial_algebraic_lines",
+      "test": "original_irrational_sloped_line_is_certifiably_disjoint",
+      "owner": "Hypercurve native-line admission, certified polynomial coefficient decisions and selected source sections",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The unchanged original line from (-1,sqrt(2)/2) to (1,3) against the quintic graph over [-1,1], in both orders.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Native LineSeg2 coordinates retain exact Real expressions and selected source parameters. Scalar and field decisions must complete exactly; these named cases do not establish the complete algebraic domain. In-memory point-definition replay is distinct from native archive replay.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "Intersection is complete and disjoint; topology retains one piece of each operand."
+        }
+      ],
+      "oracle": "The entire native line has y>0 while F_y>0 and F(x,0)=5-x>0 force the unique quintic graph root below y=0.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_sloped_contact",
+      "target": "polynomial_algebraic_lines",
+      "test": "algebraic_sloped_line_keeps_its_selected_contact",
+      "owner": "Hypercurve native-line admission, certified polynomial coefficient decisions and selected source sections",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Native lines from (-1,-alpha) to (1,-1), where alpha is sqrt(2)/2, cbrt(2)/2, seventh_root(2)/2 or (sqrt(2)+sqrt(3))/8, against the quintic.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Native LineSeg2 coordinates retain exact Real expressions and selected source parameters. Scalar and field decisions must complete exactly; these named cases do not establish the complete algebraic domain. In-memory point-definition replay is distinct from native archive replay.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Each decreasing line has exactly one selected contact satisfying both original equations and 0<x<1, in both orders."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Native and source parameters replay the same selected contact."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Each returned piece remains a complete intersection operand."
+        }
+      ],
+      "oracle": "The independent affine equation y=(alpha-1)x/2-(alpha+1)/2, defining quintic, monotonicity, sign change over (0,1) and exact point equality.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_component",
+      "target": "polynomial_algebraic_lines",
+      "test": "algebraic_component_lines_keep_selected_overlaps",
+      "owner": "Hypercurve native-line admission, certified polynomial coefficient decisions and selected source sections",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The horizontal branches of y^2-2 and y^4-10y^2+1 against native lines at their positive/negative outer roots, with irrational native abscissas, both line directions and operand orders.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Native LineSeg2 coordinates retain exact Real expressions and selected source parameters. Scalar and field decisions must complete exactly; these named cases do not establish the complete algebraic domain. In-memory point-definition replay is distinct from native archive replay.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Only the selected outer branch overlaps, with the expected correspondence, orientation and paired endpoint images."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "Other selected branches and lines displaced by 2^-80 remain disjoint."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Topology yields one branch piece and three native-line pieces; the middle line piece re-enters with one complete overlap."
+        }
+      ],
+      "oracle": "Independent roots +-sqrt(2) and +-(sqrt(2)+sqrt(3)), with the quartic inner roots +-(sqrt(3)-sqrt(2)); explicit ordinate checks, orientation and topology counts. The quartic case reproduces a false empty result if structural zero is mistaken for a complete coefficient decision.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_mapped",
+      "target": "polynomial_algebraic_lines",
+      "test": "algebraic_line_sections_survive_rational_similarities",
+      "owner": "Hypercurve native-line admission, certified polynomial coefficient decisions and selected source sections",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The selected sloped quintic contact under a quarter rotation/translation and a reflection/translation, branch reversal and both operand orders.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Native LineSeg2 coordinates retain exact Real expressions and selected source parameters. Scalar and field decisions must complete exactly; these named cases do not establish the complete algebraic domain. In-memory point-definition replay is distinct from native archive replay.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Contacts satisfy independently expanded world-coordinate quintics and line equations, with determinant-adjusted transverse signs."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Both original parameter charts and the in-memory point definition replay the transformed contact."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Returned endpoint pieces meet again as complete operands without further splits."
+        }
+      ],
+      "oracle": "Explicit substitutions u=y-4,v=3-x and u=2-x,v=y+3 expanded into world polynomials, independent affine line equations and cross signs.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_retry",
+      "target": "polynomial_algebraic_lines",
+      "test": "algebraic_line_sections_retry_and_retain_certainty",
+      "owner": "Hypercurve native-line admission, certified polynomial coefficient decisions and selected source sections",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A selected sloped quintic/line contact under zero counted allowance, a 100000-refinement/100000-promotion retry and STRICT/APPROXIMATE_512/STRICT after dropping original objects.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Native LineSeg2 coordinates retain exact Real expressions and selected source parameters. Scalar and field decisions must complete exactly; these named cases do not establish the complete algebraic domain. In-memory point-definition replay is distinct from native archive replay.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exhausted",
+          "assertion": "A reached zero work allowance returns the public BudgetExhausted reason."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "The larger counted-budget retry completes with one selected contact."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Retained pieces still meet once after the originals are dropped and preserve Certified certainty in all three policy calls."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "In-memory point replay and the original quintic defining relation remain exact."
+        }
+      ],
+      "oracle": "Reached counters, explicit public error reason, independent polynomial identity, endpoint topology, point replay and certainty receipts. Counters do not bound total work or memory.",
+      "timeout_seconds": 300
+    },
+    {
       "id": "implicit_frontier",
       "target": "polynomial_curves",
       "test": "unadmitted_polynomial_pairs_keep_typed_blockers",
@@ -1071,7 +1379,7 @@
         "P19",
         "P20"
       ],
-      "domain": "Quintic versus irrational-coordinate vertical/sloped lines, a polynomial branch pair, and a closed parabola-branch boundary. The original rationally translated branch is retained in the positive implicit_mapped_sections witness.",
+      "domain": "A quintic versus a polynomial branch pair, and a closed parabola-branch boundary. The original irrational-coordinate native lines are retained as positive witnesses in polynomial_algebraic_lines.",
       "origins": [
         "authored",
         "selected_implicit"
@@ -1088,7 +1396,7 @@
         {
           "stage": "incidence_order",
           "outcome": "unsupported",
-          "assertion": "Both operand orders reject irrational-coordinate vertical/sloped lines and polynomial branch pairs with Unsupported."
+          "assertion": "Both operand orders reject the polynomial branch pair with Unsupported."
         },
         {
           "stage": "region_admission",

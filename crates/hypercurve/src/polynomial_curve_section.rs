@@ -1,4 +1,4 @@
-//! Sections of retained polynomial graph branches by authored rational lines.
+//! Sections of retained polynomial graph branches by exact native lines.
 //!
 //! A graph branch is parameterized by the first coordinate of its source
 //! polynomial. The branch's own fiber authority selects every point it shares
@@ -14,24 +14,20 @@ use super::*;
 use crate::CurveFamily2;
 use crate::curve::PolynomialLineSections2;
 
-/// An authored rational line, or a retained restriction of one, in the source
+/// An authored native line, or a retained restriction of one, in the source
 /// chart shared by its public parameter.
 ///
 /// Only a native line evaluates an affine-form parameter by replaying its
 /// source point, which the split of the line operand relies on. A degree-
 /// elevated line image keeps its existing dispatch.
-fn rational_line(curve: &Curve2) -> Option<&crate::LineSeg2> {
+fn native_line(curve: &Curve2) -> Option<&crate::LineSeg2> {
     let source = curve
         .source_restriction()
         .map_or(curve, |(source, _, _)| source);
     let Some(CurveGeometry2::Line(line)) = source.geometry() else {
         return None;
     };
-    let (start, end) = (line.start(), line.end());
-    [start.x(), start.y(), end.x(), end.y()]
-        .iter()
-        .all(|value| value.exact_rational_ref().is_some())
-        .then_some(line)
+    Some(line)
 }
 
 fn decided<T>(value: CurveResult<Classification<T>>) -> ExactCurveResult<T> {
@@ -75,13 +71,10 @@ fn shared_line_section(
     policy: &CurveContext,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let [x0, x1] = abscissas;
-    let reversed_map = compare_reals(&x0, &x1, &policy.strict_counterpart()).ok_or_else(|| {
-        ExactCurveError::blocked(
-            CurveOperation2::Intersection,
-            CurveFamily2::ImplicitPolynomial,
-            UncertaintyReason::Ordering,
-        )
-    })? == Ordering::Greater;
+    let reversed_map = decided(
+        CurveParameter2::from(x0.clone())
+            .cmp_by_refinement(&x1.clone().into(), &policy.strict_counterpart()),
+    )? == Ordering::Greater;
     let correspondence = CurveOverlapCorrespondence2::affine(
         &ParamRange::new(x0.clone(), x1.clone()),
         &ParamRange::new(Real::zero(), Real::one()),
@@ -270,7 +263,7 @@ fn negate(sign: hyperreal::RealSign) -> hyperreal::RealSign {
 }
 
 /// Intersects a polynomial graph branch, including a retained rational
-/// similarity, with an authored rational line in either operand order.
+/// similarity, with an authored native line in either operand order.
 ///
 /// Returns `None` for every other pair, which keeps its existing dispatch.
 /// Both active domains are checked. The line parameter is `(y - y0) / dy`
@@ -289,7 +282,7 @@ pub(super) fn polynomial_line_section(
             (None, Some(branch)) => (branch, first, false),
             _ => return Ok(None),
         };
-    let Some(line) = rational_line(line_curve) else {
+    let Some(line) = native_line(line_curve) else {
         return Ok(None);
     };
     let spans = line_curve.source_spans(policy, CurveOperation2::Intersection)?;
@@ -332,7 +325,11 @@ pub(super) fn polynomial_line_section(
             )
         })
     };
-    let form = if dy.definitely_zero() {
+    let horizontal = decided(
+        CurveParameter2::from(dy.clone())
+            .cmp_by_refinement(&Real::zero().into(), &policy.strict_counterpart()),
+    )? == Ordering::Equal;
+    let form = if horizontal {
         let scale = inverse(&dx)?;
         let offset = -(line.start().x() * &scale);
         [scale, Real::zero(), offset]

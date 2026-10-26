@@ -600,15 +600,16 @@ open. Counted refinement exhaustion is not a bound on all computation.
 ## 8. Polynomial-branch sections and filled arrangements
 
 **Admitted.** A graph branch and its retained invertible rational similarities
-meet authored lines with rational endpoints, or returned restrictions of them,
+meet authored native lines with exact algebraic coordinates, or returned restrictions of them,
 in both intersection APIs and both operand orders. Parameters remain in their
 original source charts. Both operands split and the pieces re-enter the same
 query; selected algebraic trims, reversal, tangent contacts and singular-event
 contacts retain their meanings. A selected common line keeps its overlap
 correspondence, while other branches retain their finite contacts with that
-line. Other algebraic similarities, nonlinear maps,
-algebraic-coordinate lines, branch pairs and filled polynomial arrangements
-remain implementation gaps.
+line. The recorded scalar and selected-field decisions must succeed exactly;
+unresolved predicates retain their typed blockers. Other algebraic similarities,
+nonlinear maps, selected chord carriers, branch pairs and filled polynomial
+arrangements remain implementation gaps.
 
 **Rational-similarity section increment (2026-10-26).** Against `b1af6465b3`,
 the original translated quintic fixture reproduced `Unsupported`. Pulling the
@@ -669,6 +670,37 @@ polynomial regions or fresh-process native replay. Counted work is not a
 total-work, memory or cancellation bound. No performance improvement is claimed;
 full repository pre-push qualification for this increment remains pending.
 
+**Algebraic native-line increment (2026-10-26).** The original irrational
+vertical and sloped lines reproduced `Unsupported` against the frozen
+line-component candidate. Direct evaluation at algebraic abscissas already
+passed and remains a control. Native line admission now uses exact scalar
+decisions for chart direction and substituted coefficients. An initial
+prototype falsely reported an empty intersection for the component
+`y = -(sqrt(2) + sqrt(3))` of `y^4 - 10y^2 + 1`; the retained implementation
+certifies coefficient zeros before distinguishing finite sections, empty
+sections and common supports. The failure and candidate are archived.
+
+Seven witnesses cover the original cases, cubic and seventh-root coordinates,
+mixed radicals, selected common components and distinct nearby supports.
+Independent defining equations, both operand orders and traversals, rational
+rotations/reflections, subdivision/requery, retained-point replay and a reached
+counted budget followed by retry verify the admitted composition. Policy
+changes retain certified results. Selected chord carriers and broader
+algebraic maps remain outside this increment's qualification.
+
+The final release suite passes 2,676 tests (34 existing ignored; 74 suites),
+all 43 affected downstream tests, strict all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards and all 34 capability witnesses. Typos, repository
+budget and diff checks pass. Qualification used `45947259af` plus the frozen
+component and algebraic-line inputs; their bytes were verified unchanged when
+advancing the commit parent to `9da58d3ac3`. Raw commands, snapshots and failures
+are retained in `docs/evidence/2026-10-26-hypercurve-closure-algebraic-lines`,
+digest `3404dc901761f282c45021ad7d399095a624a2f5961203a38cdc45734a88aec2`.
+This does not complete A2, filled polynomial regions or fresh-process native
+replay. Counted work is not a total-work, memory or cancellation bound. No
+performance improvement is claimed; full repository pre-push qualification
+for this increment remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
@@ -677,7 +709,7 @@ full repository pre-push qualification for this increment remains pending.
   rows and measurements remain in [the experiment record](PERFORMANCE.md#shared-polynomial-cut-points-r05).
   Passing the original intersection contact's authority into subdivision
   remains a distinct experiment.
-- **Broader common components.** Rational native-line components are admitted
+- **Broader common components.** The qualified native-line components are admitted
   above. Common nonlinear components and polynomial branch pairs still need
   selected overlap correspondences and their remaining finite contacts.
 - **Horizontal-line replay.** On a horizontal line the line parameter is the
@@ -686,8 +718,8 @@ full repository pre-push qualification for this increment remains pending.
   selected-fiber image of the abscissa would keep the replay identity at the
   cost of fiber-field arithmetic.
 - **Selected abscissas and broader maps (H06, milestones 2 and 3).** Rational
-  similarity pullback is admitted above. Irrational line coordinates and
-  general algebraic similarities or nonlinear rational images still need
+  similarity pullback and the recorded algebraic native lines are admitted
+  above. Selected chord carriers, general algebraic similarities and nonlinear rational images still need
   their own section and source-domain proof; source-x monotonicity is not
   world-x monotonicity. Branch pairs need resultant events and exact fiber
   signs.

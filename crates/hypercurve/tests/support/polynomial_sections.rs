@@ -1106,17 +1106,9 @@ pub fn unadmitted_polynomial_pairs_keep_typed_blockers() {
             }
         }
     };
-    // Lines with an irrational coordinate need selected-field substitution
-    // (H06, milestone 2), whether vertical or sloped.
-    let root = (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap();
-    unsupported(curve, &vertical(root.clone(), (-3).into(), 3.into()));
-    let slanted: Curve2 = LineSeg2::try_new(
-        Point2::new((-1).into(), root),
-        Point2::new(1.into(), 3.into()),
-    )
-    .unwrap()
-    .into();
-    unsupported(curve, &slanted);
+    // The unchanged irrational vertical and sloped lines are positive
+    // witnesses in polynomial_algebraic_lines: respectively one selected
+    // contact and a proved empty intersection.
     // The original rational translation case is now a positive witness in
     // mapped_quintic_line_sections_keep_source_parameters, with the same input.
     // Two polynomial branches.

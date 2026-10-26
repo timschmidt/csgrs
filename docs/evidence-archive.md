@@ -85,6 +85,22 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-algebraic-line-evidence-2026-10-26` branch
+ends at `2d8749f6d70c8805fd96c0d4e1fefd83d59c55e2`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-algebraic-lines` (94 files,
+2,666,477 bytes), SHA-256
+`3404dc901761f282c45021ad7d399095a624a2f5961203a38cdc45734a88aec2`.
+It records native algebraic-coordinate line sections and certified coefficient
+decisions: 2,676 Hypercurve tests, 43 downstream tests, strict MSRV Clippy,
+formatting, 16 matrix guards and all 34 capability witnesses pass. Original
+blockers, a reproduced quartic false-empty prototype, exact source hashes and
+final qualification are retained. Qualification used `45947259af` plus the
+frozen component and algebraic-line inputs; source bytes were preserved when
+advancing the parent to `9da58d3ac3`. Selected chord carriers, broader maps,
+branch pairs and native archive replay remain gaps. This record is local and
+unpushed. Full repository pre-push qualification remains pending; the frozen
+`904e5408e1` run does not cover it.
+
 The separate local `hypercurve-line-components-evidence-2026-10-26` branch
 ends at `3f3a1ef5416f882095d3b3fa7b6d386d818d9f22`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-line-components` (84 files,
