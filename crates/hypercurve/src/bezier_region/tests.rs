@@ -15763,3 +15763,76 @@ fn ordered_tangent_families_preserve_opposition_frontier() {
         }
     }
 }
+
+#[test]
+fn offset_band_endpoints_share_only_certified_smooth_circle_contacts() {
+    for opposite in [false, true] {
+        for distance in [q(1, 4), q(-1, 4), q(1, 1_000_000_000), q(-1, 1_000_000_000)] {
+            let line_start = if opposite { p(1, 0) } else { p(-1, 0) };
+            let line = crate::LineSeg2::try_new(line_start.clone(), p(0, 0)).unwrap();
+            let linear = QuadraticBezier2::from_line_segment(line);
+            let circle = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(0, 1), false).unwrap();
+            let mut fragments = vec![materialized_offset_fragment(BezierSubcurve2::Quadratic(
+                linear.clone(),
+            ))];
+            fragments.extend(
+                circle
+                    .rational_bezier_decomposition()
+                    .unwrap()
+                    .spans()
+                    .iter()
+                    .map(|span| {
+                        materialized_offset_fragment(BezierSubcurve2::RationalQuadratic(
+                            span.curve().clone(),
+                        ))
+                    }),
+            );
+            fragments.push(materialized_offset_fragment(BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(
+                    crate::LineSeg2::try_new(p(1, 1), line_start).unwrap(),
+                ),
+            )));
+            let policy = CurveContext::STRICT;
+            let boundary = CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap();
+            let Classification::Decided(runs) =
+                exact_offset_span_runs_from_boundary_loop(&boundary, &distance, &policy).unwrap()
+            else {
+                panic!("the line/circle source has exact offset spans");
+            };
+            let mut spans = runs.into_iter().map(|(span, _)| span).collect::<Vec<_>>();
+            let parallel = linear.parallel_left(distance.clone()).unwrap();
+            let retained = CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new(
+                parallel,
+                BezierParameter2::Exact(Real::one()),
+                &policy,
+            ));
+            // This is the same generated line endpoint with a retained normal
+            // definition instead of independent represented coordinates.
+            assert_eq!(
+                retained.same_point(&spans[0].offset_end, &policy),
+                Classification::Decided(true)
+            );
+            spans[0].offset_end = retained.clone();
+            let circle_start = spans[1].offset_start.clone();
+            assert_ne!(retained, circle_start);
+            share_exact_offset_band_endpoints(&mut spans, &distance, &policy);
+            if opposite {
+                // The common source point has opposite tangents. The offsets
+                // stay 2d apart even for a very small positive distance.
+                assert_eq!(spans[0].offset_end, retained);
+                assert_eq!(spans[1].offset_start, circle_start);
+                assert_eq!(
+                    spans[0].offset_end.same_point(&circle_start, &policy),
+                    Classification::Decided(false)
+                );
+            } else {
+                assert_eq!(spans[0].offset_end, circle_start);
+                assert_eq!(spans[1].offset_start, circle_start);
+                assert_eq!(
+                    circle_start.coordinates(),
+                    Some(&Point2::new(Real::zero(), distance))
+                );
+            }
+        }
+    }
+}

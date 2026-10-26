@@ -378,10 +378,44 @@ I comprises the five tests in `src/bezier_offset/parallel/circular_incidence_tes
 O is the unchanged full witness named above. These rows extend demonstrated
 coverage only; the algebraic target contract and other matrix rows remain open.
 
+**Offset band endpoint transport, M1 increment (2026-10-26).** At `532e517b07`,
+separate endpoint representations at a certified smooth line/circle junction
+can leave a band connector's circular incidence undecided. Band assembly now
+shares the represented circle endpoint only after the existing strict tangent
+junction proof establishes equality. Parallel source tangents at a common
+vertex give equal normals or opposite normals; certified coordinate enclosures
+exclude the latter's distance of `2|d|`. This is an exact proof, with no tolerance
+merge. Original support fragments, charts and traversal remain authoritative.
+The owner is Hypercurve offset band assembly (P12, P15, P17–P19); the domain is
+connected certified source loops, rational nonzero offsets and represented
+circular endpoints. Unproved joins retain their existing behavior.
+
+The independent witness
+`offset_band_endpoints_share_only_certified_smooth_circle_contacts` exercises
+smooth and opposed line/quarter-circle junctions at distances `±1/4` and
+`±1/10^9`. It checks the exact expected common point and verifies that opposite
+normals remain distinct. Final formatting, MSRV all-target/all-feature Clippy
+with `-D warnings`, the complete Hypercurve release suite (72 suites, 2,646
+passed, 35 existing ignored), and all 43 downstream adapter/profile/sweep/mixed
+checks pass. The original full fixture is unchanged and still fails during
+erosion at `Offset/QuadraticBezier` against `RationalBezier/RealSign` (11.89 s).
+This failed probe is not evidence of completed erosion or a speedup. The
+increment establishes no new replay, total-work, heap-byte or cancellation
+bound, and has not completed the full repository pre-push matrix. Raw checks,
+contract and source patch are in
+`docs/evidence/2026-10-26-hypercurve-closure-band-endpoints`; its digest is in
+`docs/evidence-archive.tsv`.
+
+| Scoped witness | Representation | Evaluation/differentials | Incidence/order | Region admission | Booleans | Further offset | Corner edits | Reconstruction | Exact replay |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| B: smooth/opposed band junctions | Original fragments and shared proved point | Exact signed normal endpoints | Strict equality or preserved distinction | Certified source loop | — | Signed line/circle bands | — | — | — |
+| O after B: unchanged arc-corner chain | Generated mixed boundary | — | Earlier native line/circle band contacts complete | Certified before erosion | Earlier set identities complete | Blocked: QuadraticBezier/RationalBezier/RealSign | Both fillets complete | Reversal and rebuild complete | — |
+
 **Still open.**
 - The original ignored arc-corner refillet/erosion composition now reports
-  `Offset/RationalQuadraticBezier/Predicate` during offset-band regularization.
-  Its full fixture remains unchanged. M1 and the broader closure plan remain open.
+  `Offset/QuadraticBezier` against `RationalBezier/RealSign` during offset-band
+  regularization. Its full fixture remains unchanged. M1 and the broader
+  closure plan remain open.
 - The earlier record listed six cases on this board, four with nonparallel `A` and `B` crossing on the arc. They do not occur on the current board. If such a case recurs: `A` and `B` meet in one point `Q` in their own field. The contacts are equal exactly when `Q` lies on the circle, an exact zero test of `|Q - C|² - r²`, and the branch sign above then selects `Q` on each line.
 - The earlier options remain for such cases: line-conic contacts on a circular conic in tower-representable form, from the circle's exact center and radius as `line_circle_relation_at_endpoints` does for native arcs; `quadratic_tower` beyond one outer radical; or a zero-separation bound, which `algebraic_separation_bound_bits` does not give past 256 nodes or at `Inverse` nodes without an exact child sign.
 

@@ -5004,11 +5004,11 @@ impl CurveRegion2 {
                     ),
                 ));
             }
-            let spans = span_runs
+            let mut spans = span_runs
                 .into_iter()
                 .map(|(span, _)| span)
                 .collect::<Vec<_>>();
-            let opposite_spans = opposite_runs
+            let mut opposite_spans = opposite_runs
                 .into_iter()
                 .map(|(span, _)| span)
                 .collect::<Vec<_>>();
@@ -5018,6 +5018,9 @@ impl CurveRegion2 {
                     CurveError::Topology("exact offset loop has no source spans".into()),
                 ));
             }
+
+            share_exact_offset_band_endpoints(&mut spans, &signed_left_distance, policy);
+            share_exact_offset_band_endpoints(&mut opposite_spans, &opposite_distance, policy);
 
             for span_index in 0..spans.len() {
                 let previous_index = (span_index + spans.len() - 1) % spans.len();

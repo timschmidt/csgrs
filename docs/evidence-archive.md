@@ -85,7 +85,17 @@ in this repository.
 
 ## Follow-on records
 
-The local `hypercurve-closure-2026-10-26` branch adds commit
+The local `hypercurve-closure-2026-10-26` branch now ends at
+`38f2b160874308b674e02fc5bd53e9bb71484add`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-band-endpoints` (9 files,
+301,329 bytes), SHA-256
+`32eae2f8d8901d2c6d4ecc4f68a0dd3b0ffa81ed829072650e36424bd65bb0e0`.
+This records exact endpoint sharing in offset bands against `532e517b07`,
+with 2,646 Hypercurve tests and 43 downstream tests passing, plus formatting
+and strict MSRV Clippy. The full original erosion case remains blocked. This
+record is committed locally and has not yet been pushed.
+
+Its local parent adds commit
 `586bebeb9655773597eb3a0dd21d28b83ff88ea3` for
 `docs/evidence/2026-10-26-hypercurve-closure-fillet-contacts` (42 files,
 844,716 bytes), with SHA-256

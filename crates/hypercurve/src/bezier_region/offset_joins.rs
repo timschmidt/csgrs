@@ -128,6 +128,59 @@ fn offset_ends_meet_at_tangent_junction(
     false
 }
 
+/// Carries a proved smooth junction into the connectors of adjacent bands.
+/// The original fragments keep their source charts; only an endpoint's equal
+/// represented image is shared. Circular endpoints are retained because their
+/// incidence on the supporting circle is already certified by construction.
+/// Callers supply consecutive spans of one certified connected source loop.
+pub(super) fn share_exact_offset_band_endpoints(
+    spans: &mut [ExactOffsetSpan2],
+    distance: &Real,
+    policy: &CurveContext,
+) {
+    let strict = policy.strict_counterpart();
+    let policy = &strict;
+    for index in 0..spans.len() {
+        let next = (index + 1) % spans.len();
+        let circular = |span: &ExactOffsetSpan2, at_start: bool| {
+            let fragment = if at_start {
+                span.fragments.first()
+            } else {
+                span.fragments.last()
+            };
+            let curve = match fragment {
+                Some(BezierSplitFragment2::Materialized { curve, .. }) => Some(curve),
+                Some(BezierSplitFragment2::RetainedBezier { source_curve, .. }) => {
+                    Some(source_curve)
+                }
+                _ => None,
+            };
+            match curve {
+                Some(BezierSubcurve2::RationalQuadratic(curve)) => {
+                    curve.retained_circular_conic().is_some()
+                }
+                Some(BezierSubcurve2::Rational(curve)) => curve.retained_circular_conic().is_some(),
+                _ => false,
+            }
+        };
+        let point = if circular(&spans[index], false) {
+            &spans[index].offset_end
+        } else if circular(&spans[next], true) {
+            &spans[next].offset_start
+        } else {
+            continue;
+        };
+        if point.coordinates().is_none()
+            || !offset_ends_meet_at_tangent_junction(&spans[index], &spans[next], distance, policy)
+        {
+            continue;
+        }
+        let point = point.clone();
+        spans[index].offset_end = point.clone();
+        spans[next].offset_start = point;
+    }
+}
+
 /// Signs `cross(previous.offset_end - V, next.offset_start - V)` for the
 /// shared source vertex `V`, or `None` when it is zero or undecided.
 fn offset_end_source_turn(
