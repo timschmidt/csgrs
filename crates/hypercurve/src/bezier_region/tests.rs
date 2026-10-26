@@ -16,6 +16,182 @@ fn q(numerator: i32, denominator: i32) -> Real {
     (Real::from(numerator) / Real::from(denominator)).unwrap()
 }
 
+#[test]
+fn concentric_circle_contacts_keep_directions_without_false_incidence() {
+    use crate::rational_bezier::{
+        RationalQuadraticCircle2, RationalQuadraticCircleTangentContact2 as Contact,
+        RationalQuadraticParallelCircleContact2,
+    };
+    // R(t) = (t, t^2), tangent to the unit circle about (0, 1) at t = 0.
+    let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 1));
+    let parallel = source.parallel_left(Real::zero()).unwrap();
+    let circle = Arc::new(RationalQuadraticCircle2 {
+        center: p(0, 1),
+        radius_squared: Real::one(),
+        tangent_contacts: Some(Arc::from([Contact::Parallel(
+            RationalQuadraticParallelCircleContact2 {
+                parallel: parallel.clone(),
+                parameter: Real::zero(),
+                point: p(0, 0),
+                eliminant_root_multiplicity: 2,
+            },
+        )])),
+    });
+    let policy = &CurveContext::STRICT;
+    for scale in [q(3, 4), q(-3, 4), Real::one()] {
+        let image = circle.concentric_image(&scale);
+        let point = Point2::new(Real::zero(), Real::one() - &scale);
+        assert_eq!(point.distance_squared(&image.center), image.radius_squared);
+        // These different parallel distances preserve direction. Their
+        // t=0 points lie off every circle image tested here.
+        // Direction evidence is relative to the source tangent on either
+        // side of a parallel's normal reversal (at q = 1/2 here).
+        for query_distance in [q(1, 8), q(3, 4)] {
+            let query = parallel.with_distance(query_distance);
+            assert_ne!(
+                query
+                    .point_at(&Real::zero())
+                    .unwrap()
+                    .distance_squared(&image.center),
+                image.radius_squared
+            );
+            assert!(
+                image
+                    .parallel_tangent_contacts_for(&query, policy)
+                    .is_empty()
+            );
+            // The concentric image is incident to the shifted parallel at
+            // q' = 1-s, including continuation across the circle center.
+            let incident = parallel.with_distance(Real::one() - &scale);
+            let contacts = image.parallel_tangent_contacts_for(&incident, policy);
+            let [contact] = contacts.as_slice() else {
+                panic!("one transported tangent incidence");
+            };
+            assert_eq!(contact.parameter, Real::zero());
+            assert_eq!(contact.point, point);
+            assert_eq!(contact.eliminant_root_multiplicity, 2);
+            assert_eq!(incident.point_at(&Real::zero()).unwrap(), point);
+            for clockwise in [false, true] {
+                let tangent = CurveTangent2::CircularPoint {
+                    point: point.clone().into(),
+                    circle: Arc::clone(&image),
+                    clockwise,
+                };
+                for direction in [RealSign::Positive, RealSign::Negative] {
+                    let other = CurveTangent2::RetainedParallel {
+                        parallel: query.clone(),
+                        source_parallel: parallel.clone(),
+                        source_range: CurveParameterRange2::unit(),
+                        parameter: BezierParameter2::Exact(Real::zero()),
+                        selected_source_parameter: None,
+                        source_direction: direction,
+                    };
+                    for (first, second) in [(&tangent, &other), (&other, &tangent)] {
+                        assert_eq!(
+                            curve_tangent_cross_sign(first, second, policy),
+                            Classification::Decided(RealSign::Zero)
+                        );
+                        let opposite =
+                            (scale == q(-3, 4)) ^ clockwise ^ (direction == RealSign::Negative);
+                        assert_eq!(
+                            curve_tangents_are_opposite(first, second, policy),
+                            Classification::Decided(opposite)
+                        );
+                    }
+                }
+            }
+            assert!(!image.has_parallel_tangent_direction_contact(
+                &point.clone().into(),
+                &query,
+                &BezierParameter2::Exact(q(1, 2)),
+                policy,
+            ));
+            let changed = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), q(1, 2)), p(1, 2))
+                .parallel_left(q(1, 8))
+                .unwrap();
+            assert!(!image.has_parallel_tangent_direction_contact(
+                &point.clone().into(),
+                &changed,
+                &BezierParameter2::Exact(Real::zero()),
+                policy,
+            ));
+            let distinct_point = image.center.translated(scale.clone(), Real::zero());
+            assert!(!image.has_parallel_tangent_direction_contact(
+                &distinct_point.into(),
+                &query,
+                &BezierParameter2::Exact(Real::zero()),
+                policy,
+            ));
+            for entries in [[3, -4, 4, 3, 7, -2], [3, 4, 4, -3, 1, 5]] {
+                let [a, b, c, d, x, y] = entries.map(Real::from);
+                let transform = crate::Similarity2::try_from_real_affine(a, b, c, d, x, y).unwrap();
+                let transformed = image.transform_similarity(&transform).unwrap();
+                let mapped_incident = incident.transform_similarity(&transform).unwrap();
+                let mapped_contacts =
+                    transformed.parallel_tangent_contacts_for(&mapped_incident, policy);
+                let [mapped_contact] = mapped_contacts.as_slice() else {
+                    panic!("similarity must preserve the transported tangent incidence");
+                };
+                assert_eq!(mapped_contact.point, transform.transform_point(&point));
+                assert_eq!(mapped_contact.parameter, Real::zero());
+                assert!(transformed.has_parallel_tangent_direction_contact(
+                    &transform.transform_point(&point).into(),
+                    &query.transform_similarity(&transform).unwrap(),
+                    &BezierParameter2::Exact(Real::zero()),
+                    policy,
+                ));
+            }
+        }
+    }
+    let repeated = circle
+        .concentric_image(&q(3, 4))
+        .concentric_image(&Real::from(-2));
+    let Some([Contact::Concentric { source, scale }]) = repeated.tangent_contacts.as_deref() else {
+        panic!("one normalized concentric construction edge");
+    };
+    assert!(Arc::ptr_eq(source, &circle));
+    assert_eq!(scale, &q(-3, 2));
+    assert!(repeated.has_parallel_tangent_direction_contact(
+        &Point2::new(Real::zero(), q(5, 2)).into(),
+        &parallel,
+        &BezierParameter2::Exact(Real::zero()),
+        policy,
+    ));
+
+    let arc = CircularArc2::new_with_certified_radius(
+        p(0, 0),
+        p(1, 1),
+        p(0, 1),
+        Real::one(),
+        false,
+        None,
+    )
+    .with_retained_circular_conic(Some(circle));
+    let source = BezierSubcurve2::RationalQuadratic(
+        arc.rational_bezier_decomposition().unwrap().spans()[0]
+            .curve()
+            .clone(),
+    );
+    let Classification::Decided(offset) =
+        exact_offset_span_from_native_arc(&source, &arc, &q(1, 4), policy).unwrap()
+    else {
+        panic!("native circle offset");
+    };
+    let Some(CurveTangent2::CircularPoint { point, circle, .. }) = offset.start_tangent else {
+        panic!("native offset must retain its circle contact");
+    };
+    assert_eq!(
+        point.coordinates(),
+        Some(&Point2::new(Real::zero(), q(1, 4)))
+    );
+    assert!(circle.has_parallel_tangent_direction_contact(
+        &point,
+        &parallel,
+        &BezierParameter2::Exact(Real::zero()),
+        policy
+    ));
+}
+
 fn terminally_unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
@@ -15570,11 +15746,9 @@ fn ordered_tangent_families_preserve_opposition_frontier() {
                 });
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 let cross = ax * by - ay * bx;
-                let expected = if matches!(
-                    (a, b),
-                    (1, 5) | (5, 1) | (1, 3) | (3, 1) | (3, 3) | (3, 4) | (4, 3) | (3, 5) | (5, 3)
-                ) || ((*a == 3 || *b == 3) && cross == 0)
-                {
+                // Represented circular tangents now use their exact radial
+                // rotation; their cardinal expectations require a decision.
+                let expected = if matches!((a, b), (1, 5) | (5, 1)) {
                     Classification::Uncertain(UncertaintyReason::Unsupported)
                 } else if *a == 5 && *b == 5 && cross != 0 {
                     Classification::Uncertain(UncertaintyReason::Boundary)

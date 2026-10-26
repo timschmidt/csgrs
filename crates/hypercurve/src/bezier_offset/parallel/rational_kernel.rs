@@ -3,6 +3,119 @@
 use super::*;
 
 impl BezierParallel2 {
+    /// An exactly quadratic circle chart has no stationary parameter on its
+    /// pole-free unit domain. Its existing concentric parallel construction
+    /// preserves that parameter, so the shared circle relation and inverse
+    /// can decide incidence without squaring the homogeneous speed expression.
+    /// Declined recognition, extension domains, and coincident supports retain
+    /// the general incidence authority.
+    pub(super) fn retained_circular_source_incidence(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Vec<BezierParallelCircleIncidence2>>> {
+        let Some(source) = self.rational_source() else {
+            return Ok(None);
+        };
+        if source.retained_circular_conic().is_none() {
+            return Ok(None);
+        }
+        let strict = policy.strict_counterpart();
+        if !matches!(
+            source.quadratic_homogeneous_controls(&strict)?,
+            Classification::Decided(Some(_))
+        ) || CurveParameterDomain2::new(&CurveParameterRange2::unit(), None)
+            .contains_finite_range(range, &strict)?
+            != Classification::Decided(true)
+        {
+            return Ok(None);
+        }
+        let Classification::Decided(Some(component)) =
+            self.exact_circular_parallel_component(&strict)?
+        else {
+            return Ok(None);
+        };
+        let Classification::Decided(Some(arc)) =
+            crate::arc_bezier::rational_bezier_circular_arc(&component, &strict)?
+        else {
+            return Ok(None);
+        };
+        let points = match crate::intersect::circle_relation_from_supports(
+            arc.center(),
+            arc.radius_squared_ref(),
+            center,
+            radius_squared,
+            &strict,
+        )? {
+            crate::CircleCircleRelation::Disjoint => return Ok(Some(Vec::new())),
+            crate::CircleCircleRelation::Tangent { point } => vec![(point, true)],
+            crate::CircleCircleRelation::Secant {
+                first_point,
+                second_point,
+            } => {
+                vec![(first_point, false), (second_point, false)]
+            }
+            crate::CircleCircleRelation::Coincident
+            | crate::CircleCircleRelation::Uncertain { .. } => return Ok(None),
+        };
+        let domain = CurveParameterDomain2::new(range, None);
+        let mut contacts: Vec<BezierParallelCircleIncidence2> = Vec::new();
+        for (point, tangent) in points {
+            let Classification::Decided(parameters) =
+                component.retained_circle_point_parameters(&point, &strict)?
+            else {
+                return Ok(None);
+            };
+            let crossing = if tangent {
+                RealSign::Zero
+            } else {
+                let (x, y) = point.delta_from(arc.center());
+                let (rx, ry) = point.delta_from(center);
+                let Some(sign) = real_sign(&(x * ry - y * rx), &strict) else {
+                    return Ok(None);
+                };
+                if arc.is_clockwise() {
+                    product_sign(sign, RealSign::Negative)
+                } else {
+                    sign
+                }
+            };
+            for parameter in parameters {
+                match domain.contains_finite_parameter(&parameter.clone().into(), &strict)? {
+                    Classification::Decided(true) => {
+                        let mut insert_at = contacts.len();
+                        for (index, existing) in contacts.iter().enumerate() {
+                            match parameter
+                                .cmp_by_refinement_with_policy(&existing.parameter, &strict)?
+                            {
+                                Classification::Decided(std::cmp::Ordering::Less) => {
+                                    insert_at = index;
+                                    break;
+                                }
+                                Classification::Decided(std::cmp::Ordering::Greater) => {}
+                                Classification::Decided(std::cmp::Ordering::Equal)
+                                | Classification::Uncertain(_) => return Ok(None),
+                            }
+                        }
+                        contacts.insert(
+                            insert_at,
+                            BezierParallelCircleIncidence2 {
+                                parameter,
+                                radial_crossing_sign: Some(crossing),
+                                point: Some(point.clone()),
+                            },
+                        );
+                    }
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(_) => return Ok(None),
+                }
+            }
+        }
+        Ok(Some(contacts))
+    }
+
     #[cfg(test)]
     /// Constructs complete parameter projections for intersections with a rational Bezier.
     ///
@@ -332,21 +445,10 @@ impl BezierParallel2 {
         };
         let certified_tangent_parameters = other
             .retained_circular_conic()
-            .and_then(|circle| circle.tangent_contacts.as_deref())
+            .map(|circle| circle.parallel_tangent_contacts_for(self, policy))
+            .unwrap_or_default()
             .into_iter()
-            .flatten()
-            .filter_map(|contact| match contact {
-                crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel(
-                    contact,
-                ) if contact.parallel == *self => Some((
-                    contact.parameter.clone(),
-                    contact.eliminant_root_multiplicity,
-                )),
-                crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel(_)
-                | crate::rational_bezier::RationalQuadraticCircleTangentContact2::Line { .. } => {
-                    None
-                }
-            })
+            .map(|contact| (contact.parameter, contact.eliminant_root_multiplicity))
             .collect::<Vec<_>>();
         let parameters = match self.circle_incidence_with_tangent_field(
             support.center(),

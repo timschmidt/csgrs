@@ -321,10 +321,67 @@ A is `original_cparti_pad_overlap_has_an_exact_area`; O is
 O remains ignored and was executed explicitly to reproduce its blocker;
 its partial stages are not counted as completed erosion.
 
+**Fillet contact and circular incidence evidence, M1 increment (2026-10-26).**
+The unchanged arc-corner chain on `4b5bcdde50` / `4ace9a71a2` loses a represented
+fillet's source contacts before erosion. Publication now retains each admitted
+scalar contact parameter, its owning source chart and exact point. Noncollapsed
+concentric offsets share the original circle certificate and compose their
+scales. Tangent parallelism is kept separate from incidence: a shifted circle
+is incident to the corresponding shifted parallel only after the original
+normal-side equation and distance equality are certified. Similarities transport
+these relations; changed source, parameter and point controls remain distinct.
+
+The owning layers are Hypercurve's fillet publication, supporting-circle
+certificates, normal-parallel incidence and arrangement contact handoff
+(P12, P15, P17–P20). The optional circular incidence path reuses the existing
+circle relation, parameter inverse and exact concentric construction for a
+certified quadratic chart with active domain inside its pole-free unit interval.
+It preserves the represented contact point through the next conic inverse.
+Extensions, retracing, collapse, coincidence and unrecognized charts retain the
+general path. No tolerance, policy limit, public API or archive format changed.
+
+Independent witnesses cover algebraic centers, degree elevation, negative
+weights, reversal, negative normal sheets, exact tangency and nearby distinct
+circles. They check exact points, original parameters and oriented crossings.
+The selected trim witness completes with an explicit 4,096-refinement /
+128-promotion budget. A distinct rational tangent against an isolated algebraic
+trim exhausts a zero refinement budget, then retries successfully with a larger
+budget. These counters do not bound total work, expression growth or heap bytes.
+Selected non-scalar fillet contacts and fresh-process certificate replay remain
+outside this increment's demonstrated coverage.
+
+Final checks passed: `cargo fmt --all -- --check`; MSRV Hypercurve Clippy with
+`--all-targets --all-features -- -D warnings`; the complete release all-features
+suite (72 suites, 2,645 passed, 35 existing ignored); and all 43 downstream
+adapter/profile/sweep/mixed-model tests. The earlier full retry found one stale
+tangent-frontier assertion: represented circular tangents now decide exact
+answers. Its geometry is unchanged and the assertion now checks independent
+cross/dot expectations. The initial truncated full run, diagnostic storage
+exhaustion, read-only ccache startup failure and intermediate failed attempts
+are retained separately from successful checks.
+
+The original full arc-corner witness still fails at
+`Offset/RationalQuadraticBezier/Predicate` during erosion. Its 12.50-second
+failed probe is not a completed-workload cost or speedup claim. This source
+increment has not yet completed the full repository pre-push matrix.
+Evidence: `docs/evidence/2026-10-26-hypercurve-closure-fillet-contacts`, with
+its digest in `docs/evidence-archive.tsv`.
+
+| Scoped witness | Representation | Evaluation/differentials | Incidence/order | Region admission | Booleans | Further offset | Corner edits | Reconstruction | Exact replay |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T: concentric contact transport | Shared source and composed scale | Exact tangent direction and opposition | Changed-distance incidence checked separately | — | — | Noncollapsed native circle certificate retained | — | Similarity and reflection | — |
+| I: circular-source parallel incidence | Exact quadratic chart, degrees 2/5 | Independent circle point oracle | Exact parameters, crossings, trim and retry | — | — | Signed distances through normal reversal | — | Reversal and degree elevation | — |
+| O: unchanged original arc-corner chain | Generated mixed boundary | — | Earlier circle/parallel contacts complete | Certified before erosion | Rebuild XOR and fillet set differences | Blocked: Offset/RationalQuadraticBezier/Predicate | Both fillets complete | Reversal and rebuild complete | — |
+
+T is `concentric_circle_contacts_keep_directions_without_false_incidence`;
+I comprises the five tests in `src/bezier_offset/parallel/circular_incidence_tests.rs`.
+O is the unchanged full witness named above. These rows extend demonstrated
+coverage only; the algebraic target contract and other matrix rows remain open.
+
 **Still open.**
-- The original ignored arc-corner refillet/erosion composition still reports
-  `Offset/Line/RealSign` on this follow-up, as on the starting revision. Its full
-  fixture remains unchanged. M1 and the broader closure plan remain open.
+- The original ignored arc-corner refillet/erosion composition now reports
+  `Offset/RationalQuadraticBezier/Predicate` during offset-band regularization.
+  Its full fixture remains unchanged. M1 and the broader closure plan remain open.
 - The earlier record listed six cases on this board, four with nonparallel `A` and `B` crossing on the arc. They do not occur on the current board. If such a case recurs: `A` and `B` meet in one point `Q` in their own field. The contacts are equal exactly when `Q` lies on the circle, an exact zero test of `|Q - C|² - r²`, and the branch sign above then selects `Q` on each line.
 - The earlier options remain for such cases: line-conic contacts on a circular conic in tower-representable form, from the circle's exact center and radius as `line_circle_relation_at_endpoints` does for native arcs; `quadratic_tower` beyond one outer radical; or a zero-separation bound, which `algebraic_separation_bound_bits` does not give past 256 nodes or at `Inverse` nodes without an exact child sign.
 

@@ -70,10 +70,169 @@ pub(crate) struct RationalQuadraticParallelCircleContact2 {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum RationalQuadraticCircleTangentContact2 {
     Parallel(RationalQuadraticParallelCircleContact2),
-    Line { line: LineSeg2, point: Point2 },
+    Line {
+        line: LineSeg2,
+        point: Point2,
+    },
+    /// A noncollapsed concentric image preserves tangent parallelism at the
+    /// image of each original contact. It does not assert incidence with the
+    /// original line or parallel, which generally remains at another distance.
+    Concentric {
+        source: Arc<RationalQuadraticCircle2>,
+        scale: Real,
+    },
 }
 
 impl RationalQuadraticCircle2 {
+    pub(crate) fn parallel_tangent_contacts_for(
+        &self,
+        parallel: &crate::BezierParallel2,
+        policy: &CurveContext,
+    ) -> Vec<RationalQuadraticParallelCircleContact2> {
+        let strict = policy.strict_counterpart();
+        let policy = &strict;
+        let Some(contacts) = self.tangent_contacts.as_deref() else {
+            return Vec::new();
+        };
+        contacts
+            .iter()
+            .flat_map(|contact| match contact {
+                RationalQuadraticCircleTangentContact2::Parallel(contact) => (contact.parallel
+                    == *parallel)
+                    .then(|| contact.clone())
+                    .into_iter()
+                    .collect(),
+                RationalQuadraticCircleTangentContact2::Line { .. } => Vec::new(),
+                RationalQuadraticCircleTangentContact2::Concentric { source, scale } => {
+                    source
+                        .tangent_contacts
+                        .as_deref()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|contact| {
+                            let RationalQuadraticCircleTangentContact2::Parallel(contact) = contact
+                            else {
+                                return None;
+                            };
+                            if !parallel
+                                .with_distance(Real::zero())
+                                .shares_parameterized_curve_evidence(
+                                    &contact.parallel.with_distance(Real::zero()),
+                                )
+                            {
+                                return None;
+                            }
+                            let Classification::Decided((tx, ty)) = parallel
+                                .source_tangent_at(&contact.parameter, policy)
+                                .ok()?
+                            else {
+                                return None;
+                            };
+                            let (rx, ry) = source.center.delta_from(&contact.point);
+                            let radius = source.radius_squared.clone().sqrt().ok()?;
+                            let center_normal_distance =
+                                match real_sign(&(&tx * ry - &ty * rx), policy)? {
+                                    RealSign::Positive => radius,
+                                    RealSign::Negative => -radius,
+                                    RealSign::Zero => return None,
+                                };
+                            // C = P_q + delta N, so C+s(P_q-C) lies on
+                            // P_(q+(1-s)delta). The unsquared normal-side sign above
+                            // selects the same sheet; squaring alone is insufficient.
+                            let distance = contact.parallel.distance()
+                                + (Real::one() - scale) * center_normal_distance;
+                            if crate::classify::compare_reals(
+                                &distance,
+                                parallel.distance(),
+                                policy,
+                            ) != Some(std::cmp::Ordering::Equal)
+                            {
+                                return None;
+                            }
+                            let (x, y) = contact.point.delta_from(&source.center);
+                            Some(RationalQuadraticParallelCircleContact2 {
+                                parallel: parallel.clone(),
+                                parameter: contact.parameter.clone(),
+                                point: source.center.translated(x * scale, y * scale),
+                                eliminant_root_multiplicity: 2,
+                            })
+                        })
+                        .collect()
+                }
+            })
+            .collect()
+    }
+
+    /// The caller has certified that `scale` is nonzero. Keep one shared
+    /// construction edge; repeated concentric maps compose their scales.
+    pub(crate) fn concentric_image(self: &Arc<Self>, scale: &Real) -> Arc<Self> {
+        if scale == &Real::one() {
+            return Arc::clone(self);
+        }
+        let tangent_contacts = self.tangent_contacts.as_ref().map(|contacts| {
+            let (source, scale) = match contacts.as_ref() {
+                [
+                    RationalQuadraticCircleTangentContact2::Concentric {
+                        source,
+                        scale: previous,
+                    },
+                ] => (Arc::clone(source), previous * scale),
+                _ => (Arc::clone(self), scale.clone()),
+            };
+            Arc::from([RationalQuadraticCircleTangentContact2::Concentric { source, scale }])
+        });
+        Arc::new(Self {
+            center: self.center.clone(),
+            radius_squared: &self.radius_squared * scale * scale,
+            tangent_contacts,
+        })
+    }
+
+    pub(crate) fn has_parallel_tangent_direction_contact(
+        &self,
+        point: &crate::CurvePoint2,
+        parallel: &crate::BezierParallel2,
+        parameter: &crate::BezierParameter2,
+        policy: &CurveContext,
+    ) -> bool {
+        let strict = policy.strict_counterpart();
+        let policy = &strict;
+        let Some(parameter) = parameter.scalar() else {
+            return false;
+        };
+        let (source, scale) = match self.tangent_contacts.as_deref() {
+            Some([RationalQuadraticCircleTangentContact2::Concentric { source, scale }]) => {
+                (source.as_ref(), Some(scale))
+            }
+            _ => (self, None),
+        };
+        source.tangent_contacts.as_deref().is_some_and(|contacts| {
+            contacts.iter().any(|contact| {
+                let RationalQuadraticCircleTangentContact2::Parallel(contact) = contact else {
+                    return false;
+                };
+                if !parallel
+                    .with_distance(Real::zero())
+                    .shares_parameterized_curve_evidence(
+                        &contact.parallel.with_distance(Real::zero()),
+                    )
+                    || crate::classify::compare_reals(parameter, &contact.parameter, policy)
+                        != Some(std::cmp::Ordering::Equal)
+                {
+                    return false;
+                }
+                let image = match scale {
+                    Some(scale) => {
+                        let (x, y) = contact.point.delta_from(&self.center);
+                        self.center.translated(x * scale, y * scale)
+                    }
+                    None => contact.point.clone(),
+                };
+                point.same_point(&image.into(), policy) == Classification::Decided(true)
+            })
+        })
+    }
+
     pub(crate) fn implicit_coefficients(&self) -> Arc<[Real; 6]> {
         let two = Real::from(2);
         Arc::new([
@@ -118,6 +277,13 @@ impl RationalQuadraticCircle2 {
                                     },
                                 )
                             }
+                            RationalQuadraticCircleTangentContact2::Concentric {
+                                source,
+                                scale,
+                            } => RationalQuadraticCircleTangentContact2::Concentric {
+                                source: Arc::new(source.transform_similarity(transform)?),
+                                scale: scale.clone(),
+                            },
                         })
                     })
                     .collect::<crate::CurveResult<Vec<_>>>()

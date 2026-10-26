@@ -295,19 +295,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             BezierSubcurve2::Rational(curve) => curve.retained_circular_conic(),
             BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => None,
         }
-        .and_then(|circle| circle.tangent_contacts.as_deref())
-        .into_iter()
-        .flatten()
-        .filter_map(|contact| match contact {
-            crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel(contact)
-                if contact.parallel == *parallel =>
-            {
-                Some(contact)
-            }
-            crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel(_)
-            | crate::rational_bezier::RationalQuadraticCircleTangentContact2::Line { .. } => None,
-        })
-        .collect::<Vec<_>>();
+        .map(|circle| circle.parallel_tangent_contacts_for(parallel, &self.data.policy))
+        .unwrap_or_default();
         let certified_tangent_parameters = certified_tangent_contacts
             .iter()
             .map(|contact| {
@@ -318,7 +307,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             })
             .collect::<Vec<_>>();
         let incidence = match parallel
-            .circle_incidence(
+            .circle_incidence_with_point_evidence(
                 arc.center(),
                 arc.radius_squared_ref(),
                 range,
@@ -333,7 +322,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         };
         let mut parameters = Vec::with_capacity(incidence.len());
-        for (parameter, crossing) in incidence {
+        for incidence in incidence {
+            let parameter = &incidence.parameter;
             if let Some(contact) = parameter.scalar().and_then(|parameter| {
                 certified_tangent_contacts
                     .iter()
@@ -347,7 +337,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 // inverse at its possible affine infinity.
                 continue;
             }
-            parameters.push((parameter, crossing));
+            parameters.push(incidence);
         }
         // The incidence result already owns radial crossing evidence, including
         // tangency. Use the same conic inverse for represented and selected
@@ -361,13 +351,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
             Classification::Decided(Some(_))
         ) {
             let mut contacts = Vec::with_capacity(parameters.len());
-            for (parallel_parameter, radial_crossing_sign) in &parameters {
+            for incidence in &parameters {
+                let parallel_parameter = &incidence.parameter;
+                let radial_crossing_sign = incidence.radial_crossing_sign;
                 let certified_contact = parallel_parameter.scalar().and_then(|parameter| {
                     certified_tangent_contacts
                         .iter()
                         .find(|contact| contact.parameter == *parameter)
                 });
-                if certified_contact.is_none()
+                let certified_point = incidence
+                    .point
+                    .as_ref()
+                    .or_else(|| certified_contact.map(|contact| &contact.point));
+                if certified_point.is_none()
                     && let Some(exact) = parallel_parameter.scalar()
                 {
                     let point = parallel
@@ -383,7 +379,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         continue;
                     }
                 }
-                let point = certified_contact.map_or_else(
+                let point = certified_point.map_or_else(
                     || {
                         CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new(
                             parallel.clone(),
@@ -391,14 +387,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             &self.data.policy,
                         ))
                     },
-                    |contact| CurvePoint2::from(contact.point.clone()),
+                    |point| CurvePoint2::from(point.clone()),
                 );
-                let other_parameter = if let Some(contact) = certified_contact
-                    && contact.point == *rational.start()
+                let other_parameter = if let Some(point) = certified_point
+                    && *point == *rational.start()
                 {
                     CurveParameter2::from(Real::zero())
-                } else if let Some(contact) = certified_contact
-                    && contact.point == *rational.end()
+                } else if let Some(point) = certified_point
+                    && *point == *rational.end()
                 {
                     CurveParameter2::from(Real::one())
                 } else {
@@ -455,7 +451,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             })));
         }
         let mut retained_parameters = Vec::with_capacity(parameters.len());
-        for (parameter, _) in parameters {
+        for incidence in parameters {
+            let parameter = incidence.parameter;
             if let Some(contact) = parameter.scalar().and_then(|parameter| {
                 certified_tangent_contacts
                     .iter()

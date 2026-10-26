@@ -4,9 +4,20 @@ use super::*;
 use hypersolve::exact_factor::divide_by_linear_root;
 use hypersolve::exact_factor::polynomial_restrict_to_interval;
 
+#[cfg(test)]
+mod circular_incidence_tests;
 mod pair_kernel;
 mod point;
 mod rational_kernel;
+
+/// A circle incidence may already own a represented exact point. Keep that
+/// witness with its source parameter so consumers need not reconstruct it by
+/// evaluating a normal expression and rediscover its known circle relation.
+pub(crate) struct BezierParallelCircleIncidence2 {
+    pub(crate) parameter: BezierParameter2,
+    pub(crate) radial_crossing_sign: Option<RealSign>,
+    pub(crate) point: Option<Point2>,
+}
 
 impl BezierParallel2 {
     pub(crate) fn checked_native_point(
@@ -3281,14 +3292,62 @@ impl BezierParallel2 {
         certified_tangent_parameters: &[(Real, u8)],
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<(BezierParameter2, Option<RealSign>)>>> {
-        self.circle_incidence_with_tangent_field(
-            center,
-            radius_squared,
-            range,
-            certified_tangent_parameters,
-            None,
-            policy,
-        )
+        Ok(self
+            .circle_incidence_with_point_evidence(
+                center,
+                radius_squared,
+                range,
+                certified_tangent_parameters,
+                policy,
+            )?
+            .map(|contacts| {
+                contacts
+                    .into_iter()
+                    .map(|contact| (contact.parameter, contact.radial_crossing_sign))
+                    .collect()
+            }))
+    }
+
+    pub(crate) fn circle_incidence_with_point_evidence(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        range: &CurveParameterRange2,
+        certified_tangent_parameters: &[(Real, u8)],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParallelCircleIncidence2>>> {
+        if certified_tangent_parameters
+            .iter()
+            .any(|(_, multiplicity)| *multiplicity == 0)
+        {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        if let Some(contacts) =
+            self.retained_circular_source_incidence(center, radius_squared, range, policy)?
+        {
+            return Ok(Classification::Decided(contacts));
+        }
+        Ok(self
+            .circle_incidence_with_tangent_field(
+                center,
+                radius_squared,
+                range,
+                certified_tangent_parameters,
+                None,
+                policy,
+            )?
+            .map(|contacts| {
+                contacts
+                    .into_iter()
+                    .map(
+                        |(parameter, radial_crossing_sign)| BezierParallelCircleIncidence2 {
+                            parameter,
+                            radial_crossing_sign,
+                            point: None,
+                        },
+                    )
+                    .collect()
+            }))
     }
 
     pub(super) fn circle_incidence_with_tangent_field(

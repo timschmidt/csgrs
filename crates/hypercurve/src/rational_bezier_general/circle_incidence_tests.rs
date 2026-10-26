@@ -332,6 +332,7 @@ fn similarity_transports_circle_tangent_relations_and_invalidates_affine_metric(
             assert_eq!(contacts.len(), 2);
             for contact in contacts.iter() {
                 let (contact_point, tangent) = match contact {
+                    Contact::Concentric { .. } => panic!("this fixture has no concentric image"),
                     Contact::Line { line, point } => {
                         assert!(line.has_retained_support());
                         (point, line.directed_support_delta())

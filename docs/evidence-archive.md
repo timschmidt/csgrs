@@ -85,8 +85,22 @@ in this repository.
 
 ## Follow-on records
 
-The `hypercurve-closure-2026-10-26` branch ends at
-`6c50c8ac3f0cc4cb04a9f024a0677bd039d6eefb`, adding
+The local `hypercurve-closure-2026-10-26` branch adds commit
+`586bebeb9655773597eb3a0dd21d28b83ff88ea3` for
+`docs/evidence/2026-10-26-hypercurve-closure-fillet-contacts` (42 files,
+844,716 bytes), with SHA-256
+`00ef55209fa9f09e862504fb1bec9613ef517b4f4d5d76b07c83d5437df92f0f`.
+It records fillet contact publication, noncollapsed concentric evidence
+transport, circular-source incidence and represented contact handoff against
+base `4ace9a71a2`. The final Hypercurve release suite passes 2,645 tests
+(35 existing ignored), all 43 downstream checks pass, and MSRV strict Clippy
+and formatting pass. Failed diagnostic and resource attempts remain separate.
+The full original arc-corner erosion remains blocked; no performance, full
+closure or new pre-push completion claim is made. This record is committed
+locally and has not yet been pushed.
+
+Its published parent,
+`6c50c8ac3f0cc4cb04a9f024a0677bd039d6eefb`, adds
 `docs/evidence/2026-10-26-hypercurve-closure-validation` (12,153 files,
 58,233,737 bytes), with SHA-256
 `78c71e823c48c8f104fde6290654f66fa54452b8e50043be7380cb534b9fc137`.

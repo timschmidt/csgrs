@@ -1985,7 +1985,8 @@ pub(super) fn classify_point_with_retained_ray_skipping_origin(
                     crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel(_)
                     | crate::rational_bezier::RationalQuadraticCircleTangentContact2::Line {
                         ..
-                    } => None,
+                    }
+                    | crate::rational_bezier::RationalQuadraticCircleTangentContact2::Concentric { .. } => None,
                 }
                     })
                 });

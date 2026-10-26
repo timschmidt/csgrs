@@ -1722,6 +1722,13 @@ pub(super) fn exact_offset_retained_tangent_support(
     endpoint: &CurvePoint2,
     policy: &CurveContext,
 ) -> Option<CurveResult<Classification<crate::BezierAlgebraicChord2>>> {
+    if let Some(direction) = tangent.circular_represented_direction() {
+        return exact_offset_retained_tangent_support(
+            &CurveTangent2::RepresentedDirection(direction),
+            endpoint,
+            policy,
+        );
+    }
     match tangent {
         CurveTangent2::RepresentedDirection(vector) => Some((|| {
             let displaced = match crate::BezierAlgebraicChord2::translated_endpoint(
@@ -2739,6 +2746,25 @@ pub(super) fn curve_tangent_cross_sign(
     second: &CurveTangent2,
     policy: &CurveContext,
 ) -> Classification<RealSign> {
+    if first.has_circle_parallel_tangent_contact(second, policy)
+        || second.has_circle_parallel_tangent_contact(first, policy)
+    {
+        return Classification::Decided(RealSign::Zero);
+    }
+    if let Some(direction) = first.circular_represented_direction() {
+        return curve_tangent_cross_sign(
+            &CurveTangent2::RepresentedDirection(direction),
+            second,
+            policy,
+        );
+    }
+    if let Some(direction) = second.circular_represented_direction() {
+        return curve_tangent_cross_sign(
+            first,
+            &CurveTangent2::RepresentedDirection(direction),
+            policy,
+        );
+    }
     match (first, second) {
         (
             CurveTangent2::RepresentedDirection(first),
@@ -3296,6 +3322,49 @@ pub(super) fn curve_tangents_are_opposite(
     second: &CurveTangent2,
     policy: &CurveContext,
 ) -> Classification<bool> {
+    for (circle, other) in [(first, second), (second, first)] {
+        if circle.has_circle_parallel_tangent_contact(other, policy)
+            && let Some((x, y)) = circle.circular_represented_direction()
+            && let CurveTangent2::RetainedParallel {
+                parallel,
+                parameter,
+                source_direction,
+                ..
+            } = other
+        {
+            match parallel.vector_source_tangent_cross_dot_linear_combination_sign(
+                &CurveParameter2::from(parameter.clone()),
+                &x,
+                &y,
+                &Real::zero(),
+                &Real::one(),
+                policy,
+            ) {
+                Ok(Classification::Decided(sign)) => {
+                    return match exact_sign_product(sign, *source_direction) {
+                        RealSign::Positive => Classification::Decided(false),
+                        RealSign::Negative => Classification::Decided(true),
+                        RealSign::Zero => Classification::Uncertain(UncertaintyReason::Boundary),
+                    };
+                }
+                Ok(Classification::Uncertain(_)) | Err(_) => {}
+            }
+        }
+    }
+    if let Some(direction) = first.circular_represented_direction() {
+        return curve_tangents_are_opposite(
+            &CurveTangent2::RepresentedDirection(direction),
+            second,
+            policy,
+        );
+    }
+    if let Some(direction) = second.circular_represented_direction() {
+        return curve_tangents_are_opposite(
+            first,
+            &CurveTangent2::RepresentedDirection(direction),
+            policy,
+        );
+    }
     match curve_tangent_cross_sign(first, second, policy) {
         Classification::Decided(RealSign::Negative | RealSign::Positive) => {
             return Classification::Decided(false);

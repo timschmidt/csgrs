@@ -3043,6 +3043,41 @@ impl<'a> CurveCornerChain2<'a> {
             .collect())
     }
 
+    fn represented_fillet_tangent_contact(
+        fragment: &BezierSplitFragment2,
+        cut: &CornerTrimCut2,
+        point: &Point2,
+    ) -> CurveResult<Option<crate::rational_bezier::RationalQuadraticCircleTangentContact2>> {
+        let Some(parameter) = cut.parameter.scalar() else {
+            return Ok(None);
+        };
+        // A replacement owns the cut's chart after extension or reparameterization.
+        let fragment = cut.replacement.as_deref().unwrap_or(fragment);
+        let parallel = match fragment {
+            BezierSplitFragment2::Materialized { curve, .. }
+            | BezierSplitFragment2::RetainedBezier {
+                source_curve: curve,
+                ..
+            } => RationalBezier2::try_from_subcurve(curve)?.parallel_left(Real::zero())?,
+            BezierSplitFragment2::AnalyticParallel(fragment) => fragment.parallel().clone(),
+            // Selected fibers can own a separately regularized tangent field.
+            // A bare parallel record does not carry that field's branch proof.
+            BezierSplitFragment2::SelectedFiber(_)
+            | BezierSplitFragment2::AlgebraicChord(_)
+            | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => return Ok(None),
+        };
+        Ok(Some(
+            crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel(
+                crate::rational_bezier::RationalQuadraticParallelCircleContact2 {
+                    parallel,
+                    parameter: parameter.clone(),
+                    point: point.clone(),
+                    eliminant_root_multiplicity: 2,
+                },
+            ),
+        ))
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn retained_fillet_fragments(
         sources: [(&[BezierSplitFragment2], usize); 2],
@@ -3210,6 +3245,25 @@ impl<'a> CurveCornerChain2<'a> {
                 represented_center.as_ref(),
             )
         {
+            let contacts = [
+                Self::represented_fillet_tangent_contact(
+                    previous_fragment,
+                    previous_cut,
+                    previous_point,
+                ),
+                Self::represented_fillet_tangent_contact(next_fragment, next_cut, next_point),
+            ]
+            .into_iter()
+            .collect::<CurveResult<Vec<_>>>()
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
+            let circle = Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
+                center: center.clone(),
+                radius_squared: radius * radius,
+                tangent_contacts: (!contacts.is_empty()).then(|| Arc::from(contacts)),
+            });
             let arc = CircularArc2::new_with_certified_radius(
                 previous_point.clone(),
                 next_point.clone(),
@@ -3217,7 +3271,8 @@ impl<'a> CurveCornerChain2<'a> {
                 radius * radius,
                 clockwise,
                 None,
-            );
+            )
+            .with_retained_circular_conic(Some(circle));
             return Self::materialized_corner_arc_fragments(&arc, CurveOperation2::Fillet, policy);
         }
 

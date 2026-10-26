@@ -45,6 +45,37 @@ pub(crate) enum CurveTangent2 {
 }
 
 impl CurveTangent2 {
+    pub(super) fn circular_represented_direction(&self) -> Option<(Real, Real)> {
+        let Self::CircularPoint {
+            point,
+            circle,
+            clockwise,
+        } = self
+        else {
+            return None;
+        };
+        let (x, y) = point.coordinates()?.delta_from(&circle.center);
+        Some(if *clockwise { (y, -x) } else { (-y, x) })
+    }
+
+    pub(super) fn has_circle_parallel_tangent_contact(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> bool {
+        match (self, other) {
+            (
+                Self::CircularPoint { point, circle, .. },
+                Self::RetainedParallel {
+                    parallel,
+                    parameter,
+                    ..
+                },
+            ) => circle.has_parallel_tangent_direction_contact(point, parallel, parameter, policy),
+            _ => false,
+        }
+    }
+
     /// Retains a boundary's traversal direction in the same geometric chart
     /// used by offsets. No offset construction or coordinate projection is
     /// needed to compare endpoint directions in an arrangement.
@@ -514,11 +545,9 @@ pub(super) fn exact_offset_spans_from_algebraic_endpoint_images(
             + source_arc.center().y() * source_arc.center().y()
             - &radius_squared,
     ]);
-    let offset_circle = Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
-        center: source_arc.center().clone(),
-        radius_squared,
-        tangent_contacts: None,
-    });
+    let offset_circle = crate::arc_bezier::circular_conic_provenance(&source_arc)
+        .1
+        .concentric_image(&radial_scale);
     let offset_curve =
         crate::RationalQuadraticBezier2::try_new_with_common_weight_sign_and_implicit_conic(
             scale_point(source_curve.start()),
@@ -1049,7 +1078,12 @@ pub(super) fn exact_offset_span_from_native_arc(
                 arc.center().clone(),
                 arc.is_clockwise(),
                 arc.bulge().cloned(),
-            )?;
+            )?
+            .with_retained_circular_conic(Some(
+                crate::arc_bezier::circular_conic_provenance(arc)
+                    .1
+                    .concentric_image(&radius_scale),
+            ));
             exact_offset_span_from_native_segment(source, &Segment2::Arc(offset), policy)
         }
         None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
@@ -2406,13 +2440,27 @@ pub(super) fn exact_offset_span_from_native_segment(
             )
         }
     };
+    let endpoint_tangent = |point: &Point2, represented| {
+        if let Segment2::Arc(arc) = offset
+            && let Some(circle) = arc.retained_circular_conic()
+            && circle.tangent_contacts.is_some()
+        {
+            CurveTangent2::CircularPoint {
+                point: point.clone().into(),
+                circle: Arc::clone(circle),
+                clockwise: arc.is_clockwise(),
+            }
+        } else {
+            CurveTangent2::RepresentedDirection(represented)
+        }
+    };
     Ok(Classification::Decided(ExactOffsetSpan2 {
         fragments,
         source_end: source.end().clone().into(),
         offset_start: offset.start().clone().into(),
         offset_end: offset.end().clone().into(),
-        start_tangent: Some(CurveTangent2::RepresentedDirection(start_tangent)),
-        end_tangent: Some(CurveTangent2::RepresentedDirection(end_tangent)),
+        start_tangent: Some(endpoint_tangent(offset.start(), start_tangent)),
+        end_tangent: Some(endpoint_tangent(offset.end(), end_tangent)),
     }))
 }
 
