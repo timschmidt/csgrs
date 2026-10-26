@@ -85,6 +85,19 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-capability-matrix-evidence-2026-10-26` branch
+ends at `a74b62c4fdd8dd3c361d9f175cfa947c7c1a5635`, adding
+`docs/evidence/2026-10-26-hypercurve-capability-matrix` (98 files,
+1,781,381 bytes), SHA-256
+`355b93d081144f9633a9c16c202ef7d6c86e61b240982fd6278ddcf3ceae2f65`.
+It records the initial 18-fixture M0 catalog, 16 evidence-guard tests and two
+successful source-attributed invocations against `fa312fd849` plus the driver
+patch. Unsupported, exhausted, invalid, blocked and qualified assertions remain
+separate from exact completion. Formatting, typos, budget and the required
+Zizmor command pass; Zizmor's online-only audits need an unavailable API token.
+The hosted upload was inspected only. This record is local and unpushed; full
+repository pre-push qualification for this increment remains pending.
+
 The separate local `hypercurve-native-pair-evidence-2026-10-26` branch
 ends at `b98f70fa0673c4fd165bd118a68d8ee1d9313097`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-native-pairs` (31 files,

@@ -6,6 +6,22 @@ The detailed chronological log, including commit hashes, timings and samples, is
 
 ## Current state
 
+The initial [executable capability matrix](qualification/README.md) ties named
+public fixtures to separate operation stages and asserted outcomes. Its bounded
+catalog distinguishes exact successes from typed gaps and inherited qualification;
+unspecified stages and the complete algebraic target remain open.
+
+The initial M0 increment qualifies 18 public fixtures and 16 evidence-guard
+regressions against `fa312fd849` plus the catalog/driver patch. Both the direct
+invocation and the new CI commands pass with stable source and binary digests.
+Formatting, typos, repository budget and `zizmor --pedantic --strict-collection .`
+pass. Zizmor used its default offline mode; online-only audits were unavailable
+without an API token. Hosted artifact upload is inspected, not locally executed.
+No Rust kernel or geometry fixture changed, and the full pre-push matrix for
+this increment is pending. The scoped report, source patch and raw checks are
+in `docs/evidence/2026-10-26-hypercurve-capability-matrix`, with its digest in
+`docs/evidence-archive.tsv`.
+
 The exact-only principal API, the `CurveRegion2` migration, and S1 (`SelectedScalar2` dispatch) are complete. S6 is partly done; the remaining sites are listed below.
 
 The historical ignored composition harness (`tests/hypercurve_composed_workloads.rs` and `tests/hypercurve_open_path_compositions.rs`) records 10 of 24 cases completing under a 300 s budget:

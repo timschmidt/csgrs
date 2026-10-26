@@ -1,0 +1,80 @@
+# Executable capability witnesses
+
+This is the initial bounded matrix for M0 of the
+[exact closure plan](../../../docs/research/hypercurve_exact_curve_closure_plan.txt).
+It records what named public tests assert on the source revision actually built.
+The full algebraic domain in [AGENTS.md](../../../AGENTS.md) remains the target;
+this catalog does not establish universal closure or complete M0 coverage.
+
+From the repository root, with Python 3.11 or later and the repository's Rust
+toolchain installed:
+
+```sh
+python3 crates/hypercurve/scripts/test_capability_matrix.py
+python3 crates/hypercurve/scripts/capability_matrix.py --output /tmp/hypercurve-capabilities
+```
+
+The output directory must be new and outside the source tree. `--fixture ID`
+selects one row and can be repeated. Omitting it runs all catalog rows.
+`--build-timeout SECONDS` controls build containment separately from each row's
+published timeout. Cargo uses `--locked --release --all-features`; normal Cargo
+build-cache reuse is allowed. Each fixture runs alone in a fresh test process,
+with one test thread. This is not a fresh-process archive replay guarantee.
+
+The [catalog](capabilities.json) separates authored, generated and selected
+implicit inputs. Each row names its owner, properties, scalar/input domain,
+policies, operation conventions, asserted outcomes and oracle. The source test
+remains the authority for construction and assertions. Changing a fixture's
+meaning requires reviewing its catalog row as well. These are reviewed witness
+claims, not an automatic inference of geometry semantics from a zero exit code.
+
+The report keeps separate stages for representation, evaluation, differentials,
+incidence/order, classification, region admission, Booleans, offsets, repeated
+offsets, corner edits, restriction/reconstruction, transforms, exact replay and
+resource recovery. An empty stage list means **not qualified by this witness**.
+It does not mean unsupported or successful. A report for selected IDs says
+nothing about rows that were not run.
+
+| Recorded outcome | Meaning when the witness passes |
+| --- | --- |
+| `exact_success` | The named exact assertions pass within their stated scope. |
+| `successful_empty` | The fixture explicitly asserts a successful empty result. |
+| `unsupported`, `invalid`, `exhausted` | The fixture asserts that specific public failure category. |
+| `blocked_unspecified` | The fixture asserts `Blocked` without checking its reason; no narrower cause is claimed. |
+| `qualified_approximation` | The fixture retains the consumed approximation receipt. |
+
+The schema also reserves distinct outcomes for proved no solution,
+underconstrained input, undecided predicates and unbounded output. An outcome
+not present in the catalog has no new witness here. In particular, the
+polynomial frontier test passing records an implementation gap. Authored SVG
+round trips exercise eight authored families in one process; they do not cover
+generated definitions, fresh-process native replay or later modeling operations.
+Point-definition selector rejection is distinct from native archive replay.
+Membership samples are only the finite assertions listed, not a proof of the
+entire represented set.
+
+The driver obtains executables from Cargo's artifact messages, checks exact
+registration and ignored status, and requires one successful test summary.
+Missing tests, ignored tests, zero-test passes, failing builds or tests, changed
+binaries, changed catalogs and source changes cannot publish successful claims.
+The JSON report contains separate build and fixture commands/times, compiler
+and relevant build settings, binary and log digests, the source revision,
+tracked/input hashes, dirty patch and new source inputs. It reuses the
+repository's existing source-attribution helpers. This is an attributed local
+build, not a hermetic-build claim.
+
+Timeout and interruption are incomplete external outcomes, never inferred
+`BudgetExhausted`. On timeout or SIGTERM the runner stops the owned process
+group, including descendants. This tests the qualification harness's cleanup;
+it does not establish kernel cancellation. The per-fixture 300-second allowance
+is elapsed-time containment, not a total-work or memory limit. The catalog
+states the remaining resource gaps explicitly. Timing under CI or concurrent
+work is qualification data, not a controlled performance comparison.
+
+Hypercurve CI executes the evidence-guard tests and the catalog, then retains
+its report and logs as an artifact. For a retained implementation or performance
+claim, archive the relevant raw record under the repository's
+[admission protocol](../../../docs/admission.md) and record its digest. A green
+matrix is evidence for these witnesses only; broader transforms, singularities,
+nonrational offset chains, generated replay, general algebraic regions and
+shipped consumers still require their own algorithms and acceptance evidence.

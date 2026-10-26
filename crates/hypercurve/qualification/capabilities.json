@@ -1,0 +1,854 @@
+{
+  "schema_version": 1,
+  "scope": "Bounded qualification of reviewed named fixtures only. Each claim describes the assertion actually exercised; unspecified stages remain unqualified. Passing blocker fixtures do not establish operation completion.",
+  "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
+  "unqualified_targets": [
+    "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
+    "Generated native save/reload in a fresh process followed by another modeling operation.",
+    "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
+    "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
+    "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
+    "Published package and actual binding consumers for the complete declared domain."
+  ],
+  "fixtures": [
+    {
+      "id": "authored_svg",
+      "target": "hypercurve_svg",
+      "test": "exact_extension_round_trips_every_curve_family",
+      "owner": "Hypercurve native definitions and SVG adapter",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Eight authored finite curve families; rational controls and an algebraic-coordinate line. No selected generated carriers.",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalQuadraticBezier",
+        "RationalBezier",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Hypercurve SVG version 3 metadata is authoritative; drawing commands are separate.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Construct all eight authored variants."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Same-process exact SVG metadata round trip compares each authored Curve2."
+        }
+      ],
+      "oracle": "Exact Curve2 equality after import; no generated-geometry or fresh-process archive assertion.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "generated_arc_corner",
+      "target": "hypercurve_open_path_compositions",
+      "test": "round_stroke_boundary_of_a_filleted_arc_corner_refillets_and_erodes",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original rational arc/line corner and its generated contacts, round stroke and refillet, followed by erosion by 1/16.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "STRICT; existing round-stroke and circular-fillet selection rules in the named fixture; erosion uses its existing round convention.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Rebuilt stroke and refillet boundaries enter CurveRegion2."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Rebuild and reverse the generated boundary."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Rebuilt XOR and final difference are empty."
+        },
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "Refillet the reconstructed stroke boundary."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Erode the refilleted result and consume its region."
+        }
+      ],
+      "oracle": "Original assertions: empty set differences/XOR, generated contact incidence and added/removed material checks.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_chamfers",
+      "target": "hypercurve_path_closure",
+      "test": "selected_open_chamfers_reenter_the_public_path_api",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "One line and one quadratic open path; unit chord setbacks, then 1/4, 1/16 and 1/64 setbacks.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "TrimOnly; Euclidean chord setbacks; assert Unique for every edit.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "At least one edited curve has selected storage with geometry() == None."
+        },
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "Three further selected-path chamfers have a unique solution."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Open path endpoints and connectivity survive the edits."
+        }
+      ],
+      "oracle": "Exact endpoint coincidence, path connectivity, selected-carrier assertion and Certified receipts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_chamfer_booleans",
+      "target": "hypercurve_path_closure",
+      "test": "selected_path_chamfers_close_through_all_region_booleans",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Closed line/quadratic path with selected chamfer and a rectangular cutter; interior and closing vertices.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "TrimOnly, unique unit chord setbacks; EvenOdd; union/intersection/difference/XOR.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Admit the selected chamfer path under EvenOdd."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "All four regularized operations complete with Certified receipts."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Four exact query points match the fixture expectations for each result."
+        }
+      ],
+      "oracle": "Exact closure and Certified receipts; finite membership assertions qualify these witnesses, not universal set equality.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_fillet_chamfer",
+      "target": "hypercurve_path_closure",
+      "test": "selected_open_fillets_accept_a_subsequent_chamfer",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Open line/quadratic path, unit-radius selected fillet, then 1/16 chord setbacks.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "TrimOnly; assert one isolated fillet solution and one chord-setback chamfer.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Generated CircularArc has selected storage."
+        },
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "The unique selected fillet accepts a unique subsequent chamfer."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Exact external endpoints and connectivity remain."
+        }
+      ],
+      "oracle": "Selected circular family, exact endpoint coincidence, path connectivity and Certified receipts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "homogeneous_composition",
+      "target": "hypercurve_path_closure",
+      "test": "homogeneous_boundary_closes_through_boolean_corners_and_offset",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Finite semicircle with a homogeneous control at infinity, rational and NURBS forms and degree-12 elevations, plus lines.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Explicit material/NonZero loops; TrimOnly fillet radius or chord setbacks 1/8, all returned solutions retained, round offset 1/32 and subsequent four-way Boolean batch.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Preserve a finite curve with no affine control net."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Admit the homogeneous boundary."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Clip the boundary with a rectangle."
+        },
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "The clipped region completes the fixture corner edits."
+        },
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "The edited result completes the fixture offset."
+        }
+      ],
+      "oracle": "Exact homogeneous-source checks, boundary loop count, membership assertions and Certified receipts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "algebraic_boolean_continuation",
+      "target": "hypercurve_curve_region_boolean",
+      "test": "algebraic_curved_region_output_can_feed_another_boolean",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Quadratic cap cut at algebraic parameters; disjoint and crossing rectangular operands.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Regularized union/intersection/difference/XOR through CurveRegion2.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "The first and subsequent regions retain algebraic fragments."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Consume a selected result in disjoint union and crossing Boolean batch."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Self-XOR is empty."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Exact query points match the specified material."
+        }
+      ],
+      "oracle": "Algebraic-carrier assertions, idempotent exact region equality, empty self-XOR and specified membership.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "native_empty_identities",
+      "target": "hypercurve_curve_region_boolean",
+      "test": "boolean_batch_short_circuits_empty_and_identical_operands",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Canonical empty CurveRegion2 and one rational square; identical square operands.",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Regularized empty-set identities; this witness does not pair an invalid operand with empty.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Union/XOR with empty and self union/intersection retain exact region equality."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Empty intersection/difference and self difference/XOR remain empty."
+        }
+      ],
+      "oracle": "Exact CurveRegion2 equality, is_empty and zero arrangement work counters.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "generated_holes",
+      "target": "hypercurve_curve_region_boolean",
+      "test": "affine_line_batch_preserves_material_and_hole_roles",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A square frame formed by difference, consumed by a second Boolean batch with an inset square.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Regularized difference creates the frame; subsequent intersection retains its hole.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Consume the generated frame in a subsequent batch."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "The retained two-loop result preserves material and hole membership."
+        }
+      ],
+      "oracle": "Two boundary loops and exact inside/outside queries at prescribed points.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "nested_islands",
+      "target": "hypercurve_curve_region_boolean",
+      "test": "curved_region_boolean_respects_nested_hole_roles",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "EvenOdd nested square loops and a disconnected island inside the hole; the test name does not imply curved supports.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "EvenOdd admission followed by regularized union and intersection.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Admit nested loops under EvenOdd."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Union preserves ring, hole and island."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Ring/island intersection is empty."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Three exact queries distinguish material, hole and island."
+        }
+      ],
+      "oracle": "Independent ring/hole/island membership expectations and empty intersection.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "lower_dimensional_contacts",
+      "target": "hypercurve_curve_region_boolean",
+      "test": "regularized_affine_contacts_discard_lower_dimensional_intersections",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Two rational squares touching at one point or along one edge.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Regularization takes closure of interior; shared points/edges alone are not filled material.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Complete contacts distinguish point contact from edge overlap."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Lower-dimensional intersections regularize to empty."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Point-touch union has two loops; edge-touch union has one."
+        }
+      ],
+      "oracle": "Exact contact/overlap assertions, boundary loop counts and prescribed membership.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_evaluation",
+      "target": "polynomial_curves",
+      "test": "closed_loop_evaluation_split_reverse_and_source_identity",
+      "owner": "Hypersolve topology and Hypercurve polynomial branches",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Two selected graph branches of a rational circle polynomial on the unit box.",
+      "origins": [
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Source-chart restrictions remain authoritative; this does not admit a polynomial filled region.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Branches share the exact polynomial source and selected fibers."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Exact endpoint and midpoint identities are retained."
+        },
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "The regular chart derivative has the expected exact linear forms."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Splitting and reversing preserve source and endpoint identity."
+        }
+      ],
+      "oracle": "Explicit circle endpoints, selected fiber definitions and exact derivative linear forms.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_quintic_sections",
+      "target": "polynomial_curves",
+      "test": "quintic_section_splits_both_operands_and_continues",
+      "owner": "Hypercurve polynomial sections and Hypersolve selected fields",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The fixture quintic branch and a rational vertical line; both operand orders and both reversals.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The selected fiber remains correlated; no independent coordinate materialization is required.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "One selected contact has exact signs and isolating bounds."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Split both operands at the correlated fiber and continue with their pieces."
+        }
+      ],
+      "oracle": "Original defining equation, rational isolating bounds, selected line parameter relation and directed tangent signs.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_frontier",
+      "target": "polynomial_curves",
+      "test": "unadmitted_polynomial_pairs_keep_typed_blockers",
+      "owner": "Hypercurve polynomial incidence and region arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Quintic versus irrational-coordinate vertical/sloped lines, translated branch versus line, branch pair, and a closed parabola-branch boundary.",
+      "origins": [
+        "authored",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A passing frontier test records implementation gaps; it is not completed algebraic incidence or region support.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "unsupported",
+          "assertion": "Both operand orders reject the four unadmitted pair classes with Unsupported."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "unsupported",
+          "assertion": "Simple polynomial boundary orientation and CurveRegion2 admission return Unsupported."
+        }
+      ],
+      "oracle": "Public ExactCurveError::Blocked reasons are explicitly matched to Unsupported.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_budget_retry",
+      "target": "polynomial_curves",
+      "test": "forged_selector_rejection_and_budget_recovery",
+      "owner": "Hypersolve selected fibers and Hypercurve point definitions",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Selected polynomial-circle fibers with zero isolation/refinement allowance and independently forged selectors.",
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "In-memory point-definition replay only; counted subdivision/refinement limits do not bound total work or memory.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exhausted",
+          "assertion": "A reached zero isolation/refinement allowance produces BudgetExhausted."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A later ordinary-budget point query succeeds."
+        }
+      ],
+      "oracle": "Typed budget reason, selector rejection and exact recovered coordinate ordering; forged errors are only asserted as errors, not a specific Invalid variant.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "qualified_replay",
+      "target": "qualified_closure",
+      "test": "stricter_replay_of_a_qualified_loop_is_blocked_not_invalid",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A square closed by a symbolic trigonometric identity, outside the algebraic target; both traversal directions.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Existing symbolic support remains qualified; the blocked reason is not asserted more narrowly than the test.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "qualified_approximation",
+          "assertion": "Approximate admission carries Approximate512Consumed."
+        },
+        {
+          "stage": "classification",
+          "outcome": "blocked_unspecified",
+          "assertion": "Stricter classification is Blocked, not Invalid."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "blocked_unspecified",
+          "assertion": "Stricter intersection is Blocked."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "blocked_unspecified",
+          "assertion": "Stricter affine continuation is Blocked."
+        },
+        {
+          "stage": "classification",
+          "outcome": "qualified_approximation",
+          "assertion": "Approximate retry retains its receipt and classifies the interior."
+        }
+      ],
+      "oracle": "Independent sine addition identity, explicit certainty checks and public Blocked variant assertions.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "qualified_affine",
+      "target": "qualified_closure",
+      "test": "qualified_affine_continuation_keeps_its_closure_receipt",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The same qualified symbolic square under translation, reflection and nonsingular anisotropic scaling.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "No offset/affine commutation is claimed; symbolic approximate source fidelity remains explicit.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "qualified_approximation",
+          "assertion": "Affine continuation retains inherited Approximate512Consumed."
+        },
+        {
+          "stage": "classification",
+          "outcome": "qualified_approximation",
+          "assertion": "Transformed interior queries retain the qualification."
+        }
+      ],
+      "oracle": "Known affine images of an interior point, explicit receipts, and stricter calls remaining blocked.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "invalid_and_valid_admission",
+      "target": "qualified_closure",
+      "test": "replay_does_not_relabel_an_open_loop_or_weaken_a_strict_square",
+      "owner": "Hypercurve",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "An open rational square with gap 1/100 paired with an exactly closed square under both policies.",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Selecting an approximate policy alone does not make a certified result approximate.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "invalid",
+          "assertion": "The open loop returns ExactCurveError::Invalid under both policies."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "The closed square remains Certified under both policies."
+        }
+      ],
+      "oracle": "Explicit Invalid variant and certified successful closed-region assertions.",
+      "timeout_seconds": 300
+    }
+  ]
+}
