@@ -3133,11 +3133,10 @@ impl RationalBezier2 {
             )
         };
         let endpoints = [point(self.start()), point(self.end())];
-        let exact_line_image = self
-            .data
-            .exact_line_image
-            .as_ref()
-            .and_then(|_| LineSeg2::try_new(endpoints[0].clone(), endpoints[1].clone()).ok());
+        let exact_line_image = self.data.exact_line_image.as_ref().and_then(|line| {
+            line.map_points_between(endpoints[0].clone(), endpoints[1].clone(), point)
+                .ok()
+        });
         let curve = Self::from_validated_homogeneous(
             self.homogeneous_controls()
                 .iter()

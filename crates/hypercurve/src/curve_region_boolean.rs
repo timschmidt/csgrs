@@ -7713,9 +7713,10 @@ fn contacts_decided_same_from_circular_carriers(
 /// Incidence is supplied by the topology, not by coordinates. Each contact
 /// lies on both of its carriers. The circles are shared through one carrier
 /// or one retained circle, and the lines through one carrier or one retained
-/// support allocation. Separate storage proves nothing, so such pairs stay
-/// with the other matchers. Both signs are exact predicates; either one left
-/// undecided keeps the match uncertain.
+/// support definition. Independent transforms may allocate equal exact line
+/// definitions separately. Unrecognized support equality stays with the
+/// other matchers. Both signs are exact predicates; either one left undecided
+/// keeps the match uncertain.
 fn contacts_decided_same_from_shared_circle_and_line(
     existing: &ContactVertex,
     point: &CurvePoint2,

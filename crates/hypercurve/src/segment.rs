@@ -170,19 +170,37 @@ impl LineSeg2 {
         self.endpoints_decided_distinct
     }
 
-    /// Returns whether both segments borrow one support-line allocation.
+    /// Proves that both segments have the same supporting line.
     ///
     /// A shared allocation is a positive proof that both segments lie on the
     /// line through that support's endpoints: a segment either created the
     /// support from its own endpoints, was cut from it at certified points,
     /// or was mapped together with it by one affine transform, which gives
-    /// the image its own allocation. Separate allocations prove nothing about
-    /// the two lines.
+    /// the image its own allocation. Independent images can also retain equal
+    /// defining endpoints, in either order. Compare those exact values, not
+    /// the trimmed segment endpoints; separate allocations alone say nothing
+    /// about the lines. Failure to recognize this witness is not distinctness.
     pub(crate) fn shares_support_line(&self, other: &Self) -> bool {
-        matches!(
+        if matches!(
             (self.support.get(), other.support.get()),
             (Some(first), Some(second)) if Arc::ptr_eq(first, second)
-        )
+        ) {
+            return true;
+        }
+        let (first_start, first_end) = self
+            .support
+            .get()
+            .map_or((&self.start, &self.end), |support| {
+                (&support.start, &support.end)
+            });
+        let (second_start, second_end) = other
+            .support
+            .get()
+            .map_or((&other.start, &other.end), |support| {
+                (&support.start, &support.end)
+            });
+        (first_start == second_start && first_end == second_end)
+            || (first_start == second_end && first_end == second_start)
     }
 
     pub(crate) fn support_start(&self) -> &Point2 {
@@ -2002,6 +2020,48 @@ mod policy_cache_tests {
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn support_line_identity_survives_independent_maps_and_reversal() {
+        let source = LineSeg2::try_new(point(0, 0), point(4, 0)).unwrap();
+        let cut = source.fragment_between_after_distinct_endpoints(
+            point(1, 0),
+            point(2, 0),
+            source.fragment_support(),
+        );
+        let map = |p: &Point2| {
+            Point2::new(
+                Real::from(3) * p.x() - Real::from(4) * p.y() + Real::from(7),
+                Real::from(4) * p.x() + Real::from(3) * p.y() - Real::from(2),
+            )
+        };
+        let image = source.map_points(map).unwrap();
+        let cut_image = cut.map_points(map).unwrap();
+        assert!(!Arc::ptr_eq(
+            &image.fragment_support(),
+            &cut_image.fragment_support()
+        ));
+        for first in [&image, &image.reversed()] {
+            for second in [&cut_image, &cut_image.reversed()] {
+                assert!(first.shares_support_line(second));
+                assert!(second.shares_support_line(first));
+            }
+        }
+        let separation = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+        let shifted = cut_image
+            .map_points(|p| p.translated(Real::zero(), separation.clone()))
+            .unwrap();
+        assert!(!image.shares_support_line(&shifted));
+        let uncertain = cut_image
+            .map_points(|p| {
+                p.translated(
+                    Real::zero(),
+                    crate::test_support::terminally_unresolved_zero(),
+                )
+            })
+            .unwrap();
+        assert!(!image.shares_support_line(&uncertain));
     }
 
     #[test]

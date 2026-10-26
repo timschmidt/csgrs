@@ -85,6 +85,15 @@ in this repository.
 
 ## Local follow-on records
 
+The local `hypercurve-closure-2026-10-26` branch adds commit
+`8399bc8af813a5624f1db2152d40f7b7e1cb7e1c` for
+`docs/evidence/2026-10-26-hypercurve-closure-m1` (10 files, 32,446 bytes), with
+SHA-256 `0d07f14b2b32e5dea5b3488090871802157e57b40a6dbde74990a5642363d9a6`.
+It records the retained-line transform repair, passing focused and downstream
+checks, and the still-failing follow-on XOR. This is an unpublished incremental
+record, not a full closure or pre-push validation claim. It adds only its own
+record; its parent is the research closeout below.
+
 The published [`research-2026-10-25` branch](https://github.com/timschmidt/csgrs-evidence/tree/research-2026-10-25)
 ends at `cd8bf060aa577231f84fffd7cf21e15127c028b0`, adding
 `docs/evidence/2026-10-26-research-closeout` (12,763 files, 187,318,255 bytes), with

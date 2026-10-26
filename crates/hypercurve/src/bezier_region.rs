@@ -6421,16 +6421,9 @@ fn transform_region_subcurve(
                     .map(BezierSubcurve2::Quadratic)
                     .map_err(affine_region_error);
             }
-            let start = point(curve.start());
-            let control = point(curve.control());
-            let end = point(curve.end());
-            let transformed = if curve.retained_exact_line_image().is_some() {
-                QuadraticBezier2::with_retained_exact_line_image(start, control, end)
-                    .map_err(affine_region_error)?
-            } else {
-                QuadraticBezier2::new(start, control, end)
-            };
-            Ok(BezierSubcurve2::Quadratic(transformed))
+            Ok(BezierSubcurve2::Quadratic(
+                curve.transform_affine(m00, m01, m10, m11, tx, ty),
+            ))
         }
         BezierSubcurve2::Cubic(curve) => Ok(BezierSubcurve2::Cubic(CubicBezier2::new(
             point(curve.start()),

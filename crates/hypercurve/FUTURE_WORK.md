@@ -198,8 +198,42 @@ The first keeps the exact-only principal API smallest. The second makes the exis
 - Reversing a straight quadratic fragment kept its retained line support.
 - A line-circle relation deflated an endpoint certified on the circle, even when it is not an arc endpoint.
 
+**Independent transforms, M1 increment (2026-10-26).** The retained line owner
+now recognizes equal exact support endpoints, including reversal, across
+independent allocations. Quadratic and rational Bézier line images map their
+retained supports instead of rebuilding them from trimmed endpoints. Region
+affine transforms use the same owning implementation. This repairs evidence
+transport for algebraically trimmed lines under similarities and general
+affine maps; it does not establish full composition closure.
+
+The acceptance witnesses failed on `f612fbfe13` and pass after this change:
+`support_line_identity_survives_independent_maps_and_reversal` and
+`transforming_a_straight_fragment_keeps_its_exact_line_support`. They check exact
+support direction, algebraic endpoints, both traversals, independent maps,
+reflection, a nonsimilarity, and distinct or undecided nearby supports. The
+owning layer is Hypercurve's line support and transform machinery; the affected
+contracts are P12, P17–P19 and closure-plan M1. No tolerance or scalar fallback
+was added.
+
+Final local checks passed: formatting, Hypercurve Clippy with all features and
+targets and `-D warnings`, the three focused unit tests, 22 rational Bézier
+tests, 15 reconstruction tests, and 19 adapter/downstream/mixed-profile tests.
+The earlier downstream run also passed 24 exact-profile-sweep tests before
+the rational-line transform follow-up. The public PCB suite has nine prior
+successes and one new composition failure: a separately transformed cut can
+enter the compound region, but its next strict XOR is blocked by
+`Intersection/Line/Ordering`. The full all-features run started before the
+rational follow-up and is still pending at this checkpoint. These are
+correctness observations, not performance or completed-closure claims.
+The reproduction patch and command logs are retained in evidence record
+`docs/evidence/2026-10-26-hypercurve-closure-m1`, with its digest in
+`docs/evidence-archive.tsv`.
+
 **Still open.**
-- Shared supports are recognized by allocation identity. If the route and the zone are transformed separately after the cut, their supports are separate allocations and the case is undecided again; the regressions transform the inputs before the cut.
+- The independently transformed compound's follow-on XOR needs exact endpoint
+  order across its retained line fragments. The full failing chain is preserved
+  for the next increment; recognizing equal support definitions alone does not
+  complete it.
 - The earlier record listed six cases on this board, four with nonparallel `A` and `B` crossing on the arc. They do not occur on the current board. If such a case recurs: `A` and `B` meet in one point `Q` in their own field. The contacts are equal exactly when `Q` lies on the circle, an exact zero test of `|Q - C|² - r²`, and the branch sign above then selects `Q` on each line.
 - The earlier options remain for such cases: line-conic contacts on a circular conic in tower-representable form, from the circle's exact center and radius as `line_circle_relation_at_endpoints` does for native arcs; `quadratic_tower` beyond one outer radical; or a zero-separation bound, which `algebraic_separation_bound_bits` does not give past 256 nodes or at `Inverse` nodes without an exact child sign.
 

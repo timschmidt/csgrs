@@ -297,12 +297,23 @@ impl QuadraticBezier2 {
             .iter()
             .map(|contact| contact.transform_similarity(transform))
             .collect::<CurveResult<Vec<_>>>()?;
-        Self::with_retained_exact_line_provenance(
-            points[0].clone(),
-            points[1].clone(),
-            points[2].clone(),
-            contacts,
-        )
+        // Map the retained line itself. Reconstructing it from the trimmed
+        // endpoints discards the source support and its exact direction.
+        let line =
+            evidence
+                .line
+                .map_points_between(points[0].clone(), points[2].clone(), |point| {
+                    transform.transform_point(point)
+                })?;
+        Ok(Self {
+            start: points[0].clone(),
+            control: points[1].clone(),
+            end: points[2].clone(),
+            exact_line_image: Some(Arc::new(ExactQuadraticLineImage2 {
+                line,
+                parallel_tangent_contacts: (!contacts.is_empty()).then(|| Arc::from(contacts)),
+            })),
+        })
     }
 
     /// Applies an exact planar affine transform while retaining a certified
@@ -329,7 +340,12 @@ impl QuadraticBezier2 {
         let exact_line_image = self
             .exact_line_image
             .as_ref()
-            .and_then(|_| LineSeg2::try_new(start.clone(), end.clone()).ok())
+            .and_then(|evidence| {
+                evidence
+                    .line
+                    .map_points_between(start.clone(), end.clone(), point)
+                    .ok()
+            })
             .map(|line| {
                 Arc::new(ExactQuadraticLineImage2 {
                     line,
@@ -775,6 +791,72 @@ fn quadratic_interpolation_parameter_blocker(
 #[cfg(test)]
 mod reversal_tests {
     use super::*;
+
+    #[test]
+    fn transforming_a_straight_fragment_keeps_its_exact_line_support() {
+        let point = |x: i64, y: i64| Point2::new(Real::from(x), Real::from(y));
+        let source = LineSeg2::try_new(point(0, 0), point(6, 6)).unwrap();
+        let a = Real::from(2).sqrt().unwrap();
+        let b = Real::from(3).sqrt().unwrap();
+        let fragment = source.fragment_between_after_distinct_endpoints(
+            Point2::new(a.clone(), a),
+            Point2::new(b.clone(), b),
+            source.fragment_support(),
+        );
+        let curve = QuadraticBezier2::from_line_segment(fragment);
+        for entries in [
+            [3, -4, 4, 3, 7, -2],
+            [3, 4, 4, -3, 0, 1],
+            [2, 1, 0, 3, 5, 7],
+        ] {
+            let [a, b, c, d, x, y] = entries.map(Real::from);
+            for reversed in [false, true] {
+                let curve = if reversed {
+                    curve.reversed_with_retained_provenance().unwrap()
+                } else {
+                    curve.clone()
+                };
+                let mut images = vec![curve.transform_affine(&a, &b, &c, &d, &x, &y)];
+                let rational = crate::RationalBezier2::try_from_subcurve(
+                    &crate::BezierSubcurve2::Quadratic(curve.clone()),
+                )
+                .unwrap();
+                let mut rational_images =
+                    vec![rational.transformed_affine([&a, &b, &c, &d, &x, &y])];
+                if let Ok(transform) = Similarity2::try_from_real_affine(
+                    a.clone(),
+                    b.clone(),
+                    c.clone(),
+                    d.clone(),
+                    x.clone(),
+                    y.clone(),
+                ) {
+                    images.push(
+                        curve
+                            .transform_similarity_with_retained_provenance(&transform)
+                            .unwrap(),
+                    );
+                    rational_images.push(rational.transform_similarity(&transform));
+                }
+                for line in images
+                    .iter()
+                    .map(|image| image.retained_exact_line_image().unwrap())
+                    .chain(
+                        rational_images
+                            .iter()
+                            .map(|image| image.retained_exact_line_image().unwrap()),
+                    )
+                {
+                    assert!(line.has_retained_support());
+                    let scale = Real::from(if reversed { -6 } else { 6 });
+                    assert_eq!(
+                        line.directed_support_delta(),
+                        (&scale * (&a + &b), &scale * (&c + &d))
+                    );
+                }
+            }
+        }
+    }
 
     #[test]
     fn reversing_a_straight_fragment_keeps_its_exact_line_support() {
