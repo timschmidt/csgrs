@@ -1179,6 +1179,14 @@ fn retained_tangent_line_arc_contact(
     None
 }
 
+/// Reuses exact scalar structure without requesting refinement or promotion.
+/// This may inspect a shared expression graph; it is not a total-work bound.
+fn native_contact_structural_sign(value: &Real) -> Option<hyperreal::RealSign> {
+    value
+        .immediate_sign()
+        .or_else(|| value.structural_facts().sign)
+}
+
 fn build_native_line_evidence(
     first: &Curve2,
     second: &Curve2,
@@ -1190,6 +1198,17 @@ fn build_native_line_evidence(
         &first.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?[0];
     let second_fragment =
         &second.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?[0];
+    // Keep exact direction facts available from retained scalar structure without
+    // adding a refinement requirement to a completed native intersection.
+    let tangent_cross_sign = first
+        .geometry()
+        .and_then(affine_line_image)
+        .zip(second.geometry().and_then(affine_line_image))
+        .and_then(|(first, second)| {
+            let (ax, ay) = first.directed_support_delta();
+            let (bx, by) = second.directed_support_delta();
+            native_contact_structural_sign(&Real::diff_of_products(&ax, &by, &ay, &bx))
+        });
     let contact =
         |first_parameter: Real, second_parameter: Real, point: Point2| CurveIntersectionContact2 {
             first: CurveLocation2 {
@@ -1203,8 +1222,11 @@ fn build_native_line_evidence(
                 local_parameter: second_parameter.into(),
             },
             point: CurvePoint2::from(point),
-            certified_transverse: false,
-            tangent_cross_sign: None,
+            certified_transverse: matches!(
+                tangent_cross_sign,
+                Some(hyperreal::RealSign::Positive | hyperreal::RealSign::Negative)
+            ),
+            tangent_cross_sign,
         };
     let (contacts, overlaps) = match relation {
         LineLineIntersection::None => (Vec::new(), Vec::new()),
@@ -1373,6 +1395,36 @@ fn append_native_line_arc_contact(
     let arc_evaluators =
         arc_curve.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
     let arc_span_indices = arc_span_indices_for_point(arc_curve, arc, &hit.point, policy)?;
+    // The CCW circle tangent is J(P-C), hence cross(L, J(P-C)) = dot(L, P-C).
+    // Arc reversal and operand exchange each reverse this oriented sign.
+    let tangent_cross_sign = line
+        .geometry()
+        .and_then(affine_line_image)
+        .and_then(|line| {
+            let (dx, dy) = line.directed_support_delta();
+            // Native endpoint parameters already certify this point identity.
+            // Retain it instead of expanding the intersection's radical point.
+            let point = if hit.arc_param == Real::zero() {
+                arc.start()
+            } else if hit.arc_param == Real::one() {
+                arc.end()
+            } else {
+                &hit.point
+            };
+            let (rx, ry) = point.delta_from(arc.center());
+            let sign = native_contact_structural_sign(&(dx * rx + dy * ry))?;
+            Some(
+                if arc.is_clockwise() ^ matches!(order, LineArcOrder::ArcThenLine) {
+                    match sign {
+                        hyperreal::RealSign::Positive => hyperreal::RealSign::Negative,
+                        hyperreal::RealSign::Negative => hyperreal::RealSign::Positive,
+                        hyperreal::RealSign::Zero => hyperreal::RealSign::Zero,
+                    }
+                } else {
+                    sign
+                },
+            )
+        });
     let contact_count = contacts.len();
     for arc_span_index in arc_span_indices {
         let line_parameter = CurveLocation2 {
@@ -1399,8 +1451,11 @@ fn append_native_line_arc_contact(
             first: first_parameter,
             second: second_parameter,
             point: CurvePoint2::from(hit.point.clone()),
-            certified_transverse: false,
-            tangent_cross_sign: None,
+            certified_transverse: matches!(
+                tangent_cross_sign,
+                Some(hyperreal::RealSign::Positive | hyperreal::RealSign::Negative)
+            ),
+            tangent_cross_sign,
         };
         match matching_contact_index(contacts, &candidate, policy) {
             Classification::Decided(Some(_)) => {}
@@ -3457,6 +3512,120 @@ mod native_dispatch_tests {
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::from_values(x, y)
+    }
+
+    #[test]
+    fn native_contacts_retain_exact_oriented_tangent_facts() {
+        use hyperreal::RealSign;
+        let policy = CurveContext::STRICT;
+        for center in [
+            point(0, 0),
+            Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap()),
+        ] {
+            let point = |x: i8, y: i8| center.translated(Real::from(x), Real::from(y));
+            let line = |a, b| LineSeg2::try_new(a, b).unwrap();
+            let arc = CircularArc2::try_from_center(point(1, 0), point(0, 1), point(0, 0), false)
+                .unwrap();
+            let gap = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+            let near = center.translated(Real::one() - &gap, Real::zero());
+            let outside = center.translated(Real::one() + &gap, Real::zero());
+            let outside_line = Curve2::from(line(
+                outside.translated(Real::zero(), Real::from(-1)),
+                outside.translated(Real::zero(), Real::one()),
+            ));
+            let arc_curve = Curve2::from(arc.clone());
+            let absent =
+                CurveIntersectionContext::try_new(&outside_line, &arc_curve, &policy).unwrap();
+            assert!(absent.result().unwrap().contacts().is_empty());
+            let cases = [
+                (
+                    Curve2::from(line(point(-1, 0), point(0, 0))),
+                    Curve2::from(line(point(0, 0), point(0, 1))),
+                    RealSign::Positive,
+                ),
+                (
+                    Curve2::from(line(point(-1, 0), point(0, 0))),
+                    Curve2::from(line(point(0, 0), point(1, 0))),
+                    RealSign::Zero,
+                ),
+                (
+                    Curve2::from(QuadraticBezier2::from_line_segment(line(
+                        point(0, 0),
+                        point(2, 0),
+                    ))),
+                    Curve2::from(arc.clone()),
+                    RealSign::Positive,
+                ),
+                (
+                    Curve2::from(line(point(1, -1), point(1, 1))),
+                    Curve2::from(arc.clone()),
+                    RealSign::Zero,
+                ),
+                (
+                    Curve2::from(line(
+                        near.translated(Real::zero(), Real::from(-1)),
+                        near.translated(Real::zero(), Real::one()),
+                    )),
+                    Curve2::from(arc),
+                    RealSign::Positive,
+                ),
+            ];
+            for (first, second, expected) in cases {
+                for reversed in [false, true] {
+                    let second = if reversed {
+                        second.reversed().unwrap()
+                    } else {
+                        second.clone()
+                    };
+                    for swapped in [false, true] {
+                        let (a, b) = if swapped {
+                            (&second, &first)
+                        } else {
+                            (&first, &second)
+                        };
+                        let context = CurveIntersectionContext::try_new(a, b, &policy).unwrap();
+                        assert!(matches!(
+                            context.data.dispatch,
+                            CurveIntersectionDispatch::NativeLine(_)
+                                | CurveIntersectionDispatch::NativeLineArc { .. }
+                        ));
+                        let result = if matches!(
+                            context.data.dispatch,
+                            CurveIntersectionDispatch::NativeLine(_)
+                        ) {
+                            let attempt = crate::evaluate_with_budget(
+                                policy.predicate_policy(),
+                                crate::WorkBudget::ZERO,
+                                || context.result(),
+                            );
+                            assert_eq!(attempt.usage.refinements, 0);
+                            assert_eq!(attempt.usage.promotions, 0);
+                            attempt.result.unwrap().certified().unwrap().unwrap()
+                        } else {
+                            context.result().unwrap()
+                        };
+                        assert!(result.is_complete() && result.overlaps().is_empty());
+                        let [contact] = result.contacts() else {
+                            panic!("one finite native contact");
+                        };
+                        let expected = if reversed ^ swapped {
+                            match expected {
+                                RealSign::Positive => RealSign::Negative,
+                                RealSign::Negative => RealSign::Positive,
+                                RealSign::Zero => RealSign::Zero,
+                            }
+                        } else {
+                            expected
+                        };
+                        assert_eq!(contact.tangent_cross_sign(), Some(expected));
+                        assert_eq!(
+                            contact.is_certified_transverse(),
+                            expected != RealSign::Zero
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[test]

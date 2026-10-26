@@ -440,6 +440,40 @@ qualification logs and patch are in
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | L: native offset line endpoints | Support, offset and distinctness proofs retained | Original orientation retained | Coincident/distinct parallel relations preserved | — | — | Exact signed distance composition | — | Certified equal endpoint substitution | — |
 
+**Native oriented contact evidence, M1 increment (2026-10-26).** On
+`904e5408e1`, native line/line and line/arc intersections discard exact tangent
+signs available from their supporting directions. The focused regression
+reproduces an absent positive crossing sign. The native intersection evidence
+owner now retains structural signs of the directed support cross product;
+for a circle, it uses `cross(L, J(P-C)) = dot(L, P-C)`. Native endpoint
+parameters retain the stored arc point identity. Arc reversal and operand
+exchange transport the oriented sign. A proved nonzero sign certifies
+transversality; a proved zero remains a tangency fact; an unavailable sign
+remains absent. P15, P18 and P19 apply without a new public type or format.
+
+`native_contacts_retain_exact_oriented_tangent_facts` covers rational and
+algebraically translated centers, crossings, tangencies, collinear endpoint
+contacts, reversals, exchanged operands, and lines separated from tangency by
+`1/10^12`. Completed native line evidence publishes under zero refinement and
+promotion budgets. The optional scalar fact query requests no such work, but
+may traverse a shared expression graph: this is not a total-work or memory
+bound. No new cancellation or exact replay claim follows.
+
+The final isolated increment passes formatting, strict all-target and
+all-feature MSRV Clippy, all 2,648 Hypercurve release tests (72 suites,
+35 existing ignored), and all 43 downstream adapter/profile/sweep/mixed tests.
+The original full arc-corner fixture remains unchanged and still reports
+`Offset/QuadraticBezier` against `RationalBezier/RealSign` (14.80 s). That
+failed probe is not completed erosion or a performance comparison. The full
+repository pre-push matrix for this increment remains pending. The separate
+local evidence branch retains the baseline, checks and source patch under
+`docs/evidence/2026-10-26-hypercurve-closure-native-contact-evidence`; its
+digest is in `docs/evidence-archive.tsv`.
+
+| Scoped witness | Representation | Evaluation/differentials | Incidence/order | Region admission | Booleans | Further offset | Corner edits | Reconstruction | Exact replay |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| N: completed native contacts | Original lines/arcs and endpoint identity | Directed support tangent signs | Certified crossing/tangency facts retained | Existing corpus protected | Existing corpus protected | — | — | — | — |
+
 **Still open.**
 - The original ignored arc-corner refillet/erosion composition now reports
   `Offset/QuadraticBezier` against `RationalBezier/RealSign` during offset-band

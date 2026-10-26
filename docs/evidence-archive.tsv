@@ -332,6 +332,7 @@ docs/evidence/2026-10-26-hypercurve-closure-m1	10	32446	0d07f14b2b32e5dea5b34880
 docs/evidence/2026-10-26-hypercurve-closure-m1-circle	12	310497	52609b6ca3dc51023d2ecbec117bd91a9f249147851d81bb762d1cfcd7a39b38
 docs/evidence/2026-10-26-hypercurve-closure-native-area	9	202715	b73c39dff6499757d7d9e00ed4b8e275209b4bfe2f1de1c86d108912692cee3e
 docs/evidence/2026-10-26-hypercurve-closure-native-circle	10	80015	1e1bf512fe517ae7a60e3440ebe0115d4690c7bb03cbe600accad3c49829c68f
+docs/evidence/2026-10-26-hypercurve-closure-native-contact-evidence	12	329667	b2c6714712ce3b03bef818b23c7422b972e5dbe99f9e22166e5d0f04a9469075
 docs/evidence/2026-10-26-hypercurve-closure-validation	12153	58233737	78c71e823c48c8f104fde6290654f66fa54452b8e50043be7380cb534b9fc137
 docs/evidence/2026-10-26-research-closeout	12763	187318255	ef84e4aed934ad5014ed36b27a41951d58b2200ab82a5cee3e7ac39e2ba005ad
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
