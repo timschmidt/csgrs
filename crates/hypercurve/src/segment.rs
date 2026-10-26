@@ -150,12 +150,14 @@ impl LineSeg2 {
         end: Point2,
     ) -> CurveResult<Self> {
         let validated = Self::try_new(start, end)?;
-        if !self.has_retained_support {
-            return Ok(validated);
-        }
+        // Offset provenance exists independently of a retained trim support.
+        // Equal endpoint representations preserve both facts, and any earlier
+        // exact proof that the endpoints are distinct.
         Ok(Self {
+            endpoints_decided_distinct: self.endpoints_decided_distinct
+                || validated.endpoints_decided_distinct,
             support: line_support_cell(self.support.get().cloned()),
-            has_retained_support: true,
+            has_retained_support: self.has_retained_support,
             support_direction_reversed: self.support_direction_reversed,
             offset_provenance: self.offset_provenance.clone(),
             ..validated
@@ -2046,6 +2048,52 @@ mod policy_cache_tests {
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn equal_line_endpoint_representations_preserve_offset_provenance() {
+        let policy = CurveContext::STRICT;
+        let center = Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
+        let source =
+            LineSeg2::try_new(center.clone(), center.translated(3.into(), 4.into())).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        for retained_support in [false, true] {
+            let offset = source.offset_left(half.clone()).unwrap();
+            assert!(!offset.has_retained_support());
+            let distinct = source.offset_left(&half + &quarter).unwrap();
+            let offset = if retained_support {
+                offset.fragment_between_after_distinct_endpoints(
+                    offset.point_at(quarter.clone()),
+                    offset.point_at(&half + &quarter),
+                    offset.fragment_support(),
+                )
+            } else {
+                offset
+            };
+            assert_eq!(
+                offset.retained_offset_relation(&distinct, &policy),
+                Some(RetainedLineRelation2::ParallelDistinct)
+            );
+            let represented = offset
+                .with_endpoint_representations(offset.start().clone(), offset.end().clone())
+                .unwrap();
+            assert_eq!(
+                represented.retained_offset_relation(&distinct, &policy),
+                Some(RetainedLineRelation2::ParallelDistinct)
+            );
+            assert_eq!(
+                represented.retained_offset_relation(&offset, &policy),
+                Some(RetainedLineRelation2::Coincident)
+            );
+            assert_eq!(represented.has_retained_support(), retained_support);
+            let repeated = represented.offset_left(-(&half + &quarter)).unwrap();
+            let expected = source.offset_left(-quarter.clone()).unwrap();
+            assert_eq!(
+                repeated.retained_offset_relation(&expected, &policy),
+                Some(RetainedLineRelation2::Coincident)
+            );
+        }
     }
 
     #[test]

@@ -411,6 +411,35 @@ contract and source patch are in
 | B: smooth/opposed band junctions | Original fragments and shared proved point | Exact signed normal endpoints | Strict equality or preserved distinction | Certified source loop | — | Signed line/circle bands | — | — | — |
 | O after B: unchanged arc-corner chain | Generated mixed boundary | — | Earlier native line/circle band contacts complete | Certified before erosion | Earlier set identities complete | Blocked: QuadraticBezier/RationalBezier/RealSign | Both fillets complete | Reversal and rebuild complete | — |
 
+**Native line endpoint proof transport, M1 increment (2026-10-26).** The
+`LineSeg2::with_endpoint_representations` owner on `532e517b07` / `07f1157275`
+returns a fresh segment when no retained trim support is present, discarding
+independent offset provenance. The new direct regression reproduces that loss:
+a proved distinct parallel relation becomes absent after equal endpoint
+replacement. The helper now preserves support, signed offset source/distance,
+orientation and existing endpoint-distinctness evidence together. Equal endpoint
+values remain its caller-certified precondition. P15, P18 and P19 apply; this
+changes no public type, serialization format or predicate policy.
+
+The witness
+`equal_line_endpoint_representations_preserve_offset_provenance` uses algebraic
+coordinates, both trimmed and untrimmed offset lines, coincident/distinct support
+relations, and a subsequent signed offset with an independently expected total
+distance. The isolated final change passes formatting, strict all-target and
+all-feature MSRV Clippy, all 2,647 Hypercurve release tests (72 suites, 35 existing
+ignored), and all 43 downstream adapter/profile/sweep/mixed tests. The unchanged
+full arc-corner probe still reports the band-only `QuadraticBezier/RationalBezier`
+`RealSign` blocker (12.14 s); this repair alone does not complete erosion. No
+performance, native replay or total resource-bound claim follows from these
+checks, and the full repository pre-push matrix is pending. Raw baseline,
+qualification logs and patch are in
+`docs/evidence/2026-10-26-hypercurve-closure-line-endpoints`, with its digest in
+`docs/evidence-archive.tsv`.
+
+| Scoped witness | Representation | Evaluation/differentials | Incidence/order | Region admission | Booleans | Further offset | Corner edits | Reconstruction | Exact replay |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| L: native offset line endpoints | Support, offset and distinctness proofs retained | Original orientation retained | Coincident/distinct parallel relations preserved | — | — | Exact signed distance composition | — | Certified equal endpoint substitution | — |
+
 **Still open.**
 - The original ignored arc-corner refillet/erosion composition now reports
   `Offset/QuadraticBezier` against `RationalBezier/RealSign` during offset-band

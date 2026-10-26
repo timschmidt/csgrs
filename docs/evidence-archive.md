@@ -86,7 +86,18 @@ in this repository.
 ## Follow-on records
 
 The local `hypercurve-closure-2026-10-26` branch now ends at
-`38f2b160874308b674e02fc5bd53e9bb71484add`, adding
+`2550c23fd100d06fb2343323ae8273ea97a70164`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-line-endpoints` (13 files,
+302,594 bytes), SHA-256
+`ebd052c2f5a3bf22d9e31e016aa2245f86ef29eaeb07a72e1fd5451449e2c717`.
+It records native line proof transport across equal endpoint substitution
+against `07f1157275`: 2,647 Hypercurve tests and 43 downstream tests pass,
+as do formatting and strict MSRV Clippy. The original erosion remains blocked,
+and full pre-push qualification is pending. This record is committed locally
+and has not yet been pushed.
+
+Its local parent,
+`38f2b160874308b674e02fc5bd53e9bb71484add`, adds
 `docs/evidence/2026-10-26-hypercurve-closure-band-endpoints` (9 files,
 301,329 bytes), SHA-256
 `32eae2f8d8901d2c6d4ecc4f68a0dd3b0ffa81ed829072650e36424bd65bb0e0`.
