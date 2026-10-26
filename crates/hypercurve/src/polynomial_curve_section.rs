@@ -114,8 +114,8 @@ fn negate(sign: hyperreal::RealSign) -> hyperreal::RealSign {
     }
 }
 
-/// Intersects an unmapped polynomial graph branch with an authored rational
-/// line in either operand order.
+/// Intersects a polynomial graph branch, including a retained rational
+/// similarity, with an authored rational line in either operand order.
 ///
 /// Returns `None` for every other pair, which keeps its existing dispatch.
 /// Both active domains are checked. The line parameter is `(y - y0) / dy`
@@ -134,9 +134,6 @@ pub(super) fn polynomial_line_section(
             (None, Some(branch)) => (branch, first, false),
             _ => return Ok(None),
         };
-    if !branch.is_source_image() {
-        return Ok(None);
-    }
     let Some(line) = rational_line(line_curve) else {
         return Ok(None);
     };
@@ -150,9 +147,12 @@ pub(super) fn polynomial_line_section(
         // drop the affine source that lets the line replay the branch point.
         return Ok(None);
     }
-    let sections = branch
+    let Some(sections) = branch
         .line_sections(line, policy)
-        .map_err(|error| error.with_operation(CurveOperation2::Intersection))?;
+        .map_err(|error| error.with_operation(CurveOperation2::Intersection))?
+    else {
+        return Ok(None);
+    };
     let (dx, dy) = line.delta();
     let inverse = |delta: &Real| {
         (Real::one() / delta).map_err(|cause| {

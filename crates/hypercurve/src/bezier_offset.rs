@@ -8908,6 +8908,42 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             return point_affine_form_order_to_real(candidate, &a, &b, value, policy)
                 .map(|order| order.map(|order| if reverse { order.reverse() } else { order }));
         }
+        if let CurvePointData2::Similarity(image) = &candidate.0
+            && matches!(image.data.source.0, CurvePointData2::Polynomial(_))
+        {
+            // A mapped polynomial coordinate still belongs to its retained
+            // base/fiber field. Its counterpart may be an ordinary rational
+            // image of that same base root, so compare the selected scalar
+            // charts before unrelated coordinate enclosures or elimination.
+            let form = match axis {
+                Axis2::X => [Real::one(), Real::zero(), Real::zero()],
+                Axis2::Y => [Real::zero(), Real::one(), Real::zero()],
+            };
+            let order = match (
+                point_affine_form_parameter(candidate, &form, policy)?,
+                point_affine_form_parameter(other, &form, policy)?,
+            ) {
+                (Classification::Decided(first), Classification::Decided(second)) => {
+                    first.cmp_by_refinement(&second, policy)?
+                }
+                (Classification::Uncertain(UncertaintyReason::BudgetExhausted), _)
+                | (_, Classification::Uncertain(UncertaintyReason::BudgetExhausted)) => {
+                    Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+                }
+                _ => continue,
+            };
+            match order {
+                Classification::Decided(order) => {
+                    return Ok(Classification::Decided(if reverse {
+                        order.reverse()
+                    } else {
+                        order
+                    }));
+                }
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => return Ok(order),
+                Classification::Uncertain(_) => {}
+            }
+        }
     }
     for (candidate, other, reverse) in [(first, second, false), (second, first, true)] {
         if let CurvePointData2::Polynomial(point) = &candidate.0 {
@@ -13589,12 +13625,6 @@ impl BezierSimilarityPoint2 {
         if !policy.accepts_retained_policy(self.data.policy) {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
-        if matches!(self.data.source.0, CurvePointData2::Polynomial(_))
-            && other.coordinates().is_some()
-        {
-            return CurvePoint2::from(self.clone())
-                .same_point_by_coordinate_evidence(other, policy);
-        }
         if let CurvePoint2(CurvePointData2::Similarity(other)) = other
             && policy.accepts_retained_policy(other.data.policy)
             && self.data.transform == other.data.transform
@@ -13603,6 +13633,16 @@ impl BezierSimilarityPoint2 {
                 return Classification::Decided(true);
             }
             return self.data.source.same_point(&other.data.source, policy);
+        }
+        if matches!(self.data.source.0, CurvePointData2::Polynomial(_)) {
+            let equality =
+                CurvePoint2::from(self.clone()).same_point_by_coordinate_evidence(other, policy);
+            if hypersolve::work_budget::exhaustion().is_some() {
+                return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+            }
+            if matches!(equality, Classification::Decided(_)) {
+                return equality;
+            }
         }
         retained_point_evidence_equality_by_refinement(
             &CurvePoint2::from(self.clone()),

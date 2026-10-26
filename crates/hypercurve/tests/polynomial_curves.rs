@@ -61,6 +61,26 @@ fn unadmitted_polynomial_pairs_keep_typed_blockers() {
 }
 
 #[test]
+fn mapped_quintic_line_sections_keep_source_parameters() {
+    sections::mapped_quintic_line_sections_keep_source_parameters();
+}
+
+#[test]
+fn selected_line_parameters_replay_their_transformed_fiber() {
+    sections::selected_line_parameters_replay_their_transformed_fiber();
+}
+
+#[test]
+fn mapped_sections_preserve_singular_and_tangent_contacts() {
+    sections::mapped_sections_preserve_singular_and_tangent_contacts();
+}
+
+#[test]
+fn mapped_sections_survive_budget_retry_and_policy_changes() {
+    sections::mapped_sections_survive_budget_retry_and_policy_changes();
+}
+
+#[test]
 fn sections_survive_context_drop_budgets_and_policies() {
     sections::sections_survive_context_drop_budgets_and_policies();
 }

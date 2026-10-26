@@ -42,11 +42,12 @@ struct PolynomialCurveSource2 {
 /// after reversal and similarity transforms. Endpoints retain the selected
 /// event fiber; interior points retain the branch's ordered fiber root.
 /// Regular derivatives and smooth-event tangent directions retain that joint
-/// source. An unmapped branch intersects authored lines with rational
-/// endpoints through [`Curve2::intersect_curve`] and
-/// [`Curve2::intersection_topology`].
-/// Other intersections, singular limits, rational Bézier promotion, and filled
-/// arrangements report their typed capability blockers.
+/// source. Source branches and their retained rational similarities intersect
+/// authored lines with rational endpoints, including selected restrictions,
+/// through [`Curve2::intersect_curve`] and [`Curve2::intersection_topology`].
+/// Continuous common line components, other intersections, singular limits,
+/// rational Bézier promotion, and filled arrangements report their typed
+/// capability blockers.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolynomialCurveBranch2 {
     source: Arc<PolynomialCurveSource2>,
@@ -59,7 +60,7 @@ pub struct PolynomialCurveBranch2 {
     pub(super) reversed: bool,
 }
 
-/// One point of a graph branch on a line of its source plane.
+/// One point of a graph branch on a line in its current image plane.
 #[derive(Debug)]
 pub(crate) struct PolynomialLineSection2 {
     /// The source abscissa, or the retained boundary parameter it equals.
@@ -324,6 +325,53 @@ impl PolynomialCurveBranch2 {
         self.transform.is_none() && self.maps.is_empty()
     }
 
+    /// Uses the source section authority after a rational similarity pullback.
+    /// Source abscissas remain the branch parameters; returned points and
+    /// tangent signs belong to the current image. Nonlinear rational images
+    /// and algebraic coefficient fields retain their existing capability gap.
+    pub(crate) fn line_sections(
+        &self,
+        line: &crate::LineSeg2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Vec<PolynomialLineSection2>>> {
+        if !self.maps.is_empty() {
+            return Ok(None);
+        }
+        let Some(transform) = &self.transform else {
+            return self.source_line_sections(line, policy).map(Some);
+        };
+        let (a, b, d, e, xoff, yoff) = transform.affine_components();
+        if ![a, b, d, e, xoff, yoff]
+            .iter()
+            .all(|value| value.exact_rational_ref().is_some())
+        {
+            return Ok(None);
+        }
+        let inverse = transform.inverse().map_err(invalid)?;
+        let source_line = line.transform_similarity(&inverse).map_err(invalid)?;
+        let mut source = self.clone();
+        source.transform = None;
+        source.endpoints = self.endpoints.clone().map(|point| {
+            CurvePoint2::from(BezierSimilarityPoint2::new(point, inverse.clone(), policy))
+        });
+        let mut sections = source.source_line_sections(&source_line, policy)?;
+        for section in &mut sections {
+            // Reuse the actual selected boundary point at a retained endpoint.
+            // Interior contacts transport the newly selected source fiber.
+            section.point = if section.parameter == *self.range.start() {
+                self.endpoints[0].clone()
+            } else if section.parameter == *self.range.end() {
+                self.endpoints[1].clone()
+            } else {
+                self.map_point(section.point.clone(), policy)?
+            };
+            if transform.reverses_orientation() {
+                section.cross = section.cross.map(negate);
+            }
+        }
+        Ok(Some(sections))
+    }
+
     /// Every point of this source-plane branch on the rational `line`.
     ///
     /// A vertical line `x = c` meets the graph at most once. Otherwise the
@@ -341,7 +389,7 @@ impl PolynomialCurveBranch2 {
     /// A boundary is classified only when `F_y` is proved nonzero there:
     /// vertical-tangent and singular events are not. An undecided sign leaves
     /// a contact unclassified, never tangent. Budget exhaustion propagates.
-    pub(crate) fn line_sections(
+    fn source_line_sections(
         &self,
         line: &crate::LineSeg2,
         policy: &CurveContext,

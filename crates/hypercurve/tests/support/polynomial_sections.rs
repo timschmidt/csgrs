@@ -1,4 +1,5 @@
-//! Sections of polynomial graph branches by authored rational vertical lines.
+//! Sections of polynomial graph branches by authored rational lines, including
+//! retained rational similarities and selected restrictions of both operands.
 //!
 //! Expected values are derived independently of the section kernel: rational
 //! contact coordinates are solved by hand, and the irrational roots of
@@ -503,6 +504,575 @@ pub fn vertical_tangent_and_cusp_events_are_not_transverse() {
     assert_disjoint(&parabola.curves()[0], &short);
 }
 
+pub fn selected_line_parameters_replay_their_transformed_fiber() {
+    let set = set(QUINTIC);
+    let source = &set.curves()[0];
+    let point = source.point_at(&Real::zero().into()).unwrap();
+    let parameter = point
+        .affine_form(Real::zero(), q(1, 6), q(1, 2))
+        .parameter()
+        .unwrap();
+    assert!(parameter.scalar().is_none() && parameter.as_bezier_parameter().is_none());
+    let shift = Similarity2::try_from_real_affine(
+        1.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+        2.into(),
+        (-1).into(),
+    )
+    .unwrap();
+    let expected = source
+        .transform_similarity(&shift)
+        .unwrap()
+        .point_at(&Real::zero().into())
+        .unwrap();
+    let line = vertical(2.into(), (-4).into(), 2.into());
+    // This parameter is a form of the point in the original plane. Evaluating
+    // the shifted line must retain its image of that same correlated fiber.
+    let evaluated = line.point_at(&parameter).unwrap();
+    assert!(evaluated.coincides_with(&expected).unwrap());
+    assert!(
+        evaluated
+            .definition()
+            .unwrap()
+            .into_point()
+            .unwrap()
+            .coincides_with(&expected)
+            .unwrap()
+    );
+    let shifted = vertical(
+        Real::from(2) + q(1, 1_000_000_000_000),
+        (-4).into(),
+        2.into(),
+    );
+    assert!(
+        !shifted
+            .point_at(&parameter)
+            .unwrap()
+            .coincides_with(&expected)
+            .unwrap()
+    );
+    let outside = point
+        .affine_form(Real::zero(), Real::one(), Real::from(10))
+        .parameter()
+        .unwrap();
+    assert!(matches!(
+        line.point_at(&outside),
+        Err(ExactCurveError::Invalid { .. })
+    ));
+}
+
+pub fn mapped_quintic_line_sections_keep_source_parameters() {
+    let quintic = set(QUINTIC);
+    let source = &quintic.curves()[0];
+    let translation = Similarity2::try_from_real_affine(
+        1.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+        1.into(),
+        0.into(),
+    )
+    .unwrap();
+    let moved = source.transform_similarity(&translation).unwrap();
+    let line = vertical(Real::zero(), (-3).into(), 3.into());
+    // The original unsupported translated-branch fixture: the source endpoint
+    // (-1,-1) maps to (0,-1), at line parameter 1/3 and source abscissa -1.
+    for (first, second, branch_first) in [(&moved, &line, true), (&line, &moved, false)] {
+        let contact = one_contact(first, second);
+        assert!(
+            contact
+                .point()
+                .coincides_with(&p(0.into(), (-1).into()))
+                .unwrap()
+        );
+        let (branch_parameter, line_parameter) = if branch_first {
+            (
+                contact.first().local_parameter(),
+                contact.second().local_parameter(),
+            )
+        } else {
+            (
+                contact.second().local_parameter(),
+                contact.first().local_parameter(),
+            )
+        };
+        assert_eq!(
+            branch_parameter.compare(&Real::from(-1).into()).unwrap(),
+            Ordering::Equal
+        );
+        assert_eq!(
+            line_parameter.compare(&q(1, 3).into()).unwrap(),
+            Ordering::Equal
+        );
+        assert!(
+            line.point_at(line_parameter)
+                .unwrap()
+                .coincides_with(contact.point())
+                .unwrap()
+        );
+        assert_eq!(
+            contact.tangent_cross_sign(),
+            Some(if branch_first {
+                RealSign::Positive
+            } else {
+                RealSign::Negative
+            })
+        );
+    }
+
+    // Integral rotations/scales/reflections have rational inverse entries.
+    // The nonrational fiber at source x=0 stays selected in every world chart.
+    for [a, b, d, e, tx, ty] in [
+        [1, 0, 0, 1, 2, -1],
+        [0, -1, 1, 0, 3, 4],
+        [3, -4, 4, 3, 2, -1],
+        [-3, 4, 4, 3, -2, 1],
+        [1, 1, -1, 1, 2, 3],
+    ] {
+        let transform = Similarity2::try_from_real_affine(
+            a.into(),
+            b.into(),
+            d.into(),
+            e.into(),
+            tx.into(),
+            ty.into(),
+        )
+        .unwrap();
+        let branch = source.transform_similarity(&transform).unwrap();
+        let line = vertical(0.into(), (-3).into(), 3.into())
+            .transform_similarity(&transform)
+            .unwrap();
+        let scale_squared = a * a + d * d;
+        let source_x = BivariatePolynomial::new(vec![
+            vec![q(-(a * tx + d * ty), scale_squared), q(d, scale_squared)],
+            vec![q(a, scale_squared)],
+        ]);
+        let source_y = BivariatePolynomial::new(vec![
+            vec![q(-(b * tx + e * ty), scale_squared), q(e, scale_squared)],
+            vec![q(b, scale_squared)],
+        ]);
+        use hypersolve::bivariate_arithmetic::{
+            bivariate_add, bivariate_multiply, bivariate_scale,
+        };
+        let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let mut fifth = one.clone();
+        for _ in 0..5 {
+            fifth = bivariate_multiply(&fifth, &source_y);
+        }
+        let expected_equation = bivariate_add(
+            &bivariate_add(&fifth, &bivariate_scale(source_y, &Real::from(5))),
+            &bivariate_add(
+                &BivariatePolynomial::new(vec![vec![Real::from(5)]]),
+                &bivariate_scale(source_x, &Real::from(-1)),
+            ),
+        );
+        for branch_reversed in [false, true] {
+            let branch = if branch_reversed {
+                branch.reversed().unwrap()
+            } else {
+                branch.clone()
+            };
+            for line_reversed in [false, true] {
+                let line = if line_reversed {
+                    line.reversed().unwrap()
+                } else {
+                    line.clone()
+                };
+                for (first, second, branch_first) in
+                    [(&branch, &line, true), (&line, &branch, false)]
+                {
+                    let contact = one_contact(first, second);
+                    let point = contact.point();
+                    assert!(point.coordinates().is_none());
+                    assert_eq!(
+                        point
+                            .rational_form(expected_equation.clone(), one.clone())
+                            .unwrap()
+                            .compare_to_real(&Real::zero())
+                            .unwrap(),
+                        Ordering::Equal,
+                    );
+                    let selected_y =
+                        point.affine_form(b.into(), e.into(), (-(b * tx + e * ty)).into());
+                    assert_eq!(
+                        selected_y
+                            .compare_to_real(&(Real::from(scale_squared) * q(-89, 100)))
+                            .unwrap(),
+                        Ordering::Greater
+                    );
+                    assert_eq!(
+                        selected_y
+                            .compare_to_real(&(Real::from(scale_squared) * q(-88, 100)))
+                            .unwrap(),
+                        Ordering::Less
+                    );
+                    let (branch_parameter, line_parameter) = if branch_first {
+                        (
+                            contact.first().local_parameter(),
+                            contact.second().local_parameter(),
+                        )
+                    } else {
+                        (
+                            contact.second().local_parameter(),
+                            contact.first().local_parameter(),
+                        )
+                    };
+                    assert_eq!(
+                        branch_parameter.compare(&Real::zero().into()).unwrap(),
+                        Ordering::Equal
+                    );
+                    assert!(
+                        line.point_at(line_parameter)
+                            .unwrap()
+                            .coincides_with(point)
+                            .unwrap()
+                    );
+                    assert!(
+                        point
+                            .definition()
+                            .unwrap()
+                            .into_point()
+                            .unwrap()
+                            .coincides_with(point)
+                            .unwrap()
+                    );
+                    let negative =
+                        (a * e - b * d < 0) ^ branch_reversed ^ line_reversed ^ !branch_first;
+                    assert_eq!(
+                        contact.tangent_cross_sign(),
+                        Some(if negative {
+                            RealSign::Negative
+                        } else {
+                            RealSign::Positive
+                        })
+                    );
+                    assert!(contact.is_certified_transverse());
+                }
+            }
+        }
+        let topology = branch.intersection_topology(&line).unwrap();
+        assert_eq!((topology.first().len(), topology.second().len()), (2, 2));
+        for piece in topology.first() {
+            assert!(
+                piece
+                    .polynomial_branch()
+                    .unwrap()
+                    .shares_source(source.polynomial_branch().unwrap())
+            );
+            assert!(
+                one_contact(piece, &line)
+                    .point()
+                    .coincides_with(&piece.point_at(&Real::zero().into()).unwrap())
+                    .unwrap()
+            );
+        }
+        for piece in topology.second() {
+            one_contact(&branch, &piece.reversed().unwrap());
+        }
+        let shortened = line
+            .restrict_source(
+                CurveParameterRange2::try_new(Real::zero().into(), q(1, 4).into()).unwrap(),
+            )
+            .unwrap();
+        assert_disjoint(&branch, &shortened);
+        let outside = vertical(Real::from(-1) - tiny(), (-3).into(), 3.into())
+            .transform_similarity(&transform)
+            .unwrap();
+        assert_disjoint(&branch, &outside);
+
+        // A sloped source section selects an algebraic source abscissa as
+        // well as a line parameter. Preserve that base selection through
+        // trimming and another transform of both resulting operands.
+        let sloped = segment([(-1).into(), (-3).into()], [1.into(), 3.into()])
+            .transform_similarity(&transform)
+            .unwrap();
+        let contact = one_contact(&branch, &sloped);
+        let s = contact.first().parameter().unwrap();
+        assert!(s.scalar().is_none());
+        assert_eq!(s.compare(&q(-31, 100).into()).unwrap(), Ordering::Greater);
+        assert_eq!(s.compare(&q(-30, 100).into()).unwrap(), Ordering::Less);
+        assert_eq!(
+            contact
+                .point()
+                .affine_form(
+                    (3 * a - b).into(),
+                    (3 * d - e).into(),
+                    (-((3 * a - b) * tx + (3 * d - e) * ty)).into(),
+                )
+                .compare_to_real(&Real::zero())
+                .unwrap(),
+            Ordering::Equal,
+        );
+        assert_eq!(
+            contact
+                .point()
+                .rational_form(expected_equation, one)
+                .unwrap()
+                .compare_to_real(&Real::zero())
+                .unwrap(),
+            Ordering::Equal,
+        );
+        let t = contact.second().parameter().unwrap();
+        let evaluated = sloped.point_at(&t).unwrap();
+        for axis in [hypercurve::Axis2::X, hypercurve::Axis2::Y] {
+            for (first, second) in [(&evaluated, contact.point()), (contact.point(), &evaluated)] {
+                assert_eq!(
+                    first.compare_coordinate(second, axis).unwrap(),
+                    Ordering::Equal
+                );
+            }
+        }
+        let replay = evaluated.definition().unwrap().into_point().unwrap();
+        assert!(replay.coincides_with(contact.point()).unwrap());
+        assert!(evaluated.coincides_with(contact.point()).unwrap());
+        let shift = Similarity2::try_from_real_affine(
+            1.into(),
+            0.into(),
+            0.into(),
+            1.into(),
+            tiny(),
+            0.into(),
+        )
+        .unwrap();
+        let nearby = sloped
+            .transform_similarity(&shift)
+            .unwrap()
+            .point_at(&t)
+            .unwrap();
+        assert_eq!(
+            nearby
+                .compare_coordinate(contact.point(), hypercurve::Axis2::X)
+                .unwrap(),
+            Ordering::Greater
+        );
+        assert_eq!(
+            contact
+                .point()
+                .compare_coordinate(&nearby, hypercurve::Axis2::X)
+                .unwrap(),
+            Ordering::Less
+        );
+        assert_eq!(
+            nearby
+                .compare_coordinate(contact.point(), hypercurve::Axis2::Y)
+                .unwrap(),
+            Ordering::Equal
+        );
+        assert!(!nearby.coincides_with(contact.point()).unwrap());
+        let topology = branch.intersection_topology(&sloped).unwrap();
+        assert_eq!((topology.first().len(), topology.second().len()), (2, 2));
+        for (piece, line) in [
+            (&topology.first()[0], &topology.second()[1]),
+            (&topology.first()[1], &topology.second()[0]),
+        ] {
+            assert!(
+                one_contact(piece, line)
+                    .point()
+                    .coincides_with(contact.point())
+                    .unwrap()
+            );
+            let piece = piece
+                .transform_similarity(&translation)
+                .unwrap()
+                .reversed()
+                .unwrap();
+            let line = line.transform_similarity(&translation).unwrap();
+            let next = one_contact(&piece, &line);
+            assert_eq!(
+                next.first().parameter().unwrap().compare(&s).unwrap(),
+                Ordering::Equal
+            );
+            assert!(
+                piece
+                    .point_at(&s)
+                    .unwrap()
+                    .coincides_with(next.point())
+                    .unwrap()
+            );
+            assert!(
+                line.point_at(&next.second().parameter().unwrap())
+                    .unwrap()
+                    .coincides_with(next.point())
+                    .unwrap()
+            );
+        }
+    }
+}
+
+pub fn mapped_sections_preserve_singular_and_tangent_contacts() {
+    for [a, b, d, e, tx, ty] in [[0, -1, 1, 0, 3, 4], [-3, 4, 4, 3, -2, 1]] {
+        let transform = Similarity2::try_from_real_affine(
+            a.into(),
+            b.into(),
+            d.into(),
+            e.into(),
+            tx.into(),
+            ty.into(),
+        )
+        .unwrap();
+        let image = |x: Real, y: Real| {
+            p(
+                Real::from(a) * &x + Real::from(b) * &y + Real::from(tx),
+                Real::from(d) * x + Real::from(e) * y + Real::from(ty),
+            )
+        };
+        let origin = image(Real::zero(), Real::zero());
+        let event_line = vertical(Real::zero(), (-1).into(), 1.into())
+            .transform_similarity(&transform)
+            .unwrap();
+        for coefficients in [PARABOLA, CUSP] {
+            for source in set(coefficients).curves() {
+                let curve = source.transform_similarity(&transform).unwrap();
+                for curve in [curve.clone(), curve.reversed().unwrap()] {
+                    for (first, second) in [(&curve, &event_line), (&event_line, &curve)] {
+                        let contact = one_contact(first, second);
+                        assert!(contact.point().coincides_with(&origin).unwrap());
+                        assert_eq!(contact.tangent_cross_sign(), None);
+                        assert!(!contact.is_certified_transverse());
+                    }
+                    let topology = curve.intersection_topology(&event_line).unwrap();
+                    assert_eq!((topology.first().len(), topology.second().len()), (1, 2));
+                    assert_eq!(&topology.first()[0], &curve);
+                }
+            }
+        }
+
+        let curve = set(GRAPH_PARABOLA).curves()[0]
+            .transform_similarity(&transform)
+            .unwrap();
+        let tangent = segment([(-1).into(), Real::zero()], [1.into(), Real::zero()])
+            .transform_similarity(&transform)
+            .unwrap();
+        for (first, second) in [(&curve, &tangent), (&tangent, &curve)] {
+            let contact = one_contact(first, second);
+            assert!(contact.point().coincides_with(&origin).unwrap());
+            assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Zero));
+            assert!(!contact.is_certified_transverse());
+            let topology = first.intersection_topology(second).unwrap();
+            assert_eq!((topology.first().len(), topology.second().len()), (2, 2));
+            for piece in topology.first() {
+                assert_eq!(
+                    one_contact(piece, second).tangent_cross_sign(),
+                    Some(RealSign::Zero)
+                );
+            }
+        }
+        let secant = segment([(-1).into(), q(1, 4)], [1.into(), q(1, 4)])
+            .transform_similarity(&transform)
+            .unwrap();
+        let result = curve.intersect_curve(&secant).unwrap();
+        assert!(result.is_complete());
+        assert_eq!(result.contacts().len(), 2);
+        for (contact, (x, mut sign)) in result.contacts().iter().zip([
+            (q(-1, 2), RealSign::Positive),
+            (q(1, 2), RealSign::Negative),
+        ]) {
+            if a * e - b * d < 0 {
+                sign = opposite(sign);
+            }
+            assert_eq!(contact.tangent_cross_sign(), Some(sign));
+            assert!(contact.point().coincides_with(&image(x, q(1, 4))).unwrap());
+        }
+
+        // The unchanged source authority still reports a continuous common
+        // component as Unsupported, rather than publishing an empty section.
+        let diagonal = set(DIAGONAL).curves()[0]
+            .transform_similarity(&transform)
+            .unwrap();
+        let coincident = segment([(-1).into(), (-1).into()], [1.into(), 1.into()])
+            .transform_similarity(&transform)
+            .unwrap();
+        for (first, second) in [(&diagonal, &coincident), (&coincident, &diagonal)] {
+            for error in [
+                first.intersect_curve(second).unwrap_err(),
+                first.intersection_topology(second).unwrap_err(),
+            ] {
+                assert!(matches!(error, ExactCurveError::Blocked(blocker)
+                    if blocker.reason() == UncertaintyReason::Unsupported));
+            }
+        }
+        let distinct = segment(
+            [(-1).into(), Real::from(-1) + tiny()],
+            [1.into(), Real::one() + tiny()],
+        )
+        .transform_similarity(&transform)
+        .unwrap();
+        assert_disjoint(&diagonal, &distinct);
+    }
+}
+
+pub fn mapped_sections_survive_budget_retry_and_policy_changes() {
+    let transform = Similarity2::try_from_real_affine(
+        (-3).into(),
+        4.into(),
+        4.into(),
+        3.into(),
+        (-2).into(),
+        1.into(),
+    )
+    .unwrap();
+    let curve = set(QUINTIC).curves()[0]
+        .transform_similarity(&transform)
+        .unwrap();
+    let line = vertical(q(1, 2), (-3).into(), 3.into())
+        .transform_similarity(&transform)
+        .unwrap();
+    let denied = work_budget::with_budget(work_budget::WorkBudget::ZERO, || {
+        let error = curve.intersect_curve(&line).unwrap_err();
+        assert!(matches!(error, ExactCurveError::Blocked(blocker)
+            if blocker.reason() == UncertaintyReason::BudgetExhausted));
+    });
+    let reached = denied.result.unwrap_err();
+    assert_eq!((reached.limit, reached.used), (0, 0));
+    assert!(reached.requested > 0);
+    let recovered = work_budget::with_budget(
+        work_budget::WorkBudget {
+            refinements: 100_000,
+            promotions: 100_000,
+        },
+        || curve.intersection_topology(&line),
+    );
+    assert!(recovered.usage.refinements + recovered.usage.promotions > 0);
+    let topology = recovered.result.unwrap().unwrap();
+    assert_eq!((topology.first().len(), topology.second().len()), (2, 2));
+    let expected = curve.point_at(&q(1, 2).into()).unwrap();
+    assert!(
+        topology.result().contacts()[0]
+            .point()
+            .coincides_with(&expected)
+            .unwrap()
+    );
+    let (pieces, lines) = (topology.first().to_vec(), topology.second().to_vec());
+    drop(topology);
+    drop(curve);
+    drop(line);
+    let replay = expected.definition().unwrap().into_point().unwrap();
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+        hypercurve::PredicatePolicy::STRICT,
+    ] {
+        let outcome = hypercurve::evaluate_under(policy, || {
+            let contact = one_contact(&pieces[1], &lines[0]);
+            assert!(contact.point().coincides_with(&replay).unwrap());
+            let t = contact.second().parameter().unwrap();
+            assert!(
+                lines[0]
+                    .point_at(&t)
+                    .unwrap()
+                    .coincides_with(&replay)
+                    .unwrap()
+            );
+            let topology = lines[1].intersection_topology(&pieces[0]).unwrap();
+            assert_eq!((topology.first().len(), topology.second().len()), (1, 1));
+        });
+        assert_eq!(outcome.certainty(), hypercurve::CurveCertainty::Certified);
+        outcome.certified().unwrap();
+    }
+}
+
 pub fn unadmitted_polynomial_pairs_keep_typed_blockers() {
     let quintic = set(QUINTIC);
     let curve = &quintic.curves()[0];
@@ -530,18 +1100,8 @@ pub fn unadmitted_polynomial_pairs_keep_typed_blockers() {
     .unwrap()
     .into();
     unsupported(curve, &slanted);
-    // A mapped branch: source-x is no longer the plane's x.
-    let transform = Similarity2::try_from_real_affine(
-        1.into(),
-        0.into(),
-        0.into(),
-        1.into(),
-        1.into(),
-        0.into(),
-    )
-    .unwrap();
-    let moved = curve.transform_similarity(&transform).unwrap();
-    unsupported(&moved, &vertical(Real::zero(), (-3).into(), 3.into()));
+    // The original rational translation case is now a positive witness in
+    // mapped_quintic_line_sections_keep_source_parameters, with the same input.
     // Two polynomial branches.
     let parabola = set(PARABOLA);
     unsupported(curve, &parabola.curves()[1]);

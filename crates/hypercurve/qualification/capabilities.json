@@ -633,6 +633,206 @@
       "timeout_seconds": 300
     },
     {
+      "id": "implicit_mapped_sections",
+      "target": "polynomial_curves",
+      "test": "mapped_quintic_line_sections_keep_source_parameters",
+      "owner": "Hypercurve polynomial sections, native line evaluation and selected-field point predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original translated quintic endpoint, nonrational fibers at a rational abscissa and at an algebraic sloped-section abscissa, under five rational similarities including rotations, scale squared two and reflection; both orders, traversals and selected restrictions.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The source abscissa remains the branch parameter. Transported contacts retain the selected joint fiber. No polynomial region or native archive admission is asserted.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Original translated endpoint, transformed quintic equation, isolating bounds and directed crossing signs agree with independent exact expectations."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Selected line evaluation, both coordinate-order directions, coincidence and in-memory point-definition replay agree with the world contact. A line displaced by 2^-80 remains distinct."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Both operands split and accept subsequent intersections; algebraic source trims survive another transform and reversal with the original source abscissa."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Translations, rotations, scaling and reflection transport the same selected quintic fiber with the correct orientation."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "A shortened line and a source-domain cut displaced by 2^-80 give complete disjoint results."
+        }
+      ],
+      "oracle": "Hand-solved endpoint, independently substituted world polynomial, rational isolating bounds and determinant/traversal signs; semantic coincidence is checked separately from representation.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_selected_line_evaluation",
+      "target": "polynomial_curves",
+      "test": "selected_line_parameters_replay_their_transformed_fiber",
+      "owner": "Hypercurve native selected-line evaluation",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A native rational line evaluated at an affine form of an irreducible quintic fiber in the original plane, with a translated expected point, a nearby distinct line, and an out-of-domain parameter.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Evaluation retains an affine image of the original joint fiber. It does not independently materialize algebraic coordinates. Replay is an in-memory point-definition replay.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Evaluation and definition replay equal the independently translated selected point, while the line displaced by 10^-12 remains distinct."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "invalid",
+          "assertion": "A selected parameter outside the native line domain returns ExactCurveError::Invalid."
+        }
+      ],
+      "oracle": "The exact relation t = y/6 + 1/2 on the source fiber and the independently transformed point; a displaced-line counterexample and explicit Invalid match.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_mapped_events",
+      "target": "polynomial_curves",
+      "test": "mapped_sections_preserve_singular_and_tangent_contacts",
+      "owner": "Hypercurve polynomial source sections and similarity proof transport",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Parabola and cusp event endpoints, a graph-parabola tangent and secant, a coincident diagonal component and a distinct parallel line displaced by 2^-80, under a rotation and a reflection/scale.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Unclassified singular contacts, proved tangencies, transverse intersections, disjoint supports and continuous common components remain distinct.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Singular events retain unclassified cross signs; regular tangencies have certified zero signs; secant contacts have independently known coordinates and orientation signs."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Tangent splits and singular endpoint subdivisions remain valid subsequent intersection operands."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "unsupported",
+          "assertion": "A continuous shared polynomial/line component remains explicitly Unsupported in both operand orders."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "The exactly distinct nearby parallel support is disjoint, with no tolerance merge."
+        }
+      ],
+      "oracle": "Explicit transformed rational event/tangent/secant coordinates, determinant signs and typed Unsupported assertions; None and Zero are separately asserted.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_mapped_budget_retry",
+      "target": "polynomial_curves",
+      "test": "mapped_sections_survive_budget_retry_and_policy_changes",
+      "owner": "Hypercurve mapped polynomial sections and Hypersolve counted work scopes",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A reflected/scaled quintic section and its split branch/line pieces, under zero and larger counted refinement/promotion budgets, followed by STRICT to APPROXIMATE_512 to STRICT queries.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "The counted budget bounds only admitted refinements and promotions. It is not a total arithmetic, memory, cancellation or elapsed-time guarantee. Retained pieces survive dropping their construction objects.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exhausted",
+          "assertion": "A denied work request at the declared zero limit produces the public BudgetExhausted reason and a matching reached-limit receipt."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A later budget of 100000 refinements and 100000 promotions completes the section and both operand splits."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Retained pieces intersect after the original curve, line and topology are dropped; selected line evaluation and point-definition replay agree."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "All three policy transitions complete with Certified receipts using the retained exact relations."
+        }
+      ],
+      "oracle": "Actual denied work units, the public blocker category, exact selected contact evaluation and subdivision identities, and explicit certainty receipts.",
+      "timeout_seconds": 300
+    },
+    {
       "id": "implicit_frontier",
       "target": "polynomial_curves",
       "test": "unadmitted_polynomial_pairs_keep_typed_blockers",
@@ -645,7 +845,7 @@
         "P19",
         "P20"
       ],
-      "domain": "Quintic versus irrational-coordinate vertical/sloped lines, translated branch versus line, branch pair, and a closed parabola-branch boundary.",
+      "domain": "Quintic versus irrational-coordinate vertical/sloped lines, a polynomial branch pair, and a closed parabola-branch boundary. The original rationally translated branch is retained in the positive implicit_mapped_sections witness.",
       "origins": [
         "authored",
         "selected_implicit"
@@ -662,7 +862,7 @@
         {
           "stage": "incidence_order",
           "outcome": "unsupported",
-          "assertion": "Both operand orders reject the four unadmitted pair classes with Unsupported."
+          "assertion": "Both operand orders reject irrational-coordinate vertical/sloped lines and polynomial branch pairs with Unsupported."
         },
         {
           "stage": "region_admission",

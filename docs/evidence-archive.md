@@ -85,6 +85,21 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-mapped-polynomial-evidence-2026-10-26` branch
+ends at `f763399f1656e9596f9e63d13661feb89e3ee85b`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-mapped-polynomial` (76 files,
+2,412,312 bytes), SHA-256
+`81fd5fbcd665b34092c65e8e914400cdb35157a285d7545e84d3e45700f6f91d`.
+It records rational-similarity polynomial/line sections and consumption of
+their selected-point relations against `b1af6465b3`: 2,664 Hypercurve tests,
+43 downstream tests, strict MSRV Clippy, formatting, 16 matrix guards and all
+22 capability witnesses pass. The original translated quintic, selected-line
+comparison failures, source snapshots and final qualification are retained.
+Continuous line components remain unsupported at this increment; the separate
+prototype is excluded. This record is local and unpushed. Full repository
+pre-push qualification remains pending; the frozen `904e5408e1` run does not
+cover this source.
+
 The separate local `hypercurve-capability-matrix-evidence-2026-10-26` branch
 ends at `a74b62c4fdd8dd3c361d9f175cfa947c7c1a5635`, adding
 `docs/evidence/2026-10-26-hypercurve-capability-matrix` (98 files,

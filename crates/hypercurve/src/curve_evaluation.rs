@@ -287,7 +287,7 @@ impl Curve2 {
             // proves that evaluating this line returns the original point.
             // Retain that point before unrelated coordinate fields are built.
             // A form with merely matching numeric bounds is insufficient.
-            if crate::classify::is_zero(
+            let image = if crate::classify::is_zero(
                 &(Real::dot2_refs([a, b], [&dx, &dy]) - Real::one()),
                 &strict,
             ) == Some(true)
@@ -305,8 +305,30 @@ impl Curve2 {
                     )
                     .map_err(|cause| evaluation_error(family, cause))?,
                     Classification::Decided(Ordering::Equal)
-                )
-            {
+                ) {
+                Some(form.source().clone())
+            } else if let crate::CurvePointData2::Polynomial(point) = &form.source().0 {
+                // Canonical affine forms may refer to the point before a
+                // similarity. Evaluate the line as an affine image of that
+                // same joint fiber, retaining its defining relations for
+                // comparison and replay. The denominator is identically one.
+                let coordinate = |delta: &Real, start: &Real| {
+                    hypersolve::BivariatePolynomial::new(vec![
+                        vec![delta * c + start, delta * b],
+                        vec![delta * a],
+                    ])
+                };
+                Some(point.mapped(&crate::RationalMap2::new(
+                    [
+                        coordinate(&dx, line.start().x()),
+                        coordinate(&dy, line.start().y()),
+                    ],
+                    hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
+                )))
+            } else {
+                None
+            };
+            if let Some(image) = image {
                 let in_domain = decided(
                     CurveParameterDomain2::new(self.parameter_domain(), None)
                         .contains_finite_parameter(parameter, &strict)
@@ -316,7 +338,7 @@ impl Curve2 {
                 if !in_domain {
                     return Err(evaluation_error(family, CurveError::InvalidCurveParameter));
                 }
-                return Ok(form.source().clone());
+                return Ok(image);
             }
         }
         let fragments =

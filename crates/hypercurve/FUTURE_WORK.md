@@ -599,12 +599,40 @@ open. Counted refinement exhaustion is not a bound on all computation.
 
 ## 8. Polynomial-branch sections and filled arrangements
 
-**Admitted.** An unmapped graph branch meets an authored line with rational
-endpoints, or a returned restriction of one, in both intersection APIs and
-both operand orders, including tangencies; both operands split and the
-pieces re-enter the same query (`PERFORMANCE.md`, 2026-10-22). A branch's
-other intersections, its self-intersections and point location still report
-typed `Unsupported` blockers.
+**Admitted.** A graph branch and its retained invertible rational similarities
+meet authored lines with rational endpoints, or returned restrictions of them,
+in both intersection APIs and both operand orders. Parameters remain in their
+original source charts. Both operands split and the pieces re-enter the same
+query; selected algebraic trims, reversal, tangent contacts and singular-event
+contacts retain their meanings. Other algebraic similarities, nonlinear maps,
+algebraic-coordinate lines, branch pairs and filled polynomial arrangements
+remain implementation gaps.
+
+**Rational-similarity section increment (2026-10-26).** Against `b1af6465b3`,
+the original translated quintic fixture reproduced `Unsupported`. Pulling the
+line back through the retained rational similarity reuses the source section
+authority. Native line evaluation retains an affine image of the same selected
+fiber, and transformed coordinate comparison consumes its existing field
+relations. The independent sloped-line case also reproduced an undecided
+point comparison before those relations were consumed. No coordinate
+materialization or new implicit equation is required by these paths.
+
+The retained witnesses substitute the transformed quintic independently, check
+isolating bounds, both operand orders and reversals, selected trims through a
+further transform, subdivision/requery, point-definition replay and distinct
+features separated by `2^-80`. They exercise reached counted exhaustion,
+larger-budget retry and strict/approximate/strict policy changes. The final
+release suite passes 2,664 tests (34 existing ignored; 72 suites), all 43
+affected downstream tests, strict all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards and 22 capability witnesses. Typos, the repository
+budget and diff checks pass. Raw source attribution, baseline failures and
+qualification commands are retained in evidence record
+`docs/evidence/2026-10-26-hypercurve-closure-mapped-polynomial`, digest
+`81fd5fbcd665b34092c65e8e914400cdb35157a285d7545e84d3e45700f6f91d`.
+Point replay here is in memory, and counted refinements/promotions are not a
+total-work, memory or cancellation bound. Concurrent timings establish no
+performance improvement. A2, full algebraic closure and this increment's full
+repository pre-push qualification remain open.
 
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
@@ -624,11 +652,12 @@ typed `Unsupported` blockers.
   point that is proved equal to, not stored as, the branch point. A
   selected-fiber image of the abscissa would keep the replay identity at the
   cost of fiber-field arithmetic.
-- **Selected abscissas and mapped branches (H06, milestones 2 and 3).** An
-  irrational `c`, algebraic line coefficients, and branches with a similarity
-  or rational image need the query pulled back through the image map;
-  source-x monotonicity is not world-x monotonicity. Branch pairs need
-  resultant events and exact fiber signs.
+- **Selected abscissas and broader maps (H06, milestones 2 and 3).** Rational
+  similarity pullback is admitted above. Irrational line coordinates and
+  general algebraic similarities or nonlinear rational images still need
+  their own section and source-domain proof; source-x monotonicity is not
+  world-x monotonicity. Branch pairs need resultant events and exact fiber
+  signs.
 - **Repeated and vertical components (H07).** See `hypersolve/FUTURE_WORK.md`.
 - **Filled regions and BRep trims (H08).** `CurveRegion2` construction and
   `CurvePath2::simple_loop_orientation` with polynomial boundary pieces return

@@ -203,6 +203,26 @@ impl Similarity2 {
         }
     }
 
+    /// Inverts the certified nonsingular similarity. Its inverse linear part
+    /// is the transpose divided by the squared scale; orientation is unchanged.
+    pub(crate) fn inverse(&self) -> CurveResult<Self> {
+        let reciprocal_squared = (Real::one() / (&self.a * &self.a + &self.d * &self.d))?;
+        let a = &self.a * &reciprocal_squared;
+        let b = &self.d * &reciprocal_squared;
+        let d = &self.b * &reciprocal_squared;
+        let e = &self.e * &reciprocal_squared;
+        Ok(Self {
+            xoff: -(&a * &self.xoff + &b * &self.yoff),
+            yoff: -(&d * &self.xoff + &e * &self.yoff),
+            a,
+            b,
+            d,
+            e,
+            scale: (Real::one() / &self.scale)?,
+            reverses_orientation: self.reverses_orientation,
+        })
+    }
+
     /// Returns this similarity followed by an exact translation.
     ///
     /// Translation leaves the certified linear part, uniform scale, and
