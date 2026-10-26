@@ -3167,7 +3167,48 @@ impl RationalBezier2 {
     /// Applies a certified similarity without projecting intermediate controls.
     pub fn transform_similarity(&self, transform: &crate::Similarity2) -> Self {
         let (a, b, d, e, xoff, yoff) = transform.affine_components();
-        self.transformed_affine([a, b, d, e, xoff, yoff])
+        let mut image = self.transformed_affine([a, b, d, e, xoff, yoff]);
+        // A fresh image owns a fresh lineage. Transport the source chart along
+        // with its frame; keeping only one would misidentify restricted roots.
+        let lineage = &mut Arc::get_mut(&mut image.data)
+            .expect("new affine image has unique storage")
+            .lineage;
+        lineage.range = self.data.lineage.range.clone();
+        if let Some(injective) = self.data.lineage.root.unit_image_is_injective.get() {
+            // The certified map is invertible, so it preserves the root chart's
+            // injectivity, including when the current curve is only a subrange.
+            let _ = lineage.root.unit_image_is_injective.set(*injective);
+        }
+        if let Some(frame) = self.data.lineage.root.quadratic_conic_parameter_frame.get() {
+            let _ =
+                lineage
+                    .root
+                    .quadratic_conic_parameter_frame
+                    .set(Arc::new(std::array::from_fn(|index| {
+                        let control = &frame[index];
+                        let (x, y) = transform.transform_homogeneous_coordinates(
+                            &control.x,
+                            &control.y,
+                            &control.weight,
+                        );
+                        HomogeneousControl2::new(x, y, control.weight.clone())
+                    })));
+        }
+        if let Some(circle) = self.retained_circular_conic() {
+            // These contacts were certified when authored. An invertible
+            // similarity preserves their nonzero line spans and source weights.
+            let circle = Arc::new(
+                circle
+                    .transform_similarity(transform)
+                    .expect("a certified similarity preserves valid circle contacts"),
+            );
+            let _ = lineage
+                .root
+                .implicit_quadratic_conic
+                .set(circle.implicit_coefficients());
+            let _ = lineage.root.circular_conic.set(circle);
+        }
+        image
     }
 
     /// Returns this curve with traversal direction reversed.

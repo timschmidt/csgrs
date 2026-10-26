@@ -85,6 +85,17 @@ in this repository.
 
 ## Local follow-on records
 
+The local `hypercurve-closure-2026-10-26` branch now ends at
+`770d49fd53a2bfec1943af54b417b2dface7a596`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-m1-circle` (12 files, 310,497 bytes),
+with SHA-256
+`52609b6ca3dc51023d2ecbec117bd91a9f249147851d81bb762d1cfcd7a39b38`.
+It retains the missing-circle reproduction, transform repair, passing circle,
+PCB and downstream checks, and the unchanged arc-corner erosion blocker.
+The complete release suite was still running at this checkpoint. This local
+record does not claim pre-push validation, performance improvement, or completed
+closure; its parent is the retained-line record below.
+
 The local `hypercurve-closure-2026-10-26` branch adds commit
 `8399bc8af813a5624f1db2152d40f7b7e1cb7e1c` for
 `docs/evidence/2026-10-26-hypercurve-closure-m1` (10 files, 32,446 bytes), with

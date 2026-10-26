@@ -223,17 +223,39 @@ the rational-line transform follow-up. The public PCB suite has nine prior
 successes and one new composition failure: a separately transformed cut can
 enter the compound region, but its next strict XOR is blocked by
 `Intersection/Line/Ordering`. The full all-features run started before the
-rational follow-up and is still pending at this checkpoint. These are
+rational follow-up subsequently finished with 2,635 passes, this one failure,
+and 35 existing ignored tests. These are
 correctness observations, not performance or completed-closure claims.
 The reproduction patch and command logs are retained in evidence record
 `docs/evidence/2026-10-26-hypercurve-closure-m1`, with its digest in
 `docs/evidence-archive.tsv`.
 
+**Circle transforms, M1 follow-up (2026-10-26).** The complete independently
+transformed PCB chain now succeeds, including reconstruction in three operand
+orders and the next strict XOR against the corresponding union. Similarity
+transforms had discarded retained circle definitions, forcing later contacts
+through a general conic calculation with wider endpoint expressions. The
+rational quadratic and general rational owners now transport the circle,
+tangent contacts, source parameter frame and restriction, and certified
+injectivity. Region transforms delegate to those owners. General affine maps
+still invalidate circular metric evidence. No sign limit or policy changed.
+
+The domain is retained circular rational spans, including algebraic centers,
+trims, degree elevation, negative homogeneous weights, reversal, and certified
+similarities; the properties are P12 and P17–P19. The missing-circle witness
+failed on `e002496280`. Independent circle parametrization and exact radius,
+tangency and parameter relations now pass, alongside near-distinct, repeated
+visit and pole controls. Final local checks passed: formatting, strict
+all-target/all-feature Hypercurve Clippy, six circle-incidence tests, all ten
+PCB tests, and 43 adapter/profile/sweep/mixed-modeling tests. The full
+all-feature release suite is running separately; this is not pre-push
+validation or a performance claim. The evidence record is
+`docs/evidence/2026-10-26-hypercurve-closure-m1-circle`.
+
 **Still open.**
-- The independently transformed compound's follow-on XOR needs exact endpoint
-  order across its retained line fragments. The full failing chain is preserved
-  for the next increment; recognizing equal support definitions alone does not
-  complete it.
+- The original ignored arc-corner refillet/erosion composition still reports
+  `Offset/Line/RealSign` on this follow-up, as on the starting revision. Its full
+  fixture remains unchanged. M1 and the broader closure plan remain open.
 - The earlier record listed six cases on this board, four with nonparallel `A` and `B` crossing on the arc. They do not occur on the current board. If such a case recurs: `A` and `B` meet in one point `Q` in their own field. The contacts are equal exactly when `Q` lies on the circle, an exact zero test of `|Q - C|² - r²`, and the branch sign above then selects `Q` on each line.
 - The earlier options remain for such cases: line-conic contacts on a circular conic in tower-representable form, from the circle's exact center and radius as `line_circle_relation_at_endpoints` does for native arcs; `quadratic_tower` beyond one outer radical; or a zero-separation bound, which `algebraic_separation_bound_bits` does not give past 256 nodes or at `Inverse` nodes without an exact child sign.
 

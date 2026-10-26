@@ -87,6 +87,178 @@ fn parameter_equals(actual: &BezierParameter2, expected: &Real) {
 }
 
 #[test]
+fn similarity_preserves_retained_circle_and_selected_chart() {
+    let center = Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
+    for degree in [2, 5] {
+        let source = circle_source(&center, -3)
+            .elevated_to_degree(degree)
+            .unwrap()
+            .subcurve_between_exact(&q(1, 4), &q(3, 4))
+            .unwrap();
+        for reversed in [false, true] {
+            let source = if reversed {
+                source.reversed()
+            } else {
+                source.clone()
+            };
+            for entries in [[3, -4, 4, 3, 7, -2], [3, 4, 4, -3, 1, 5]] {
+                let [a, b, c, d, x, y] = entries.map(Real::from);
+                let transform = crate::Similarity2::try_from_real_affine(a, b, c, d, x, y).unwrap();
+                let image = source.transform_similarity(&transform);
+                let circle = image
+                    .retained_circular_conic()
+                    .expect("similarity retains the circle definition");
+                assert_eq!(circle.center, transform.transform_point(&center));
+                assert_eq!(
+                    is_zero(
+                        &(&circle.radius_squared - Real::from(25)),
+                        &CurveContext::STRICT
+                    ),
+                    Some(true)
+                );
+                for t in [q(1, 4), q(1, 2), q(3, 4)] {
+                    let expected = transform.transform_point(&oracle_point(&center, &t));
+                    let local = if reversed {
+                        (q(3, 4) - &t) * Real::from(2)
+                    } else {
+                        (&t - q(1, 4)) * Real::from(2)
+                    };
+                    let found = parameters(
+                        &image,
+                        &expected,
+                        &CurveParameterRange2::unit(),
+                        &CurveContext::STRICT,
+                    );
+                    assert_eq!(found.len(), 1);
+                    parameter_equals(&found[0], &local);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn similarity_transports_circle_tangent_relations_and_invalidates_affine_metric() {
+    use crate::rational_bezier::{
+        RationalQuadraticCircle2, RationalQuadraticCircleTangentContact2 as Contact,
+        RationalQuadraticParallelCircleContact2,
+    };
+    let center = Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
+    let point = center.translated(Real::one(), Real::zero());
+    let support = LineSeg2::try_new(
+        center.translated(Real::one(), Real::from(-2)),
+        center.translated(Real::one(), Real::from(2)),
+    )
+    .unwrap();
+    let line = support.fragment_between_after_distinct_endpoints(
+        center.translated(Real::one(), Real::from(-1)),
+        center.translated(Real::one(), Real::one()),
+        support.fragment_support(),
+    );
+    let source = crate::QuadraticBezier2::from_line_segment(
+        LineSeg2::try_new(
+            center.translated(Real::from(2), Real::from(-1)),
+            center.translated(Real::from(2), Real::one()),
+        )
+        .unwrap(),
+    );
+    let parallel = crate::BezierParallel2::from_source(
+        crate::BezierParallelSource2::Quadratic(source),
+        Real::one(),
+    );
+    assert_eq!(parallel.point_at(&q(1, 2)).unwrap(), point);
+    let circle = Arc::new(RationalQuadraticCircle2 {
+        center: center.clone(),
+        radius_squared: Real::one(),
+        tangent_contacts: Some(Arc::from([
+            Contact::Line {
+                line,
+                point: point.clone(),
+            },
+            Contact::Parallel(RationalQuadraticParallelCircleContact2 {
+                parallel,
+                parameter: q(1, 2),
+                point: point.clone(),
+                eliminant_root_multiplicity: 2,
+            }),
+        ])),
+    });
+    let conic = crate::RationalQuadraticBezier2::try_new(
+        point.clone(),
+        center.translated(Real::one(), Real::one()),
+        center.translated(Real::zero(), Real::one()),
+        Real::one(),
+        Real::one(),
+        Real::from(2),
+    )
+    .unwrap()
+    .with_retained_conic_provenance(Some(circle.implicit_coefficients()), Some(circle));
+    let rational = RationalBezier2::from(conic.clone());
+    for entries in [[3, -4, 4, 3, 7, -2], [3, 4, 4, -3, 1, 5]] {
+        let [a, b, c, d, x, y] = entries.map(Real::from);
+        let transform = crate::Similarity2::try_from_real_affine(a, b, c, d, x, y).unwrap();
+        let conic_image = conic
+            .transform_similarity_with_retained_provenance(&transform)
+            .unwrap();
+        let rational_image = rational.transform_similarity(&transform);
+        for circle in [
+            conic_image.retained_circular_conic().unwrap(),
+            rational_image.retained_circular_conic().unwrap(),
+        ] {
+            let contacts = circle.tangent_contacts.as_ref().unwrap();
+            assert_eq!(contacts.len(), 2);
+            for contact in contacts.iter() {
+                let (contact_point, tangent) = match contact {
+                    Contact::Line { line, point } => {
+                        assert!(line.has_retained_support());
+                        (point, line.directed_support_delta())
+                    }
+                    Contact::Parallel(contact) => {
+                        assert_eq!(contact.parameter, q(1, 2));
+                        assert_eq!(contact.eliminant_root_multiplicity, 2);
+                        let expected_distance = Real::from(if transform.reverses_orientation() {
+                            -5
+                        } else {
+                            5
+                        });
+                        assert_eq!(contact.parallel.distance(), &expected_distance);
+                        assert_eq!(
+                            contact.parallel.point_at(&contact.parameter).unwrap(),
+                            contact.point
+                        );
+                        (
+                            &contact.point,
+                            transform.transform_vector_coordinates(&Real::zero(), &Real::one()),
+                        )
+                    }
+                };
+                assert_eq!(contact_point, &transform.transform_point(&point));
+                let radial = contact_point.delta_from(&circle.center);
+                assert_eq!(
+                    is_zero(
+                        &(radial.0 * tangent.0 + radial.1 * tangent.1),
+                        &CurveContext::STRICT
+                    ),
+                    Some(true)
+                );
+                assert_eq!(
+                    is_zero(
+                        &(contact_point.distance_squared(&circle.center) - &circle.radius_squared),
+                        &CurveContext::STRICT
+                    ),
+                    Some(true)
+                );
+            }
+        }
+    }
+    // A nonuniform affine map preserves the conic but cannot retain a circle's metric.
+    let [a, b, c, d, x, y] = [2, 1, 0, 3, 0, 0].map(Real::from);
+    let sheared = rational.transformed_affine([&a, &b, &c, &d, &x, &y]);
+    assert!(sheared.retained_circular_conic().is_none());
+    assert!(sheared.retained_implicit_quadratic_conic().is_none());
+}
+
+#[test]
 fn circle_incidence_preserves_subranges_reversal_elevation_and_certainty() {
     for center in [
         Point2::from_values(0, 0),

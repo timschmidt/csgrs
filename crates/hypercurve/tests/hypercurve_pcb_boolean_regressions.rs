@@ -518,6 +518,66 @@ fn concurrent_circle_contacts_survive_rational_rotation_and_reflection() {
 }
 
 #[test]
+fn concurrent_circle_contacts_survive_independent_maps_after_cutting() {
+    use hypercurve::{BooleanOp, CurveCertainty};
+
+    let pad = rotated_rounded_pad();
+    let route = board_route();
+    let outline = circular_zone_outline();
+    let zone = compound(&[(&outline, false), (&route, true)]).unwrap();
+    for map in [
+        [
+            ratio(3, 5),
+            ratio(-4, 5),
+            ratio(4, 5),
+            ratio(3, 5),
+            ratio(-7, 2),
+            ratio(11, 3),
+        ],
+        [
+            ratio(3, 5),
+            ratio(4, 5),
+            ratio(4, 5),
+            ratio(-3, 5),
+            Real::zero(),
+            ratio(1, 7),
+        ],
+    ] {
+        // The cut and its source are transformed separately. Their supporting
+        // lines have equal defining points but independent allocations.
+        let pad = mapped_region(&pad, &map);
+        let route = mapped_region(&route, &map);
+        let zone = mapped_region(&zone, &map);
+        let outline = mapped_region(&outline, &map);
+        let expected = crate::support::under(&PredicatePolicy::STRICT, || {
+            pad.boolean_region(&route, BooleanOp::Union)?
+                .boolean_region(&outline, BooleanOp::Union)
+        })
+        .unwrap()
+        .into_certified();
+        for order in [
+            [&pad, &route, &zone],
+            [&zone, &route, &pad],
+            [&route, &zone, &pad],
+        ] {
+            let result = crate::support::under(&PredicatePolicy::STRICT, || {
+                compound(&[(order[0], false), (order[1], false), (order[2], false)])
+            })
+            .expect("independent maps must preserve the shared support proof");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            // Set equality, including boundary ownership, and reuse as an
+            // operand. Area and sampled membership alone are insufficient.
+            let difference = crate::support::under(&PredicatePolicy::STRICT, || {
+                result.value.boolean_region(&expected, BooleanOp::Xor)
+            })
+            .unwrap()
+            .into_certified();
+            assert!(difference.is_empty());
+        }
+    }
+}
+
+#[test]
 fn distinct_crossings_of_one_shared_circle_and_line_stay_distinct() {
     // A 45-degree route whose edge `x - y = 43.66 + sqrt(2)/10` lies between
     // the chord and the arc of the pad's lower-right corner, so it crosses

@@ -73,6 +73,65 @@ pub(crate) enum RationalQuadraticCircleTangentContact2 {
     Line { line: LineSeg2, point: Point2 },
 }
 
+impl RationalQuadraticCircle2 {
+    pub(crate) fn implicit_coefficients(&self) -> Arc<[Real; 6]> {
+        let two = Real::from(2);
+        Arc::new([
+            Real::one(),
+            Real::zero(),
+            Real::one(),
+            -(&two * self.center.x()),
+            -(&two * self.center.y()),
+            self.center.x() * self.center.x() + self.center.y() * self.center.y()
+                - &self.radius_squared,
+        ])
+    }
+
+    pub(crate) fn transform_similarity(
+        &self,
+        transform: &crate::Similarity2,
+    ) -> crate::CurveResult<Self> {
+        let tangent_contacts = self
+            .tangent_contacts
+            .as_ref()
+            .map(|contacts| {
+                contacts
+                    .iter()
+                    .map(|contact| {
+                        Ok(match contact {
+                            RationalQuadraticCircleTangentContact2::Line { line, point } => {
+                                RationalQuadraticCircleTangentContact2::Line {
+                                    line: line.transform_similarity(transform)?,
+                                    point: transform.transform_point(point),
+                                }
+                            }
+                            RationalQuadraticCircleTangentContact2::Parallel(contact) => {
+                                RationalQuadraticCircleTangentContact2::Parallel(
+                                    RationalQuadraticParallelCircleContact2 {
+                                        parallel: contact
+                                            .parallel
+                                            .transform_similarity(transform)?,
+                                        parameter: contact.parameter.clone(),
+                                        point: transform.transform_point(&contact.point),
+                                        eliminant_root_multiplicity: contact
+                                            .eliminant_root_multiplicity,
+                                    },
+                                )
+                            }
+                        })
+                    })
+                    .collect::<crate::CurveResult<Vec<_>>>()
+                    .map(Arc::from)
+            })
+            .transpose()?;
+        Ok(Self {
+            center: transform.transform_point(&self.center),
+            radius_squared: &self.radius_squared * transform.scale() * transform.scale(),
+            tangent_contacts,
+        })
+    }
+}
+
 impl PartialEq for RationalQuadraticBezier2 {
     fn eq(&self, other: &Self) -> bool {
         self.start == other.start
@@ -85,6 +144,28 @@ impl PartialEq for RationalQuadraticBezier2 {
 }
 
 impl RationalQuadraticBezier2 {
+    pub(crate) fn transform_similarity_with_retained_provenance(
+        &self,
+        transform: &crate::Similarity2,
+    ) -> crate::CurveResult<Self> {
+        let circle = self
+            .circular_conic
+            .as_ref()
+            .map(|circle| circle.transform_similarity(transform).map(Arc::new))
+            .transpose()?;
+        Self::try_new_with_common_weight_sign_and_implicit_conic(
+            transform.transform_point(&self.start),
+            transform.transform_point(&self.control),
+            transform.transform_point(&self.end),
+            self.start_weight.clone(),
+            self.control_weight.clone(),
+            self.end_weight.clone(),
+            self.common_weight_sign,
+            circle.as_ref().map(|circle| circle.implicit_coefficients()),
+            circle,
+        )
+    }
+
     /// Constructs a rational quadratic segment after rejecting provably zero weights.
     pub fn try_new(
         start: Point2,

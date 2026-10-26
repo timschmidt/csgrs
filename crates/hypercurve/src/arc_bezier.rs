@@ -361,23 +361,12 @@ fn full_circle_quarter_points(arc: &CircularArc2) -> Vec<Point2> {
 pub(crate) fn circular_conic_provenance(
     arc: &CircularArc2,
 ) -> (Arc<[Real; 6]>, Arc<RationalQuadraticCircle2>) {
-    let two = Real::from(2_i8);
-    (
-        Arc::new([
-            Real::one(),
-            Real::zero(),
-            Real::one(),
-            -(&two * arc.center().x()),
-            -(&two * arc.center().y()),
-            arc.center().x() * arc.center().x() + arc.center().y() * arc.center().y()
-                - arc.radius_squared_ref(),
-        ]),
-        Arc::new(RationalQuadraticCircle2 {
-            center: arc.center().clone(),
-            radius_squared: arc.radius_squared_ref().clone(),
-            tangent_contacts: None,
-        }),
-    )
+    let circle = Arc::new(RationalQuadraticCircle2 {
+        center: arc.center().clone(),
+        radius_squared: arc.radius_squared_ref().clone(),
+        tangent_contacts: None,
+    });
+    (circle.implicit_coefficients(), circle)
 }
 
 pub(crate) fn rational_bezier_circular_arc(

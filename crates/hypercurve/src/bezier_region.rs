@@ -6431,19 +6431,31 @@ fn transform_region_subcurve(
             point(curve.control2()),
             point(curve.end()),
         ))),
-        BezierSubcurve2::RationalQuadratic(curve) => Ok(BezierSubcurve2::RationalQuadratic(
-            RationalQuadraticBezier2::try_new(
-                point(curve.start()),
-                point(curve.control()),
-                point(curve.end()),
-                curve.start_weight().clone(),
-                curve.control_weight().clone(),
-                curve.end_weight().clone(),
-            )
-            .map_err(affine_region_error)?,
-        )),
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            if let Some(similarity) = similarity {
+                return curve
+                    .transform_similarity_with_retained_provenance(similarity)
+                    .map(BezierSubcurve2::RationalQuadratic)
+                    .map_err(affine_region_error);
+            }
+            Ok(BezierSubcurve2::RationalQuadratic(
+                RationalQuadraticBezier2::try_new(
+                    point(curve.start()),
+                    point(curve.control()),
+                    point(curve.end()),
+                    curve.start_weight().clone(),
+                    curve.control_weight().clone(),
+                    curve.end_weight().clone(),
+                )
+                .map_err(affine_region_error)?,
+            ))
+        }
         BezierSubcurve2::Rational(curve) => Ok(BezierSubcurve2::Rational(
-            curve.transformed_affine([m00, m01, m10, m11, tx, ty]),
+            if let Some(similarity) = similarity {
+                curve.transform_similarity(similarity)
+            } else {
+                curve.transformed_affine([m00, m01, m10, m11, tx, ty])
+            },
         )),
     }
 }
