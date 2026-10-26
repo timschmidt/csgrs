@@ -12,6 +12,7 @@ use std::cmp::Ordering;
 
 use super::*;
 use crate::CurveFamily2;
+use crate::curve::PolynomialLineSections2;
 
 /// An authored rational line, or a retained restriction of one, in the source
 /// chart shared by its public parameter.
@@ -47,16 +48,170 @@ fn decided<T>(value: CurveResult<Classification<T>>) -> ExactCurveResult<T> {
     }
 }
 
-fn publish(contacts: Vec<CurveIntersectionContact2>) -> CurveIntersectionResult2 {
+fn publish(
+    contacts: Vec<CurveIntersectionContact2>,
+    overlaps: Vec<CurveIntersectionOverlap2>,
+) -> CurveIntersectionResult2 {
     CurveIntersectionResult2 {
         data: Arc::new(CurveIntersectionResultData {
             span_pair_count: 1,
             contacts: contacts.into(),
-            overlaps: Arc::from([]),
+            overlaps: overlaps.into(),
             blockers: Arc::from([]),
             parameter_components: None,
         }),
     }
+}
+
+/// Clips a caller-certified common supporting line in the original source
+/// chart. Reuse the same correspondence authority as native line overlaps;
+/// source abscissas and native parameters are never rebased on the trim.
+fn shared_line_section(
+    branch_curve: &Curve2,
+    line_curve: &Curve2,
+    branch_first: bool,
+    abscissas: [Real; 2],
+    chart: &CurveSpanRange2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveIntersectionResult2> {
+    let [x0, x1] = abscissas;
+    let reversed_map = compare_reals(&x0, &x1, &policy.strict_counterpart()).ok_or_else(|| {
+        ExactCurveError::blocked(
+            CurveOperation2::Intersection,
+            CurveFamily2::ImplicitPolynomial,
+            UncertaintyReason::Ordering,
+        )
+    })? == Ordering::Greater;
+    let correspondence = CurveOverlapCorrespondence2::affine(
+        &ParamRange::new(x0.clone(), x1.clone()),
+        &ParamRange::new(Real::zero(), Real::one()),
+    );
+    let ranges = decided(correspondence.clipped_ranges(
+        branch_curve.parameter_domain(),
+        line_curve.parameter_domain(),
+        policy,
+    ))?;
+    if let Some((mut branch_range, mut line_range)) = ranges {
+        let branch_reversed = branch_curve.source_traversal_is_reversed();
+        let line_reversed = line_curve.source_traversal_is_reversed();
+        let reverse_pair = if branch_first {
+            branch_reversed
+        } else {
+            reversed_map != line_reversed
+        };
+        if reverse_pair {
+            branch_range = CurveParameterRange2::new_validated(
+                branch_range.end().clone(),
+                branch_range.start().clone(),
+            );
+            line_range = CurveParameterRange2::new_validated(
+                line_range.end().clone(),
+                line_range.start().clone(),
+            );
+        }
+        let (first_range, second_range, parameter_correspondence) = if branch_first {
+            (branch_range, line_range, correspondence)
+        } else {
+            let CurveOverlapCorrespondence2::Rational { source, .. } = correspondence else {
+                unreachable!("the certified affine constructor returns a rational correspondence")
+            };
+            (
+                line_range,
+                branch_range,
+                CurveOverlapCorrespondence2::Rational {
+                    source,
+                    swapped: true,
+                },
+            )
+        };
+        return Ok(publish(
+            Vec::new(),
+            vec![CurveIntersectionOverlap2 {
+                first_span_index: 0,
+                second_span_index: 0,
+                first_range,
+                second_range,
+                orientation: if reversed_map ^ branch_reversed ^ line_reversed {
+                    CurveOverlapOrientation2::Reversed
+                } else {
+                    CurveOverlapOrientation2::Same
+                },
+                endpoint_inclusion: [true, true],
+                parameter_correspondence,
+            }],
+        ));
+    }
+
+    // Positive-length clipping deliberately omits singleton intersections.
+    // Two closed nonempty intervals meet at one point only when the lower
+    // end of one equals the upper end of the other.
+    let dx = &x1 - &x0;
+    let source_start = decided(
+        line_curve
+            .parameter_domain()
+            .start()
+            .affine_image_unbounded(&dx, &x0, policy),
+    )?;
+    let source_end = decided(
+        line_curve
+            .parameter_domain()
+            .end()
+            .affine_image_unbounded(&dx, &x0, policy),
+    )?;
+    let line_source_range = CurveParameterRange2::new_validated(source_start, source_end);
+    let [line_low, line_high] = decided(line_source_range.ordered_endpoints(policy))?;
+    let [branch_low, branch_high] =
+        decided(branch_curve.parameter_domain().ordered_endpoints(policy))?;
+    for (branch_parameter, line_boundary) in [(branch_low, line_high), (branch_high, line_low)] {
+        if decided(branch_parameter.cmp_by_refinement(line_boundary, policy))? != Ordering::Equal {
+            continue;
+        }
+        let point = branch_curve
+            .point_at_with_policy(branch_parameter, policy)?
+            .into_value();
+        let parameter = decided(correspondence.map_parameter(branch_parameter, true, policy))?
+            .ok_or_else(|| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    CurveFamily2::Line,
+                    CurveError::InvalidCurveParameter,
+                )
+            })?;
+        let parameter =
+            admit_line_parameter(line_curve, parameter, &point, policy)?.ok_or_else(|| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    CurveFamily2::Line,
+                    CurveError::InvalidCurveParameter,
+                )
+            })?;
+        let branch_location = CurveLocation2 {
+            span_index: 0,
+            span_range: CurveSpanRange2::from_affine_chart(&Real::one(), &Real::zero()),
+            local_parameter: branch_parameter.clone(),
+        };
+        let line_location = CurveLocation2 {
+            span_index: 0,
+            span_range: chart.clone(),
+            local_parameter: parameter,
+        };
+        let (first, second) = if branch_first {
+            (branch_location, line_location)
+        } else {
+            (line_location, branch_location)
+        };
+        return Ok(publish(
+            vec![CurveIntersectionContact2 {
+                first,
+                second,
+                point,
+                certified_transverse: false,
+                tangent_cross_sign: Some(hyperreal::RealSign::Zero),
+            }],
+            Vec::new(),
+        ));
+    }
+    Ok(publish(Vec::new(), Vec::new()))
 }
 
 /// Admits a line parameter in the active domain of `curve`.
@@ -153,6 +308,20 @@ pub(super) fn polynomial_line_section(
     else {
         return Ok(None);
     };
+    let sections = match sections {
+        PolynomialLineSections2::Isolated(points) => points,
+        PolynomialLineSections2::SharedLine(abscissas) => {
+            return shared_line_section(
+                if branch_first { first } else { second },
+                line_curve,
+                branch_first,
+                abscissas,
+                &chart,
+                policy,
+            )
+            .map(Some);
+        }
+    };
     let (dx, dy) = line.delta();
     let inverse = |delta: &Real| {
         (Real::one() / delta).map_err(|cause| {
@@ -214,7 +383,7 @@ pub(super) fn polynomial_line_section(
             tangent_cross_sign,
         });
     }
-    Ok(Some(publish(contacts)))
+    Ok(Some(publish(contacts, Vec::new())))
 }
 
 #[cfg(test)]

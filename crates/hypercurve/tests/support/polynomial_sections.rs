@@ -976,8 +976,7 @@ pub fn mapped_sections_preserve_singular_and_tangent_contacts() {
             assert!(contact.point().coincides_with(&image(x, q(1, 4))).unwrap());
         }
 
-        // The unchanged source authority still reports a continuous common
-        // component as Unsupported, rather than publishing an empty section.
+        // A continuous common component retains its paired source charts.
         let diagonal = set(DIAGONAL).curves()[0]
             .transform_similarity(&transform)
             .unwrap();
@@ -985,12 +984,30 @@ pub fn mapped_sections_preserve_singular_and_tangent_contacts() {
             .transform_similarity(&transform)
             .unwrap();
         for (first, second) in [(&diagonal, &coincident), (&coincident, &diagonal)] {
-            for error in [
-                first.intersect_curve(second).unwrap_err(),
-                first.intersection_topology(second).unwrap_err(),
+            let topology = first.intersection_topology(second).unwrap();
+            assert!(topology.result().is_complete());
+            assert!(topology.result().contacts().is_empty());
+            assert_eq!(topology.result().overlaps().len(), 1);
+            assert_eq!((topology.first().len(), topology.second().len()), (1, 1));
+            let overlap = &topology.result().overlaps()[0];
+            assert_eq!(
+                overlap.orientation(),
+                hypercurve::CurveOverlapOrientation2::Same
+            );
+            for (a, b) in [
+                (
+                    overlap.first_range().start(),
+                    overlap.second_range().start(),
+                ),
+                (overlap.first_range().end(), overlap.second_range().end()),
             ] {
-                assert!(matches!(error, ExactCurveError::Blocked(blocker)
-                    if blocker.reason() == UncertaintyReason::Unsupported));
+                assert!(
+                    first
+                        .point_at(a)
+                        .unwrap()
+                        .coincides_with(&second.point_at(b).unwrap())
+                        .unwrap()
+                );
             }
         }
         let distinct = segment(
@@ -1460,20 +1477,30 @@ pub fn tangent_lines_and_line_components_keep_their_meaning() {
     let (x, t) = check_contact_at(&contact, true, Some(RealSign::Positive));
     assert_eq!(x, *quintic.curves()[0].parameter_domain().start());
     assert_eq!(t, *corner.parameter_domain().start());
-    // The line y = x is a component of y - x. That shared component is not an
-    // empty result; it stays a typed blocker until overlaps are admitted.
+    // The original shared-component fixture now retains a complete overlap.
     let diagonal = set(DIAGONAL);
     for (a, b) in [
         (&diagonal.curves()[0], &corner),
         (&corner, &diagonal.curves()[0]),
     ] {
-        for error in [
-            a.intersect_curve(b).unwrap_err(),
-            a.intersection_topology(b).unwrap_err(),
+        let topology = a.intersection_topology(b).unwrap();
+        assert!(topology.result().is_complete());
+        assert!(topology.result().contacts().is_empty());
+        assert_eq!(topology.result().overlaps().len(), 1);
+        assert_eq!((topology.first().len(), topology.second().len()), (1, 1));
+        let overlap = &topology.result().overlaps()[0];
+        for (s, t) in [
+            (
+                overlap.first_range().start(),
+                overlap.second_range().start(),
+            ),
+            (overlap.first_range().end(), overlap.second_range().end()),
         ] {
             assert!(
-                matches!(&error, ExactCurveError::Blocked(blocker) if blocker.reason() == UncertaintyReason::Unsupported),
-                "{error:?}"
+                a.point_at(s)
+                    .unwrap()
+                    .coincides_with(&b.point_at(t).unwrap())
+                    .unwrap()
             );
         }
     }

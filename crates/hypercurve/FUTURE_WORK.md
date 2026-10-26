@@ -604,7 +604,9 @@ meet authored lines with rational endpoints, or returned restrictions of them,
 in both intersection APIs and both operand orders. Parameters remain in their
 original source charts. Both operands split and the pieces re-enter the same
 query; selected algebraic trims, reversal, tangent contacts and singular-event
-contacts retain their meanings. Other algebraic similarities, nonlinear maps,
+contacts retain their meanings. A selected common line keeps its overlap
+correspondence, while other branches retain their finite contacts with that
+line. Other algebraic similarities, nonlinear maps,
 algebraic-coordinate lines, branch pairs and filled polynomial arrangements
 remain implementation gaps.
 
@@ -634,6 +636,39 @@ total-work, memory or cancellation bound. Concurrent timings establish no
 performance improvement. A2, full algebraic closure and this increment's full
 repository pre-push qualification remain open.
 
+**Line-component section increment (2026-10-26).** Against `45947259af`,
+the original shared-line inputs and three new component witnesses reproduced
+`Unsupported`. A global line identity and the existing checked slab/fiber
+selection now distinguish the selected line branch from the other branches.
+The original polynomial remains the point and branch authority. For a different
+branch, exact division by the line supplies finite candidates and regular
+tangent signs, including a transverse node or tangent contact where the full
+polynomial's gradient vanishes.
+
+The existing overlap correspondence clips both original parameter domains;
+it retains algebraic trims, traversal and endpoint inclusion without rebasing
+the map. Singleton intersections and disjoint same-support intervals remain
+distinct. Five new witnesses cover these outcomes, both operand orders and
+reversals, rational rotations/reflections, exact restricted parameter pairs,
+distinct irrational branches, subdivision/requery, selected-point replay and
+reached counted exhaustion followed by a larger-budget retry and policy
+changes. A reviewed prototype used closed isolator membership; the retained
+implementation delegates endpoint ownership to the checked fiber authority.
+The irrational-branch fixture passed both versions and is not evidence of a
+runtime failure in that prototype.
+
+The final release suite passes 2,669 tests (34 existing ignored; 73 suites),
+all 43 affected downstream tests, strict all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards and all 27 capability witnesses. Typos, repository
+budget and diff checks pass. Source snapshots, original failures and exact
+commands are retained in
+`docs/evidence/2026-10-26-hypercurve-closure-line-components`, digest
+`9bc06b8764a2564c2ccd5f4ce42b3e952db4d0edc5e254116c273c3c0cfcf5c4`.
+This does not complete A2, repeated/vertical component topology, filled
+polynomial regions or fresh-process native replay. Counted work is not a
+total-work, memory or cancellation bound. No performance improvement is claimed;
+full repository pre-push qualification for this increment remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
@@ -642,11 +677,9 @@ repository pre-push qualification remain open.
   rows and measurements remain in [the experiment record](PERFORMANCE.md#shared-polynomial-cut-points-r05).
   Passing the original intersection contact's authority into subdivision
   remains a distinct experiment.
-- **Line components.** When the line is a component of the zero set, the
-  substituted polynomial vanishes identically and the pair reports
-  `Unsupported`, for every branch of that zero set. Admitting it needs overlap
-  evidence on the branch that lies on the line and the finite contacts of the
-  others.
+- **Broader common components.** Rational native-line components are admitted
+  above. Common nonlinear components and polynomial branch pairs still need
+  selected overlap correspondences and their remaining finite contacts.
 - **Horizontal-line replay.** On a horizontal line the line parameter is the
   branch abscissa's own root, so a returned line piece's endpoint is a line
   point that is proved equal to, not stored as, the branch point. A

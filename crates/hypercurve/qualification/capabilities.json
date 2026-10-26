@@ -768,8 +768,8 @@
         },
         {
           "stage": "incidence_order",
-          "outcome": "unsupported",
-          "assertion": "A continuous shared polynomial/line component remains explicitly Unsupported in both operand orders."
+          "outcome": "exact_success",
+          "assertion": "The original continuous shared polynomial/line component yields a complete overlap in both operand orders, with paired endpoints and traversal preserved."
         },
         {
           "stage": "incidence_order",
@@ -777,7 +777,7 @@
           "assertion": "The exactly distinct nearby parallel support is disjoint, with no tolerance merge."
         }
       ],
-      "oracle": "Explicit transformed rational event/tangent/secant coordinates, determinant signs and typed Unsupported assertions; None and Zero are separately asserted.",
+      "oracle": "Explicit transformed rational event/tangent/secant coordinates, determinant signs and the common line equation; None and Zero are separately asserted.",
       "timeout_seconds": 300
     },
     {
@@ -830,6 +830,232 @@
         }
       ],
       "oracle": "Actual denied work units, the public blocker category, exact selected contact evaluation and subdivision identities, and explicit certainty receipts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_line_component_overlap",
+      "target": "polynomial_line_components",
+      "test": "component_overlap_keeps_algebraic_trims_and_original_correspondence",
+      "owner": "Hypersolve certified slab/fiber selection and Hypercurve polynomial sections and overlap correspondence",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "F=y-x on [-1,1] against an authored diagonal restricted at the positive root of 2 beta^2-1; identity, rotation/translation and reflection/scale; both operand orders and reversals, plus a backwards authored line.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original polynomial, selected branch and source parameters remain authoritative. A common support is clipped to both active domains; finite contacts on other branches remain distinct from overlaps. No filled-region or native archive replay claim.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The common line yields one included overlap with the expected traversal and paired endpoint images; endpoint-only contact is a singleton with zero cross sign."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Independent t=(x+2)/4 expectations survive overlap restriction and splitting/requery without rebasing the original correspondence or losing source identity."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "The same algebraic trim correspondence survives a rational rotation and reflection/scale."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "Disjoint same-support intervals, including a positive 10^-12 gap, yield an empty intersection."
+        }
+      ],
+      "oracle": "The exact line equation, 2 beta^2-1 with its positive isolator, explicit rational clipped pairs (2/5,3/5) and (1/2,5/8), traversal signs and topology counts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_line_component_crossing",
+      "target": "polynomial_line_components",
+      "test": "component_line_keeps_transverse_contacts_with_other_branches",
+      "owner": "Hypersolve certified slab/fiber selection and Hypercurve polynomial sections and overlap correspondence",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "F=y^2-x^2 decomposed into four graph branches at its node; y=x is a component while y=-x has a transverse endpoint contact, also under rational rotation and reflection/scale.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original polynomial, selected branch and source parameters remain authoritative. A common support is clipped to both active domains; finite contacts on other branches remain distinct from overlaps. No filled-region or native archive replay claim.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Only the two y=x branches overlap. The others meet at the independently known image of the origin, with a certified transverse sign respecting operand order, reversal and reflection."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "All returned pieces re-enter intersection as complete operands."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "The component and noncomponent branch outcomes survive the two explicit similarities."
+        }
+      ],
+      "oracle": "Independent factorization (y-x)(y+x), explicit transformed origin and determinant signs, with all four selected branches exercised.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_line_component_tangent",
+      "target": "polynomial_line_components",
+      "test": "component_line_keeps_tangent_contacts_with_other_branches",
+      "owner": "Hypersolve certified slab/fiber selection and Hypercurve polynomial sections and overlap correspondence",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "F=y(y-x^2) decomposed at the origin against y=0, in both operand orders.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original polynomial, selected branch and source parameters remain authoritative. A common support is clipped to both active domains; finite contacts on other branches remain distinct from overlaps. No filled-region or native archive replay claim.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The selected line branches overlap; the parabola branches retain a single origin contact with certified zero tangent cross sign and no transverse flag."
+        }
+      ],
+      "oracle": "Independent factorization, y=x^2 and its zero derivative at x=0, separately selected graph branches and exact origin.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_line_component_selection",
+      "target": "polynomial_line_components",
+      "test": "component_selection_keeps_distinct_irrational_branches",
+      "owner": "Hypersolve certified slab/fiber selection and Hypercurve polynomial sections and overlap correspondence",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "F=y(y^2-2) has three distinct horizontal graph branches; a rational native line lies at y=0.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original polynomial, selected branch and source parameters remain authoritative. A common support is clipped to both active domains; finite contacts on other branches remain distinct from overlaps. No filled-region or native archive replay claim.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Only the middle ordered branch has a common line overlap."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "The two irrational branches remain disjoint in both operand orders."
+        }
+      ],
+      "oracle": "Independent factorization into y=0 and y=+-sqrt(2), and the certified ordering of all three distinct fibers.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_line_component_retry",
+      "target": "polynomial_line_components",
+      "test": "component_sections_retry_a_reached_budget",
+      "owner": "Hypersolve certified slab/fiber selection and Hypercurve polynomial sections and overlap correspondence",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The lower middle branch of F=y(y+1-2x^2) meets y=0 at x=+-sqrt(1/2); zero counted work allowance followed by a larger retry and STRICT/APPROXIMATE_512/STRICT.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Original polynomial, selected branch and source parameters remain authoritative. A common support is clipped to both active domains; finite contacts on other branches remain distinct from overlaps. No filled-region or native archive replay claim.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exhausted",
+          "assertion": "The zero counted refinement/promotion allowance is actually reached and the public query returns BudgetExhausted."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A larger counted allowance completes both transverse contacts with exact original polynomial/source relations; an exhausted attempt does not poison the retry."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Both source and native-line parameters replay the selected contact, including in-memory point-definition reconstruction."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The middle returned line piece and polynomial branch are further operands under all three policy calls, each retaining Certified certainty."
+        }
+      ],
+      "oracle": "The independent equation 2x^2-1=0 with y=0, derivative signs, reached-budget counters, typed error, topology counts, exact replay equality and explicit certainty receipts.",
       "timeout_seconds": 300
     },
     {

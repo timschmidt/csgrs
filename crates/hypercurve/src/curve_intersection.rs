@@ -401,8 +401,8 @@ impl CurveOverlapCorrespondence2 {
         }
     }
 
-    /// The native line or shared-lineage kernel has certified an affine map.
-    fn affine(first: &ParamRange, second: &ParamRange) -> Self {
+    /// The caller has certified a common support and this affine parameter map.
+    pub(crate) fn affine(first: &ParamRange, second: &ParamRange) -> Self {
         Self::Rational {
             source: RationalCurveOverlap2 {
                 source: RationalBezierOverlapParameterCorrespondence2::RangeProjective {

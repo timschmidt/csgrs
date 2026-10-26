@@ -2,6 +2,7 @@
 
 #[path = "polynomial_curve.rs"]
 mod polynomial_curve;
+pub(crate) use polynomial_curve::PolynomialLineSections2;
 pub use polynomial_curve::{PolynomialCurveBranch2, PolynomialCurveSet2};
 
 #[path = "curve_evaluation.rs"]

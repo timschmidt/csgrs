@@ -85,6 +85,21 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-line-components-evidence-2026-10-26` branch
+ends at `3f3a1ef5416f882095d3b3fa7b6d386d818d9f22`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-line-components` (84 files,
+2,961,879 bytes), SHA-256
+`9bc06b8764a2564c2ccd5f4ce42b3e952db4d0edc5e254116c273c3c0cfcf5c4`.
+It records selected common-line overlaps and other-branch contacts against
+`45947259af`: 2,669 Hypercurve tests, 43 downstream tests, strict MSRV Clippy,
+formatting, 16 matrix guards and all 27 capability witnesses pass. Exact trim
+correspondences, regular branch contacts at singular points, policy changes
+and a reached-budget retry are qualified within the recorded native-line
+domain. Original blockers, source snapshots and the reviewed selector prototype
+are retained; the latter is not a reproduced runtime counterexample.
+This record is local and unpushed. Full repository pre-push qualification
+remains pending; the frozen `904e5408e1` run does not cover it.
+
 The separate local `hypercurve-mapped-polynomial-evidence-2026-10-26` branch
 ends at `f763399f1656e9596f9e63d13661feb89e3ee85b`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-mapped-polynomial` (76 files,

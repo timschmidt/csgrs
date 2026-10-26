@@ -56,9 +56,11 @@ entire represented set.
 The rational-similarity section witnesses retain the original translated
 quintic case as a positive fixture. They also check transformed selected-line
 evaluation, cusps, tangencies, distinct nearby supports, and a counted-budget
-retry. Coincident polynomial/line components remain explicit overlap gaps.
-Their point-definition replay is in memory; native generated archive replay
-remains unqualified.
+retry. The component witnesses additionally separate a selected common line
+from the other branches of its original polynomial. They retain algebraic
+trim correspondences, orientation, singleton contacts, transverse and tangent
+contacts, and disjoint irrational branches. Their point-definition replay is
+in memory; native generated archive replay remains unqualified.
 
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.

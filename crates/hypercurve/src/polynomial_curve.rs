@@ -45,9 +45,10 @@ struct PolynomialCurveSource2 {
 /// source. Source branches and their retained rational similarities intersect
 /// authored lines with rational endpoints, including selected restrictions,
 /// through [`Curve2::intersect_curve`] and [`Curve2::intersection_topology`].
-/// Continuous common line components, other intersections, singular limits,
-/// rational Bézier promotion, and filled arrangements report their typed
-/// capability blockers.
+/// A common line component keeps its overlap correspondence; other selected
+/// branches keep their finite contacts with that component. Other
+/// intersections, singular limits, rational Bézier promotion, and filled
+/// arrangements report their typed capability blockers.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolynomialCurveBranch2 {
     source: Arc<PolynomialCurveSource2>,
@@ -71,6 +72,14 @@ pub(crate) struct PolynomialLineSection2 {
     /// abscissa and the line's direction `d`. `Zero` is a certified tangency;
     /// `None` leaves the contact unclassified.
     pub(crate) cross: Option<RealSign>,
+}
+
+/// A finite section, or a certified common supporting line. The latter still
+/// needs both active domains clipped before publishing an overlap or contact.
+pub(crate) enum PolynomialLineSections2 {
+    Isolated(Vec<PolynomialLineSection2>),
+    /// Source abscissas at the authored line's parameters zero and one.
+    SharedLine([Real; 2]),
 }
 
 /// Exact sign queries of a branch point against one line.
@@ -333,7 +342,7 @@ impl PolynomialCurveBranch2 {
         &self,
         line: &crate::LineSeg2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Option<Vec<PolynomialLineSection2>>> {
+    ) -> ExactCurveResult<Option<PolynomialLineSections2>> {
         if !self.maps.is_empty() {
             return Ok(None);
         }
@@ -355,7 +364,12 @@ impl PolynomialCurveBranch2 {
             CurvePoint2::from(BezierSimilarityPoint2::new(point, inverse.clone(), policy))
         });
         let mut sections = source.source_line_sections(&source_line, policy)?;
-        for section in &mut sections {
+        let PolynomialLineSections2::Isolated(points) = &mut sections else {
+            // An invertible image preserves the complete support identity;
+            // the source-abscissa/line-parameter map is unchanged.
+            return Ok(Some(sections));
+        };
+        for section in points {
             // Reuse the actual selected boundary point at a retained endpoint.
             // Interior contacts transport the newly selected source fiber.
             section.point = if section.parameter == *self.range.start() {
@@ -386,22 +400,63 @@ impl PolynomialCurveBranch2 {
     /// so an event keeps the event fiber's incidence rather than an open-slab
     /// root ordinal. An interior point is a simple root of an open fiber, so
     /// `F_y` is nonzero and `t x d` has the sign of `(dy F_y + dx F_x) F_y`.
+    /// If the line is a component, the selected line branch returns its
+    /// support correspondence. For another branch, the exact quotient by
+    /// that line supplies candidate roots and tangent signs, while points
+    /// retain the original polynomial and selected fiber as authority.
     /// A boundary is classified only when `F_y` is proved nonzero there:
-    /// vertical-tangent and singular events are not. An undecided sign leaves
+    /// vertical-tangent and singular events of that branch are not. An undecided sign leaves
     /// a contact unclassified, never tangent. Budget exhaustion propagates.
     fn source_line_sections(
         &self,
         line: &crate::LineSeg2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Vec<PolynomialLineSection2>> {
+    ) -> ExactCurveResult<PolynomialLineSections2> {
         use hypersolve::BivariatePolynomial;
         use hypersolve::bivariate_arithmetic::{
             bivariate_add, bivariate_parameter_derivative as derivative, bivariate_scale,
+            bivariate_substitute_second_equal_affine_first,
         };
         debug_assert!(self.is_source_image());
         let (dx, dy) = line.delta();
         let (x0, y0) = (line.start().x(), line.start().y());
         let vertical = dx.definitely_zero();
+        let mut residual_equation = None;
+        let candidates = if vertical {
+            Vec::new()
+        } else {
+            let slope = (&dy / &dx).map_err(|cause| invalid(cause.into()))?;
+            let offset = y0 - &slope * x0;
+            let mut substituted = bivariate_substitute_second_equal_affine_first(
+                self.topology().equation(),
+                &slope,
+                &offset,
+            );
+            if substituted.iter().all(Real::definitely_zero) {
+                if self.selects_line_component(&slope, &offset, policy)? {
+                    return Ok(PolynomialLineSections2::SharedLine([
+                        x0.clone(),
+                        line.end().x().clone(),
+                    ]));
+                }
+                // Keep the original polynomial and selector as point
+                // authority. The exact quotient isolates the other branches'
+                // finite contacts and their regular tangent directions.
+                let component = BivariatePolynomial::new(vec![
+                    vec![-offset.clone(), Real::one()],
+                    vec![-slope.clone()],
+                ]);
+                let residual = hypersolve::divide_bivariate_polynomial_exact(
+                    self.topology().equation(),
+                    &component,
+                )
+                .ok_or_else(|| blocked(UncertaintyReason::Predicate))?;
+                substituted =
+                    bivariate_substitute_second_equal_affine_first(&residual, &slope, &offset);
+                residual_equation = Some(residual);
+            }
+            self.line_abscissas(substituted)?
+        };
         let dy_sign = if dy
             .exact_rational_ref()
             .is_some_and(|value| value.is_positive())
@@ -415,7 +470,9 @@ impl PolynomialCurveBranch2 {
         let forms = std::cell::OnceCell::new();
         let forms = || {
             forms.get_or_init(|| {
-                let equation = self.topology().equation();
+                let equation = residual_equation
+                    .as_ref()
+                    .unwrap_or_else(|| self.topology().equation());
                 let fy = derivative(equation, CurveResultantParameter::Second);
                 // Where F_y != 0, t x d has the sign of (dy F_y + dx F_x) F_y;
                 // for a vertical line, that of dy.
@@ -518,32 +575,54 @@ impl PolynomialCurveBranch2 {
             }))
         };
         if vertical {
-            return Ok(section_at(x0.clone().into())?.into_iter().collect());
+            return Ok(PolynomialLineSections2::Isolated(
+                section_at(x0.clone().into())?.into_iter().collect(),
+            ));
         }
-        let slope = (&dy / &dx).map_err(|cause| invalid(cause.into()))?;
         let mut sections = Vec::new();
-        for candidate in self.line_abscissas(&slope, &(y0 - &slope * x0))? {
+        for candidate in candidates {
             sections.extend(section_at(candidate)?);
         }
-        Ok(sections)
+        Ok(PolynomialLineSections2::Isolated(sections))
+    }
+
+    /// The global line identity and the complete slab certificate together
+    /// identify its ordered branch. Simple continuous roots cannot exchange
+    /// order inside this slab. The checked sample fiber therefore selects a
+    /// whole component. Its own authority interprets isolator endpoint
+    /// ownership; a closed numerical box would not be a sufficient selector.
+    fn selects_line_component(
+        &self,
+        slope: &Real,
+        offset: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
+        let slab = &self.topology().slabs()[self.slab];
+        let root = &slab.roots()[self.root];
+        let point = PolynomialPoint2::from_fiber(
+            self.topology().equation().clone(),
+            BezierParameter2::Exact(slab.sample().clone()),
+            std::slice::from_ref(root),
+        )?
+        .pop()
+        .expect("one checked root supplies one selected point");
+        Ok(decided(
+            crate::bezier_offset::point_affine_form_order_to_real(
+                &point,
+                &(-slope),
+                &Real::one(),
+                offset,
+                policy,
+            )
+            .map_err(invalid)?,
+        )? == Ordering::Equal)
     }
 
     /// The distinct real roots of `F(x, slope*x + offset)` in the source
     /// rectangle's first interval, in increasing order.
-    fn line_abscissas(
-        &self,
-        slope: &Real,
-        offset: &Real,
-    ) -> ExactCurveResult<Vec<CurveParameter2>> {
-        use hypersolve::bivariate_arithmetic::{
-            bivariate_substitute_second_equal_affine_first, polynomial_trim_structural_zeros,
-        };
-        let substituted =
-            polynomial_trim_structural_zeros(bivariate_substitute_second_equal_affine_first(
-                self.topology().equation(),
-                slope,
-                offset,
-            ));
+    fn line_abscissas(&self, substituted: Vec<Real>) -> ExactCurveResult<Vec<CurveParameter2>> {
+        use hypersolve::bivariate_arithmetic::polynomial_trim_structural_zeros;
+        let substituted = polynomial_trim_structural_zeros(substituted);
         if substituted.iter().all(Real::definitely_zero) {
             // The line is a component of the zero set.
             return Err(blocked(UncertaintyReason::Unsupported));
