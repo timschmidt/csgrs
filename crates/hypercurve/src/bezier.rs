@@ -6,7 +6,7 @@
 //! geometric computation split between exact representations, certified
 //! predicates, and explicit approximate output adapters.
 
-use hyperreal::{Real, ZeroKnowledge};
+use hyperreal::{Real, RealSign, ZeroKnowledge};
 
 use std::cmp::Ordering;
 use std::sync::Arc;
@@ -204,21 +204,78 @@ impl QuadraticBezier2 {
         }
     }
 
-    pub(crate) fn with_retained_exact_line_image(
-        start: Point2,
-        control: Point2,
-        end: Point2,
-    ) -> CurveResult<Self> {
-        Self::with_retained_exact_line_provenance(start, control, end, Vec::new())
+    pub(crate) fn retained_exact_line_image(&self) -> Option<&LineSeg2> {
+        self.exact_line_image
+            .as_deref()
+            .map(|evidence| &evidence.line)
     }
 
-    pub(crate) fn with_retained_exact_line_provenance(
+    /// Replaces endpoint expressions after the caller has certified equal
+    /// values. The affine parameterization and its retained proofs are unchanged.
+    pub(crate) fn with_equal_line_endpoints(
+        &self,
+        start: Point2,
+        end: Point2,
+    ) -> CurveResult<Self> {
+        let exact_line_image = self
+            .exact_line_image
+            .as_ref()
+            .map(|evidence| {
+                Ok::<_, crate::CurveError>(Arc::new(ExactQuadraticLineImage2 {
+                    line: evidence.line.fragment_between_with_certified_direction(
+                        start.clone(),
+                        end.clone(),
+                        false,
+                    )?,
+                    parallel_tangent_contacts: evidence.parallel_tangent_contacts.clone(),
+                }))
+            })
+            .transpose()?;
+        Ok(Self {
+            start,
+            control: self.control.clone(),
+            end,
+            exact_line_image,
+        })
+    }
+
+    pub(crate) fn with_retained_line_fragment(
+        &self,
         start: Point2,
         control: Point2,
         end: Point2,
+        parameter_scale: &Real,
         parallel_tangent_contacts: Vec<BezierParallelLineTangentContact2>,
     ) -> CurveResult<Self> {
-        let line = LineSeg2::try_new(start.clone(), end.clone())?;
+        let source = self.retained_exact_line_image();
+        let direction = parameter_scale
+            .immediate_sign()
+            .or_else(|| parameter_scale.structural_facts().sign)
+            .or_else(|| crate::classify::real_sign(parameter_scale, &CurveContext::STRICT));
+        let mut parallel_tangent_contacts = parallel_tangent_contacts;
+        match direction {
+            Some(RealSign::Negative) => {
+                for contact in &mut parallel_tangent_contacts {
+                    // The retained original endpoint stays at the same end of
+                    // this child, but its traversal now opposes the source.
+                    contact.parallel_fragment_reversed = !contact.parallel_fragment_reversed;
+                }
+            }
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => return Err(crate::CurveError::ZeroLengthLine),
+            // The exact curve is still constructible; an unproved orientation
+            // cannot authorize an oriented tangent certificate.
+            None => parallel_tangent_contacts.clear(),
+        }
+        let line = match (source, direction) {
+            (Some(source), Some(sign @ (RealSign::Positive | RealSign::Negative))) => source
+                .fragment_between_with_certified_direction(
+                    start.clone(),
+                    end.clone(),
+                    sign == RealSign::Negative,
+                )?,
+            _ => LineSeg2::try_new(start.clone(), end.clone())?,
+        };
         Ok(Self {
             start,
             control,
@@ -229,12 +286,6 @@ impl QuadraticBezier2 {
                     .then(|| Arc::from(parallel_tangent_contacts)),
             })),
         })
-    }
-
-    pub(crate) fn retained_exact_line_image(&self) -> Option<&LineSeg2> {
-        self.exact_line_image
-            .as_deref()
-            .map(|evidence| &evidence.line)
     }
 
     pub(crate) fn retained_parallel_line_tangent_contacts(

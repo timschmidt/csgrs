@@ -474,6 +474,53 @@ digest is in `docs/evidence-archive.tsv`.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | N: completed native contacts | Original lines/arcs and endpoint identity | Directed support tangent signs | Certified crossing/tangency facts retained | Existing corpus protected | Existing corpus protected | — | — | — | — |
 
+**Retained line fragments, M1 increment (2026-10-26).** Exact affine line
+subdivision, selected trimming, boundary endpoint sharing and native contour
+materialization rebuilt lines from their endpoints, losing known supporting
+lines and signed offset relations. The focused baselines reproduce the missing
+support and offset facts. A separate `13c3e18375` regression proves that the
+first offset of a reversed retained line recorded its source direction
+backwards even though its coordinates were correct.
+
+The owning `LineSeg2` restriction helper now transports support, traversal,
+existing endpoint-distinctness evidence and signed offset provenance. Its first
+offset orients the retained source with the current fragment. Quadratic affine
+splits transport each noncollapsed child independently; cuts at zero or one
+keep the complete surviving source, and reversed parameter intervals transport
+oriented endpoint contacts. Public native subcurves, CurveString trims, equal
+boundary vertices and retained native contour materialization use that same
+owner. Existing endpoint/range/image validation remains in force. P15 and
+P17–P20 apply; no new public carrier or interchange format is introduced.
+
+Seven regressions cover rational and algebraic origins, oblique offsets,
+interior and exterior algebraic cuts, collapsed children, independently
+represented equal points, both traversal directions, tangent contact incidence,
+nearby distinct parallel lines and further signed offsets. Materialization
+covers quadratic and rational affine spans in authored, retained and analytic
+parallel fragments; the resulting contour retains those proofs. A strict
+scalar direction query can transport the sign beyond structural cases. When
+broader symbolic direction remains unproved, the exact curve is retained but
+oriented contact proof is unavailable. This is not complete algebraic closure.
+
+Final checks pass: `cargo fmt --all -- --check`; MSRV Hypercurve Clippy with
+`--all-targets --all-features -- -D warnings`; all 2,655 Hypercurve release
+all-features tests (72 suites, 35 existing ignored); and all 43 downstream
+adapter/profile/sweep/mixed tests. The unchanged full arc-corner probe still
+reports `Offset/QuadraticBezier` against `RationalBezier/RealSign` (13.20 s).
+Initial harness/fixture errors remain separate from reproduced proof failures.
+The separately captured combined prototype completes the original arc-corner
+workflow, but includes native pair changes outside this increment. That
+completion is not attributed to this isolated line patch. Refinement/promotion
+counts do not bound total graph work or memory; no speedup, new cancellation or
+native replay claim follows. The full repository pre-push matrix for this
+increment is pending. Baselines, source patches and checks are retained in
+`docs/evidence/2026-10-26-hypercurve-closure-line-fragments`, with its digest in
+`docs/evidence-archive.tsv`.
+
+| Scoped witness | Representation | Evaluation/differentials | Incidence/order | Region admission | Booleans | Further offset | Corner edits | Reconstruction | Exact replay |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| F: selected native line fragments | Shared support and signed offset proofs | Reversal and affine split directions | Endpoint tangencies and distinct parallels | Native contour materialization | Existing corpus | Exact signed distance composition | — | Trimmed/equal boundary endpoints retain proof | — |
+
 **Still open.**
 - The original ignored arc-corner refillet/erosion composition now reports
   `Offset/QuadraticBezier` against `RationalBezier/RealSign` during offset-band

@@ -17,6 +17,254 @@ fn q(numerator: i32, denominator: i32) -> Real {
 }
 
 #[test]
+fn retained_affine_line_materialization_preserves_signed_offsets() {
+    let policy = CurveContext::STRICT;
+    let center = Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
+    let base = LineSeg2::try_new(
+        center.clone(),
+        center.translated(Real::from(5), Real::from(-3)),
+    )
+    .unwrap();
+    let half = q(1, 2);
+    let quarter = q(1, 4);
+    let offset = base.offset_left(half.clone()).unwrap();
+    let quadratic = QuadraticBezier2::from_line_segment(offset);
+    let sources = [
+        BezierSubcurve2::Quadratic(quadratic.clone()),
+        BezierSubcurve2::Rational(
+            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(quadratic)).unwrap(),
+        ),
+    ];
+    let start = (Real::one() / Real::from(3).sqrt().unwrap()).unwrap();
+    let end = q(3, 4);
+    for source in sources {
+        let parallel = match &source {
+            BezierSubcurve2::Quadratic(curve) => curve.parallel_left(quarter.clone()).unwrap(),
+            BezierSubcurve2::Rational(curve) => curve.parallel_left(quarter.clone()).unwrap(),
+            _ => unreachable!(),
+        };
+        let Classification::Decided(parallel) = crate::BezierParallelFragment2::try_new(
+            parallel,
+            BezierParameterRange2::from_exact(start.clone(), end.clone()),
+            &policy,
+        )
+        .unwrap() else {
+            panic!("a regular affine parallel");
+        };
+        let fragments = [
+            (
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: source.clone(),
+                },
+                Real::zero(),
+                Real::one(),
+                half.clone(),
+            ),
+            (
+                BezierSplitFragment2::RetainedBezier {
+                    reversed: false,
+                    start: BezierParameter2::Exact(start.clone()),
+                    end: BezierParameter2::Exact(end.clone()),
+                    source_curve: source,
+                    start_image: None,
+                    end_image: None,
+                },
+                start.clone(),
+                end.clone(),
+                half.clone(),
+            ),
+            (
+                BezierSplitFragment2::AnalyticParallel(parallel),
+                start.clone(),
+                end.clone(),
+                &half + &quarter,
+            ),
+        ];
+        for (fragment, start, end, distance) in fragments {
+            for reversed in [false, true] {
+                let fragment = if reversed {
+                    fragment.reversed().unwrap()
+                } else {
+                    fragment.clone()
+                };
+                let Classification::Decided(line) =
+                    retained_line_fragment_segment(&fragment, &policy).unwrap()
+                else {
+                    panic!("a native line materialization");
+                };
+                let expected = base.offset_left(distance.clone()).unwrap();
+                let (start, end) = if reversed {
+                    (&end, &start)
+                } else {
+                    (&start, &end)
+                };
+                for (actual, parameter) in [(line.start(), start), (line.end(), end)] {
+                    assert_eq!(
+                        CurvePoint2::from(actual.clone())
+                            .same_point(&expected.point_at(parameter.clone()).into(), &policy),
+                        Classification::Decided(true)
+                    );
+                }
+                assert_eq!(
+                    line.retained_offset_relation(&expected, &policy),
+                    Some(crate::segment::RetainedLineRelation2::Coincident)
+                );
+                let corner = line.start().translated(Real::zero(), Real::from(2));
+                let closing = |a, b| BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                        LineSeg2::try_new(a, b).unwrap(),
+                    )),
+                };
+                let boundary = CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
+                    vec![
+                        fragment.clone(),
+                        closing(line.end().clone(), corner.clone()),
+                        closing(corner, line.start().clone()),
+                    ],
+                    None,
+                    &policy,
+                )
+                .unwrap();
+                let Classification::Decided(contour) =
+                    retained_line_loop_to_contour(&boundary, &policy).unwrap()
+                else {
+                    panic!("an exact native contour");
+                };
+                let Segment2::Line(first) = &contour.segments()[0] else {
+                    panic!("the original line fragment");
+                };
+                assert_eq!(
+                    first.retained_offset_relation(&expected, &policy),
+                    Some(crate::segment::RetainedLineRelation2::Coincident)
+                );
+                let gap = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+                let distinct = base.offset_left(&distance + gap).unwrap();
+                assert_eq!(
+                    line.retained_offset_relation(&distinct, &policy),
+                    Some(crate::segment::RetainedLineRelation2::ParallelDistinct)
+                );
+                let intersections = Curve2::from(line.clone())
+                    .intersect_curve(&Curve2::from(distinct))
+                    .unwrap();
+                assert!(
+                    intersections.is_complete()
+                        && intersections.contacts().is_empty()
+                        && intersections.overlaps().is_empty()
+                );
+                let repeated = line.offset_left(q(1, 8)).unwrap();
+                let expected = base
+                    .offset_left(if reversed {
+                        &distance - q(1, 8)
+                    } else {
+                        &distance + q(1, 8)
+                    })
+                    .unwrap();
+                assert_eq!(
+                    repeated.retained_offset_relation(&expected, &policy),
+                    Some(crate::segment::RetainedLineRelation2::Coincident)
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn shared_line_vertices_keep_support_offset_and_traversal() {
+    let policy = CurveContext::STRICT;
+    let root = Real::from(3).sqrt().unwrap();
+    let center = Point2::new(Real::from(2).sqrt().unwrap(), root.clone());
+    let source = LineSeg2::try_new(
+        center.clone(),
+        center.translated(Real::from(5), Real::from(-3)),
+    )
+    .unwrap();
+    let offset = source.offset_left(q(1, 2)).unwrap();
+    let other = source.offset_left(q(-1, 2)).unwrap();
+    for reversed in [false, true] {
+        let line = if reversed {
+            offset.reversed()
+        } else {
+            offset.clone()
+        };
+        let x = line.start().x();
+        // (x+b)(x-b)/(x-b)-b = x, with the nonzero denominator checked by
+        // exact division. This identity needs the strict equality predicate;
+        // Point2's cheaper equality still sees different representations.
+        let endpoint = Point2::new(
+            (((x + &root) * (x - &root)) / (x - &root)).unwrap() - &root,
+            line.start().y().clone(),
+        );
+        assert!(
+            &endpoint != line.start(),
+            "the exact equal endpoint expressions differ"
+        );
+        assert_eq!(
+            crate::CurvePoint2::from(endpoint.clone())
+                .same_point(&line.start().clone().into(), &policy),
+            Classification::Decided(true)
+        );
+        let corner = center.translated(Real::from(6), Real::from(2));
+        let fragment = |line| BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line)),
+        };
+        let mut fragments = [
+            fragment(LineSeg2::try_new(corner.clone(), endpoint.clone()).unwrap()),
+            fragment(line),
+            fragment(
+                LineSeg2::try_new(
+                    if reversed {
+                        offset.start().clone()
+                    } else {
+                        offset.end().clone()
+                    },
+                    corner,
+                )
+                .unwrap(),
+            ),
+        ];
+        share_line_image_vertices(&mut fragments, &policy);
+        let BezierSplitFragment2::Materialized {
+            curve: BezierSubcurve2::Quadratic(curve),
+            ..
+        } = &fragments[1]
+        else {
+            panic!("a native affine line");
+        };
+        let image = curve.retained_exact_line_image().unwrap();
+        assert_eq!(image.start(), &endpoint);
+        assert_eq!(
+            curve.control(),
+            &QuadraticBezier2::from_line_segment(if reversed {
+                offset.reversed()
+            } else {
+                offset.clone()
+            })
+            .control()
+            .clone()
+        );
+        assert!(image.shares_support_line(&offset));
+        assert_eq!(
+            image.retained_offset_relation(&other, &policy),
+            Some(crate::segment::RetainedLineRelation2::ParallelDistinct)
+        );
+        let repeated = image.offset_left(q(1, 8)).unwrap();
+        let expected = source
+            .offset_left(if reversed { q(3, 8) } else { q(5, 8) })
+            .unwrap();
+        assert_eq!(
+            repeated.retained_offset_relation(&expected, &policy),
+            Some(crate::segment::RetainedLineRelation2::Coincident)
+        );
+    }
+}
+
+#[test]
 fn concentric_circle_contacts_keep_directions_without_false_incidence() {
     use crate::rational_bezier::{
         RationalQuadraticCircle2, RationalQuadraticCircleTangentContact2 as Contact,

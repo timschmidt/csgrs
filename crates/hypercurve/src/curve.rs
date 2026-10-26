@@ -1338,7 +1338,12 @@ impl Curve2 {
                 ));
             }
             Some(CurveGeometry2::Line(curve)) => CurveGeometry2::Line(
-                LineSeg2::try_new(curve.point_at(start), curve.point_at(end))
+                curve
+                    .fragment_between_with_certified_direction(
+                        curve.point_at(start),
+                        curve.point_at(end),
+                        false,
+                    )
                     .map_err(|cause| self.subdivision_error(cause))?,
             ),
             Some(CurveGeometry2::CircularArc(curve)) => {
@@ -5400,6 +5405,56 @@ enum FilletLinearSource2<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn native_line_subcurves_keep_support_offset_and_traversal() {
+        let policy = CurveContext::STRICT;
+        let center = Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
+        let source = LineSeg2::try_new(
+            center.clone(),
+            center.translated(Real::from(5), Real::from(-3)),
+        )
+        .unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let step = (Real::one() / Real::from(8)).unwrap();
+        let offset = source.offset_left(half.clone()).unwrap();
+        let other = source.offset_left(-half.clone()).unwrap();
+        let start = (Real::one() / Real::from(3).sqrt().unwrap()).unwrap();
+        let end = (Real::from(3) / Real::from(4)).unwrap();
+        for reversed in [false, true] {
+            let line = if reversed {
+                offset.reversed()
+            } else {
+                offset.clone()
+            };
+            let curve = Curve2::from(line.clone());
+            let result = curve
+                .subcurve(start.clone().into(), end.clone().into())
+                .unwrap();
+            let Some(CurveGeometry2::Line(image)) = result.geometry() else {
+                panic!("a native line subcurve");
+            };
+            assert_eq!(image.start(), &line.point_at(start.clone()));
+            assert_eq!(image.end(), &line.point_at(end.clone()));
+            assert!(image.shares_support_line(&offset));
+            assert_eq!(
+                image.retained_offset_relation(&other, &policy),
+                Some(crate::segment::RetainedLineRelation2::ParallelDistinct)
+            );
+            let repeated = image.offset_left(step.clone()).unwrap();
+            let expected = source
+                .offset_left(if reversed {
+                    &half - &step
+                } else {
+                    &half + &step
+                })
+                .unwrap();
+            assert_eq!(
+                repeated.retained_offset_relation(&expected, &policy),
+                Some(crate::segment::RetainedLineRelation2::Coincident)
+            );
+        }
+    }
 
     #[test]
     fn distinct_parallel_sources_keep_a_shared_fillet_center_family() {

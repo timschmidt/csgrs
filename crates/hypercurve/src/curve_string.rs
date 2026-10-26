@@ -1254,7 +1254,7 @@ fn trim_line_segment_by_range(
 ) -> CurveResult<SegmentTrimMaterialization> {
     let start = line.point_at(source_range.start().clone());
     let end = line.point_at(source_range.end().clone());
-    LineSeg2::try_new(start, end)
+    line.fragment_between_with_certified_direction(start, end, false)
         .map(Segment2::Line)
         .map(SegmentTrimMaterialization::Materialized)
 }
@@ -1306,7 +1306,12 @@ fn trim_segment_by_point_range(
     }
 
     match source_segment {
-        Segment2::Line(_) => LineSeg2::try_new(start_point.clone(), end_point.clone())
+        Segment2::Line(line) => line
+            .fragment_between_with_certified_direction(
+                start_point.clone(),
+                end_point.clone(),
+                false,
+            )
             .map(Segment2::Line)
             .map(SegmentTrimMaterialization::Materialized),
         Segment2::Arc(arc) => {
@@ -1889,4 +1894,66 @@ fn sampled_exact_rational_x_overlap_is_dense(first: &[&Aabb2], second: &[&Aabb2]
     // scan. A false dense result can cost an optimization opportunity but
     // cannot reject a geometric candidate or change topology.
     overlap_count * 2 > sampled_pair_count
+}
+
+#[cfg(test)]
+mod line_trim_provenance_tests {
+    use super::*;
+
+    #[test]
+    fn native_line_trims_keep_support_offset_and_traversal() {
+        let policy = CurveContext::STRICT;
+        let center = Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
+        let source = LineSeg2::try_new(
+            center.clone(),
+            center.translated(Real::from(5), Real::from(-3)),
+        )
+        .unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let step = (Real::one() / Real::from(8)).unwrap();
+        let offset = source.offset_left(half.clone()).unwrap();
+        let other = source.offset_left(-half.clone()).unwrap();
+        let range = ParamRange::new(
+            (Real::one() / Real::from(3).sqrt().unwrap()).unwrap(),
+            (Real::from(3) / Real::from(4)).unwrap(),
+        );
+        for reversed in [false, true] {
+            let line = if reversed {
+                offset.reversed()
+            } else {
+                offset.clone()
+            };
+            let segment = Segment2::Line(line.clone());
+            let start = line.point_at(range.start().clone());
+            let end = line.point_at(range.end().clone());
+            let results = [
+                trim_segment_by_range(&segment, &range, &policy).unwrap(),
+                trim_segment_by_point_range(&segment, &range, &start, &end, &policy).unwrap(),
+            ];
+            for result in results {
+                let SegmentTrimMaterialization::Materialized(Segment2::Line(image)) = result else {
+                    panic!("a native line trim");
+                };
+                assert_eq!(image.start(), &start);
+                assert_eq!(image.end(), &end);
+                assert!(image.shares_support_line(&offset));
+                assert_eq!(
+                    image.retained_offset_relation(&other, &policy),
+                    Some(crate::segment::RetainedLineRelation2::ParallelDistinct)
+                );
+                let repeated = image.offset_left(step.clone()).unwrap();
+                let expected = source
+                    .offset_left(if reversed {
+                        &half - &step
+                    } else {
+                        &half + &step
+                    })
+                    .unwrap();
+                assert_eq!(
+                    repeated.retained_offset_relation(&expected, &policy),
+                    Some(crate::segment::RetainedLineRelation2::Coincident)
+                );
+            }
+        }
+    }
 }

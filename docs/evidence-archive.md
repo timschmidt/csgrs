@@ -85,6 +85,19 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-line-fragment-evidence-2026-10-26` branch
+ends at `baf93f7321f69b0870da921b738f6549294fd8fb`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-line-fragments` (44 files,
+521,732 bytes), SHA-256
+`e57ae46ca6ccd5a0b405d96ee831fc61c9d6ab96c179f0b2215dc851390ceaf8`.
+It records exact line support, orientation and signed offset transport against
+`13c3e18375`: 2,655 Hypercurve tests and 43 downstream tests pass, with
+formatting and strict MSRV Clippy. The isolated original erosion remains
+blocked. The separately retained experimental completion includes native pair
+changes outside this source increment. This record is local and unpushed;
+its full repository pre-push qualification remains pending. The frozen
+`904e5408e1` validation run does not cover this increment.
+
 The separate local `hypercurve-contact-evidence-2026-10-26` branch ends at
 `2783b4aa0e1e029b9dcc9d2200e246eb7f095444`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-native-contact-evidence`

@@ -1991,6 +1991,26 @@ impl QuadraticBezier2 {
             .lerp_with_weights(self.end(), &one_minus_t, &t);
         let p012 = p01.lerp_with_weights(&p12, &one_minus_t, &t);
         if self.retained_exact_line_image().is_some() {
+            if t == Real::zero() {
+                return (
+                    QuadraticBezier2::new(
+                        self.start().clone(),
+                        self.start().clone(),
+                        self.start().clone(),
+                    ),
+                    self.clone(),
+                );
+            }
+            if t == Real::one() {
+                return (
+                    self.clone(),
+                    QuadraticBezier2::new(
+                        self.end().clone(),
+                        self.end().clone(),
+                        self.end().clone(),
+                    ),
+                );
+            }
             let left_contacts = self
                 .retained_parallel_line_tangent_contacts()
                 .iter()
@@ -2003,23 +2023,27 @@ impl QuadraticBezier2 {
                 .filter(|contact| contact.line_endpoint() == BezierEndpoint::End)
                 .cloned()
                 .collect::<Vec<_>>();
-            let retained = (
-                QuadraticBezier2::with_retained_exact_line_provenance(
+            // Each noncollapsed affine interval keeps the source support and
+            // signed offset relation. At t=0 or t=1 only one side collapses;
+            // that point curve must not erase the other side's line evidence.
+            return (
+                self.with_retained_line_fragment(
                     self.start().clone(),
                     p01.clone(),
                     p012.clone(),
+                    &t,
                     left_contacts,
-                ),
-                QuadraticBezier2::with_retained_exact_line_provenance(
+                )
+                .unwrap_or_else(|_| QuadraticBezier2::new(self.start().clone(), p01, p012.clone())),
+                self.with_retained_line_fragment(
                     p012.clone(),
                     p12.clone(),
                     self.end().clone(),
+                    &one_minus_t,
                     right_contacts,
-                ),
+                )
+                .unwrap_or_else(|_| QuadraticBezier2::new(p012, p12, self.end().clone())),
             );
-            if let (Ok(left), Ok(right)) = retained {
-                return (left, right);
-            }
         }
         (
             QuadraticBezier2::new(self.start().clone(), p01, p012.clone()),
@@ -2629,6 +2653,195 @@ fn validate_ordered_exact_range(
         None => Err(CurveError::Topology(
             "Bezier exact split range order is uncertain".to_string(),
         )),
+    }
+}
+
+#[cfg(test)]
+mod line_split_provenance_tests {
+    use super::*;
+
+    #[test]
+    fn affine_line_splits_keep_endpoint_contacts_and_their_direction() {
+        use crate::bezier::BezierParallelLineTangentContact2;
+        let policy = CurveContext::STRICT;
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let start = Point2::from_values(0, 0);
+        let end = Point2::from_values(1, 0);
+        let first = QuadraticBezier2::new(
+            start.clone(),
+            Point2::new(half.clone(), Real::zero()),
+            Point2::from_values(1, 1),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let last = QuadraticBezier2::new(
+            Point2::from_values(0, 1),
+            Point2::new(half, Real::zero()),
+            end.clone(),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let curve = QuadraticBezier2::from_line_segment_with_parallel_tangent_contacts(
+            crate::LineSeg2::try_new(start, end).unwrap(),
+            vec![
+                BezierParallelLineTangentContact2::new(
+                    first,
+                    Real::zero(),
+                    BezierEndpoint::Start,
+                    false,
+                ),
+                BezierParallelLineTangentContact2::new(
+                    last,
+                    Real::one(),
+                    BezierEndpoint::End,
+                    false,
+                ),
+            ],
+        );
+        for (cut, counts) in [
+            (Real::zero(), [0, 2]),
+            (Real::one(), [2, 0]),
+            (
+                (Real::one() / Real::from(3).sqrt().unwrap()).unwrap(),
+                [1, 1],
+            ),
+            (-Real::from(2).sqrt().unwrap(), [1, 1]),
+            (Real::from(2).sqrt().unwrap(), [1, 1]),
+        ] {
+            let (left, right) = curve.split_at_exact(cut);
+            for (part, count) in [(left, counts[0]), (right, counts[1])] {
+                for image in [
+                    part.clone(),
+                    part.reversed_with_retained_provenance().unwrap(),
+                ] {
+                    assert_eq!(image.retained_parallel_line_tangent_contacts().len(), count);
+                    for contact in image.retained_parallel_line_tangent_contacts() {
+                        let endpoint = match contact.line_endpoint() {
+                            BezierEndpoint::Start => image.start(),
+                            BezierEndpoint::End => image.end(),
+                        };
+                        assert_eq!(
+                            &contact.parallel().point_at(contact.parameter()).unwrap(),
+                            endpoint
+                        );
+                        let Classification::Decided((tx, ty)) = contact
+                            .parallel()
+                            .source_tangent_at(contact.parameter(), &policy)
+                            .unwrap()
+                        else {
+                            panic!("an exact parabola endpoint tangent");
+                        };
+                        let (dx, dy) = image
+                            .retained_exact_line_image()
+                            .unwrap()
+                            .directed_support_delta();
+                        assert_eq!(
+                            crate::classify::real_sign(
+                                &Real::diff_of_products(&dx, &ty, &dy, &tx),
+                                &policy
+                            ),
+                            Some(hyperreal::RealSign::Zero)
+                        );
+                        assert_eq!(
+                            crate::classify::real_sign(&(dx * tx + dy * ty), &policy),
+                            Some(if contact.parallel_fragment_reversed() {
+                                hyperreal::RealSign::Negative
+                            } else {
+                                hyperreal::RealSign::Positive
+                            })
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn affine_line_splits_keep_support_offset_and_traversal() {
+        let policy = CurveContext::STRICT;
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let step = (Real::one() / Real::from(8)).unwrap();
+        let root = Real::from(2).sqrt().unwrap();
+        let center = Point2::new(root.clone(), Real::from(3).sqrt().unwrap());
+        let source = crate::LineSeg2::try_new(
+            center.clone(),
+            center.translated(Real::from(5), Real::from(-3)),
+        )
+        .unwrap();
+        let offset = source.offset_left(half.clone()).unwrap();
+        let other = source.offset_left(-half.clone()).unwrap();
+        let curve = QuadraticBezier2::from_line_segment(offset.clone());
+        for (cut_index, t) in [
+            Real::zero(),
+            Real::one(),
+            (Real::one() / Real::from(3).sqrt().unwrap()).unwrap(),
+            -root.clone(),
+            root,
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let attempt = crate::evaluate_with_budget(
+                policy.predicate_policy(),
+                crate::WorkBudget {
+                    refinements: 4096,
+                    promotions: 128,
+                },
+                || curve.split_at_exact(t.clone()),
+            );
+            let (left, right) = attempt.result.unwrap().certified().unwrap();
+            let cut = offset.point_at(t.clone());
+            for (part_index, (part, scale, start, end)) in [
+                (left, t.clone(), offset.start().clone(), cut.clone()),
+                (right, Real::one() - &t, cut, offset.end().clone()),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                assert_eq!(
+                    CurvePoint2::from(part.start().clone()).same_point(&start.into(), &policy),
+                    Classification::Decided(true)
+                );
+                assert_eq!(
+                    CurvePoint2::from(part.end().clone()).same_point(&end.into(), &policy),
+                    Classification::Decided(true)
+                );
+                if scale == Real::zero() {
+                    assert!(part.retained_exact_line_image().is_none());
+                    continue;
+                }
+                let image = part
+                    .retained_exact_line_image()
+                    .expect("a noncollapsed line image");
+                assert!(
+                    image.shares_support_line(&offset),
+                    "cut={cut_index} part={part_index} retained={} scale_sign={:?}",
+                    image.has_retained_support(),
+                    scale.structural_facts().sign
+                );
+                assert_eq!(
+                    image.retained_offset_relation(&other, &policy),
+                    Some(crate::segment::RetainedLineRelation2::ParallelDistinct)
+                );
+                let sign = crate::classify::real_sign(&scale, &policy).unwrap();
+                let (dx, dy) = image.directed_support_delta();
+                assert_eq!(
+                    crate::classify::real_sign(&(Real::from(5) * dx - Real::from(3) * dy), &policy),
+                    Some(sign)
+                );
+                let repeated = image.offset_left(step.clone()).unwrap();
+                let expected_distance = if sign == hyperreal::RealSign::Positive {
+                    &half + &step
+                } else {
+                    &half - &step
+                };
+                let expected = source.offset_left(expected_distance).unwrap();
+                assert_eq!(
+                    repeated.retained_offset_relation(&expected, &policy),
+                    Some(crate::segment::RetainedLineRelation2::Coincident)
+                );
+            }
+        }
     }
 }
 

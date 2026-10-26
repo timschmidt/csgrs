@@ -228,6 +228,32 @@ impl LineSeg2 {
         }
     }
 
+    /// Restricts the support to endpoints whose nonzero parameter interval and
+    /// direction the caller has certified. Endpoint incidence is also supplied
+    /// by that construction; ordinary endpoint validation remains in force.
+    pub(crate) fn fragment_between_with_certified_direction(
+        &self,
+        start: Point2,
+        end: Point2,
+        reversed: bool,
+    ) -> CurveResult<Self> {
+        let source = if reversed {
+            self.reversed()
+        } else {
+            self.clone()
+        };
+        let validated = Self::try_new(start, end)?;
+        Ok(Self {
+            endpoints_decided_distinct: source.endpoints_decided_distinct
+                || validated.endpoints_decided_distinct,
+            support: line_support_cell(Some(source.fragment_support())),
+            has_retained_support: true,
+            support_direction_reversed: source.support_direction_reversed,
+            offset_provenance: source.offset_provenance.clone(),
+            ..validated
+        })
+    }
+
     pub(crate) fn fragment_support(&self) -> Arc<LineSupport2> {
         self.support
             .get_or_init(|| {
@@ -276,10 +302,24 @@ impl LineSeg2 {
     ) -> CurveResult<Self> {
         let mut offset = Self::try_new(start, end)?;
         let provenance = match self.offset_provenance.as_ref() {
-            None => LineOffsetProvenance2 {
-                source: self.fragment_support(),
-                left_distance: distance,
-            },
+            None => {
+                let source = self.fragment_support();
+                // A retained support may oppose this fragment's traversal.
+                // Orient the first offset's source with the fragment, so each
+                // later left-distance addition keeps that same convention.
+                let source = if self.has_retained_support && self.support_direction_reversed {
+                    Arc::new(LineSupport2 {
+                        start: source.end.clone(),
+                        end: source.start.clone(),
+                    })
+                } else {
+                    source
+                };
+                LineOffsetProvenance2 {
+                    source,
+                    left_distance: distance,
+                }
+            }
             Some(provenance) => LineOffsetProvenance2 {
                 source: provenance.source.clone(),
                 left_distance: &provenance.left_distance + &distance,
@@ -2048,6 +2088,77 @@ mod policy_cache_tests {
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn reversed_retained_line_first_offset_keeps_oriented_source() {
+        let policy = CurveContext::STRICT;
+        let half = (Real::one() / Real::from(2)).unwrap();
+        for origin in [
+            point(0, 0),
+            Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap()),
+        ] {
+            let source = LineSeg2::try_new(
+                origin.clone(),
+                origin.translated(Real::from(4), Real::zero()),
+            )
+            .unwrap();
+            let fragment = source.fragment_between_after_distinct_endpoints(
+                origin.translated(Real::one(), Real::zero()),
+                origin.translated(Real::from(3), Real::zero()),
+                source.fragment_support(),
+            );
+            for reversed in [false, true] {
+                let fragment = if reversed {
+                    fragment.reversed()
+                } else {
+                    fragment.clone()
+                };
+                assert!(fragment.offset_provenance.is_none());
+                let sign = Real::from(if reversed { -1 } else { 1 });
+                let image = fragment.offset_left(Real::one()).unwrap();
+                // The independently known horizontal left normal has y = +/-1.
+                assert_eq!(
+                    crate::CurvePoint2::from(image.start().clone()).same_point(
+                        &fragment
+                            .start()
+                            .translated(Real::zero(), sign.clone())
+                            .into(),
+                        &policy
+                    ),
+                    Classification::Decided(true)
+                );
+                let expected = source.offset_left(sign.clone()).unwrap();
+                let opposite = source.offset_left(-sign.clone()).unwrap();
+                assert_eq!(
+                    image.retained_offset_relation(&expected, &policy),
+                    Some(RetainedLineRelation2::Coincident)
+                );
+                assert_eq!(
+                    image.retained_offset_relation(&opposite, &policy),
+                    Some(RetainedLineRelation2::ParallelDistinct)
+                );
+                for reverse_again in [false, true] {
+                    let image = if reverse_again {
+                        image.reversed()
+                    } else {
+                        image.clone()
+                    };
+                    let repeated = image.offset_left(half.clone()).unwrap();
+                    let total = &sign
+                        * if reverse_again {
+                            Real::one() - &half
+                        } else {
+                            Real::one() + &half
+                        };
+                    let expected = source.offset_left(total).unwrap();
+                    assert_eq!(
+                        repeated.retained_offset_relation(&expected, &policy),
+                        Some(RetainedLineRelation2::Coincident)
+                    );
+                }
+            }
+        }
     }
 
     #[test]

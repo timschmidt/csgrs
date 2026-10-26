@@ -1685,14 +1685,7 @@ fn share_line_image_vertices(fragments: &mut [BezierSplitFragment2], policy: &Cu
                     if !curve.retained_parallel_line_tangent_contacts().is_empty() {
                         return None;
                     }
-                    BezierSubcurve2::Quadratic(
-                        QuadraticBezier2::with_retained_exact_line_image(
-                            first,
-                            curve.control().clone(),
-                            last,
-                        )
-                        .ok()?,
-                    )
+                    BezierSubcurve2::Quadratic(curve.with_equal_line_endpoints(first, last).ok()?)
                 } else {
                     BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                         first,
@@ -6523,8 +6516,8 @@ fn retained_line_loop_to_contour(
     let mut segments = Vec::with_capacity(boundary_loop.fragments().len());
     let mut blocker = None;
     for fragment in boundary_loop.fragments() {
-        let endpoints = match retained_line_fragment_endpoints(fragment, policy)? {
-            Classification::Decided(endpoints) => endpoints,
+        let line = match retained_line_fragment_segment(fragment, policy)? {
+            Classification::Decided(line) => line,
             Classification::Uncertain(UncertaintyReason::Unsupported) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
@@ -6533,8 +6526,7 @@ fn retained_line_loop_to_contour(
                 continue;
             }
         };
-        let (start, end) = endpoints;
-        segments.push(Segment2::Line(LineSeg2::try_new(start, end)?));
+        segments.push(Segment2::Line(line));
     }
     if let Some(reason) = blocker {
         return Ok(Classification::Uncertain(reason));
@@ -6788,6 +6780,47 @@ pub(crate) fn retained_line_fragment_segment(
             return Ok(Classification::Uncertain(reason));
         }
     };
+    // Endpoint admission above proves the represented image. When the source
+    // also retains an affine line chart, transport its support and signed offset
+    // relation through this selected interval instead of discarding that proof.
+    let native_line = |curve: &BezierSubcurve2| match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.retained_exact_line_image().cloned(),
+        BezierSubcurve2::Rational(curve) => curve.retained_exact_line_image().cloned(),
+        _ => None,
+    };
+    let source = match fragment {
+        BezierSplitFragment2::Materialized { curve, .. } => {
+            native_line(curve).map(|line| (line, false))
+        }
+        BezierSplitFragment2::RetainedBezier {
+            source_curve,
+            reversed,
+            ..
+        } => native_line(source_curve).map(|line| (line, *reversed)),
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            let source = match fragment.parallel().source() {
+                crate::BezierParallelSource2::Quadratic(curve) => curve.retained_exact_line_image(),
+                crate::BezierParallelSource2::Rational(curve) => curve.retained_exact_line_image(),
+                crate::BezierParallelSource2::Cubic(_) => None,
+            };
+            source
+                .map(|line| line.offset_left(fragment.parallel().distance().clone()))
+                .transpose()?
+                .map(|line| (line, fragment.is_reversed()))
+        }
+        BezierSplitFragment2::SelectedFiber(fragment) => fragment
+            .rational_curve()
+            .and_then(RationalBezier2::retained_exact_line_image)
+            .cloned()
+            .map(|line| (line, fragment.is_reversed())),
+        BezierSplitFragment2::AlgebraicChord(chord) => chord.exact_line().map(|line| (line, false)),
+        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
+    };
+    if let Some((line, reversed)) = source {
+        return line
+            .fragment_between_with_certified_direction(endpoints.0, endpoints.1, reversed)
+            .map(Classification::Decided);
+    }
     LineSeg2::try_new(endpoints.0, endpoints.1).map(Classification::Decided)
 }
 
