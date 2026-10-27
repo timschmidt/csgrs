@@ -69,8 +69,8 @@ coordinates include cubic, seventh-root and mixed quadratic expressions.
 Substituted coefficients require certified zero decisions: a quartic's line
 component must not become an empty result because its zero expression is not
 structurally obvious. These witnesses cover native `LineSeg2` inputs; selected
-chord carriers, broader transform coefficients and general branch pairs still
-need separate qualification. They do not establish universal algebraic closure.
+chord carriers and general branch pairs need their own qualification. Algebraic
+similarity coefficients are exercised separately below. They do not establish universal algebraic closure.
 
 The point-order witnesses compare an interior polynomial fiber with an exact
 event singleton, retain distinct neighbors separated by `2^-100`, and replay
@@ -130,6 +130,16 @@ nearby distinct points, changed transforms, output-to-input intersections and
 recovery after reached exhaustion. General rational image preimages and filled
 polynomial arrangements remain outside this increment. Checked point definitions
 here are in-memory replay, not fresh-process native archive qualification.
+
+The algebraic similarity witnesses extend native-line sections to retained
+images with quadratic and seventh-root scale/translation coefficients and an
+oblique map using both sqrt(2) and sqrt(3). Independently expanded world
+equations, original source abscissas, reflection and traversal signs, tangency,
+selected trim endpoints, overlap continuation and exact nearby separation are
+checked. Reached counted exhaustion remains distinct from a larger successful
+retry and Certified policy transitions. These are similarity pullbacks through
+the existing section authority; general rational images, different-image
+polynomial pairs and fresh-process native archive replay remain unqualified.
 
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.

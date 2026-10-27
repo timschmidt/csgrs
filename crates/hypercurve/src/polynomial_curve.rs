@@ -55,8 +55,8 @@ struct PolynomialCurveSource2 {
 /// root of the same equation is not an incident point. Rational image maps
 /// need a separate inverse/preimage contract for this query.
 /// Regular derivatives and smooth-event tangent directions retain that joint
-/// source. Source branches and their retained rational similarities intersect
-/// authored native lines, including exact algebraic coordinates and selected
+/// source. Source branches and their retained rational or algebraic similarities
+/// intersect authored native lines, including exact algebraic coordinates and selected
 /// restrictions, through [`Curve2::intersect_curve`] and
 /// [`Curve2::intersection_topology`]. Scalar and selected-field decisions must
 /// succeed exactly; unresolved predicates retain their typed blockers.
@@ -383,10 +383,11 @@ impl PolynomialCurveBranch2 {
         self.transform.is_none() && self.maps.is_empty()
     }
 
-    /// Uses the source section authority after a rational similarity pullback.
+    /// Uses the source section authority after an exact similarity pullback.
     /// Source abscissas remain the branch parameters; returned points and
-    /// tangent signs belong to the current image. Nonlinear rational images
-    /// and algebraic transform coefficients retain their existing capability gap.
+    /// tangent signs belong to the current image. The native line authority
+    /// decides algebraic coefficients without changing the original source.
+    /// Nonlinear rational images retain their existing capability gap.
     pub(crate) fn line_sections(
         &self,
         line: &crate::LineSeg2,
@@ -398,13 +399,6 @@ impl PolynomialCurveBranch2 {
         let Some(transform) = &self.transform else {
             return self.source_line_sections(line, policy).map(Some);
         };
-        let (a, b, d, e, xoff, yoff) = transform.affine_components();
-        if ![a, b, d, e, xoff, yoff]
-            .iter()
-            .all(|value| value.exact_rational_ref().is_some())
-        {
-            return Ok(None);
-        }
         let inverse = transform.inverse().map_err(invalid)?;
         let source_line = line.transform_similarity(&inverse).map_err(invalid)?;
         let mut source = self.clone();

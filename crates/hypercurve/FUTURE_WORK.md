@@ -974,6 +974,46 @@ remain open. Counted work and external timeouts do not bound all arithmetic,
 coefficient growth, retained memory or cancellation. No performance improvement
 is claimed. Full repository pre-push qualification remains pending.
 
+**Algebraic similarity section increment (2026-10-27).** On committed
+`5de7f0cb05`, native-line queries against the selected quintic scaled by
+`sqrt(2)` or translated by `(sqrt(3),sqrt(2))` reproduce
+`Intersection/ImplicitPolynomial/Unsupported`. Original source-line controls
+already succeed. The polynomial owner now lets the exact inverse similarity
+feed the existing native-line section authority. P15 and P17–P20 require the
+same original source equation, ordered fiber, parameter domain, selected
+endpoints, overlap correspondence and retained image to survive the query.
+
+A nonsingular similarity is bijective: contact and overlap pullbacks preserve
+the original source abscissa, and its determinant transports oriented crossing
+signs. Removing the rational-coefficient restriction adds no geometric carrier
+or elimination path. Exact scalar and selected-field decisions remain required;
+their undecided or exhausted outcomes keep their typed meaning.
+
+Seven public witnesses cover the original failures, a seventh-root scale,
+oblique maps using both `sqrt(2)` and `sqrt(3)`, reflection and all traversal
+orders, tangency, selected trim endpoints, excluded parameters, common line
+components, repeated overlap clipping and distinct `2^-80` source shifts.
+Independent expanded world equations, exact source parameters and topology
+assertions accompany checked in-memory point replay and further intersection.
+Reached zero counted work returns exhaustion; a larger retry succeeds, and
+STRICT/APPROXIMATE_512/STRICT retains Certified receipts after source drop.
+
+Final checks pass: 2,745 Hypercurve tests (81 suites, 34 existing ignored),
+43 root downstream tests and 3,009 tests across six dependent packages
+(0 existing ignored). Strict Hypercurve all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards, 98 capability witnesses, typos, repository budget
+and diff checks pass. Raw failures, source snapshots and exact commands are in
+`docs/evidence/2026-10-27-hypercurve-closure-algebraic-similarities`, SHA-256 `cb775d3b839b79110b7dca2f73d291d91217f19dc11e1707d6d9ca10bdf99612`. All non-receipt source bytes remain identical
+after this receipt.
+
+General rational images, different-image polynomial pairs, broader topology
+coefficient fields, repeated/vertical components and implicit offset/corner
+closure remain open. Point-definition replay here is in memory, not a native
+fresh-process archive. This branch excludes the separate region and horizontal
+boundary increments. Counted work and external timeouts do not bound total
+arithmetic, coefficient growth, retained memory or cancellation. No performance
+improvement is claimed; full repository pre-push qualification remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

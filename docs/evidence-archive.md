@@ -85,6 +85,20 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-algebraic-similarity-evidence-2026-10-27` branch
+ends at `1216d6408218a4746703408ea0e51832ae4fed62`, adding `docs/evidence/2026-10-27-hypercurve-closure-algebraic-similarities`
+(202 files, 4,910,607 bytes), SHA-256 `cb775d3b839b79110b7dca2f73d291d91217f19dc11e1707d6d9ca10bdf99612`.
+It records native-line sections through retained algebraic similarities with
+original selected polynomial sources preserved. 2,745 Hypercurve tests,
+43 root downstream tests, 3,009 tests across six dependent packages,
+strict MSRV Clippy, formatting, 16 matrix guards and 98 capability witnesses
+pass. Expanded equations, exact parameters, tangency, overlap continuation,
+selected trims, distinct nearby supports and actual exhaustion/retry are covered.
+Original failed witnesses and raw source-attributed commands remain archived.
+This record is local and unpushed. General image and algebraic operation closure
+and fresh-process native replay remain open; full pre-push qualification is
+still required before publication.
+
 The separate local `hypercurve-polynomial-location-evidence-2026-10-26`
 branch ends at `98fd9084af3539fabee8dbedc1ffe300935f46e9`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-polynomial-locations` (227 files,
