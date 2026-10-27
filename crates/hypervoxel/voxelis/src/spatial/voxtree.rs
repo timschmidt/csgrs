@@ -2026,6 +2026,15 @@ mod tests {
 
     #[test]
     fn test_patterns_set_random_noise() {
+        use rand::{SeedableRng, rngs::SmallRng};
+
+        // Seed 17 repeats the value at (14, 14, 27) on write 384. Keep this
+        // regression alongside the full independently randomized workload.
+        assert!(check_random_writes(SmallRng::seed_from_u64(17)) > 0);
+        check_random_writes(rand::rng());
+    }
+
+    fn check_random_writes(mut rng: impl Rng) -> usize {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
@@ -2036,7 +2045,7 @@ mod tests {
         let size = 1 << (3 * MAX_DEPTH.max());
         let mut data = vec![0; size as usize];
 
-        let mut rng = rand::rng();
+        let mut unchanged_writes = 0;
 
         for _ in 0..1000 {
             let x = rng.random_range(0..voxels_per_axis);
@@ -2044,10 +2053,19 @@ mod tests {
             let z = rng.random_range(0..voxels_per_axis);
             let index = z * voxels_per_axis * voxels_per_axis + y * voxels_per_axis + x;
             let value = rng.random_range(1..=255) as u8;
+            let expected_change = data[index as usize] != value;
             data[index as usize] = value;
             let position = IVec3::new(x, y, z);
 
-            assert!(tree.set(&mut interner, position, value));
+            tree.clear_dirty();
+            let previous_root = tree.get_root_id();
+            assert_eq!(tree.set(&mut interner, position, value), expected_change);
+            assert_eq!(tree.is_dirty(), expected_change);
+            if !expected_change {
+                unchanged_writes += 1;
+                assert_eq!(tree.get_root_id(), previous_root);
+                assert_eq!(interner.get_ref(&previous_root), 1);
+            }
             assert_eq!(tree.get(&interner, position), Some(value));
         }
 
@@ -2072,6 +2090,7 @@ mod tests {
         assert!(!tree.is_empty());
         assert!(!tree.is_leaf());
         assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
+        unchanged_writes
     }
 
     #[test]

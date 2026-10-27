@@ -85,6 +85,32 @@ in this repository.
 
 ## Follow-on records
 
+The combined local `hypercurve-publication-evidence-2026-10-26` archive ends at
+`15af9d0b78ec35c82bf00217eec4dd25c46c5918` and retains 349 records.
+
+The complete command inventory was attempted against `904e5408e1`: 324 of
+325 groups passed. The unchanged-value voxel assertion failed, so that revision
+was not published. Both release/package checks and all 13 ASan campaigns passed;
+the unsuccessful run remains evidence of an incomplete qualification attempt.
+Its record, `docs/evidence/2026-10-26-hypercurve-closure-validation-attempt-904e`,
+contains 12,786 files and 36,965,435 bytes, SHA-256
+`94d4948defd834cd3b4984d64196a6063eab0038b9bde0454341a86c347951a4`.
+The combined local archive retains this attempt and all independently qualified
+follow-on records. A fresh 328-group pre-push run is required for the combined
+code candidate; no previous command execution is counted toward that run.
+
+The local `hypercurve-voxel-write-oracle-evidence-2026-10-26` branch ends at
+`e5b2ee8217a3b9254b30130aacbbccbc0001ccc6`. Its new
+`docs/evidence/2026-10-26-hypercurve-closure-voxel-write-oracle` record contains
+24 files and 568,359 bytes, SHA-256
+`32e6bc134c56648d70bd45a26e1032fd4cd07623b7b1c138cb9f74bfc26b7a4a`.
+The full pre-push attempt at `904e5408e1` exposed an invalid random-write test
+expectation for unchanged voxel values. The deterministic failing seed and the
+original full random workload now use an independent dense-array change oracle.
+All 116 nested workspace tests, 78 Hypervoxel consumer tests, strict Voxelis
+Clippy, formatting and repository hygiene checks pass. This is targeted local
+qualification; publication remains blocked pending the complete validation set.
+
 The separate local `hypercurve-rational-section-evidence-2026-10-26` branch
 ends at `a4abd246af4e572dbf62a7c139f127fd84bd085b`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-rational-sections` (442 files,

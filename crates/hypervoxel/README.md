@@ -337,3 +337,23 @@ suite, and strict Clippy with `-p hypervoxel`.
 Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
 It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
+
+## Repeated-write validation (2026-10-26)
+
+The full repository pre-push run at `904e5408e1` exposed a random-test oracle
+error: `VoxTree::set` returns false when a write leaves the value unchanged,
+but the random workload asserted true for every write. Seed 17 reproduces
+the failure at write 384. The oracle now compares the change result with its
+independent dense array, verifies the dirty flag, and checks root/reference
+preservation on unchanged writes. Both the original unseeded 1,000-write
+workload and a complete seeded regression check all 32³ cells afterward.
+
+P35 and P37 govern this test-only correction. Formatting, 116 nested workspace
+tests, 78 all-feature Hypervoxel consumer tests, all-target/all-feature Voxelis
+Clippy with `-D warnings`, typos, diff and repository budget checks pass.
+The original full-run failure, deterministic reproduction, source hashes and
+final commands are archived in
+`docs/evidence/2026-10-26-hypercurve-closure-voxel-write-oracle`, SHA-256
+`32e6bc134c56648d70bd45a26e1032fd4cd07623b7b1c138cb9f74bfc26b7a4a`.
+The interrupted full pre-push set is not a passing qualification; the complete
+set must run against the corrected publication candidate.
