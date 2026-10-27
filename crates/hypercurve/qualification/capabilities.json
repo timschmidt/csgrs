@@ -1583,6 +1583,111 @@
       ],
       "oracle": "Explicit Invalid variant and certified successful closed-region assertions.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_point_singleton_order",
+      "target": "polynomial_point_order",
+      "test": "interior_and_event_points_compare_with_retained_base_relations",
+      "owner": "Hypercurve selected-fiber scalar ordering and polynomial point identity",
+      "properties": [
+        "P4",
+        "P15",
+        "P19",
+        "P20"
+      ],
+      "domain": "The independently retained interior point of (y-x)(y+x)=0 and event endpoint of (y-x)(2y-1)=0 at (1/2,1/2). Both source sets are dropped.",
+      "origins": [
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Retained exact singleton/native scalar evidence is consumed without changing the source fiber or selector. Interval filters and exact fallbacks remain authoritative; no tolerance merging.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both operand orders compare the points and each coordinate exactly across policy changes; every point equality fits 512 counted refinements and one promotion."
+        }
+      ],
+      "oracle": "Independent defining supports and their selected positive branch/event imply the exact rational point; equality and certainty assertions distinguish native evidence from interval convergence.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_point_replay_distinction",
+      "target": "polynomial_point_order",
+      "test": "replayed_event_points_keep_singleton_order_and_distinct_neighbors",
+      "owner": "Hypercurve selected-fiber scalar ordering and polynomial point identity",
+      "properties": [
+        "P4",
+        "P15",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original event point and validated constant-line fibers at y=1/2 and y=1/2+-2^-100, plus the negative conjugate of y^2-x^2.",
+      "origins": [
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retained exact singleton/native scalar evidence is consumed without changing the source fiber or selector. Interval filters and exact fallbacks remain authoritative; no tolerance merging.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both directions preserve exact coordinate order, equality and distinction for neighbors and the negative branch."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "In-memory PolynomialFiber replay validates the defining relation and selector after original source drop; original event replay retains equality."
+        }
+      ],
+      "oracle": "Exact rational coordinates independently order the newly validated fibers; the opposite branch has negative y. Replay is in memory, not native archive or fresh-process replay.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_point_order_retry",
+      "target": "polynomial_point_order",
+      "test": "singleton_point_order_retries_after_counted_exhaustion",
+      "owner": "Hypercurve selected-fiber scalar ordering and polynomial point identity",
+      "properties": [
+        "P4",
+        "P15",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original interior/event point comparison with a zero counted budget, followed by 512 refinements and one promotion on the same retained points.",
+      "origins": [
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retained exact singleton/native scalar evidence is consumed without changing the source fiber or selector. Interval filters and exact fallbacks remain authoritative; no tolerance merging.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "The zero enclosing budget is actually reached with a positive request; a larger retry returns exact Y equality and point coincidence."
+        }
+      ],
+      "oracle": "Actual reached budget counters and exact equality after retry; counted work does not bound total arithmetic, coefficient growth, memory or cancellation.",
+      "timeout_seconds": 300
     }
   ]
 }

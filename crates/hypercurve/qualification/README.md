@@ -71,6 +71,15 @@ structurally obvious. These witnesses cover native `LineSeg2` inputs; selected
 chord carriers, broader transform coefficients and general branch pairs still
 need separate qualification. They do not establish universal algebraic closure.
 
+The point-order witnesses compare an interior polynomial fiber with an exact
+event singleton, retain distinct neighbors separated by `2^-100`, and replay
+checked point definitions after source drop. The original equality must finish
+within 512 counted refinements and one promotion; a reached zero-budget
+attempt must permit a larger retry. These are selected-point and scalar
+evidence checks, with in-memory replay only.
+Related unit witnesses preserve repeated supports and verify that a
+base-independent root relation never discards a query's actual base dependency.
+
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.
 Missing tests, ignored tests, zero-test passes, failing builds or tests, changed

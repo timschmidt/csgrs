@@ -701,6 +701,45 @@ replay. Counted work is not a total-work, memory or cancellation bound. No
 performance improvement is claimed; full repository pre-push qualification
 for this increment remains pending.
 
+**Selected-fiber ordering increment (2026-10-26).** At `fd1313a23a9`,
+the independently retained interior point of `(y-x)(y+x)` and event endpoint
+of `(y-x)(2y-1)` at `(1/2,1/2)` exhaust all 512 counted refinements without a
+promotion. Both base parameters are already exact `1/2`. An interior isolator
+can converge to an exact singleton without ever fitting inside it; the missing
+step was consuming the retained exact value. This reproduces independently of
+the polynomial-pair prototype that exposed the comparison.
+
+P4, P15, P19 and P20 govern the scalar fix. Existing interval proofs run first;
+then either operand's retained native or exact singleton evidence can decide
+the comparison through the existing scalar authority. Non-budget unknowns keep
+the original fallback. A second regression over retained `sqrt(2)` compares
+`sqrt(3) +- 2^-80` with independently certified native `sqrt(3)`. When both the
+incidence and query are structurally independent of that base, the existing
+exact univariate path now decides without refining the irrelevant base. The
+original fiber, selectors, multiplicity and actual query dependencies remain
+intact; no global coordinate projection or new scalar authority is introduced.
+
+Three public witnesses and two private scalar regressions check both operand
+orders, distinct neighbors, negative conjugates, repeated roots, dependent
+queries and equations, checked point-definition replay, policy changes and
+actual zero-budget exhaustion followed by a larger retry. Final checks pass:
+2,681 Hypercurve tests (75 suites, 34 existing ignored), 43 root downstream
+tests, and 3,009 tests across Hyperbrep, Hyperbrep IO, Hypercircuit, Hyperdrc,
+Hypergraphics and Hyperpack (0 existing ignored). Strict all-target/all-feature MSRV
+Clippy, formatting, 16 matrix guards, 37 capability witnesses, typos, repository
+budget and diff checks pass. An initial exact unit-test filter matched zero
+tests; its retained log is not credited, and the corrected test and full suite
+both execute the regression.
+
+Raw baselines, source hashes and commands are retained in
+`docs/evidence/2026-10-26-hypercurve-closure-fiber-order`, digest
+`a82d1aafbb3ce0ce84f909eb99da5e5ae35b9bf76c82c2382847d05ae64d4435`.
+Point replay is in memory; counted refinements/promotions do not bound total
+arithmetic, coefficient growth, memory or cancellation. This does not complete
+A2, general polynomial operations or fresh-process native archive replay. No
+performance improvement is claimed. Full repository pre-push qualification
+for this increment remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

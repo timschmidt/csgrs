@@ -85,6 +85,20 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-fiber-order-evidence-2026-10-26` branch
+ends at `1761ca45750dd215a45dd150e08393a8b50c64ac`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-fiber-order` (116 files,
+3,051,934 bytes), SHA-256
+`a82d1aafbb3ce0ce84f909eb99da5e5ae35b9bf76c82c2382847d05ae64d4435`.
+It records selected-fiber ordering and retained native evidence at `fd1313a23a9`
+plus the predicate patch: 2,681 Hypercurve tests, 43 root downstream tests,
+3,009 tests across six direct dependent packages, strict MSRV Clippy,
+formatting, 16 matrix guards and 37 capability witnesses pass. Original counted
+exhaustion, independent native-evidence regressions, source snapshots and
+qualification commands are retained. Point replay remains in memory, and
+counted work is not a total resource bound. The record is local and unpushed;
+full repository pre-push qualification for this increment remains pending.
+
 The separate local `hypercurve-algebraic-line-evidence-2026-10-26` branch
 ends at `2d8749f6d70c8805fd96c0d4e1fefd83d59c55e2`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-algebraic-lines` (94 files,

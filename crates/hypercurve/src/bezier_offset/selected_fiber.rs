@@ -1371,6 +1371,33 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             {
                 return Ok(Classification::Decided(std::cmp::Ordering::Greater));
             }
+            if refinement_steps == 0 {
+                // An isolator can converge to an exact singleton without
+                // ever fitting inside it. Consume an already certified
+                // native scalar before further refinement. Keep the existing
+                // interval proofs first, and retain the fiber fallback when
+                // this optional comparison cannot decide.
+                for (known, selected, reverse) in [(self, other, true), (other, self, false)] {
+                    let Some(parameter) = known.retained_bezier_parameter() else {
+                        continue;
+                    };
+                    match selected.cmp_bezier_parameter(&parameter, policy)? {
+                        Classification::Decided(order) => {
+                            return Ok(Classification::Decided(if reverse {
+                                order.reverse()
+                            } else {
+                                order
+                            }));
+                        }
+                        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                            return Ok(Classification::Uncertain(
+                                UncertaintyReason::BudgetExhausted,
+                            ));
+                        }
+                        Classification::Uncertain(_) => {}
+                    }
+                }
+            }
             if !shares_retained_parameter && refinement_steps >= 512 {
                 break;
             }

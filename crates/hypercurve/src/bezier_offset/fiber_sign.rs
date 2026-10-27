@@ -1809,6 +1809,45 @@ pub(super) fn algebraic_selected_fiber_root_predicate_sign(
     if predicate == incidence || divide_bivariate_polynomial_exact(predicate, incidence).is_some() {
         return Ok(Classification::Decided(RealSign::Zero));
     }
+    let independent_of_base = |polynomial: &BivariatePolynomial| {
+        polynomial
+            .coefficients
+            .iter()
+            .skip(1)
+            .flatten()
+            .all(Real::definitely_zero)
+    };
+    if independent_of_base(incidence) && independent_of_base(predicate) {
+        // The selected base is still owned by the fiber, but neither this
+        // root relation nor this query depends on its value. Reuse the exact
+        // univariate authority with the same selector instead of refining an
+        // irrelevant base or constructing a degree-multiplied norm.
+        let native = (|| {
+            let parameter =
+                match selected_fiber_parameter_at_exact_retained(incidence, &Real::zero(), root)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            signed_coefficients_at_parameter(
+                predicate.coefficients.first().map_or(&[], Vec::as_slice),
+                &parameter,
+                policy,
+            )
+        })()?;
+        match native {
+            Classification::Decided(sign) => return Ok(Classification::Decided(sign)),
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
+            // Native conversion is optional; an unresolved coefficient must
+            // not remove the original selected-field decision route.
+            Classification::Uncertain(_) => {}
+        }
+    }
     let retained_parameter = authority.retained_parameter_refined(64);
     if predicate.coefficients.iter().all(|row| row.len() <= 1) {
         return signed_coefficients_at_parameter(
