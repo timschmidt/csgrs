@@ -165,6 +165,15 @@ identity, overlap continuation and Certified policy receipts are asserted within
 the named cases. General algebraic closure, native archive replay and total
 resource bounds remain unqualified.
 
+The selected-polynomial policy witnesses retain the same point or transformed
+branch produced with a Certified receipt under `APPROXIMATE_512`, then consume
+it under `STRICT`. Exact coordinate relations, checked point definitions and
+further chord/line incidence remain available. A separate unit witness keeps an
+observed approximate dependency qualified through a later locally Certified
+similarity; the original explicit similarity-policy barrier regression is
+unchanged. This qualifies the named polynomial construction paths, not a new
+native archive format or every point-family policy transition.
+
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.
 Missing tests, ignored tests, zero-test passes, failing builds or tests, changed

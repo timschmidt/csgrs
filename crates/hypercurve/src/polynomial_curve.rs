@@ -947,7 +947,7 @@ impl PolynomialCurveBranch2 {
             Some(transform) => CurvePoint2::from(BezierSimilarityPoint2::new(
                 point,
                 transform.clone(),
-                policy,
+                &policy.retained_object_policy(),
             )),
             None => point,
         })
@@ -970,7 +970,7 @@ impl PolynomialCurveBranch2 {
             CurvePoint2::from(BezierSimilarityPoint2::new(
                 point,
                 transform.clone(),
-                policy,
+                &policy.retained_object_policy(),
             ))
         });
         result
@@ -1074,5 +1074,84 @@ impl Curve2 {
                 bounds: OnceLock::new(),
             }),
         }
+    }
+}
+
+#[cfg(test)]
+mod policy_tests {
+    use super::*;
+    use hypersolve::bivariate_topology::{BivariateCurveDomain, decompose_bivariate_curve};
+
+    #[test]
+    fn selected_similarity_keeps_approximate_endpoint_dependencies() {
+        let topology = decompose_bivariate_curve(
+            &hypersolve::BivariatePolynomial::new(vec![vec![
+                5.into(),
+                5.into(),
+                0.into(),
+                0.into(),
+                0.into(),
+                1.into(),
+            ]]),
+            &BivariateCurveDomain {
+                first: [(-1).into(), 1.into()],
+                second: [(-2).into(), 2.into()],
+            },
+            Default::default(),
+        )
+        .unwrap();
+        let source = PolynomialCurveSet2::from_topology(topology, Default::default()).unwrap();
+        let branch = source.curves()[0].polynomial_branch().unwrap();
+        let translation = Similarity2::try_from_real_affine(
+            1.into(),
+            0.into(),
+            0.into(),
+            1.into(),
+            1.into(),
+            0.into(),
+        )
+        .unwrap();
+        let aggregate = crate::evaluate_under(hyperlimit::PredicatePolicy::APPROXIMATE_512, || {
+            let parent = crate::policy::resolve_certified_operation(
+                &CurveContext::APPROXIMATE_512,
+                |policy| {
+                    // Seed an actual consumed-policy receipt, independently
+                    // of the following locally exact image construction.
+                    policy.observe_approximate_512();
+                    Ok::<_, CurveError>(branch.transformed(&translation, policy))
+                },
+            )
+            .unwrap();
+            assert_eq!(
+                parent.certainty,
+                crate::CurveCertainty::Approximate512Consumed
+            );
+            let child = crate::policy::resolve_certified_operation(
+                &CurveContext::APPROXIMATE_512,
+                |policy| Ok::<_, CurveError>(parent.value.transformed(&translation, policy)),
+            )
+            .unwrap();
+            assert_eq!(child.certainty, crate::CurveCertainty::Certified);
+            crate::evaluate_under(hyperlimit::PredicatePolicy::STRICT, || {
+                for endpoint in &child.value.endpoints {
+                    let query = endpoint
+                        .affine_form(0.into(), 1.into(), 0.into())
+                        .compare_to_real(&Real::zero());
+                    assert!(matches!(query, Err(ExactCurveError::Blocked(blocker))
+                        if blocker.reason() == UncertaintyReason::Unsupported));
+                    let replay = endpoint
+                        .definition()
+                        .and_then(crate::CurvePointDefinition2::into_point);
+                    assert!(matches!(replay, Err(ExactCurveError::Blocked(blocker))
+                        if blocker.reason() == UncertaintyReason::Unsupported));
+                }
+            })
+            .certified()
+            .unwrap();
+        });
+        assert_eq!(
+            aggregate.certainty(),
+            crate::CurveCertainty::Approximate512Consumed
+        );
     }
 }

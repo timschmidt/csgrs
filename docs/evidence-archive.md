@@ -85,6 +85,19 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-similarity-policy-evidence-2026-10-27` branch
+ends at `5c1494e708b19575a7616ee58443d4acf07350f1`, adding `docs/evidence/2026-10-27-hypercurve-closure-similarity-policy`
+(242 files, 6,278,223 bytes), SHA-256 `db95b27ddd9dff1a5f89d3e234a663ea7e66140af57edd77b708c033fb95537c`.
+It records policy retention for selected polynomial similarity points and
+endpoints: locally certified outputs remain usable under STRICT, while nested
+approximate dependencies keep their replay barriers. 2,773 Hypercurve tests,
+43 root downstream tests, 3,010 tests across six dependent packages,
+strict MSRV Clippy, formatting, 16 matrix guards and 125 capability witnesses
+pass. Original failed witnesses, the unchanged generic policy-barrier check,
+a consumed-receipt dependency witness and raw commands remain archived.
+Point replay here is checked in memory. This record is local and unpushed;
+full pre-push qualification and broader algebraic closure remain open.
+
 The local `hypercurve-selected-integration-evidence-2026-10-27` branch
 ends at `04eccb7d4eccb1928dc4e1c2998174cd4a6f27c4`, adding `docs/evidence/2026-10-27-hypercurve-closure-selected-composition`
 (344 files, 13,220,752 bytes), SHA-256 `309880681d97f5bf8760866eea8009a38f0d1764bb4340f13e136d73e8da4499`.

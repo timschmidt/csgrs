@@ -5476,6 +5476,102 @@
       ],
       "oracle": "Positive original guard 3+x on [-2,2], exact original map equality, explicit algebraic contact coordinates, determinant/traversal/exchange signs, source parameter zero and a three-piece continuation census.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "selected_point_policy_replay",
+      "target": "similarity_policy_closure",
+      "test": "certified_selected_point_created_under_approximate_policy_replays_under_strict",
+      "owner": "Hypercurve polynomial point and branch similarity construction",
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A selected point at source x=0 on y^5+5y+5=0, mapped by T(x,y)=(3-y,4+x), produced under APPROXIMATE_512 with a Certified receipt and reused under STRICT.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "An operation stores its consumed construction policy, while existing nested source-policy barriers remain intact. These cases qualify exact selected polynomial output across policy scopes, not all point-family policy transport or a native archive format.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The same returned point admits its exact world ordinate, strict abscissa bounds and equality to an independently constructed STRICT reference."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Its checked in-memory point definition replays under STRICT and agrees with the same exact selected point."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "A subsequently constructed generated chord intersects the original transformed branch in exactly that endpoint."
+        }
+      ],
+      "oracle": "The quintic derivative is positive and p(-1)=-1,p(0)=5, selecting a unique alpha in (-1,0). The explicit image is (3-alpha,4). A STRICT reference passes before construction under APPROXIMATE_512; the exact same Certified output is then queried, replayed and consumed outside that policy scope.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_similarity_policy_replay",
+      "target": "similarity_policy_closure",
+      "test": "certified_selected_similarity_created_under_approximate_policy_keeps_strict_endpoints",
+      "owner": "Hypercurve polynomial point and branch similarity construction",
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The selected quintic graph on [-1,1]x[-2,2], transformed by the rational quarter turn T(x,y)=(3-y,4+x) under APPROXIMATE_512 without terminal consumption, then reused under STRICT.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "An operation stores its consumed construction policy, while existing nested source-policy barriers remain intact. These cases qualify exact selected polynomial output across policy scopes, not all point-family policy transport or a native archive format.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "The resulting branch reports Certified construction and preserves exact selected endpoints at world ordinates 3 and 5."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Both retained endpoints provide checked in-memory source definitions under STRICT, preserving the selected quintic geometry."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "A later horizontal line at world y=4 has one contact at source x=0 and splits the retained branch into two pieces."
+        }
+      ],
+      "oracle": "The original equation selects alpha uniquely; endpoints are (3-alpha,3) and (3-alpha,5), and the horizontal cut meets the branch once at (3-alpha,4). The same transformed output, rather than a reconstruction under a new policy, supplies the later queries and split.",
+      "timeout_seconds": 300
     }
   ]
 }

@@ -1165,6 +1165,47 @@ growth, retained-memory or cancellation bounds. No performance improvement is
 claimed. The separate publication candidate is excluded, and full repository
 pre-push qualification of this integration remains pending.
 
+**Selected similarity point policy increment (2026-10-27).** On committed
+`2395ba77d8`, two public witnesses produce Certified selected-quintic points
+or similarity images under APPROXIMATE_512, then reproduce
+`Classification/Unsupported` when the same returned points are queried under
+STRICT. Independent STRICT reference constructions already succeed. P4, P8,
+P9, P15 and P18–P20 require retained evidence to follow the actual consumed
+policy and preserve selected source dependencies through subsequent operations.
+
+The polynomial point and branch similarity construction sites now pass the
+existing `retained_object_policy()` result to `BezierSimilarityPoint2::new`.
+The generic constructor is unchanged. Locally exact images retain strict
+replay authority; incompatible approximate source images remain nested, so a
+new local certificate cannot upgrade inherited evidence. Checked point replay
+continues to validate the original source definition and selected fiber.
+
+Two public witnesses keep the same returned points across the policy boundary,
+verify exact affine relations for the selected root of `y^5+5y+5`, replay point
+definitions in memory, and consume them in generated-chord incidence and branch
+subdivision. A new negative unit witness seeds an observed consumed-policy
+receipt on a parent, constructs a locally Certified child, and verifies that
+strict endpoint queries and replay remain blocked. The original generic
+similarity policy-barrier regression passes unchanged. All four focused
+checks pass; this negative witness tests receipt propagation, not a newly
+rounded geometric construction.
+
+Final checks pass: 2,773 Hypercurve tests (85 suites, 34 existing ignored),
+43 root downstream tests and 3,010 tests across six dependent packages
+(0 ignored). Strict Hypercurve all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards, 125 capability witnesses, typos, repository budget
+and diff checks pass. Raw failures, source snapshots and exact commands are in
+`docs/evidence/2026-10-27-hypercurve-closure-similarity-policy`, SHA-256 `db95b27ddd9dff1a5f89d3e234a663ea7e66140af57edd77b708c033fb95537c`. All non-receipt source bytes remain identical
+after this receipt.
+
+This addresses selected polynomial similarity points, not every retained point
+family. General algebraic operation closure and fresh-process native archive
+replay remain open. Existing counted limits and external timeouts do not bound
+total arithmetic, coefficient growth, retained memory or cancellation. No
+performance improvement is claimed. Full repository pre-push qualification
+remains pending; checks on the separate earlier publication candidate do not
+validate this later source revision.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
